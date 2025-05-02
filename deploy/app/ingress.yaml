@@ -1,0 +1,14 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: bf42-servers
+  namespace: bf42-servers
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`1942.home.net`)
+    kind: Rule
+    services:
+    - name: bf42-servers-service
+      port: 80

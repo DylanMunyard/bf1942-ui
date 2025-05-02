@@ -1,0 +1,33 @@
+metadata:
+  labels:
+    app: jenkins
+spec:
+  nodeSelector:
+    beta.kubernetes.io/arch: arm64
+  containers:
+    - name: dind
+      image: docker:dind
+      resources:
+        requests:
+          cpu: 2
+          memory: 1Gi
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: dind-storage
+          mountPath: /var/lib/docker
+        - name: docker-config
+          mountPath: /etc/docker/daemon.json
+          subPath: daemon.json
+    - name: kubectl
+      image: localhost:30500/jenkins-agent-kubectl:03
+      resources:
+        requests:
+          cpu: 0.5
+          memory: 512Mi
+  volumes:
+    - name: dind-storage
+      emptyDir: {}
+    - name: docker-config
+      configMap:
+        name: docker-daemon-config
