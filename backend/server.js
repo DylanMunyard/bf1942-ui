@@ -18,7 +18,30 @@ const PORT = process.env.PORT || 3000;
 const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://kube-prometheus-stack-prometheus.monitoring:9090/api/v1';
 
 // Middleware
-app.use(cors());
+// Configure CORS to allow requests from the deployed frontend
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if(!origin) return callback(null, true);
+
+    // List of allowed origins
+    const allowedOrigins = [
+      'https://1942-metrics.munyard.dev',
+      'http://localhost:5173',
+      'https://1942.home.net'
+    ];
+
+    if(allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked request from:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Health check endpoint
