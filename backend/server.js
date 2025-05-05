@@ -17,32 +17,28 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://kube-prometheus-stack-prometheus.monitoring:9090/api/v1';
 
-// Middleware
-// Configure CORS to allow requests from the deployed frontend
+// First, enable CORS for preflight requests
+app.options('*', cors());
+
+// Configure CORS for all other requests
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if(!origin) return callback(null, true);
-
-    const allowedOrigins = [
-      'https://1942.munyard.dev',
-      'http://localhost:5173',
-      'https://1942.home.net'
-    ];
-
-    if(allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked request from:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: ['https://1942.munyard.dev', 'http://localhost:5173', 'https://1942.home.net'],
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Access-Control-Allow-Origin'],
-  credentials: true,
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  credentials: true
 }));
+
+// Add a middleware to ensure CORS headers are always set
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ['https://1942.munyard.dev', 'http://localhost:5173', 'https://1942.home.net'].includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  next();
+});
+
+// Middleware
 app.use(express.json());
 
 // Health check endpoint
@@ -115,11 +111,4 @@ app.get('/api/prometheus/server_players', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Backend API server running on port ${PORT}`);
   console.log(`Proxying Prometheus requests to ${PROMETHEUS_URL}`);
-});
-
-// Add this after all your routes
-app.use((req, res) => {
-  // Ensure CORS headers are set even for error responses
-  res.header("Access-Control-Allow-Origin", req.headers.origin);
-  res.header("Access-Control-Allow-Credentials", "true");
 });
