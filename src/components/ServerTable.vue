@@ -185,6 +185,17 @@ const handleSort = (column: string) => {
   }
 };
 
+// Function to join a server without changing focus
+const joinServer = (server: ServerInfo) => {
+  // Open the link in a new tab without changing focus
+  const newWindow = window.open(server.joinLink, '_blank', 'noopener,noreferrer');
+  if (newWindow) {
+    // Immediately blur the new window to return focus to the current window
+    newWindow.blur();
+    window.focus();
+  }
+};
+
 onMounted(() => {
   fetchServerData();
 
@@ -246,7 +257,7 @@ onUnmounted(() => {
             <td>{{ server.mapName }}</td>
             <td>{{ server.gameType }}</td>
             <td>
-              <a :href="server.joinLink" target="_blank" class="join-link">Join Server</a>
+              <a href="#" @click.prevent="joinServer(server)" class="join-link">Join Server</a>
             </td>
           </tr>
         </tbody>
