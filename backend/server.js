@@ -24,7 +24,6 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if(!origin) return callback(null, true);
 
-    // List of allowed origins
     const allowedOrigins = [
       'https://1942.munyard.dev',
       'http://localhost:5173',
@@ -40,7 +39,9 @@ app.use(cors({
   },
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  exposedHeaders: ['Access-Control-Allow-Origin'],
+  credentials: true,
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
 app.use(express.json());
 
@@ -114,4 +115,11 @@ app.get('/api/prometheus/server_players', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Backend API server running on port ${PORT}`);
   console.log(`Proxying Prometheus requests to ${PROMETHEUS_URL}`);
+});
+
+// Add this after all your routes
+app.use((req, res) => {
+  // Ensure CORS headers are set even for error responses
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header("Access-Control-Allow-Credentials", "true");
 });
