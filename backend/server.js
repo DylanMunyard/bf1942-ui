@@ -17,28 +17,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://kube-prometheus-stack-prometheus.monitoring:9090/api/v1';
 
-// First, enable CORS for preflight requests
-app.options('*', cors());
-
-// Configure CORS for all other requests
-app.use(cors({
-  origin: ['https://1942.munyard.dev', 'http://localhost:5173', 'https://1942.home.net'],
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
-
-// Add a middleware to ensure CORS headers are always set
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && ['https://1942.munyard.dev', 'http://localhost:5173', 'https://1942.home.net'].includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-  next();
-});
-
 // Middleware
+app.use(cors());
 app.use(express.json());
 
 // Health check endpoint
@@ -54,9 +34,9 @@ app.get('/api/prometheus/server_players', async (req, res) => {
 
     // Validate required parameters
     if (!serverName) {
-      return res.status(400).json({ 
-        status: 'error', 
-        message: 'Missing required parameter: serverName' 
+      return res.status(400).json({
+        status: 'error',
+        message: 'Missing required parameter: serverName'
       });
     }
 
