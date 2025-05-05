@@ -20,10 +20,27 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['close']);
 
+// Define timezones for each region (same as in TimeDisplay.vue)
+const timezones = {
+  france: 'Europe/Paris',
+  usEast: 'America/New_York',
+  usWest: 'America/Los_Angeles'
+};
+
 // Format timestamp to readable date/time
 const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp * 1000);
   return date.toLocaleString();
+};
+
+// Format timestamp for a specific timezone
+const formatTimestampForTimezone = (timestamp: number, timezone: string, locale: string = 'en-US'): string => {
+  const date = new Date(timestamp * 1000);
+  return new Intl.DateTimeFormat(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: timezone
+  }).format(date);
 };
 
 // Prepare data for Chart.js
@@ -64,6 +81,22 @@ const chartOptions = {
         },
         label: (context) => {
           return `Players: ${context.raw}`;
+        },
+        afterLabel: (context) => {
+          // Get the timestamp from the original data
+          const timestamp = props.chartData[context.dataIndex].timestamp;
+
+          // Format the timestamp for each timezone
+          const franceTime = formatTimestampForTimezone(timestamp, timezones.france, 'fr-FR');
+          const usEastTime = formatTimestampForTimezone(timestamp, timezones.usEast);
+          const usWestTime = formatTimestampForTimezone(timestamp, timezones.usWest);
+
+          // Return formatted times with emoji flags
+          return [
+            `🇫🇷 ${franceTime}`,
+            `🇺🇸 East ${usEastTime}`,
+            `🇺🇸 West ${usWestTime}`
+          ];
         }
       }
     },
