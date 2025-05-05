@@ -26,7 +26,7 @@ app.use(cors({
 
     // List of allowed origins
     const allowedOrigins = [
-      'https://1942-metrics.munyard.dev',
+      'https://1942.munyard.dev',
       'http://localhost:5173',
       'https://1942.home.net'
     ];
