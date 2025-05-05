@@ -1,5 +1,5 @@
 # Use Node.js as the base image
-FROM node:20-alpine as build-stage
+FROM node:20-alpine AS build-stage
 
 # Set the working directory
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY .. .
 RUN npm run build
 
 # Production stage
-FROM nginx:stable-alpine as production-stage
+FROM nginx:stable-alpine AS production-stage
 
 # Copy the built files from the build stage to the nginx server
 COPY --from=build-stage /app/dist /usr/share/nginx/html
