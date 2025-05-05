@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
-import axios from 'axios';
 import DetailedChartPopup from './DetailedChartPopup.vue';
+import { fetchServerPlayerData } from '../services/prometheusService';
 
 interface PrometheusDataPoint {
   timestamp: number;
@@ -36,40 +36,8 @@ const fetchPrometheusData = async () => {
   error.value = null;
 
   try {
-    // Get current time and 12 hours ago for the query
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setHours(endDate.getHours() - 12);
-
-    // Format dates for Prometheus
-    const start = startDate.toISOString().split('.')[0] + 'Z';
-    const end = endDate.toISOString().split('.')[0] + 'Z';
-
-    // Build the query - use the most recent data (up to 12h)
-    const query = `bf1942_server_players{server_name="${props.serverName}"}`;
-
-    // Make the request to Prometheus
-    const response = await axios.get('http://localhost:9090/api/v1/query_range', {
-      params: {
-        query,
-        start,
-        end,
-        step: '15m'
-      }
-    });
-
-    // Process the response
-    if (response.data.status === 'success' && response.data.data.result.length > 0) {
-      const result = response.data.data.result[0];
-
-      // Transform the data for the chart
-      chartData.value = result.values.map((point: [number, string]) => ({
-        timestamp: point[0],
-        value: parseFloat(point[1])
-      }));
-    } else {
-      chartData.value = [];
-    }
+    // Use the prometheusService to fetch data
+    chartData.value = await fetchServerPlayerData(props.serverName);
   } catch (err) {
     console.error('Error fetching Prometheus data:', err);
     error.value = 'Failed to fetch chart data';
@@ -84,9 +52,8 @@ watch(() => props.serverName, fetchPrometheusData);
 </script>
 
 <template>
-  <div class="line-chart-container">
+  <div v-if="!error" class="line-chart-container">
     <div v-if="loading" class="chart-loading">Loading...</div>
-    <div v-else-if="error" class="chart-error">{{ error }}</div>
     <div v-else-if="chartData.length === 0" class="chart-no-data">No data</div>
     <div v-else class="chart" @click="showDetailedChart = true">
       <!-- SVG line chart with min/max labels -->
@@ -128,7 +95,7 @@ watch(() => props.serverName, fetchPrometheusData);
   vertical-align: middle;
 }
 
-.chart-loading, .chart-error, .chart-no-data {
+.chart-loading, .chart-no-data {
   font-size: 10px;
   color: #666;
   text-align: center;

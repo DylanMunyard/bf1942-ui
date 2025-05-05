@@ -149,7 +149,7 @@ onMounted(() => {
         </div>
         <div class="chart-info">
           <p><strong>Server:</strong> {{ serverName }}</p>
-          <p><strong>Time Range:</strong> Last 12 hours</p>
+          <p><strong>Time Range:</strong> Last 24 hours</p>
           <p v-if="chartData.datasets[0].data.length > 0">
             <strong>Current Players:</strong> {{ chartData.datasets[0].data[chartData.datasets[0].data.length - 1] }}
           </p>

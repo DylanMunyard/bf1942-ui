@@ -7,12 +7,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+/backend/node_modules
+
+# Build outputs
 .DS_Store
 dist
 dist-ssr
 coverage
+
+# Environment files
 *.local
+.env
+.env.*
+!.env.example
+/backend/.env
+/backend/.env.development
+!/backend/.env.development
 
 /cypress/videos/
 /cypress/screenshots/
