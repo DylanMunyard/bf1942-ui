@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
-import { ServerInfo, ServerPlayer, PlayerWithKdr } from '../types/server';
+import { ServerInfo, PlayerWithKdr } from '../types/server';
 import TimeDisplay from './TimeDisplay.vue';
+import LineChart from './LineChart.vue';
 
 // Function to format seconds to mm:ss
 const formatTime = (seconds: number): string => {
@@ -234,6 +235,7 @@ onUnmounted(() => {
               <a href="#" @click.prevent="openServerInfoModal(server)" class="server-name-link">
                 {{ server.name }}
               </a> 
+              <LineChart v-if="server.guid === '42b98b-61f0b93-183a06c-49be6b0' || server.guid === '7b3a63-12e36b3-6dac2c-8c0a76c' || server.guid === '42ba49-61f1d04-183a4bc-49bf3d2'" :server-name="server.name" />
               ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
             </td>
             <td>

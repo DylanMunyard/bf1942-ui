@@ -1,0 +1,173 @@
+<script setup lang="ts">
+import { ref, onMounted, watch, computed } from 'vue';
+import axios from 'axios';
+import DetailedChartPopup from './DetailedChartPopup.vue';
+
+interface PrometheusDataPoint {
+  timestamp: number;
+  value: number;
+}
+
+interface Props {
+  serverName: string;
+}
+
+const props = defineProps<Props>();
+const chartData = ref<PrometheusDataPoint[]>([]);
+const loading = ref(false);
+const error = ref<string | null>(null);
+const showDetailedChart = ref(false);
+
+// Compute min and max values for y-axis labels
+const maxValue = computed(() => {
+  if (chartData.value.length === 0) return 0;
+  return Math.max(...chartData.value.map(p => p.value));
+});
+
+const minValue = computed(() => {
+  if (chartData.value.length === 0) return 0;
+  return Math.min(...chartData.value.map(p => p.value));
+});
+
+const fetchPrometheusData = async () => {
+  if (!props.serverName) return;
+
+  loading.value = true;
+  error.value = null;
+
+  try {
+    // Get current time and 12 hours ago for the query
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setHours(endDate.getHours() - 12);
+
+    // Format dates for Prometheus
+    const start = startDate.toISOString().split('.')[0] + 'Z';
+    const end = endDate.toISOString().split('.')[0] + 'Z';
+
+    // Build the query - use the most recent data (up to 12h)
+    const query = `bf1942_server_players{server_name="${props.serverName}"}`;
+
+    // Make the request to Prometheus
+    const response = await axios.get('http://localhost:9090/api/v1/query_range', {
+      params: {
+        query,
+        start,
+        end,
+        step: '15m'
+      }
+    });
+
+    // Process the response
+    if (response.data.status === 'success' && response.data.data.result.length > 0) {
+      const result = response.data.data.result[0];
+
+      // Transform the data for the chart
+      chartData.value = result.values.map((point: [number, string]) => ({
+        timestamp: point[0],
+        value: parseFloat(point[1])
+      }));
+    } else {
+      chartData.value = [];
+    }
+  } catch (err) {
+    console.error('Error fetching Prometheus data:', err);
+    error.value = 'Failed to fetch chart data';
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Fetch data when component is mounted or when serverName changes
+onMounted(fetchPrometheusData);
+watch(() => props.serverName, fetchPrometheusData);
+</script>
+
+<template>
+  <div class="line-chart-container">
+    <div v-if="loading" class="chart-loading">Loading...</div>
+    <div v-else-if="error" class="chart-error">{{ error }}</div>
+    <div v-else-if="chartData.length === 0" class="chart-no-data">No data</div>
+    <div v-else class="chart" @click="showDetailedChart = true">
+      <!-- SVG line chart with min/max labels -->
+      <svg width="100" height="30" viewBox="0 0 100 30" class="clickable-chart">
+        <!-- Chart line -->
+        <polyline
+          :points="chartData
+            .map((point, index) => `${(index / (chartData.length - 1)) * 100},${30 - (point.value / Math.max(...chartData.map(p => p.value)) * 30)}`)
+            .join(' ')"
+          fill="none"
+          stroke="#4CAF50"
+          stroke-width="2"
+        />
+
+        <!-- Min/Max labels with semi-transparent backgrounds -->
+        <rect x="0" y="20" width="15" height="12" fill="white" opacity="0.7" />
+        <rect x="0" y="1" width="15" height="12" fill="white" opacity="0.7" />
+        <text x="2" y="28" class="axis-label min-label">{{ Math.round(minValue) }}</text>
+        <text x="2" y="9" class="axis-label max-label">{{ Math.round(maxValue) }}</text>
+      </svg>
+    </div>
+
+    <!-- Detailed Chart Popup -->
+    <DetailedChartPopup 
+      :server-name="props.serverName"
+      :chart-data="chartData"
+      :is-open="showDetailedChart"
+      @close="showDetailedChart = false"
+    />
+  </div>
+</template>
+
+<style scoped>
+.line-chart-container {
+  display: inline-block;
+  width: 100px;
+  height: 30px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.chart-loading, .chart-error, .chart-no-data {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  line-height: 30px;
+}
+
+.chart {
+  width: 100%;
+  height: 100%;
+}
+
+.axis-label {
+  font-size: 7px;
+  fill: #666;
+  font-family: Arial, sans-serif;
+}
+
+.clickable-chart {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.chart:hover .clickable-chart {
+  transform: scale(1.05);
+}
+
+.chart::after {
+  content: "🔍";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.chart:hover::after {
+  opacity: 0.8;
+}
+</style>
