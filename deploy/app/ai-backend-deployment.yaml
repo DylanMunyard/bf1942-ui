@@ -21,7 +21,7 @@ spec:
         - name: bf42-servers-ai-backend
           image: localhost:30500/bf42-servers-ai-backend:latest
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           env:
             - name: OpenAi__Key 
               valueFrom:
@@ -48,7 +48,7 @@ spec:
   type: ClusterIP
   ports:
     - port: 80
-      targetPort: 80
+      targetPort: 8080
       protocol: TCP
   selector:
     app: bf42-servers-ai-backend
