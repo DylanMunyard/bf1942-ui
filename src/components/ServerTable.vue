@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ServerInfo, PlayerWithKdr } from '../types/server';
 import TimeDisplay from './TimeDisplay.vue';
 import LineChart from './LineChart.vue';
+import { queryAI } from '../services/aiService';
 
 // Function to format seconds to mm:ss
 const formatTime = (seconds: number): string => {
@@ -25,6 +26,13 @@ const refreshTimer = ref<number | null>(null);
 const previousServersData = ref<Record<string, ServerInfo>>({});
 const sortBy = ref<string>('score');
 const sortDirection = ref<'asc' | 'desc'>('desc');
+
+// AI Chat state
+const showAIChatModal = ref(false);
+const aiQuestion = ref('');
+const aiResponse = ref('');
+const aiLoading = ref(false);
+const lastQuestion = ref('');
 
 const fetchServerData = async () => {
   // If servers are already loaded, use updating state instead of loading
@@ -205,6 +213,41 @@ onMounted(() => {
   }, 15000);
 });
 
+// AI Chat functions
+const openAIChatModal = () => {
+  showAIChatModal.value = true;
+  window.addEventListener('keydown', handleAIChatKeyDown);
+};
+
+const closeAIChatModal = () => {
+  showAIChatModal.value = false;
+  window.removeEventListener('keydown', handleAIChatKeyDown);
+};
+
+const handleAIChatKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    closeAIChatModal();
+  }
+};
+
+const submitAIQuestion = async () => {
+  if (!aiQuestion.value.trim()) return;
+
+  aiLoading.value = true;
+  try {
+    // Store the question before sending it
+    lastQuestion.value = aiQuestion.value;
+    aiResponse.value = await queryAI(aiQuestion.value);
+    // Clear the question field after receiving a response
+    aiQuestion.value = '';
+  } catch (error) {
+    aiResponse.value = 'Sorry, I encountered an error while processing your question.';
+    console.error('AI query error:', error);
+  } finally {
+    aiLoading.value = false;
+  }
+};
+
 onUnmounted(() => {
   // Clear the timer when component is unmounted
   if (refreshTimer.value !== null) {
@@ -221,10 +264,15 @@ onUnmounted(() => {
         <h1>BF1942 servers</h1>
         <TimeDisplay />
       </div>
-      <button @click="fetchServerData" class="update-button">
-        <span v-if="!updating">Update</span>
-        <span v-else class="spinner"></span>
-      </button>
+      <div class="header-right">
+        <button @click="openAIChatModal" class="ai-chat-button">
+          <span>Metrics Chat</span>
+        </button>
+        <button @click="fetchServerData" class="update-button">
+          <span v-if="!updating">Update</span>
+          <span v-else class="spinner"></span>
+        </button>
+      </div>
     </div>
 
     <div v-if="loading" class="loading">Loading server data...</div>
@@ -390,6 +438,50 @@ onUnmounted(() => {
             </div>
             <div class="server-detail-item">
               <strong>Port:</strong> {{ selectedServer.port }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics Chat Modal -->
+    <div v-if="showAIChatModal" class="modal-overlay" @click="closeAIChatModal">
+      <div class="modal-content ai-chat-modal" @click.stop>
+        <div class="modal-header">
+          <h2>Metrics Chat</h2>
+          <button @click="closeAIChatModal" class="close-button">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="ai-chat-container">
+            <div class="ai-response-container">
+              <div v-if="aiResponse" class="ai-response">
+                <div class="ai-question">
+                  <strong>Question:</strong> {{ lastQuestion }}
+                </div>
+                <div class="ai-answer">
+                  <strong>Answer:</strong> {{ aiResponse }}
+                </div>
+              </div>
+              <div v-else class="ai-response-placeholder">
+                Ask me anything about server metrics!
+              </div>
+            </div>
+            <div class="ai-input-container">
+              <input 
+                v-model="aiQuestion" 
+                @keyup.enter="submitAIQuestion"
+                placeholder="Ask a question about metrics..." 
+                class="ai-input"
+                :disabled="aiLoading"
+              />
+              <button 
+                @click="submitAIQuestion" 
+                class="ai-submit-button"
+                :disabled="aiLoading || !aiQuestion.trim()"
+              >
+                <span v-if="!aiLoading">Ask</span>
+                <span v-else class="spinner"></span>
+              </button>
             </div>
           </div>
         </div>
@@ -612,5 +704,101 @@ th {
 .server-detail-item {
   margin-bottom: 10px;
   font-size: 16px;
+}
+
+/* Header right section */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Metrics Chat button styles */
+.ai-chat-button {
+  padding: 8px 16px;
+  background-color: white;
+  color: #333;
+  font-weight: bold;
+  border: 2px solid #2196F3;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.ai-chat-button:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s;
+}
+
+/* Metrics Chat modal styles */
+.ai-chat-modal {
+  max-width: 600px;
+}
+
+.ai-chat-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ai-response-container {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 15px;
+  min-height: 150px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ai-response {
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.ai-question {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.ai-answer {
+  margin-top: 5px;
+}
+
+.ai-response-placeholder {
+  color: #888;
+  font-style: italic;
+}
+
+.ai-input-container {
+  display: flex;
+  gap: 10px;
+}
+
+.ai-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.ai-submit-button {
+  padding: 10px 20px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.ai-submit-button:hover:not(:disabled) {
+  background-color: #0b7dda;
+}
+
+.ai-submit-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 </style>

@@ -21,6 +21,11 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true
+      },
+      // Proxy AI requests to the AI backend during development
+      '/ai': {
+        target: 'http://localhost:8181',
+        changeOrigin: true
       }
     }
   }
