@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>junie_des_semantic_kernel</RootNamespace>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+      <UserSecretsId>094acf0c-44bc-4cd8-b46e-3a61c7508544</UserSecretsId>
+  </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
+        <PackageReference Include="Microsoft.SemanticKernel" Version="1.51.0" />
+    </ItemGroup>
+
+</Project>

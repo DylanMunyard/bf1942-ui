@@ -1,0 +1,70 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bf42-servers-ai-backend
+  namespace: bf42-servers
+  labels:
+    app: bf42-servers-ai-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bf42-servers-ai-backend
+  template:
+    metadata:
+      labels:
+        app: bf42-servers-ai-backend
+    spec:
+      containers:
+        - name: bf42-servers-ai-backend
+          image: localhost:30500/bf42-servers:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: OpenAi__Key 
+              valueFrom:
+                secretKeyRef:
+                  name: openai-api-key # created during CI by Jenkins
+                  key: openai-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bf42-servers-ai-backend
+  namespace: bf42-servers
+  labels:
+    app: bf42-servers-ai-backend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  selector:
+    app: bf42-servers-ai-backend
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: bf42-servers-ai-backend-ingress
+  namespace: bf42-servers
+  labels:
+    app: bf42-servers-ai-backend
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`1942.home.net`) && PathPrefix(`/ai`)
+      kind: Rule
+      services:
+        - name: bf42-servers-ai-backend
+          port: 80
