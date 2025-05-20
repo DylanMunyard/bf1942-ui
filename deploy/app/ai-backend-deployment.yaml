@@ -19,7 +19,7 @@ spec:
         kubernetes.io/arch: arm64
       containers:
         - name: bf42-servers-ai-backend
-          image: localhost:30500/bf42-servers:latest
+          image: localhost:30500/bf42-servers-ai-backend:latest
           ports:
             - containerPort: 80
           env:
