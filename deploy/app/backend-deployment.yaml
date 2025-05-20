@@ -14,6 +14,8 @@ spec:
       labels:
         app: bf42-servers-backend
     spec:
+      nodeSelector:
+        kubernetes.io/arch: arm64
       containers:
         - name: api
           image: localhost:30500/bf42-servers-backend:latest
