@@ -10,7 +10,7 @@ namespace junie_des_semantic_kernel.Prometheus;
 public interface IMetricsService
 {
     Task<List<PrometheusValue>> AverageNumberPlayersOverLastXDays(int days);
-    // Task<List<HourlyAverage>> PeakNumberPlayersOverLastXDays(int days);
+    Task<PrometheusValue?> GetLatestPlayerCount();
 }
 
 public class HourlyAverage
@@ -46,6 +46,15 @@ public class MetricsService : IMetricsService
         return results!.Data.Results.SelectMany(r => r.Values).ToList();
     }
 
+    public async Task<PrometheusValue?> GetLatestPlayerCount()
+    {
+        var now = DateTime.UtcNow;
+        var start = now.AddMinutes(-30); // Look back 30 minutes to ensure we get a value
+        var results = await QueryRangeAsync("bf1942_players_online", start, now, "1m");
+        var values = results?.Data.Results.SelectMany(r => r.Values).ToList();
+        return values?.OrderByDescending(v => v.Timestamp).FirstOrDefault();
+    }
+
     private async Task<PrometheusResponse?> QueryRangeAsync(string metricName, DateTime start, DateTime end, string step)
     {
         // Format start and end dates for Prometheus
@@ -54,6 +63,33 @@ public class MetricsService : IMetricsService
 
         // Build the query string
         var queryString = $"/api/v1/query_range?query={metricName}&start={formattedStart}&end={formattedEnd}&step={step}";
+
+        // Check cache for existing response
+        if (_cache.TryGetValue(queryString, out var cacheEntry) && cacheEntry.expiration > DateTimeOffset.Now)
+        {
+            return cacheEntry.response;
+        }
+
+        // Cache miss; make the HTTP request
+        var response = await _httpClient.GetAsync(queryString);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new ApplicationException($"Prometheus query failed with status code {response.StatusCode}");
+        }
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        var prometheusResponse = JsonSerializer.Deserialize<PrometheusResponse>(jsonResponse);
+
+        // Store response in cache
+        _cache[queryString] = (DateTimeOffset.Now.Add(_cacheDuration), prometheusResponse)!;
+
+        return prometheusResponse;
+    }
+
+    private async Task<PrometheusResponse?> QueryAsync(string metricName)
+    {
+        // Build the query string
+        var queryString = $"/api/v1/query?query={metricName}";
 
         // Check cache for existing response
         if (_cache.TryGetValue(queryString, out var cacheEntry) && cacheEntry.expiration > DateTimeOffset.Now)
