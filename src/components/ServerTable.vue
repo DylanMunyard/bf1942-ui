@@ -16,6 +16,7 @@ const formatTime = (seconds: number): string => {
 const servers = ref<ServerInfo[]>([]);
 const loading = ref(true);
 const updating = ref(false); // New ref for tracking updates separately from initial load
+const tabSwitchLoading = ref(false); // New ref for tracking loading state during tab switching
 const error = ref<string | null>(null);
 const showPlayerModal = ref(false);
 const showServerInfoModal = ref(false);
@@ -26,6 +27,7 @@ const refreshTimer = ref<number | null>(null);
 const previousServersData = ref<Record<string, ServerInfo>>({});
 const sortBy = ref<string>('score');
 const sortDirection = ref<'asc' | 'desc'>('desc');
+const serverMode = ref<'42' | 'FH2'>('42'); // Track which server list to display
 
 // AI Chat state
 const showAIChatModal = ref(false);
@@ -44,7 +46,12 @@ const fetchServerData = async () => {
   error.value = null;
 
   try {
-    const response = await axios.get<ServerInfo[]>('https://api.bflist.io/bf1942/v1/servers/1?perPage=100');
+    // Use different API URL based on selected mode
+    const apiUrl = serverMode.value === '42' 
+      ? 'https://api.bflist.io/bf1942/v1/servers/1?perPage=100'
+      : 'https://api.bflist.io/fh2/v1/servers/1?perPage=100';
+
+    const response = await axios.get<ServerInfo[]>(apiUrl);
 
     // Before updating servers, store the current data as previous data
     if (servers.value.length > 0) {
@@ -67,6 +74,7 @@ const fetchServerData = async () => {
   } finally {
     loading.value = false;
     updating.value = false;
+    tabSwitchLoading.value = false;
   }
 };
 
@@ -248,6 +256,15 @@ const submitAIQuestion = async () => {
   }
 };
 
+// Function to toggle between 42 and FH2 server modes
+const toggleServerMode = () => {
+  serverMode.value = serverMode.value === '42' ? 'FH2' : '42';
+  // Set tab switch loading state
+  tabSwitchLoading.value = true;
+  // Refresh data when mode changes
+  fetchServerData();
+};
+
 onUnmounted(() => {
   // Clear the timer when component is unmounted
   if (refreshTimer.value !== null) {
@@ -259,12 +276,25 @@ onUnmounted(() => {
 
 <template>
   <div class="server-table-container">
-    <div class="header">
-      <div class="header-left">
-        <h1>BF1942 servers</h1>
-        <TimeDisplay />
+    <div class="tabs-container">
+      <div class="tabs">
+        <div 
+          class="tab" 
+          :class="{ 'active': serverMode === '42' }" 
+          @click="serverMode !== '42' && toggleServerMode()"
+        >
+          BF1942
+        </div>
+        <div 
+          class="tab" 
+          :class="{ 'active': serverMode === 'FH2' }" 
+          @click="serverMode !== 'FH2' && toggleServerMode()"
+        >
+          FH2
+        </div>
       </div>
       <div class="header-right">
+        <TimeDisplay />
         <button @click="openAIChatModal" class="ai-chat-button">
           <span>Metrics Chat</span>
         </button>
@@ -278,38 +308,45 @@ onUnmounted(() => {
     <div v-if="loading" class="loading">Loading server data...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="servers.length > 0" class="server-info">
-      <table>
-        <thead>
-          <tr>
-            <th>Server Name</th>
-            <th>Players</th>
-            <th>Map</th>
-            <th>Game Type</th>
-            <th>Join</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="server in servers" :key="server.guid">
-            <td>
-              <a href="#" @click.prevent="openServerInfoModal(server)" class="server-name-link">
-                {{ server.name }}
-              </a> 
-              <LineChart v-if="server.guid === '42b98b-61f0b93-183a06c-49be6b0' || server.guid === '7b3a63-12e36b3-6dac2c-8c0a76c' || server.guid === '42ba49-61f1d04-183a4bc-49bf3d2'" :server-name="server.name" />
-              ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
-            </td>
-            <td>
-              <a href="#" @click.prevent="openPlayerModal(server)">
-                {{ server.numPlayers }} / {{ server.maxPlayers }}
-              </a>
-            </td>
-            <td>{{ server.mapName }}</td>
-            <td>{{ server.gameType }}</td>
-            <td>
-              <a href="#" @click.prevent="joinServer(server)" class="join-link">Join Server</a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Server Name</th>
+              <th>Players</th>
+              <th>Map</th>
+              <th>Game Type</th>
+              <th>Join</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="server in servers" :key="server.guid">
+              <td>
+                <a href="#" @click.prevent="openServerInfoModal(server)" class="server-name-link">
+                  {{ server.name }}
+                </a> 
+                <LineChart v-if="server.guid === '42b98b-61f0b93-183a06c-49be6b0' || server.guid === '7b3a63-12e36b3-6dac2c-8c0a76c' || server.guid === '42ba49-61f1d04-183a4bc-49bf3d2'" :server-name="server.name" />
+                ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
+              </td>
+              <td>
+                <a href="#" @click.prevent="openPlayerModal(server)">
+                  {{ server.numPlayers }} / {{ server.maxPlayers }}
+                </a>
+              </td>
+              <td>{{ server.mapName }}</td>
+              <td>{{ server.gameType }}</td>
+              <td>
+                <a href="#" @click.prevent="joinServer(server)" class="join-link">Join Server</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <!-- Transparent loading overlay for tab switching -->
+        <div v-if="tabSwitchLoading" class="table-loading-overlay">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading data...</div>
+        </div>
+      </div>
     </div>
 
     <!-- Player Modal -->
@@ -495,6 +532,10 @@ onUnmounted(() => {
   width: 100%;
   margin: 0 auto;
   padding: 0 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: auto;
 }
 
 .header {
@@ -590,6 +631,46 @@ th {
 
 .error {
   color: #f44336;
+}
+
+.server-info {
+  align-self: flex-start;
+  width: 100%;
+}
+
+.table-container {
+  position: relative;
+  width: 100%;
+}
+
+.table-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(33, 150, 243, 0.3);
+  border-radius: 50%;
+  border-top-color: #2196F3;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 15px;
+}
+
+.loading-text {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2196F3;
 }
 
 /* Modal styles */
@@ -704,6 +785,44 @@ th {
 .server-detail-item {
   margin-bottom: 10px;
   font-size: 16px;
+}
+
+/* Tabs container and tabs styles */
+.tabs-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.tab {
+  padding: 12px 24px;
+  background-color: #f0f0f0;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  background-color: #e0e0e0;
+}
+
+.tab.active {
+  background-color: #fff;
+  color: #2196F3;
+  border-bottom: 2px solid #2196F3;
+  position: relative;
+  z-index: 1;
 }
 
 /* Header right section */
