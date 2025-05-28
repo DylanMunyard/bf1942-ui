@@ -104,12 +104,12 @@ app.get('/api/prometheus/server_players_preview', async (req, res) => {
     // Calculate time range for last 8 hours
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setHours(endDate.getHours() - 8);
+    startDate.setHours(endDate.getHours() - 1);
 
     // Format dates for Prometheus
     const start = startDate.toISOString().split('.')[0] + 'Z';
     const end = endDate.toISOString().split('.')[0] + 'Z';
-    const step = '15m'; // 15-minute intervals for 8 hours of data
+    const step = '5m'; // 5-minute intervals
 
     // Build the query
     const query = `bf1942_server_players{server_name="${serverName}"}`;

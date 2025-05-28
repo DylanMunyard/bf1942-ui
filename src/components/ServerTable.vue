@@ -4,8 +4,10 @@ import axios from 'axios';
 import { ServerInfo, PlayerWithKdr } from '../types/server';
 import TimeDisplay from './TimeDisplay.vue';
 import LineChart from './LineChart.vue';
+import DetailedChartPopup from './DetailedChartPopup.vue';
 import { queryAI } from '../services/aiService';
 import { marked } from 'marked';
+import { fetchServerPlayerData } from '../services/prometheusService';
 
 // Function to format seconds to mm:ss
 const formatTime = (seconds: number): string => {
@@ -29,6 +31,12 @@ const previousServersData = ref<Record<string, ServerInfo>>({});
 const sortBy = ref<string>('score');
 const sortDirection = ref<'asc' | 'desc'>('desc');
 const serverMode = ref<'42' | 'FH2'>('42'); // Track which server list to display
+
+// Chart popup state
+const showChartModal = ref(false);
+const chartData = ref<{ timestamp: number; value: number; }[]>([]);
+const chartLoading = ref(false);
+const chartError = ref<string | null>(null);
 
 // AI Chat state
 const showAIChatModal = ref(false);
@@ -186,6 +194,39 @@ const closeServerInfoModal = () => {
   window.removeEventListener('keydown', handleServerInfoKeyDown);
 };
 
+// Function to open the chart popup
+const openChartModal = async (server: ServerInfo) => {
+  selectedServer.value = server;
+  showChartModal.value = true;
+  chartLoading.value = true;
+  chartError.value = null;
+
+  try {
+    // Fetch player count data for the server
+    chartData.value = await fetchServerPlayerData(server.name);
+  } catch (err) {
+    console.error('Error fetching chart data:', err);
+    chartError.value = 'Failed to fetch chart data';
+  } finally {
+    chartLoading.value = false;
+  }
+
+  window.addEventListener('keydown', handleChartKeyDown);
+};
+
+// Function to handle key events for the chart popup
+const handleChartKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    closeChartModal();
+  }
+};
+
+// Function to close the chart popup
+const closeChartModal = () => {
+  showChartModal.value = false;
+  window.removeEventListener('keydown', handleChartKeyDown);
+};
+
 const handleSort = (column: string) => {
   // If clicking the same column, toggle direction
   if (sortBy.value === column) {
@@ -339,7 +380,9 @@ onUnmounted(() => {
                 <a href="#" @click.prevent="openServerInfoModal(server)" class="server-name-link">
                   {{ server.name }}
                 </a> 
-                <LineChart v-if="server.guid === '42b98b-61f0b93-183a06c-49be6b0' || server.guid === '7b3a63-12e36b3-6dac2c-8c0a76c' || server.guid === '42ba49-61f1d04-183a4bc-49bf3d2'" :server-name="server.name" />
+                <a href="#" @click.prevent="openChartModal(server)" class="chart-link" title="View player count history">
+                  <span class="chart-icon">📈</span>
+                </a>
                 ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
               </td>
               <td>
@@ -538,6 +581,15 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- Player Count History Modal -->
+    <DetailedChartPopup 
+      v-if="showChartModal"
+      :server-name="selectedServer?.name || ''"
+      :chart-data="chartData"
+      :is-open="showChartModal"
+      @close="closeChartModal"
+    />
   </div>
 </template>
 
@@ -785,6 +837,24 @@ th {
 
 .server-name-link:hover {
   text-decoration: underline;
+}
+
+/* Chart link styles */
+.chart-link {
+  display: inline-block;
+  margin-left: 5px;
+  color: var(--color-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.chart-link:hover {
+  transform: scale(1.2);
+}
+
+.chart-icon {
+  font-size: 14px;
 }
 
 /* Server info modal styles */
