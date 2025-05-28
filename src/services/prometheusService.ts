@@ -8,37 +8,65 @@ interface PrometheusDataPoint {
   value: number;
 }
 
+// Common function to process Prometheus response
+function processPrometheusResponse(response: any): PrometheusDataPoint[] {
+  if (response.data.status === 'success' && response.data.data.result.length > 0) {
+    const result = response.data.data.result[0];
+
+    // Transform the data for the chart
+    return result.values.map((point: [number, string]) => ({
+      timestamp: point[0],
+      value: parseFloat(point[1])
+    }));
+  }
+
+  return [];
+}
+
 /**
  * Fetches player count data from Prometheus for a specific server
  * @param serverName The name of the server to fetch data for
- * @returns Array of data points with timestamp and value for the last 24 hours
+ * @returns Array of data points with timestamp and value for the last 7 days
  */
 export async function fetchServerPlayerData(
   serverName: string
 ): Promise<PrometheusDataPoint[]> {
   try {
     // Make the request to the secure backend API endpoint
-    // This endpoint hardcodes the time range to the last 24 hours
+    // This endpoint fetches data for the last 7 days
     const response = await axios.get(`${API_BASE_URL}/api/prometheus/server_players`, {
       params: {
         serverName
       }
     });
 
-    // Process the response
-    if (response.data.status === 'success' && response.data.data.result.length > 0) {
-      const result = response.data.data.result[0];
-
-      // Transform the data for the chart
-      return result.values.map((point: [number, string]) => ({
-        timestamp: point[0],
-        value: parseFloat(point[1])
-      }));
-    }
-
-    return [];
+    return processPrometheusResponse(response);
   } catch (err) {
     console.error('Error fetching Prometheus data:', err);
     throw new Error('Failed to fetch chart data');
+  }
+}
+
+/**
+ * Fetches player count preview data from Prometheus for a specific server
+ * @param serverName The name of the server to fetch data for
+ * @returns Array of data points with timestamp and value for the last 8 hours
+ */
+export async function fetchServerPlayerPreviewData(
+  serverName: string
+): Promise<PrometheusDataPoint[]> {
+  try {
+    // Make the request to the secure backend API endpoint
+    // This endpoint fetches data for the last 8 hours
+    const response = await axios.get(`${API_BASE_URL}/api/prometheus/server_players_preview`, {
+      params: {
+        serverName
+      }
+    });
+
+    return processPrometheusResponse(response);
+  } catch (err) {
+    console.error('Error fetching Prometheus preview data:', err);
+    throw new Error('Failed to fetch preview chart data');
   }
 }
