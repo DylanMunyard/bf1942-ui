@@ -5,6 +5,7 @@ import { ServerInfo, PlayerWithKdr } from '../types/server';
 import TimeDisplay from './TimeDisplay.vue';
 import LineChart from './LineChart.vue';
 import { queryAI } from '../services/aiService';
+import { marked } from 'marked';
 
 // Function to format seconds to mm:ss
 const formatTime = (seconds: number): string => {
@@ -220,6 +221,19 @@ onMounted(() => {
     fetchServerData();
   }, 15000);
 });
+
+// Function to render markdown as HTML
+const renderMarkdown = (text: string): string => {
+  // Configure marked to minimize whitespace
+  marked.setOptions({
+    gfm: true,
+    breaks: true,
+    sanitize: false
+  });
+
+  // Process the markdown and return HTML
+  return marked(text);
+};
 
 // AI Chat functions
 const openAIChatModal = () => {
@@ -496,7 +510,7 @@ onUnmounted(() => {
                   <strong>Question:</strong> {{ lastQuestion }}
                 </div>
                 <div class="ai-answer">
-                  <strong>Answer:</strong> {{ aiResponse }}
+                  <strong>Answer:</strong> <span v-html="renderMarkdown(aiResponse)"></span>
                 </div>
               </div>
               <div v-else class="ai-response-placeholder">
@@ -557,7 +571,7 @@ onUnmounted(() => {
 
 .update-button {
   padding: 8px 16px;
-  background-color: #4CAF50;
+  background-color: var(--color-accent);
   color: white;
   border: none;
   border-radius: 4px;
@@ -566,7 +580,7 @@ onUnmounted(() => {
 }
 
 .update-button:hover {
-  background-color: #45a049;
+  background-color: var(--color-accent-hover);
 }
 
 .spinner {
@@ -592,36 +606,36 @@ table {
 th, td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #ddd;
-  color: #333; /* Ensure text is dark enough for readability */
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
 }
 
 /* Add alternating row colors for better readability */
 tbody tr:nth-child(even) {
-  background-color: #f9f9f9;
+  background-color: var(--color-background-soft);
 }
 
 tbody tr:hover {
-  background-color: #f0f0f0;
+  background-color: var(--color-background-mute);
 }
 
 th {
-  background-color: #e0e0e0; /* Slightly darker for better contrast */
+  background-color: var(--color-background-mute);
   font-weight: bold;
-  color: #333; /* Ensure text is dark enough for readability */
+  color: var(--color-heading);
 }
 
 .join-link {
   display: inline-block;
   padding: 6px 12px;
-  background-color: #2196F3;
+  background-color: var(--color-primary);
   color: white;
   text-decoration: none;
   border-radius: 4px;
 }
 
 .join-link:hover {
-  background-color: #0b7dda;
+  background-color: var(--color-primary-hover);
 }
 
 .loading, .error {
@@ -630,7 +644,7 @@ th {
 }
 
 .error {
-  color: #f44336;
+  color: #ff5252; /* A red that works well in both light and dark modes */
 }
 
 .server-info {
@@ -649,7 +663,7 @@ th {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(var(--color-background-rgb, 255, 255, 255), 0.7);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -660,9 +674,9 @@ th {
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid rgba(33, 150, 243, 0.3);
+  border: 5px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
   border-radius: 50%;
-  border-top-color: #2196F3;
+  border-top-color: var(--color-primary);
   animation: spin 1s ease-in-out infinite;
   margin-bottom: 15px;
 }
@@ -670,7 +684,7 @@ th {
 .loading-text {
   font-size: 18px;
   font-weight: bold;
-  color: #2196F3;
+  color: var(--color-primary);
 }
 
 /* Modal styles */
@@ -680,7 +694,7 @@ th {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.3); /* Lighter overlay for better readability */
+  background-color: rgba(0, 0, 0, 0.5); /* Slightly darker for better contrast in both modes */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -688,14 +702,14 @@ th {
 }
 
 .modal-content {
-  background-color: white;
+  background-color: var(--color-background);
   border-radius: 8px;
   width: 90%;
   max-width: 1000px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for better visibility */
-  color: #333; /* Ensure text is dark enough for readability */
+  color: var(--color-text);
 }
 
 .modal-header {
@@ -703,7 +717,7 @@ th {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .close-button {
@@ -751,20 +765,20 @@ th {
 }
 
 .score-up {
-  color: #4CAF50;
+  color: var(--color-accent);
   margin-left: 5px;
   font-size: 12px;
 }
 
 .score-down {
-  color: #f44336;
+  color: #ff5252; /* A red that works well in both light and dark modes */
   margin-left: 5px;
   font-size: 12px;
 }
 
 /* Server name link styles */
 .server-name-link {
-  color: #2196F3;
+  color: var(--color-primary);
   text-decoration: none;
   cursor: pointer;
 }
@@ -793,7 +807,7 @@ th {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .tabs {
@@ -803,24 +817,24 @@ th {
 
 .tab {
   padding: 12px 24px;
-  background-color: #f0f0f0;
-  color: #333;
+  background-color: var(--color-background-soft);
+  color: var(--color-text);
   font-weight: bold;
   cursor: pointer;
   border-radius: 4px 4px 0 0;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-bottom: none;
   transition: all 0.2s ease;
 }
 
 .tab:hover {
-  background-color: #e0e0e0;
+  background-color: var(--color-background-mute);
 }
 
 .tab.active {
-  background-color: #fff;
-  color: #2196F3;
-  border-bottom: 2px solid #2196F3;
+  background-color: var(--color-background);
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
   position: relative;
   z-index: 1;
 }
@@ -835,10 +849,10 @@ th {
 /* Metrics Chat button styles */
 .ai-chat-button {
   padding: 8px 16px;
-  background-color: white;
-  color: #333;
+  background-color: var(--color-background);
+  color: var(--color-text);
   font-weight: bold;
-  border: 2px solid #2196F3;
+  border: 2px solid var(--color-primary);
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
@@ -847,6 +861,7 @@ th {
 .ai-chat-button:hover {
   transform: scale(1.05);
   transition: transform 0.2s;
+  background-color: var(--color-background-soft);
 }
 
 /* Metrics Chat modal styles */
@@ -861,7 +876,7 @@ th {
 }
 
 .ai-response-container {
-  background-color: #f9f9f9;
+  background-color: var(--color-background-soft);
   border-radius: 8px;
   padding: 15px;
   min-height: 150px;
@@ -870,22 +885,77 @@ th {
 }
 
 .ai-response {
-  white-space: pre-line;
   line-height: 1.5;
 }
 
 .ai-question {
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .ai-answer {
   margin-top: 5px;
 }
 
+/* Markdown styling */
+.ai-answer ul, .ai-answer ol {
+  padding-left: 20px;
+  margin: 5px 0;
+}
+
+.ai-answer li {
+  margin-bottom: 5px;
+}
+
+/* Reduce space between paragraphs and lists */
+.ai-answer p + ul, 
+.ai-answer p + ol {
+  margin-top: 0;
+}
+
+.ai-answer code {
+  background-color: var(--color-background-mute);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.ai-answer pre {
+  background-color: var(--color-background-mute);
+  padding: 10px;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.ai-answer blockquote {
+  border-left: 4px solid var(--color-border);
+  padding-left: 10px;
+  margin-left: 0;
+  color: var(--color-text-muted, var(--color-text));
+}
+
+.ai-answer h1, .ai-answer h2, .ai-answer h3, .ai-answer h4, .ai-answer h5, .ai-answer h6 {
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+.ai-answer p {
+  margin: 5px 0;
+}
+
+/* Ensure no extra space between elements */
+.ai-answer > *:first-child {
+  margin-top: 0;
+}
+
+.ai-answer > *:last-child {
+  margin-bottom: 0;
+}
+
 .ai-response-placeholder {
-  color: #888;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
@@ -897,14 +967,16 @@ th {
 .ai-input {
   flex: 1;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 16px;
+  background-color: var(--color-background);
+  color: var(--color-text);
 }
 
 .ai-submit-button {
   padding: 10px 20px;
-  background-color: #2196F3;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   border-radius: 4px;
@@ -913,11 +985,12 @@ th {
 }
 
 .ai-submit-button:hover:not(:disabled) {
-  background-color: #0b7dda;
+  background-color: var(--color-primary-hover);
 }
 
 .ai-submit-button:disabled {
-  background-color: #cccccc;
+  background-color: var(--color-background-mute);
+  color: var(--color-border);
   cursor: not-allowed;
 }
 </style>

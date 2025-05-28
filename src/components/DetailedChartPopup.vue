@@ -201,23 +201,25 @@ const chartOptions = {
           const label = tooltipItems[0].label;
           const hour = parseInt(label.split(':')[0]);
 
-          // Calculate times for different timezones
-          let franceHour = (hour + 2) % 24; // France is UTC+2
+          // The base time is AEST (UTC+10)
+          // Calculate times for different timezones relative to AEST
+          let franceHour = (hour - 8) % 24; // France is UTC+2, AEST is UTC+10, so -8 hours
+          if (franceHour < 0) franceHour += 24;
 
-          let usEastHour = hour - 4; // US East is UTC-4
+          let usEastHour = (hour - 14) % 24; // US East is UTC-4, AEST is UTC+10, so -14 hours
           if (usEastHour < 0) usEastHour += 24;
 
-          let usWestHour = hour - 7; // US West is UTC-7
+          let usWestHour = (hour - 17) % 24; // US West is UTC-7, AEST is UTC+10, so -17 hours
           if (usWestHour < 0) usWestHour += 24;
 
           // Format hours with leading zeros and add timezone information
-          const localTime = `${hour.toString().padStart(2, '0')}:00`;
+          const aestTime = `${hour.toString().padStart(2, '0')}:00`;
           const franceTime = `${franceHour.toString().padStart(2, '0')}:00`;
           const usEastTime = `${usEastHour.toString().padStart(2, '0')}:00`;
           const usWestTime = `${usWestHour.toString().padStart(2, '0')}:00`;
 
-          // Return timezone information in the format "<local> | <france> | <us east> | <us west>"
-          return `${localTime} | 🇫🇷 ${franceTime} | 🇺🇸E ${usEastTime} | 🇺🇸W ${usWestTime}`;
+          // Return timezone information in the format "<AEST> | <france> | <us east> | <us west>"
+          return `🇦🇺 ${aestTime} | 🇫🇷 ${franceTime} | 🇺🇸E ${usEastTime} | 🇺🇸W ${usWestTime}`;
         },
         label: (context) => {
           return `${context.dataset.label}: ${context.raw}`;
@@ -251,7 +253,7 @@ const chartOptions = {
           // Check if value is a string before attempting to split
           const hour = typeof value === 'string' ? parseInt(value.split(':')[0]) : index;
 
-          // Only show local time on x-axis
+          // Only show AEST time on x-axis
           return `${hour}:00`;
         },
         font: {
@@ -372,6 +374,7 @@ const getMinPlayers = () => {
           <Line :data="chartData" :options="chartOptions" />
           <div class="timezone-legend">
             <span><strong>Timezone Legend:</strong></span>
+            <span>🇦🇺 AEST (UTC+10)</span>
             <span>🇫🇷 France (UTC+2)</span>
             <span>🇺🇸E US East (UTC-4)</span>
             <span>🇺🇸W US West (UTC-7)</span>
@@ -410,7 +413,7 @@ const getMinPlayers = () => {
 }
 
 .detailed-chart-popup-content {
-  background-color: white;
+  background-color: var(--color-background);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   width: 80%;
@@ -419,6 +422,7 @@ const getMinPlayers = () => {
   overflow: auto;
   padding: 0;
   animation: popup-fade-in 0.3s ease-out;
+  color: var(--color-text);
 }
 
 @keyframes popup-fade-in {
@@ -437,13 +441,13 @@ const getMinPlayers = () => {
   justify-content: space-between;
   align-items: center;
   padding: 15px 20px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .detailed-chart-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: #333;
+  color: var(--color-heading);
 }
 
 .close-button {
@@ -451,12 +455,12 @@ const getMinPlayers = () => {
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: var(--color-text);
   transition: color 0.2s;
 }
 
 .close-button:hover {
-  color: #000;
+  color: var(--color-primary);
 }
 
 .detailed-chart-body {
@@ -478,8 +482,8 @@ const getMinPlayers = () => {
   justify-content: center;
   margin-top: 5px;
   font-size: 12px;
-  color: #666;
-  background-color: #f5f5f5;
+  color: var(--color-text-muted);
+  background-color: var(--color-background-soft);
   border-radius: 4px;
   padding: 8px;
 }
@@ -488,7 +492,7 @@ const getMinPlayers = () => {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  background-color: #f9f9f9;
+  background-color: var(--color-background-soft);
   padding: 15px;
   border-radius: 6px;
 }

@@ -10,10 +10,19 @@
 
   --vt-c-indigo: #2c3e50;
 
+  /* Dark mode colors - dark purple with deep blue vibe */
+  --vt-c-dark-purple: #1a1025;
+  --vt-c-dark-purple-soft: #231535;
+  --vt-c-dark-purple-mute: #2c1a40;
+  --vt-c-dark-blue: #0f1a2e;
+  --vt-c-dark-blue-soft: #162a45;
+  --vt-c-dark-accent: #6b46c1;
+  --vt-c-dark-accent-soft: #805ad5;
+
   --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
   --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+  --vt-c-divider-dark-1: rgba(134, 114, 184, 0.65);
+  --vt-c-divider-dark-2: rgba(134, 114, 184, 0.48);
 
   --vt-c-text-light-1: var(--vt-c-indigo);
   --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
@@ -26,17 +35,70 @@
   --color-background: var(--vt-c-white);
   --color-background-soft: var(--vt-c-white-soft);
   --color-background-mute: var(--vt-c-white-mute);
+  --color-background-rgb: 255, 255, 255;
 
   --color-border: var(--vt-c-divider-light-2);
   --color-border-hover: var(--vt-c-divider-light-1);
 
   --color-heading: var(--vt-c-text-light-1);
   --color-text: var(--vt-c-text-light-1);
+  --color-text-muted: var(--vt-c-text-light-2);
+
+  --color-primary: #2196F3;
+  --color-primary-hover: #0b7dda;
+  --color-primary-rgb: 33, 150, 243;
+  --color-accent: #4CAF50;
+  --color-accent-hover: #45a049;
+  --color-accent-rgb: 76, 175, 80;
 
   --section-gap: 160px;
 }
 
-/* Dark theme disabled for better readability */
+/* Dark mode theme */
+.dark-mode {
+  --color-background: var(--vt-c-dark-purple);
+  --color-background-soft: var(--vt-c-dark-purple-soft);
+  --color-background-mute: var(--vt-c-dark-purple-mute);
+  --color-background-rgb: 26, 16, 37;
+
+  --color-border: var(--vt-c-divider-dark-2);
+  --color-border-hover: var(--vt-c-divider-dark-1);
+
+  --color-heading: var(--vt-c-text-dark-1);
+  --color-text: var(--vt-c-text-dark-2);
+  --color-text-muted: rgba(235, 235, 235, 0.45);
+
+  --color-primary: var(--vt-c-dark-accent);
+  --color-primary-hover: var(--vt-c-dark-accent-soft);
+  --color-primary-rgb: 107, 70, 193;
+  --color-accent: #7e57c2;
+  --color-accent-hover: #9575cd;
+  --color-accent-rgb: 126, 87, 194;
+}
+
+/* System preference based dark mode */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light-mode) {
+    --color-background: var(--vt-c-dark-purple);
+    --color-background-soft: var(--vt-c-dark-purple-soft);
+    --color-background-mute: var(--vt-c-dark-purple-mute);
+    --color-background-rgb: 26, 16, 37;
+
+    --color-border: var(--vt-c-divider-dark-2);
+    --color-border-hover: var(--vt-c-divider-dark-1);
+
+    --color-heading: var(--vt-c-text-dark-1);
+    --color-text: var(--vt-c-text-dark-2);
+    --color-text-muted: rgba(235, 235, 235, 0.45);
+
+    --color-primary: var(--vt-c-dark-accent);
+    --color-primary-hover: var(--vt-c-dark-accent-soft);
+    --color-primary-rgb: 107, 70, 193;
+    --color-accent: #7e57c2;
+    --color-accent-hover: #9575cd;
+    --color-accent-rgb: 126, 87, 194;
+  }
+}
 
 *,
 *::before,
@@ -71,4 +133,14 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Additional dark mode styles */
+.dark-mode {
+  color-scheme: dark;
+}
+
+/* Transition for smooth theme switching */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
