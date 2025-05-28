@@ -377,12 +377,9 @@ onUnmounted(() => {
           <tbody>
             <tr v-for="server in servers" :key="server.guid">
               <td>
-                <a href="#" @click.prevent="openServerInfoModal(server)" class="server-name-link">
+                <a href="#" @click.prevent="openChartModal(server)" class="server-name-link">
                   {{ server.name }}
                 </a> 
-                <a href="#" @click.prevent="openChartModal(server)" class="chart-link" title="View player count history">
-                  <span class="chart-icon">📈</span>
-                </a>
                 ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
               </td>
               <td>
@@ -586,6 +583,7 @@ onUnmounted(() => {
     <DetailedChartPopup 
       v-if="showChartModal"
       :server-name="selectedServer?.name || ''"
+      :server-ip="selectedServer?.ip || ''"
       :chart-data="chartData"
       :is-open="showChartModal"
       @close="closeChartModal"

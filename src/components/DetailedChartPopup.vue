@@ -13,6 +13,7 @@ interface PrometheusDataPoint {
 
 interface Props {
   serverName: string;
+  serverIp?: string;
   chartData: PrometheusDataPoint[];
   isOpen: boolean;
 }
@@ -382,6 +383,7 @@ const getMinPlayers = () => {
         </div>
         <div class="chart-info">
           <p><strong>Server:</strong> {{ serverName }}</p>
+          <p v-if="serverIp"><strong>IP:</strong> {{ serverIp }}</p>
           <p><strong>Time Range:</strong> Last 7 days</p>
           <p v-if="chartData.datasets.length > 0">
             <strong>Current Players:</strong> {{ getCurrentPlayers() }}
