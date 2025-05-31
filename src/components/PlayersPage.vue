@@ -11,7 +11,6 @@ const error = ref<string | null>(null);
 const sortBy = ref<string>('lastSeen');
 const sortDirection = ref<'asc' | 'desc'>('desc');
 const servers = ref<any[]>([]);
-const activePlayerServers = ref<Map<string, string>>(new Map());
 
 // Player Stats Modal state
 const showPlayerStatsModal = ref(false);
@@ -249,8 +248,8 @@ onMounted(() => {
             <td>
               <div v-if="player.isActive" class="active-status">
                 <div class="server-info">
-                  {{ activePlayerServers.get(player.playerName) ? 
-                    `Currently active on ${activePlayerServers.get(player.playerName)}` : 
+                  {{ player.currentServer ? 
+                    `Currently active on ${player.currentServer.serverName}` : 
                     'Currently active' }}
                 </div>
               </div>
