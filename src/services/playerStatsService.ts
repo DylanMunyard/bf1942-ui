@@ -13,6 +13,7 @@ export interface ServerInfo {
   serverName: string;
   sessionKills?: number;
   sessionDeaths?: number;
+  mapName?: string;
 }
 
 export interface RecentServerActivity {
@@ -24,9 +25,21 @@ export interface RecentServerActivity {
   lastPlayed: string; // ISO date string
 }
 
+export interface Session {
+  startTime: string; // ISO date string
+  lastSeenTime: string; // ISO date string
+  isActive: boolean;
+  totalScore: number;
+  totalKills: number;
+  totalDeaths: number;
+  mapName: string;
+  gameType: string;
+  serverName: string;
+}
+
 export interface PlayerTimeStatistics {
   totalPlayTimeMinutes: number;
-  totalObservations: number;
+  totalSessions: number;
   firstPlayed: string; // ISO date string
   lastPlayed: string; // ISO date string
   highestScore: number;
@@ -34,7 +47,8 @@ export interface PlayerTimeStatistics {
   totalDeaths: number;
   isActive: boolean;
   currentServer: ServerInfo | null;
-  recentServers: RecentServerActivity[];
+  bestSession: Session | null;
+  recentSessions: Session[];
 }
 
 /**

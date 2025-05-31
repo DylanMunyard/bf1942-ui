@@ -167,9 +167,27 @@ onMounted(() => {
                   <div class="stat-value-secondary">{{ formatDate(playerStats.lastPlayed) }}</div>
                 </div>
               </div>
-              <div class="stat-item">
-                <div class="stat-label">Highest Score</div>
-                <div class="stat-value">{{ playerStats.highestScore }}</div>
+              <div class="stat-item" v-if="playerStats.bestSession">
+                <div class="stat-label">Best Session</div>
+                <div class="stat-value">
+                  <div>Score: {{ playerStats.bestSession.totalScore }}</div>
+                  <div class="stat-value-secondary">
+                    Server: {{ playerStats.bestSession.serverName }}
+                  </div>
+                  <div class="stat-value-secondary">
+                    {{ playerStats.bestSession.mapName }} ({{ playerStats.bestSession.gameType }})
+                  </div>
+                  <div class="stat-value-secondary">
+                    K/D: {{ playerStats.bestSession.totalKills }}/{{ playerStats.bestSession.totalDeaths }}
+                    ({{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }})
+                  </div>
+                  <div class="stat-value-secondary">
+                    {{ formatDate(playerStats.bestSession.startTime) }}
+                  </div>
+                  <div class="stat-value-secondary" v-if="playerStats.bestSession.isActive">
+                    <span class="active-session-badge">Active</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -193,31 +211,39 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Recent servers section -->
-          <div v-if="playerStats.recentServers.length > 0" class="stats-section">
-            <h3>Recent Servers</h3>
+          <!-- Recent sessions section -->
+          <div v-if="playerStats.recentSessions.length > 0" class="stats-section">
+            <h3>Recent Sessions</h3>
             <div class="recent-servers-table">
               <table>
                 <thead>
                   <tr>
                     <th>Server Name</th>
-                    <th>Play Time</th>
+                    <th>Map</th>
+                    <th>Game Type</th>
+                    <th>Score</th>
                     <th>Kills</th>
                     <th>Deaths</th>
                     <th>K/D</th>
-                    <th>Last Played</th>
+                    <th>Start Time</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(server, index) in playerStats.recentServers" :key="index">
-                    <td>{{ server.serverName }}</td>
-                    <td>{{ formatPlayTime(server.totalPlayTimeMinutes) }}</td>
-                    <td>{{ server.totalKills }}</td>
-                    <td>{{ server.totalDeaths }}</td>
-                    <td>{{ calculateKDR(server.totalKills, server.totalDeaths) }}</td>
+                  <tr v-for="(session, index) in playerStats.recentSessions" :key="index">
+                    <td>{{ session.serverName }}</td>
+                    <td>{{ session.mapName }}</td>
+                    <td>{{ session.gameType }}</td>
+                    <td>{{ session.totalScore }}</td>
+                    <td>{{ session.totalKills }}</td>
+                    <td>{{ session.totalDeaths }}</td>
+                    <td>{{ calculateKDR(session.totalKills, session.totalDeaths) }}</td>
                     <td>
-                      <div>{{ formatRelativeTime(server.lastPlayed) }}</div>
-                      <div class="table-secondary-text">{{ formatDate(server.lastPlayed) }}</div>
+                      <div>{{ formatRelativeTime(session.startTime) }}</div>
+                      <div class="table-secondary-text">{{ formatDate(session.startTime) }}</div>
+                    </td>
+                    <td>
+                      <span v-if="session.isActive" class="active-session-badge">Active</span>
                     </td>
                   </tr>
                 </tbody>
@@ -425,6 +451,17 @@ onMounted(() => {
 .table-secondary-text {
   font-size: 0.8rem;
   color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.active-session-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: white;
+  background-color: #4CAF50;
   margin-top: 2px;
 }
 
