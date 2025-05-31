@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { fetchServerPlayerPreviewData } from '../services/prometheusService';
+import { fetchServerPlayerData } from '../services/prometheusService';
 
 interface Props {
   serverName: string;
@@ -19,8 +19,8 @@ const fetchTrendData = async () => {
   error.value = null;
 
   try {
-    // Fetch player count data for the last 30 minutes (at 5m steps)
-    const data = await fetchServerPlayerPreviewData(props.serverName);
+    // Fetch player count data for the last 7 days
+    const data = await fetchServerPlayerData(props.serverName);
 
     // Filter data to only include the last 30 minutes
     const now = Math.floor(Date.now() / 1000);

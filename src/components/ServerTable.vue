@@ -5,9 +5,11 @@ import { ServerInfo, PlayerWithKdr } from '../types/server';
 import TimeDisplay from './TimeDisplay.vue';
 import LineChart from './LineChart.vue';
 import DetailedChartPopup from './DetailedChartPopup.vue';
+import PlayerStatsModal from './PlayerStatsModal.vue';
 import { queryAI } from '../services/aiService';
 import { marked } from 'marked';
 import { fetchServerPlayerData } from '../services/prometheusService';
+import { fetchPlayerStats, PlayerTimeStatistics } from '../services/playerStatsService';
 
 // Function to format seconds to mm:ss
 const formatTime = (seconds: number): string => {
@@ -44,6 +46,13 @@ const aiQuestion = ref('');
 const aiResponse = ref('');
 const aiLoading = ref(false);
 const lastQuestion = ref('');
+
+// Player Stats Modal state
+const showPlayerStatsModal = ref(false);
+const selectedPlayerName = ref('');
+const playerStats = ref<PlayerTimeStatistics | null>(null);
+const playerStatsLoading = ref(false);
+const playerStatsError = ref<string | null>(null);
 
 const fetchServerData = async () => {
   // If servers are already loaded, use updating state instead of loading
@@ -225,6 +234,41 @@ const handleChartKeyDown = (event: KeyboardEvent) => {
 const closeChartModal = () => {
   showChartModal.value = false;
   window.removeEventListener('keydown', handleChartKeyDown);
+};
+
+// Function to open the player stats modal
+const openPlayerStatsModal = async (playerName: string) => {
+  selectedPlayerName.value = playerName;
+  showPlayerStatsModal.value = true;
+  playerStatsLoading.value = true;
+  playerStatsError.value = null;
+  playerStats.value = null;
+
+  try {
+    // Fetch player statistics from the API
+    const stats = await fetchPlayerStats(playerName);
+    playerStats.value = stats;
+  } catch (err) {
+    console.error('Error fetching player stats:', err);
+    playerStatsError.value = 'Failed to fetch player statistics';
+  } finally {
+    playerStatsLoading.value = false;
+  }
+
+  window.addEventListener('keydown', handlePlayerStatsKeyDown);
+};
+
+// Function to handle key events for the player stats modal
+const handlePlayerStatsKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    closePlayerStatsModal();
+  }
+};
+
+// Function to close the player stats modal
+const closePlayerStatsModal = () => {
+  showPlayerStatsModal.value = false;
+  window.removeEventListener('keydown', handlePlayerStatsKeyDown);
 };
 
 const handleSort = (column: string) => {
@@ -447,7 +491,9 @@ onUnmounted(() => {
                 <tbody>
                   <tr v-for="player in selectedTeamPlayers.team1" :key="player.name">
                     <td>
-                      {{ player.name }}
+                      <a href="#" @click.prevent="openPlayerStatsModal(player.name)" class="player-name-link">
+                        {{ player.name }}
+                      </a>
                       <span v-if="player.scoreChanged === 'up'" class="score-up">▲</span>
                       <span v-else-if="player.scoreChanged === 'down'" class="score-down">▼</span>
                     </td>
@@ -495,7 +541,9 @@ onUnmounted(() => {
                 <tbody>
                   <tr v-for="player in selectedTeamPlayers.team2" :key="player.name">
                     <td>
-                      {{ player.name }}
+                      <a href="#" @click.prevent="openPlayerStatsModal(player.name)" class="player-name-link">
+                        {{ player.name }}
+                      </a>
                       <span v-if="player.scoreChanged === 'up'" class="score-up">▲</span>
                       <span v-else-if="player.scoreChanged === 'down'" class="score-down">▼</span>
                     </td>
@@ -587,6 +635,18 @@ onUnmounted(() => {
       :chart-data="chartData"
       :is-open="showChartModal"
       @close="closeChartModal"
+    />
+
+    <!-- Player Stats Modal -->
+    <PlayerStatsModal
+      v-if="showPlayerStatsModal"
+      :player-name="selectedPlayerName"
+      :player-stats="playerStats"
+      :is-open="showPlayerStatsModal"
+      :is-loading="playerStatsLoading"
+      :error="playerStatsError"
+      :servers="servers"
+      @close="closePlayerStatsModal"
     />
   </div>
 </template>
@@ -834,6 +894,17 @@ th {
 }
 
 .server-name-link:hover {
+  text-decoration: underline;
+}
+
+/* Player name link styles */
+.player-name-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.player-name-link:hover {
   text-decoration: underline;
 }
 

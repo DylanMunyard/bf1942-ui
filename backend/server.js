@@ -51,68 +51,7 @@ app.get('/api/prometheus/server_players', async (req, res) => {
     const step = '2h'; // 2-hour intervals for 7 days of data
 
     // Build the query
-    const query = `bf1942_server_players{server_name="${serverName}"}`;
-
-    // Forward the request to Prometheus with hardcoded time parameters
-    const response = await axios.get(`${PROMETHEUS_URL}/query_range`, {
-      params: {
-        query,
-        start,
-        end,
-        step
-      }
-    });
-
-    // Return the Prometheus response
-    res.status(200).json(response.data);
-  } catch (error) {
-    console.error('Error proxying request to Prometheus:', error);
-
-    // Return appropriate error response
-    if (error.response) {
-      // Prometheus returned an error
-      res.status(error.response.status).json({
-        status: 'error',
-        message: error.response.data.error || 'Error from Prometheus',
-        data: error.response.data
-      });
-    } else {
-      // Network error or other issue
-      res.status(500).json({
-        status: 'error',
-        message: 'Failed to connect to Prometheus',
-        error: error.message
-      });
-    }
-  }
-});
-
-// Secure Prometheus endpoint for server player data preview (last 8 hours)
-app.get('/api/prometheus/server_players_preview', async (req, res) => {
-  try {
-    // Extract server name from query parameters
-    const { serverName } = req.query;
-
-    // Validate required parameters
-    if (!serverName) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Missing required parameter: serverName'
-      });
-    }
-
-    // Calculate time range for last 8 hours
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setHours(endDate.getHours() - 1);
-
-    // Format dates for Prometheus
-    const start = startDate.toISOString().split('.')[0] + 'Z';
-    const end = endDate.toISOString().split('.')[0] + 'Z';
-    const step = '5m'; // 5-minute intervals
-
-    // Build the query
-    const query = `bf1942_server_players{server_name="${serverName}"}`;
+    const query = `sum without (pod, instance) (bf1942_server_players{server_name="${serverName}"})`;
 
     // Forward the request to Prometheus with hardcoded time parameters
     const response = await axios.get(`${PROMETHEUS_URL}/query_range`, {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import DetailedChartPopup from './DetailedChartPopup.vue';
-import { fetchServerPlayerData, fetchServerPlayerPreviewData } from '../services/prometheusService';
+import { fetchServerPlayerData } from '../services/prometheusService';
 
 interface PrometheusDataPoint {
   timestamp: number;
@@ -37,20 +37,10 @@ const fetchPrometheusData = async () => {
   error.value = null;
 
   try {
-    // Use the prometheusService to fetch preview data for the small chart
-    chartData.value = await fetchServerPlayerPreviewData(props.serverName);
-
-    // Also fetch the full data for the detailed popup
-    // We'll do this in the background after showing the preview
-    fetchServerPlayerData(props.serverName)
-      .then(data => {
-        fullChartData.value = data;
-      })
-      .catch(err => {
-        console.error('Error fetching full Prometheus data:', err);
-        // If we can't get full data, use preview data as fallback
-        fullChartData.value = chartData.value;
-      });
+    // Use the prometheusService to fetch data for the chart
+    const data = await fetchServerPlayerData(props.serverName);
+    chartData.value = data;
+    fullChartData.value = data;
   } catch (err) {
     console.error('Error fetching Prometheus data:', err);
     error.value = 'Failed to fetch chart data';

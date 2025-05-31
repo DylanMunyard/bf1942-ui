@@ -26,6 +26,11 @@ export default defineConfig({
       '/ai': {
         target: 'http://localhost:5126',
         changeOrigin: true
+      },
+      // Proxy player stats requests to the backend during development
+      '/stats': {
+        target: 'http://localhost:9222',
+        changeOrigin: true
       }
     }
   }

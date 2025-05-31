@@ -47,26 +47,3 @@ export async function fetchServerPlayerData(
   }
 }
 
-/**
- * Fetches player count preview data from Prometheus for a specific server
- * @param serverName The name of the server to fetch data for
- * @returns Array of data points with timestamp and value for the last 8 hours
- */
-export async function fetchServerPlayerPreviewData(
-  serverName: string
-): Promise<PrometheusDataPoint[]> {
-  try {
-    // Make the request to the secure backend API endpoint
-    // This endpoint fetches data for the last 8 hours
-    const response = await axios.get(`${API_BASE_URL}/api/prometheus/server_players_preview`, {
-      params: {
-        serverName
-      }
-    });
-
-    return processPrometheusResponse(response);
-  } catch (err) {
-    console.error('Error fetching Prometheus preview data:', err);
-    throw new Error('Failed to fetch preview chart data');
-  }
-}
