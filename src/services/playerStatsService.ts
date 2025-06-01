@@ -35,6 +35,7 @@ export interface Session {
   mapName: string;
   gameType: string;
   serverName: string;
+  sessionId: number;
 }
 
 export interface PlayerTimeStatistics {
@@ -83,5 +84,70 @@ export async function fetchPlayersList(): Promise<PlayerListItem[]> {
   } catch (err) {
     console.error('Error fetching players list:', err);
     throw new Error('Failed to get players list');
+  }
+}
+
+export interface SessionObservation {
+  deaths: number;
+  kills: number;
+  ping: number;
+  score: number;
+  teamLabel: string;
+  timestamp: string; // ISO date string
+}
+
+export interface PlayerDetails {
+  firstSeen: string; // ISO date string
+  isAiBot: boolean;
+  lastSeen: string; // ISO date string
+  name: string;
+  totalPlayTimeMinutes: number;
+}
+
+export interface ServerDetails {
+  address: string;
+  country: string;
+  countryCode: string;
+  gameId: string;
+  guid: string;
+  maxPlayers: number;
+  name: string;
+  port: number;
+}
+
+export interface SessionDetails {
+  endTime: string | null; // ISO date string or null if session is active
+  gameType: string;
+  isActive: boolean;
+  mapName: string;
+  observations: SessionObservation[];
+  playerDetails: PlayerDetails;
+  playerName: string;
+  serverDetails: ServerDetails;
+  serverName: string;
+  sessionId: number;
+  startTime: string; // ISO date string
+  totalDeaths: number;
+  totalKills: number;
+  totalPlayTimeMinutes: number;
+  totalScore: number;
+}
+
+/**
+ * Fetches session details for a specific player and session
+ * @param playerName The name of the player
+ * @param sessionId The ID of the session
+ * @returns Session details
+ */
+export async function fetchSessionDetails(playerName: string, sessionId: number): Promise<SessionDetails> {
+  try {
+    // Make the request to the API endpoint
+    const response = await axios.get<SessionDetails>(`/stats/players/${encodeURIComponent(playerName)}/sessions/${sessionId}`);
+
+    // Return the response data
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching session details:', err);
+    throw new Error('Failed to get session details');
   }
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { PlayerTimeStatistics } from '../services/playerStatsService';
+import SessionDetailsModal from './SessionDetailsModal.vue';
 
 interface Props {
   playerName: string;
@@ -13,6 +14,21 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['close']);
+
+// Session details modal state
+const showSessionDetailsModal = ref(false);
+const selectedSessionId = ref<number | null>(null);
+
+// Function to open the session details modal
+const openSessionDetailsModal = (sessionId: number) => {
+  selectedSessionId.value = sessionId;
+  showSessionDetailsModal.value = true;
+};
+
+// Function to close the session details modal
+const closeSessionDetailsModal = () => {
+  showSessionDetailsModal.value = false;
+};
 
 // Format minutes to hours and minutes
 const formatPlayTime = (minutes: number): string => {
@@ -32,16 +48,44 @@ const formatPlayTime = (minutes: number): string => {
 const formatDate = (dateString: string): string => {
   // Ensure the date is treated as UTC by appending 'Z' if it doesn't have timezone info
   const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  // Use toLocaleString with options to ensure proper locale conversion
-  return date.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  const now = new Date();
+
+  // Format time without seconds
+  const timeFormat = date.toLocaleTimeString(undefined, {
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'short'
-  });
+    hour12: true
+  }).toLowerCase();
+
+  // Calculate the difference in days
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffTime = today.getTime() - dateDay.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  // Get day name
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayName = dayNames[date.getDay()];
+
+  // Format date based on how recent it is
+  if (diffDays === 0) {
+    // Today
+    return `Today at ${timeFormat}`;
+  } else if (diffDays === 1) {
+    // Yesterday
+    return `Yesterday at ${timeFormat}`;
+  } else if (diffDays < 7) {
+    // Within the last week
+    return `${dayName} at ${timeFormat}`;
+  } else {
+    // More than a week ago
+    const formattedDate = date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+    return `${formattedDate} at ${timeFormat} (${diffDays} days ago)`;
+  }
 };
 
 // Format date to a human-readable relative time (e.g., "2 days ago")
@@ -230,7 +274,9 @@ onMounted(() => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(session, index) in playerStats.recentSessions" :key="index">
+                  <tr v-for="(session, index) in playerStats.recentSessions" :key="index" 
+                      @click="openSessionDetailsModal(session.sessionId)" 
+                      class="clickable-row">
                     <td>{{ session.serverName }}</td>
                     <td>{{ session.mapName }}</td>
                     <td>{{ session.gameType }}</td>
@@ -257,6 +303,15 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <!-- Session Details Modal -->
+  <SessionDetailsModal
+    v-if="showSessionDetailsModal && selectedSessionId !== null && playerStats"
+    :player-name="playerName"
+    :session-id="selectedSessionId"
+    :is-open="showSessionDetailsModal"
+    @close="closeSessionDetailsModal"
+  />
 </template>
 
 <style scoped>
@@ -488,6 +543,15 @@ th {
 }
 
 tbody tr:hover {
+  background-color: var(--color-background-mute);
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clickable-row:hover {
   background-color: var(--color-background-mute);
 }
 
