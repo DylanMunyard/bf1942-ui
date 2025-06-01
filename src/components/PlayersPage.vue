@@ -1,8 +1,23 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { fetchPlayersList, PlayerListItem, fetchPlayerStats } from '../services/playerStatsService';
 import PlayerStatsModal from './PlayerStatsModal.vue';
 import axios from 'axios';
+
+// Router
+const router = useRouter();
+const route = useRoute();
+
+// Props from router
+interface Props {
+  selectedPlayerName?: string;
+  selectedSessionId?: number;
+  showPlayerModal?: boolean;
+  showSessionModal?: boolean;
+}
+
+const props = defineProps<Props>();
 
 // State variables
 const players = ref<PlayerListItem[]>([]);
@@ -218,10 +233,8 @@ const handleSort = (column: string) => {
   filterAndSortPlayers();
 };
 
-// Function to open the player stats modal
-const openPlayerStatsModal = async (playerName: string) => {
-  selectedPlayerName.value = playerName;
-  showPlayerStatsModal.value = true;
+// Function to fetch player stats data
+const fetchPlayerStatsData = async (playerName: string) => {
   playerStatsLoading.value = true;
   playerStatsError.value = null;
   playerStats.value = null;
@@ -236,8 +249,12 @@ const openPlayerStatsModal = async (playerName: string) => {
   } finally {
     playerStatsLoading.value = false;
   }
+};
 
-  window.addEventListener('keydown', handlePlayerStatsKeyDown);
+// Function to open the player stats modal
+const openPlayerStatsModal = (playerName: string) => {
+  // Navigate to the player details page
+  router.push(`/players/${encodeURIComponent(playerName)}`);
 };
 
 // Function to handle key events for the player stats modal
@@ -251,6 +268,11 @@ const handlePlayerStatsKeyDown = (event: KeyboardEvent) => {
 const closePlayerStatsModal = () => {
   showPlayerStatsModal.value = false;
   window.removeEventListener('keydown', handlePlayerStatsKeyDown);
+
+  // If we're on the player details page, navigate back to the players page
+  if (route.name === 'player-details' || route.name === 'session-details') {
+    router.push('/players');
+  }
 };
 
 // Handle name filter change
@@ -289,6 +311,22 @@ const resetFilters = () => {
 watch([nameFilter, gameIdFilter, serverNameFilter], () => {
   filterAndSortPlayers();
 });
+
+// Watch for route props changes
+watch(() => props.selectedPlayerName, (newPlayerName) => {
+  if (newPlayerName && props.showPlayerModal) {
+    selectedPlayerName.value = newPlayerName;
+    showPlayerStatsModal.value = true;
+    fetchPlayerStatsData(newPlayerName);
+  }
+}, { immediate: true });
+
+// Watch for session ID changes
+watch(() => props.selectedSessionId, (newSessionId) => {
+  if (newSessionId && props.showSessionModal) {
+    // This will be handled by the PlayerStatsModal component
+  }
+}, { immediate: true });
 
 // Fetch data when component is mounted
 onMounted(() => {
@@ -437,6 +475,8 @@ onMounted(() => {
       :is-loading="playerStatsLoading"
       :error="playerStatsError"
       :servers="servers"
+      :selected-session-id="props.selectedSessionId"
+      :show-session-modal="props.showSessionModal"
       @close="closePlayerStatsModal"
     />
   </div>

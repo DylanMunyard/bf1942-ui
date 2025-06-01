@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import { ServerInfo, PlayerWithKdr } from '../types/server';
 import TimeDisplay from './TimeDisplay.vue';
@@ -10,6 +11,19 @@ import { queryAI } from '../services/aiService';
 import { marked } from 'marked';
 import { fetchServerPlayerData } from '../services/prometheusService';
 import { fetchPlayerStats, PlayerTimeStatistics } from '../services/playerStatsService';
+
+// Router
+const router = useRouter();
+const route = useRoute();
+
+// Props from router
+interface Props {
+  initialMode?: 'FH2' | '42';
+  selectedServerName?: string;
+  showServerModal?: boolean;
+}
+
+const props = defineProps<Props>();
 
 // Function to format seconds to mm:ss
 const formatTime = (seconds: number): string => {
@@ -32,7 +46,7 @@ const refreshTimer = ref<number | null>(null);
 const previousServersData = ref<Record<string, ServerInfo>>({});
 const sortBy = ref<string>('score');
 const sortDirection = ref<'asc' | 'desc'>('desc');
-const serverMode = ref<'42' | 'FH2'>('42'); // Track which server list to display
+const serverMode = ref<'42' | 'FH2'>(props.initialMode || '42'); // Track which server list to display
 
 // Chart popup state
 const showChartModal = ref(false);
@@ -97,6 +111,16 @@ const fetchServerData = async () => {
 };
 
 const openPlayerModal = (server: ServerInfo) => {
+  // If we're already on the server details page, just update the state
+  // Otherwise, navigate to the server details page
+  if (route.name === 'server-details' && route.params.serverName === server.name) {
+    processServerPlayers(server);
+  } else {
+    router.push(`/servers/${encodeURIComponent(server.name)}`);
+  }
+};
+
+const processServerPlayers = (server: ServerInfo) => {
   selectedServer.value = server;
 
   // Group players by team and calculate KDR
@@ -184,6 +208,11 @@ const handleKeyDown = (event: KeyboardEvent) => {
 const closePlayerModal = () => {
   showPlayerModal.value = false;
   window.removeEventListener('keydown', handleKeyDown);
+
+  // If we're on the server details page, navigate back to the servers page
+  if (route.name === 'server-details') {
+    router.push('/');
+  }
 };
 
 const openServerInfoModal = (server: ServerInfo) => {
@@ -238,24 +267,8 @@ const closeChartModal = () => {
 
 // Function to open the player stats modal
 const openPlayerStatsModal = async (playerName: string) => {
-  selectedPlayerName.value = playerName;
-  showPlayerStatsModal.value = true;
-  playerStatsLoading.value = true;
-  playerStatsError.value = null;
-  playerStats.value = null;
-
-  try {
-    // Fetch player statistics from the API
-    const stats = await fetchPlayerStats(playerName);
-    playerStats.value = stats;
-  } catch (err) {
-    console.error('Error fetching player stats:', err);
-    playerStatsError.value = 'Failed to fetch player statistics';
-  } finally {
-    playerStatsLoading.value = false;
-  }
-
-  window.addEventListener('keydown', handlePlayerStatsKeyDown);
+  // Navigate to the player details page
+  router.push(`/players/${encodeURIComponent(playerName)}`);
 };
 
 // Function to handle key events for the player stats modal
@@ -297,6 +310,33 @@ const joinServer = (server: ServerInfo) => {
     window.focus();
   }
 };
+
+// Watch for route props changes
+watch(() => [props.selectedServerName, props.showServerModal], ([newServerName, newShowServerModal]) => {
+  if (newServerName && servers.value.length > 0 && newShowServerModal) {
+    const server = servers.value.find(s => s.name === newServerName);
+    if (server) {
+      processServerPlayers(server);
+    }
+  }
+}, { immediate: true });
+
+// Watch for servers changes to handle the case when servers are loaded after component is mounted
+watch(() => servers.value, (newServers) => {
+  if (props.selectedServerName && props.showServerModal && newServers.length > 0) {
+    const server = newServers.find(s => s.name === props.selectedServerName);
+    if (server) {
+      processServerPlayers(server);
+    }
+  }
+});
+
+// Watch for route changes to close the modal when navigating back
+watch(() => route.name, (newRouteName) => {
+  if (showPlayerModal.value && newRouteName !== 'server-details') {
+    showPlayerModal.value = false;
+  }
+});
 
 onMounted(() => {
   fetchServerData();

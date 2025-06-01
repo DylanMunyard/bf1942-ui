@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics } from '../services/playerStatsService';
 import SessionDetailsModal from './SessionDetailsModal.vue';
+
+// Router
+const router = useRouter();
+const route = useRoute();
 
 interface Props {
   playerName: string;
@@ -10,6 +15,8 @@ interface Props {
   isLoading: boolean;
   error: string | null;
   servers?: any[]; // Add servers prop to get player count
+  selectedSessionId?: number | null;
+  showSessionModal?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -21,13 +28,18 @@ const selectedSessionId = ref<number | null>(null);
 
 // Function to open the session details modal
 const openSessionDetailsModal = (sessionId: number) => {
-  selectedSessionId.value = sessionId;
-  showSessionDetailsModal.value = true;
+  // Navigate to the session details page
+  router.push(`/players/${encodeURIComponent(props.playerName)}/sessions/${sessionId}`);
 };
 
 // Function to close the session details modal
 const closeSessionDetailsModal = () => {
   showSessionDetailsModal.value = false;
+
+  // Navigate back to the player details page
+  if (route.name === 'session-details') {
+    router.push(`/players/${encodeURIComponent(props.playerName)}`);
+  }
 };
 
 // Format minutes to hours and minutes
@@ -152,6 +164,25 @@ watch(() => props.isOpen, (newValue) => {
   } else {
     document.removeEventListener('mousedown', handleOutsideClick);
     document.removeEventListener('keydown', handleKeyDown);
+  }
+});
+
+// Watch for changes to selectedSessionId and showSessionModal props
+watch(() => [props.selectedSessionId, props.showSessionModal], ([newSessionId, newShowSessionModal]) => {
+  if (newSessionId && newShowSessionModal) {
+    selectedSessionId.value = newSessionId;
+    showSessionDetailsModal.value = true;
+  }
+}, { immediate: true });
+
+// Watch for route changes to close the modal when navigating back
+watch(() => route.name, (newRouteName) => {
+  if (props.isOpen && newRouteName !== 'player-details' && newRouteName !== 'session-details') {
+    emit('close');
+  }
+
+  if (showSessionDetailsModal.value && newRouteName !== 'session-details') {
+    showSessionDetailsModal.value = false;
   }
 });
 

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import ServerTable from './components/ServerTable.vue'
-import PlayersPage from './components/PlayersPage.vue'
+import { useRouter, useRoute } from 'vue-router';
 
-// Active page state
-const activePage = ref<'servers' | 'players'>('servers');
+const router = useRouter();
+const route = useRoute();
 
 // Dark mode state
 const isDarkMode = ref(false);
@@ -68,24 +67,23 @@ watch(isDarkMode, () => {
     </div>
 
     <div class="main-navigation">
-      <button 
-        @click="activePage = 'servers'" 
+      <router-link 
+        to="/" 
         class="nav-button" 
-        :class="{ active: activePage === 'servers' }"
+        :class="{ active: route.path === '/' || route.path.startsWith('/servers') || route.path.startsWith('/games') }"
       >
         Servers
-      </button>
-      <button 
-        @click="activePage = 'players'" 
+      </router-link>
+      <router-link 
+        to="/players" 
         class="nav-button" 
-        :class="{ active: activePage === 'players' }"
+        :class="{ active: route.path.startsWith('/players') }"
       >
         Players
-      </button>
+      </router-link>
     </div>
 
-    <ServerTable v-if="activePage === 'servers'" />
-    <PlayersPage v-else-if="activePage === 'players'" />
+    <router-view />
   </div>
 </template>
 

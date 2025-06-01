@@ -17,7 +17,7 @@ spec:
       nodeSelector:
         kubernetes.io/arch: arm64
       containers:
-        - name: nginx
+        - name: stats
           image: localhost:30500/bf42-servers:latest
           imagePullPolicy: Always
           ports:

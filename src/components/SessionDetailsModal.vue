@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { fetchSessionDetails, SessionDetails } from '../services/playerStatsService';
+
+// Router
+const router = useRouter();
+const route = useRoute();
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -324,6 +329,13 @@ watch(() => props.isOpen, (newValue) => {
   } else {
     document.removeEventListener('mousedown', handleOutsideClick);
     document.removeEventListener('keydown', handleKeyDown);
+  }
+});
+
+// Watch for route changes to close the modal when navigating back
+watch(() => route.name, (newRouteName) => {
+  if (props.isOpen && newRouteName !== 'session-details') {
+    emit('close');
   }
 });
 
