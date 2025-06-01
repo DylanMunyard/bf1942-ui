@@ -189,6 +189,9 @@ onMounted(() => {
               <span v-if="getServerPlayerCount(playerStats.currentServer.serverGuid)" class="player-count">
                 ({{ getServerPlayerCount(playerStats.currentServer.serverGuid) }} players online)
               </span>
+              <span v-if="playerStats.currentServer.gameId" class="game-id">
+                Game: {{ playerStats.currentServer.gameId }}
+              </span>
             </div>
             <div v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined" class="session-stats">
               Session: {{ playerStats.currentServer.sessionKills }} kills / {{ playerStats.currentServer.sessionDeaths }} deaths

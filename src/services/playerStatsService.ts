@@ -14,15 +14,7 @@ export interface ServerInfo {
   sessionKills?: number;
   sessionDeaths?: number;
   mapName?: string;
-}
-
-export interface RecentServerActivity {
-  serverGuid: string;
-  serverName: string;
-  totalPlayTimeMinutes: number;
-  totalKills: number;
-  totalDeaths: number;
-  lastPlayed: string; // ISO date string
+  gameId?: string;
 }
 
 export interface Session {

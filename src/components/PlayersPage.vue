@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { fetchPlayersList, PlayerListItem, fetchPlayerStats } from '../services/playerStatsService';
 import PlayerStatsModal from './PlayerStatsModal.vue';
 import axios from 'axios';
 
 // State variables
 const players = ref<PlayerListItem[]>([]);
+const filteredPlayers = ref<PlayerListItem[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const sortBy = ref<string>('lastSeen');
 const sortDirection = ref<'asc' | 'desc'>('desc');
 const servers = ref<any[]>([]);
+
+// Filter variables
+const nameFilter = ref('');
+const gameIdFilter = ref('');
+const serverNameFilter = ref('');
+const uniqueGameIds = ref<string[]>([]);
+const uniqueServerNames = ref<string[]>([]);
 
 // Player Stats Modal state
 const showPlayerStatsModal = ref(false);
@@ -97,6 +105,9 @@ const fetchPlayersData = async () => {
     // Fetch the players list
     players.value = await fetchPlayersList();
 
+    // Initialize filteredPlayers with all players
+    filteredPlayers.value = [...players.value];
+
     // Fetch server data if not already loaded
     if (servers.value.length === 0) {
       await fetchServersData();
@@ -104,7 +115,7 @@ const fetchPlayersData = async () => {
 
     // Mark active players in the list without fetching detailed stats
     // We'll fetch detailed stats only when a player is clicked
-    sortPlayers();
+    filterAndSortPlayers();
   } catch (err) {
     console.error('Error fetching players data:', err);
     error.value = 'Failed to fetch players data. Please try again.';
@@ -113,9 +124,69 @@ const fetchPlayersData = async () => {
   }
 };
 
+// Filter and sort players based on the current filter and sort settings
+const filterAndSortPlayers = () => {
+  // First, update the list of unique game IDs and server names
+  updateUniqueGameIds();
+  updateUniqueServerNames();
+
+  // Filter players based on name, gameId, and server name filters
+  filteredPlayers.value = players.value.filter(player => {
+    // Filter by player name
+    const nameMatch = player.playerName.toLowerCase().includes(nameFilter.value.toLowerCase());
+
+    // Filter by game ID
+    let gameIdMatch = true;
+    if (gameIdFilter.value && player.currentServer && player.currentServer.gameId) {
+      gameIdMatch = player.currentServer.gameId === gameIdFilter.value;
+    } else if (gameIdFilter.value) {
+      gameIdMatch = false;
+    }
+
+    // Filter by server name
+    let serverNameMatch = true;
+    if (serverNameFilter.value && player.currentServer && player.currentServer.serverName) {
+      serverNameMatch = player.currentServer.serverName === serverNameFilter.value;
+    } else if (serverNameFilter.value) {
+      serverNameMatch = false;
+    }
+
+    return nameMatch && gameIdMatch && serverNameMatch;
+  });
+
+  // Sort the filtered players
+  sortPlayers();
+};
+
+// Update the list of unique game IDs from the players
+const updateUniqueGameIds = () => {
+  const gameIds = new Set<string>();
+
+  players.value.forEach(player => {
+    if (player.currentServer && player.currentServer.gameId) {
+      gameIds.add(player.currentServer.gameId);
+    }
+  });
+
+  uniqueGameIds.value = Array.from(gameIds).sort();
+};
+
+// Update the list of unique server names from the players
+const updateUniqueServerNames = () => {
+  const serverNames = new Set<string>();
+
+  players.value.forEach(player => {
+    if (player.currentServer && player.currentServer.serverName) {
+      serverNames.add(player.currentServer.serverName);
+    }
+  });
+
+  uniqueServerNames.value = Array.from(serverNames).sort();
+};
+
 // Sort players based on the current sort settings
 const sortPlayers = () => {
-  players.value.sort((a, b) => {
+  filteredPlayers.value.sort((a, b) => {
     let comparison = 0;
 
     if (sortBy.value === 'playerName') {
@@ -143,8 +214,8 @@ const handleSort = (column: string) => {
     sortDirection.value = 'desc';
   }
 
-  // Re-sort the players
-  sortPlayers();
+  // Re-filter and sort the players
+  filterAndSortPlayers();
 };
 
 // Function to open the player stats modal
@@ -182,6 +253,43 @@ const closePlayerStatsModal = () => {
   window.removeEventListener('keydown', handlePlayerStatsKeyDown);
 };
 
+// Handle name filter change
+const handleNameFilterChange = (event: Event) => {
+  nameFilter.value = (event.target as HTMLInputElement).value;
+  filterAndSortPlayers();
+};
+
+// Handle game ID filter change
+const handleGameIdFilterChange = (event: Event) => {
+  gameIdFilter.value = (event.target as HTMLSelectElement).value;
+  filterAndSortPlayers();
+};
+
+// Handle server name filter change
+const handleServerNameFilterChange = (event: Event) => {
+  serverNameFilter.value = (event.target as HTMLSelectElement).value;
+  filterAndSortPlayers();
+};
+
+// Clear name filter
+const clearNameFilter = () => {
+  nameFilter.value = '';
+  filterAndSortPlayers();
+};
+
+// Reset all filters
+const resetFilters = () => {
+  nameFilter.value = '';
+  gameIdFilter.value = '';
+  serverNameFilter.value = '';
+  filterAndSortPlayers();
+};
+
+// Watch for filter changes
+watch([nameFilter, gameIdFilter, serverNameFilter], () => {
+  filterAndSortPlayers();
+});
+
 // Fetch data when component is mounted
 onMounted(() => {
   // Fetch servers data first, then fetch players data
@@ -201,9 +309,66 @@ onMounted(() => {
       </button>
     </div>
 
+    <!-- Filter controls -->
+    <div class="filter-container">
+      <div class="filter-group">
+        <label for="nameFilter">Filter by Name:</label>
+        <div class="input-with-clear">
+          <input 
+            type="text" 
+            id="nameFilter" 
+            v-model="nameFilter" 
+            @input="handleNameFilterChange" 
+            placeholder="Enter player name"
+            class="filter-input"
+          />
+          <span 
+            v-if="nameFilter" 
+            class="clear-input" 
+            @click="clearNameFilter"
+            title="Clear filter"
+          >×</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="gameIdFilter">Currently Playing:</label>
+        <select 
+          id="gameIdFilter" 
+          v-model="gameIdFilter" 
+          @change="handleGameIdFilterChange"
+          class="filter-select"
+        >
+          <option value="">All Games</option>
+          <option v-for="gameId in uniqueGameIds" :key="gameId" :value="gameId">
+            {{ gameId }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="serverNameFilter">Currently Playing On:</label>
+        <select 
+          id="serverNameFilter" 
+          v-model="serverNameFilter" 
+          @change="handleServerNameFilterChange"
+          class="filter-select"
+        >
+          <option value="">All Servers</option>
+          <option v-for="serverName in uniqueServerNames" :key="serverName" :value="serverName">
+            {{ serverName }}
+          </option>
+        </select>
+      </div>
+
+      <button @click="resetFilters" class="reset-filters-button">
+        Reset Filters
+      </button>
+    </div>
+
     <div v-if="loading && players.length === 0" class="loading">Loading players data...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="players.length > 0" class="players-table-container">
+    <div v-else-if="filteredPlayers.length > 0" class="players-table-container">
       <table>
         <thead>
           <tr>
@@ -234,7 +399,7 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="player in players" :key="player.playerName">
+          <tr v-for="player in filteredPlayers" :key="player.playerName">
             <td>
               <a href="#" @click.prevent="openPlayerStatsModal(player.playerName)" class="player-name-link">
                 {{ player.playerName }}
@@ -257,6 +422,9 @@ onMounted(() => {
           </tr>
         </tbody>
       </table>
+    </div>
+    <div v-else-if="players.length > 0 && filteredPlayers.length === 0" class="no-data">
+      No players match the current filters. <a href="#" @click.prevent="resetFilters">Reset filters</a>
     </div>
     <div v-else class="no-data">No players found.</div>
 
@@ -308,6 +476,90 @@ onMounted(() => {
 
 .refresh-button:hover {
   background-color: var(--color-accent-hover);
+}
+
+.filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.filter-group label {
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.filter-input, .filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: var(--color-background-soft);
+  color: var(--color-text);
+}
+
+.filter-input:focus, .filter-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.input-with-clear {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.clear-input {
+  position: absolute;
+  right: 10px;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.clear-input:hover {
+  color: #666;
+  background-color: #f0f0f0;
+}
+
+.reset-filters-button {
+  padding: 8px 16px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  height: 36px;
+  align-self: flex-end;
+}
+
+.reset-filters-button:hover {
+  background-color: #5a6268;
+}
+
+.game-id {
+  margin-left: 10px;
+  padding: 2px 6px;
+  background-color: var(--color-accent);
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
 }
 
 .spinner {
