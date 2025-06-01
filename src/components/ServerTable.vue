@@ -21,6 +21,7 @@ interface Props {
   initialMode?: 'FH2' | '42';
   selectedServerName?: string;
   showServerModal?: boolean;
+  showChartModal?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -111,12 +112,12 @@ const fetchServerData = async () => {
 };
 
 const openPlayerModal = (server: ServerInfo) => {
-  // If we're already on the server details page, just update the state
-  // Otherwise, navigate to the server details page
-  if (route.name === 'server-details' && route.params.serverName === server.name) {
+  // If we're already on the server players page, just update the state
+  // Otherwise, navigate to the server players page
+  if (route.name === 'server-players' && route.params.serverName === server.name) {
     processServerPlayers(server);
   } else {
-    router.push(`/servers/${encodeURIComponent(server.name)}`);
+    router.push(`/servers/${encodeURIComponent(server.name)}/players`);
   }
 };
 
@@ -209,8 +210,8 @@ const closePlayerModal = () => {
   showPlayerModal.value = false;
   window.removeEventListener('keydown', handleKeyDown);
 
-  // If we're on the server details page, navigate back to the servers page
-  if (route.name === 'server-details') {
+  // If we're on the server players page, navigate back to the servers page
+  if (route.name === 'server-players') {
     router.push('/');
   }
 };
@@ -234,6 +235,17 @@ const closeServerInfoModal = () => {
 
 // Function to open the chart popup
 const openChartModal = async (server: ServerInfo) => {
+  // If we're already on the server details page, just update the state
+  // Otherwise, navigate to the server details page
+  if (route.name === 'server-details' && route.params.serverName === server.name) {
+    await loadChartData(server);
+  } else {
+    router.push(`/servers/${encodeURIComponent(server.name)}`);
+  }
+};
+
+// Function to load chart data
+const loadChartData = async (server: ServerInfo) => {
   selectedServer.value = server;
   showChartModal.value = true;
   chartLoading.value = true;
@@ -241,7 +253,8 @@ const openChartModal = async (server: ServerInfo) => {
 
   try {
     // Fetch player count data for the server
-    chartData.value = await fetchServerPlayerData(server.name);
+    const gameParam = serverMode.value === '42' ? 'bf1942' : 'fh2';
+    chartData.value = await fetchServerPlayerData(server.name, gameParam);
   } catch (err) {
     console.error('Error fetching chart data:', err);
     chartError.value = 'Failed to fetch chart data';
@@ -263,6 +276,11 @@ const handleChartKeyDown = (event: KeyboardEvent) => {
 const closeChartModal = () => {
   showChartModal.value = false;
   window.removeEventListener('keydown', handleChartKeyDown);
+
+  // If we're on the server details page, navigate back to the servers page
+  if (route.name === 'server-details') {
+    router.push('/');
+  }
 };
 
 // Function to open the player stats modal
@@ -312,29 +330,40 @@ const joinServer = (server: ServerInfo) => {
 };
 
 // Watch for route props changes
-watch(() => [props.selectedServerName, props.showServerModal], ([newServerName, newShowServerModal]) => {
-  if (newServerName && servers.value.length > 0 && newShowServerModal) {
+watch(() => [props.selectedServerName, props.showServerModal, props.showChartModal], ([newServerName, newShowServerModal, newShowChartModal]) => {
+  if (newServerName && servers.value.length > 0) {
     const server = servers.value.find(s => s.name === newServerName);
     if (server) {
-      processServerPlayers(server);
+      if (newShowServerModal) {
+        processServerPlayers(server);
+      } else if (newShowChartModal) {
+        loadChartData(server);
+      }
     }
   }
 }, { immediate: true });
 
 // Watch for servers changes to handle the case when servers are loaded after component is mounted
 watch(() => servers.value, (newServers) => {
-  if (props.selectedServerName && props.showServerModal && newServers.length > 0) {
+  if (props.selectedServerName && newServers.length > 0) {
     const server = newServers.find(s => s.name === props.selectedServerName);
     if (server) {
-      processServerPlayers(server);
+      if (props.showServerModal) {
+        processServerPlayers(server);
+      } else if (props.showChartModal) {
+        loadChartData(server);
+      }
     }
   }
 });
 
-// Watch for route changes to close the modal when navigating back
+// Watch for route changes to close the modals when navigating back
 watch(() => route.name, (newRouteName) => {
-  if (showPlayerModal.value && newRouteName !== 'server-details') {
+  if (showPlayerModal.value && newRouteName !== 'server-players') {
     showPlayerModal.value = false;
+  }
+  if (showChartModal.value && newRouteName !== 'server-details') {
+    showChartModal.value = false;
   }
 });
 

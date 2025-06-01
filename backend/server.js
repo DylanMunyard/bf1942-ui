@@ -30,13 +30,13 @@ app.get('/health', (req, res) => {
 app.get('/api/prometheus/server_players', async (req, res) => {
   try {
     // Extract server name from query parameters
-    const { serverName } = req.query;
+    const { serverName, game } = req.query;
 
     // Validate required parameters
-    if (!serverName) {
+    if (!serverName || !game) {
       return res.status(400).json({
         status: 'error',
-        message: 'Missing required parameter: serverName'
+        message: 'Missing required parameter(s): serverName, game'
       });
     }
 
@@ -51,7 +51,8 @@ app.get('/api/prometheus/server_players', async (req, res) => {
     const step = '2h'; // 2-hour intervals for 7 days of data
 
     // Build the query
-    const query = `sum without (pod, instance) (bf1942_server_players{server_name="${serverName}"})`;
+    const metric = game === 'bf1942' ? 'bf1942_server_players' : 'fh2_server_players';
+    const query = `sum without (pod, instance) (${metric}{server_name="${serverName}"})`;
 
     // Forward the request to Prometheus with hardcoded time parameters
     const response = await axios.get(`${PROMETHEUS_URL}/query_range`, {

@@ -26,17 +26,20 @@ function processPrometheusResponse(response: any): PrometheusDataPoint[] {
 /**
  * Fetches player count data from Prometheus for a specific server
  * @param serverName The name of the server to fetch data for
+ * @param game The game type ('bf1942' or 'fh2')
  * @returns Array of data points with timestamp and value for the last 7 days
  */
 export async function fetchServerPlayerData(
-  serverName: string
+  serverName: string,
+  game: string
 ): Promise<PrometheusDataPoint[]> {
   try {
     // Make the request to the secure backend API endpoint
     // This endpoint fetches data for the last 7 days
     const response = await axios.get(`${API_BASE_URL}/api/prometheus/server_players`, {
       params: {
-        serverName
+        serverName,
+        game
       }
     });
 
@@ -46,4 +49,3 @@ export async function fetchServerPlayerData(
     throw new Error('Failed to fetch chart data');
   }
 }
-
