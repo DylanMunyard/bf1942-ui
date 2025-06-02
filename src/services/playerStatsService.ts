@@ -30,6 +30,40 @@ export interface Session {
   sessionId: number;
 }
 
+export interface ActivityByHour {
+  formattedHour: string;
+  hour: number;
+  minutesActive: number;
+}
+
+export interface BestKillMap {
+  kdRatio: number;
+  mapName: string;
+  totalDeaths: number;
+  totalKills: number;
+}
+
+export interface FavoriteMap {
+  mapName: string;
+  minutesPlayed: number;
+}
+
+export interface ServerPlayTime {
+  minutesPlayed: number;
+  serverGuid: string;
+  serverName: string;
+}
+
+export interface PlayerInsights {
+  activityByHour: ActivityByHour[];
+  bestKillMap: BestKillMap;
+  endPeriod: string; // ISO date string
+  favoriteMaps: FavoriteMap[];
+  playerName: string;
+  serverPlayTimes: ServerPlayTime[];
+  startPeriod: string; // ISO date string
+}
+
 export interface PlayerTimeStatistics {
   totalPlayTimeMinutes: number;
   totalSessions: number;
@@ -42,6 +76,7 @@ export interface PlayerTimeStatistics {
   currentServer: ServerInfo | null;
   bestSession: Session | null;
   recentSessions: Session[];
+  insights?: PlayerInsights;
 }
 
 /**

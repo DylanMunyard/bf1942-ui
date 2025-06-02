@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { PlayerTimeStatistics } from '../services/playerStatsService';
+import { PlayerTimeStatistics, ServerPlayTime, ActivityByHour } from '../services/playerStatsService';
 import SessionDetailsModal from './SessionDetailsModal.vue';
 
 // Router
@@ -186,6 +186,61 @@ watch(() => route.name, (newRouteName) => {
   }
 });
 
+// Computed property to sort server play times by minutes played (descending)
+const sortedServerPlayTimes = computed(() => {
+  if (!props.playerStats?.insights?.serverPlayTimes) return [];
+  return [...props.playerStats.insights.serverPlayTimes].sort((a, b) => b.minutesPlayed - a.minutesPlayed);
+});
+
+// Computed property to sort activity hours chronologically by UTC hour
+const sortedActivityHours = computed(() => {
+  if (!props.playerStats?.insights?.activityByHour) return [];
+  return [...props.playerStats.insights.activityByHour].sort((a, b) => a.hour - b.hour);
+});
+
+// Computed property to sort activity hours chronologically by local hour (0-23)
+const sortedLocalActivityHours = computed(() => {
+  if (!props.playerStats?.insights?.activityByHour) return [];
+
+  // Create a new array with local hour information
+  const hoursWithLocalTime = props.playerStats.insights.activityByHour.map(hourData => ({
+    ...hourData,
+    localHour: convertToLocalHour(hourData.hour)
+  }));
+
+  // Sort by local hour (0-23)
+  return [...hoursWithLocalTime].sort((a, b) => a.localHour - b.localHour);
+});
+
+// Function to convert UTC hour to local hour
+const convertToLocalHour = (utcHour: number): number => {
+  const now = new Date();
+  const localDate = new Date(now.setUTCHours(utcHour, 0, 0, 0));
+  return localDate.getHours();
+};
+
+// Function to format hour range in local time
+const formatLocalHourRange = (utcHour: number): string => {
+  const localHour = convertToLocalHour(utcHour);
+  const startHour = localHour.toString().padStart(2, '0');
+  const endHour = ((localHour + 1) % 24).toString().padStart(2, '0');
+  return `${startHour}:00 - ${endHour}:59`;
+};
+
+// Function to calculate the height of each bar in the activity chart
+const getActivityBarHeight = (minutesActive: number): string => {
+  if (!props.playerStats?.insights?.activityByHour) return "0%";
+
+  // Find the maximum minutes active
+  const maxMinutes = Math.max(...props.playerStats.insights.activityByHour.map(hour => hour.minutesActive));
+
+  if (maxMinutes === 0) return "0%";
+
+  // Calculate the percentage height (minimum 5% for visibility if there's any activity)
+  const percentage = (minutesActive / maxMinutes) * 100;
+  return minutesActive > 0 ? `${Math.max(5, percentage)}%` : "0%";
+};
+
 // Clean up event listeners when component is unmounted
 onMounted(() => {
   if (props.isOpen) {
@@ -245,46 +300,117 @@ onMounted(() => {
                   <div class="stat-value-secondary">{{ formatDate(playerStats.lastPlayed) }}</div>
                 </div>
               </div>
-              <div class="stat-item" v-if="playerStats.bestSession">
-                <div class="stat-label">Best Session</div>
+              <div class="stat-item">
+                <div class="stat-label">Combat Stats</div>
                 <div class="stat-value">
-                  <div>Score: {{ playerStats.bestSession.totalScore }}</div>
-                  <div class="stat-value-secondary">
-                    Server: {{ playerStats.bestSession.serverName }}
+                  <div class="combat-stats">
+                    <span class="stat-badge">Kills: {{ playerStats.totalKills }}</span>
+                    <span class="stat-badge">Deaths: {{ playerStats.totalDeaths }}</span>
+                    <span class="stat-badge">KDR: {{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
                   </div>
-                  <div class="stat-value-secondary">
+                </div>
+              </div>
+              <div class="stat-item best-session-container" v-if="playerStats.bestSession">
+                <div class="stat-label">
+                  <span class="trophy-icon">🏆</span> Best Session
+                </div>
+                <div class="best-session-card">
+                  <div class="best-session-header">
+                    <div class="best-session-score">{{ playerStats.bestSession.totalScore }}</div>
+                    <span class="best-session-badge">
+                      KDR: {{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }}
+                    </span>
+                    <span class="best-session-badge">
+                      K: {{ playerStats.bestSession.totalKills }}
+                    </span>
+                    <span class="best-session-badge">
+                      D: {{ playerStats.bestSession.totalDeaths }}
+                    </span>
+                    <span v-if="playerStats.bestSession.isActive" class="active-session-badge">Active</span>
+                  </div>
+                  <div class="best-session-details">
                     {{ playerStats.bestSession.mapName }} ({{ playerStats.bestSession.gameType }})
-                  </div>
-                  <div class="stat-value-secondary">
-                    K/D: {{ playerStats.bestSession.totalKills }}/{{ playerStats.bestSession.totalDeaths }}
-                    ({{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }})
-                  </div>
-                  <div class="stat-value-secondary">
-                    {{ formatDate(playerStats.bestSession.startTime) }}
-                  </div>
-                  <div class="stat-value-secondary" v-if="playerStats.bestSession.isActive">
-                    <span class="active-session-badge">Active</span>
+                    | {{ playerStats.bestSession.serverName }}
+                    | {{ formatDate(playerStats.bestSession.startTime) }}
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Combat statistics section -->
-          <div class="stats-section">
-            <h3>Combat Statistics</h3>
-            <div class="stats-grid">
-              <div class="stat-item">
-                <div class="stat-label">Total Kills</div>
-                <div class="stat-value">{{ playerStats.totalKills }}</div>
+          <!-- Insights section -->
+          <div v-if="playerStats.insights" class="stats-section">
+            <h3>Player Insights</h3>
+            <div class="insights-period">
+              Data from {{ formatDate(playerStats.insights.startPeriod) }} to {{ formatDate(playerStats.insights.endPeriod) }}
+            </div>
+
+            <!-- Favorite Servers -->
+            <div v-if="playerStats.insights.serverPlayTimes && playerStats.insights.serverPlayTimes.length > 0" class="insights-subsection">
+              <h4>Favorite Servers</h4>
+              <div class="insights-cards">
+                <div v-for="(server, index) in sortedServerPlayTimes" :key="index" class="insights-card">
+                  <div class="insights-card-title">{{ server.serverName }}</div>
+                  <div class="insights-card-value">{{ formatPlayTime(server.minutesPlayed) }}</div>
+                </div>
               </div>
-              <div class="stat-item">
-                <div class="stat-label">Total Deaths</div>
-                <div class="stat-value">{{ playerStats.totalDeaths }}</div>
+            </div>
+
+            <!-- Deadliest Map -->
+            <div v-if="playerStats.insights.bestKillMap" class="insights-subsection">
+              <h4>Deadliest Map</h4>
+              <div class="insights-card best-kill-map">
+                <div class="insights-card-title">{{ playerStats.insights.bestKillMap.mapName }}</div>
+                <div class="insights-card-stats">
+                  <div class="insights-card-stat">
+                    <span class="stat-label">K/D Ratio:</span>
+                    <span class="stat-value">{{ playerStats.insights.bestKillMap.kdRatio.toFixed(2) }}</span>
+                  </div>
+                  <div class="insights-card-stat">
+                    <span class="stat-label">Kills:</span>
+                    <span class="stat-value">{{ playerStats.insights.bestKillMap.totalKills }}</span>
+                  </div>
+                  <div class="insights-card-stat">
+                    <span class="stat-label">Deaths:</span>
+                    <span class="stat-value">{{ playerStats.insights.bestKillMap.totalDeaths }}</span>
+                  </div>
+                </div>
               </div>
-              <div class="stat-item">
-                <div class="stat-label">K/D Ratio</div>
-                <div class="stat-value">{{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</div>
+            </div>
+
+            <!-- Favorite Maps -->
+            <div v-if="playerStats.insights.favoriteMaps && playerStats.insights.favoriteMaps.length > 0" class="insights-subsection">
+              <h4>Favorite Maps</h4>
+              <div class="insights-cards">
+                <div v-for="(map, index) in playerStats.insights.favoriteMaps" :key="index" class="insights-card">
+                  <div class="insights-card-title">{{ map.mapName }}</div>
+                  <div class="insights-card-value">{{ formatPlayTime(map.minutesPlayed) }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Activity By Hour -->
+            <div v-if="playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0" class="insights-subsection">
+              <h4>Activity By Hour (Local Time)</h4>
+              <div class="activity-hours-container">
+                <div class="activity-hours-summary">
+                  When they're typically online
+                </div>
+                <div class="activity-hours-chart">
+                  <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
+                       class="activity-hour-bar" 
+                       :style="{ height: getActivityBarHeight(hourData.minutesActive) }">
+                    <div class="activity-hour-value" v-if="hourData.minutesActive > 0">
+                      {{ hourData.minutesActive }}m
+                    </div>
+                  </div>
+                </div>
+                <div class="activity-hours-labels">
+                  <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
+                       class="activity-hour-label">
+                    {{ hourData.localHour.toString().padStart(2, '0') }}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -531,6 +657,78 @@ onMounted(() => {
   margin-top: 3px;
 }
 
+.combat-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.stat-badge {
+  display: inline-block;
+  background-color: var(--color-background-soft);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--color-text);
+  transition: background-color 0.2s;
+}
+
+.stat-badge:hover {
+  background-color: var(--color-background-mute);
+}
+
+/* Best Session Styles */
+.best-session-container {
+  grid-column: 1 / -1; /* Make it span all columns */
+}
+
+.trophy-icon {
+  font-size: 1.2rem;
+  margin-right: 5px;
+  color: gold;
+}
+
+.best-session-card {
+  background-color: var(--color-background);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-border);
+  margin-top: 5px;
+}
+
+.best-session-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.best-session-score {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-heading);
+  margin-right: 8px;
+}
+
+.best-session-badge {
+  background-color: var(--color-background-soft);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+.best-session-details {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
 .player-count {
   font-size: 0.9rem;
   margin-left: 5px;
@@ -589,6 +787,138 @@ tbody tr:hover {
   background-color: var(--color-background-mute);
 }
 
+/* Insights Styles */
+.insights-period {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin-bottom: 15px;
+}
+
+.insights-subsection {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--color-border);
+}
+
+.insights-subsection h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  color: var(--color-heading);
+}
+
+.insights-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.insights-card {
+  background-color: var(--color-background);
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  flex: 1;
+  max-width: calc(33.333% - 8px);
+}
+
+.insights-card-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: var(--color-heading);
+  font-size: 0.95rem;
+}
+
+.insights-card-value {
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.best-kill-map {
+  max-width: 100%;
+  background-color: var(--color-background-soft);
+  border-left: 4px solid var(--color-accent);
+}
+
+.insights-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.insights-card-stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.insights-card-stat .stat-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.insights-card-stat .stat-value {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+.activity-hours-container {
+  margin-top: 10px;
+}
+
+.activity-hours-summary {
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.activity-hours-chart {
+  display: flex;
+  align-items: flex-end;
+  height: 150px;
+  gap: 2px;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.activity-hour-bar {
+  flex: 1;
+  background-color: var(--color-accent);
+  border-radius: 3px 3px 0 0;
+  min-height: 1px;
+  position: relative;
+  transition: height 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.activity-hour-value {
+  position: absolute;
+  top: -20px;
+  font-size: 0.75rem;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.activity-hours-labels {
+  display: flex;
+  gap: 2px;
+}
+
+.activity-hour-label {
+  flex: 1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  padding-top: 5px;
+}
+
 @media (max-width: 768px) {
   .player-stats-modal-content {
     width: 95%;
@@ -596,6 +926,18 @@ tbody tr:hover {
 
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .insights-card {
+    max-width: 100%;
+  }
+
+  .activity-hours-chart {
+    height: 120px;
+  }
+
+  .activity-hour-label {
+    font-size: 0.7rem;
   }
 }
 </style>
