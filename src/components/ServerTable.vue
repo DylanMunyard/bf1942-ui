@@ -5,11 +5,11 @@ import axios from 'axios';
 import { ServerInfo, PlayerWithKdr } from '../types/server';
 import TimeDisplay from './TimeDisplay.vue';
 import LineChart from './LineChart.vue';
-import DetailedChartPopup from './DetailedChartPopup.vue';
+import ServerDetailsModal from './ServerDetailsModal.vue';
 import PlayerStatsModal from './PlayerStatsModal.vue';
 import { queryAI } from '../services/aiService';
 import { marked } from 'marked';
-import { fetchServerPlayerData } from '../services/prometheusService';
+import { fetchServerDetails } from '../services/serverDetailsService';
 import { fetchPlayerStats, PlayerTimeStatistics } from '../services/playerStatsService';
 
 // Router
@@ -49,11 +49,8 @@ const sortBy = ref<string>('score');
 const sortDirection = ref<'asc' | 'desc'>('desc');
 const serverMode = ref<'42' | 'FH2'>(props.initialMode || '42'); // Track which server list to display
 
-// Chart popup state
+// Server details modal state
 const showChartModal = ref(false);
-const chartData = ref<{ timestamp: number; value: number; }[]>([]);
-const chartLoading = ref(false);
-const chartError = ref<string | null>(null);
 
 // AI Chat state
 const showAIChatModal = ref(false);
@@ -244,24 +241,13 @@ const openChartModal = async (server: ServerInfo) => {
   }
 };
 
-// Function to load chart data
+// Function to open server details modal
 const loadChartData = async (server: ServerInfo) => {
   selectedServer.value = server;
   showChartModal.value = true;
-  chartLoading.value = true;
-  chartError.value = null;
 
-  try {
-    // Fetch player count data for the server
-    const gameParam = serverMode.value === '42' ? 'bf1942' : 'fh2';
-    chartData.value = await fetchServerPlayerData(server.name, gameParam);
-  } catch (err) {
-    console.error('Error fetching chart data:', err);
-    chartError.value = 'Failed to fetch chart data';
-  } finally {
-    chartLoading.value = false;
-  }
-
+  // No need to fetch data here as the ServerDetailsModal will handle that
+  // Just set up the event listener for key presses
   window.addEventListener('keydown', handleChartKeyDown);
 };
 
@@ -696,12 +682,11 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Player Count History Modal -->
-    <DetailedChartPopup 
+    <!-- Server Details Modal -->
+    <ServerDetailsModal 
       v-if="showChartModal"
       :server-name="selectedServer?.name || ''"
-      :server-ip="selectedServer?.ip || ''"
-      :chart-data="chartData"
+      :game="serverMode === '42' ? 'bf1942' : 'fh2'"
       :is-open="showChartModal"
       @close="closeChartModal"
     />
