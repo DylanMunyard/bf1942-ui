@@ -202,6 +202,17 @@ const chartOptions = {
           const label = tooltipItems[0].label;
           const hour = parseInt(label.split(':')[0]);
 
+          // Create a date object for today with the specified hour (UTC)
+          const date = new Date();
+          date.setUTCHours(hour, 0, 0, 0);
+
+          // Format the time in user's local timezone
+          const localTime = new Intl.DateTimeFormat(navigator.language, {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZoneName: 'short'
+          }).format(date);
+
           // The base time is AEST (UTC+10)
           // Calculate times for different timezones relative to AEST
           let franceHour = (hour - 8) % 24; // France is UTC+2, AEST is UTC+10, so -8 hours
@@ -219,8 +230,8 @@ const chartOptions = {
           const usEastTime = `${usEastHour.toString().padStart(2, '0')}:00`;
           const usWestTime = `${usWestHour.toString().padStart(2, '0')}:00`;
 
-          // Return timezone information in the format "<AEST> | <france> | <us east> | <us west>"
-          return `🇦🇺 ${aestTime} | 🇫🇷 ${franceTime} | 🇺🇸E ${usEastTime} | 🇺🇸W ${usWestTime}`;
+          // Return timezone information including user's local time
+          return `🏠 ${localTime} | 🇦🇺 ${aestTime} | 🇫🇷 ${franceTime} | 🇺🇸E ${usEastTime} | 🇺🇸W ${usWestTime}`;
         },
         label: (context) => {
           return `${context.dataset.label}: ${context.raw}`;
@@ -243,7 +254,7 @@ const chartOptions = {
     x: {
       title: {
         display: true,
-        text: 'Time (Hours)'
+        text: 'Time (Local Hours)'
       },
       ticks: {
         display: true,
@@ -254,8 +265,15 @@ const chartOptions = {
           // Check if value is a string before attempting to split
           const hour = typeof value === 'string' ? parseInt(value.split(':')[0]) : index;
 
-          // Only show AEST time on x-axis
-          return `${hour}:00`;
+          // Create a date object for today with the specified hour (UTC)
+          const date = new Date();
+          date.setUTCHours(hour, 0, 0, 0);
+
+          // Format the time in user's local timezone (hours only)
+          return new Intl.DateTimeFormat(navigator.language, {
+            hour: '2-digit',
+            hour12: false
+          }).format(date);
         },
         font: {
           size: 9
@@ -375,6 +393,7 @@ const getMinPlayers = () => {
           <Line :data="chartData" :options="chartOptions" />
           <div class="timezone-legend">
             <span><strong>Timezone Legend:</strong></span>
+            <span>🏠 Local Time ({{ new Intl.DateTimeFormat().resolvedOptions().timeZone }})</span>
             <span>🇦🇺 AEST (UTC+10)</span>
             <span>🇫🇷 France (UTC+2)</span>
             <span>🇺🇸E US East (UTC-4)</span>
