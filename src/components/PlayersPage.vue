@@ -26,6 +26,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const sortBy = ref<string>('lastSeen');
 const sortDirection = ref<'asc' | 'desc'>('desc');
+const statusSortOption = ref<'isActive' | 'kills' | 'deaths' | 'kdr'>('isActive');
 const servers = ref<any[]>([]);
 
 // Filter variables
@@ -199,6 +200,35 @@ const updateUniqueServerNames = () => {
   uniqueServerNames.value = Array.from(serverNames).sort();
 };
 
+// Helper function to get KDR value
+const getKDR = (player: PlayerListItem): number => {
+  if (!player.currentServer || player.currentServer.sessionDeaths === undefined || player.currentServer.sessionKills === undefined) {
+    return -1; // Player not in server or no stats
+  }
+
+  return player.currentServer.sessionDeaths === 0 
+    ? player.currentServer.sessionKills // Avoid division by zero
+    : player.currentServer.sessionKills / player.currentServer.sessionDeaths;
+};
+
+// Helper function to get kills value
+const getKills = (player: PlayerListItem): number => {
+  if (!player.currentServer || player.currentServer.sessionKills === undefined) {
+    return -1; // Player not in server or no kills data
+  }
+
+  return player.currentServer.sessionKills;
+};
+
+// Helper function to get deaths value
+const getDeaths = (player: PlayerListItem): number => {
+  if (!player.currentServer || player.currentServer.sessionDeaths === undefined) {
+    return -1; // Player not in server or no deaths data
+  }
+
+  return player.currentServer.sessionDeaths;
+};
+
 // Sort players based on the current sort settings
 const sortPlayers = () => {
   filteredPlayers.value.sort((a, b) => {
@@ -211,7 +241,67 @@ const sortPlayers = () => {
     } else if (sortBy.value === 'lastSeen') {
       comparison = new Date(a.lastSeen).getTime() - new Date(b.lastSeen).getTime();
     } else if (sortBy.value === 'isActive') {
-      comparison = (a.isActive === b.isActive) ? 0 : a.isActive ? -1 : 1;
+      // First sort by active status
+      if (a.isActive !== b.isActive) {
+        return a.isActive ? -1 : 1;
+      }
+
+      // For active players, prioritize those with a current server
+      const aHasServer = a.currentServer !== undefined;
+      const bHasServer = b.currentServer !== undefined;
+
+      // If one player has a server and the other doesn't, the one with a server comes first
+      if (aHasServer !== bHasServer) {
+        return aHasServer ? -1 : 1;
+      }
+
+      // If both players have the same active status and both are active, apply additional sorting
+      if (a.isActive && b.isActive) {
+        if (statusSortOption.value === 'isActive') {
+          // Default sort by active status only
+          return 0;
+        } else if (statusSortOption.value === 'kdr') {
+          // Sort by KDR
+          const aKDR = getKDR(a);
+          const bKDR = getKDR(b);
+
+          // Handle cases where one or both players don't have KDR data
+          if (aKDR === -1 && bKDR === -1) return 0;
+          if (aKDR === -1) return 1; // b comes first
+          if (bKDR === -1) return -1; // a comes first
+
+          comparison = sortDirection.value === 'asc' ? aKDR - bKDR : bKDR - aKDR;
+          return comparison;
+        } else if (statusSortOption.value === 'kills') {
+          // Sort by kills
+          const aKills = getKills(a);
+          const bKills = getKills(b);
+
+          // Handle cases where one or both players don't have kills data
+          if (aKills === -1 && bKills === -1) return 0;
+          if (aKills === -1) return 1; // b comes first
+          if (bKills === -1) return -1; // a comes first
+
+          comparison = sortDirection.value === 'asc' ? aKills - bKills : bKills - aKills;
+          return comparison;
+        } else if (statusSortOption.value === 'deaths') {
+          // Sort by deaths
+          const aDeaths = getDeaths(a);
+          const bDeaths = getDeaths(b);
+
+          // Handle cases where one or both players don't have deaths data
+          if (aDeaths === -1 && bDeaths === -1) return 0;
+          if (aDeaths === -1) return 1; // b comes first
+          if (bDeaths === -1) return -1; // a comes first
+
+          comparison = sortDirection.value === 'asc' ? aDeaths - bDeaths : bDeaths - aDeaths;
+          return comparison;
+        }
+      }
+
+      // If we get here, players have the same active status but are not both active
+      // or they have the same server status, so return 0 (no preference)
+      return 0;
     }
 
     return sortDirection.value === 'desc' ? -comparison : comparison;
@@ -220,12 +310,38 @@ const sortPlayers = () => {
 
 // Handle sort column click
 const handleSort = (column: string) => {
-  // If clicking the same column, toggle direction
-  if (sortBy.value === column) {
+  // For columns other than Status
+  if (column !== 'isActive') {
+    // If clicking the same column, toggle direction
+    if (sortBy.value === column) {
+      sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+    } else {
+      // If clicking a new column, set it as the sort column and default to descending
+      sortBy.value = column;
+      sortDirection.value = 'desc';
+    }
+  } else {
+    // If clicking the Status column, set it as the sort column with default sort
+    sortBy.value = column;
+    statusSortOption.value = 'isActive';
+    sortDirection.value = 'desc';
+  }
+
+  // Re-filter and sort the players
+  filterAndSortPlayers();
+};
+
+// Handle sort by status metric (kills, deaths, kdr)
+const handleStatusSort = (metric: 'kills' | 'deaths' | 'kdr') => {
+  // Set Status as the sort column
+  sortBy.value = 'isActive';
+
+  // If already sorting by this metric, toggle direction
+  if (statusSortOption.value === metric) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
   } else {
-    // If clicking a new column, set it as the sort column and default to descending
-    sortBy.value = column;
+    // If switching to a new metric, set it as the sort option and default to descending
+    statusSortOption.value = metric;
     sortDirection.value = 'desc';
   }
 
@@ -428,11 +544,36 @@ onMounted(() => {
                 {{ sortDirection === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
-            <th @click="handleSort('isActive')" class="sortable">
-              Status
-              <span v-if="sortBy === 'isActive'" class="sort-indicator">
-                {{ sortDirection === 'asc' ? '▲' : '▼' }}
-              </span>
+            <th class="sortable status-column">
+              <div @click="handleSort('isActive')">
+                Status
+                <span v-if="sortBy === 'isActive' && statusSortOption === 'isActive'" class="sort-indicator">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+              <div class="sort-badges">
+                <span 
+                  @click.stop="handleStatusSort('kills')" 
+                  class="sort-badge" 
+                  :class="{ active: sortBy === 'isActive' && statusSortOption === 'kills' }"
+                >
+                  Kills {{ sortBy === 'isActive' && statusSortOption === 'kills' ? (sortDirection === 'asc' ? '▲' : '▼') : '' }}
+                </span>
+                <span 
+                  @click.stop="handleStatusSort('deaths')" 
+                  class="sort-badge" 
+                  :class="{ active: sortBy === 'isActive' && statusSortOption === 'deaths' }"
+                >
+                  Deaths {{ sortBy === 'isActive' && statusSortOption === 'deaths' ? (sortDirection === 'asc' ? '▲' : '▼') : '' }}
+                </span>
+                <span 
+                  @click.stop="handleStatusSort('kdr')" 
+                  class="sort-badge" 
+                  :class="{ active: sortBy === 'isActive' && statusSortOption === 'kdr' }"
+                >
+                  KDR {{ sortBy === 'isActive' && statusSortOption === 'kdr' ? (sortDirection === 'asc' ? '▲' : '▼') : '' }}
+                </span>
+              </div>
             </th>
           </tr>
         </thead>
@@ -454,6 +595,11 @@ onMounted(() => {
                   {{ player.currentServer ? 
                     `Currently active on ${player.currentServer.serverName}` : 
                     'Currently active' }}
+                </div>
+                <div v-if="player.currentServer && (player.currentServer.sessionKills !== undefined || player.currentServer.sessionDeaths !== undefined)" class="player-stats">
+                  <span class="stat-item">Kills: {{ player.currentServer.sessionKills || 0 }}</span>
+                  <span class="stat-item">Deaths: {{ player.currentServer.sessionDeaths || 0 }}</span>
+                  <span class="stat-item">KDR: {{ player.currentServer.sessionDeaths ? (player.currentServer.sessionKills / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}</span>
                 </div>
               </div>
             </td>
@@ -672,6 +818,47 @@ th {
   font-size: 12px;
 }
 
+.sort-option {
+  display: inline-block;
+  background-color: var(--color-background-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+.status-column {
+  min-width: 200px;
+}
+
+.sort-badges {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.sort-badge {
+  display: inline-block;
+  background-color: var(--color-background-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.sort-badge:hover {
+  background-color: var(--color-background-mute);
+}
+
+.sort-badge.active {
+  background-color: var(--color-accent);
+  color: white;
+}
+
 .player-name-link {
   color: var(--color-primary);
   text-decoration: none;
@@ -717,6 +904,20 @@ th {
 .server-info {
   font-size: 0.9rem;
   color: var(--color-text);
+}
+
+.player-stats {
+  margin-top: 8px;
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.stat-item {
+  background-color: var(--color-background);
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
 }
 
 @media (max-width: 768px) {
