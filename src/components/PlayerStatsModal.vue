@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { PlayerTimeStatistics, ServerPlayTime, ActivityByHour } from '../services/playerStatsService';
+import { PlayerTimeStatistics } from '../services/playerStatsService';
 import SessionDetailsModal from './SessionDetailsModal.vue';
 
 // Router
@@ -192,12 +192,6 @@ const sortedServerPlayTimes = computed(() => {
   return [...props.playerStats.insights.serverPlayTimes].sort((a, b) => b.minutesPlayed - a.minutesPlayed);
 });
 
-// Computed property to sort activity hours chronologically by UTC hour
-const sortedActivityHours = computed(() => {
-  if (!props.playerStats?.insights?.activityByHour) return [];
-  return [...props.playerStats.insights.activityByHour].sort((a, b) => a.hour - b.hour);
-});
-
 // Computed property to sort activity hours chronologically by local hour (0-23)
 const sortedLocalActivityHours = computed(() => {
   if (!props.playerStats?.insights?.activityByHour) return [];
@@ -217,14 +211,6 @@ const convertToLocalHour = (utcHour: number): number => {
   const now = new Date();
   const localDate = new Date(now.setUTCHours(utcHour, 0, 0, 0));
   return localDate.getHours();
-};
-
-// Function to format hour range in local time
-const formatLocalHourRange = (utcHour: number): string => {
-  const localHour = convertToLocalHour(utcHour);
-  const startHour = localHour.toString().padStart(2, '0');
-  const endHour = ((localHour + 1) % 24).toString().padStart(2, '0');
-  return `${startHour}:00 - ${endHour}:59`;
 };
 
 // Function to calculate the height of each bar in the activity chart
