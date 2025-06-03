@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ServerTable from '../components/ServerTable.vue'
 import PlayersPage from '../components/PlayersPage.vue'
+import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -51,6 +52,14 @@ const router = createRouter({
       props: route => ({ 
         selectedPlayerName: route.params.playerName,
         showPlayerModal: true
+      })
+    },
+    {
+      path: '/players/:playerName/sessions',
+      name: 'player-sessions',
+      component: PlayerSessionsPage,
+      props: route => ({
+        playerName: route.params.playerName
       })
     },
     {

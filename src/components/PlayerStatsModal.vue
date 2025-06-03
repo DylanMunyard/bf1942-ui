@@ -408,7 +408,12 @@ onMounted(() => {
 
           <!-- Recent sessions section -->
           <div v-if="playerStats.recentSessions.length > 0" class="stats-section">
-            <h3>Recent Sessions</h3>
+            <div class="section-header-with-action">
+              <h3>Recent Sessions</h3>
+              <router-link :to="`/players/${encodeURIComponent(playerName)}/sessions`" class="view-all-button">
+                View All Sessions
+              </router-link>
+            </div>
             <div class="recent-servers-table">
               <table>
                 <thead>
@@ -617,6 +622,36 @@ onMounted(() => {
   font-size: 1.2rem;
   border-bottom: 1px solid var(--color-border);
   padding-bottom: 8px;
+}
+
+.section-header-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+.section-header-with-action h3 {
+  margin: 0;
+  padding: 0;
+  border-bottom: none;
+}
+
+.view-all-button {
+  padding: 5px 10px;
+  background-color: var(--color-background-mute);
+  color: var(--color-text);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.view-all-button:hover {
+  background-color: var(--color-accent);
+  color: white;
 }
 
 .stats-grid {

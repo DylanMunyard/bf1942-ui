@@ -1,6 +1,40 @@
 import axios from 'axios';
 
 // Define interfaces for the API response
+export interface PagedResult<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  playerInfo?: PlayerContextInfo;
+}
+
+export interface PlayerContextInfo {
+  name: string;
+  totalPlayTimeMinutes: number;
+  firstSeen: string; // ISO date string
+  lastSeen: string; // ISO date string
+  isActive: boolean;
+  totalSessions: number;
+  totalKills: number;
+  totalDeaths: number;
+  currentServer?: ServerInfo;
+}
+
+export interface SessionListItem {
+  sessionId: number;
+  serverName: string;
+  mapName: string;
+  gameType: string;
+  startTime: string; // ISO date string
+  endTime: string; // ISO date string
+  durationMinutes: number;
+  score: number;
+  kills: number;
+  deaths: number;
+  isActive: boolean;
+}
 export interface PlayerListItem {
   playerName: string;
   totalPlayTimeMinutes: number;
@@ -176,5 +210,37 @@ export async function fetchSessionDetails(playerName: string, sessionId: number)
   } catch (err) {
     console.error('Error fetching session details:', err);
     throw new Error('Failed to get session details');
+  }
+}
+
+/**
+ * Fetches all sessions for a player with pagination support
+ * @param playerName The name of the player
+ * @param page The page number (1-based)
+ * @param pageSize The number of items per page
+ * @returns Paged result of session list items
+ */
+export async function fetchPlayerSessions(
+  playerName: string,
+  page: number = 1,
+  pageSize: number = 10
+): Promise<PagedResult<SessionListItem>> {
+  try {
+    // Make the request to the API endpoint
+    const response = await axios.get<PagedResult<SessionListItem>>(
+      `/stats/players/${encodeURIComponent(playerName)}/sessions`,
+      {
+        params: {
+          page,
+          pageSize
+        }
+      }
+    );
+
+    // Return the response data
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching player sessions:', err);
+    throw new Error('Failed to get player sessions');
   }
 }
