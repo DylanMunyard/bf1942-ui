@@ -23,7 +23,7 @@ const playerInfo = ref<PlayerContextInfo | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const currentPage = ref(1);
-const pageSize = ref(10);
+const pageSize = ref(20);
 const totalItems = ref(0);
 const totalPages = ref(0);
 
@@ -32,6 +32,7 @@ const showSessionDetailsModal = ref(false);
 const selectedSessionId = ref<number | null>(null);
 const sessionDetailsLoading = ref(false);
 const sessionDetailsError = ref<string | null>(null);
+
 
 // Format minutes to hours and minutes
 const formatPlayTime = (minutes: number): string => {
@@ -102,7 +103,7 @@ const fetchData = async () => {
   try {
     // Fetch the player sessions with pagination
     const result = await fetchPlayerSessions(props.playerName, currentPage.value, pageSize.value);
-    
+
     // Update state with the fetched data
     sessions.value = result.items;
     playerInfo.value = result.playerInfo || null;
@@ -137,6 +138,7 @@ const closeSessionDetailsModal = () => {
   }
 };
 
+
 // Function to handle pagination
 const goToPage = (page: number) => {
   if (page < 1 || page > totalPages.value) return;
@@ -148,19 +150,19 @@ const goToPage = (page: number) => {
 const paginationRange = computed(() => {
   const range = [];
   const maxVisiblePages = 5;
-  
+
   let startPage = Math.max(1, currentPage.value - Math.floor(maxVisiblePages / 2));
   let endPage = Math.min(totalPages.value, startPage + maxVisiblePages - 1);
-  
+
   // Adjust start page if end page is at max
   if (endPage === totalPages.value) {
     startPage = Math.max(1, endPage - maxVisiblePages + 1);
   }
-  
+
   for (let i = startPage; i <= endPage; i++) {
     range.push(i);
   }
-  
+
   return range;
 });
 
@@ -169,7 +171,7 @@ watch(() => [props.playerName, props.selectedSessionId, props.showSessionModal],
   if (newPlayerName) {
     fetchData();
   }
-  
+
   if (newSessionId && newShowSessionModal) {
     selectedSessionId.value = newSessionId;
     showSessionDetailsModal.value = true;
@@ -234,14 +236,17 @@ onMounted(() => {
             <th>K/D</th>
             <th>Start Time</th>
             <th>Duration</th>
-            <th>Status</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="session in sessions" :key="session.sessionId" 
               @click="(event) => openSessionDetailsModal(session.sessionId, event)" 
               class="clickable-row">
-            <td>{{ session.serverName }}</td>
+            <td>
+              <router-link :to="`/servers/${encodeURIComponent(session.serverName)}`" class="server-link">
+                {{ session.serverName }}
+              </router-link>
+            </td>
             <td>{{ session.mapName }}</td>
             <td>{{ session.gameType }}</td>
             <td>{{ session.score }}</td>
@@ -253,10 +258,6 @@ onMounted(() => {
               <div class="secondary-text">{{ formatDate(session.startTime) }}</div>
             </td>
             <td>{{ formatPlayTime(session.durationMinutes) }}</td>
-            <td>
-              <span v-if="session.isActive" class="active-session-badge">Active</span>
-              <span v-else class="completed-session-badge">Completed</span>
-            </td>
           </tr>
         </tbody>
       </table>
@@ -330,6 +331,7 @@ onMounted(() => {
       :is-open="showSessionDetailsModal"
       @close="closeSessionDetailsModal"
     />
+
   </div>
 </template>
 
@@ -508,6 +510,18 @@ th {
   font-weight: bold;
   color: white;
   background-color: #9e9e9e;
+}
+
+.server-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.server-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
 }
 
 .pagination-container {
