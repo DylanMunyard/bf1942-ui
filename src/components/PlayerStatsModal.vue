@@ -311,7 +311,7 @@ onMounted(() => {
               </span>
             </div>
             <div v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined" class="session-stats">
-              Session: {{ playerStats.currentServer.sessionKills }} kills / {{ playerStats.currentServer.sessionDeaths }} deaths
+              Session: {{ playerStats.currentServer.sessionKills }} 🔫 / {{ playerStats.currentServer.sessionDeaths }} 💀
               (K/D: {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }})
             </div>
           </div>
@@ -335,8 +335,8 @@ onMounted(() => {
                 <div class="stat-label">Combat Stats</div>
                 <div class="stat-value">
                   <div class="combat-stats">
-                    <span class="stat-badge">Kills: {{ playerStats.totalKills }}</span>
-                    <span class="stat-badge">Deaths: {{ playerStats.totalDeaths }}</span>
+                    <span class="stat-badge">🔫 {{ playerStats.totalKills }}</span>
+                    <span class="stat-badge">💀 {{ playerStats.totalDeaths }}</span>
                     <span class="stat-badge">KDR: {{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
                   </div>
                 </div>
@@ -352,10 +352,10 @@ onMounted(() => {
                       KDR: {{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }}
                     </span>
                     <span class="best-session-badge">
-                      K: {{ playerStats.bestSession.totalKills }}
+                      🔫 {{ playerStats.bestSession.totalKills }}
                     </span>
                     <span class="best-session-badge">
-                      D: {{ playerStats.bestSession.totalDeaths }}
+                      💀 {{ playerStats.bestSession.totalDeaths }}
                     </span>
                     <span v-if="playerStats.bestSession.isActive" class="active-session-badge">Active</span>
                   </div>
@@ -436,13 +436,13 @@ onMounted(() => {
                         </span>
                       </th>
                       <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header">
-                        Kills
+                        🔫
                         <span v-if="favoriteMapsSortField === 'totalKills'" class="sort-indicator">
                           {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
                         </span>
                       </th>
                       <th @click="changeFavoriteMapsSort('totalDeaths')" class="sortable-header">
-                        Deaths
+                        💀
                         <span v-if="favoriteMapsSortField === 'totalDeaths'" class="sort-indicator">
                           {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
                         </span>
@@ -480,8 +480,8 @@ onMounted(() => {
                     <th>Map</th>
                     <th>Game Type</th>
                     <th>Score</th>
-                    <th>Kills</th>
-                    <th>Deaths</th>
+                    <th>🔫</th>
+                    <th>💀</th>
                     <th>K/D</th>
                     <th>Start Time</th>
                     <th>Status</th>
