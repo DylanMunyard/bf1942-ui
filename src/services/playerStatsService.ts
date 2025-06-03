@@ -77,9 +77,12 @@ export interface BestKillMap {
   totalKills: number;
 }
 
-export interface FavoriteMap {
+export interface MapPlayTime {
   mapName: string;
   minutesPlayed: number;
+  kdRatio: number;
+  totalDeaths: number;
+  totalKills: number;
 }
 
 export interface ServerPlayTime {
@@ -90,9 +93,9 @@ export interface ServerPlayTime {
 
 export interface PlayerInsights {
   activityByHour: ActivityByHour[];
-  bestKillMap: BestKillMap;
+  bestKillMap?: BestKillMap;
   endPeriod: string; // ISO date string
-  favoriteMaps: FavoriteMap[];
+  favoriteMaps: MapPlayTime[];
   playerName: string;
   serverPlayTimes: ServerPlayTime[];
   startPeriod: string; // ISO date string

@@ -211,6 +211,46 @@ const sortedLocalActivityHours = computed(() => {
   return [...hoursWithLocalTime].sort((a, b) => a.localHour - b.localHour);
 });
 
+// State for favorite maps sorting
+const favoriteMapsSortField = ref('kdRatio');
+const favoriteMapsSortDirection = ref('desc');
+
+// Function to change sort field and direction
+const changeFavoriteMapsSort = (field: string) => {
+  if (favoriteMapsSortField.value === field) {
+    // Toggle direction if clicking the same field
+    favoriteMapsSortDirection.value = favoriteMapsSortDirection.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    // Set new field and default to descending
+    favoriteMapsSortField.value = field;
+    favoriteMapsSortDirection.value = 'desc';
+  }
+};
+
+// Computed property to sort favorite maps
+const sortedFavoriteMaps = computed(() => {
+  if (!props.playerStats?.insights?.favoriteMaps) return [];
+
+  return [...props.playerStats.insights.favoriteMaps].sort((a, b) => {
+    const direction = favoriteMapsSortDirection.value === 'asc' ? 1 : -1;
+
+    switch (favoriteMapsSortField.value) {
+      case 'mapName':
+        return direction * a.mapName.localeCompare(b.mapName);
+      case 'minutesPlayed':
+        return direction * (a.minutesPlayed - b.minutesPlayed);
+      case 'kdRatio':
+        return direction * (a.kdRatio - b.kdRatio);
+      case 'totalKills':
+        return direction * (a.totalKills - b.totalKills);
+      case 'totalDeaths':
+        return direction * (a.totalDeaths - b.totalDeaths);
+      default:
+        return direction * (a.kdRatio - b.kdRatio);
+    }
+  });
+});
+
 // Function to convert UTC hour to local hour
 const convertToLocalHour = (utcHour: number): number => {
   const now = new Date();
@@ -327,6 +367,28 @@ onMounted(() => {
                 </div>
               </div>
             </div>
+
+            <!-- Activity By Hour -->
+            <div v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0" class="online-times-section">
+              <h4>When they're typically online (Local Time)</h4>
+              <div class="activity-hours-container">
+                <div class="activity-hours-chart">
+                  <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
+                       class="activity-hour-bar" 
+                       :style="{ height: getActivityBarHeight(hourData.minutesActive) }">
+                    <div class="activity-hour-value" v-if="hourData.minutesActive > 0">
+                      {{ hourData.minutesActive }}m
+                    </div>
+                  </div>
+                </div>
+                <div class="activity-hours-labels">
+                  <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
+                       class="activity-hour-label">
+                    {{ hourData.localHour.toString().padStart(2, '0') }}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Insights section -->
@@ -347,63 +409,59 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- Deadliest Map -->
-            <div v-if="playerStats.insights.bestKillMap" class="insights-subsection">
-              <h4>Deadliest Map</h4>
-              <div class="insights-card best-kill-map">
-                <div class="insights-card-title">{{ playerStats.insights.bestKillMap.mapName }}</div>
-                <div class="insights-card-stats">
-                  <div class="insights-card-stat">
-                    <span class="stat-label">K/D Ratio:</span>
-                    <span class="stat-value">{{ playerStats.insights.bestKillMap.kdRatio.toFixed(2) }}</span>
-                  </div>
-                  <div class="insights-card-stat">
-                    <span class="stat-label">Kills:</span>
-                    <span class="stat-value">{{ playerStats.insights.bestKillMap.totalKills }}</span>
-                  </div>
-                  <div class="insights-card-stat">
-                    <span class="stat-label">Deaths:</span>
-                    <span class="stat-value">{{ playerStats.insights.bestKillMap.totalDeaths }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <!-- Favorite Maps -->
             <div v-if="playerStats.insights.favoriteMaps && playerStats.insights.favoriteMaps.length > 0" class="insights-subsection">
               <h4>Favorite Maps</h4>
-              <div class="insights-cards">
-                <div v-for="(map, index) in playerStats.insights.favoriteMaps" :key="index" class="insights-card">
-                  <div class="insights-card-title">{{ map.mapName }}</div>
-                  <div class="insights-card-value">{{ formatPlayTime(map.minutesPlayed) }}</div>
-                </div>
+              <div class="favorite-maps-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th @click="changeFavoriteMapsSort('mapName')" class="sortable-header">
+                        Map Name
+                        <span v-if="favoriteMapsSortField === 'mapName'" class="sort-indicator">
+                          {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                        </span>
+                      </th>
+                      <th @click="changeFavoriteMapsSort('minutesPlayed')" class="sortable-header">
+                        Play Time
+                        <span v-if="favoriteMapsSortField === 'minutesPlayed'" class="sort-indicator">
+                          {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                        </span>
+                      </th>
+                      <th @click="changeFavoriteMapsSort('kdRatio')" class="sortable-header">
+                        K/D Ratio
+                        <span v-if="favoriteMapsSortField === 'kdRatio'" class="sort-indicator">
+                          {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                        </span>
+                      </th>
+                      <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header">
+                        Kills
+                        <span v-if="favoriteMapsSortField === 'totalKills'" class="sort-indicator">
+                          {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                        </span>
+                      </th>
+                      <th @click="changeFavoriteMapsSort('totalDeaths')" class="sortable-header">
+                        Deaths
+                        <span v-if="favoriteMapsSortField === 'totalDeaths'" class="sort-indicator">
+                          {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                        </span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(map, index) in sortedFavoriteMaps" :key="index">
+                      <td>{{ map.mapName }}</td>
+                      <td>{{ formatPlayTime(map.minutesPlayed) }}</td>
+                      <td>{{ map.kdRatio.toFixed(2) }}</td>
+                      <td>{{ map.totalKills }}</td>
+                      <td>{{ map.totalDeaths }}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <!-- Activity By Hour -->
-            <div v-if="playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0" class="insights-subsection">
-              <h4>Activity By Hour (Local Time)</h4>
-              <div class="activity-hours-container">
-                <div class="activity-hours-summary">
-                  When they're typically online
-                </div>
-                <div class="activity-hours-chart">
-                  <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
-                       class="activity-hour-bar" 
-                       :style="{ height: getActivityBarHeight(hourData.minutesActive) }">
-                    <div class="activity-hour-value" v-if="hourData.minutesActive > 0">
-                      {{ hourData.minutesActive }}m
-                    </div>
-                  </div>
-                </div>
-                <div class="activity-hours-labels">
-                  <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
-                       class="activity-hour-label">
-                    {{ hourData.localHour.toString().padStart(2, '0') }}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- Recent sessions section -->
@@ -755,6 +813,19 @@ onMounted(() => {
   line-height: 1.4;
 }
 
+.online-times-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--color-border);
+}
+
+.online-times-section h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  color: var(--color-heading);
+}
+
 .player-count {
   font-size: 0.9rem;
   margin-left: 5px;
@@ -905,7 +976,7 @@ tbody tr:hover {
 .activity-hours-chart {
   display: flex;
   align-items: flex-end;
-  height: 150px;
+  height: 100px;
   gap: 2px;
   margin-bottom: 5px;
   padding-bottom: 5px;
@@ -945,6 +1016,29 @@ tbody tr:hover {
   padding-top: 5px;
 }
 
+/* Favorite Maps Table Styles */
+.favorite-maps-table {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.sortable-header {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.sortable-header:hover {
+  background-color: var(--color-background);
+}
+
+.sort-indicator {
+  margin-left: 5px;
+  font-size: 0.8rem;
+  display: inline-block;
+}
+
 @media (max-width: 768px) {
   .player-stats-modal-content {
     width: 95%;
@@ -959,7 +1053,7 @@ tbody tr:hover {
   }
 
   .activity-hours-chart {
-    height: 120px;
+    height: 80px;
   }
 
   .activity-hour-label {

@@ -2,11 +2,11 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { ServerDetails, fetchServerDetails } from '../services/serverDetailsService';
-import { Line } from 'vue-chartjs';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Bar } from 'vue-chartjs';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 
 // Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
 interface Props {
   serverName: string;
@@ -110,13 +110,9 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Player Count',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
         borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 2,
-        pointBackgroundColor: 'rgba(75, 192, 192, 1)',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1,
         data
       }
     ]
@@ -148,11 +144,11 @@ const chartOptions = {
   },
   plugins: {
     legend: {
-      display: true
+      display: false
     },
     tooltip: {
-      mode: 'index',
-      intersect: false
+      mode: 'nearest',
+      intersect: true
     }
   }
 };
@@ -206,7 +202,7 @@ onMounted(() => {
           <div class="stats-section">
             <h3>Player Count Over Time</h3>
             <div class="chart-container">
-              <Line :data="chartData" :options="chartOptions" />
+              <Bar :data="chartData" :options="chartOptions" />
             </div>
           </div>
 
@@ -241,30 +237,6 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Popular Maps -->
-          <div class="stats-section">
-            <h3>Popular Maps</h3>
-            <div class="maps-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Map Name</th>
-                    <th>Player Count</th>
-                    <th>Total Play Time</th>
-                    <th>Sessions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(map, index) in serverDetails.popularMaps" :key="index">
-                    <td>{{ map.mapName }}</td>
-                    <td>{{ map.playerCount }}</td>
-                    <td>{{ formatPlayTime(map.totalMinutesPlayed) }}</td>
-                    <td>{{ map.totalSessions }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
 
           <!-- Top Scores -->
           <div class="stats-section">
