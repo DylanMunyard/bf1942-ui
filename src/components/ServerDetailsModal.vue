@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { ServerDetails, fetchServerDetails } from '../services/serverDetailsService';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
@@ -16,6 +17,9 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['close']);
 
+// Router
+const router = useRouter();
+
 // State
 const serverDetails = ref<ServerDetails | null>(null);
 const isLoading = ref(true);
@@ -24,10 +28,10 @@ const error = ref<string | null>(null);
 // Fetch server details
 const fetchData = async () => {
   if (!props.serverName || !props.game) return;
-  
+
   isLoading.value = true;
   error.value = null;
-  
+
   try {
     serverDetails.value = await fetchServerDetails(props.serverName, props.game);
   } catch (err) {
@@ -56,7 +60,7 @@ const formatPlayTime = (minutes: number): string => {
 const formatDate = (dateString: string): string => {
   // Ensure the date is treated as UTC by appending 'Z' if it doesn't have timezone info
   const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  
+
   // Format date
   return date.toLocaleDateString(undefined, {
     year: 'numeric',
@@ -222,7 +226,11 @@ onMounted(() => {
                 </thead>
                 <tbody>
                   <tr v-for="(player, index) in serverDetails.mostActivePlayersByTime" :key="index">
-                    <td>{{ player.playerName }}</td>
+                    <td>
+                      <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
+                        {{ player.playerName }}
+                      </router-link>
+                    </td>
                     <td>{{ formatPlayTime(player.minutesPlayed) }}</td>
                     <td>{{ player.totalKills }}</td>
                     <td>{{ player.totalDeaths }}</td>
@@ -276,8 +284,16 @@ onMounted(() => {
                 </thead>
                 <tbody>
                   <tr v-for="(score, index) in serverDetails.topScores" :key="index">
-                    <td>{{ score.playerName }}</td>
-                    <td>{{ score.score }}</td>
+                    <td>
+                      <router-link :to="`/players/${encodeURIComponent(score.playerName)}`" class="player-link">
+                        {{ score.playerName }}
+                      </router-link>
+                    </td>
+                    <td>
+                      <router-link :to="`/players/${encodeURIComponent(score.playerName)}/sessions/${score.sessionId}`" class="session-link">
+                        {{ score.score }}
+                      </router-link>
+                    </td>
                     <td>{{ score.kills }}</td>
                     <td>{{ score.deaths }}</td>
                     <td>{{ calculateKDR(score.kills, score.deaths) }}</td>
@@ -453,15 +469,40 @@ tbody tr:hover {
   background-color: var(--color-background-mute);
 }
 
+/* Link styles */
+.player-link, .session-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.player-link:hover, .session-link:hover {
+  text-decoration: underline;
+}
+
+.session-link {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: var(--color-background-mute);
+  transition: background-color 0.2s;
+}
+
+.session-link:hover {
+  background-color: var(--color-accent);
+  color: white;
+  text-decoration: none;
+}
+
 @media (max-width: 768px) {
   .server-details-modal-content {
     width: 95%;
   }
-  
+
   table {
     font-size: 0.9rem;
   }
-  
+
   th, td {
     padding: 8px 5px;
   }

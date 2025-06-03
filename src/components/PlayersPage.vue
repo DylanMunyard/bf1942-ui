@@ -580,9 +580,9 @@ onMounted(() => {
         <tbody>
           <tr v-for="player in filteredPlayers" :key="player.playerName">
             <td>
-              <a href="#" @click.prevent="openPlayerStatsModal(player.playerName)" class="player-name-link">
+              <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-name-link">
                 {{ player.playerName }}
-              </a>
+              </router-link>
             </td>
             <td>{{ formatPlayTime(player.totalPlayTimeMinutes) }}</td>
             <td>

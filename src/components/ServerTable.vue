@@ -207,9 +207,9 @@ const closePlayerModal = () => {
   showPlayerModal.value = false;
   window.removeEventListener('keydown', handleKeyDown);
 
-  // If we're on the server players page, navigate back to the servers page
+  // If we're on the server players page, navigate back using browser history
   if (route.name === 'server-players') {
-    router.push('/');
+    router.back();
   }
 };
 
@@ -263,30 +263,12 @@ const closeChartModal = () => {
   showChartModal.value = false;
   window.removeEventListener('keydown', handleChartKeyDown);
 
-  // If we're on the server details page, navigate back to the servers page
+  // If we're on the server details page, navigate back using browser history
   if (route.name === 'server-details') {
-    router.push('/');
+    router.back();
   }
 };
 
-// Function to open the player stats modal
-const openPlayerStatsModal = async (playerName: string) => {
-  // Navigate to the player details page
-  router.push(`/players/${encodeURIComponent(playerName)}`);
-};
-
-// Function to handle key events for the player stats modal
-const handlePlayerStatsKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    closePlayerStatsModal();
-  }
-};
-
-// Function to close the player stats modal
-const closePlayerStatsModal = () => {
-  showPlayerStatsModal.value = false;
-  window.removeEventListener('keydown', handlePlayerStatsKeyDown);
-};
 
 const handleSort = (column: string) => {
   // If clicking the same column, toggle direction
@@ -476,15 +458,15 @@ onUnmounted(() => {
           <tbody>
             <tr v-for="server in servers" :key="server.guid">
               <td>
-                <a href="#" @click.prevent="openChartModal(server)" class="server-name-link">
+                <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="server-name-link">
                   {{ server.name }}
-                </a> 
+                </router-link> 
                 ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
               </td>
               <td>
-                <a href="#" @click.prevent="openPlayerModal(server)">
+                <router-link :to="`/servers/${encodeURIComponent(server.name)}/players`">
                   {{ server.numPlayers }} / {{ server.maxPlayers }}
-                </a>
+                </router-link>
               </td>
               <td>{{ server.mapName }}</td>
               <td>{{ server.gameType }}</td>
@@ -546,9 +528,9 @@ onUnmounted(() => {
                 <tbody>
                   <tr v-for="player in selectedTeamPlayers.team1" :key="player.name">
                     <td>
-                      <a href="#" @click.prevent="openPlayerStatsModal(player.name)" class="player-name-link">
+                      <router-link :to="`/players/${encodeURIComponent(player.name)}`" class="player-name-link">
                         {{ player.name }}
-                      </a>
+                      </router-link>
                       <span v-if="player.scoreChanged === 'up'" class="score-up">▲</span>
                       <span v-else-if="player.scoreChanged === 'down'" class="score-down">▼</span>
                     </td>
@@ -596,9 +578,9 @@ onUnmounted(() => {
                 <tbody>
                   <tr v-for="player in selectedTeamPlayers.team2" :key="player.name">
                     <td>
-                      <a href="#" @click.prevent="openPlayerStatsModal(player.name)" class="player-name-link">
+                      <router-link :to="`/players/${encodeURIComponent(player.name)}`" class="player-name-link">
                         {{ player.name }}
-                      </a>
+                      </router-link>
                       <span v-if="player.scoreChanged === 'up'" class="score-up">▲</span>
                       <span v-else-if="player.scoreChanged === 'down'" class="score-down">▼</span>
                     </td>

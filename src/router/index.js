@@ -7,11 +7,16 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'home',
+      redirect: '/servers'
+    },
+    {
+      path: '/servers',
       name: 'servers',
       component: ServerTable
     },
     {
-      path: '/games/fh2',
+      path: '/servers/fh2',
       name: 'fh2',
       component: ServerTable,
       props: { initialMode: 'FH2' }
