@@ -27,7 +27,12 @@ const showSessionDetailsModal = ref(false);
 const selectedSessionId = ref<number | null>(null);
 
 // Function to open the session details modal
-const openSessionDetailsModal = (sessionId: number) => {
+const openSessionDetailsModal = (sessionId: number, event?: Event) => {
+  // Prevent event propagation to stop the modal from closing
+  if (event) {
+    event.stopPropagation();
+  }
+
   // Navigate to the session details page
   router.push(`/players/${encodeURIComponent(props.playerName)}/sessions/${sessionId}`);
 };
@@ -421,7 +426,7 @@ onMounted(() => {
                 </thead>
                 <tbody>
                   <tr v-for="(session, index) in playerStats.recentSessions" :key="index" 
-                      @click="openSessionDetailsModal(session.sessionId)" 
+                      @click="(event) => openSessionDetailsModal(session.sessionId, event)" 
                       class="clickable-row">
                     <td>{{ session.serverName }}</td>
                     <td>{{ session.mapName }}</td>
