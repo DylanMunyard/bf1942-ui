@@ -15,16 +15,6 @@ pipeline {
         }
       }
     }
-    stage('Docker build API back end') {
-      steps {
-        container('dind') {
-            sh '''
-                docker build -f backend/Dockerfile ./backend -t container-registry-service.container-registry:5000/bf42-servers-backend:latest
-                docker push container-registry-service.container-registry:5000/bf42-servers-backend:latest
-            '''
-        }
-      }
-    }
     stage('Docker build AI back end') {
       steps {
         container('dind') {
