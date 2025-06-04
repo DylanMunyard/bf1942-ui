@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ServerTable from '../components/ServerTable.vue'
 import PlayersPage from '../components/PlayersPage.vue'
 import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
+import ServerRankingsPage from '../components/ServerRankingsPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +22,12 @@ const router = createRouter({
       name: 'fh2',
       component: ServerTable,
       props: { initialMode: 'FH2' }
+    },
+    {
+      path: '/servers/:serverName/rankings',
+      name: 'server-rankings',
+      component: ServerRankingsPage,
+      props: true
     },
     {
       path: '/servers/:serverName',

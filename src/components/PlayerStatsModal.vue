@@ -302,7 +302,12 @@ onMounted(() => {
         <div v-else-if="playerStats" class="stats-container">
           <div v-if="playerStats.isActive && playerStats.currentServer" class="current-server-banner">
             <div>
-              Currently active on {{ playerStats.currentServer.serverName }}
+              <router-link 
+                :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}/rankings`" 
+                class="server-link"
+              >
+                {{ playerStats.currentServer.serverName }}
+              </router-link>
               <span v-if="getServerPlayerCount(playerStats.currentServer.serverGuid)" class="player-count">
                 ({{ getServerPlayerCount(playerStats.currentServer.serverGuid) }} players online)
               </span>
@@ -502,7 +507,15 @@ onMounted(() => {
                   <tr v-for="(session, index) in playerStats.recentSessions" :key="index" 
                       @click="(event) => openSessionDetailsModal(session.sessionId, event)" 
                       class="clickable-row">
-                    <td>{{ session.serverName }}</td>
+                    <td>
+                      <router-link 
+                        :to="`/servers/${encodeURIComponent(session.serverName)}/rankings`" 
+                        class="server-link"
+                        @click.stop
+                      >
+                        {{ session.serverName }}
+                      </router-link>
+                    </td>
                     <td>{{ session.mapName }}</td>
                     <td>{{ session.gameType }}</td>
                     <td>{{ session.totalScore }}</td>
@@ -1104,5 +1117,17 @@ tbody tr:hover {
 
 .server-rankings-table tr:hover {
   background-color: var(--color-background-mute);
+}
+
+.server-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.server-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
 }
 </style>

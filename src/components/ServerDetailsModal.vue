@@ -182,7 +182,15 @@ onMounted(() => {
         <div class="server-name-container">
           <h2>Server Details: {{ serverName }}</h2>
         </div>
-        <button class="close-button" @click="$emit('close')">&times;</button>
+        <div class="modal-actions">
+          <router-link 
+            :to="`/servers/${encodeURIComponent(props.serverName)}/rankings`" 
+            class="rankings-button"
+          >
+            View Rankings
+          </router-link>
+          <button class="close-button" @click="$emit('close')">&times;</button>
+        </div>
       </div>
       <div class="server-details-body">
         <div v-if="isLoading" class="loading-container">
@@ -478,5 +486,27 @@ tbody tr:hover {
   th, td {
     padding: 8px 5px;
   }
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.rankings-button {
+  padding: 8px 16px;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.rankings-button:hover {
+  background-color: var(--color-primary-hover);
 }
 </style>
