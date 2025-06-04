@@ -417,7 +417,14 @@ onMounted(() => {
                   </thead>
                   <tbody>
                     <tr v-for="(ranking, index) in playerStats.insights.serverRankings" :key="index">
-                      <td>{{ ranking.serverName }}</td>
+                      <td>
+                        <router-link 
+                          :to="`/servers/${encodeURIComponent(ranking.serverName)}/rankings`" 
+                          class="server-link"
+                        >
+                          {{ ranking.serverName }}
+                        </router-link>
+                      </td>
                       <td>{{ ranking.rankDisplay }}</td>
                       <td>{{ ranking.scoreDisplay }}</td>
                     </tr>

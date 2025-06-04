@@ -207,7 +207,7 @@ onMounted(() => {
           </div>
 
           <!-- Player Count Chart -->
-          <div class="stats-section">
+          <div v-if="serverDetails.playerCountMetrics && serverDetails.playerCountMetrics.length > 0" class="stats-section">
             <h3>Player Count Over Time</h3>
             <div class="chart-container">
               <Bar :data="chartData" :options="chartOptions" />
