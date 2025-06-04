@@ -398,17 +398,28 @@ onMounted(() => {
               Data from {{ formatDate(playerStats.insights.startPeriod) }} to {{ formatDate(playerStats.insights.endPeriod) }}
             </div>
 
-            <!-- Favorite Servers -->
-            <div v-if="playerStats.insights.serverPlayTimes && playerStats.insights.serverPlayTimes.length > 0" class="insights-subsection">
-              <h4>Favorite Servers</h4>
-              <div class="insights-cards">
-                <div v-for="(server, index) in sortedServerPlayTimes" :key="index" class="insights-card">
-                  <div class="insights-card-title">{{ server.serverName }}</div>
-                  <div class="insights-card-value">{{ formatPlayTime(server.minutesPlayed) }}</div>
-                </div>
+            <!-- Server Rankings -->
+            <div v-if="playerStats.insights.serverRankings && playerStats.insights.serverRankings.length > 0" class="insights-subsection">
+              <h4>Server Rankings</h4>
+              <div class="server-rankings-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Server</th>
+                      <th>Rank</th>
+                      <th>Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(ranking, index) in playerStats.insights.serverRankings" :key="index">
+                      <td>{{ ranking.serverName }}</td>
+                      <td>{{ ranking.rankDisplay }}</td>
+                      <td>{{ ranking.scoreDisplay }}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-
 
             <!-- Favorite Maps -->
             <div v-if="playerStats.insights.favoriteMaps && playerStats.insights.favoriteMaps.length > 0" class="insights-subsection">
@@ -1059,5 +1070,39 @@ tbody tr:hover {
   .activity-hour-label {
     font-size: 0.7rem;
   }
+}
+
+.server-rankings-table {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.server-rankings-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--color-background-soft);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.server-rankings-table th,
+.server-rankings-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.server-rankings-table th {
+  background-color: var(--color-background-mute);
+  font-weight: bold;
+  color: var(--color-heading);
+}
+
+.server-rankings-table tr:last-child td {
+  border-bottom: none;
+}
+
+.server-rankings-table tr:hover {
+  background-color: var(--color-background-mute);
 }
 </style>
