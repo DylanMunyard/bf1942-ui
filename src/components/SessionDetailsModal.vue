@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { Line } from 'vue-chartjs';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import { fetchSessionDetails, SessionDetails } from '../services/playerStatsService';
+import { fetchRoundReport, RoundReport, LeaderboardSnapshot } from '../services/playerStatsService';
 
 // Router
 const router = useRouter();
 const route = useRoute();
-
-// Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 interface Props {
   playerName: string;
@@ -21,23 +16,25 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['close']);
 
-const sessionDetails = ref<SessionDetails | null>(null);
+const roundReport = ref<RoundReport | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
+const selectedSnapshotIndex = ref(0);
 
-// Fetch session details when component is mounted or when props change
+// Fetch round report when component is mounted or when props change
 const fetchData = async () => {
-  if (!props.playerName || !props.sessionId) return;
+  if (!props.sessionId) return;
 
   loading.value = true;
   error.value = null;
 
   try {
-    const data = await fetchSessionDetails(props.playerName, props.sessionId);
-    sessionDetails.value = data;
+    const data = await fetchRoundReport(props.sessionId);
+    roundReport.value = data;
+    selectedSnapshotIndex.value = data.leaderboardSnapshots.length - 1; // Default to final snapshot
   } catch (err) {
-    console.error('Error fetching session details:', err);
-    error.value = 'Failed to fetch session details';
+    console.error('Error fetching round report:', err);
+    error.value = 'Failed to fetch round report';
   } finally {
     loading.value = false;
   }
@@ -89,10 +86,15 @@ const formatDate = (dateString: string | null): string => {
   }
 };
 
-// Format minutes to hours and minutes
-const formatPlayTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
+// Format duration between start and end times
+const formatDuration = (startTime: string, endTime: string): string => {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  const diffMs = end.getTime() - start.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  
+  const hours = Math.floor(diffMinutes / 60);
+  const remainingMinutes = diffMinutes % 60;
 
   if (hours === 0) {
     return `${remainingMinutes} minutes`;
@@ -109,191 +111,66 @@ const calculateKDR = (kills: number, deaths: number): string => {
   return (kills / deaths).toFixed(2);
 };
 
-// Prepare data for the performance chart (score, kills, deaths)
-const performanceChartData = computed(() => {
-  if (!sessionDetails.value || !sessionDetails.value.observations.length) {
-    return {
-      labels: [],
-      datasets: []
-    };
-  }
-
-  // Sort observations by timestamp
-  const sortedObservations = [...sessionDetails.value.observations].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
-
-  // Extract timestamps for labels
-  const labels = sortedObservations.map(obs => {
-    const date = new Date(obs.timestamp);
-    return date.toLocaleTimeString(undefined, { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    }).toLowerCase();
-  });
-
-  // Create datasets for score, kills, and deaths
-  return {
-    labels,
-    datasets: [
-      {
-        label: 'Score',
-        backgroundColor: 'rgba(76, 175, 80, 0.2)',
-        borderColor: '#4CAF50',
-        borderWidth: 2,
-        data: sortedObservations.map(obs => obs.score),
-        tension: 0.1
-      },
-      {
-        label: 'Kills',
-        backgroundColor: 'rgba(33, 150, 243, 0.2)',
-        borderColor: '#2196F3',
-        borderWidth: 2,
-        data: sortedObservations.map(obs => obs.kills),
-        tension: 0.1
-      },
-      {
-        label: 'Deaths',
-        backgroundColor: 'rgba(244, 67, 54, 0.2)',
-        borderColor: '#F44336',
-        borderWidth: 2,
-        data: sortedObservations.map(obs => obs.deaths),
-        tension: 0.1
-      }
-    ]
-  };
+// Get the currently selected leaderboard snapshot
+const currentSnapshot = computed(() => {
+  if (!roundReport.value || !roundReport.value.leaderboardSnapshots.length) return null;
+  return roundReport.value.leaderboardSnapshots[selectedSnapshotIndex.value];
 });
 
-// Prepare data for the ping chart
-const pingChartData = computed(() => {
-  if (!sessionDetails.value || !sessionDetails.value.observations.length) {
-    return {
-      labels: [],
-      datasets: []
-    };
-  }
-
-  // Sort observations by timestamp
-  const sortedObservations = [...sessionDetails.value.observations].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
-
-  // Extract timestamps for labels
-  const labels = sortedObservations.map(obs => {
-    const date = new Date(obs.timestamp);
-    return date.toLocaleTimeString(undefined, { 
-      hour: '2-digit', 
+// Get snapshots formatted for the timeline selector
+const snapshotTimeline = computed(() => {
+  if (!roundReport.value) return [];
+  
+  return roundReport.value.leaderboardSnapshots.map((snapshot, index) => {
+    const date = new Date(snapshot.timestamp);
+    const timeString = date.toLocaleTimeString(undefined, {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     }).toLowerCase();
+    
+    let label = timeString;
+    if (index === 0) label = `Start (${timeString})`;
+    else if (index === roundReport.value!.leaderboardSnapshots.length - 1) label = `End (${timeString})`;
+    
+    return {
+      index,
+      label,
+      timestamp: snapshot.timestamp
+    };
   });
-
-  // Create dataset for ping
-  return {
-    labels,
-    datasets: [
-      {
-        label: 'Ping (ms)',
-        backgroundColor: 'rgba(255, 152, 0, 0.2)',
-        borderColor: '#FF9800',
-        borderWidth: 2,
-        data: sortedObservations.map(obs => obs.ping),
-        tension: 0.1
-      }
-    ]
-  };
 });
 
-// Chart options for performance chart with dynamic title
-const performanceChartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: true,
-      position: 'top'
-    },
-    tooltip: {
-      mode: 'index',
-      intersect: false
-    },
-    title: {
-      display: true,
-      text: `Player Performance - ${sessionDetails.value ? `📊 ${formattedKDR.value}` : ''}`,
-      font: {
-        size: 16
-      }
-    }
-  },
-  scales: {
-    x: {
-      title: {
-        display: true,
-        text: 'Time'
-      }
-    },
-    y: {
-      beginAtZero: true,
-      title: {
-        display: true,
-        text: 'Value'
-      },
-      ticks: {
-        precision: 0
-      }
-    }
-  },
-  interaction: {
-    intersect: false,
-    mode: 'index'
-  }
-}));
-
-// Chart options for ping chart
-const pingChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: true,
-      position: 'top'
-    },
-    tooltip: {
-      mode: 'index',
-      intersect: false
-    },
-    title: {
-      display: true,
-      text: 'Player Ping',
-      font: {
-        size: 16
-      }
-    }
-  },
-  scales: {
-    x: {
-      title: {
-        display: true,
-        text: 'Time'
-      }
-    },
-    y: {
-      beginAtZero: true,
-      title: {
-        display: true,
-        text: 'Ping (ms)'
-      },
-      ticks: {
-        precision: 0
-      }
-    }
-  },
-  interaction: {
-    intersect: false,
-    mode: 'index'
-  }
+// Check if a player name matches the current player (case insensitive)
+const isCurrentPlayer = (playerName: string): boolean => {
+  return playerName.toLowerCase() === props.playerName.toLowerCase();
 };
+
+// Group leaderboard entries by team
+const teamGroups = computed(() => {
+  if (!currentSnapshot.value || !currentSnapshot.value.entries.length) return [];
+  
+  const groups = currentSnapshot.value.entries.reduce((acc, entry) => {
+    if (!acc[entry.teamLabel]) {
+      acc[entry.teamLabel] = [];
+    }
+    acc[entry.teamLabel].push(entry);
+    return acc;
+  }, {} as Record<string, typeof currentSnapshot.value.entries>);
+  
+  // Sort each team by rank
+  Object.values(groups).forEach(team => {
+    team.sort((a, b) => a.rank - b.rank);
+  });
+  
+  return Object.entries(groups).map(([teamName, players]) => ({
+    teamName,
+    players,
+    totalScore: players.reduce((sum, player) => sum + player.score, 0),
+    totalKills: players.reduce((sum, player) => sum + player.kills, 0),
+    totalDeaths: players.reduce((sum, player) => sum + player.deaths, 0)
+  })).sort((a, b) => b.totalScore - a.totalScore); // Sort teams by total score
+});
 
 // Close the popup when clicking outside or pressing ESC
 const handleOutsideClick = (event: MouseEvent) => {
@@ -310,15 +187,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
     event.stopImmediatePropagation();
   }
 };
-
-// Format KDR as "ratio (kills/deaths)" e.g., "0.33 (1/3)"
-const formattedKDR = computed(() => {
-  if (!sessionDetails.value) return '';
-  const kills = sessionDetails.value.totalKills;
-  const deaths = sessionDetails.value.totalDeaths;
-  const ratio = calculateKDR(kills, deaths);
-  return `${ratio} (${kills}/${deaths})`;
-});
 
 // Add and remove event listeners
 watch(() => props.isOpen, (newValue) => {
@@ -346,77 +214,166 @@ onMounted(() => {
   <div v-if="isOpen" class="session-details-modal-overlay" @click="$emit('close')">
     <div class="session-details-modal-content" @click.stop>
       <div class="session-details-header">
-        <h2>Session Details</h2>
+        <h2>Round Report</h2>
         <button class="close-button" @click="$emit('close'); $event.stopPropagation()">&times;</button>
       </div>
       <div class="session-details-body">
         <div v-if="loading" class="loading-container">
           <div class="loading-spinner"></div>
-          <p>Loading session details...</p>
+          <p>Loading round report...</p>
         </div>
         <div v-else-if="error" class="error-container">
           <p class="error-message">{{ error }}</p>
         </div>
-        <div v-else-if="sessionDetails" class="details-container">
-          <!-- Session Info Section -->
-          <div class="session-info">
-            <div class="session-info-header">
-              <h3>{{ sessionDetails.playerName }}</h3>
-              <span v-if="sessionDetails.isActive" class="status-badge active">Active</span>
-            </div>
-            <div class="session-info-grid">
-              <div class="info-item">
-                <div class="info-label">Server</div>
-                <div class="info-value">{{ sessionDetails.serverName }}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Map</div>
-                <div class="info-value">{{ sessionDetails.mapName }}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Game Type</div>
-                <div class="info-value">{{ sessionDetails.gameType }}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Start Time</div>
-                <div class="info-value">{{ formatDate(sessionDetails.startTime) }}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">End Time</div>
-                <div class="info-value">{{ sessionDetails.endTime ? formatDate(sessionDetails.endTime) : 'Session Active' }}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Duration</div>
-                <div class="info-value">{{ formatPlayTime(sessionDetails.totalPlayTimeMinutes) }}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Total Score</div>
-                <div class="info-value">{{ sessionDetails.totalScore }}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Team</div>
-                <div class="info-value">{{ sessionDetails.observations.length > 0 ? sessionDetails.observations[0].teamLabel : 'N/A' }}</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Performance Chart Section -->
-          <div v-if="sessionDetails.observations.length > 0" class="chart-section">
-            <div class="chart-container">
-              <Line :data="performanceChartData" :options="performanceChartOptions" />
+        <div v-else-if="roundReport" class="details-container">
+                     <!-- Session & Round Info Section -->
+           <div class="round-info">
+             <div class="round-info-header">
+               <h3>{{ roundReport.session.playerName }}</h3>
+               <span v-if="roundReport.round.isActive" class="status-badge active">Active</span>
+             </div>
+             <div class="round-info-grid">
+               <div class="info-item">
+                 <div class="info-label">Server</div>
+                 <div class="info-value">{{ roundReport.session.serverName }}</div>
+               </div>
+               <div class="info-item">
+                 <div class="info-label">Map</div>
+                 <div class="info-value">{{ roundReport.round.mapName }}</div>
+               </div>
+               <div class="info-item">
+                 <div class="info-label">Game Type</div>
+                 <div class="info-value">{{ roundReport.round.gameType }}</div>
+               </div>
+               <div class="info-item">
+                 <div class="info-label">Start Time</div>
+                 <div class="info-value">{{ formatDate(roundReport.round.startTime) }}</div>
+               </div>
+               <div class="info-item">
+                 <div class="info-label">End Time</div>
+                 <div class="info-value">{{ roundReport.round.isActive ? 'Round Active' : formatDate(roundReport.round.endTime) }}</div>
+               </div>
+               <div class="info-item">
+                 <div class="info-label">Duration</div>
+                 <div class="info-value">{{ roundReport.round.isActive ? 'In Progress' : formatDuration(roundReport.round.startTime, roundReport.round.endTime) }}</div>
+               </div>
+               <div class="info-item">
+                 <div class="info-label">Total Participants</div>
+                 <div class="info-value">{{ roundReport.round.totalParticipants }}</div>
+               </div>
+               <div class="info-item">
+                 <div class="info-label">Final Score</div>
+                 <div class="info-value">{{ roundReport.session.score }}</div>
+               </div>
+               <div class="info-item">
+                 <div class="info-label">Final K/D</div>
+                 <div class="info-value">{{ calculateKDR(roundReport.session.kills, roundReport.session.deaths) }} ({{ roundReport.session.kills }}/{{ roundReport.session.deaths }})</div>
+               </div>
             </div>
           </div>
 
-          <!-- Ping Chart Section -->
-          <div v-if="sessionDetails.observations.length > 0" class="chart-section">
-            <div class="chart-container">
-              <Line :data="pingChartData" :options="pingChartOptions" />
+          <!-- Timeline Selector -->
+          <div v-if="snapshotTimeline.length > 1" class="timeline-section">
+            <h3>Leaderboard Timeline</h3>
+            <div class="timeline-selector">
+              <button
+                v-for="snapshot in snapshotTimeline"
+                :key="snapshot.index"
+                :class="{ active: selectedSnapshotIndex === snapshot.index }"
+                @click="selectedSnapshotIndex = snapshot.index"
+                class="timeline-button"
+              >
+                {{ snapshot.label }}
+              </button>
             </div>
           </div>
+
+                     <!-- Team-Based Leaderboard Section -->
+           <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
+             <div class="leaderboard-header">
+               <h3>🏆 Team Leaderboard</h3>
+               <div class="timestamp">{{ formatDate(currentSnapshot.timestamp) }}</div>
+             </div>
+             
+             <div class="teams-container">
+               <div 
+                 v-for="(team, index) in teamGroups" 
+                 :key="team.teamName"
+                 class="team-column"
+                 :class="[`team-${team.teamName.toLowerCase()}`, { 'winning-team': index === 0 }]"
+               >
+                 <!-- Team Header -->
+                 <div class="team-header">
+                   <div class="team-name">
+                     <span class="team-icon">🛡️</span>
+                     {{ team.teamName }}
+                     <span v-if="index === 0" class="crown">👑</span>
+                   </div>
+                   <div class="team-stats">
+                     <div class="team-stat">
+                       <span class="stat-label">Score</span>
+                       <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
+                     </div>
+                     <div class="team-stat">
+                       <span class="stat-label">K/D</span>
+                       <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
+                     </div>
+                   </div>
+                 </div>
+
+                 <!-- Team Players -->
+                 <div class="team-players">
+                   <div class="players-header">
+                     <div class="header-rank">#</div>
+                     <div class="header-player">Player</div>
+                     <div class="header-score">Score</div>
+                     <div class="header-kd">K/D</div>
+                     <div class="header-ping">Ping</div>
+                   </div>
+                   
+                   <div class="players-list">
+                     <div
+                       v-for="player in team.players"
+                       :key="player.playerName"
+                       class="player-row"
+                       :class="{ 
+                         'current-player-row': isCurrentPlayer(player.playerName),
+                         'top-player': player.rank === 1
+                       }"
+                     >
+                       <div class="player-rank">
+                         <span v-if="player.rank === 1" class="rank-medal">🥇</span>
+                         <span v-else-if="player.rank === 2" class="rank-medal">🥈</span>
+                         <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
+                         <span v-else class="rank-number">{{ player.rank }}</span>
+                       </div>
+                       <div class="player-name" :class="{ 'highlighted-name': isCurrentPlayer(player.playerName) }">
+                         {{ player.playerName }}
+                         <span v-if="isCurrentPlayer(player.playerName)" class="you-indicator">YOU</span>
+                       </div>
+                       <div class="player-score">{{ player.score.toLocaleString() }}</div>
+                       <div class="player-kd">
+                         <span class="kills">{{ player.kills }}</span>
+                         <span class="separator">/</span>
+                         <span class="deaths">{{ player.deaths }}</span>
+                       </div>
+                       <div class="player-ping" :class="{ 
+                         'ping-good': player.ping < 50, 
+                         'ping-ok': player.ping >= 50 && player.ping < 100,
+                         'ping-bad': player.ping >= 100
+                       }">
+                         {{ player.ping }}ms
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </div>
 
         </div>
         <div v-else class="no-data-container">
-          <p>No session details available.</p>
+          <p>No round report available.</p>
         </div>
       </div>
     </div>
@@ -441,8 +398,8 @@ onMounted(() => {
   background-color: var(--color-background);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  width: 80%;
-  max-width: 1000px;
+  width: 85%;
+  max-width: 1200px;
   max-height: 90vh;
   overflow: auto;
   padding: 0;
@@ -522,31 +479,31 @@ onMounted(() => {
 .details-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 25px;
 }
 
-.session-info {
+.round-info {
   background-color: var(--color-background-soft);
   border-radius: 8px;
-  padding: 15px;
+  padding: 20px;
 }
 
-.session-info-header {
+.round-info-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
-.session-info-header h3 {
+.round-info-header h3 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: var(--color-heading);
 }
 
 .status-badge {
   display: inline-block;
-  padding: 3px 8px;
+  padding: 4px 12px;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: bold;
@@ -557,9 +514,9 @@ onMounted(() => {
   background-color: #4CAF50;
 }
 
-.session-info-grid {
+.round-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 15px;
 }
 
@@ -572,75 +529,394 @@ onMounted(() => {
 .info-label {
   font-size: 0.9rem;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 
 .info-value {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: bold;
 }
 
-.chart-section {
+.timeline-section {
   background-color: var(--color-background-soft);
   border-radius: 8px;
-  padding: 15px;
+  padding: 20px;
 }
 
-.chart-container {
-  height: 300px;
-}
-
-.observations-section {
-  background-color: var(--color-background-soft);
-  border-radius: 8px;
-  padding: 15px;
-}
-
-.observations-section h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
+.timeline-section h3 {
+  margin: 0 0 15px 0;
   color: var(--color-heading);
   font-size: 1.2rem;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 8px;
 }
 
-.observations-table {
-  overflow-x: auto;
+.timeline-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+.timeline-button {
+  padding: 8px 16px;
+  border: 2px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
 }
 
-th, td {
-  padding: 10px;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-}
-
-th {
+.timeline-button:hover {
   background-color: var(--color-background-mute);
-  font-weight: bold;
+  border-color: var(--color-primary);
+}
+
+.timeline-button.active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.leaderboard-section {
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
+  border-radius: 12px;
+  padding: 25px;
+  border: 1px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.1);
+}
+
+.leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+}
+
+.leaderboard-header h3 {
+  margin: 0;
   color: var(--color-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-tbody tr:hover {
-  background-color: var(--color-background-mute);
+.timestamp {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  background: var(--color-background);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+}
+
+.teams-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.team-column {
+  background: var(--color-background);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.team-column:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.team-column.winning-team {
+  border-color: #ffd700;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.team-column.team-red {
+  border-top: 4px solid #f44336;
+}
+
+.team-column.team-blue {
+  border-top: 4px solid #2196f3;
+}
+
+.team-column.team-green {
+  border-top: 4px solid #4caf50;
+}
+
+.team-column.team-yellow {
+  border-top: 4px solid #ff9800;
+}
+
+.team-header {
+  background: linear-gradient(135deg, var(--color-background-mute) 0%, var(--color-background-soft) 100%);
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.team-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  margin-bottom: 10px;
+}
+
+.team-icon {
+  font-size: 1.2rem;
+}
+
+.crown {
+  font-size: 1.3rem;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-4px); }
+  60% { transform: translateY(-2px); }
+}
+
+.team-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.team-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.team-players {
+  padding: 0;
+}
+
+.players-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 60px 60px;
+  gap: 10px;
+  padding: 12px 15px;
+  background: var(--color-background-mute);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+}
+
+.players-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 60px 60px;
+  gap: 10px;
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+  align-items: center;
+}
+
+.player-row:hover {
+  background: var(--color-background-soft);
+}
+
+.player-row.current-player-row {
+  background: linear-gradient(90deg, rgba(var(--color-primary-rgb, 33, 150, 243), 0.1) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
+  border-left: 4px solid var(--color-primary);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { background: linear-gradient(90deg, rgba(var(--color-primary-rgb, 33, 150, 243), 0.1) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%); }
+  50% { background: linear-gradient(90deg, rgba(var(--color-primary-rgb, 33, 150, 243), 0.15) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.08) 100%); }
+  100% { background: linear-gradient(90deg, rgba(var(--color-primary-rgb, 33, 150, 243), 0.1) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%); }
+}
+
+.player-row.top-player {
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+}
+
+.player-rank {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+}
+
+.rank-medal {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.rank-number {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  background: var(--color-background-mute);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-name {
+  font-weight: 500;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.highlighted-name {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.you-indicator {
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 5px rgba(var(--color-primary-rgb, 33, 150, 243), 0.5); }
+  to { box-shadow: 0 0 10px rgba(var(--color-primary-rgb, 33, 150, 243), 0.8); }
+}
+
+.player-score {
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.player-kd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+
+.kills {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.separator {
+  color: var(--color-text-muted);
+}
+
+.deaths {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.player-ping {
+  text-align: center;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.ping-good {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.ping-ok {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+.ping-bad {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
 }
 
 @media (max-width: 768px) {
   .session-details-modal-content {
     width: 95%;
+    max-height: 95vh;
   }
 
-  .session-info-grid {
+  .round-info-grid {
     grid-template-columns: 1fr;
   }
 
-  .chart-container {
-    height: 250px;
+  .timeline-selector {
+    flex-direction: column;
+  }
+
+  .timeline-button {
+    text-align: center;
+  }
+
+  .teams-container {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .team-column {
+    min-width: 0;
+  }
+
+  .players-header,
+  .player-row {
+    grid-template-columns: 30px 1fr 60px 50px 50px;
+    gap: 8px;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .team-stats {
+    gap: 15px;
+  }
+
+  .leaderboard-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .leaderboard-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .you-indicator {
+    font-size: 0.6rem;
+    padding: 1px 4px;
   }
 }
 </style>
