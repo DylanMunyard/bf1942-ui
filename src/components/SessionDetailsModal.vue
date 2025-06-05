@@ -20,6 +20,9 @@ const roundReport = ref<RoundReport | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const selectedSnapshotIndex = ref(0);
+const isPlaying = ref(false);
+const playbackInterval = ref<NodeJS.Timeout | null>(null);
+const playbackSpeed = ref(150); // milliseconds between snapshots (much faster default)
 
 // Fetch round report when component is mounted or when props change
 const fetchData = async () => {
@@ -122,16 +125,9 @@ const snapshotTimeline = computed(() => {
   if (!roundReport.value) return [];
   
   return roundReport.value.leaderboardSnapshots.map((snapshot, index) => {
-    const date = new Date(snapshot.timestamp);
-    const timeString = date.toLocaleTimeString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    }).toLowerCase();
-    
-    let label = timeString;
-    if (index === 0) label = `Start (${timeString})`;
-    else if (index === roundReport.value!.leaderboardSnapshots.length - 1) label = `End (${timeString})`;
+    let label = `${index + 1}`;
+    if (index === 0) label = `Start`;
+    else if (index === roundReport.value!.leaderboardSnapshots.length - 1) label = `End`;
     
     return {
       index,
@@ -144,6 +140,51 @@ const snapshotTimeline = computed(() => {
 // Check if a player name matches the current player (case insensitive)
 const isCurrentPlayer = (playerName: string): boolean => {
   return playerName.toLowerCase() === props.playerName.toLowerCase();
+};
+
+// Playback controls
+const startPlayback = () => {
+  if (!roundReport.value || roundReport.value.leaderboardSnapshots.length <= 1) return;
+  
+  isPlaying.value = true;
+  selectedSnapshotIndex.value = 0;
+  
+  playbackInterval.value = setInterval(() => {
+    if (selectedSnapshotIndex.value < roundReport.value!.leaderboardSnapshots.length - 1) {
+      selectedSnapshotIndex.value++;
+    } else {
+      stopPlayback();
+    }
+  }, playbackSpeed.value);
+};
+
+const stopPlayback = () => {
+  isPlaying.value = false;
+  if (playbackInterval.value) {
+    clearInterval(playbackInterval.value);
+    playbackInterval.value = null;
+  }
+};
+
+const resetPlayback = () => {
+  stopPlayback();
+  selectedSnapshotIndex.value = 0;
+};
+
+const togglePlayback = () => {
+  if (isPlaying.value) {
+    stopPlayback();
+  } else {
+    startPlayback();
+  }
+};
+
+const setPlaybackSpeed = (speed: number) => {
+  playbackSpeed.value = speed;
+  if (isPlaying.value) {
+    stopPlayback();
+    startPlayback();
+  }
 };
 
 // Group leaderboard entries by team
@@ -169,7 +210,7 @@ const teamGroups = computed(() => {
     totalScore: players.reduce((sum, player) => sum + player.score, 0),
     totalKills: players.reduce((sum, player) => sum + player.kills, 0),
     totalDeaths: players.reduce((sum, player) => sum + player.deaths, 0)
-  })).sort((a, b) => b.totalScore - a.totalScore); // Sort teams by total score
+  })); // No sorting - just display teams as they are
 });
 
 // Close the popup when clicking outside or pressing ESC
@@ -200,12 +241,19 @@ watch(() => props.isOpen, (newValue) => {
   }
 });
 
-// Clean up event listeners when component is unmounted
+// Clean up event listeners and intervals when component is unmounted
 onMounted(() => {
   if (props.isOpen) {
     document.addEventListener('mousedown', handleOutsideClick);
     document.addEventListener('keydown', handleKeyDown);
     fetchData();
+  }
+});
+
+// Cleanup on unmount
+watch(() => props.isOpen, (newValue) => {
+  if (!newValue) {
+    stopPlayback();
   }
 });
 </script>
@@ -225,101 +273,73 @@ onMounted(() => {
         <div v-else-if="error" class="error-container">
           <p class="error-message">{{ error }}</p>
         </div>
-        <div v-else-if="roundReport" class="details-container">
-                     <!-- Session & Round Info Section -->
-           <div class="round-info">
-             <div class="round-info-header">
-               <h3>{{ roundReport.session.playerName }}</h3>
-               <span v-if="roundReport.round.isActive" class="status-badge active">Active</span>
-             </div>
-             <div class="round-info-grid">
-               <div class="info-item">
-                 <div class="info-label">Server</div>
-                 <div class="info-value">{{ roundReport.session.serverName }}</div>
-               </div>
-               <div class="info-item">
-                 <div class="info-label">Map</div>
-                 <div class="info-value">{{ roundReport.round.mapName }}</div>
-               </div>
-               <div class="info-item">
-                 <div class="info-label">Game Type</div>
-                 <div class="info-value">{{ roundReport.round.gameType }}</div>
-               </div>
-               <div class="info-item">
-                 <div class="info-label">Start Time</div>
-                 <div class="info-value">{{ formatDate(roundReport.round.startTime) }}</div>
-               </div>
-               <div class="info-item">
-                 <div class="info-label">End Time</div>
-                 <div class="info-value">{{ roundReport.round.isActive ? 'Round Active' : formatDate(roundReport.round.endTime) }}</div>
-               </div>
-               <div class="info-item">
-                 <div class="info-label">Duration</div>
-                 <div class="info-value">{{ roundReport.round.isActive ? 'In Progress' : formatDuration(roundReport.round.startTime, roundReport.round.endTime) }}</div>
-               </div>
-               <div class="info-item">
-                 <div class="info-label">Total Participants</div>
-                 <div class="info-value">{{ roundReport.round.totalParticipants }}</div>
-               </div>
-               <div class="info-item">
-                 <div class="info-label">Final Score</div>
-                 <div class="info-value">{{ roundReport.session.score }}</div>
-               </div>
-               <div class="info-item">
-                 <div class="info-label">Final K/D</div>
-                 <div class="info-value">{{ calculateKDR(roundReport.session.kills, roundReport.session.deaths) }} ({{ roundReport.session.kills }}/{{ roundReport.session.deaths }})</div>
-               </div>
+                <div v-else-if="roundReport" class="details-container">
+          <!-- Map & Time Header -->
+          <div class="match-header">
+            <div class="match-info">
+              <h2 class="map-name">🗺️ {{ roundReport.round.mapName }}</h2>
+              <div class="match-time">{{ formatDate(roundReport.round.startTime) }}</div>
+            </div>
+            <div class="match-status">
+              <span v-if="roundReport.round.isActive" class="status-badge active">Live Match</span>
+              <span v-else class="status-badge completed">Match Complete</span>
             </div>
           </div>
 
-          <!-- Timeline Selector -->
-          <div v-if="snapshotTimeline.length > 1" class="timeline-section">
-            <h3>Leaderboard Timeline</h3>
-            <div class="timeline-selector">
-              <button
-                v-for="snapshot in snapshotTimeline"
-                :key="snapshot.index"
-                :class="{ active: selectedSnapshotIndex === snapshot.index }"
-                @click="selectedSnapshotIndex = snapshot.index"
-                class="timeline-button"
-              >
-                {{ snapshot.label }}
-              </button>
-            </div>
-          </div>
-
-                     <!-- Team-Based Leaderboard Section -->
+                                           <!-- Team-Based Leaderboard Section -->
            <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
              <div class="leaderboard-header">
                <h3>🏆 Team Leaderboard</h3>
-               <div class="timestamp">{{ formatDate(currentSnapshot.timestamp) }}</div>
-             </div>
+               <div class="header-controls">
+                 <div v-if="snapshotTimeline.length > 1" class="compact-playback">
+                   <button @click="resetPlayback" class="mini-button" title="Reset">⏮️</button>
+                   <button @click="togglePlayback" class="mini-button play-mini" :class="{ playing: isPlaying }" title="Play/Pause">
+                     {{ isPlaying ? '⏸️' : '▶️' }}
+                   </button>
+                   <select v-model="playbackSpeed" @change="setPlaybackSpeed(playbackSpeed)" class="mini-select">
+                     <option :value="500">0.5x</option>
+                     <option :value="250">1x</option>
+                     <option :value="150" selected>2x</option>
+                     <option :value="75">4x</option>
+                   </select>
+                   <span v-if="isPlaying" class="mini-indicator">🔴</span>
+              </div>
+              </div>
+              </div>
+             
+             <div v-if="snapshotTimeline.length > 1" class="compact-progress">
+               <div class="mini-progress-bar">
+                 <div 
+                   class="mini-progress-fill"
+                   :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
+                 ></div>
+              </div>
+              </div>
              
              <div class="teams-container">
-               <div 
-                 v-for="(team, index) in teamGroups" 
-                 :key="team.teamName"
-                 class="team-column"
-                 :class="[`team-${team.teamName.toLowerCase()}`, { 'winning-team': index === 0 }]"
-               >
+                               <div 
+                  v-for="team in teamGroups" 
+                  :key="team.teamName"
+                  class="team-column"
+                  :class="`team-${team.teamName.toLowerCase()}`"
+                >
                  <!-- Team Header -->
                  <div class="team-header">
-                   <div class="team-name">
-                     <span class="team-icon">🛡️</span>
-                     {{ team.teamName }}
-                     <span v-if="index === 0" class="crown">👑</span>
-                   </div>
+                                        <div class="team-name">
+                       <span class="team-icon">🛡️</span>
+                       {{ team.teamName }}
+              </div>
                    <div class="team-stats">
                      <div class="team-stat">
                        <span class="stat-label">Score</span>
                        <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
-                     </div>
+              </div>
                      <div class="team-stat">
                        <span class="stat-label">K/D</span>
                        <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
-                     </div>
-                   </div>
-                 </div>
+              </div>
+            </div>
+          </div>
 
                  <!-- Team Players -->
                  <div class="team-players">
@@ -366,10 +386,10 @@ onMounted(() => {
                        </div>
                      </div>
                    </div>
-                 </div>
-               </div>
-             </div>
-           </div>
+            </div>
+          </div>
+            </div>
+          </div>
 
         </div>
         <div v-else class="no-data-container">
@@ -479,103 +499,75 @@ onMounted(() => {
 .details-container {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 20px;
 }
 
-.round-info {
-  background-color: var(--color-background-soft);
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.round-info-header {
+.match-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.round-info-header h3 {
-  margin: 0;
-  font-size: 1.3rem;
-  color: var(--color-heading);
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 12px;
+  padding: 20px 25px;
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
   border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: white;
+  border: 1px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.1);
 }
 
-.status-badge.active {
-  background-color: #4CAF50;
-}
-
-.round-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-}
-
-.info-item {
+.match-info {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.info-label {
-  font-size: 0.9rem;
+.map-name {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.match-time {
+  font-size: 1rem;
   color: var(--color-text-muted);
   font-weight: 500;
 }
 
-.info-value {
-  font-size: 1rem;
-  font-weight: bold;
-}
-
-.timeline-section {
-  background-color: var(--color-background-soft);
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.timeline-section h3 {
-  margin: 0 0 15px 0;
-  color: var(--color-heading);
-  font-size: 1.2rem;
-}
-
-.timeline-selector {
+.match-status {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
 }
 
-.timeline-button {
-  padding: 8px 16px;
-  border: 2px solid var(--color-border);
-  border-radius: 6px;
-  background-color: var(--color-background);
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.timeline-button:hover {
-  background-color: var(--color-background-mute);
-  border-color: var(--color-primary);
-}
-
-.timeline-button.active {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
+.status-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
+
+.status-badge.active {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  animation: pulse-live 2s infinite;
+}
+
+.status-badge.completed {
+  background: linear-gradient(135deg, #666 0%, #555 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes pulse-live {
+  0% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
+  50% { box-shadow: 0 2px 12px rgba(76, 175, 80, 0.6); }
+  100% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
+}
+
+
+
+
 
 .leaderboard-section {
   background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
@@ -588,7 +580,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   padding-bottom: 15px;
   border-bottom: 2px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
 }
@@ -601,13 +593,92 @@ onMounted(() => {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.timestamp {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
+.header-controls {
+  display: flex;
+  align-items: center;
+}
+
+.compact-playback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background: var(--color-background);
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 4px 8px;
+  border-radius: 16px;
   border: 1px solid var(--color-border);
+}
+
+.mini-button {
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+}
+
+.mini-button:hover {
+  background: var(--color-background-mute);
+  border-color: var(--color-primary);
+}
+
+.play-mini.playing {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.mini-select {
+  padding: 2px 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+  min-width: 45px;
+}
+
+.mini-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.mini-indicator {
+  color: #ff4444;
+  font-size: 0.7rem;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+.compact-progress {
+  margin-bottom: 10px;
+}
+
+.mini-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--color-background-mute);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.mini-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.8) 100%);
+  border-radius: 2px;
+  transition: width 0.3s ease;
 }
 
 .teams-container {
@@ -630,10 +701,7 @@ onMounted(() => {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-.team-column.winning-team {
-  border-color: #ffd700;
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-}
+
 
 .team-column.team-red {
   border-top: 4px solid #f44336;
@@ -671,16 +739,7 @@ onMounted(() => {
   font-size: 1.2rem;
 }
 
-.crown {
-  font-size: 1.3rem;
-  animation: bounce 2s infinite;
-}
 
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-4px); }
-  60% { transform: translateY(-2px); }
-}
 
 .team-stats {
   display: flex;
@@ -871,16 +930,30 @@ onMounted(() => {
     max-height: 95vh;
   }
 
-  .round-info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .timeline-selector {
+  .match-header {
     flex-direction: column;
+    gap: 15px;
+    text-align: center;
   }
 
-  .timeline-button {
-    text-align: center;
+  .map-name {
+    font-size: 1.4rem;
+  }
+
+  .compact-playback {
+    gap: 4px;
+    padding: 3px 6px;
+  }
+
+  .mini-button {
+    min-width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+
+  .mini-select {
+    min-width: 40px;
+    font-size: 0.7rem;
   }
 
   .teams-container {
