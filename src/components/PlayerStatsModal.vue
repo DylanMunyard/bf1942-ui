@@ -499,6 +499,7 @@ onMounted(() => {
               <table>
                 <thead>
                   <tr>
+                    <th>Time</th>
                     <th>Server Name</th>
                     <th>Map</th>
                     <th>Game Type</th>
@@ -506,7 +507,6 @@ onMounted(() => {
                     <th>🔫</th>
                     <th>💀</th>
                     <th>K/D</th>
-                    <th>Start Time</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -516,23 +516,21 @@ onMounted(() => {
                       class="clickable-row">
                     <td>
                       <router-link 
-                        :to="`/servers/${encodeURIComponent(session.serverName)}/rankings`" 
-                        class="server-link"
-                        @click.stop
+                        :to="`/players/${encodeURIComponent(playerName)}/sessions/${session.sessionId}`" 
+                        class="time-link"
+                        style="color: #1a73e8; text-decoration: underline;"
                       >
-                        {{ session.serverName }}
+                        <div>{{ formatRelativeTime(session.startTime) }}</div>
+                        <div class="table-secondary-text">{{ formatDate(session.startTime) }}</div>
                       </router-link>
                     </td>
+                    <td>{{ session.serverName }}</td>
                     <td>{{ session.mapName }}</td>
                     <td>{{ session.gameType }}</td>
                     <td>{{ session.totalScore }}</td>
                     <td>{{ session.totalKills }}</td>
                     <td>{{ session.totalDeaths }}</td>
                     <td>{{ calculateKDR(session.totalKills, session.totalDeaths) }}</td>
-                    <td>
-                      <div>{{ formatRelativeTime(session.startTime) }}</div>
-                      <div class="table-secondary-text">{{ formatDate(session.startTime) }}</div>
-                    </td>
                     <td>
                       <span v-if="session.isActive" class="active-session-badge">Active</span>
                     </td>

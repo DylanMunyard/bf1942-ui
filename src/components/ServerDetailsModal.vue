@@ -187,7 +187,7 @@ onMounted(() => {
             :to="`/servers/${encodeURIComponent(props.serverName)}/rankings`" 
             class="rankings-button"
           >
-            View Rankings
+            🏆 View Rankings
           </router-link>
           <button class="close-button" @click="$emit('close')">&times;</button>
         </div>
@@ -208,7 +208,7 @@ onMounted(() => {
 
           <!-- Player Count Chart -->
           <div v-if="serverDetails.playerCountMetrics && serverDetails.playerCountMetrics.length > 0" class="stats-section">
-            <h3>Player Count Over Time</h3>
+            <h3>Player Count</h3>
             <div class="chart-container">
               <Bar :data="chartData" :options="chartOptions" />
             </div>
