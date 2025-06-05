@@ -300,14 +300,14 @@ const handleOutsideClick = (event: MouseEvent) => {
   const popup = document.querySelector('.session-details-modal-content');
   if (popup && !popup.contains(event.target as Node)) {
     emit('close');
-    event.stopPropagation(); // Prevent the event from bubbling up to the PlayerStatsModal
+    event.stopImmediatePropagation();
   }
 };
 
 const handleKeyDown = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     emit('close');
-    event.stopPropagation(); // Prevent the event from bubbling up to the PlayerStatsModal
+    event.stopImmediatePropagation();
   }
 };
 
@@ -332,13 +332,6 @@ watch(() => props.isOpen, (newValue) => {
   }
 });
 
-// Watch for route changes to close the modal when navigating back
-watch(() => route.name, (newRouteName) => {
-  if (props.isOpen && newRouteName !== 'session-details') {
-    emit('close');
-  }
-});
-
 // Clean up event listeners when component is unmounted
 onMounted(() => {
   if (props.isOpen) {
@@ -350,8 +343,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="session-details-modal-overlay">
-    <div class="session-details-modal-content">
+  <div v-if="isOpen" class="session-details-modal-overlay" @click="$emit('close')">
+    <div class="session-details-modal-content" @click.stop>
       <div class="session-details-header">
         <h2>Session Details</h2>
         <button class="close-button" @click="$emit('close'); $event.stopPropagation()">&times;</button>
