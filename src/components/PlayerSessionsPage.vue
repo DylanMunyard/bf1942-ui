@@ -125,7 +125,7 @@ const openSessionDetailsModal = (sessionId: number, event?: Event) => {
   }
 
   // Navigate to the session details page
-  router.push(`/players/${encodeURIComponent(props.playerName)}/sessions/${sessionId}`);
+  router.push(`/sessions/${encodeURIComponent(props.playerName)}/${sessionId}`);
 };
 
 // Function to close the session details modal

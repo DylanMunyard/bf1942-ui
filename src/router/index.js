@@ -3,6 +3,7 @@ import ServerTable from '../components/ServerTable.vue'
 import PlayersPage from '../components/PlayersPage.vue'
 import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
 import ServerRankingsPage from '../components/ServerRankingsPage.vue'
+import SessionDetailsPage from '../components/SessionDetailsPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -78,6 +79,15 @@ const router = createRouter({
         selectedSessionId: parseInt(route.params.sessionId),
         showPlayerModal: true,
         showSessionModal: true
+      })
+    },
+    {
+      path: '/sessions/:playerName/:sessionId',
+      name: 'standalone-session-details',
+      component: SessionDetailsPage,
+      props: route => ({
+        playerName: route.params.playerName,
+        sessionId: parseInt(route.params.sessionId)
       })
     }
   ]

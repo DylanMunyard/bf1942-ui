@@ -270,7 +270,7 @@ onMounted(() => {
                       </router-link>
                     </td>
                     <td>
-                      <router-link :to="`/players/${encodeURIComponent(score.playerName)}/sessions/${score.sessionId}`" class="session-link">
+                      <router-link :to="`/sessions/${encodeURIComponent(score.playerName)}/${score.sessionId}`" class="session-link">
                         {{ score.score }}
                       </router-link>
                     </td>

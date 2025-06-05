@@ -34,7 +34,7 @@ const openSessionDetailsModal = (sessionId: number, event?: Event) => {
   }
 
   // Navigate to the session details page
-  router.push(`/players/${encodeURIComponent(props.playerName)}/sessions/${sessionId}`);
+  router.push(`/sessions/${encodeURIComponent(props.playerName)}/${sessionId}`);
 };
 
 // Function to close the session details modal
@@ -516,7 +516,7 @@ onMounted(() => {
                       class="clickable-row">
                     <td>
                       <router-link 
-                        :to="`/players/${encodeURIComponent(playerName)}/sessions/${session.sessionId}`" 
+                        :to="`/sessions/${encodeURIComponent(playerName)}/${session.sessionId}`" 
                         class="time-link"
                         style="color: #1a73e8; text-decoration: underline;"
                       >
