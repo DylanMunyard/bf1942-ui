@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchPlayersList, PlayerListItem, fetchPlayerStats } from '../services/playerStatsService';
 import PlayerStatsModal from './PlayerStatsModal.vue';
@@ -28,6 +28,12 @@ const sortBy = ref<string>('lastSeen');
 const sortDirection = ref<'asc' | 'desc'>('desc');
 const statusSortOption = ref<'isActive' | 'kills' | 'deaths' | 'kdr'>('isActive');
 const servers = ref<any[]>([]);
+
+// Pagination state
+const currentPage = ref(1);
+const pageSize = ref(50);
+const totalItems = ref(0);
+const totalPages = ref(0);
 
 // Filter variables
 const nameFilter = ref('');
@@ -112,26 +118,32 @@ const fetchServersData = async () => {
   }
 };
 
-// Fetch players data
+// Fetch players data with pagination and sorting
 const fetchPlayersData = async () => {
   loading.value = true;
   error.value = null;
 
   try {
-    // Fetch the players list
-    players.value = await fetchPlayersList();
+    // Fetch the players list with pagination and sorting
+    const result = await fetchPlayersList(
+      currentPage.value,
+      pageSize.value,
+      sortBy.value,
+      sortDirection.value
+    );
 
-    // Initialize filteredPlayers with all players
-    filteredPlayers.value = [...players.value];
+    players.value = result.items;
+    totalItems.value = result.totalItems;
+    totalPages.value = result.totalPages;
 
-    // Fetch server data if not already loaded
+    // Fetch server data if not already loaded (for filters)
     if (servers.value.length === 0) {
       await fetchServersData();
     }
 
-    // Mark active players in the list without fetching detailed stats
-    // We'll fetch detailed stats only when a player is clicked
-    filterAndSortPlayers();
+    // Update unique values for filters
+    updateUniqueGameIds();
+    updateUniqueServerNames();
   } catch (err) {
     console.error('Error fetching players data:', err);
     error.value = 'Failed to fetch players data. Please try again.';
@@ -308,27 +320,20 @@ const sortPlayers = () => {
   });
 };
 
-// Handle sort column click
+// Handle sort column click - now refetches data from server
 const handleSort = (column: string) => {
-  // For columns other than Status
-  if (column !== 'isActive') {
-    // If clicking the same column, toggle direction
-    if (sortBy.value === column) {
-      sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
-    } else {
-      // If clicking a new column, set it as the sort column and default to descending
-      sortBy.value = column;
-      sortDirection.value = 'desc';
-    }
+  // If clicking the same column, toggle direction
+  if (sortBy.value === column) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
   } else {
-    // If clicking the Status column, set it as the sort column with default sort
+    // If clicking a new column, set it as the sort column and default to descending
     sortBy.value = column;
-    statusSortOption.value = 'isActive';
     sortDirection.value = 'desc';
   }
 
-  // Re-filter and sort the players
-  filterAndSortPlayers();
+  // Reset to first page and refetch data
+  currentPage.value = 1;
+  fetchPlayersData();
 };
 
 // Handle sort by status metric (kills, deaths, kdr)
@@ -444,6 +449,40 @@ watch(() => props.selectedSessionId, (newSessionId) => {
   }
 }, { immediate: true });
 
+// Function to go to a specific page
+const goToPage = (page: number) => {
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+  fetchPlayersData();
+};
+
+// Function to change page size
+const changePageSize = (newPageSize: number) => {
+  pageSize.value = newPageSize;
+  currentPage.value = 1; // Reset to first page
+  fetchPlayersData();
+};
+
+// Computed property for pagination range display
+const paginationRange = computed(() => {
+  const range = [];
+  const maxVisiblePages = 5;
+
+  let startPage = Math.max(1, currentPage.value - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages.value, startPage + maxVisiblePages - 1);
+
+  // Adjust start page if end page is at max
+  if (endPage === totalPages.value) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    range.push(i);
+  }
+
+  return range;
+});
+
 // Fetch data when component is mounted
 onMounted(() => {
   // Fetch servers data first, then fetch players data
@@ -522,7 +561,22 @@ onMounted(() => {
 
     <div v-if="loading && players.length === 0" class="loading">Loading players data...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="filteredPlayers.length > 0" class="players-table-container">
+    <div v-else-if="players.length > 0" class="players-table-container">
+      <!-- Players count and pagination info -->
+      <div class="table-header">
+        <div class="players-count">
+          Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} players
+        </div>
+        <div class="page-size-selector">
+          <label for="pageSize">Players per page:</label>
+          <select id="pageSize" v-model="pageSize" @change="changePageSize(pageSize)">
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+
       <table>
         <thead>
           <tr>
@@ -544,41 +598,16 @@ onMounted(() => {
                 {{ sortDirection === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
-            <th class="sortable status-column">
-              <div @click="handleSort('isActive')">
-                Status
-                <span v-if="sortBy === 'isActive' && statusSortOption === 'isActive'" class="sort-indicator">
-                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                </span>
-              </div>
-              <div class="sort-badges">
-                <span 
-                  @click.stop="handleStatusSort('kills')" 
-                  class="sort-badge" 
-                  :class="{ active: sortBy === 'isActive' && statusSortOption === 'kills' }"
-                >
-                  Kills {{ sortBy === 'isActive' && statusSortOption === 'kills' ? (sortDirection === 'asc' ? '▲' : '▼') : '' }}
-                </span>
-                <span 
-                  @click.stop="handleStatusSort('deaths')" 
-                  class="sort-badge" 
-                  :class="{ active: sortBy === 'isActive' && statusSortOption === 'deaths' }"
-                >
-                  Deaths {{ sortBy === 'isActive' && statusSortOption === 'deaths' ? (sortDirection === 'asc' ? '▲' : '▼') : '' }}
-                </span>
-                <span 
-                  @click.stop="handleStatusSort('kdr')" 
-                  class="sort-badge" 
-                  :class="{ active: sortBy === 'isActive' && statusSortOption === 'kdr' }"
-                >
-                  KDR {{ sortBy === 'isActive' && statusSortOption === 'kdr' ? (sortDirection === 'asc' ? '▲' : '▼') : '' }}
-                </span>
-              </div>
+            <th @click="handleSort('isActive')" class="sortable">
+              Status
+              <span v-if="sortBy === 'isActive'" class="sort-indicator">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="player in filteredPlayers" :key="player.playerName">
+          <tr v-for="player in players" :key="player.playerName">
             <td>
               <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-name-link">
                 {{ player.playerName }}
@@ -605,13 +634,60 @@ onMounted(() => {
                   <span class="stat-item">KDR: {{ player.currentServer.sessionDeaths ? (player.currentServer.sessionKills / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}</span>
                 </div>
               </div>
+              <div v-else class="inactive-status">
+                Offline
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
-    </div>
-    <div v-else-if="players.length > 0 && filteredPlayers.length === 0" class="no-data">
-      No players match the current filters. <a href="#" @click.prevent="resetFilters">Reset filters</a>
+
+      <!-- Pagination controls -->
+      <div v-if="totalPages > 1" class="pagination-container">
+        <div class="pagination-controls">
+          <button 
+            @click="goToPage(1)" 
+            class="pagination-button" 
+            :disabled="currentPage === 1"
+            title="First Page"
+          >
+            &laquo;
+          </button>
+          <button 
+            @click="goToPage(currentPage - 1)" 
+            class="pagination-button" 
+            :disabled="currentPage === 1"
+            title="Previous Page"
+          >
+            &lsaquo;
+          </button>
+          <button 
+            v-for="page in paginationRange" 
+            :key="page" 
+            @click="goToPage(page)" 
+            class="pagination-button" 
+            :class="{ active: page === currentPage }"
+          >
+            {{ page }}
+          </button>
+          <button 
+            @click="goToPage(currentPage + 1)" 
+            class="pagination-button" 
+            :disabled="currentPage === totalPages"
+            title="Next Page"
+          >
+            &rsaquo;
+          </button>
+          <button 
+            @click="goToPage(totalPages)" 
+            class="pagination-button" 
+            :disabled="currentPage === totalPages"
+            title="Last Page"
+          >
+            &raquo;
+          </button>
+        </div>
+      </div>
     </div>
     <div v-else class="no-data">No players found.</div>
 
@@ -927,6 +1003,56 @@ th {
   font-size: 0.8rem;
   color: var(--color-text-muted);
   margin-top: 2px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.players-count {
+  font-weight: bold;
+}
+
+.page-size-selector {
+  display: flex;
+  align-items: center;
+}
+
+.page-size-selector label {
+  margin-right: 5px;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.pagination-button {
+  padding: 8px 16px;
+  background-color: var(--color-background-soft);
+  color: var(--color-text);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pagination-button:hover {
+  background-color: var(--color-background-mute);
+}
+
+.pagination-button.active {
+  background-color: var(--color-accent);
+  color: white;
 }
 
 @media (max-width: 768px) {
