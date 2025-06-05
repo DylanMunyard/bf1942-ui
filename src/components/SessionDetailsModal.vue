@@ -23,6 +23,7 @@ const selectedSnapshotIndex = ref(0);
 const isPlaying = ref(false);
 const playbackInterval = ref<NodeJS.Timeout | null>(null);
 const playbackSpeed = ref(500); // milliseconds between snapshots (slower default for smoother playback)
+const isDragging = ref(false);
 
 // Fetch round report when component is mounted or when props change
 const fetchData = async () => {
@@ -147,7 +148,7 @@ const startPlayback = () => {
   if (!roundReport.value || roundReport.value.leaderboardSnapshots.length <= 1) return;
   
   isPlaying.value = true;
-  selectedSnapshotIndex.value = 0;
+  // Don't reset to 0 - start from current position
   
   playbackInterval.value = setInterval(() => {
     if (selectedSnapshotIndex.value < roundReport.value!.leaderboardSnapshots.length - 1) {
@@ -279,6 +280,62 @@ const sampledDots = computed(() => {
   
   return dots;
 });
+
+const handleDotClick = (index: number) => {
+  stopPlayback();
+  selectedSnapshotIndex.value = index;
+};
+
+const startDrag = (event: MouseEvent) => {
+  isDragging.value = true;
+  stopPlayback();
+  updateSnapshotIndex(event);
+};
+
+const handleDrag = (event: MouseEvent) => {
+  if (!isDragging.value) return;
+  updateSnapshotIndex(event);
+};
+
+const stopDrag = () => {
+  isDragging.value = false;
+};
+
+const updateSnapshotIndex = (event: MouseEvent) => {
+  const scrubber = event.currentTarget as HTMLElement;
+  const rect = scrubber.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const percent = Math.min(Math.max(x / rect.width, 0), 1);
+  
+  // Find the closest dot
+  const closestDotIndex = Math.round(percent * (sampledDots.value.length - 1));
+  selectedSnapshotIndex.value = sampledDots.value[closestDotIndex].index;
+};
+
+// Calculate elapsed time from round start
+const getElapsedTime = (timestamp: string): string => {
+  if (!roundReport.value) return '+0m';
+  
+  const roundStart = new Date(roundReport.value.round.startTime);
+  const snapshotTime = new Date(timestamp);
+  const diffMs = snapshotTime.getTime() - roundStart.getTime();
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+  
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  
+  if (hours > 0) {
+    return `+${hours}h ${minutes}m`;
+  } else {
+    return `+${totalMinutes}m`;
+  }
+};
+
+// Get current snapshot elapsed time
+const currentElapsedTime = computed(() => {
+  if (!currentSnapshot.value) return '0:00';
+  return getElapsedTime(currentSnapshot.value.timestamp);
+});
 </script>
 
 <template>
@@ -326,26 +383,36 @@ const sampledDots = computed(() => {
                      <option :value="75">4x</option>
                    </select>
                    <span v-if="isPlaying" class="mini-indicator">🔴</span>
-              </div>
-              </div>
-              </div>
-             
+                 </div>
+                 <div class="elapsed-badge">
+                   {{ currentElapsedTime }}
+                 </div>
+               </div>
+               </div>
+              
              <div v-if="snapshotTimeline.length > 1" class="compact-progress">
-               <div class="mini-progress-bar">
+               <div 
+                 class="mini-progress-bar"
+                 @mousedown="startDrag"
+                 @mousemove="handleDrag"
+                 @mouseup="stopDrag"
+                 @mouseleave="stopDrag"
+               >
                  <div 
                    class="mini-progress-fill"
                    :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
                  ></div>
-              </div>
-              <div class="scrubber-dots">
-                <div 
-                  v-for="(dot, index) in sampledDots" 
-                  :key="index"
-                  class="scrubber-dot"
-                  :class="{ 'active-dot': index === selectedSnapshotIndex }"
-                  @click="selectedSnapshotIndex = dot.index"
-                ></div>
-              </div>
+                 <div class="scrubber-dots">
+                   <div 
+                     v-for="(dot, index) in sampledDots" 
+                     :key="index"
+                     class="scrubber-dot"
+                     :class="{ 'active-dot': index === selectedSnapshotIndex }"
+                     :title="`${getElapsedTime(dot.timestamp)} elapsed`"
+                     @click="handleDotClick(dot.index)"
+                   ></div>
+                 </div>
+               </div>
              </div>
              
              <div class="teams-container">
@@ -686,7 +753,7 @@ const sampledDots = computed(() => {
 .mini-indicator {
   color: #ff4444;
   font-size: 0.7rem;
-  animation: blink 1.5s infinite;
+  animation: blink 1.5s infinite alternate;
 }
 
 @keyframes blink {
@@ -700,17 +767,59 @@ const sampledDots = computed(() => {
 
 .mini-progress-bar {
   width: 100%;
-  height: 4px;
+  height: 16px;
   background: var(--color-background-mute);
-  border-radius: 2px;
+  border-radius: 8px;
   overflow: hidden;
+  position: relative;
+  cursor: pointer;
 }
 
 .mini-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-primary) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.8) 100%);
-  border-radius: 2px;
+  background: var(--color-primary);
+  border-radius: 8px;
   transition: width 0.5s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.scrubber-dots {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.scrubber-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  opacity: 0.8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.scrubber-dot:hover {
+  opacity: 1;
+  transform: scale(1.3);
+  border-color: rgba(0, 0, 0, 0.5);
+}
+
+.active-dot {
+  opacity: 1;
+  transform: scale(1.3);
+  border-color: rgba(0, 0, 0, 0.5);
 }
 
 .teams-container {
@@ -1025,28 +1134,14 @@ const sampledDots = computed(() => {
   }
 }
 
-.scrubber-dots {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 8px;
-}
-
-.scrubber-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--color-text-muted);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.scrubber-dot:hover {
-  background-color: var(--color-primary);
-}
-
-.active-dot {
-  background-color: var(--color-primary);
-  transform: scale(1.2);
+.elapsed-badge {
+  background: var(--color-primary);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 </style>
