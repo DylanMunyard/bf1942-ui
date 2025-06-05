@@ -24,6 +24,7 @@ const isPlaying = ref(false);
 const playbackInterval = ref<NodeJS.Timeout | null>(null);
 const playbackSpeed = ref(500); // milliseconds between snapshots (slower default for smoother playback)
 const isDragging = ref(false);
+const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
 
 // Fetch round report when component is mounted or when props change
 const fetchData = async () => {
@@ -36,6 +37,11 @@ const fetchData = async () => {
     const data = await fetchRoundReport(props.sessionId);
     roundReport.value = data;
     selectedSnapshotIndex.value = data.leaderboardSnapshots.length - 1; // Default to final snapshot
+    
+    // Start auto-refresh if this is a live match
+    if (data.round.isActive) {
+      startAutoRefresh();
+    }
   } catch (err) {
     console.error('Error fetching round report:', err);
     error.value = 'Failed to fetch round report';
@@ -259,6 +265,7 @@ onMounted(() => {
 watch(() => props.isOpen, (newValue) => {
   if (!newValue) {
     stopPlayback();
+    stopAutoRefresh();
   }
 });
 
@@ -340,6 +347,26 @@ const currentElapsedTime = computed(() => {
   if (!currentSnapshot.value) return '0:00';
   return getElapsedTime(currentSnapshot.value.timestamp);
 });
+
+// Auto-refresh for live matches
+const startAutoRefresh = () => {
+  if (autoRefreshInterval.value) return;
+  
+  autoRefreshInterval.value = setInterval(() => {
+    if (roundReport.value?.round.isActive) {
+      fetchData();
+    } else {
+      stopAutoRefresh();
+    }
+  }, 60000); // 60 seconds
+};
+
+const stopAutoRefresh = () => {
+  if (autoRefreshInterval.value) {
+    clearInterval(autoRefreshInterval.value);
+    autoRefreshInterval.value = null;
+  }
+};
 </script>
 
 <template>
@@ -365,7 +392,10 @@ const currentElapsedTime = computed(() => {
               <div class="match-time">{{ formatDate(roundReport.round.startTime) }}</div>
             </div>
             <div class="match-status">
-              <span v-if="roundReport.round.isActive" class="status-badge active">Live Match</span>
+              <span v-if="roundReport.round.isActive" class="status-badge active">
+                Live Match
+                <span class="auto-refresh-indicator">• Auto-refreshing</span>
+              </span>
               <span v-else class="status-badge completed">Match Complete</span>
             </div>
           </div>
@@ -670,6 +700,14 @@ const currentElapsedTime = computed(() => {
   0% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
   50% { box-shadow: 0 2px 12px rgba(76, 175, 80, 0.6); }
   100% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
+}
+
+.auto-refresh-indicator {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.9;
+  font-weight: 500;
+  margin-top: 2px;
 }
 
 .leaderboard-section {
