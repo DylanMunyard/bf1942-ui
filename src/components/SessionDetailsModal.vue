@@ -147,8 +147,12 @@ const isCurrentPlayer = (playerName: string): boolean => {
 const startPlayback = () => {
   if (!roundReport.value || roundReport.value.leaderboardSnapshots.length <= 1) return;
   
+  // If we're at the last snapshot, restart from the beginning
+  if (selectedSnapshotIndex.value >= roundReport.value.leaderboardSnapshots.length - 1) {
+    selectedSnapshotIndex.value = 0;
+  }
+  
   isPlaying.value = true;
-  // Don't reset to 0 - start from current position
   
   playbackInterval.value = setInterval(() => {
     if (selectedSnapshotIndex.value < roundReport.value!.leaderboardSnapshots.length - 1) {
@@ -388,8 +392,12 @@ const currentElapsedTime = computed(() => {
                    {{ currentElapsedTime }}
                  </div>
                </div>
-               </div>
-              
+             </div>
+             
+             <div v-if="snapshotTimeline.length > 1" class="playback-instructions">
+               <span class="instructions-text">Click play to watch the match unfold, or drag through the timeline</span>
+             </div>
+             
              <div v-if="snapshotTimeline.length > 1" class="compact-progress">
                <div 
                  class="mini-progress-bar"
@@ -664,10 +672,6 @@ const currentElapsedTime = computed(() => {
   100% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
 }
 
-
-
-
-
 .leaderboard-section {
   background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
   border-radius: 12px;
@@ -842,8 +846,6 @@ const currentElapsedTime = computed(() => {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-
-
 .team-column.team-red {
   border-top: 4px solid #f44336;
 }
@@ -879,8 +881,6 @@ const currentElapsedTime = computed(() => {
 .team-icon {
   font-size: 1.2rem;
 }
-
-
 
 .team-stats {
   display: flex;
@@ -1143,5 +1143,19 @@ const currentElapsedTime = computed(() => {
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.5px;
+}
+
+.playback-instructions {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.instructions-text {
+  background: var(--color-background-mute);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
 }
 </style>
