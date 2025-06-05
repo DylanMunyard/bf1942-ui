@@ -231,7 +231,7 @@ onMounted(() => {
                 <tbody>
                   <tr v-for="(player, index) in serverDetails.mostActivePlayersByTime" :key="index">
                     <td>
-                      <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
+                      <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
                         {{ player.playerName }}
                       </router-link>
                     </td>
@@ -265,7 +265,7 @@ onMounted(() => {
                 <tbody>
                   <tr v-for="(score, index) in serverDetails.topScores" :key="index">
                     <td>
-                      <router-link :to="`/players/${encodeURIComponent(score.playerName)}`" class="player-link">
+                      <router-link :to="`/player/${encodeURIComponent(score.playerName)}`" class="player-link">
                         {{ score.playerName }}
                       </router-link>
                     </td>

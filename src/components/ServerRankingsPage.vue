@@ -183,7 +183,7 @@ watch(
             <tr v-for="ranking in rankings" :key="ranking.playerName">
               <td class="rank-cell">#{{ ranking.rank }}</td>
               <td>
-                <router-link :to="`/players/${encodeURIComponent(ranking.playerName)}`" class="player-link">
+                <router-link :to="`/player/${encodeURIComponent(ranking.playerName)}`" class="player-link">
                   {{ ranking.playerName }}
                 </router-link>
               </td>

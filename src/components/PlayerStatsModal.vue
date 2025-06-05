@@ -39,12 +39,12 @@ const openSessionDetailsModal = (sessionId: number, event?: Event) => {
 
 // Function to close the session details modal
 const closeSessionDetailsModal = () => {
-  showSessionDetailsModal.value = false;
+  router.back();
+};
 
-  // Navigate back to the player details page
-  if (route.name === 'session-details') {
-    router.push(`/players/${encodeURIComponent(props.playerName)}`);
-  }
+// Function to close the player stats modal
+const closePlayerStatsModal = () => {
+  router.back();
 };
 
 // Format minutes to hours and minutes

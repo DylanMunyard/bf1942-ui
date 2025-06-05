@@ -4,6 +4,7 @@ import PlayersPage from '../components/PlayersPage.vue'
 import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
 import ServerRankingsPage from '../components/ServerRankingsPage.vue'
 import SessionDetailsPage from '../components/SessionDetailsPage.vue'
+import PlayerDetailsPage from '../components/PlayerDetailsPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -88,6 +89,14 @@ const router = createRouter({
       props: route => ({
         playerName: route.params.playerName,
         sessionId: parseInt(route.params.sessionId)
+      })
+    },
+    {
+      path: '/player/:playerName',
+      name: 'standalone-player-details',
+      component: PlayerDetailsPage,
+      props: route => ({
+        playerName: route.params.playerName
       })
     }
   ]

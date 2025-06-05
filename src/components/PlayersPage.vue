@@ -370,7 +370,7 @@ const fetchPlayerStatsData = async (playerName: string) => {
 // Function to open the player stats modal
 const openPlayerStatsModal = (playerName: string) => {
   // Navigate to the player details page
-  router.push(`/players/${encodeURIComponent(playerName)}`);
+  router.push(`/player/${encodeURIComponent(playerName)}`);
 };
 
 // Function to handle key events for the player stats modal
@@ -580,9 +580,12 @@ onMounted(() => {
         <tbody>
           <tr v-for="player in filteredPlayers" :key="player.playerName">
             <td>
-              <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-name-link">
+              <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-name-link">
                 {{ player.playerName }}
               </router-link>
+              <div v-if="player.currentServer" class="current-server">
+                {{ player.currentServer.serverName }}
+              </div>
             </td>
             <td>{{ formatPlayTime(player.totalPlayTimeMinutes) }}</td>
             <td>
@@ -918,6 +921,12 @@ th {
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
+}
+
+.current-server {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
 }
 
 @media (max-width: 768px) {
