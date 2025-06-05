@@ -256,6 +256,29 @@ watch(() => props.isOpen, (newValue) => {
     stopPlayback();
   }
 });
+
+const sampledDots = computed(() => {
+  const maxDots = 20; // Maximum number of dots to display
+  const totalSnapshots = snapshotTimeline.value.length;
+  
+  if (totalSnapshots <= maxDots) {
+    return snapshotTimeline.value;
+  }
+  
+  // Sample dots evenly
+  const step = Math.floor(totalSnapshots / maxDots);
+  const dots = [];
+  for (let i = 0; i < totalSnapshots; i += step) {
+    dots.push(snapshotTimeline.value[i]);
+  }
+  
+  // Ensure the last snapshot is included
+  if (dots[dots.length - 1].index !== totalSnapshots - 1) {
+    dots.push(snapshotTimeline.value[totalSnapshots - 1]);
+  }
+  
+  return dots;
+});
 </script>
 
 <template>
@@ -314,7 +337,16 @@ watch(() => props.isOpen, (newValue) => {
                    :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
                  ></div>
               </div>
+              <div class="scrubber-dots">
+                <div 
+                  v-for="(dot, index) in sampledDots" 
+                  :key="index"
+                  class="scrubber-dot"
+                  :class="{ 'active-dot': index === selectedSnapshotIndex }"
+                  @click="selectedSnapshotIndex = dot.index"
+                ></div>
               </div>
+             </div>
              
              <div class="teams-container">
                                <div 
@@ -991,5 +1023,30 @@ watch(() => props.isOpen, (newValue) => {
     font-size: 0.6rem;
     padding: 1px 4px;
   }
+}
+
+.scrubber-dots {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.scrubber-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.scrubber-dot:hover {
+  background-color: var(--color-primary);
+}
+
+.active-dot {
+  background-color: var(--color-primary);
+  transform: scale(1.2);
 }
 </style>
