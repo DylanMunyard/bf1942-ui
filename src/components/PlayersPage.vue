@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchPlayersList, PlayerListItem, fetchPlayerStats } from '../services/playerStatsService';
 import PlayerStatsModal from './PlayerStatsModal.vue';
@@ -21,12 +21,12 @@ const props = defineProps<Props>();
 
 // State variables
 const players = ref<PlayerListItem[]>([]);
-const filteredPlayers = ref<PlayerListItem[]>([]);
+// Removed filteredPlayers - using server-side filtering
 const loading = ref(true);
 const error = ref<string | null>(null);
 const sortBy = ref<string>('lastSeen');
 const sortDirection = ref<'asc' | 'desc'>('desc');
-const statusSortOption = ref<'isActive' | 'kills' | 'deaths' | 'kdr'>('isActive');
+// Removed statusSortOption - using simplified server-side sorting
 const servers = ref<any[]>([]);
 
 // Pagination state
@@ -48,6 +48,10 @@ const selectedPlayerName = ref('');
 const playerStats = ref(null);
 const playerStatsLoading = ref(false);
 const playerStatsError = ref<string | null>(null);
+
+// Debounced search functionality
+const searchTimeout = ref<any>(null);
+const isSearching = ref(false);
 
 // Format minutes to hours and minutes
 const formatPlayTime = (minutes: number): string => {
@@ -118,30 +122,37 @@ const fetchServersData = async () => {
   }
 };
 
-// Fetch players data with pagination and sorting
+// Fetch players data with pagination, sorting, and filtering
 const fetchPlayersData = async () => {
   loading.value = true;
   error.value = null;
 
   try {
-    // Fetch the players list with pagination and sorting
+    // Build filter object from current filter values
+    const filters: Record<string, string> = {};
+    if (nameFilter.value) filters.playerName = nameFilter.value;
+    if (gameIdFilter.value) filters.gameId = gameIdFilter.value;
+    if (serverNameFilter.value) filters.serverName = serverNameFilter.value;
+
+    // Fetch the players list with pagination, sorting, and filtering
     const result = await fetchPlayersList(
       currentPage.value,
       pageSize.value,
       sortBy.value,
-      sortDirection.value
+      sortDirection.value,
+      filters
     );
 
     players.value = result.items;
     totalItems.value = result.totalItems;
     totalPages.value = result.totalPages;
 
-    // Fetch server data if not already loaded (for filters)
+    // Fetch server data if not already loaded (for filter dropdowns)
     if (servers.value.length === 0) {
       await fetchServersData();
     }
 
-    // Update unique values for filters
+    // Update unique values for filters (these will come from server response eventually)
     updateUniqueGameIds();
     updateUniqueServerNames();
   } catch (err) {
@@ -152,39 +163,7 @@ const fetchPlayersData = async () => {
   }
 };
 
-// Filter and sort players based on the current filter and sort settings
-const filterAndSortPlayers = () => {
-  // First, update the list of unique game IDs and server names
-  updateUniqueGameIds();
-  updateUniqueServerNames();
-
-  // Filter players based on name, gameId, and server name filters
-  filteredPlayers.value = players.value.filter(player => {
-    // Filter by player name
-    const nameMatch = player.playerName.toLowerCase().includes(nameFilter.value.toLowerCase());
-
-    // Filter by game ID
-    let gameIdMatch = true;
-    if (gameIdFilter.value && player.currentServer && player.currentServer.gameId) {
-      gameIdMatch = player.currentServer.gameId === gameIdFilter.value;
-    } else if (gameIdFilter.value) {
-      gameIdMatch = false;
-    }
-
-    // Filter by server name
-    let serverNameMatch = true;
-    if (serverNameFilter.value && player.currentServer && player.currentServer.serverName) {
-      serverNameMatch = player.currentServer.serverName === serverNameFilter.value;
-    } else if (serverNameFilter.value) {
-      serverNameMatch = false;
-    }
-
-    return nameMatch && gameIdMatch && serverNameMatch;
-  });
-
-  // Sort the filtered players
-  sortPlayers();
-};
+// Removed old client-side filtering function - now using server-side filtering
 
 // Update the list of unique game IDs from the players
 const updateUniqueGameIds = () => {
@@ -212,113 +191,9 @@ const updateUniqueServerNames = () => {
   uniqueServerNames.value = Array.from(serverNames).sort();
 };
 
-// Helper function to get KDR value
-const getKDR = (player: PlayerListItem): number => {
-  if (!player.currentServer || player.currentServer.sessionDeaths === undefined || player.currentServer.sessionKills === undefined) {
-    return -1; // Player not in server or no stats
-  }
+// Removed helper functions - no longer needed with server-side sorting
 
-  return player.currentServer.sessionDeaths === 0 
-    ? player.currentServer.sessionKills // Avoid division by zero
-    : player.currentServer.sessionKills / player.currentServer.sessionDeaths;
-};
-
-// Helper function to get kills value
-const getKills = (player: PlayerListItem): number => {
-  if (!player.currentServer || player.currentServer.sessionKills === undefined) {
-    return -1; // Player not in server or no kills data
-  }
-
-  return player.currentServer.sessionKills;
-};
-
-// Helper function to get deaths value
-const getDeaths = (player: PlayerListItem): number => {
-  if (!player.currentServer || player.currentServer.sessionDeaths === undefined) {
-    return -1; // Player not in server or no deaths data
-  }
-
-  return player.currentServer.sessionDeaths;
-};
-
-// Sort players based on the current sort settings
-const sortPlayers = () => {
-  filteredPlayers.value.sort((a, b) => {
-    let comparison = 0;
-
-    if (sortBy.value === 'playerName') {
-      comparison = a.playerName.localeCompare(b.playerName);
-    } else if (sortBy.value === 'totalPlayTimeMinutes') {
-      comparison = a.totalPlayTimeMinutes - b.totalPlayTimeMinutes;
-    } else if (sortBy.value === 'lastSeen') {
-      comparison = new Date(a.lastSeen).getTime() - new Date(b.lastSeen).getTime();
-    } else if (sortBy.value === 'isActive') {
-      // First sort by active status
-      if (a.isActive !== b.isActive) {
-        return a.isActive ? -1 : 1;
-      }
-
-      // For active players, prioritize those with a current server
-      const aHasServer = a.currentServer !== undefined;
-      const bHasServer = b.currentServer !== undefined;
-
-      // If one player has a server and the other doesn't, the one with a server comes first
-      if (aHasServer !== bHasServer) {
-        return aHasServer ? -1 : 1;
-      }
-
-      // If both players have the same active status and both are active, apply additional sorting
-      if (a.isActive && b.isActive) {
-        if (statusSortOption.value === 'isActive') {
-          // Default sort by active status only
-          return 0;
-        } else if (statusSortOption.value === 'kdr') {
-          // Sort by KDR
-          const aKDR = getKDR(a);
-          const bKDR = getKDR(b);
-
-          // Handle cases where one or both players don't have KDR data
-          if (aKDR === -1 && bKDR === -1) return 0;
-          if (aKDR === -1) return 1; // b comes first
-          if (bKDR === -1) return -1; // a comes first
-
-          comparison = sortDirection.value === 'asc' ? aKDR - bKDR : bKDR - aKDR;
-          return comparison;
-        } else if (statusSortOption.value === 'kills') {
-          // Sort by kills
-          const aKills = getKills(a);
-          const bKills = getKills(b);
-
-          // Handle cases where one or both players don't have kills data
-          if (aKills === -1 && bKills === -1) return 0;
-          if (aKills === -1) return 1; // b comes first
-          if (bKills === -1) return -1; // a comes first
-
-          comparison = sortDirection.value === 'asc' ? aKills - bKills : bKills - aKills;
-          return comparison;
-        } else if (statusSortOption.value === 'deaths') {
-          // Sort by deaths
-          const aDeaths = getDeaths(a);
-          const bDeaths = getDeaths(b);
-
-          // Handle cases where one or both players don't have deaths data
-          if (aDeaths === -1 && bDeaths === -1) return 0;
-          if (aDeaths === -1) return 1; // b comes first
-          if (bDeaths === -1) return -1; // a comes first
-
-          comparison = sortDirection.value === 'asc' ? aDeaths - bDeaths : bDeaths - aDeaths;
-          return comparison;
-        }
-      }
-
-      // If we get here, players have the same active status but are not both active
-      // or they have the same server status, so return 0 (no preference)
-      return 0;
-    }
-
-    return sortDirection.value === 'desc' ? -comparison : comparison;
-  });
-};
+// Removed old client-side sorting function - now using server-side sorting
 
 // Handle sort column click - now refetches data from server
 const handleSort = (column: string) => {
@@ -336,23 +211,7 @@ const handleSort = (column: string) => {
   fetchPlayersData();
 };
 
-// Handle sort by status metric (kills, deaths, kdr)
-const handleStatusSort = (metric: 'kills' | 'deaths' | 'kdr') => {
-  // Set Status as the sort column
-  sortBy.value = 'isActive';
-
-  // If already sorting by this metric, toggle direction
-  if (statusSortOption.value === metric) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    // If switching to a new metric, set it as the sort option and default to descending
-    statusSortOption.value = metric;
-    sortDirection.value = 'desc';
-  }
-
-  // Re-filter and sort the players
-  filterAndSortPlayers();
-};
+// Removed handleStatusSort function - now using simplified server-side sorting
 
 // Function to fetch player stats data
 const fetchPlayerStatsData = async (playerName: string) => {
@@ -396,28 +255,56 @@ const closePlayerStatsModal = () => {
   }
 };
 
-// Handle name filter change
-const handleNameFilterChange = (event: Event) => {
-  nameFilter.value = (event.target as HTMLInputElement).value;
-  filterAndSortPlayers();
+// Debounced name filter function
+const debouncedNameSearch = (searchTerm: string) => {
+  // Clear existing timeout
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+
+  isSearching.value = true;
+
+  // Set new timeout
+  searchTimeout.value = setTimeout(() => {
+    nameFilter.value = searchTerm;
+    currentPage.value = 1; // Reset to first page when filtering
+    isSearching.value = false;
+    fetchPlayersData();
+  }, 500); // 500ms delay
 };
 
-// Handle game ID filter change
+// Handle name filter change - now with debouncing
+const handleNameFilterChange = (event: Event) => {
+  const searchTerm = (event.target as HTMLInputElement).value;
+  debouncedNameSearch(searchTerm);
+};
+
+// Handle game ID filter change - now triggers server-side search
 const handleGameIdFilterChange = (event: Event) => {
   gameIdFilter.value = (event.target as HTMLSelectElement).value;
-  filterAndSortPlayers();
+  currentPage.value = 1; // Reset to first page when filtering
+  fetchPlayersData();
 };
 
-// Handle server name filter change
+// Handle server name filter change - now triggers server-side search
 const handleServerNameFilterChange = (event: Event) => {
   serverNameFilter.value = (event.target as HTMLSelectElement).value;
-  filterAndSortPlayers();
+  currentPage.value = 1; // Reset to first page when filtering
+  fetchPlayersData();
 };
 
 // Clear name filter
 const clearNameFilter = () => {
+  // Cancel any pending search
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+    searchTimeout.value = null;
+  }
+  
   nameFilter.value = '';
-  filterAndSortPlayers();
+  isSearching.value = false;
+  currentPage.value = 1; // Reset to first page when clearing filter
+  fetchPlayersData();
 };
 
 // Reset all filters
@@ -425,13 +312,9 @@ const resetFilters = () => {
   nameFilter.value = '';
   gameIdFilter.value = '';
   serverNameFilter.value = '';
-  filterAndSortPlayers();
+  currentPage.value = 1; // Reset to first page when resetting filters
+  fetchPlayersData();
 };
-
-// Watch for filter changes
-watch([nameFilter, gameIdFilter, serverNameFilter], () => {
-  filterAndSortPlayers();
-});
 
 // Watch for route props changes
 watch(() => props.selectedPlayerName, (newPlayerName) => {
@@ -490,6 +373,14 @@ onMounted(() => {
     fetchPlayersData();
   });
 });
+
+// Cleanup when component is unmounted
+onUnmounted(() => {
+  // Clear any pending search timeout
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+});
 </script>
 
 <template>
@@ -515,8 +406,9 @@ onMounted(() => {
             placeholder="Enter player name"
             class="filter-input"
           />
+          <span v-if="isSearching" class="search-indicator">🔍</span>
           <span 
-            v-if="nameFilter" 
+            v-if="nameFilter && !isSearching" 
             class="clear-input" 
             @click="clearNameFilter"
             title="Clear filter"
@@ -781,6 +673,20 @@ onMounted(() => {
   position: relative;
   display: flex;
   align-items: center;
+}
+
+.search-indicator {
+  position: absolute;
+  right: 10px;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
 .clear-input {

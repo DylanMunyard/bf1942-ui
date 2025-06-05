@@ -135,28 +135,34 @@ export async function fetchPlayerStats(playerName: string): Promise<PlayerTimeSt
 }
 
 /**
- * Fetches the list of all players from the API with pagination and sorting
+ * Fetches the list of all players from the API with pagination, sorting, and filtering
  * @param page The page number (1-based)
  * @param pageSize The number of items per page
  * @param sortBy The field to sort by
  * @param sortDirection The sort direction ('asc' or 'desc')
+ * @param filters Object containing filter parameters (e.g. { playerName: 'john', gameId: 'fh2' })
  * @returns Paged list of players
  */
 export async function fetchPlayersList(
   page: number = 1,
   pageSize: number = 50,
   sortBy: string = 'lastSeen',
-  sortDirection: 'asc' | 'desc' = 'desc'
+  sortDirection: 'asc' | 'desc' = 'desc',
+  filters: Record<string, string> = {}
 ): Promise<PagedResult<PlayerListItem>> {
   try {
-    // Make the request to the API endpoint with pagination and sorting
+    // Build query parameters
+    const params: Record<string, any> = {
+      page,
+      pageSize,
+      sortBy,
+      sortDirection,
+      ...filters // Spread filter parameters into the query
+    };
+
+    // Make the request to the API endpoint with pagination, sorting, and filtering
     const response = await axios.get<PagedResult<PlayerListItem>>('/stats/players', {
-      params: {
-        page,
-        pageSize,
-        sortBy,
-        sortDirection
-      }
+      params
     });
 
     // Return the response data
