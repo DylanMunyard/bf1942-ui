@@ -393,8 +393,7 @@ const stopAutoRefresh = () => {
             </div>
             <div class="match-status">
               <span v-if="roundReport.round.isActive" class="status-badge active">
-                Live Match
-                <span class="auto-refresh-indicator">• Auto-refreshing</span>
+                Live
               </span>
               <span v-else class="status-badge completed">Match Complete</span>
             </div>
