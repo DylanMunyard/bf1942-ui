@@ -22,7 +22,7 @@ const error = ref<string | null>(null);
 const selectedSnapshotIndex = ref(0);
 const isPlaying = ref(false);
 const playbackInterval = ref<NodeJS.Timeout | null>(null);
-const playbackSpeed = ref(150); // milliseconds between snapshots (much faster default)
+const playbackSpeed = ref(500); // milliseconds between snapshots (slower default for smoother playback)
 
 // Fetch round report when component is mounted or when props change
 const fetchData = async () => {
@@ -678,7 +678,7 @@ watch(() => props.isOpen, (newValue) => {
   height: 100%;
   background: linear-gradient(90deg, var(--color-primary) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.8) 100%);
   border-radius: 2px;
-  transition: width 0.3s ease;
+  transition: width 0.5s ease;
 }
 
 .teams-container {
