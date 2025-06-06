@@ -78,21 +78,7 @@ const calculateKDR = (kills: number, deaths: number): string => {
   return (kills / deaths).toFixed(2);
 };
 
-// Calculate round duration
-const calculateRoundDuration = (startTime: string, endTime: string): string => {
-  const start = new Date(startTime.endsWith('Z') ? startTime : startTime + 'Z');
-  const end = new Date(endTime.endsWith('Z') ? endTime : endTime + 'Z');
-  const durationMs = end.getTime() - start.getTime();
-  const durationMinutes = Math.floor(durationMs / (1000 * 60));
-  
-  if (durationMinutes < 60) {
-    return `${durationMinutes}m`;
-  } else {
-    const hours = Math.floor(durationMinutes / 60);
-    const remainingMinutes = durationMinutes % 60;
-    return remainingMinutes === 0 ? `${hours}h` : `${hours}h ${remainingMinutes}m`;
-  }
-};
+
 
 // Close the popup when clicking outside or pressing ESC
 const handleOutsideClick = (event: MouseEvent) => {
@@ -485,16 +471,14 @@ onMounted(() => {
               <div class="leaderboard-content">
                 <div class="rounds-header">
                   <div class="header-map">Map</div>
-                  <div class="header-start-time">Start Time</div>
-                  <div class="header-duration">Duration</div>
-                  <div class="header-session">Session</div>
+                  <div class="header-end-time">End Time</div>
+                  <div class="header-report">Report</div>
                 </div>
                 <div class="rounds-list">
                   <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-row">
                     <div class="round-map">{{ round.mapName }}</div>
-                    <div class="round-start-time">{{ formatDate(round.startTime) }}</div>
-                    <div class="round-duration">{{ calculateRoundDuration(round.startTime, round.endTime) }}</div>
-                    <div class="round-session">
+                    <div class="round-end-time">{{ formatDate(round.endTime) }}</div>
+                    <div class="round-report">
                       <router-link 
                         :to="{
                           path: '/servers/round-report',
@@ -504,9 +488,9 @@ onMounted(() => {
                             startTime: round.startTime
                           }
                         }" 
-                        class="session-link"
+                        class="report-link"
                       >
-                        {{ round.sessionId }}
+                        View Report
                       </router-link>
                     </div>
                   </div>
@@ -864,7 +848,7 @@ onMounted(() => {
 }
 
 /* Players Header */
-.players-header, .scores-header {
+.players-header, .scores-header, .rounds-header {
   display: grid;
   padding: 12px 15px;
   background: var(--color-background-mute);
@@ -886,6 +870,14 @@ onMounted(() => {
   text-align: center;
 }
 
+.header-map {
+  text-align: left;
+}
+
+.header-end-time, .header-report {
+  text-align: center;
+}
+
 .players-header {
   grid-template-columns: 50px 1fr 120px 80px;
   gap: 10px;
@@ -897,7 +889,7 @@ onMounted(() => {
   }
 
   .rounds-header {
-    grid-template-columns: 1fr 180px 80px 120px;
+    grid-template-columns: 1fr 180px 120px;
     gap: 10px;
   }
 
@@ -925,7 +917,7 @@ onMounted(() => {
 }
 
 .round-row {
-  grid-template-columns: 1fr 180px 80px 120px;
+  grid-template-columns: 1fr 180px 120px;
 }
 
 .player-row:hover, .score-row:hover, .round-row:hover {
@@ -982,20 +974,15 @@ onMounted(() => {
   color: var(--color-text);
 }
 
-.round-start-time {
+.round-end-time {
   font-size: 0.85rem;
   color: var(--color-text-muted);
   text-align: center;
 }
 
-.round-duration {
-  font-weight: 500;
-  color: var(--color-text);
-  text-align: center;
-  font-family: monospace;
-}
 
-.round-session {
+
+.round-report {
   text-align: center;
 }
 
@@ -1031,28 +1018,29 @@ onMounted(() => {
 }
 
 /* Link styles */
-.player-link, .session-link {
+.player-link, .report-link {
   color: var(--color-primary);
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.player-link:hover, .session-link:hover {
+.player-link:hover, .report-link:hover {
   text-decoration: underline;
   color: var(--color-primary-hover, var(--color-primary));
 }
 
-.session-link {
+.report-link {
   display: inline-block;
   padding: 4px 8px;
   border-radius: 6px;
   background-color: var(--color-background-mute);
   font-weight: 600;
   transition: all 0.2s ease;
+  font-size: 0.85rem;
 }
 
-.session-link:hover {
+.report-link:hover {
   background-color: var(--color-primary);
   color: white;
   text-decoration: none;
@@ -1090,7 +1078,7 @@ onMounted(() => {
   }
 
   .rounds-header {
-    grid-template-columns: 1fr 120px 60px 80px;
+    grid-template-columns: 1fr 120px 80px;
     gap: 6px;
   }
 
@@ -1110,7 +1098,7 @@ onMounted(() => {
   }
 
   .round-row {
-    grid-template-columns: 1fr 120px 60px 80px;
+    grid-template-columns: 1fr 120px 80px;
     gap: 6px;
   }
 
