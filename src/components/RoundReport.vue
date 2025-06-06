@@ -375,17 +375,29 @@ const startAutoRefresh = () => {
         }
         
         // Convert BFList API response to LeaderboardSnapshot format
+        // First, sort players by score (descending) to fix ordering
+        const sortedPlayers = liveServerData.players.sort((a, b) => b.score - a.score);
+        
         const liveSnapshot: LeaderboardSnapshot = {
           timestamp: new Date().toISOString(),
-          entries: liveServerData.players.map((player, index) => ({
-            rank: index + 1,
-            playerName: player.name,
-            score: player.score,
-            kills: player.kills,
-            deaths: player.deaths,
-            ping: player.ping,
-            teamLabel: player.teamLabel
-          }))
+          entries: sortedPlayers.map((player, index) => {
+            // Handle empty teamLabel by looking it up in teams array
+            let teamLabel = player.teamLabel;
+            if (!teamLabel && liveServerData.teams && typeof player.team === 'number') {
+              const team = liveServerData.teams.find(t => t.index === player.team);
+              teamLabel = team?.label || 'Unknown';
+            }
+            
+            return {
+              rank: index + 1, // Now correctly ranked by score order
+              playerName: player.name,
+              score: player.score,
+              kills: player.kills,
+              deaths: player.deaths,
+              ping: player.ping,
+              teamLabel: teamLabel
+            };
+          })
         };
         
         // Update the latest snapshot with live data
@@ -406,7 +418,7 @@ const startAutoRefresh = () => {
     } else {
       stopAutoRefresh();
     }
-  }, 15000); // 15 seconds for live updates
+  }, 5000); // 5 seconds for live updates
 };
 
 const stopAutoRefresh = () => {

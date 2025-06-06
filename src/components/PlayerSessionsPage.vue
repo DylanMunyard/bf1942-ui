@@ -2,7 +2,6 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchPlayerSessions, PagedResult, SessionListItem, PlayerContextInfo, fetchSessionDetails } from '../services/playerStatsService';
-import SessionDetailsModal from './SessionDetailsModal.vue';
 
 // Router
 const router = useRouter();
@@ -11,8 +10,6 @@ const route = useRoute();
 // Props from router
 interface Props {
   playerName: string;
-  selectedSessionId?: number;
-  showSessionModal?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -26,13 +23,6 @@ const currentPage = ref(1);
 const pageSize = ref(20);
 const totalItems = ref(0);
 const totalPages = ref(0);
-
-// Session Details Modal state
-const showSessionDetailsModal = ref(false);
-const selectedSessionId = ref<number | null>(null);
-const sessionDetailsLoading = ref(false);
-const sessionDetailsError = ref<string | null>(null);
-
 
 // Format minutes to hours and minutes
 const formatPlayTime = (minutes: number): string => {
@@ -117,9 +107,9 @@ const fetchData = async () => {
   }
 };
 
-// Function to open the session details modal
-const openSessionDetailsModal = (sessionId: number, event?: Event) => {
-  // Prevent event propagation to stop the modal from closing
+// Function to navigate to round report
+const navigateToRoundReport = (sessionId: number, event?: Event) => {
+  // Prevent event propagation to stop any unwanted behavior
   if (event) {
     event.stopPropagation();
   }
@@ -138,17 +128,6 @@ const openSessionDetailsModal = (sessionId: number, event?: Event) => {
     });
   }
 };
-
-// Function to close the session details modal
-const closeSessionDetailsModal = () => {
-  showSessionDetailsModal.value = false;
-
-  // Navigate back to the player sessions page
-  if (route.name === 'session-details') {
-    router.push(`/players/${encodeURIComponent(props.playerName)}/sessions`);
-  }
-};
-
 
 // Function to handle pagination
 const goToPage = (page: number) => {
@@ -178,14 +157,9 @@ const paginationRange = computed(() => {
 });
 
 // Watch for route props changes
-watch(() => [props.playerName, props.selectedSessionId, props.showSessionModal], ([newPlayerName, newSessionId, newShowSessionModal]) => {
+watch(() => props.playerName, (newPlayerName) => {
   if (newPlayerName) {
     fetchData();
-  }
-
-  if (newSessionId && newShowSessionModal && (typeof newSessionId === 'number' || typeof newSessionId === 'string')) {
-    selectedSessionId.value = typeof newSessionId === 'string' ? parseInt(newSessionId) : newSessionId;
-    showSessionDetailsModal.value = true;
   }
 }, { immediate: true });
 
@@ -251,7 +225,7 @@ onMounted(() => {
         </thead>
         <tbody>
           <tr v-for="session in sessions" :key="session.sessionId" 
-              @click="(event) => openSessionDetailsModal(session.sessionId, event)" 
+              @click="(event) => navigateToRoundReport(session.sessionId, event)" 
               class="clickable-row">
             <td>
               <router-link :to="`/servers/${encodeURIComponent(session.serverName)}`" class="server-link">
@@ -333,16 +307,6 @@ onMounted(() => {
       </div>
     </div>
     <div v-else class="no-data">No sessions found for this player.</div>
-
-    <!-- Session Details Modal -->
-    <SessionDetailsModal
-      v-if="showSessionDetailsModal && selectedSessionId !== null"
-      :player-name="playerName"
-      :session-id="selectedSessionId"
-      :is-open="showSessionDetailsModal"
-      @close="closeSessionDetailsModal"
-    />
-
   </div>
 </template>
 

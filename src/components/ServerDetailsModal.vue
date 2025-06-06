@@ -478,15 +478,13 @@ onMounted(() => {
                   <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-row">
                     <div class="round-map">
                       {{ round.mapName }}
-                      <span v-if="round.isActive" class="badge-active">In Progress</span>
                     </div>
                     <div class="round-end-time">
-                      <span v-if="round.isActive">-</span>
+                      <span v-if="round.isActive" class="badge-active">In Progress</span>
                       <span v-else>{{ formatDate(round.endTime) }}</span>
                     </div>
                     <div class="round-report">
                       <router-link
-                        v-if="!round.isActive"
                         :to="{
                           path: '/servers/round-report',
                           query: {
@@ -499,7 +497,6 @@ onMounted(() => {
                       >
                         View Report
                       </router-link>
-                      <span v-else>-</span>
                     </div>
                   </div>
                 </div>
