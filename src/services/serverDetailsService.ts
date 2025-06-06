@@ -36,6 +36,7 @@ export interface RecentRoundInfo {
   startTime: string; // ISO date string  
   endTime: string; // ISO date string
   sessionId: string;
+  isActive?: boolean;
 }
 
 export interface LeaderboardEntry {

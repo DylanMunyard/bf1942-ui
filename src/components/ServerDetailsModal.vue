@@ -476,10 +476,17 @@ onMounted(() => {
                 </div>
                 <div class="rounds-list">
                   <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-row">
-                    <div class="round-map">{{ round.mapName }}</div>
-                    <div class="round-end-time">{{ formatDate(round.endTime) }}</div>
+                    <div class="round-map">
+                      {{ round.mapName }}
+                      <span v-if="round.isActive" class="badge-active">In Progress</span>
+                    </div>
+                    <div class="round-end-time">
+                      <span v-if="round.isActive">-</span>
+                      <span v-else>{{ formatDate(round.endTime) }}</span>
+                    </div>
                     <div class="round-report">
-                      <router-link 
+                      <router-link
+                        v-if="!round.isActive"
                         :to="{
                           path: '/servers/round-report',
                           query: {
@@ -487,11 +494,12 @@ onMounted(() => {
                             mapName: round.mapName,
                             startTime: round.startTime
                           }
-                        }" 
+                        }"
                         class="report-link"
                       >
                         View Report
                       </router-link>
+                      <span v-else>-</span>
                     </div>
                   </div>
                 </div>
@@ -1046,6 +1054,18 @@ onMounted(() => {
   text-decoration: none;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.badge-active {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background-color: #4caf50;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
 }
 
 @media (max-width: 768px) {
