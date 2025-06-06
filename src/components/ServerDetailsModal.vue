@@ -24,6 +24,7 @@ const router = useRouter();
 const serverDetails = ref<ServerDetails | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const isChartExpanded = ref(false);
 
 // Fetch server details
 const fetchData = async () => {
@@ -48,11 +49,11 @@ const formatPlayTime = (minutes: number): string => {
   const remainingMinutes = minutes % 60;
 
   if (hours === 0) {
-    return `${remainingMinutes} minutes`;
-  } else if (hours === 1) {
-    return `${hours} hour ${remainingMinutes} minutes`;
+    return `${remainingMinutes}m`;
+  } else if (remainingMinutes === 0) {
+    return `${hours}h`;
   } else {
-    return `${hours} hours ${remainingMinutes} minutes`;
+    return `${hours}h ${remainingMinutes}m`;
   }
 };
 
@@ -165,6 +166,11 @@ watch(() => props.isOpen, (newValue) => {
   }
 });
 
+// Toggle chart expansion
+const toggleChartExpansion = () => {
+  isChartExpanded.value = !isChartExpanded.value;
+};
+
 // Clean up event listeners when component is unmounted
 onMounted(() => {
   if (props.isOpen) {
@@ -208,9 +214,27 @@ onMounted(() => {
 
           <!-- Player Count Chart -->
           <div v-if="serverDetails.playerCountMetrics && serverDetails.playerCountMetrics.length > 0" class="stats-section">
-            <h3>Player Count</h3>
-            <div class="chart-container">
+            <div class="chart-header">
+              <h3>Player Count Over Time</h3>
+              <button 
+                class="expand-chart-button"
+                @click="toggleChartExpansion"
+                :title="isChartExpanded ? 'Collapse chart' : 'Expand chart'"
+              >
+                {{ isChartExpanded ? '📉' : '📊' }}
+              </button>
+            </div>
+            <div 
+              class="chart-container"
+              :class="{ 'chart-expanded': isChartExpanded }"
+              @click="!isChartExpanded && toggleChartExpansion()"
+            >
               <Bar :data="chartData" :options="chartOptions" />
+              <div v-if="!isChartExpanded" class="chart-overlay">
+                <div class="chart-overlay-text">
+                  <span>Click to expand</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -432,9 +456,95 @@ onMounted(() => {
   padding-bottom: 8px;
 }
 
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.chart-header h3 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1.2rem;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.expand-chart-button {
+  background: var(--color-background-mute);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.2s ease;
+  color: var(--color-text);
+}
+
+.expand-chart-button:hover {
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
 .chart-container {
-  height: 300px;
+  height: 120px;
   margin-bottom: 20px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+
+.chart-container:hover:not(.chart-expanded) {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+}
+
+.chart-container.chart-expanded {
+  height: 400px;
+  cursor: default;
+  border-color: var(--color-primary);
+  box-shadow: 0 8px 25px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
+}
+
+.chart-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(1px);
+}
+
+.chart-container:hover .chart-overlay {
+  background: rgba(var(--color-primary-rgb, 33, 150, 243), 0.15);
+}
+
+.chart-overlay-text {
+  background: var(--color-background);
+  color: var(--color-primary);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 2px solid var(--color-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.chart-container:hover .chart-overlay-text {
+  background: var(--color-primary);
+  color: white;
+  transform: scale(1.05);
 }
 
 /* Leaderboards Container */
@@ -491,6 +601,16 @@ onMounted(() => {
   letter-spacing: 0.5px;
   color: var(--color-text-muted);
   border-bottom: 1px solid var(--color-border);
+  align-items: center;
+}
+
+/* Header cell alignment */
+.header-rank, .header-score {
+  text-align: center;
+}
+
+.header-playtime, .header-kd, .header-map {
+  text-align: center;
 }
 
 .players-header {
@@ -690,6 +810,19 @@ onMounted(() => {
 
   .leaderboard-header h3 {
     font-size: 1.1rem;
+  }
+
+  .chart-container {
+    height: 100px;
+  }
+
+  .chart-container.chart-expanded {
+    height: 300px;
+  }
+
+  .expand-chart-button {
+    padding: 6px 10px;
+    font-size: 1rem;
   }
 }
 
