@@ -25,6 +25,7 @@ export interface PlayerContextInfo {
 export interface SessionListItem {
   sessionId: number;
   serverName: string;
+  serverGuid: string;
   mapName: string;
   gameType: string;
   startTime: string; // ISO date string
@@ -61,6 +62,7 @@ export interface Session {
   mapName: string;
   gameType: string;
   serverName: string;
+  serverGuid: string;
   sessionId: number;
 }
 

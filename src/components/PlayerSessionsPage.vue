@@ -124,8 +124,19 @@ const openSessionDetailsModal = (sessionId: number, event?: Event) => {
     event.stopPropagation();
   }
 
-  // Navigate to the session details page
-  router.push(`/sessions/${encodeURIComponent(props.playerName)}/${sessionId}`);
+  // Find the session to get the required data for the round report
+  const session = sessions.value.find(s => s.sessionId === sessionId);
+  if (session) {
+    // Navigate to the round report page with the required parameters
+    router.push({
+      path: '/servers/round-report',
+      query: {
+        serverGuid: session.serverGuid,
+        mapName: session.mapName,
+        startTime: session.startTime
+      }
+    });
+  }
 };
 
 // Function to close the session details modal
@@ -172,8 +183,8 @@ watch(() => [props.playerName, props.selectedSessionId, props.showSessionModal],
     fetchData();
   }
 
-  if (newSessionId && newShowSessionModal) {
-    selectedSessionId.value = newSessionId;
+  if (newSessionId && newShowSessionModal && (typeof newSessionId === 'number' || typeof newSessionId === 'string')) {
+    selectedSessionId.value = typeof newSessionId === 'string' ? parseInt(newSessionId) : newSessionId;
     showSessionDetailsModal.value = true;
   }
 }, { immediate: true });

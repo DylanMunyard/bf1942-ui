@@ -33,8 +33,19 @@ const openSessionDetailsModal = (sessionId: number, event?: Event) => {
     event.stopPropagation();
   }
 
-  // Navigate to the session details page
-  router.push(`/sessions/${encodeURIComponent(props.playerName)}/${sessionId}`);
+  // Find the session to get the required data for the round report
+  const session = props.playerStats?.recentSessions?.find(s => s.sessionId === sessionId);
+  if (session) {
+    // Navigate to the round report page with the required parameters
+    router.push({
+      path: '/servers/round-report',
+      query: {
+        serverGuid: session.serverGuid,
+        mapName: session.mapName,
+        startTime: session.startTime
+      }
+    });
+  }
 };
 
 // Function to close the session details modal
@@ -145,6 +156,23 @@ const getServerPlayerCount = (serverGuid: string): number | null => {
 const calculateKDR = (kills: number, deaths: number): string => {
   if (deaths === 0) return kills.toString();
   return (kills / deaths).toFixed(2);
+};
+
+// Function to get round report route for a session
+const getRoundReportRoute = (session: any) => {
+  if (session.serverGuid) {
+    return {
+      path: '/servers/round-report',
+      query: {
+        serverGuid: session.serverGuid,
+        mapName: session.mapName,
+        startTime: session.startTime
+      }
+    };
+  }
+  
+  // Fallback to player details if serverGuid not found
+  return `/player/${encodeURIComponent(props.playerName)}`;
 };
 
 // Close the popup when clicking outside or pressing ESC
@@ -516,7 +544,7 @@ onMounted(() => {
                       class="clickable-row">
                     <td>
                       <router-link 
-                        :to="`/sessions/${encodeURIComponent(playerName)}/${session.sessionId}`" 
+                        :to="getRoundReportRoute(session)" 
                         class="time-link"
                         style="color: #1a73e8; text-decoration: underline;"
                       >
