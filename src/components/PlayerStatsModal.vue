@@ -27,25 +27,21 @@ const showSessionDetailsModal = ref(false);
 const selectedSessionId = ref<number | null>(null);
 
 // Function to open the session details modal
-const openSessionDetailsModal = (sessionId: number, event?: Event) => {
+const openSessionDetailsModal = (serverGuid: string, mapName: string, startTime: string, event?: Event) => {
   // Prevent event propagation to stop the modal from closing
   if (event) {
     event.stopPropagation();
   }
 
-  // Find the session to get the required data for the round report
-  const session = props.playerStats?.recentSessions?.find(s => s.sessionId === sessionId);
-  if (session) {
-    // Navigate to the round report page with the required parameters
-    router.push({
-      path: '/servers/round-report',
-      query: {
-        serverGuid: session.serverGuid,
-        mapName: session.mapName,
-        startTime: session.startTime
-      }
-    });
-  }
+  // Navigate to the round report page with the required parameters
+  router.push({
+    path: '/servers/round-report',
+    query: {
+      serverGuid,
+      mapName,
+      startTime
+    }
+  });
 };
 
 // Function to close the session details modal
@@ -378,7 +374,11 @@ onMounted(() => {
                 <div class="stat-label">
                   <span class="trophy-icon">🏆</span> Best Session
                 </div>
-                <div class="best-session-card">
+                <div 
+                  class="best-session-card clickable-best-session" 
+                  @click="openSessionDetailsModal(playerStats.bestSession.serverGuid, playerStats.bestSession.mapName, playerStats.bestSession.startTime)"
+                  title="Click to view round report"
+                >
                   <div class="best-session-header">
                     <div class="best-session-score">{{ playerStats.bestSession.totalScore }}</div>
                     <span class="best-session-badge">
@@ -540,7 +540,7 @@ onMounted(() => {
                 </thead>
                 <tbody>
                   <tr v-for="(session, index) in playerStats.recentSessions" :key="index" 
-                      @click="(event) => openSessionDetailsModal(session.sessionId, event)" 
+                      @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)" 
                       class="clickable-row">
                     <td>
                       <router-link 
@@ -838,6 +838,18 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--color-border);
   margin-top: 5px;
+}
+
+.clickable-best-session {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clickable-best-session:hover {
+  background-color: var(--color-background-soft);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  border-color: var(--color-primary);
 }
 
 .best-session-header {
