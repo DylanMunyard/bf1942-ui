@@ -11,6 +11,7 @@ import { queryAI } from '../services/aiService';
 import { marked } from 'marked';
 import { fetchServerDetails } from '../services/serverDetailsService';
 import { fetchPlayerStats, PlayerTimeStatistics } from '../services/playerStatsService';
+import { fetchLiveServersList } from "../services/serverListService";
 
 // Router
 const router = useRouter();
@@ -76,13 +77,6 @@ const fetchServerData = async () => {
   error.value = null;
 
   try {
-    // Use different API URL based on selected mode
-    const apiUrl = serverMode.value === '42' 
-      ? 'https://api.bflist.io/bf1942/v1/servers/1?perPage=100'
-      : 'https://api.bflist.io/fh2/v1/servers/1?perPage=100';
-
-    const response = await axios.get<ServerInfo[]>(apiUrl);
-
     // Before updating servers, store the current data as previous data
     if (servers.value.length > 0) {
       // Create a map of current servers by GUID
@@ -93,8 +87,12 @@ const fetchServerData = async () => {
       previousServersData.value = newPreviousData;
     }
 
+    const game = serverMode.value === '42'
+      ? 'bf1942'
+      : 'fh2';
+
     // In a real application, we would fetch multiple servers and sort them
-    servers.value = response.data;
+    servers.value = await fetchLiveServersList(game);
 
     // Sort servers by numPlayers in descending order
     servers.value.sort((a, b) => b.numPlayers - a.numPlayers);

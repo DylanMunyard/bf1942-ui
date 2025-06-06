@@ -161,8 +161,8 @@ export async function fetchLiveServerData(
 ): Promise<ServerInfo> {
   try {
     const baseUrl = gameId === 'fh2' 
-      ? 'https://api.bflist.io/fh2/v1/servers'
-      : 'https://api.bflist.io/bf1942/v1/servers';
+      ? 'https://api.bflist.io/v2/fh2/servers'
+      : 'https://api.bflist.io/v2/bf1942/servers';
     
     const response = await axios.get<ServerInfo>(`${baseUrl}/${serverIp}:${serverPort}`);
     return response.data;

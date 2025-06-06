@@ -3,7 +3,7 @@ import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchPlayersList, PlayerListItem, fetchPlayerStats } from '../services/playerStatsService';
 import PlayerStatsModal from './PlayerStatsModal.vue';
-import axios from 'axios';
+import { fetchLiveServersList } from "../services/serverListService";
 
 // Router
 const router = useRouter();
@@ -113,10 +113,7 @@ const formatRelativeTime = (dateString: string): string => {
 // Fetch servers data
 const fetchServersData = async () => {
   try {
-    // Use the same API URL as in ServerTable.vue
-    const apiUrl = 'https://api.bflist.io/bf1942/v1/servers/1?perPage=100';
-    const response = await axios.get(apiUrl);
-    servers.value = response.data;
+    servers.value = await fetchLiveServersList('bf1942');
   } catch (err) {
     console.error('Error fetching servers data:', err);
   }
