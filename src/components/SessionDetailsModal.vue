@@ -384,149 +384,150 @@ const stopAutoRefresh = () => {
         <div v-else-if="error" class="error-container">
           <p class="error-message">{{ error }}</p>
         </div>
-                <div v-else-if="roundReport" class="details-container">
-          <!-- Map & Time Header -->
-          <div class="match-header">
-            <div class="match-info">
-              <h2 class="map-name">🗺️ {{ roundReport.round.mapName }}</h2>
-              <div class="match-time">{{ formatDate(roundReport.round.startTime) }}</div>
-            </div>
-            <div class="match-status">
-              <span v-if="roundReport.round.isActive" class="status-badge active">
-                Live
-              </span>
-              <span v-else class="status-badge completed">Match Complete</span>
-            </div>
-          </div>
-
-                                           <!-- Team-Based Leaderboard Section -->
-           <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
-             <div class="leaderboard-header">
-               <h3>🏆 Team Leaderboard</h3>
-               <div class="header-controls">
-                 <div v-if="snapshotTimeline.length > 1" class="compact-playback">
-                   <button @click="resetPlayback" class="mini-button" title="Reset">⏮️</button>
-                   <button @click="togglePlayback" class="mini-button play-mini" :class="{ playing: isPlaying }" title="Play/Pause">
-                     {{ isPlaying ? '⏸️' : '▶️' }}
-                   </button>
-                   <select v-model="playbackSpeed" @change="setPlaybackSpeed(playbackSpeed)" class="mini-select">
-                     <option :value="500">0.5x</option>
-                     <option :value="250">1x</option>
-                     <option :value="150" selected>2x</option>
-                     <option :value="75">4x</option>
-                   </select>
-                   <span v-if="isPlaying" class="mini-indicator">🔴</span>
-                 </div>
-                 <div class="elapsed-badge">
-                   {{ currentElapsedTime }}
-                 </div>
-               </div>
-             </div>
-             
-             <div v-if="snapshotTimeline.length > 1" class="playback-instructions">
-               <span class="instructions-text">Click play to watch the match unfold, or drag through the timeline</span>
-             </div>
-             
-             <div v-if="snapshotTimeline.length > 1" class="compact-progress">
-               <div 
-                 class="mini-progress-bar"
-                 @mousedown="startDrag"
-                 @mousemove="handleDrag"
-                 @mouseup="stopDrag"
-                 @mouseleave="stopDrag"
-               >
-                 <div 
-                   class="mini-progress-fill"
-                   :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
-                 ></div>
-                 <div class="scrubber-dots">
-                   <div 
-                     v-for="(dot, index) in sampledDots" 
-                     :key="index"
-                     class="scrubber-dot"
-                     :class="{ 'active-dot': index === selectedSnapshotIndex }"
-                     :title="`${getElapsedTime(dot.timestamp)} elapsed`"
-                     @click="handleDotClick(dot.index)"
-                   ></div>
-                 </div>
-               </div>
-             </div>
-             
-             <div class="teams-container">
-                               <div 
-                  v-for="team in teamGroups" 
-                  :key="team.teamName"
-                  class="team-column"
-                  :class="`team-${team.teamName.toLowerCase()}`"
+        <div v-else-if="roundReport" class="details-container">
+          <!-- Consolidated Leaderboard Section with Session Details -->
+          <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
+            <div class="leaderboard-header">
+              <div class="header-left">
+                <h3>🗺️ {{ roundReport.round.mapName }}</h3>
+                <router-link 
+                  :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
+                  class="server-name"
                 >
-                 <!-- Team Header -->
-                 <div class="team-header">
-                                        <div class="team-name">
-                       <span class="team-icon">🛡️</span>
-                       {{ team.teamName }}
+                  {{ roundReport.session.serverName }}
+                </router-link>
+                <div class="match-meta">
+                  <span class="game-id">#{{ roundReport.session.gameId }}</span>
+                  <span class="separator">•</span>
+                  <span class="match-time">{{ formatDate(roundReport.round.startTime) }}</span>
+                  <span class="separator">•</span>
+                  <span v-if="roundReport.round.isActive" class="status-badge active">Live</span>
+                  <span v-else class="status-badge completed">Match Complete</span>
+                </div>
               </div>
-                   <div class="team-stats">
-                     <div class="team-stat">
-                       <span class="stat-label">Score</span>
-                       <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
-              </div>
-                     <div class="team-stat">
-                       <span class="stat-label">K/D</span>
-                       <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
+              <div class="header-controls">
+                <div v-if="snapshotTimeline.length > 1" class="compact-playback">
+                  <button @click="resetPlayback" class="mini-button" title="Reset">⏮️</button>
+                  <button @click="togglePlayback" class="mini-button play-mini" :class="{ playing: isPlaying }" title="Play/Pause">
+                    {{ isPlaying ? '⏸️' : '▶️' }}
+                  </button>
+                  <select v-model="playbackSpeed" @change="setPlaybackSpeed(playbackSpeed)" class="mini-select">
+                    <option :value="500">0.5x</option>
+                    <option :value="250">1x</option>
+                    <option :value="150" selected>2x</option>
+                    <option :value="75">4x</option>
+                  </select>
+                  <span v-if="isPlaying" class="mini-indicator">🔴</span>
+                </div>
+                <div class="elapsed-badge">
+                  {{ currentElapsedTime }}
+                </div>
               </div>
             </div>
-          </div>
+            
+            <div v-if="snapshotTimeline.length > 1" class="playback-instructions">
+              <span class="instructions-text">Click play to watch the match unfold, or drag through the timeline</span>
+            </div>
+            
+            <div v-if="snapshotTimeline.length > 1" class="compact-progress">
+              <div 
+                class="mini-progress-bar"
+                @mousedown="startDrag"
+                @mousemove="handleDrag"
+                @mouseup="stopDrag"
+                @mouseleave="stopDrag"
+              >
+                <div 
+                  class="mini-progress-fill"
+                  :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
+                ></div>
+                <div class="scrubber-dots">
+                  <div 
+                    v-for="(dot, index) in sampledDots" 
+                    :key="index"
+                    class="scrubber-dot"
+                    :class="{ 'active-dot': index === selectedSnapshotIndex }"
+                    :title="`${getElapsedTime(dot.timestamp)} elapsed`"
+                    @click="handleDotClick(dot.index)"
+                  ></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="teams-container">
+              <div 
+                v-for="team in teamGroups" 
+                :key="team.teamName"
+                class="team-column"
+                :class="`team-${team.teamName.toLowerCase()}`"
+              >
+                <!-- Team Header -->
+                <div class="team-header">
+                  <div class="team-name">
+                    <span class="team-icon">🛡️</span>
+                    {{ team.teamName }}
+                  </div>
+                  <div class="team-stats">
+                    <div class="team-stat">
+                      <span class="stat-label">Score</span>
+                      <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
+                    </div>
+                    <div class="team-stat">
+                      <span class="stat-label">K/D</span>
+                      <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
+                    </div>
+                  </div>
+                </div>
 
-                 <!-- Team Players -->
-                 <div class="team-players">
-                   <div class="players-header">
-                     <div class="header-rank">#</div>
-                     <div class="header-player">Player</div>
-                     <div class="header-score">Score</div>
-                     <div class="header-kd">K/D</div>
-                     <div class="header-ping">Ping</div>
-                   </div>
-                   
-                   <div class="players-list">
-                     <div
-                       v-for="player in team.players"
-                       :key="player.playerName"
-                       class="player-row"
-                       :class="{ 
-                         'current-player-row': isCurrentPlayer(player.playerName),
-                         'top-player': player.rank === 1
-                       }"
-                     >
-                       <div class="player-rank">
-                         <span v-if="player.rank === 1" class="rank-medal">🥇</span>
-                         <span v-else-if="player.rank === 2" class="rank-medal">🥈</span>
-                         <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
-                         <span v-else class="rank-number">{{ player.rank }}</span>
-                       </div>
-                       <div class="player-name" :class="{ 'highlighted-name': isCurrentPlayer(player.playerName) }">
-                         {{ player.playerName }}
-                         <span v-if="isCurrentPlayer(player.playerName)" class="you-indicator">YOU</span>
-                       </div>
-                       <div class="player-score">{{ player.score.toLocaleString() }}</div>
-                       <div class="player-kd">
-                         <span class="kills">{{ player.kills }}</span>
-                         <span class="separator">/</span>
-                         <span class="deaths">{{ player.deaths }}</span>
-                       </div>
-                       <div class="player-ping" :class="{ 
-                         'ping-good': player.ping < 50, 
-                         'ping-ok': player.ping >= 50 && player.ping < 100,
-                         'ping-bad': player.ping >= 100
-                       }">
-                         {{ player.ping }}ms
-                       </div>
-                     </div>
-                   </div>
+                <!-- Team Players -->
+                <div class="team-players">
+                  <div class="players-header">
+                    <div class="header-rank">#</div>
+                    <div class="header-player">Player</div>
+                    <div class="header-score">Score</div>
+                    <div class="header-kd">K/D</div>
+                    <div class="header-ping">Ping</div>
+                  </div>
+                  
+                  <div class="players-list">
+                    <div
+                      v-for="player in team.players"
+                      :key="player.playerName"
+                      class="player-row"
+                      :class="{ 
+                        'current-player-row': isCurrentPlayer(player.playerName),
+                        'top-player': player.rank === 1
+                      }"
+                    >
+                      <div class="player-rank">
+                        <span v-if="player.rank === 1" class="rank-medal">🥇</span>
+                        <span v-else-if="player.rank === 2" class="rank-medal">🥈</span>
+                        <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
+                        <span v-else class="rank-number">{{ player.rank }}</span>
+                      </div>
+                      <div class="player-name" :class="{ 'highlighted-name': isCurrentPlayer(player.playerName) }">
+                        {{ player.playerName }}
+                        <span v-if="isCurrentPlayer(player.playerName)" class="you-indicator">YOU</span>
+                      </div>
+                      <div class="player-score">{{ player.score.toLocaleString() }}</div>
+                      <div class="player-kd">
+                        <span class="kills">{{ player.kills }}</span>
+                        <span class="separator">/</span>
+                        <span class="deaths">{{ player.deaths }}</span>
+                      </div>
+                      <div class="player-ping" :class="{ 
+                        'ping-good': player.ping < 50, 
+                        'ping-ok': player.ping >= 50 && player.ping < 100,
+                        'ping-bad': player.ping >= 100
+                      }">
+                        {{ player.ping }}ms
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-            </div>
-          </div>
-
         </div>
         <div v-else class="no-data-container">
           <p>No round report available.</p>
@@ -636,77 +637,6 @@ const stopAutoRefresh = () => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.match-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 25px;
-  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.1);
-}
-
-.match-info {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.map-name {
-  margin: 0;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--color-heading);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.match-time {
-  font-size: 1rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
-
-.match-status {
-  display: flex;
-  align-items: center;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-badge.active {
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
-  animation: pulse-live 2s infinite;
-}
-
-.status-badge.completed {
-  background: linear-gradient(135deg, #666 0%, #555 100%);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-@keyframes pulse-live {
-  0% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
-  50% { box-shadow: 0 2px 12px rgba(76, 175, 80, 0.6); }
-  100% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
-}
-
-.auto-refresh-indicator {
-  display: block;
-  font-size: 0.7rem;
-  opacity: 0.9;
-  font-weight: 500;
-  margin-top: 2px;
 }
 
 .leaderboard-section {
@@ -1194,5 +1124,31 @@ const stopAutoRefresh = () => {
   padding: 4px 8px;
   border-radius: 12px;
   font-weight: 600;
+}
+
+.server-name {
+  font-size: 0.95rem;
+  color: var(--color-primary);
+  margin-bottom: 6px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.server-name:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.match-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.separator {
+  opacity: 0.5;
+  user-select: none;
 }
 </style>

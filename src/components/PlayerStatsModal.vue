@@ -272,12 +272,6 @@ const getActivityBarHeight = (minutesActive: number): string => {
   return minutesActive > 0 ? `${Math.max(5, percentage)}%` : "0%";
 };
 
-// Add this computed property to find the best session
-const bestSessionLink = computed(() => {
-  if (!props.playerStats?.bestSession) return null;
-  return `/sessions/${encodeURIComponent(props.playerName)}/${props.playerStats.bestSession.sessionId}`;
-});
-
 // Clean up event listeners when component is unmounted
 onMounted(() => {
   if (props.isOpen) {
@@ -322,7 +316,7 @@ onMounted(() => {
               </span>
             </div>
             <div v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined" class="session-stats">
-              Session: {{ playerStats.currentServer.sessionKills }} ⚔️ / {{ playerStats.currentServer.sessionDeaths }} 💀
+              Session: {{ playerStats.currentServer.sessionKills }} 🔫 / {{ playerStats.currentServer.sessionDeaths }} 💀
               (K/D: {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }})
             </div>
           </div>
@@ -346,7 +340,7 @@ onMounted(() => {
                 <div class="stat-label">Combat Stats</div>
                 <div class="stat-value">
                   <div class="combat-stats">
-                    <span class="stat-badge">⚔️ {{ playerStats.totalKills }}</span>
+                    <span class="stat-badge">🔫 {{ playerStats.totalKills }}</span>
                     <span class="stat-badge">💀 {{ playerStats.totalDeaths }}</span>
                     <span class="stat-badge">KDR: {{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
                   </div>
@@ -363,19 +357,12 @@ onMounted(() => {
                       KDR: {{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }}
                     </span>
                     <span class="best-session-badge">
-                      ⚔️ {{ playerStats.bestSession.totalKills }}
+                      🔫 {{ playerStats.bestSession.totalKills }}
                     </span>
                     <span class="best-session-badge">
                       💀 {{ playerStats.bestSession.totalDeaths }}
                     </span>
                     <span v-if="playerStats.bestSession.isActive" class="active-session-badge">Active</span>
-                    <router-link 
-                      v-if="bestSessionLink" 
-                      :to="bestSessionLink"
-                      class="view-session-link"
-                    >
-                      View Round
-                    </router-link>
                   </div>
                   <div class="best-session-details">
                     {{ playerStats.bestSession.mapName }} ({{ playerStats.bestSession.gameType }})
@@ -472,7 +459,7 @@ onMounted(() => {
                         </span>
                       </th>
                       <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header">
-                        ⚔️
+                        🔫
                         <span v-if="favoriteMapsSortField === 'totalKills'" class="sort-indicator">
                           {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
                         </span>
@@ -517,7 +504,7 @@ onMounted(() => {
                     <th>Map</th>
                     <th>Game Type</th>
                     <th>Score</th>
-                    <th>⚔️</th>
+                    <th>🔫</th>
                     <th>💀</th>
                     <th>K/D</th>
                     <th>Status</th>
@@ -1147,20 +1134,5 @@ tbody tr:hover {
 .server-link:hover {
   color: var(--color-accent);
   text-decoration: underline;
-}
-
-.view-session-link {
-  margin-left: auto;
-  padding: 4px 8px;
-  background-color: var(--color-primary);
-  color: white;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.view-session-link:hover {
-  background-color: var(--color-primary-dark);
 }
 </style>
