@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { fetchSessionDetails, SessionDetails } from '../services/playerStatsService';
 import { fetchRoundReport, RoundReport, LeaderboardSnapshot } from '../services/serverDetailsService';
 
 // Router
@@ -9,8 +8,9 @@ const router = useRouter();
 const route = useRoute();
 
 interface Props {
-  playerName: string;
-  sessionId: number;
+  serverGuid: string;
+  mapName: string;
+  startTime: string;
   isOpen: boolean;
 }
 
@@ -29,20 +29,17 @@ const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
 
 // Fetch round report when component is mounted or when props change
 const fetchData = async () => {
-  if (!props.sessionId || !props.playerName) return;
+  if (!props.serverGuid || !props.mapName || !props.startTime) return;
 
   loading.value = true;
   error.value = null;
 
   try {
-    // First fetch session details to get server GUID, map name, and start time
-    const sessionDetails = await fetchSessionDetails(props.playerName, props.sessionId);
-    
-    // Then fetch round report using the new API parameters
+    // Fetch round report using the provided parameters
     const data = await fetchRoundReport(
-      sessionDetails.serverDetails.guid,
-      sessionDetails.mapName,
-      sessionDetails.startTime
+      props.serverGuid,
+      props.mapName,
+      props.startTime
     );
     roundReport.value = data;
     selectedSnapshotIndex.value = data.leaderboardSnapshots.length - 1; // Default to final snapshot
@@ -153,10 +150,7 @@ const snapshotTimeline = computed(() => {
   });
 });
 
-// Check if a player name matches the current player (case insensitive)
-const isCurrentPlayer = (playerName: string): boolean => {
-  return playerName.toLowerCase() === props.playerName.toLowerCase();
-};
+// Removed player highlighting functionality as it no longer makes sense
 
 // Playback controls
 const startPlayback = () => {
@@ -235,7 +229,7 @@ const teamGroups = computed(() => {
 
 // Close the popup when clicking outside or pressing ESC
 const handleOutsideClick = (event: MouseEvent) => {
-  const popup = document.querySelector('.session-details-modal-content');
+  const popup = document.querySelector('.round-report-modal-content');
   if (popup && !popup.contains(event.target as Node)) {
     emit('close');
     event.stopImmediatePropagation();
@@ -379,13 +373,13 @@ const stopAutoRefresh = () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="session-details-modal-overlay" @click="$emit('close')">
-    <div class="session-details-modal-content" @click.stop>
-      <div class="session-details-header">
+  <div v-if="isOpen" class="round-report-modal-overlay" @click="$emit('close')">
+    <div class="round-report-modal-content" @click.stop>
+      <div class="round-report-header">
         <h2>Round Report</h2>
         <button class="close-button" @click="$emit('close'); $event.stopPropagation()">&times;</button>
       </div>
-      <div class="session-details-body">
+      <div class="round-report-body">
         <div v-if="loading" class="loading-container">
           <div class="loading-spinner"></div>
           <p>Loading round report...</p>
@@ -504,7 +498,6 @@ const stopAutoRefresh = () => {
                       :key="player.playerName"
                       class="player-row"
                       :class="{ 
-                        'current-player-row': isCurrentPlayer(player.playerName),
                         'top-player': player.rank === 1
                       }"
                     >
@@ -514,9 +507,10 @@ const stopAutoRefresh = () => {
                         <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
                         <span v-else class="rank-number">{{ player.rank }}</span>
                       </div>
-                      <div class="player-name" :class="{ 'highlighted-name': isCurrentPlayer(player.playerName) }">
-                        {{ player.playerName }}
-                        <span v-if="isCurrentPlayer(player.playerName)" class="you-indicator">YOU</span>
+                      <div class="player-name">
+                        <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
+                          {{ player.playerName }}
+                        </router-link>
                       </div>
                       <div class="player-score">{{ player.score.toLocaleString() }}</div>
                       <div class="player-kd">
@@ -547,7 +541,7 @@ const stopAutoRefresh = () => {
 </template>
 
 <style scoped>
-.session-details-modal-overlay {
+.round-report-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -560,12 +554,12 @@ const stopAutoRefresh = () => {
   z-index: 1000;
 }
 
-.session-details-modal-content {
+.round-report-modal-content {
   background-color: var(--color-background);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  width: 85%;
-  max-width: 1200px;
+  width: 95%;
+  max-width: 1400px;
   max-height: 90vh;
   overflow: auto;
   padding: 0;
@@ -584,7 +578,7 @@ const stopAutoRefresh = () => {
   }
 }
 
-.session-details-header {
+.round-report-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -592,7 +586,7 @@ const stopAutoRefresh = () => {
   border-bottom: 1px solid var(--color-border);
 }
 
-.session-details-header h2 {
+.round-report-header h2 {
   margin: 0;
   font-size: 1.5rem;
   color: var(--color-heading);
@@ -611,7 +605,7 @@ const stopAutoRefresh = () => {
   color: var(--color-primary);
 }
 
-.session-details-body {
+.round-report-body {
   padding: 20px;
 }
 

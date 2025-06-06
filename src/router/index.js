@@ -5,6 +5,7 @@ import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
 import ServerRankingsPage from '../components/ServerRankingsPage.vue'
 import SessionDetailsPage from '../components/SessionDetailsPage.vue'
 import PlayerDetailsPage from '../components/PlayerDetailsPage.vue'
+import RoundReportPage from '../components/RoundReportPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -97,6 +98,16 @@ const router = createRouter({
       component: PlayerDetailsPage,
       props: route => ({
         playerName: route.params.playerName
+      })
+    },
+    {
+      path: '/servers/round-report',
+      name: 'round-report',
+      component: RoundReportPage,
+      props: route => ({
+        serverGuid: route.query.serverGuid,
+        mapName: route.query.mapName,
+        startTime: route.query.startTime
       })
     }
   ]

@@ -31,6 +31,54 @@ export interface TopScore {
   timestamp: string; // ISO date string
 }
 
+export interface RecentRoundInfo {
+  mapName: string;
+  startTime: string; // ISO date string  
+  endTime: string; // ISO date string
+  sessionId: string;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  playerName: string;
+  score: number;
+  kills: number;
+  deaths: number;
+  ping: number;
+  teamLabel: string;
+}
+
+export interface LeaderboardSnapshot {
+  timestamp: string; // ISO date string
+  entries: LeaderboardEntry[];
+}
+
+export interface RoundInfo {
+  mapName: string;
+  gameType: string;
+  startTime: string; // ISO date string
+  endTime: string; // ISO date string
+  totalParticipants: number;
+  isActive: boolean;
+}
+
+export interface SessionInfo {
+  sessionId: number;
+  playerName: string;
+  serverName: string;
+  serverGuid: string;
+  gameId: string;
+  kills: number;
+  deaths: number;
+  score: number;
+}
+
+export interface RoundReport {
+  session: SessionInfo;
+  round: RoundInfo;
+  leaderboardSnapshots: LeaderboardSnapshot[];
+}
+
 export interface ServerDetails {
   endPeriod: string; // ISO date string
   mostActivePlayersByTime: MostActivePlayer[];
@@ -40,6 +88,7 @@ export interface ServerDetails {
   serverName: string;
   startPeriod: string; // ISO date string
   topScores: TopScore[];
+  lastRounds: RecentRoundInfo[];
 }
 
 /**
@@ -65,5 +114,31 @@ export async function fetchServerDetails(
   } catch (err) {
     console.error('Error fetching server details:', err);
     throw new Error('Failed to get server details');
+  }
+}
+
+/**
+ * Fetches round report for a specific round
+ * @param serverGuid The GUID of the server
+ * @param mapName The name of the map
+ * @param startTime The start time of the round
+ * @returns Round report with leaderboard snapshots
+ */
+export async function fetchRoundReport(serverGuid: string, mapName: string, startTime: string): Promise<RoundReport> {
+  try {
+    // Make the request to the API endpoint
+    const response = await axios.get<RoundReport>('/stats/servers/round-report', {
+      params: {
+        serverGuid,
+        mapName,
+        startTime
+      }
+    });
+
+    // Return the response data
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching round report:', err);
+    throw new Error('Failed to get round report');
   }
 }

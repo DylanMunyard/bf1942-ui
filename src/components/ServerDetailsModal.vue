@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { ServerDetails, fetchServerDetails } from '../services/serverDetailsService';
+import { ServerDetails, RecentRoundInfo, fetchServerDetails } from '../services/serverDetailsService';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 
@@ -76,6 +76,22 @@ const formatDate = (dateString: string): string => {
 const calculateKDR = (kills: number, deaths: number): string => {
   if (deaths === 0) return kills.toString();
   return (kills / deaths).toFixed(2);
+};
+
+// Calculate round duration
+const calculateRoundDuration = (startTime: string, endTime: string): string => {
+  const start = new Date(startTime.endsWith('Z') ? startTime : startTime + 'Z');
+  const end = new Date(endTime.endsWith('Z') ? endTime : endTime + 'Z');
+  const durationMs = end.getTime() - start.getTime();
+  const durationMinutes = Math.floor(durationMs / (1000 * 60));
+  
+  if (durationMinutes < 60) {
+    return `${durationMinutes}m`;
+  } else {
+    const hours = Math.floor(durationMinutes / 60);
+    const remainingMinutes = durationMinutes % 60;
+    return remainingMinutes === 0 ? `${hours}h` : `${hours}h ${remainingMinutes}m`;
+  }
 };
 
 // Close the popup when clicking outside or pressing ESC
@@ -436,7 +452,17 @@ onMounted(() => {
                       </router-link>
                     </div>
                     <div class="score-value">
-                      <router-link :to="`/sessions/${encodeURIComponent(score.playerName)}/${score.sessionId}`" class="session-link">
+                      <router-link 
+                        :to="{
+                          path: '/servers/round-report',
+                          query: {
+                            serverGuid: serverDetails.serverGuid,
+                            mapName: score.mapName,
+                            startTime: score.timestamp
+                          }
+                        }" 
+                        class="session-link"
+                      >
                         {{ score.score.toLocaleString() }}
                       </router-link>
                     </div>
@@ -446,6 +472,43 @@ onMounted(() => {
                       <span class="deaths">{{ score.deaths }}</span>
                     </div>
                     <div class="score-map">{{ score.mapName }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Rounds -->
+            <div v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0" class="leaderboard-section recent-rounds-section">
+              <div class="leaderboard-header">
+                <h3>🎮 Recent Rounds</h3>
+              </div>
+              <div class="leaderboard-content">
+                <div class="rounds-header">
+                  <div class="header-map">Map</div>
+                  <div class="header-start-time">Start Time</div>
+                  <div class="header-duration">Duration</div>
+                  <div class="header-session">Session</div>
+                </div>
+                <div class="rounds-list">
+                  <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-row">
+                    <div class="round-map">{{ round.mapName }}</div>
+                    <div class="round-start-time">{{ formatDate(round.startTime) }}</div>
+                    <div class="round-duration">{{ calculateRoundDuration(round.startTime, round.endTime) }}</div>
+                    <div class="round-session">
+                      <router-link 
+                        :to="{
+                          path: '/servers/round-report',
+                          query: {
+                            serverGuid: serverDetails.serverGuid,
+                            mapName: round.mapName,
+                            startTime: round.startTime
+                          }
+                        }" 
+                        class="session-link"
+                      >
+                        {{ round.sessionId }}
+                      </router-link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -828,18 +891,23 @@ onMounted(() => {
   gap: 10px;
 }
 
-.scores-header {
-  grid-template-columns: 50px 1fr 100px 80px 100px;
-  gap: 10px;
-}
+  .scores-header {
+    grid-template-columns: 50px 1fr 100px 80px 100px;
+    gap: 10px;
+  }
+
+  .rounds-header {
+    grid-template-columns: 1fr 180px 80px 120px;
+    gap: 10px;
+  }
 
 /* Players List */
-.players-list, .scores-list {
+.players-list, .scores-list, .rounds-list {
   max-height: 350px;
   overflow-y: auto;
 }
 
-.player-row, .score-row {
+.player-row, .score-row, .round-row {
   display: grid;
   gap: 10px;
   padding: 12px 15px;
@@ -856,11 +924,15 @@ onMounted(() => {
   grid-template-columns: 50px 1fr 100px 80px 100px;
 }
 
-.player-row:hover, .score-row:hover {
+.round-row {
+  grid-template-columns: 1fr 180px 80px 120px;
+}
+
+.player-row:hover, .score-row:hover, .round-row:hover {
   background: var(--color-background-soft);
 }
 
-.player-row:last-child, .score-row:last-child {
+.player-row:last-child, .score-row:last-child, .round-row:last-child {
   border-bottom: none;
 }
 
@@ -901,6 +973,29 @@ onMounted(() => {
 .player-playtime, .score-value, .score-map {
   font-weight: 500;
   color: var(--color-text);
+  text-align: center;
+}
+
+/* Round row styling */
+.round-map {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.round-start-time {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.round-duration {
+  font-weight: 500;
+  color: var(--color-text);
+  text-align: center;
+  font-family: monospace;
+}
+
+.round-session {
   text-align: center;
 }
 
@@ -994,6 +1089,11 @@ onMounted(() => {
     gap: 8px;
   }
 
+  .rounds-header {
+    grid-template-columns: 1fr 120px 60px 80px;
+    gap: 6px;
+  }
+
   .player-row, .score-row {
     padding: 10px 12px;
     font-size: 0.85rem;
@@ -1007,6 +1107,11 @@ onMounted(() => {
   .score-row {
     grid-template-columns: 40px 1fr 80px 70px 80px;
     gap: 8px;
+  }
+
+  .round-row {
+    grid-template-columns: 1fr 120px 60px 80px;
+    gap: 6px;
   }
 
   .rank-number {
