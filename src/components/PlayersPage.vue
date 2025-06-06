@@ -25,7 +25,7 @@ const players = ref<PlayerListItem[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const sortBy = ref<string>('lastSeen');
-const sortDirection = ref<'asc' | 'desc'>('desc');
+const sortOrder = ref<'asc' | 'desc'>('desc');
 // Removed statusSortOption - using simplified server-side sorting
 const servers = ref<any[]>([]);
 
@@ -139,7 +139,7 @@ const fetchPlayersData = async () => {
       currentPage.value,
       pageSize.value,
       sortBy.value,
-      sortDirection.value,
+      sortOrder.value,
       filters
     );
 
@@ -197,13 +197,13 @@ const updateUniqueServerNames = () => {
 
 // Handle sort column click - now refetches data from server
 const handleSort = (column: string) => {
-  // If clicking the same column, toggle direction
+  // If clicking the same column, toggle order
   if (sortBy.value === column) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
   } else {
     // If clicking a new column, set it as the sort column and default to descending
     sortBy.value = column;
-    sortDirection.value = 'desc';
+    sortOrder.value = 'desc';
   }
 
   // Reset to first page and refetch data
@@ -475,25 +475,25 @@ onUnmounted(() => {
             <th @click="handleSort('playerName')" class="sortable">
               Player Name
               <span v-if="sortBy === 'playerName'" class="sort-indicator">
-                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
             <th @click="handleSort('totalPlayTimeMinutes')" class="sortable">
               Total Play Time
               <span v-if="sortBy === 'totalPlayTimeMinutes'" class="sort-indicator">
-                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
             <th @click="handleSort('lastSeen')" class="sortable">
               Last Seen
               <span v-if="sortBy === 'lastSeen'" class="sort-indicator">
-                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
             <th @click="handleSort('isActive')" class="sortable">
               Status
               <span v-if="sortBy === 'isActive'" class="sort-indicator">
-                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
           </tr>

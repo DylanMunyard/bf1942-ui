@@ -139,7 +139,7 @@ export async function fetchPlayerStats(playerName: string): Promise<PlayerTimeSt
  * @param page The page number (1-based)
  * @param pageSize The number of items per page
  * @param sortBy The field to sort by
- * @param sortDirection The sort direction ('asc' or 'desc')
+ * @param sortOrder The sort order ('asc' or 'desc')
  * @param filters Object containing filter parameters (e.g. { playerName: 'john', gameId: 'fh2' })
  * @returns Paged list of players
  */
@@ -147,7 +147,7 @@ export async function fetchPlayersList(
   page: number = 1,
   pageSize: number = 50,
   sortBy: string = 'lastSeen',
-  sortDirection: 'asc' | 'desc' = 'desc',
+  sortOrder: 'asc' | 'desc' = 'desc',
   filters: Record<string, string> = {}
 ): Promise<PagedResult<PlayerListItem>> {
   try {
@@ -156,7 +156,7 @@ export async function fetchPlayersList(
       page,
       pageSize,
       sortBy,
-      sortDirection,
+      sortOrder,
       ...filters // Spread filter parameters into the query
     };
 
