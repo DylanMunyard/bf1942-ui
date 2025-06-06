@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ServerInfo } from '../types/server';
 
 // Define interfaces for the API response
 export interface PlayerCountMetric {
@@ -68,6 +69,8 @@ export interface SessionInfo {
   playerName: string;
   serverName: string;
   serverGuid: string;
+  serverIp: string;
+  serverPort: number;
   gameId: string;
   kills: number;
   deaths: number;
@@ -141,5 +144,30 @@ export async function fetchRoundReport(serverGuid: string, mapName: string, star
   } catch (err) {
     console.error('Error fetching round report:', err);
     throw new Error('Failed to get round report');
+  }
+}
+
+/**
+ * Fetches live server data from BFList API
+ * @param gameId The game ID ('fh2' for Forgotten Hope 2, others for BF1942)
+ * @param serverIp The IP address of the server
+ * @param serverPort The port of the server
+ * @returns Live server information including current leaderboard
+ */
+export async function fetchLiveServerData(
+  gameId: string, 
+  serverIp: string, 
+  serverPort: number
+): Promise<ServerInfo> {
+  try {
+    const baseUrl = gameId === 'fh2' 
+      ? 'https://api.bflist.io/fh2/v1/servers'
+      : 'https://api.bflist.io/bf1942/v1/servers';
+    
+    const response = await axios.get<ServerInfo>(`${baseUrl}/${serverIp}:${serverPort}`);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching live server data:', err);
+    throw new Error('Failed to get live server data');
   }
 }

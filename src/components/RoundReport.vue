@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { fetchRoundReport, RoundReport, LeaderboardSnapshot } from '../services/serverDetailsService';
+import { fetchRoundReport, fetchLiveServerData, RoundReport, LeaderboardSnapshot } from '../services/serverDetailsService';
 
 // Router
 const router = useRouter();
@@ -355,13 +355,56 @@ const currentElapsedTime = computed(() => {
 const startAutoRefresh = () => {
   if (autoRefreshInterval.value) return;
   
-  autoRefreshInterval.value = setInterval(() => {
-    if (roundReport.value?.round.isActive) {
-      fetchData();
+  autoRefreshInterval.value = setInterval(async () => {
+    if (roundReport.value?.round.isActive && roundReport.value?.session) {
+      try {
+        // Fetch live leaderboard data from BFList API
+        const liveServerData = await fetchLiveServerData(
+          roundReport.value.session.gameId,
+          roundReport.value.session.serverIp,
+          roundReport.value.session.serverPort
+        );
+        
+        // Guard: Check if map has changed - if so, stop auto-refresh
+        if (liveServerData.mapName !== roundReport.value.round.mapName) {
+          console.log('Map changed from', roundReport.value.round.mapName, 'to', liveServerData.mapName, '- stopping live updates');
+          stopAutoRefresh();
+          return;
+        }
+        
+        // Convert BFList API response to LeaderboardSnapshot format
+        const liveSnapshot: LeaderboardSnapshot = {
+          timestamp: new Date().toISOString(),
+          entries: liveServerData.players.map((player, index) => ({
+            rank: index + 1,
+            playerName: player.name,
+            score: player.score,
+            kills: player.kills,
+            deaths: player.deaths,
+            ping: player.ping,
+            teamLabel: player.teamLabel
+          }))
+        };
+        
+        // Update the latest snapshot with live data
+        if (roundReport.value && roundReport.value.leaderboardSnapshots.length > 0) {
+          const lastIndex = roundReport.value.leaderboardSnapshots.length - 1;
+          roundReport.value.leaderboardSnapshots[lastIndex] = liveSnapshot;
+          
+          // If user is viewing the latest snapshot, it will auto-update
+          if (selectedSnapshotIndex.value === lastIndex) {
+            // The computed currentSnapshot will automatically reflect the new data
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching live leaderboard data:', err);
+        // Fall back to regular round report fetch if live data fails
+        fetchData();
+      }
     } else {
       stopAutoRefresh();
     }
-  }, 60000); // 60 seconds
+  }, 15000); // 15 seconds for live updates
 };
 
 const stopAutoRefresh = () => {
