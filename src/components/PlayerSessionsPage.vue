@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchPlayerSessions, PagedResult, SessionListItem, PlayerContextInfo, fetchSessionDetails } from '../services/playerStatsService';
 
@@ -23,6 +23,21 @@ const currentPage = ref(1);
 const pageSize = ref(20);
 const totalItems = ref(0);
 const totalPages = ref(0);
+
+// Sorting state
+const sortBy = ref<string>('startTime');
+const sortOrder = ref<'asc' | 'desc'>('desc');
+
+// Filter variables
+const mapFilter = ref('');
+const serverFilter = ref('');
+const gameTypeFilter = ref('');
+const uniqueMaps = ref<string[]>([]);
+const uniqueServers = ref<string[]>([]);
+const uniqueGameTypes = ref<string[]>([]);
+
+// Debounced search functionality
+const searchTimeout = ref<any>(null);
 
 // Format minutes to hours and minutes
 const formatPlayTime = (minutes: number): string => {
@@ -85,20 +100,53 @@ const calculateKDR = (kills: number, deaths: number): string => {
   return (kills / deaths).toFixed(2);
 };
 
+// Update unique values for filters
+const updateUniqueValues = () => {
+  const maps = new Set<string>();
+  const servers = new Set<string>();
+  const gameTypes = new Set<string>();
+
+  sessions.value.forEach(session => {
+    if (session.mapName) maps.add(session.mapName);
+    if (session.serverName) servers.add(session.serverName);
+    if (session.gameType) gameTypes.add(session.gameType);
+  });
+
+  uniqueMaps.value = Array.from(maps).sort();
+  uniqueServers.value = Array.from(servers).sort();
+  uniqueGameTypes.value = Array.from(gameTypes).sort();
+};
+
 // Fetch player sessions data
 const fetchData = async () => {
   loading.value = true;
   error.value = null;
 
   try {
-    // Fetch the player sessions with pagination
-    const result = await fetchPlayerSessions(props.playerName, currentPage.value, pageSize.value);
+    // Build filter object from current filter values
+    const filters: Record<string, string> = {};
+    if (mapFilter.value) filters.mapName = mapFilter.value;
+    if (serverFilter.value) filters.serverName = serverFilter.value;
+    if (gameTypeFilter.value) filters.gameType = gameTypeFilter.value;
+
+    // Fetch the player sessions with pagination, filters, and sorting
+    const result = await fetchPlayerSessions(
+      props.playerName, 
+      currentPage.value, 
+      pageSize.value,
+      filters,
+      sortBy.value,
+      sortOrder.value
+    );
 
     // Update state with the fetched data
     sessions.value = result.items;
     playerInfo.value = result.playerInfo || null;
     totalItems.value = result.totalItems;
     totalPages.value = result.totalPages;
+
+    // Update unique values for filters
+    updateUniqueValues();
   } catch (err) {
     console.error('Error fetching player sessions:', err);
     error.value = 'Failed to fetch player sessions. Please try again.';
@@ -127,6 +175,50 @@ const navigateToRoundReport = (sessionId: number, event?: Event) => {
       }
     });
   }
+};
+
+// Filter handlers
+const handleMapFilterChange = (event: Event) => {
+  mapFilter.value = (event.target as HTMLSelectElement).value;
+  currentPage.value = 1; // Reset to first page when filtering
+  fetchData();
+};
+
+const handleServerFilterChange = (event: Event) => {
+  serverFilter.value = (event.target as HTMLSelectElement).value;
+  currentPage.value = 1; // Reset to first page when filtering
+  fetchData();
+};
+
+const handleGameTypeFilterChange = (event: Event) => {
+  gameTypeFilter.value = (event.target as HTMLSelectElement).value;
+  currentPage.value = 1; // Reset to first page when filtering
+  fetchData();
+};
+
+// Reset all filters
+const resetFilters = () => {
+  mapFilter.value = '';
+  serverFilter.value = '';
+  gameTypeFilter.value = '';
+  currentPage.value = 1; // Reset to first page when resetting filters
+  fetchData();
+};
+
+// Handle sort column click
+const handleSort = (column: string) => {
+  // If clicking the same column, toggle order
+  if (sortBy.value === column) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    // If clicking a new column, set it as the sort column and default to descending
+    sortBy.value = column;
+    sortOrder.value = 'desc';
+  }
+
+  // Reset to first page and refetch data
+  currentPage.value = 1;
+  fetchData();
 };
 
 // Function to handle pagination
@@ -173,6 +265,14 @@ watch(() => pageSize.value, () => {
 onMounted(() => {
   fetchData();
 });
+
+// Cleanup when component is unmounted
+onUnmounted(() => {
+  // Clear any pending search timeout
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+});
 </script>
 
 <template>
@@ -206,21 +306,134 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- Filter controls -->
+    <div class="filter-container">
+      <div class="filter-group">
+        <label for="mapFilter">Map:</label>
+        <select 
+          id="mapFilter" 
+          v-model="mapFilter" 
+          @change="handleMapFilterChange"
+          class="filter-select"
+        >
+          <option value="">All Maps</option>
+          <option v-for="map in uniqueMaps" :key="map" :value="map">
+            {{ map }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="serverFilter">Server:</label>
+        <select 
+          id="serverFilter" 
+          v-model="serverFilter" 
+          @change="handleServerFilterChange"
+          class="filter-select"
+        >
+          <option value="">All Servers</option>
+          <option v-for="server in uniqueServers" :key="server" :value="server">
+            {{ server }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="gameTypeFilter">Game Type:</label>
+        <select 
+          id="gameTypeFilter" 
+          v-model="gameTypeFilter" 
+          @change="handleGameTypeFilterChange"
+          class="filter-select"
+        >
+          <option value="">All Game Types</option>
+          <option v-for="gameType in uniqueGameTypes" :key="gameType" :value="gameType">
+            {{ gameType }}
+          </option>
+        </select>
+      </div>
+
+      <button @click="resetFilters" class="reset-filters-button">
+        Reset Filters
+      </button>
+    </div>
+
     <div v-if="loading && sessions.length === 0" class="loading">Loading sessions data...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="sessions.length > 0" class="sessions-table-container">
+      <!-- Sessions count and pagination info -->
+      <div class="table-header">
+        <div class="sessions-count">
+          Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} sessions
+        </div>
+        <div class="page-size-selector">
+          <label for="pageSize">Sessions per page:</label>
+          <select id="pageSize" v-model="pageSize" @change="currentPage = 1; fetchData()">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+
       <table>
         <thead>
           <tr>
-            <th>Server Name</th>
-            <th>Map</th>
-            <th>Game Type</th>
-            <th>Score</th>
-            <th>Kills</th>
-            <th>Deaths</th>
-            <th>K/D</th>
-            <th>Start Time</th>
-            <th>Duration</th>
+            <th @click="handleSort('serverName')" class="sortable">
+              Server Name
+              <span v-if="sortBy === 'serverName'" class="sort-indicator">
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th @click="handleSort('mapName')" class="sortable">
+              Map
+              <span v-if="sortBy === 'mapName'" class="sort-indicator">
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th @click="handleSort('gameType')" class="sortable">
+              Game Type
+              <span v-if="sortBy === 'gameType'" class="sort-indicator">
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th @click="handleSort('score')" class="sortable">
+              Score
+              <span v-if="sortBy === 'score'" class="sort-indicator">
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th @click="handleSort('kills')" class="sortable">
+              Kills
+              <span v-if="sortBy === 'kills'" class="sort-indicator">
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th @click="handleSort('deaths')" class="sortable">
+              Deaths
+              <span v-if="sortBy === 'deaths'" class="sort-indicator">
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th @click="handleSort('kdr')" class="sortable">
+              K/D
+              <span v-if="sortBy === 'kdr'" class="sort-indicator">
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th @click="handleSort('startTime')" class="sortable">
+              Start Time
+              <span v-if="sortBy === 'startTime'" class="sort-indicator">
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th @click="handleSort('durationMinutes')" class="sortable">
+              Duration
+              <span v-if="sortBy === 'durationMinutes'" class="sort-indicator">
+                {{ sortOrder === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -397,6 +610,56 @@ onMounted(() => {
   background-color: var(--color-accent-hover);
 }
 
+.filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.filter-group label {
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: var(--color-background-soft);
+  color: var(--color-text);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.reset-filters-button {
+  padding: 8px 16px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  height: 36px;
+  align-self: flex-end;
+}
+
+.reset-filters-button:hover {
+  background-color: #5a6268;
+}
+
 .spinner {
   display: inline-block;
   width: 16px;
@@ -450,6 +713,21 @@ th {
   background-color: var(--color-background-mute);
   font-weight: bold;
   color: var(--color-heading);
+}
+
+.sortable {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.sortable:hover {
+  background-color: var(--color-background-soft);
+}
+
+.sort-indicator {
+  margin-left: 5px;
+  font-size: 12px;
 }
 
 .clickable-row {
@@ -544,6 +822,17 @@ th {
   cursor: not-allowed;
 }
 
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.sessions-count {
+  font-weight: bold;
+}
+
 .page-size-selector {
   display: flex;
   align-items: center;
@@ -581,6 +870,26 @@ th {
   .player-info {
     flex-direction: column;
     gap: 5px;
+  }
+
+  .filter-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .filter-group {
+    min-width: 0;
+  }
+
+  .reset-filters-button {
+    align-self: stretch;
+    margin-top: 10px;
+  }
+
+  .table-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
   }
 
   th, td {

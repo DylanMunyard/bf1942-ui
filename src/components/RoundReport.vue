@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchRoundReport, fetchLiveServerData, RoundReport, LeaderboardSnapshot } from '../services/serverDetailsService';
 
@@ -265,7 +265,15 @@ onMounted(() => {
   }
 });
 
-// Cleanup on unmount
+// Cleanup on unmount - ensure all intervals are cleared
+onUnmounted(() => {
+  stopPlayback();
+  stopAutoRefresh();
+  document.removeEventListener('mousedown', handleOutsideClick);
+  document.removeEventListener('keydown', handleKeyDown);
+});
+
+// Cleanup on close
 watch(() => props.isOpen, (newValue) => {
   if (!newValue) {
     stopPlayback();

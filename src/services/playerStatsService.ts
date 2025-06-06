@@ -241,26 +241,38 @@ export async function fetchSessionDetails(playerName: string, sessionId: number)
 }
 
 /**
- * Fetches all sessions for a player with pagination support
+ * Fetches all sessions for a player with pagination support, filtering, and sorting
  * @param playerName The name of the player
  * @param page The page number (1-based)
  * @param pageSize The number of items per page
+ * @param filters Object containing filter parameters (e.g. { mapName: 'Berlin', serverName: 'Server 1' })
+ * @param sortBy The field to sort by (default: 'startTime')
+ * @param sortOrder The sort order ('asc' or 'desc', default: 'desc')
  * @returns Paged result of session list items
  */
 export async function fetchPlayerSessions(
   playerName: string,
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  filters: Record<string, string> = {},
+  sortBy: string = 'startTime',
+  sortOrder: 'asc' | 'desc' = 'desc'
 ): Promise<PagedResult<SessionListItem>> {
   try {
+    // Build query parameters
+    const params: Record<string, any> = {
+      page,
+      pageSize,
+      sortBy,
+      sortOrder,
+      ...filters // Spread filter parameters into the query
+    };
+
     // Make the request to the API endpoint
     const response = await axios.get<PagedResult<SessionListItem>>(
       `/stats/players/${encodeURIComponent(playerName)}/sessions`,
       {
-        params: {
-          page,
-          pageSize
-        }
+        params
       }
     );
 
