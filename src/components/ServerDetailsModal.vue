@@ -147,7 +147,7 @@ const chartOptions = {
       display: false
     },
     tooltip: {
-      mode: 'nearest',
+      mode: 'nearest' as const,
       intersect: true
     }
   }
@@ -214,74 +214,84 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Most Active Players -->
-          <div class="stats-section">
-            <h3>Most Active Players</h3>
-            <div class="players-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Player Name</th>
-                    <th>Play Time</th>
-                    <th>Kills</th>
-                    <th>Deaths</th>
-                    <th>K/D Ratio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(player, index) in serverDetails.mostActivePlayersByTime" :key="index">
-                    <td>
+          <!-- Leaderboards Container -->
+          <div class="leaderboards-container">
+            <!-- Most Active Players -->
+            <div class="leaderboard-section">
+              <div class="leaderboard-header">
+                <h3>🏃 Most Active Players</h3>
+              </div>
+              <div class="leaderboard-content">
+                <div class="players-header">
+                  <div class="header-rank">#</div>
+                  <div class="header-name">Player</div>
+                  <div class="header-playtime">Time</div>
+                  <div class="header-kd">K/D</div>
+                </div>
+                <div class="players-list">
+                  <div v-for="(player, index) in serverDetails.mostActivePlayersByTime" :key="index" class="player-row">
+                    <div class="player-rank">
+                      <span v-if="index === 0" class="rank-medal">🥇</span>
+                      <span v-else-if="index === 1" class="rank-medal">🥈</span>
+                      <span v-else-if="index === 2" class="rank-medal">🥉</span>
+                      <span v-else class="rank-number">{{ index + 1 }}</span>
+                    </div>
+                    <div class="player-name">
                       <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
                         {{ player.playerName }}
                       </router-link>
-                    </td>
-                    <td>{{ formatPlayTime(player.minutesPlayed) }}</td>
-                    <td>{{ player.totalKills }}</td>
-                    <td>{{ player.totalDeaths }}</td>
-                    <td>{{ calculateKDR(player.totalKills, player.totalDeaths) }}</td>
-                  </tr>
-                </tbody>
-              </table>
+                    </div>
+                    <div class="player-playtime">{{ formatPlayTime(player.minutesPlayed) }}</div>
+                    <div class="player-kd">
+                      <span class="kills">{{ player.totalKills }}</span>
+                      <span class="separator">/</span>
+                      <span class="deaths">{{ player.totalDeaths }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
 
-
-          <!-- Top Scores -->
-          <div class="stats-section">
-            <h3>Top Scores</h3>
-            <div class="scores-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Player Name</th>
-                    <th>Score</th>
-                    <th>Kills</th>
-                    <th>Deaths</th>
-                    <th>K/D Ratio</th>
-                    <th>Map</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(score, index) in serverDetails.topScores" :key="index">
-                    <td>
+            <!-- Top Scores -->
+            <div class="leaderboard-section">
+              <div class="leaderboard-header">
+                <h3>🏆 Top Scores</h3>
+              </div>
+              <div class="leaderboard-content">
+                <div class="scores-header">
+                  <div class="header-rank">#</div>
+                  <div class="header-name">Player</div>
+                  <div class="header-score">Score</div>
+                  <div class="header-kd">K/D</div>
+                  <div class="header-map">Map</div>
+                </div>
+                <div class="scores-list">
+                  <div v-for="(score, index) in serverDetails.topScores" :key="index" class="score-row">
+                    <div class="score-rank">
+                      <span v-if="index === 0" class="rank-medal">🥇</span>
+                      <span v-else-if="index === 1" class="rank-medal">🥈</span>
+                      <span v-else-if="index === 2" class="rank-medal">🥉</span>
+                      <span v-else class="rank-number">{{ index + 1 }}</span>
+                    </div>
+                    <div class="score-name">
                       <router-link :to="`/player/${encodeURIComponent(score.playerName)}`" class="player-link">
                         {{ score.playerName }}
                       </router-link>
-                    </td>
-                    <td>
+                    </div>
+                    <div class="score-value">
                       <router-link :to="`/sessions/${encodeURIComponent(score.playerName)}/${score.sessionId}`" class="session-link">
-                        {{ score.score }}
+                        {{ score.score.toLocaleString() }}
                       </router-link>
-                    </td>
-                    <td>{{ score.kills }}</td>
-                    <td>{{ score.deaths }}</td>
-                    <td>{{ calculateKDR(score.kills, score.deaths) }}</td>
-                    <td>{{ score.mapName }}</td>
-                    <td>{{ formatDate(score.timestamp) }}</td>
-                  </tr>
-                </tbody>
-              </table>
+                    </div>
+                    <div class="score-kd">
+                      <span class="kills">{{ score.kills }}</span>
+                      <span class="separator">/</span>
+                      <span class="deaths">{{ score.deaths }}</span>
+                    </div>
+                    <div class="score-map">{{ score.mapName }}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -427,26 +437,172 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+/* Leaderboards Container */
+.leaderboards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
 }
 
-th, td {
-  padding: 10px;
-  text-align: left;
+/* Leaderboard Section */
+.leaderboard-section {
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.leaderboard-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.leaderboard-header {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+}
+
+.leaderboard-header h3 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.leaderboard-content {
+  background: var(--color-background);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+/* Players Header */
+.players-header, .scores-header {
+  display: grid;
+  padding: 12px 15px;
+  background: var(--color-background-mute);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
   border-bottom: 1px solid var(--color-border);
 }
 
-th {
-  background-color: var(--color-background-mute);
-  font-weight: bold;
-  color: var(--color-heading);
+.players-header {
+  grid-template-columns: 50px 1fr 120px 80px;
+  gap: 10px;
 }
 
-tbody tr:hover {
-  background-color: var(--color-background-mute);
+.scores-header {
+  grid-template-columns: 50px 1fr 100px 80px 100px;
+  gap: 10px;
+}
+
+/* Players List */
+.players-list, .scores-list {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.player-row, .score-row {
+  display: grid;
+  gap: 10px;
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+  align-items: center;
+}
+
+.player-row {
+  grid-template-columns: 50px 1fr 120px 80px;
+}
+
+.score-row {
+  grid-template-columns: 50px 1fr 100px 80px 100px;
+}
+
+.player-row:hover, .score-row:hover {
+  background: var(--color-background-soft);
+}
+
+.player-row:last-child, .score-row:last-child {
+  border-bottom: none;
+}
+
+/* Rank Styling */
+.player-rank, .score-rank {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+}
+
+.rank-medal {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.rank-number {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  background: var(--color-background-mute);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+/* Player Name */
+.player-name, .score-name {
+  font-weight: 500;
+  color: var(--color-text);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.player-playtime, .score-value, .score-map {
+  font-weight: 500;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.score-value {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* K/D Styling */
+.player-kd, .score-kd {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.kills {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.separator {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.deaths {
+  color: #f44336;
+  font-weight: 600;
 }
 
 /* Link styles */
@@ -454,24 +610,29 @@ tbody tr:hover {
   color: var(--color-primary);
   text-decoration: none;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .player-link:hover, .session-link:hover {
   text-decoration: underline;
+  color: var(--color-primary-hover, var(--color-primary));
 }
 
 .session-link {
   display: inline-block;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
   background-color: var(--color-background-mute);
-  transition: background-color 0.2s;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .session-link:hover {
-  background-color: var(--color-accent);
+  background-color: var(--color-primary);
   color: white;
   text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -479,12 +640,56 @@ tbody tr:hover {
     width: 95%;
   }
 
-  table {
-    font-size: 0.9rem;
+  .leaderboards-container {
+    grid-template-columns: 1fr;
+    gap: 15px;
   }
 
-  th, td {
-    padding: 8px 5px;
+  .leaderboard-section {
+    padding: 15px;
+  }
+
+  .players-header, .scores-header {
+    padding: 10px 12px;
+    font-size: 0.75rem;
+  }
+
+  .players-header {
+    grid-template-columns: 40px 1fr 100px 70px;
+    gap: 8px;
+  }
+
+  .scores-header {
+    grid-template-columns: 40px 1fr 80px 70px 80px;
+    gap: 8px;
+  }
+
+  .player-row, .score-row {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .player-row {
+    grid-template-columns: 40px 1fr 100px 70px;
+    gap: 8px;
+  }
+
+  .score-row {
+    grid-template-columns: 40px 1fr 80px 70px 80px;
+    gap: 8px;
+  }
+
+  .rank-number {
+    width: 24px;
+    height: 24px;
+  }
+
+  .rank-medal {
+    font-size: 1rem;
+  }
+
+  .leaderboard-header h3 {
+    font-size: 1.1rem;
   }
 }
 
