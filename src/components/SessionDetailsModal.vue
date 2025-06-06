@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { fetchSessionDetails, SessionDetails } from '../services/playerStatsService';
 import { fetchRoundReport, fetchLiveServerData, RoundReport, LeaderboardSnapshot } from '../services/serverDetailsService';
 
 // Router
@@ -8,9 +9,8 @@ const router = useRouter();
 const route = useRoute();
 
 interface Props {
-  serverGuid: string;
-  mapName: string;
-  startTime: string;
+  playerName: string;
+  sessionId: number;
   isOpen: boolean;
 }
 
@@ -26,21 +26,23 @@ const playbackInterval = ref<NodeJS.Timeout | null>(null);
 const playbackSpeed = ref(500); // milliseconds between snapshots (slower default for smoother playback)
 const isDragging = ref(false);
 const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
-const isLiveUpdating = ref(false);
 
 // Fetch round report when component is mounted or when props change
 const fetchData = async () => {
-  if (!props.serverGuid || !props.mapName || !props.startTime) return;
+  if (!props.sessionId || !props.playerName) return;
 
   loading.value = true;
   error.value = null;
 
   try {
-    // Fetch round report using the provided parameters
+    // First fetch session details to get server GUID, map name, and start time
+    const sessionDetails = await fetchSessionDetails(props.playerName, props.sessionId);
+    
+    // Then fetch round report using the new API parameters
     const data = await fetchRoundReport(
-      props.serverGuid,
-      props.mapName,
-      props.startTime
+      sessionDetails.serverDetails.guid,
+      sessionDetails.mapName,
+      sessionDetails.startTime
     );
     roundReport.value = data;
     selectedSnapshotIndex.value = data.leaderboardSnapshots.length - 1; // Default to final snapshot
@@ -151,7 +153,10 @@ const snapshotTimeline = computed(() => {
   });
 });
 
-// Removed player highlighting functionality as it no longer makes sense
+// Check if a player name matches the current player (case insensitive)
+const isCurrentPlayer = (playerName: string): boolean => {
+  return playerName.toLowerCase() === props.playerName.toLowerCase();
+};
 
 // Playback controls
 const startPlayback = () => {
@@ -230,7 +235,7 @@ const teamGroups = computed(() => {
 
 // Close the popup when clicking outside or pressing ESC
 const handleOutsideClick = (event: MouseEvent) => {
-  const popup = document.querySelector('.round-report-modal-content');
+  const popup = document.querySelector('.session-details-modal-content');
   if (popup && !popup.contains(event.target as Node)) {
     emit('close');
     event.stopImmediatePropagation();
@@ -356,7 +361,6 @@ const currentElapsedTime = computed(() => {
 const startAutoRefresh = () => {
   if (autoRefreshInterval.value) return;
   
-  isLiveUpdating.value = true;
   autoRefreshInterval.value = setInterval(async () => {
     if (roundReport.value?.round.isActive && roundReport.value?.session) {
       try {
@@ -410,7 +414,6 @@ const startAutoRefresh = () => {
 };
 
 const stopAutoRefresh = () => {
-  isLiveUpdating.value = false;
   if (autoRefreshInterval.value) {
     clearInterval(autoRefreshInterval.value);
     autoRefreshInterval.value = null;
@@ -419,13 +422,13 @@ const stopAutoRefresh = () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="round-report-modal-overlay" @click="$emit('close')">
-    <div class="round-report-modal-content" @click.stop>
-      <div class="round-report-header">
+  <div v-if="isOpen" class="session-details-modal-overlay" @click="$emit('close')">
+    <div class="session-details-modal-content" @click.stop>
+      <div class="session-details-header">
         <h2>Round Report</h2>
         <button class="close-button" @click="$emit('close'); $event.stopPropagation()">&times;</button>
       </div>
-      <div class="round-report-body">
+      <div class="session-details-body">
         <div v-if="loading" class="loading-container">
           <div class="loading-spinner"></div>
           <p>Loading round report...</p>
@@ -450,10 +453,7 @@ const stopAutoRefresh = () => {
                   <span class="separator">•</span>
                   <span class="match-time">{{ formatDate(roundReport.round.startTime) }}</span>
                   <span class="separator">•</span>
-                  <span v-if="roundReport.round.isActive" class="status-badge active" :class="{ 'live-updating': isLiveUpdating }">
-                    Live
-                    <span v-if="isLiveUpdating" class="live-dot"></span>
-                  </span>
+                  <span v-if="roundReport.round.isActive" class="status-badge active">Live</span>
                   <span v-else class="status-badge completed">Match Complete</span>
                 </div>
               </div>
@@ -547,6 +547,7 @@ const stopAutoRefresh = () => {
                       :key="player.playerName"
                       class="player-row"
                       :class="{ 
+                        'current-player-row': isCurrentPlayer(player.playerName),
                         'top-player': player.rank === 1
                       }"
                     >
@@ -556,10 +557,9 @@ const stopAutoRefresh = () => {
                         <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
                         <span v-else class="rank-number">{{ player.rank }}</span>
                       </div>
-                      <div class="player-name">
-                        <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
-                          {{ player.playerName }}
-                        </router-link>
+                      <div class="player-name" :class="{ 'highlighted-name': isCurrentPlayer(player.playerName) }">
+                        {{ player.playerName }}
+                        <span v-if="isCurrentPlayer(player.playerName)" class="you-indicator">YOU</span>
                       </div>
                       <div class="player-score">{{ player.score.toLocaleString() }}</div>
                       <div class="player-kd">
@@ -590,7 +590,7 @@ const stopAutoRefresh = () => {
 </template>
 
 <style scoped>
-.round-report-modal-overlay {
+.session-details-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -603,12 +603,12 @@ const stopAutoRefresh = () => {
   z-index: 1000;
 }
 
-.round-report-modal-content {
+.session-details-modal-content {
   background-color: var(--color-background);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  width: 95%;
-  max-width: 1400px;
+  width: 85%;
+  max-width: 1200px;
   max-height: 90vh;
   overflow: auto;
   padding: 0;
@@ -627,7 +627,7 @@ const stopAutoRefresh = () => {
   }
 }
 
-.round-report-header {
+.session-details-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -635,7 +635,7 @@ const stopAutoRefresh = () => {
   border-bottom: 1px solid var(--color-border);
 }
 
-.round-report-header h2 {
+.session-details-header h2 {
   margin: 0;
   font-size: 1.5rem;
   color: var(--color-heading);
@@ -654,7 +654,7 @@ const stopAutoRefresh = () => {
   color: var(--color-primary);
 }
 
-.round-report-body {
+.session-details-body {
   padding: 20px;
 }
 
@@ -1202,55 +1202,5 @@ const stopAutoRefresh = () => {
 .separator {
   opacity: 0.5;
   user-select: none;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: white;
-  background-color: #ff5252;
-  transition: all 0.3s ease;
-}
-
-.status-badge.active {
-  background-color: #4CAF50;
-}
-
-.status-badge.completed {
-  background-color: #757575;
-}
-
-.status-badge.live-updating {
-  background: linear-gradient(45deg, #4CAF50, #66BB6A);
-  animation: live-pulse 2s ease-in-out infinite;
-}
-
-.live-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: white;
-  animation: live-blink 1.5s ease-in-out infinite;
-}
-
-@keyframes live-pulse {
-  0%, 100% { 
-    background: linear-gradient(45deg, #4CAF50, #66BB6A);
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
-  }
-  50% { 
-    background: linear-gradient(45deg, #66BB6A, #81C784);
-    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0);
-  }
-}
-
-@keyframes live-blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0.3; }
 }
 </style>

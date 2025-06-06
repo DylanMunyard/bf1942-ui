@@ -2,7 +2,6 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics } from '../services/playerStatsService';
-import SessionDetailsModal from './SessionDetailsModal.vue';
 
 // Router
 const router = useRouter();
@@ -15,18 +14,12 @@ interface Props {
   isLoading: boolean;
   error: string | null;
   servers?: any[]; // Add servers prop to get player count
-  selectedSessionId?: number | null;
-  showSessionModal?: boolean;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits(['close']);
 
-// Session details modal state
-const showSessionDetailsModal = ref(false);
-const selectedSessionId = ref<number | null>(null);
-
-// Function to open the session details modal
+// Function to open the round report page
 const openSessionDetailsModal = (serverGuid: string, mapName: string, startTime: string, event?: Event) => {
   // Prevent event propagation to stop the modal from closing
   if (event) {
@@ -42,11 +35,6 @@ const openSessionDetailsModal = (serverGuid: string, mapName: string, startTime:
       startTime
     }
   });
-};
-
-// Function to close the session details modal
-const closeSessionDetailsModal = () => {
-  router.back();
 };
 
 // Function to close the player stats modal
@@ -196,22 +184,10 @@ watch(() => props.isOpen, (newValue) => {
   }
 });
 
-// Watch for changes to selectedSessionId and showSessionModal props
-watch(() => [props.selectedSessionId, props.showSessionModal], ([newSessionId, newShowSessionModal]) => {
-  if (newSessionId && newShowSessionModal) {
-    selectedSessionId.value = newSessionId;
-    showSessionDetailsModal.value = true;
-  }
-}, { immediate: true });
-
 // Watch for route changes to close the modal when navigating back
 watch(() => route.name, (newRouteName) => {
-  if (props.isOpen && newRouteName !== 'player-details' && newRouteName !== 'session-details') {
+  if (props.isOpen && newRouteName !== 'player-details') {
     emit('close');
-  }
-
-  if (showSessionDetailsModal.value && newRouteName !== 'session-details') {
-    showSessionDetailsModal.value = false;
   }
 });
 
@@ -431,35 +407,7 @@ onMounted(() => {
               Data from {{ formatDate(playerStats.insights.startPeriod) }} to {{ formatDate(playerStats.insights.endPeriod) }}
             </div>
 
-            <!-- Server Rankings -->
-            <div v-if="playerStats.insights.serverRankings && playerStats.insights.serverRankings.length > 0" class="insights-subsection">
-              <h4>Server Rankings</h4>
-              <div class="server-rankings-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Server</th>
-                      <th>Rank</th>
-                      <th>Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(ranking, index) in playerStats.insights.serverRankings" :key="index">
-                      <td>
-                        <router-link 
-                          :to="`/servers/${encodeURIComponent(ranking.serverName)}/rankings`" 
-                          class="server-link"
-                        >
-                          {{ ranking.serverName }}
-                        </router-link>
-                      </td>
-                      <td>{{ ranking.rankDisplay }}</td>
-                      <td>{{ ranking.scoreDisplay }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+
 
             <!-- Favorite Maps -->
             <div v-if="playerStats.insights.favoriteMaps && playerStats.insights.favoriteMaps.length > 0" class="insights-subsection">
@@ -574,15 +522,6 @@ onMounted(() => {
       </div>
     </div>
   </div>
-
-  <!-- Session Details Modal -->
-  <SessionDetailsModal
-    v-if="showSessionDetailsModal && selectedSessionId !== null && playerStats"
-    :player-name="playerName"
-    :session-id="selectedSessionId"
-    :is-open="showSessionDetailsModal"
-    @close="closeSessionDetailsModal"
-  />
 </template>
 
 <style scoped>
@@ -1128,40 +1067,6 @@ tbody tr:hover {
   .activity-hour-label {
     font-size: 0.7rem;
   }
-}
-
-.server-rankings-table {
-  margin-top: 10px;
-  width: 100%;
-}
-
-.server-rankings-table table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: var(--color-background-soft);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.server-rankings-table th,
-.server-rankings-table td {
-  padding: 10px;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.server-rankings-table th {
-  background-color: var(--color-background-mute);
-  font-weight: bold;
-  color: var(--color-heading);
-}
-
-.server-rankings-table tr:last-child td {
-  border-bottom: none;
-}
-
-.server-rankings-table tr:hover {
-  background-color: var(--color-background-mute);
 }
 
 .server-link {
