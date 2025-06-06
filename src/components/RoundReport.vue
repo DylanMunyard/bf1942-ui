@@ -370,6 +370,8 @@ const startAutoRefresh = () => {
         // Guard: Check if map has changed - if so, stop auto-refresh
         if (liveServerData.mapName !== roundReport.value.round.mapName) {
           console.log('Map changed from', roundReport.value.round.mapName, 'to', liveServerData.mapName, '- stopping live updates');
+          // Mark the round as no longer active since it has ended
+          roundReport.value.round.isActive = false;
           stopAutoRefresh();
           return;
         }
@@ -412,13 +414,16 @@ const startAutoRefresh = () => {
         }
       } catch (err) {
         console.error('Error fetching live leaderboard data:', err);
-        // Fall back to regular round report fetch if live data fails
-        fetchData();
+        // Mark the round as no longer active since live updates are failing
+        if (roundReport.value) {
+          roundReport.value.round.isActive = false;
+        }
+        stopAutoRefresh();
       }
     } else {
       stopAutoRefresh();
     }
-  }, 5000); // 5 seconds for live updates
+  }, 10000); // 10 seconds for live updates
 };
 
 const stopAutoRefresh = () => {

@@ -480,7 +480,7 @@ onMounted(() => {
                       {{ round.mapName }}
                     </div>
                     <div class="round-end-time">
-                      <span v-if="round.isActive" class="badge-active">In Progress</span>
+                      <span v-if="round.isActive && index === 0" class="badge-active">In Progress</span>
                       <span v-else>{{ formatDate(round.endTime) }}</span>
                     </div>
                     <div class="round-report">
