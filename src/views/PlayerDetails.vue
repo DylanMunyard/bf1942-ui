@@ -426,9 +426,17 @@ onMounted(() => {
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Insights section -->
+        <div v-if="playerStats.insights" class="stats-section">
+          <h3>Player Insights</h3>
+          <div class="insights-period">
+            Data from {{ formatDate(playerStats.insights.startPeriod) }} to {{ formatDate(playerStats.insights.endPeriod) }}
+          </div>
 
           <!-- Activity By Hour -->
-          <div v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0" class="online-times-section">
+          <div v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0" class="insights-subsection">
             <h4>When they're typically online (Local Time)</h4>
             <div class="activity-chart-wrapper">
               <div class="activity-chart-container">
@@ -456,23 +464,7 @@ onMounted(() => {
                   <span class="period-hours">4PM-12AM</span>
                 </div>
               </div>
-              
-              <!-- Individual hour labels -->
-              <div class="activity-hours-labels">
-                <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
-                     class="activity-hour-label">
-                  {{ hourData.localHour.toString().padStart(2, '0') }}
-                </div>
-              </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Insights section -->
-        <div v-if="playerStats.insights" class="stats-section">
-          <h3>Player Insights</h3>
-          <div class="insights-period">
-            Data from {{ formatDate(playerStats.insights.startPeriod) }} to {{ formatDate(playerStats.insights.endPeriod) }}
           </div>
 
           <!-- Server Rankings -->
@@ -1157,18 +1149,7 @@ tbody tr:hover {
   color: rgba(149, 117, 205, 0.9); /* Lighter purple for dark mode */
 }
 
-.activity-hours-labels {
-  display: flex;
-  gap: 2px;
-}
 
-.activity-hour-label {
-  flex: 1;
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  padding-top: 5px;
-}
 
 /* Favorite Maps Table Styles */
 .favorite-maps-table {
@@ -1208,10 +1189,6 @@ tbody tr:hover {
 
   .activity-chart-container {
     height: 60px;
-  }
-
-  .activity-hour-label {
-    font-size: 0.7rem;
   }
 
   .period-name {
