@@ -439,7 +439,16 @@ const goBack = () => {
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           Back
         </button>
-        <h2>Round Report</h2>
+        <div class="header-titles" v-if="roundReport">
+          <h2>🗺️ {{ roundReport.round.mapName }}</h2>
+          <router-link 
+            :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
+            class="server-name-header"
+          >
+            {{ roundReport.session.serverName }}
+          </router-link>
+        </div>
+        <h2 v-else>Round Report</h2>
       </div>
     </div>
     <div class="round-report-body">
@@ -454,14 +463,7 @@ const goBack = () => {
         <!-- Consolidated Leaderboard Section with Session Details -->
         <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
           <div class="leaderboard-header">
-            <div class="header-left">
-              <h3>🗺️ {{ roundReport.round.mapName }}</h3>
-              <router-link 
-                :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
-                class="server-name"
-              >
-                {{ roundReport.session.serverName }}
-              </router-link>
+            <div class="match-info">
               <div class="match-meta">
                 <span class="game-id">#{{ roundReport.session.gameId }}</span>
                 <span class="separator">•</span>
@@ -475,47 +477,52 @@ const goBack = () => {
               </div>
             </div>
             <div class="header-controls">
-              <div v-if="snapshotTimeline.length > 1" class="compact-playback">
-                <button @click="resetPlayback" class="mini-button" title="Reset">⏮️</button>
-                <button @click="togglePlayback" class="mini-button play-mini" :class="{ playing: isPlaying }" title="Play/Pause">
-                  {{ isPlaying ? '⏸️' : '▶️' }}
-                </button>
-                <select v-model="playbackSpeed" @change="setPlaybackSpeed(playbackSpeed)" class="mini-select">
-                  <option :value="500">0.5x</option>
-                  <option :value="250">1x</option>
-                  <option :value="150" selected>2x</option>
-                  <option :value="75">4x</option>
-                </select>
-                <span v-if="isPlaying" class="mini-indicator">🔴</span>
-              </div>
-              <div class="elapsed-badge">
-                {{ currentElapsedTime }}
-              </div>
             </div>
           </div>
           
-          <div v-if="snapshotTimeline.length > 1" class="playback-instructions">
-            <span class="instructions-text">Click play to watch the match unfold, or drag through the timeline</span>
-          </div>
-          
-          <div v-if="snapshotTimeline.length > 1" class="compact-progress">
-            <div 
-              class="mini-progress-bar"
-              @mousedown="startDrag"
-            >
+          <div v-if="snapshotTimeline.length > 1" class="timeline-section">
+            <div class="timeline-header">
+              <div class="instructions-text">Click play to watch the match unfold, or drag through the timeline</div>
+              <div class="timeline-controls-compact">
+                <div class="compact-playback">
+                  <button @click="resetPlayback" class="mini-button" title="Reset">⏮️</button>
+                  <button @click="togglePlayback" class="mini-button play-mini" :class="{ playing: isPlaying }" title="Play/Pause">
+                    {{ isPlaying ? '⏸️' : '▶️' }}
+                  </button>
+                  <select v-model="playbackSpeed" @change="setPlaybackSpeed(playbackSpeed)" class="mini-select">
+                    <option :value="500">0.5x</option>
+                    <option :value="250">1x</option>
+                    <option :value="150" selected>2x</option>
+                    <option :value="75">4x</option>
+                  </select>
+                  <span v-if="isPlaying" class="mini-indicator">🔴</span>
+                </div>
+                
+                <div class="elapsed-badge">
+                  {{ currentElapsedTime }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="timeline-scrubber">
               <div 
-                class="mini-progress-fill"
-                :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
-              ></div>
-              <div class="scrubber-dots">
+                class="mini-progress-bar"
+                @mousedown="startDrag"
+              >
                 <div 
-                  v-for="(dot, index) in sampledDots" 
-                  :key="index"
-                  class="scrubber-dot"
-                  :class="{ 'active-dot': index === selectedSnapshotIndex }"
-                  :title="`${getElapsedTime(dot.timestamp)} elapsed`"
-                  @click="handleDotClick(dot.index)"
+                  class="mini-progress-fill"
+                  :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
                 ></div>
+                <div class="scrubber-dots">
+                  <div 
+                    v-for="(dot, index) in sampledDots" 
+                    :key="index"
+                    class="scrubber-dot"
+                    :class="{ 'active-dot': index === selectedSnapshotIndex }"
+                    :title="`${getElapsedTime(dot.timestamp)} elapsed`"
+                    @click="handleDotClick(dot.index)"
+                  ></div>
+                </div>
               </div>
             </div>
           </div>
@@ -610,16 +617,19 @@ const goBack = () => {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.header {
+
+
+.round-report-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.header h2 {
-  margin: 0;
-  color: var(--color-heading);
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .back-button {
@@ -627,7 +637,7 @@ const goBack = () => {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background-color: var(--color-accent);
+  background-color: #6c757d;
   color: white;
   border: none;
   border-radius: 4px;
@@ -636,7 +646,30 @@ const goBack = () => {
 }
 
 .back-button:hover {
-  background-color: var(--color-accent-hover);
+  background-color: #5a6268;
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-titles h2 {
+  margin: 0;
+  color: var(--color-heading);
+}
+
+.server-name-header {
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.server-name-header:hover {
+  opacity: 0.8;
+  text-decoration: underline;
 }
 
 .loading-container, .error-container, .no-data-container {
@@ -688,9 +721,8 @@ const goBack = () => {
   border-bottom: 1px solid var(--color-border);
 }
 
-.leaderboard-header h3 {
-  margin: 0;
-  color: var(--color-heading);
+.match-info {
+  flex: 1;
 }
 
 .header-controls {
@@ -756,10 +788,26 @@ const goBack = () => {
   51%, 100% { opacity: 0.3; }
 }
 
-.compact-progress {
+.timeline-section {
+  margin: 20px 0;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
+
+.timeline-controls-compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeline-scrubber {
   width: 100%;
-  margin: 25px 0;
-  padding: 15px 0;
 }
 
 .mini-progress-bar {
@@ -1021,44 +1069,40 @@ body.dragging * {
   letter-spacing: 0.5px;
 }
 
-.playback-instructions {
-  text-align: center;
-  margin-bottom: 10px;
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
 .instructions-text {
   background: var(--color-background-mute);
-  padding: 4px 8px;
+  padding: 6px 12px;
   border-radius: 12px;
   font-weight: 600;
-}
-
-.server-name {
-  font-size: 0.95rem;
-  color: var(--color-primary);
-  margin-bottom: 6px;
-  text-decoration: none;
-  transition: opacity 0.2s;
-}
-
-.server-name:hover {
-  opacity: 0.8;
-  text-decoration: underline;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
 }
 
 .match-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  background: var(--color-background-soft);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.game-id {
+  background: var(--color-accent);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .separator {
-  opacity: 0.5;
+  opacity: 0.6;
   user-select: none;
+  color: var(--color-text-muted);
 }
 
 .status-badge {
