@@ -23,6 +23,7 @@ const isPlaying = ref(false);
 const playbackInterval = ref<NodeJS.Timeout | null>(null);
 const playbackSpeed = ref(500); // milliseconds between snapshots (slower default for smoother playback)
 const isDragging = ref(false);
+const scrubberElement = ref<HTMLElement | null>(null);
 const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
 const isLiveUpdating = ref(false);
 
@@ -234,6 +235,10 @@ const teamGroups = computed(() => {
 onUnmounted(() => {
   stopPlayback();
   stopAutoRefresh();
+  // Clean up drag state if component unmounts during drag
+  if (isDragging.value) {
+    stopDrag();
+  }
 });
 
 const sampledDots = computed(() => {
@@ -265,23 +270,47 @@ const handleDotClick = (index: number) => {
 };
 
 const startDrag = (event: MouseEvent) => {
+  event.preventDefault(); // Prevent text selection
   isDragging.value = true;
+  scrubberElement.value = event.currentTarget as HTMLElement;
   stopPlayback();
   updateSnapshotIndex(event);
+  
+  // Add dragging class to body for visual feedback
+  document.body.classList.add('dragging');
+  
+  // Add event listeners to document for smooth dragging
+  document.addEventListener('mousemove', handleDrag, { passive: false });
+  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('selectstart', preventSelection); // Prevent text selection during drag
 };
 
 const handleDrag = (event: MouseEvent) => {
-  if (!isDragging.value) return;
+  if (!isDragging.value || !scrubberElement.value) return;
+  event.preventDefault(); // Prevent text selection
   updateSnapshotIndex(event);
 };
 
 const stopDrag = () => {
   isDragging.value = false;
+  scrubberElement.value = null;
+  
+  // Remove dragging class from body
+  document.body.classList.remove('dragging');
+  
+  document.removeEventListener('mousemove', handleDrag);
+  document.removeEventListener('mouseup', stopDrag);
+  document.removeEventListener('selectstart', preventSelection);
+};
+
+const preventSelection = (event: Event) => {
+  event.preventDefault();
 };
 
 const updateSnapshotIndex = (event: MouseEvent) => {
-  const scrubber = event.currentTarget as HTMLElement;
-  const rect = scrubber.getBoundingClientRect();
+  if (!scrubberElement.value) return;
+  
+  const rect = scrubberElement.value.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const percent = Math.min(Math.max(x / rect.width, 0), 1);
   
@@ -473,9 +502,6 @@ const goBack = () => {
             <div 
               class="mini-progress-bar"
               @mousedown="startDrag"
-              @mousemove="handleDrag"
-              @mouseup="stopDrag"
-              @mouseleave="stopDrag"
             >
               <div 
                 class="mini-progress-fill"
@@ -578,53 +604,39 @@ const goBack = () => {
 
 <style scoped>
 .round-report-container {
-  background-color: var(--color-background);
+  background: #fff;
   padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.round-report-header {
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 15px;
   margin-bottom: 20px;
-  border-bottom: 1px solid var(--color-border);
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+.header h2 {
+  margin: 0;
+  color: var(--color-heading);
 }
 
 .back-button {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  background-color: var(--color-background-mute);
+  padding: 8px 16px;
+  background-color: var(--color-accent);
+  color: white;
   border: none;
-  border-radius: 6px;
-  color: var(--color-text);
-  text-decoration: none;
-  font-weight: 500;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  font-size: 16px;
 }
 
 .back-button:hover {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.round-report-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: var(--color-heading);
-}
-
-.round-report-body {
-  padding: 20px;
+  background-color: var(--color-accent-hover);
 }
 
 .loading-container, .error-container, .no-data-container {
@@ -661,32 +673,31 @@ const goBack = () => {
 }
 
 .leaderboard-section {
-  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
-  border-radius: 12px;
-  padding: 25px;
-  border: 1px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.1);
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
 .leaderboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 2px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .leaderboard-header h3 {
   margin: 0;
   color: var(--color-heading);
-  font-size: 1.4rem;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .header-controls {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
 }
 
 .compact-playback {
@@ -702,22 +713,14 @@ const goBack = () => {
 .mini-button {
   padding: 4px 6px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--color-background);
   color: var(--color-text);
   cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 26px;
-  height: 26px;
 }
 
 .mini-button:hover {
   background: var(--color-background-mute);
-  border-color: var(--color-primary);
 }
 
 .play-mini.playing {
@@ -754,24 +757,25 @@ const goBack = () => {
 }
 
 .compact-progress {
-  margin-bottom: 10px;
+  width: 100%;
+  margin: 25px 0;
+  padding: 15px 0;
 }
 
 .mini-progress-bar {
   width: 100%;
-  height: 16px;
+  height: 20px;
   background: var(--color-background-mute);
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 10px;
   position: relative;
   cursor: pointer;
+  user-select: none; /* Prevent text selection */
 }
 
 .mini-progress-fill {
   height: 100%;
   background: var(--color-primary);
-  border-radius: 8px;
-  transition: width 0.5s ease;
+  border-radius: 10px;
   position: relative;
   z-index: 1;
 }
@@ -787,14 +791,15 @@ const goBack = () => {
   align-items: center;
   transform: translateY(-50%);
   pointer-events: none;
+  padding: 0 10px;
 }
 
 .scrubber-dot {
-  width: 6px;
-  height: 6px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background-color: white;
-  border: 1px solid rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(0, 0, 0, 0.3);
   opacity: 0.8;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -802,16 +807,24 @@ const goBack = () => {
   z-index: 2;
 }
 
-.scrubber-dot:hover {
+.scrubber-dot:hover, .active-dot {
   opacity: 1;
   transform: scale(1.3);
   border-color: rgba(0, 0, 0, 0.5);
 }
 
-.active-dot {
-  opacity: 1;
-  transform: scale(1.3);
-  border-color: rgba(0, 0, 0, 0.5);
+/* Improve dragging experience */
+.mini-progress-bar:active {
+  cursor: grabbing;
+}
+
+body.dragging {
+  user-select: none;
+  cursor: grabbing !important;
+}
+
+body.dragging * {
+  cursor: grabbing !important;
 }
 
 .teams-container {
@@ -821,76 +834,42 @@ const goBack = () => {
 }
 
 .team-column {
-  background: var(--color-background);
-  border-radius: 12px;
+  background: #fff;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-}
-
-.team-column:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.team-column.team-red {
-  border-top: 4px solid #f44336;
-}
-
-.team-column.team-blue {
-  border-top: 4px solid #2196f3;
-}
-
-.team-column.team-green {
-  border-top: 4px solid #4caf50;
-}
-
-.team-column.team-yellow {
-  border-top: 4px solid #ff9800;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid var(--color-border);
 }
 
 .team-header {
-  background: linear-gradient(135deg, var(--color-background-mute) 0%, var(--color-background-soft) 100%);
-  padding: 15px 20px;
+  padding: 15px;
+  background: var(--color-background-mute);
   border-bottom: 1px solid var(--color-border);
 }
 
 .team-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: bold;
   color: var(--color-heading);
-  margin-bottom: 10px;
-}
-
-.team-icon {
-  font-size: 1.2rem;
 }
 
 .team-stats {
   display: flex;
-  gap: 20px;
+  gap: 15px;
+  margin-top: 10px;
 }
 
 .team-stat {
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
 .stat-label {
   font-size: 0.8rem;
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .stat-value {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: bold;
   color: var(--color-primary);
 }
 
@@ -906,9 +885,6 @@ const goBack = () => {
   background: var(--color-background-mute);
   font-size: 0.8rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text-muted);
 }
 
 .players-list {
@@ -921,8 +897,6 @@ const goBack = () => {
   gap: 10px;
   padding: 12px 15px;
   border-bottom: 1px solid var(--color-border);
-  transition: all 0.2s ease;
-  align-items: center;
 }
 
 .player-row:hover {
@@ -949,7 +923,6 @@ const goBack = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-weight: 700;
 }
 
 .rank-medal {
@@ -971,47 +944,25 @@ const goBack = () => {
 
 .player-name {
   font-weight: 500;
-  color: var(--color-text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  overflow: hidden;
 }
 
-.highlighted-name {
-  font-weight: 700;
+.player-link {
   color: var(--color-primary);
+  text-decoration: none;
 }
 
-.you-indicator {
-  background: var(--color-primary);
-  color: white;
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  animation: glow 2s infinite alternate;
-}
-
-@keyframes glow {
-  from { box-shadow: 0 0 5px rgba(var(--color-primary-rgb, 33, 150, 243), 0.5); }
-  to { box-shadow: 0 0 10px rgba(var(--color-primary-rgb, 33, 150, 243), 0.8); }
+.player-link:hover {
+  text-decoration: underline;
 }
 
 .player-score {
-  font-weight: 600;
-  color: var(--color-text);
   text-align: center;
 }
 
 .player-kd {
   display: flex;
-  align-items: center;
   justify-content: center;
   gap: 2px;
-  font-size: 0.85rem;
 }
 
 .kills {
@@ -1030,11 +981,6 @@ const goBack = () => {
 
 .player-ping {
   text-align: center;
-  font-family: monospace;
-  font-weight: 600;
-  font-size: 0.8rem;
-  padding: 4px 6px;
-  border-radius: 4px;
 }
 
 .ping-good {
@@ -1053,71 +999,14 @@ const goBack = () => {
 }
 
 @media (max-width: 768px) {
-  .session-details-modal-content {
-    width: 95%;
-    max-height: 95vh;
-  }
-
-  .match-header {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-
-  .map-name {
-    font-size: 1.4rem;
-  }
-
-  .compact-playback {
-    gap: 4px;
-    padding: 3px 6px;
-  }
-
-  .mini-button {
-    min-width: 24px;
-    height: 24px;
-    font-size: 0.7rem;
-  }
-
-  .mini-select {
-    min-width: 40px;
-    font-size: 0.7rem;
-  }
-
   .teams-container {
     grid-template-columns: 1fr;
-    gap: 15px;
   }
-
-  .team-column {
-    min-width: 0;
-  }
-
+  
   .players-header,
   .player-row {
     grid-template-columns: 30px 1fr 60px 50px 50px;
-    gap: 8px;
     padding: 10px 12px;
-    font-size: 0.8rem;
-  }
-
-  .team-stats {
-    gap: 15px;
-  }
-
-  .leaderboard-header {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-  }
-
-  .leaderboard-header h3 {
-    font-size: 1.2rem;
-  }
-
-  .you-indicator {
-    font-size: 0.6rem;
-    padding: 1px 4px;
   }
 }
 
@@ -1181,8 +1070,6 @@ const goBack = () => {
   font-size: 0.8rem;
   font-weight: bold;
   color: white;
-  background-color: #ff5252;
-  transition: all 0.3s ease;
 }
 
 .status-badge.active {
