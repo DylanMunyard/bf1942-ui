@@ -264,7 +264,11 @@ onMounted(() => {
   <div class="player-details-container">
     <div class="player-stats-header">
       <div class="player-name-container">
-        <h2>Player Statistics: {{ playerName }}</h2>
+        <router-link to="/players" class="back-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Back to Players
+        </router-link>
+        <h2 class="player-name-heading">Player Statistics: {{ playerName }}</h2>
         <span v-if="playerStats && playerStats.isActive" class="status-badge active">Active</span>
       </div>
     </div>
@@ -553,7 +557,7 @@ onMounted(() => {
   gap: 10px;
 }
 
-.player-stats-header h2 {
+.player-name-heading {
   margin: 0;
   font-size: 1.5rem;
   color: var(--color-heading);
@@ -567,6 +571,24 @@ onMounted(() => {
   font-weight: bold;
   color: white;
   background-color: #ff5252;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--color-background-mute);
+  border-radius: 6px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.back-button:hover {
+  background-color: var(--color-primary);
+  color: white;
 }
 
 .status-badge.active {

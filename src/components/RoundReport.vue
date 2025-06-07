@@ -11,11 +11,9 @@ interface Props {
   serverGuid: string;
   mapName: string;
   startTime: string;
-  isOpen: boolean;
 }
 
 const props = defineProps<Props>();
-const emit = defineEmits(['close']);
 
 const roundReport = ref<RoundReport | null>(null);
 const loading = ref(false);
@@ -56,6 +54,10 @@ const fetchData = async () => {
     loading.value = false;
   }
 };
+
+onMounted(() => {
+  fetchData();
+});
 
 // Format date to a readable format in the user's locale
 const formatDate = (dateString: string | null): string => {
@@ -228,57 +230,10 @@ const teamGroups = computed(() => {
   })); // No sorting - just display teams as they are
 });
 
-// Close the popup when clicking outside or pressing ESC
-const handleOutsideClick = (event: MouseEvent) => {
-  const popup = document.querySelector('.round-report-modal-content');
-  if (popup && !popup.contains(event.target as Node)) {
-    emit('close');
-    event.stopImmediatePropagation();
-  }
-};
-
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    emit('close');
-    event.stopImmediatePropagation();
-  }
-};
-
-// Add and remove event listeners
-watch(() => props.isOpen, (newValue) => {
-  if (newValue) {
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('keydown', handleKeyDown);
-    fetchData();
-  } else {
-    document.removeEventListener('mousedown', handleOutsideClick);
-    document.removeEventListener('keydown', handleKeyDown);
-  }
-});
-
-// Clean up event listeners and intervals when component is unmounted
-onMounted(() => {
-  if (props.isOpen) {
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('keydown', handleKeyDown);
-    fetchData();
-  }
-});
-
 // Cleanup on unmount - ensure all intervals are cleared
 onUnmounted(() => {
   stopPlayback();
   stopAutoRefresh();
-  document.removeEventListener('mousedown', handleOutsideClick);
-  document.removeEventListener('keydown', handleKeyDown);
-});
-
-// Cleanup on close
-watch(() => props.isOpen, (newValue) => {
-  if (!newValue) {
-    stopPlayback();
-    stopAutoRefresh();
-  }
 });
 
 const sampledDots = computed(() => {
@@ -441,164 +396,171 @@ const stopAutoRefresh = () => {
     autoRefreshInterval.value = null;
   }
 };
+
+const goBack = () => {
+  router.back();
+};
 </script>
 
 <template>
-  <div v-if="isOpen" class="round-report-modal-overlay" @click="$emit('close')">
-    <div class="round-report-modal-content" @click.stop>
-      <div class="round-report-header">
+  <div class="round-report-container">
+    <div class="round-report-header">
+      <div class="header-left">
+        <button class="back-button" @click="goBack">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Back
+        </button>
         <h2>Round Report</h2>
-        <button class="close-button" @click="$emit('close'); $event.stopPropagation()">&times;</button>
       </div>
-      <div class="round-report-body">
-        <div v-if="loading" class="loading-container">
-          <div class="loading-spinner"></div>
-          <p>Loading round report...</p>
-        </div>
-        <div v-else-if="error" class="error-container">
-          <p class="error-message">{{ error }}</p>
-        </div>
-        <div v-else-if="roundReport" class="details-container">
-          <!-- Consolidated Leaderboard Section with Session Details -->
-          <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
-            <div class="leaderboard-header">
-              <div class="header-left">
-                <h3>🗺️ {{ roundReport.round.mapName }}</h3>
-                <router-link 
-                  :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
-                  class="server-name"
-                >
-                  {{ roundReport.session.serverName }}
-                </router-link>
-                <div class="match-meta">
-                  <span class="game-id">#{{ roundReport.session.gameId }}</span>
-                  <span class="separator">•</span>
-                  <span class="match-time">{{ formatDate(roundReport.round.startTime) }}</span>
-                  <span class="separator">•</span>
-                  <span v-if="roundReport.round.isActive" class="status-badge active" :class="{ 'live-updating': isLiveUpdating }">
-                    Live
-                    <span v-if="isLiveUpdating" class="live-dot"></span>
-                  </span>
-                  <span v-else class="status-badge completed">Match Complete</span>
-                </div>
-              </div>
-              <div class="header-controls">
-                <div v-if="snapshotTimeline.length > 1" class="compact-playback">
-                  <button @click="resetPlayback" class="mini-button" title="Reset">⏮️</button>
-                  <button @click="togglePlayback" class="mini-button play-mini" :class="{ playing: isPlaying }" title="Play/Pause">
-                    {{ isPlaying ? '⏸️' : '▶️' }}
-                  </button>
-                  <select v-model="playbackSpeed" @change="setPlaybackSpeed(playbackSpeed)" class="mini-select">
-                    <option :value="500">0.5x</option>
-                    <option :value="250">1x</option>
-                    <option :value="150" selected>2x</option>
-                    <option :value="75">4x</option>
-                  </select>
-                  <span v-if="isPlaying" class="mini-indicator">🔴</span>
-                </div>
-                <div class="elapsed-badge">
-                  {{ currentElapsedTime }}
-                </div>
-              </div>
-            </div>
-            
-            <div v-if="snapshotTimeline.length > 1" class="playback-instructions">
-              <span class="instructions-text">Click play to watch the match unfold, or drag through the timeline</span>
-            </div>
-            
-            <div v-if="snapshotTimeline.length > 1" class="compact-progress">
-              <div 
-                class="mini-progress-bar"
-                @mousedown="startDrag"
-                @mousemove="handleDrag"
-                @mouseup="stopDrag"
-                @mouseleave="stopDrag"
+    </div>
+    <div class="round-report-body">
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading round report...</p>
+      </div>
+      <div v-else-if="error" class="error-container">
+        <p class="error-message">{{ error }}</p>
+      </div>
+      <div v-else-if="roundReport" class="details-container">
+        <!-- Consolidated Leaderboard Section with Session Details -->
+        <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
+          <div class="leaderboard-header">
+            <div class="header-left">
+              <h3>🗺️ {{ roundReport.round.mapName }}</h3>
+              <router-link 
+                :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
+                class="server-name"
               >
+                {{ roundReport.session.serverName }}
+              </router-link>
+              <div class="match-meta">
+                <span class="game-id">#{{ roundReport.session.gameId }}</span>
+                <span class="separator">•</span>
+                <span class="match-time">{{ formatDate(roundReport.round.startTime) }}</span>
+                <span class="separator">•</span>
+                <span v-if="roundReport.round.isActive" class="status-badge active" :class="{ 'live-updating': isLiveUpdating }">
+                  Live
+                  <span v-if="isLiveUpdating" class="live-dot"></span>
+                </span>
+                <span v-else class="status-badge completed">Match Complete</span>
+              </div>
+            </div>
+            <div class="header-controls">
+              <div v-if="snapshotTimeline.length > 1" class="compact-playback">
+                <button @click="resetPlayback" class="mini-button" title="Reset">⏮️</button>
+                <button @click="togglePlayback" class="mini-button play-mini" :class="{ playing: isPlaying }" title="Play/Pause">
+                  {{ isPlaying ? '⏸️' : '▶️' }}
+                </button>
+                <select v-model="playbackSpeed" @change="setPlaybackSpeed(playbackSpeed)" class="mini-select">
+                  <option :value="500">0.5x</option>
+                  <option :value="250">1x</option>
+                  <option :value="150" selected>2x</option>
+                  <option :value="75">4x</option>
+                </select>
+                <span v-if="isPlaying" class="mini-indicator">🔴</span>
+              </div>
+              <div class="elapsed-badge">
+                {{ currentElapsedTime }}
+              </div>
+            </div>
+          </div>
+          
+          <div v-if="snapshotTimeline.length > 1" class="playback-instructions">
+            <span class="instructions-text">Click play to watch the match unfold, or drag through the timeline</span>
+          </div>
+          
+          <div v-if="snapshotTimeline.length > 1" class="compact-progress">
+            <div 
+              class="mini-progress-bar"
+              @mousedown="startDrag"
+              @mousemove="handleDrag"
+              @mouseup="stopDrag"
+              @mouseleave="stopDrag"
+            >
+              <div 
+                class="mini-progress-fill"
+                :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
+              ></div>
+              <div class="scrubber-dots">
                 <div 
-                  class="mini-progress-fill"
-                  :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
+                  v-for="(dot, index) in sampledDots" 
+                  :key="index"
+                  class="scrubber-dot"
+                  :class="{ 'active-dot': index === selectedSnapshotIndex }"
+                  :title="`${getElapsedTime(dot.timestamp)} elapsed`"
+                  @click="handleDotClick(dot.index)"
                 ></div>
-                <div class="scrubber-dots">
-                  <div 
-                    v-for="(dot, index) in sampledDots" 
-                    :key="index"
-                    class="scrubber-dot"
-                    :class="{ 'active-dot': index === selectedSnapshotIndex }"
-                    :title="`${getElapsedTime(dot.timestamp)} elapsed`"
-                    @click="handleDotClick(dot.index)"
-                  ></div>
-                </div>
               </div>
             </div>
-            
-            <div class="teams-container">
-              <div 
-                v-for="team in teamGroups" 
-                :key="team.teamName"
-                class="team-column"
-                :class="`team-${team.teamName.toLowerCase()}`"
-              >
-                <!-- Team Header -->
-                <div class="team-header">
-                  <div class="team-name">
-                    <span class="team-icon">🛡️</span>
-                    {{ team.teamName }}
+          </div>
+          
+          <div class="teams-container">
+            <div 
+              v-for="team in teamGroups" 
+              :key="team.teamName"
+              class="team-column"
+              :class="`team-${team.teamName.toLowerCase()}`"
+            >
+              <!-- Team Header -->
+              <div class="team-header">
+                <div class="team-name">
+                  <span class="team-icon">🛡️</span>
+                  {{ team.teamName }}
+                </div>
+                <div class="team-stats">
+                  <div class="team-stat">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
                   </div>
-                  <div class="team-stats">
-                    <div class="team-stat">
-                      <span class="stat-label">Score</span>
-                      <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
-                    </div>
-                    <div class="team-stat">
-                      <span class="stat-label">K/D</span>
-                      <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
-                    </div>
+                  <div class="team-stat">
+                    <span class="stat-label">K/D</span>
+                    <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
                   </div>
                 </div>
+              </div>
 
-                <!-- Team Players -->
-                <div class="team-players">
-                  <div class="players-header">
-                    <div class="header-rank">#</div>
-                    <div class="header-player">Player</div>
-                    <div class="header-score">Score</div>
-                    <div class="header-kd">K/D</div>
-                    <div class="header-ping">Ping</div>
-                  </div>
-                  
-                  <div class="players-list">
-                    <div
-                      v-for="player in team.players"
-                      :key="player.playerName"
-                      class="player-row"
-                      :class="{ 
-                        'top-player': player.rank === 1
-                      }"
-                    >
-                      <div class="player-rank">
-                        <span v-if="player.rank === 1" class="rank-medal">🥇</span>
-                        <span v-else-if="player.rank === 2" class="rank-medal">🥈</span>
-                        <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
-                        <span v-else class="rank-number">{{ player.rank }}</span>
-                      </div>
-                      <div class="player-name">
-                        <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
-                          {{ player.playerName }}
-                        </router-link>
-                      </div>
-                      <div class="player-score">{{ player.score.toLocaleString() }}</div>
-                      <div class="player-kd">
-                        <span class="kills">{{ player.kills }}</span>
-                        <span class="separator">/</span>
-                        <span class="deaths">{{ player.deaths }}</span>
-                      </div>
-                      <div class="player-ping" :class="{ 
-                        'ping-good': player.ping < 50, 
-                        'ping-ok': player.ping >= 50 && player.ping < 100,
-                        'ping-bad': player.ping >= 100
-                      }">
-                        {{ player.ping }}ms
-                      </div>
+              <!-- Team Players -->
+              <div class="team-players">
+                <div class="players-header">
+                  <div class="header-rank">#</div>
+                  <div class="header-player">Player</div>
+                  <div class="header-score">Score</div>
+                  <div class="header-kd">K/D</div>
+                  <div class="header-ping">Ping</div>
+                </div>
+                
+                <div class="players-list">
+                  <div
+                    v-for="player in team.players"
+                    :key="player.playerName"
+                    class="player-row"
+                    :class="{ 
+                      'top-player': player.rank === 1
+                    }"
+                  >
+                    <div class="player-rank">
+                      <span v-if="player.rank === 1" class="rank-medal">🥇</span>
+                      <span v-else-if="player.rank === 2" class="rank-medal">🥈</span>
+                      <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
+                      <span v-else class="rank-number">{{ player.rank }}</span>
+                    </div>
+                    <div class="player-name">
+                      <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
+                        {{ player.playerName }}
+                      </router-link>
+                    </div>
+                    <div class="player-score">{{ player.score.toLocaleString() }}</div>
+                    <div class="player-kd">
+                      <span class="kills">{{ player.kills }}</span>
+                      <span class="separator">/</span>
+                      <span class="deaths">{{ player.deaths }}</span>
+                    </div>
+                    <div class="player-ping" :class="{ 
+                      'ping-good': player.ping < 50, 
+                      'ping-ok': player.ping >= 50 && player.ping < 100,
+                      'ping-bad': player.ping >= 100
+                    }">
+                      {{ player.ping }}ms
                     </div>
                   </div>
                 </div>
@@ -606,77 +568,59 @@ const stopAutoRefresh = () => {
             </div>
           </div>
         </div>
-        <div v-else class="no-data-container">
-          <p>No round report available.</p>
-        </div>
+      </div>
+      <div v-else class="no-data-container">
+        <p>No round report available.</p>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.round-report-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.round-report-modal-content {
+.round-report-container {
   background-color: var(--color-background);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  width: 95%;
-  max-width: 1400px;
-  max-height: 90vh;
-  overflow: auto;
-  padding: 0;
-  animation: popup-fade-in 0.3s ease-out;
-  color: var(--color-text);
-}
-
-@keyframes popup-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  padding: 20px;
 }
 
 .round-report-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
   border-bottom: 1px solid var(--color-border);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--color-background-mute);
+  border: none;
+  border-radius: 6px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.back-button:hover {
+  background-color: var(--color-primary);
+  color: white;
 }
 
 .round-report-header h2 {
   margin: 0;
   font-size: 1.5rem;
   color: var(--color-heading);
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--color-text);
-  transition: color 0.2s;
-}
-
-.close-button:hover {
-  color: var(--color-primary);
 }
 
 .round-report-body {
@@ -968,7 +912,6 @@ const stopAutoRefresh = () => {
 }
 
 .players-list {
-  max-height: 300px;
   overflow-y: auto;
 }
 
