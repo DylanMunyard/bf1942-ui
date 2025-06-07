@@ -11,11 +11,9 @@ interface Props {
   serverGuid: string;
   mapName: string;
   startTime: string;
-  isOpen: boolean;
 }
 
 const props = defineProps<Props>();
-const emit = defineEmits(['close']);
 
 const roundReport = ref<RoundReport | null>(null);
 const loading = ref(false);
@@ -25,6 +23,7 @@ const isPlaying = ref(false);
 const playbackInterval = ref<NodeJS.Timeout | null>(null);
 const playbackSpeed = ref(500); // milliseconds between snapshots (slower default for smoother playback)
 const isDragging = ref(false);
+const scrubberElement = ref<HTMLElement | null>(null);
 const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
 const isLiveUpdating = ref(false);
 
@@ -56,6 +55,10 @@ const fetchData = async () => {
     loading.value = false;
   }
 };
+
+onMounted(() => {
+  fetchData();
+});
 
 // Format date to a readable format in the user's locale
 const formatDate = (dateString: string | null): string => {
@@ -228,56 +231,13 @@ const teamGroups = computed(() => {
   })); // No sorting - just display teams as they are
 });
 
-// Close the popup when clicking outside or pressing ESC
-const handleOutsideClick = (event: MouseEvent) => {
-  const popup = document.querySelector('.round-report-modal-content');
-  if (popup && !popup.contains(event.target as Node)) {
-    emit('close');
-    event.stopImmediatePropagation();
-  }
-};
-
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    emit('close');
-    event.stopImmediatePropagation();
-  }
-};
-
-// Add and remove event listeners
-watch(() => props.isOpen, (newValue) => {
-  if (newValue) {
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('keydown', handleKeyDown);
-    fetchData();
-  } else {
-    document.removeEventListener('mousedown', handleOutsideClick);
-    document.removeEventListener('keydown', handleKeyDown);
-  }
-});
-
-// Clean up event listeners and intervals when component is unmounted
-onMounted(() => {
-  if (props.isOpen) {
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('keydown', handleKeyDown);
-    fetchData();
-  }
-});
-
 // Cleanup on unmount - ensure all intervals are cleared
 onUnmounted(() => {
   stopPlayback();
   stopAutoRefresh();
-  document.removeEventListener('mousedown', handleOutsideClick);
-  document.removeEventListener('keydown', handleKeyDown);
-});
-
-// Cleanup on close
-watch(() => props.isOpen, (newValue) => {
-  if (!newValue) {
-    stopPlayback();
-    stopAutoRefresh();
+  // Clean up drag state if component unmounts during drag
+  if (isDragging.value) {
+    stopDrag();
   }
 });
 
@@ -310,23 +270,47 @@ const handleDotClick = (index: number) => {
 };
 
 const startDrag = (event: MouseEvent) => {
+  event.preventDefault(); // Prevent text selection
   isDragging.value = true;
+  scrubberElement.value = event.currentTarget as HTMLElement;
   stopPlayback();
   updateSnapshotIndex(event);
+  
+  // Add dragging class to body for visual feedback
+  document.body.classList.add('dragging');
+  
+  // Add event listeners to document for smooth dragging
+  document.addEventListener('mousemove', handleDrag, { passive: false });
+  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('selectstart', preventSelection); // Prevent text selection during drag
 };
 
 const handleDrag = (event: MouseEvent) => {
-  if (!isDragging.value) return;
+  if (!isDragging.value || !scrubberElement.value) return;
+  event.preventDefault(); // Prevent text selection
   updateSnapshotIndex(event);
 };
 
 const stopDrag = () => {
   isDragging.value = false;
+  scrubberElement.value = null;
+  
+  // Remove dragging class from body
+  document.body.classList.remove('dragging');
+  
+  document.removeEventListener('mousemove', handleDrag);
+  document.removeEventListener('mouseup', stopDrag);
+  document.removeEventListener('selectstart', preventSelection);
+};
+
+const preventSelection = (event: Event) => {
+  event.preventDefault();
 };
 
 const updateSnapshotIndex = (event: MouseEvent) => {
-  const scrubber = event.currentTarget as HTMLElement;
-  const rect = scrubber.getBoundingClientRect();
+  if (!scrubberElement.value) return;
+  
+  const rect = scrubberElement.value.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const percent = Math.min(Math.max(x / rect.width, 0), 1);
   
@@ -441,49 +425,64 @@ const stopAutoRefresh = () => {
     autoRefreshInterval.value = null;
   }
 };
+
+const goBack = () => {
+  router.back();
+};
 </script>
 
 <template>
-  <div v-if="isOpen" class="round-report-modal-overlay" @click="$emit('close')">
-    <div class="round-report-modal-content" @click.stop>
-      <div class="round-report-header">
-        <h2>Round Report</h2>
-        <button class="close-button" @click="$emit('close'); $event.stopPropagation()">&times;</button>
+  <div class="round-report-container">
+    <div class="round-report-header">
+      <div class="header-left">
+        <button class="back-button" @click="goBack">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Back
+        </button>
+        <div class="header-titles" v-if="roundReport">
+          <h2>🗺️ {{ roundReport.round.mapName }}</h2>
+          <router-link 
+            :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
+            class="server-name-header"
+          >
+            {{ roundReport.session.serverName }}
+          </router-link>
+        </div>
+        <h2 v-else>Round Report</h2>
       </div>
-      <div class="round-report-body">
-        <div v-if="loading" class="loading-container">
-          <div class="loading-spinner"></div>
-          <p>Loading round report...</p>
-        </div>
-        <div v-else-if="error" class="error-container">
-          <p class="error-message">{{ error }}</p>
-        </div>
-        <div v-else-if="roundReport" class="details-container">
-          <!-- Consolidated Leaderboard Section with Session Details -->
-          <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
-            <div class="leaderboard-header">
-              <div class="header-left">
-                <h3>🗺️ {{ roundReport.round.mapName }}</h3>
-                <router-link 
-                  :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
-                  class="server-name"
-                >
-                  {{ roundReport.session.serverName }}
-                </router-link>
-                <div class="match-meta">
-                  <span class="game-id">#{{ roundReport.session.gameId }}</span>
-                  <span class="separator">•</span>
-                  <span class="match-time">{{ formatDate(roundReport.round.startTime) }}</span>
-                  <span class="separator">•</span>
-                  <span v-if="roundReport.round.isActive" class="status-badge active" :class="{ 'live-updating': isLiveUpdating }">
-                    Live
-                    <span v-if="isLiveUpdating" class="live-dot"></span>
-                  </span>
-                  <span v-else class="status-badge completed">Match Complete</span>
-                </div>
+    </div>
+    <div class="round-report-body">
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading round report...</p>
+      </div>
+      <div v-else-if="error" class="error-container">
+        <p class="error-message">{{ error }}</p>
+      </div>
+      <div v-else-if="roundReport" class="details-container">
+        <!-- Consolidated Leaderboard Section with Session Details -->
+        <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
+          <div class="leaderboard-header">
+            <div class="match-info">
+              <div class="match-meta">
+                <span class="game-id">#{{ roundReport.session.gameId }}</span>
+                <span class="separator">•</span>
+                <span class="match-time">{{ formatDate(roundReport.round.startTime) }}</span>
+                <span v-if="roundReport.round.isActive" class="status-badge active" :class="{ 'live-updating': isLiveUpdating }">
+                  Live
+                  <span v-if="isLiveUpdating" class="live-dot"></span>
+                </span>
               </div>
-              <div class="header-controls">
-                <div v-if="snapshotTimeline.length > 1" class="compact-playback">
+            </div>
+            <div class="header-controls">
+            </div>
+          </div>
+          
+          <div v-if="snapshotTimeline.length > 1" class="timeline-section">
+            <div class="timeline-header">
+              <div class="instructions-text">Click play to watch the match unfold, or drag through the timeline</div>
+              <div class="timeline-controls-compact">
+                <div class="compact-playback">
                   <button @click="resetPlayback" class="mini-button" title="Reset">⏮️</button>
                   <button @click="togglePlayback" class="mini-button play-mini" :class="{ playing: isPlaying }" title="Play/Pause">
                     {{ isPlaying ? '⏸️' : '▶️' }}
@@ -496,23 +495,17 @@ const stopAutoRefresh = () => {
                   </select>
                   <span v-if="isPlaying" class="mini-indicator">🔴</span>
                 </div>
+                
                 <div class="elapsed-badge">
                   {{ currentElapsedTime }}
                 </div>
               </div>
             </div>
             
-            <div v-if="snapshotTimeline.length > 1" class="playback-instructions">
-              <span class="instructions-text">Click play to watch the match unfold, or drag through the timeline</span>
-            </div>
-            
-            <div v-if="snapshotTimeline.length > 1" class="compact-progress">
+            <div class="timeline-scrubber">
               <div 
                 class="mini-progress-bar"
                 @mousedown="startDrag"
-                @mousemove="handleDrag"
-                @mouseup="stopDrag"
-                @mouseleave="stopDrag"
               >
                 <div 
                   class="mini-progress-fill"
@@ -530,75 +523,75 @@ const stopAutoRefresh = () => {
                 </div>
               </div>
             </div>
-            
-            <div class="teams-container">
-              <div 
-                v-for="team in teamGroups" 
-                :key="team.teamName"
-                class="team-column"
-                :class="`team-${team.teamName.toLowerCase()}`"
-              >
-                <!-- Team Header -->
-                <div class="team-header">
-                  <div class="team-name">
-                    <span class="team-icon">🛡️</span>
-                    {{ team.teamName }}
+          </div>
+          
+          <div class="teams-container">
+            <div 
+              v-for="team in teamGroups" 
+              :key="team.teamName"
+              class="team-column"
+              :class="`team-${team.teamName.toLowerCase()}`"
+            >
+              <!-- Team Header -->
+              <div class="team-header">
+                <div class="team-name">
+                  <span class="team-icon">🛡️</span>
+                  {{ team.teamName }}
+                </div>
+                <div class="team-stats">
+                  <div class="team-stat">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
                   </div>
-                  <div class="team-stats">
-                    <div class="team-stat">
-                      <span class="stat-label">Score</span>
-                      <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
-                    </div>
-                    <div class="team-stat">
-                      <span class="stat-label">K/D</span>
-                      <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
-                    </div>
+                  <div class="team-stat">
+                    <span class="stat-label">K/D</span>
+                    <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
                   </div>
                 </div>
+              </div>
 
-                <!-- Team Players -->
-                <div class="team-players">
-                  <div class="players-header">
-                    <div class="header-rank">#</div>
-                    <div class="header-player">Player</div>
-                    <div class="header-score">Score</div>
-                    <div class="header-kd">K/D</div>
-                    <div class="header-ping">Ping</div>
-                  </div>
-                  
-                  <div class="players-list">
-                    <div
-                      v-for="player in team.players"
-                      :key="player.playerName"
-                      class="player-row"
-                      :class="{ 
-                        'top-player': player.rank === 1
-                      }"
-                    >
-                      <div class="player-rank">
-                        <span v-if="player.rank === 1" class="rank-medal">🥇</span>
-                        <span v-else-if="player.rank === 2" class="rank-medal">🥈</span>
-                        <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
-                        <span v-else class="rank-number">{{ player.rank }}</span>
-                      </div>
-                      <div class="player-name">
-                        <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
-                          {{ player.playerName }}
-                        </router-link>
-                      </div>
-                      <div class="player-score">{{ player.score.toLocaleString() }}</div>
-                      <div class="player-kd">
-                        <span class="kills">{{ player.kills }}</span>
-                        <span class="separator">/</span>
-                        <span class="deaths">{{ player.deaths }}</span>
-                      </div>
-                      <div class="player-ping" :class="{ 
-                        'ping-good': player.ping < 50, 
-                        'ping-ok': player.ping >= 50 && player.ping < 100,
-                        'ping-bad': player.ping >= 100
-                      }">
-                        {{ player.ping }}ms
-                      </div>
+              <!-- Team Players -->
+              <div class="team-players">
+                <div class="players-header">
+                  <div class="header-rank">#</div>
+                  <div class="header-player">Player</div>
+                  <div class="header-score">Score</div>
+                  <div class="header-kd">K/D</div>
+                  <div class="header-ping">Ping</div>
+                </div>
+                
+                <div class="players-list">
+                  <div
+                    v-for="player in team.players"
+                    :key="player.playerName"
+                    class="player-row"
+                    :class="{ 
+                      'top-player': player.rank === 1
+                    }"
+                  >
+                    <div class="player-rank">
+                      <span v-if="player.rank === 1" class="rank-medal">🥇</span>
+                      <span v-else-if="player.rank === 2" class="rank-medal">🥈</span>
+                      <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
+                      <span v-else class="rank-number">{{ player.rank }}</span>
+                    </div>
+                    <div class="player-name">
+                      <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
+                        {{ player.playerName }}
+                      </router-link>
+                    </div>
+                    <div class="player-score">{{ player.score.toLocaleString() }}</div>
+                    <div class="player-kd">
+                      <span class="kills">{{ player.kills }}</span>
+                      <span class="separator">/</span>
+                      <span class="deaths">{{ player.deaths }}</span>
+                    </div>
+                    <div class="player-ping" :class="{ 
+                      'ping-good': player.ping < 50, 
+                      'ping-ok': player.ping >= 50 && player.ping < 100,
+                      'ping-bad': player.ping >= 100
+                    }">
+                      {{ player.ping }}ms
                     </div>
                   </div>
                 </div>
@@ -606,81 +599,78 @@ const stopAutoRefresh = () => {
             </div>
           </div>
         </div>
-        <div v-else class="no-data-container">
-          <p>No round report available.</p>
-        </div>
+      </div>
+      <div v-else class="no-data-container">
+        <p>No round report available.</p>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.round-report-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.round-report-modal-content {
-  background-color: var(--color-background);
+.round-report-container {
+  background: #fff;
+  padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  width: 95%;
-  max-width: 1400px;
-  max-height: 90vh;
-  overflow: auto;
-  padding: 0;
-  animation: popup-fade-in 0.3s ease-out;
-  color: var(--color-text);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-@keyframes popup-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+
 
 .round-report-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
-  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 20px;
 }
 
-.round-report-header h2 {
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--color-background-mute);
+  border-radius: 6px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.back-button:hover {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-titles h2 {
   margin: 0;
-  font-size: 1.5rem;
   color: var(--color-heading);
 }
 
-.close-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--color-text);
-  transition: color 0.2s;
-}
-
-.close-button:hover {
+.server-name-header {
+  font-size: 0.9rem;
   color: var(--color-primary);
+  text-decoration: none;
+  transition: opacity 0.2s;
 }
 
-.round-report-body {
-  padding: 20px;
+.server-name-header:hover {
+  opacity: 0.8;
+  text-decoration: underline;
 }
 
 .loading-container, .error-container, .no-data-container {
@@ -717,32 +707,30 @@ const stopAutoRefresh = () => {
 }
 
 .leaderboard-section {
-  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
-  border-radius: 12px;
-  padding: 25px;
-  border: 1px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.1);
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
 .leaderboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 2px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.leaderboard-header h3 {
-  margin: 0;
-  color: var(--color-heading);
-  font-size: 1.4rem;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+.match-info {
+  flex: 1;
 }
 
 .header-controls {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
 }
 
 .compact-playback {
@@ -758,22 +746,14 @@ const stopAutoRefresh = () => {
 .mini-button {
   padding: 4px 6px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--color-background);
   color: var(--color-text);
   cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 26px;
-  height: 26px;
 }
 
 .mini-button:hover {
   background: var(--color-background-mute);
-  border-color: var(--color-primary);
 }
 
 .play-mini.playing {
@@ -809,25 +789,42 @@ const stopAutoRefresh = () => {
   51%, 100% { opacity: 0.3; }
 }
 
-.compact-progress {
-  margin-bottom: 10px;
+.timeline-section {
+  margin: 20px 0;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
+
+.timeline-controls-compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeline-scrubber {
+  width: 100%;
 }
 
 .mini-progress-bar {
   width: 100%;
-  height: 16px;
+  height: 20px;
   background: var(--color-background-mute);
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 10px;
   position: relative;
   cursor: pointer;
+  user-select: none; /* Prevent text selection */
 }
 
 .mini-progress-fill {
   height: 100%;
   background: var(--color-primary);
-  border-radius: 8px;
-  transition: width 0.5s ease;
+  border-radius: 10px;
   position: relative;
   z-index: 1;
 }
@@ -843,14 +840,15 @@ const stopAutoRefresh = () => {
   align-items: center;
   transform: translateY(-50%);
   pointer-events: none;
+  padding: 0 10px;
 }
 
 .scrubber-dot {
-  width: 6px;
-  height: 6px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background-color: white;
-  border: 1px solid rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(0, 0, 0, 0.3);
   opacity: 0.8;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -858,16 +856,24 @@ const stopAutoRefresh = () => {
   z-index: 2;
 }
 
-.scrubber-dot:hover {
+.scrubber-dot:hover, .active-dot {
   opacity: 1;
   transform: scale(1.3);
   border-color: rgba(0, 0, 0, 0.5);
 }
 
-.active-dot {
-  opacity: 1;
-  transform: scale(1.3);
-  border-color: rgba(0, 0, 0, 0.5);
+/* Improve dragging experience */
+.mini-progress-bar:active {
+  cursor: grabbing;
+}
+
+body.dragging {
+  user-select: none;
+  cursor: grabbing !important;
+}
+
+body.dragging * {
+  cursor: grabbing !important;
 }
 
 .teams-container {
@@ -877,76 +883,42 @@ const stopAutoRefresh = () => {
 }
 
 .team-column {
-  background: var(--color-background);
-  border-radius: 12px;
+  background: #fff;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-}
-
-.team-column:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.team-column.team-red {
-  border-top: 4px solid #f44336;
-}
-
-.team-column.team-blue {
-  border-top: 4px solid #2196f3;
-}
-
-.team-column.team-green {
-  border-top: 4px solid #4caf50;
-}
-
-.team-column.team-yellow {
-  border-top: 4px solid #ff9800;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid var(--color-border);
 }
 
 .team-header {
-  background: linear-gradient(135deg, var(--color-background-mute) 0%, var(--color-background-soft) 100%);
-  padding: 15px 20px;
+  padding: 15px;
+  background: var(--color-background-mute);
   border-bottom: 1px solid var(--color-border);
 }
 
 .team-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: bold;
   color: var(--color-heading);
-  margin-bottom: 10px;
-}
-
-.team-icon {
-  font-size: 1.2rem;
 }
 
 .team-stats {
   display: flex;
-  gap: 20px;
+  gap: 15px;
+  margin-top: 10px;
 }
 
 .team-stat {
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
 .stat-label {
   font-size: 0.8rem;
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .stat-value {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: bold;
   color: var(--color-primary);
 }
 
@@ -962,13 +934,9 @@ const stopAutoRefresh = () => {
   background: var(--color-background-mute);
   font-size: 0.8rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text-muted);
 }
 
 .players-list {
-  max-height: 300px;
   overflow-y: auto;
 }
 
@@ -978,8 +946,6 @@ const stopAutoRefresh = () => {
   gap: 10px;
   padding: 12px 15px;
   border-bottom: 1px solid var(--color-border);
-  transition: all 0.2s ease;
-  align-items: center;
 }
 
 .player-row:hover {
@@ -1006,7 +972,6 @@ const stopAutoRefresh = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-weight: 700;
 }
 
 .rank-medal {
@@ -1028,47 +993,25 @@ const stopAutoRefresh = () => {
 
 .player-name {
   font-weight: 500;
-  color: var(--color-text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  overflow: hidden;
 }
 
-.highlighted-name {
-  font-weight: 700;
+.player-link {
   color: var(--color-primary);
+  text-decoration: none;
 }
 
-.you-indicator {
-  background: var(--color-primary);
-  color: white;
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  animation: glow 2s infinite alternate;
-}
-
-@keyframes glow {
-  from { box-shadow: 0 0 5px rgba(var(--color-primary-rgb, 33, 150, 243), 0.5); }
-  to { box-shadow: 0 0 10px rgba(var(--color-primary-rgb, 33, 150, 243), 0.8); }
+.player-link:hover {
+  text-decoration: underline;
 }
 
 .player-score {
-  font-weight: 600;
-  color: var(--color-text);
   text-align: center;
 }
 
 .player-kd {
   display: flex;
-  align-items: center;
   justify-content: center;
   gap: 2px;
-  font-size: 0.85rem;
 }
 
 .kills {
@@ -1087,11 +1030,6 @@ const stopAutoRefresh = () => {
 
 .player-ping {
   text-align: center;
-  font-family: monospace;
-  font-weight: 600;
-  font-size: 0.8rem;
-  padding: 4px 6px;
-  border-radius: 4px;
 }
 
 .ping-good {
@@ -1110,71 +1048,14 @@ const stopAutoRefresh = () => {
 }
 
 @media (max-width: 768px) {
-  .session-details-modal-content {
-    width: 95%;
-    max-height: 95vh;
-  }
-
-  .match-header {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-
-  .map-name {
-    font-size: 1.4rem;
-  }
-
-  .compact-playback {
-    gap: 4px;
-    padding: 3px 6px;
-  }
-
-  .mini-button {
-    min-width: 24px;
-    height: 24px;
-    font-size: 0.7rem;
-  }
-
-  .mini-select {
-    min-width: 40px;
-    font-size: 0.7rem;
-  }
-
   .teams-container {
     grid-template-columns: 1fr;
-    gap: 15px;
   }
-
-  .team-column {
-    min-width: 0;
-  }
-
+  
   .players-header,
   .player-row {
     grid-template-columns: 30px 1fr 60px 50px 50px;
-    gap: 8px;
     padding: 10px 12px;
-    font-size: 0.8rem;
-  }
-
-  .team-stats {
-    gap: 15px;
-  }
-
-  .leaderboard-header {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-  }
-
-  .leaderboard-header h3 {
-    font-size: 1.2rem;
-  }
-
-  .you-indicator {
-    font-size: 0.6rem;
-    padding: 1px 4px;
   }
 }
 
@@ -1189,44 +1070,40 @@ const stopAutoRefresh = () => {
   letter-spacing: 0.5px;
 }
 
-.playback-instructions {
-  text-align: center;
-  margin-bottom: 10px;
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
 .instructions-text {
   background: var(--color-background-mute);
-  padding: 4px 8px;
+  padding: 6px 12px;
   border-radius: 12px;
   font-weight: 600;
-}
-
-.server-name {
-  font-size: 0.95rem;
-  color: var(--color-primary);
-  margin-bottom: 6px;
-  text-decoration: none;
-  transition: opacity 0.2s;
-}
-
-.server-name:hover {
-  opacity: 0.8;
-  text-decoration: underline;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
 }
 
 .match-meta {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  background: transparent;
+  padding: 4px 0;
+  border-radius: 0;
+  border: none;
+}
+
+.game-id {
+  background: var(--color-background-mute);
+  color: var(--color-text-muted);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 500;
 }
 
 .separator {
-  opacity: 0.5;
+  opacity: 0.6;
   user-select: none;
+  color: var(--color-text-muted);
 }
 
 .status-badge {
@@ -1238,8 +1115,6 @@ const stopAutoRefresh = () => {
   font-size: 0.8rem;
   font-weight: bold;
   color: white;
-  background-color: #ff5252;
-  transition: all 0.3s ease;
 }
 
 .status-badge.active {

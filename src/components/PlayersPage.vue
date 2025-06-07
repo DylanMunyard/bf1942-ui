@@ -1,32 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { fetchPlayersList, PlayerListItem, fetchPlayerStats } from '../services/playerStatsService';
-import PlayerStatsModal from './PlayerStatsModal.vue';
+import { fetchPlayersList, PlayerListItem } from '../services/playerStatsService';
 import axios from 'axios';
 
 // Router
 const router = useRouter();
 const route = useRoute();
 
-// Props from router
-interface Props {
-  selectedPlayerName?: string;
-  selectedSessionId?: number;
-  showPlayerModal?: boolean;
-  showSessionModal?: boolean;
-}
-
-const props = defineProps<Props>();
-
 // State variables
 const players = ref<PlayerListItem[]>([]);
-// Removed filteredPlayers - using server-side filtering
 const loading = ref(true);
 const error = ref<string | null>(null);
 const sortBy = ref<string>('lastSeen');
 const sortOrder = ref<'asc' | 'desc'>('desc');
-// Removed statusSortOption - using simplified server-side sorting
 const servers = ref<any[]>([]);
 
 // Pagination state
@@ -37,17 +24,11 @@ const totalPages = ref(0);
 
 // Filter variables
 const nameFilter = ref('');
+const nameInputValue = ref(''); // Separate value for the input display
 const gameIdFilter = ref('');
 const serverNameFilter = ref('');
 const uniqueGameIds = ref<string[]>([]);
 const uniqueServerNames = ref<string[]>([]);
-
-// Player Stats Modal state
-const showPlayerStatsModal = ref(false);
-const selectedPlayerName = ref('');
-const playerStats = ref(null);
-const playerStatsLoading = ref(false);
-const playerStatsError = ref<string | null>(null);
 
 // Debounced search functionality
 const searchTimeout = ref<any>(null);
@@ -163,8 +144,6 @@ const fetchPlayersData = async () => {
   }
 };
 
-// Removed old client-side filtering function - now using server-side filtering
-
 // Update the list of unique game IDs from the players
 const updateUniqueGameIds = () => {
   const gameIds = new Set<string>();
@@ -191,10 +170,6 @@ const updateUniqueServerNames = () => {
   uniqueServerNames.value = Array.from(serverNames).sort();
 };
 
-// Removed helper functions - no longer needed with server-side sorting
-
-// Removed old client-side sorting function - now using server-side sorting
-
 // Handle sort column click - now refetches data from server
 const handleSort = (column: string) => {
   // If clicking the same column, toggle order
@@ -209,50 +184,6 @@ const handleSort = (column: string) => {
   // Reset to first page and refetch data
   currentPage.value = 1;
   fetchPlayersData();
-};
-
-// Removed handleStatusSort function - now using simplified server-side sorting
-
-// Function to fetch player stats data
-const fetchPlayerStatsData = async (playerName: string) => {
-  playerStatsLoading.value = true;
-  playerStatsError.value = null;
-  playerStats.value = null;
-
-  try {
-    // Fetch player statistics from the API
-    const stats = await fetchPlayerStats(playerName);
-    playerStats.value = stats;
-  } catch (err) {
-    console.error('Error fetching player stats:', err);
-    playerStatsError.value = 'Failed to fetch player statistics';
-  } finally {
-    playerStatsLoading.value = false;
-  }
-};
-
-// Function to open the player stats modal
-const openPlayerStatsModal = (playerName: string) => {
-  // Navigate to the player details page
-  router.push(`/player/${encodeURIComponent(playerName)}`);
-};
-
-// Function to handle key events for the player stats modal
-const handlePlayerStatsKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    closePlayerStatsModal();
-  }
-};
-
-// Function to close the player stats modal
-const closePlayerStatsModal = () => {
-  showPlayerStatsModal.value = false;
-  window.removeEventListener('keydown', handlePlayerStatsKeyDown);
-
-  // If we're on the player details page, navigate back to the players page
-  if (route.name === 'player-details' || route.name === 'session-details') {
-    router.push('/players');
-  }
 };
 
 // Debounced name filter function
@@ -274,8 +205,7 @@ const debouncedNameSearch = (searchTerm: string) => {
 };
 
 // Handle name filter change - now with debouncing
-const handleNameFilterChange = (event: Event) => {
-  const searchTerm = (event.target as HTMLInputElement).value;
+const handleNameFilterChange = (searchTerm: string) => {
   debouncedNameSearch(searchTerm);
 };
 
@@ -302,6 +232,7 @@ const clearNameFilter = () => {
   }
   
   nameFilter.value = '';
+  nameInputValue.value = '';
   isSearching.value = false;
   currentPage.value = 1; // Reset to first page when clearing filter
   fetchPlayersData();
@@ -310,27 +241,12 @@ const clearNameFilter = () => {
 // Reset all filters
 const resetFilters = () => {
   nameFilter.value = '';
+  nameInputValue.value = '';
   gameIdFilter.value = '';
   serverNameFilter.value = '';
   currentPage.value = 1; // Reset to first page when resetting filters
   fetchPlayersData();
 };
-
-// Watch for route props changes
-watch(() => props.selectedPlayerName, (newPlayerName) => {
-  if (newPlayerName && props.showPlayerModal) {
-    selectedPlayerName.value = newPlayerName;
-    showPlayerStatsModal.value = true;
-    fetchPlayerStatsData(newPlayerName);
-  }
-}, { immediate: true });
-
-// Watch for session ID changes
-watch(() => props.selectedSessionId, (newSessionId) => {
-  if (newSessionId && props.showSessionModal) {
-    // This will be handled by the PlayerStatsModal component
-  }
-}, { immediate: true });
 
 // Function to go to a specific page
 const goToPage = (page: number) => {
@@ -374,6 +290,13 @@ onMounted(() => {
   });
 });
 
+// Watch for external changes to nameFilter and sync with input
+watch(nameFilter, (newValue) => {
+  if (newValue !== nameInputValue.value) {
+    nameInputValue.value = newValue;
+  }
+});
+
 // Cleanup when component is unmounted
 onUnmounted(() => {
   // Clear any pending search timeout
@@ -401,14 +324,14 @@ onUnmounted(() => {
           <input 
             type="text" 
             id="nameFilter" 
-            v-model="nameFilter" 
-            @input="handleNameFilterChange" 
+            v-model="nameInputValue"
+            @input="handleNameFilterChange(nameInputValue)" 
             placeholder="Enter player name"
             class="filter-input"
           />
           <span v-if="isSearching" class="search-indicator">🔍</span>
           <span 
-            v-if="nameFilter && !isSearching" 
+            v-if="nameInputValue && !isSearching" 
             class="clear-input" 
             @click="clearNameFilter"
             title="Clear filter"
@@ -461,7 +384,7 @@ onUnmounted(() => {
         </div>
         <div class="page-size-selector">
           <label for="pageSize">Players per page:</label>
-          <select id="pageSize" v-model="pageSize" @change="changePageSize(pageSize)">
+          <select id="pageSize" :value="pageSize" @change="changePageSize(Number(($event.target as HTMLSelectElement).value))">
             <option value="25">25</option>
             <option value="50">50</option>
             <option value="100">100</option>
@@ -523,7 +446,7 @@ onUnmounted(() => {
                 <div v-if="player.currentServer && (player.currentServer.sessionKills !== undefined || player.currentServer.sessionDeaths !== undefined)" class="player-stats">
                   <span class="stat-item">Kills: {{ player.currentServer.sessionKills || 0 }}</span>
                   <span class="stat-item">Deaths: {{ player.currentServer.sessionDeaths || 0 }}</span>
-                  <span class="stat-item">KDR: {{ player.currentServer.sessionDeaths ? (player.currentServer.sessionKills / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}</span>
+                  <span class="stat-item">KDR: {{ player.currentServer.sessionDeaths ? ((player.currentServer.sessionKills || 0) / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}</span>
                 </div>
               </div>
               <div v-else class="inactive-status">
@@ -582,31 +505,15 @@ onUnmounted(() => {
       </div>
     </div>
     <div v-else class="no-data">No players found.</div>
-
-    <!-- Player Stats Modal -->
-    <PlayerStatsModal
-      v-if="showPlayerStatsModal"
-      :player-name="selectedPlayerName"
-      :player-stats="playerStats"
-      :is-open="showPlayerStatsModal"
-      :is-loading="playerStatsLoading"
-      :error="playerStatsError"
-      :servers="servers"
-      :selected-session-id="props.selectedSessionId"
-      :show-session-modal="props.showSessionModal"
-      @close="closePlayerStatsModal"
-    />
   </div>
 </template>
 
 <style scoped>
 .players-page-container {
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .header {

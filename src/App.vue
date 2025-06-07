@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import DashboardLayout from './layouts/DashboardLayout.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -58,36 +59,50 @@ watch(isDarkMode, () => {
 </script>
 
 <template>
-  <div class="app">
-    <div class="theme-toggle">
-      <button @click="toggleDarkMode" class="theme-toggle-button" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
-        <span v-if="isDarkMode" class="toggle-icon">☀️</span>
-        <span v-else class="toggle-icon">🌙</span>
-      </button>
-    </div>
-
-    <div class="main-navigation">
-      <router-link 
-        to="/" 
-        class="nav-button" 
-        :class="{ active: route.path === '/' || route.path.startsWith('/servers') || route.path.startsWith('/games') }"
-      >
-        Servers
-      </router-link>
-      <router-link 
-        to="/players" 
-        class="nav-button" 
-        :class="{ active: route.path.startsWith('/players') }"
-      >
-        Players
-      </router-link>
-    </div>
-
-    <router-view />
-  </div>
+  <DashboardLayout />
 </template>
 
 <style>
+/* Global styles */
+:root {
+  --color-primary: #3498db;
+  --color-primary-hover: #2980b9;
+  --color-accent: #e67e22;
+  --color-accent-hover: #d35400;
+  --color-background: #ffffff;
+  --color-background-soft: #f8f9f9;
+  --color-background-mute: #e5e8e8;
+  --color-border: #d7dbdd;
+  --color-text: #2c3e50;
+  --color-text-muted: #7f8c8d;
+  --color-heading: #2c3e50;
+  --color-primary-rgb: 52, 152, 219;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background-soft);
+  color: var(--color-text);
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+a {
+  text-decoration: none;
+  color: var(--color-primary);
+  transition: color 0.2s ease-in-out;
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
 .app {
   font-family: Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
