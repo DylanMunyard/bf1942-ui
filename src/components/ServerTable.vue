@@ -44,20 +44,22 @@ watch(() => props.initialMode, (newMode) => {
   if (newMode) {
     if (serverMode.value !== newMode) {
       serverMode.value = newMode;
-      fetchServerData();
+      fetchServerData(true); // Tab switch is considered manual
     }
   }
 }, { immediate: true });
 
 
-const fetchServerData = async () => {
-  if (servers.value.length > 0) {
+const fetchServerData = async (isManualRefresh: boolean = false) => {
+  if (servers.value.length > 0 && isManualRefresh) {
     updating.value = true;
-  } else {
+  } else if (servers.value.length === 0) {
     loading.value = true;
   }
   error.value = null;
-  tabSwitchLoading.value = true;
+  if (isManualRefresh) {
+    tabSwitchLoading.value = true;
+  }
 
   try {
     const apiUrl = serverMode.value === '42'
@@ -86,9 +88,9 @@ const joinServer = (server: ServerInfo) => {
 };
 
 onMounted(() => {
-  fetchServerData();
+  fetchServerData(true); // Initial load is considered manual
   refreshTimer.value = window.setInterval(() => {
-    fetchServerData();
+    fetchServerData(false); // Auto-refresh is not manual
   }, 15000);
 });
 
@@ -157,7 +159,7 @@ onUnmounted(() => {
         <button @click="openAIChatModal" class="ai-chat-button">
           <span>Metrics Chat</span>
         </button>
-        <button @click="fetchServerData" class="update-button">
+        <button @click="() => fetchServerData(true)" class="update-button">
           <span v-if="!updating">Update</span>
           <span v-else class="spinner"></span>
         </button>
