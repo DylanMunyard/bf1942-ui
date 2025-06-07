@@ -18,6 +18,11 @@ interface Props {
 
 const props = defineProps<Props>();
 
+// Define emits
+const emit = defineEmits<{
+  'show-players': [server: ServerInfo]
+}>();
+
 // Function to format seconds to mm:ss
 const formatTime = (seconds: number): string => {
   const minutes = Math.floor(seconds / 60);
@@ -85,6 +90,10 @@ const joinServer = (server: ServerInfo) => {
     newWindow.blur();
     window.focus();
   }
+};
+
+const showPlayers = (server: ServerInfo) => {
+  emit('show-players', server);
 };
 
 onMounted(() => {
@@ -188,7 +197,7 @@ onUnmounted(() => {
                 </router-link>
                 ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
               </td>
-              <td>
+              <td class="players-column" @click="showPlayers(server)">
                 {{ server.numPlayers }} / {{ server.maxPlayers }}
               </td>
               <td>{{ server.mapName }}</td>
@@ -347,6 +356,17 @@ th {
   color: var(--color-primary);
   text-decoration: none;
   font-weight: 500;
+}
+
+.players-column {
+  cursor: pointer;
+  color: var(--color-primary);
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.players-column:hover {
+  background-color: var(--color-background-soft);
 }
 
 .join-link {
