@@ -2,6 +2,11 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics, fetchPlayerStats } from '../services/playerStatsService';
+import { Line } from 'vue-chartjs';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+
+// Register Chart.js components
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 // Router
 const router = useRouter();
@@ -129,8 +134,6 @@ const formatRelativeTime = (dateString: string): string => {
   }
 };
 
-
-
 // Calculate K/D ratio
 const calculateKDR = (kills: number, deaths: number): string => {
   if (deaths === 0) return kills.toString();
@@ -221,19 +224,107 @@ const convertToLocalHour = (utcHour: number): number => {
   return localDate.getHours();
 };
 
-// Function to calculate the height of each bar in the activity chart
-const getActivityBarHeight = (minutesActive: number): string => {
-  if (!playerStats.value?.insights?.activityByHour) return "0%";
+// Chart data for player activity by hour
+const activityChartData = computed(() => {
+  if (!playerStats.value?.insights?.activityByHour) return { labels: [], datasets: [] };
 
-  // Find the maximum minutes active
-  const maxMinutes = Math.max(...playerStats.value.insights.activityByHour.map(hour => hour.minutesActive));
+  // Convert hours to readable labels (00:00, 01:00, etc.)
+  const labels = sortedLocalActivityHours.value.map(hourData => 
+    `${hourData.localHour.toString().padStart(2, '0')}:00`
+  );
 
-  if (maxMinutes === 0) return "0%";
+  // Get activity values in minutes
+  const data = sortedLocalActivityHours.value.map(hourData => hourData.minutesActive);
 
-  // Calculate the percentage height (minimum 5% for visibility if there's any activity)
-  const percentage = (minutesActive / maxMinutes) * 100;
-  return minutesActive > 0 ? `${Math.max(5, percentage)}%` : "0%";
-};
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Activity (minutes)',
+        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+        borderColor: 'rgba(156, 39, 176, 0.8)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        data
+      }
+    ]
+  };
+});
+
+// Chart options for the compact player activity chart
+const activityChartOptions = computed(() => {
+  // Get computed styles to access CSS variables
+  const computedStyles = window.getComputedStyle(document.documentElement);
+  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') || 
+                    document.documentElement.classList.contains('dark-mode') ||
+                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      intersect: false,
+      mode: 'index' as const
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        display: false,
+        grid: {
+          display: false
+        }
+      },
+      x: {
+        display: false,
+        grid: {
+          display: false
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        enabled: true,
+        backgroundColor: isDarkMode ? 'rgba(35, 21, 53, 0.95)' : 'rgba(0, 0, 0, 0.8)',
+        titleColor: isDarkMode ? '#ffffff' : '#ffffff',
+        bodyColor: isDarkMode ? '#ffffff' : '#ffffff',
+        borderColor: isDarkMode ? '#9c27b0' : '#666666',
+        borderWidth: 1,
+        cornerRadius: 6,
+        displayColors: true,
+        titleFont: {
+          size: 12,
+          weight: 'bold' as const
+        },
+        bodyFont: {
+          size: 11
+        },
+        callbacks: {
+          title: function(context: any) {
+            return `${context[0].label}`;
+          },
+          label: function(context: any) {
+            return `${context.parsed.y} minutes active`;
+          }
+        }
+      }
+    },
+    elements: {
+      point: {
+        radius: 0,
+        hoverRadius: 4
+      }
+    }
+  };
+});
 
 // Clean up event listeners when component is unmounted
 onMounted(() => {
@@ -339,16 +430,34 @@ onMounted(() => {
           <!-- Activity By Hour -->
           <div v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0" class="online-times-section">
             <h4>When they're typically online (Local Time)</h4>
-            <div class="activity-hours-container">
-              <div class="activity-hours-chart">
-                <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
-                     class="activity-hour-bar" 
-                     :style="{ height: getActivityBarHeight(hourData.minutesActive) }">
-                  <div class="activity-hour-value" v-if="hourData.minutesActive > 0">
-                    {{ hourData.minutesActive }}m
-                  </div>
+            <div class="activity-chart-wrapper">
+              <div class="activity-chart-container">
+                <!-- Background zones for time periods -->
+                <div class="time-period-zones">
+                  <div class="time-zone early-zone" title="Early (00:00 - 08:00)"></div>
+                  <div class="time-zone day-zone" title="Day (08:00 - 16:00)"></div>
+                  <div class="time-zone night-zone" title="Night (16:00 - 24:00)"></div>
+                </div>
+                <Line :data="activityChartData" :options="activityChartOptions" />
+              </div>
+              
+              <!-- Time period section labels -->
+              <div class="time-period-labels">
+                <div class="period-label early-label">
+                  <span class="period-name">Early</span>
+                  <span class="period-hours">12AM-8AM</span>
+                </div>
+                <div class="period-label day-label">
+                  <span class="period-name">Day</span>
+                  <span class="period-hours">8AM-4PM</span>
+                </div>
+                <div class="period-label night-label">
+                  <span class="period-name">Night</span>
+                  <span class="period-hours">4PM-12AM</span>
                 </div>
               </div>
+              
+              <!-- Individual hour labels -->
               <div class="activity-hours-labels">
                 <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
                      class="activity-hour-label">
@@ -941,45 +1050,111 @@ tbody tr:hover {
   color: var(--color-text);
 }
 
-.activity-hours-container {
-  margin-top: 10px;
+.activity-chart-wrapper {
+  margin: 10px 0;
 }
 
-.activity-hours-summary {
-  margin-bottom: 15px;
-  font-size: 0.95rem;
-  color: var(--color-text);
-  line-height: 1.4;
-}
-
-.activity-hours-chart {
-  display: flex;
-  align-items: flex-end;
-  height: 100px;
-  gap: 2px;
-  margin-bottom: 5px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.activity-hour-bar {
-  flex: 1;
-  background-color: var(--color-accent);
-  border-radius: 3px 3px 0 0;
-  min-height: 1px;
+.activity-chart-container {
+  height: 80px;
   position: relative;
-  transition: height 0.3s ease;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-background-soft) 100%);
+  border: 1px solid rgba(156, 39, 176, 0.1);
+  padding: 5px;
 }
 
-.activity-hour-value {
+/* Time period background zones */
+.time-period-zones {
   position: absolute;
-  top: -20px;
-  font-size: 0.75rem;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.time-zone {
+  flex: 1;
+  transition: opacity 0.2s ease;
+}
+
+.early-zone {
+  background: linear-gradient(135deg, rgba(103, 58, 183, 0.25) 0%, rgba(103, 58, 183, 0.15) 100%);
+  flex: 8; /* 8 hours: 00-08 */
+}
+
+.day-zone {
+  background: linear-gradient(135deg, rgba(156, 39, 176, 0.3) 0%, rgba(156, 39, 176, 0.2) 100%);
+  flex: 8; /* 8 hours: 08-16 */
+}
+
+.night-zone {
+  background: linear-gradient(135deg, rgba(74, 20, 140, 0.35) 0%, rgba(74, 20, 140, 0.25) 100%);
+  flex: 8; /* 8 hours: 16-24 */
+}
+
+/* Time period labels */
+.time-period-labels {
+  display: flex;
+  margin: 8px 0 5px 0;
+  padding: 0 5px;
+}
+
+.period-label {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.period-name {
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--color-text);
-  white-space: nowrap;
+}
+
+.period-hours {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+
+.early-label .period-name {
+  color: rgba(103, 58, 183, 0.9);
+}
+
+.day-label .period-name {
+  color: rgba(156, 39, 176, 0.9);
+}
+
+.night-label .period-name {
+  color: rgba(74, 20, 140, 0.9);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .early-label .period-name {
+    color: rgba(159, 126, 219, 0.9); /* Lighter purple for dark mode */
+  }
+  
+  .night-label .period-name {
+    color: rgba(149, 117, 205, 0.9); /* Lighter purple for dark mode */
+  }
+}
+
+/* Also handle explicit dark mode class if used */
+.dark-mode .early-label .period-name,
+:root.dark-mode .early-label .period-name {
+  color: rgba(159, 126, 219, 0.9); /* Lighter purple for dark mode */
+}
+
+.dark-mode .night-label .period-name,
+:root.dark-mode .night-label .period-name {
+  color: rgba(149, 117, 205, 0.9); /* Lighter purple for dark mode */
 }
 
 .activity-hours-labels {
@@ -1031,12 +1206,20 @@ tbody tr:hover {
     max-width: 100%;
   }
 
-  .activity-hours-chart {
-    height: 80px;
+  .activity-chart-container {
+    height: 60px;
   }
 
   .activity-hour-label {
     font-size: 0.7rem;
+  }
+
+  .period-name {
+    font-size: 0.75rem;
+  }
+
+  .period-hours {
+    font-size: 0.65rem;
   }
 }
 
