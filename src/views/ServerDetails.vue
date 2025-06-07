@@ -274,6 +274,10 @@ const toggleChartExpansion = () => {
   <div class="server-details-container">
     <div class="server-details-header">
       <div class="server-name-container">
+        <router-link to="/servers" class="back-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Back to Servers
+        </router-link>
         <h2>Server Details: {{ serverName }}</h2>
       </div>
       <div class="modal-actions">
@@ -508,6 +512,24 @@ const toggleChartExpansion = () => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--color-background-mute);
+  border-radius: 6px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.back-button:hover {
+  background-color: var(--color-primary);
+  color: white;
 }
 
 .server-details-header h2 {

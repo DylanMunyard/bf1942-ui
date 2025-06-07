@@ -16,6 +16,11 @@ const router = createRouter({
       redirect: '/servers/bf1942'
     },
     {
+      path: '/servers',
+      name: 'servers',
+      redirect: '/servers/bf1942'
+    },
+    {
       path: '/servers/bf1942',
       name: 'servers-bf1942',
       component: Servers,
