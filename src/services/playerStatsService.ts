@@ -93,6 +93,17 @@ export interface ServerPlayTime {
   serverName: string;
 }
 
+export interface ServerRanking {
+  serverGuid: string;
+  serverName: string;
+  rank: number;
+  totalScore: number;
+  totalRankedPlayers: number;
+  rankDisplay: string;
+  scoreDisplay: string;
+  averagePing: number;
+}
+
 export interface PlayerInsights {
   activityByHour: ActivityByHour[];
   bestKillMap?: BestKillMap;
@@ -100,6 +111,7 @@ export interface PlayerInsights {
   favoriteMaps: MapPlayTime[];
   playerName: string;
   serverPlayTimes: ServerPlayTime[];
+  serverRankings: ServerRanking[];
   startPeriod: string; // ISO date string
 }
 

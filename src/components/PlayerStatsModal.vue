@@ -407,7 +407,38 @@ onMounted(() => {
               Data from {{ formatDate(playerStats.insights.startPeriod) }} to {{ formatDate(playerStats.insights.endPeriod) }}
             </div>
 
-
+            <!-- Server Rankings -->
+            <div v-if="playerStats.insights?.serverRankings && playerStats.insights.serverRankings.length > 0" class="insights-subsection">
+              <h4>Server Rankings</h4>
+              <div class="server-rankings-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Server Name</th>
+                      <th>Rank</th>
+                      <th>Score</th>
+                      <th>Ping</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(ranking, index) in playerStats.insights.serverRankings" :key="index">
+                      <td>{{ ranking.serverName }}</td>
+                      <td>{{ ranking.rankDisplay }}</td>
+                      <td>{{ ranking.scoreDisplay }}</td>
+                      <td>
+                        <span class="player-ping" :class="{
+                          'ping-good': ranking.averagePing < 50,
+                          'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                          'ping-bad': ranking.averagePing >= 100
+                        }">
+                          {{ ranking.averagePing }}ms
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
             <!-- Favorite Maps -->
             <div v-if="playerStats.insights.favoriteMaps && playerStats.insights.favoriteMaps.length > 0" class="insights-subsection">
@@ -1079,5 +1110,29 @@ tbody tr:hover {
 .server-link:hover {
   color: var(--color-accent);
   text-decoration: underline;
+}
+
+.player-ping {
+  text-align: center;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.ping-good {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.ping-ok {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+.ping-bad {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
 }
 </style>
