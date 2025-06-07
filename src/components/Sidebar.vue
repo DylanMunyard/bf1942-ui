@@ -113,6 +113,8 @@ const route = useRoute();
   transition: all 0.3s ease;
   border-radius: 0 25px 25px 0;
   margin-right: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .nav-menu > li > a, .nav-menu > li > .router-link-exact-active {
