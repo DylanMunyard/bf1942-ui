@@ -98,20 +98,14 @@ export interface ServerDetails {
 /**
  * Fetches server details from the API
  * @param serverName The name of the server to fetch details for
- * @param game The game type ('bf1942' or 'fh2')
  * @returns Server details
  */
 export async function fetchServerDetails(
-  serverName: string,
-  game: string
+  serverName: string
 ): Promise<ServerDetails> {
   try {
     // Make the request to the API endpoint
-    const response = await axios.get<ServerDetails>(`/stats/servers/${encodeURIComponent(serverName)}`, {
-      params: {
-        game
-      }
-    });
+    const response = await axios.get<ServerDetails>(`/stats/servers/${encodeURIComponent(serverName)}`);
 
     // Return the response data
     return response.data;

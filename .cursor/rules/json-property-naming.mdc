@@ -1,0 +1,6 @@
+---
+description: 
+globs: *.ts
+alwaysApply: false
+---
+Please use camel casing for JSON properties. E.g. IsActive becomes isActive

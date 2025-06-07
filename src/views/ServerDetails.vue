@@ -13,7 +13,6 @@ const router = useRouter();
 
 // State
 const serverName = ref(route.params.serverName as string);
-const game = ref(route.params.game as string);
 const serverDetails = ref<ServerDetails | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
@@ -21,13 +20,13 @@ const isChartExpanded = ref(false);
 
 // Fetch server details
 const fetchData = async () => {
-  if (!serverName.value || !game.value) return;
+  if (!serverName.value) return;
 
   isLoading.value = true;
   error.value = null;
 
   try {
-    serverDetails.value = await fetchServerDetails(serverName.value, game.value);
+    serverDetails.value = await fetchServerDetails(serverName.value);
   } catch (err) {
     console.error('Error fetching server details:', err);
     error.value = 'Failed to load server details. Please try again later.';
@@ -35,6 +34,20 @@ const fetchData = async () => {
     isLoading.value = false;
   }
 };
+
+watch(
+  () => route.params.serverName,
+  (newName, oldName) => {
+    if (newName !== oldName) {
+      serverName.value = newName as string;
+      fetchData();
+    }
+  }
+);
+
+onMounted(() => {
+  fetchData();
+});
 
 // Format minutes to hours and minutes
 const formatPlayTime = (minutes: number): string => {
@@ -246,11 +259,6 @@ const activityAnalysis = computed(() => {
 const toggleChartExpansion = () => {
   isChartExpanded.value = !isChartExpanded.value;
 };
-
-// Clean up event listeners when component is unmounted
-onMounted(() => {
-  fetchData();
-});
 </script>
 
 <template>

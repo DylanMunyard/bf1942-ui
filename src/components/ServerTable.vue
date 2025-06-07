@@ -181,7 +181,7 @@ onUnmounted(() => {
           <tbody>
             <tr v-for="server in servers" :key="server.guid">
               <td>
-                <router-link :to="`/servers/${encodeURIComponent(server.name)}?game=${serverMode}`" class="server-name-link">
+                <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="server-name-link">
                   {{ server.name }}
                 </router-link>
                 ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})

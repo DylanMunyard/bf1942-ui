@@ -5,12 +5,12 @@
     </div>
     <ul class="nav-menu">
       <li>
-        <a @click="toggleServersMenu" :class="{ 'active-parent': $route.path.startsWith('/servers') }">
+        <div :class="{ 'active-parent': $route.path.startsWith('/servers') }">
           <i class="icon-server"></i>
           <span>Servers</span>
-          <i class="icon-arrow" :class="{ 'open': serversMenuOpen }"></i>
-        </a>
-        <ul v-if="serversMenuOpen" class="submenu">
+          <i class="icon-arrow open"></i>
+        </div>
+        <ul class="submenu">
           <li><router-link to="/servers/bf1942" active-class="active">BF1942</router-link></li>
           <li><router-link to="/servers/fh2" active-class="active">FH2</router-link></li>
         </ul>
@@ -26,15 +26,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
-const serversMenuOpen = ref(route.path.startsWith('/servers'));
-
-const toggleServersMenu = () => {
-  serversMenuOpen.value = !serversMenuOpen.value;
-};
 </script>
 
 <style scoped>
@@ -71,13 +65,16 @@ const toggleServersMenu = () => {
   flex-grow: 1;
 }
 
-.nav-menu > li > a, .nav-menu > li > .router-link-exact-active {
+.nav-menu > li > a, .nav-menu > li > div, .nav-menu > li > .router-link-exact-active {
   display: flex;
   align-items: center;
   padding: 15px 20px;
   color: #bdc3c7;
   text-decoration: none;
   transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-menu > li > a, .nav-menu > li > .router-link-exact-active {
   cursor: pointer;
 }
 
@@ -86,12 +83,11 @@ const toggleServersMenu = () => {
   color: #ecf0f1;
 }
 
-.nav-menu > li > a.active, .nav-menu > li > .router-link-exact-active, .nav-menu > li > a.active-parent {
+.nav-menu > li > a.active, .nav-menu > li > .router-link-exact-active, .nav-menu > li > div.active-parent {
   background-color: #34495e;
   color: #ffffff;
   font-weight: 500;
 }
-
 
 .nav-menu .icon-server, .nav-menu .icon-players, .nav-menu .icon-arrow {
   margin-right: 15px;
