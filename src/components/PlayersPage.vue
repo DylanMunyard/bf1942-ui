@@ -24,6 +24,7 @@ const totalPages = ref(0);
 
 // Filter variables
 const nameFilter = ref('');
+const nameInputValue = ref(''); // Separate value for the input display
 const gameIdFilter = ref('');
 const serverNameFilter = ref('');
 const uniqueGameIds = ref<string[]>([]);
@@ -204,8 +205,7 @@ const debouncedNameSearch = (searchTerm: string) => {
 };
 
 // Handle name filter change - now with debouncing
-const handleNameFilterChange = (event: Event) => {
-  const searchTerm = (event.target as HTMLInputElement).value;
+const handleNameFilterChange = (searchTerm: string) => {
   debouncedNameSearch(searchTerm);
 };
 
@@ -232,6 +232,7 @@ const clearNameFilter = () => {
   }
   
   nameFilter.value = '';
+  nameInputValue.value = '';
   isSearching.value = false;
   currentPage.value = 1; // Reset to first page when clearing filter
   fetchPlayersData();
@@ -240,6 +241,7 @@ const clearNameFilter = () => {
 // Reset all filters
 const resetFilters = () => {
   nameFilter.value = '';
+  nameInputValue.value = '';
   gameIdFilter.value = '';
   serverNameFilter.value = '';
   currentPage.value = 1; // Reset to first page when resetting filters
@@ -288,6 +290,13 @@ onMounted(() => {
   });
 });
 
+// Watch for external changes to nameFilter and sync with input
+watch(nameFilter, (newValue) => {
+  if (newValue !== nameInputValue.value) {
+    nameInputValue.value = newValue;
+  }
+});
+
 // Cleanup when component is unmounted
 onUnmounted(() => {
   // Clear any pending search timeout
@@ -315,14 +324,14 @@ onUnmounted(() => {
           <input 
             type="text" 
             id="nameFilter" 
-            :value="nameFilter"
-            @input="handleNameFilterChange" 
+            v-model="nameInputValue"
+            @input="handleNameFilterChange(nameInputValue)" 
             placeholder="Enter player name"
             class="filter-input"
           />
           <span v-if="isSearching" class="search-indicator">🔍</span>
           <span 
-            v-if="nameFilter && !isSearching" 
+            v-if="nameInputValue && !isSearching" 
             class="clear-input" 
             @click="clearNameFilter"
             title="Clear filter"
