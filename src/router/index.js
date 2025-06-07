@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import ServerTable from '../components/ServerTable.vue'
-import PlayersPage from '../components/PlayersPage.vue'
-import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
+import Servers from '../views/Servers.vue'
+import Players from '../views/Players.vue'
+import PlayerDetails from '../views/PlayerDetails.vue'
+import ServerDetails from '../views/ServerDetails.vue'
 import ServerRankingsPage from '../components/ServerRankingsPage.vue'
-import PlayerDetailsPage from '../components/PlayerDetailsPage.vue'
+import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
 import RoundReportPage from '../components/RoundReportPage.vue'
 
 const router = createRouter({
@@ -12,18 +13,25 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      redirect: '/servers'
+      redirect: '/servers/bf1942'
     },
     {
-      path: '/servers',
-      name: 'servers',
-      component: ServerTable
+      path: '/servers/bf1942',
+      name: 'servers-bf1942',
+      component: Servers,
+      props: { initialMode: '42' }
     },
     {
       path: '/servers/fh2',
-      name: 'fh2',
-      component: ServerTable,
+      name: 'servers-fh2',
+      component: Servers,
       props: { initialMode: 'FH2' }
+    },
+    {
+      path: '/servers/:serverName',
+      name: 'server-details',
+      component: ServerDetails,
+      props: true
     },
     {
       path: '/servers/:serverName/rankings',
@@ -32,63 +40,21 @@ const router = createRouter({
       props: true
     },
     {
-      path: '/servers/:serverName',
-      name: 'server-details',
-      component: ServerTable,
-      props: route => ({ 
-        selectedServerName: route.params.serverName,
-        showChartModal: true
-      })
-    },
-    {
-      path: '/servers/:serverName/players',
-      name: 'server-players',
-      component: ServerTable,
-      props: route => ({ 
-        selectedServerName: route.params.serverName,
-        showServerModal: true
-      })
-    },
-    {
       path: '/players',
       name: 'players',
-      component: PlayersPage
+      component: Players
     },
     {
-      path: '/players/:playerName',
+      path: '/player/:playerName',
       name: 'player-details',
-      component: PlayersPage,
-      props: route => ({ 
-        selectedPlayerName: route.params.playerName,
-        showPlayerModal: true
-      })
+      component: PlayerDetails,
+      props: true
     },
     {
       path: '/players/:playerName/sessions',
       name: 'player-sessions',
       component: PlayerSessionsPage,
-      props: route => ({
-        playerName: route.params.playerName
-      })
-    },
-    {
-      path: '/players/:playerName/sessions/:sessionId',
-      name: 'session-details',
-      component: PlayersPage,
-      props: route => ({ 
-        selectedPlayerName: route.params.playerName,
-        selectedSessionId: parseInt(route.params.sessionId),
-        showPlayerModal: true,
-        showSessionModal: true
-      })
-    },
-    {
-      path: '/player/:playerName',
-      name: 'standalone-player-details',
-      component: PlayerDetailsPage,
-      props: route => ({
-        playerName: route.params.playerName
-      })
+      props: true
     },
     {
       path: '/servers/round-report',

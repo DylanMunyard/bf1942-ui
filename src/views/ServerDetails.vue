@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { ServerDetails, RecentRoundInfo, fetchServerDetails } from '../services/serverDetailsService';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
@@ -8,19 +8,12 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
-interface Props {
-  serverName: string;
-  game: string;
-  isOpen: boolean;
-}
-
-const props = defineProps<Props>();
-const emit = defineEmits(['close']);
-
-// Router
+const route = useRoute();
 const router = useRouter();
 
 // State
+const serverName = ref(route.params.serverName as string);
+const game = ref(route.params.game as string);
 const serverDetails = ref<ServerDetails | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
@@ -28,13 +21,13 @@ const isChartExpanded = ref(false);
 
 // Fetch server details
 const fetchData = async () => {
-  if (!props.serverName || !props.game) return;
+  if (!serverName.value || !game.value) return;
 
   isLoading.value = true;
   error.value = null;
 
   try {
-    serverDetails.value = await fetchServerDetails(props.serverName, props.game);
+    serverDetails.value = await fetchServerDetails(serverName.value, game.value);
   } catch (err) {
     console.error('Error fetching server details:', err);
     error.value = 'Failed to load server details. Please try again later.';
@@ -76,22 +69,6 @@ const formatDate = (dateString: string): string => {
 const calculateKDR = (kills: number, deaths: number): string => {
   if (deaths === 0) return kills.toString();
   return (kills / deaths).toFixed(2);
-};
-
-
-
-// Close the popup when clicking outside or pressing ESC
-const handleOutsideClick = (event: MouseEvent) => {
-  const popup = document.querySelector('.server-details-modal-content');
-  if (popup && !popup.contains(event.target as Node)) {
-    emit('close');
-  }
-};
-
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    emit('close');
-  }
 };
 
 // Chart data for player count
@@ -226,18 +203,6 @@ const chartOptions = computed(() => {
   return baseOptions;
 });
 
-// Add and remove event listeners
-watch(() => props.isOpen, (newValue) => {
-  if (newValue) {
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('keydown', handleKeyDown);
-    fetchData();
-  } else {
-    document.removeEventListener('mousedown', handleOutsideClick);
-    document.removeEventListener('keydown', handleKeyDown);
-  }
-});
-
 // Analyze player count data to determine activity levels
 const activityAnalysis = computed(() => {
   if (!serverDetails.value?.playerCountMetrics || serverDetails.value.playerCountMetrics.length === 0) {
@@ -284,278 +249,242 @@ const toggleChartExpansion = () => {
 
 // Clean up event listeners when component is unmounted
 onMounted(() => {
-  if (props.isOpen) {
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('keydown', handleKeyDown);
-    fetchData();
-  }
+  fetchData();
 });
 </script>
 
 <template>
-  <div v-if="isOpen" class="server-details-modal-overlay">
-    <div class="server-details-modal-content">
-      <div class="server-details-header">
-        <div class="server-name-container">
-          <h2>Server Details: {{ serverName }}</h2>
+  <div class="server-details-container">
+    <div class="server-details-header">
+      <div class="server-name-container">
+        <h2>Server Details: {{ serverName }}</h2>
+      </div>
+      <div class="modal-actions">
+        <router-link
+          :to="`/servers/${encodeURIComponent(serverName)}/rankings`"
+          class="rankings-button"
+        >
+          🏆 View Rankings
+        </router-link>
+      </div>
+    </div>
+    <div class="server-details-body">
+      <div v-if="isLoading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading server details...</p>
+      </div>
+      <div v-else-if="error" class="error-container">
+        <p class="error-message">{{ error }}</p>
+      </div>
+      <div v-else-if="serverDetails" class="stats-container">
+        <!-- Period information -->
+        <div class="period-info">
+          Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
         </div>
-        <div class="modal-actions">
-          <router-link 
-            :to="`/servers/${encodeURIComponent(props.serverName)}/rankings`" 
-            class="rankings-button"
-          >
-            🏆 View Rankings
-          </router-link>
-          <button class="close-button" @click="$emit('close')">&times;</button>
+
+        <!-- Player Count Chart -->
+        <div v-if="serverDetails.playerCountMetrics && serverDetails.playerCountMetrics.length > 0" class="stats-section">
+          <div class="chart-header">
+            <h3>Player Activity</h3>
+            <button
+              class="expand-chart-button"
+              @click="toggleChartExpansion"
+              :title="isChartExpanded ? 'Collapse chart' : 'Expand chart'"
+            >
+              {{ isChartExpanded ? '📉' : '📊' }}
+            </button>
+          </div>
+                       <div
+             class="chart-container"
+             :class="{ 'chart-expanded': isChartExpanded }"
+             @click="!isChartExpanded && toggleChartExpansion()"
+           >
+                             <!-- Activity zone backgrounds for collapsed view -->
+              <div v-if="!isChartExpanded && activityAnalysis.zones.length > 0" class="activity-zones">
+                <div
+                  v-for="(zone, index) in activityAnalysis.zones"
+                  :key="index"
+                  class="activity-zone"
+                  :class="zone"
+                  :title="`${activityAnalysis.labels[index]} - ${activityAnalysis.timeRanges[index]}`"
+                >
+                  <div class="time-range-label">{{ activityAnalysis.timeRanges[index] }}</div>
+                </div>
+              </div>
+
+             <Line :data="chartData" :options="chartOptions" />
+           </div>
+
+           <!-- Activity level legend for collapsed view -->
+           <div v-if="!isChartExpanded && activityAnalysis.labels.length > 0" class="activity-legend">
+             <div class="legend-item">
+               <div class="legend-color busiest-color"></div>
+               <span>Busiest</span>
+             </div>
+             <div class="legend-item">
+               <div class="legend-color busy-color"></div>
+               <span>Busy</span>
+             </div>
+             <div class="legend-item">
+               <div class="legend-color quietest-color"></div>
+               <span>Quietest</span>
+             </div>
+           </div>
+        </div>
+
+        <!-- Leaderboards Container -->
+        <div class="leaderboards-container">
+          <!-- Most Active Players -->
+          <div class="leaderboard-section">
+            <div class="leaderboard-header">
+              <h3>🏃 Most Active Players</h3>
+            </div>
+            <div class="leaderboard-content">
+              <div class="players-header">
+                <div class="header-rank">#</div>
+                <div class="header-name">Player</div>
+                <div class="header-playtime">Time</div>
+                <div class="header-kd">K/D</div>
+              </div>
+              <div class="players-list">
+                <div v-for="(player, index) in serverDetails.mostActivePlayersByTime" :key="index" class="player-row">
+                  <div class="player-rank">
+                    <span v-if="index === 0" class="rank-medal">🥇</span>
+                    <span v-else-if="index === 1" class="rank-medal">🥈</span>
+                    <span v-else-if="index === 2" class="rank-medal">🥉</span>
+                    <span v-else class="rank-number">{{ index + 1 }}</span>
+                  </div>
+                  <div class="player-name">
+                    <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
+                      {{ player.playerName }}
+                    </router-link>
+                  </div>
+                  <div class="player-playtime">{{ formatPlayTime(player.minutesPlayed) }}</div>
+                  <div class="player-kd">
+                    <span class="kills">{{ player.totalKills }}</span>
+                    <span class="separator">/</span>
+                    <span class="deaths">{{ player.totalDeaths }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Scores -->
+          <div class="leaderboard-section">
+            <div class="leaderboard-header">
+              <h3>🏆 Top Scores</h3>
+            </div>
+            <div class="leaderboard-content">
+              <div class="scores-header">
+                <div class="header-rank">#</div>
+                <div class="header-name">Player</div>
+                <div class="header-score">Score</div>
+                <div class="header-kd">K/D</div>
+                <div class="header-map">Map</div>
+              </div>
+              <div class="scores-list">
+                <div v-for="(score, index) in serverDetails.topScores" :key="index" class="score-row">
+                  <div class="score-rank">
+                    <span v-if="index === 0" class="rank-medal">🥇</span>
+                    <span v-else-if="index === 1" class="rank-medal">🥈</span>
+                    <span v-else-if="index === 2" class="rank-medal">🥉</span>
+                    <span v-else class="rank-number">{{ index + 1 }}</span>
+                  </div>
+                  <div class="score-name">
+                    <router-link :to="`/player/${encodeURIComponent(score.playerName)}`" class="player-link">
+                      {{ score.playerName }}
+                    </router-link>
+                  </div>
+                  <div class="score-value">
+                    <router-link
+                      :to="{
+                        path: '/servers/round-report',
+                        query: {
+                          serverGuid: serverDetails.serverGuid,
+                          mapName: score.mapName,
+                          startTime: score.timestamp
+                        }
+                      }"
+                      class="session-link"
+                    >
+                      {{ score.score.toLocaleString() }}
+                    </router-link>
+                  </div>
+                  <div class="score-kd">
+                    <span class="kills">{{ score.kills }}</span>
+                    <span class="separator">/</span>
+                    <span class="deaths">{{ score.deaths }}</span>
+                  </div>
+                  <div class="score-map">{{ score.mapName }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Rounds -->
+          <div v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0" class="leaderboard-section recent-rounds-section">
+            <div class="leaderboard-header">
+              <h3>🎮 Recent Rounds</h3>
+            </div>
+            <div class="leaderboard-content">
+              <div class="rounds-header">
+                <div class="header-map">Map</div>
+                <div class="header-end-time">End Time</div>
+                <div class="header-report">Report</div>
+              </div>
+              <div class="rounds-list">
+                <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-row">
+                  <div class="round-map">
+                    {{ round.mapName }}
+                  </div>
+                  <div class="round-end-time">
+                    <span v-if="round.isActive && index === 0" class="badge-active">In Progress</span>
+                    <span v-else>{{ formatDate(round.endTime) }}</span>
+                  </div>
+                  <div class="round-report">
+                    <router-link
+                      :to="{
+                        path: '/servers/round-report',
+                        query: {
+                          serverGuid: serverDetails.serverGuid,
+                          mapName: round.mapName,
+                          startTime: round.startTime
+                        }
+                      }"
+                      class="report-link"
+                    >
+                      View Report
+                    </router-link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="server-details-body">
-        <div v-if="isLoading" class="loading-container">
-          <div class="loading-spinner"></div>
-          <p>Loading server details...</p>
-        </div>
-        <div v-else-if="error" class="error-container">
-          <p class="error-message">{{ error }}</p>
-        </div>
-        <div v-else-if="serverDetails" class="stats-container">
-          <!-- Period information -->
-          <div class="period-info">
-            Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
-          </div>
-
-          <!-- Player Count Chart -->
-          <div v-if="serverDetails.playerCountMetrics && serverDetails.playerCountMetrics.length > 0" class="stats-section">
-            <div class="chart-header">
-              <h3>Player Activity</h3>
-              <button 
-                class="expand-chart-button"
-                @click="toggleChartExpansion"
-                :title="isChartExpanded ? 'Collapse chart' : 'Expand chart'"
-              >
-                {{ isChartExpanded ? '📉' : '📊' }}
-              </button>
-            </div>
-                         <div 
-               class="chart-container"
-               :class="{ 'chart-expanded': isChartExpanded }"
-               @click="!isChartExpanded && toggleChartExpansion()"
-             >
-                               <!-- Activity zone backgrounds for collapsed view -->
-                <div v-if="!isChartExpanded && activityAnalysis.zones.length > 0" class="activity-zones">
-                  <div 
-                    v-for="(zone, index) in activityAnalysis.zones" 
-                    :key="index"
-                    class="activity-zone"
-                    :class="zone"
-                    :title="`${activityAnalysis.labels[index]} - ${activityAnalysis.timeRanges[index]}`"
-                  >
-                    <div class="time-range-label">{{ activityAnalysis.timeRanges[index] }}</div>
-                  </div>
-                </div>
-               
-               <Line :data="chartData" :options="chartOptions" />
-             </div>
-             
-             <!-- Activity level legend for collapsed view -->
-             <div v-if="!isChartExpanded && activityAnalysis.labels.length > 0" class="activity-legend">
-               <div class="legend-item">
-                 <div class="legend-color busiest-color"></div>
-                 <span>Busiest</span>
-               </div>
-               <div class="legend-item">
-                 <div class="legend-color busy-color"></div>
-                 <span>Busy</span>
-               </div>
-               <div class="legend-item">
-                 <div class="legend-color quietest-color"></div>
-                 <span>Quietest</span>
-               </div>
-             </div>
-          </div>
-
-          <!-- Leaderboards Container -->
-          <div class="leaderboards-container">
-            <!-- Most Active Players -->
-            <div class="leaderboard-section">
-              <div class="leaderboard-header">
-                <h3>🏃 Most Active Players</h3>
-              </div>
-              <div class="leaderboard-content">
-                <div class="players-header">
-                  <div class="header-rank">#</div>
-                  <div class="header-name">Player</div>
-                  <div class="header-playtime">Time</div>
-                  <div class="header-kd">K/D</div>
-                </div>
-                <div class="players-list">
-                  <div v-for="(player, index) in serverDetails.mostActivePlayersByTime" :key="index" class="player-row">
-                    <div class="player-rank">
-                      <span v-if="index === 0" class="rank-medal">🥇</span>
-                      <span v-else-if="index === 1" class="rank-medal">🥈</span>
-                      <span v-else-if="index === 2" class="rank-medal">🥉</span>
-                      <span v-else class="rank-number">{{ index + 1 }}</span>
-                    </div>
-                    <div class="player-name">
-                      <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
-                        {{ player.playerName }}
-                      </router-link>
-                    </div>
-                    <div class="player-playtime">{{ formatPlayTime(player.minutesPlayed) }}</div>
-                    <div class="player-kd">
-                      <span class="kills">{{ player.totalKills }}</span>
-                      <span class="separator">/</span>
-                      <span class="deaths">{{ player.totalDeaths }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Top Scores -->
-            <div class="leaderboard-section">
-              <div class="leaderboard-header">
-                <h3>🏆 Top Scores</h3>
-              </div>
-              <div class="leaderboard-content">
-                <div class="scores-header">
-                  <div class="header-rank">#</div>
-                  <div class="header-name">Player</div>
-                  <div class="header-score">Score</div>
-                  <div class="header-kd">K/D</div>
-                  <div class="header-map">Map</div>
-                </div>
-                <div class="scores-list">
-                  <div v-for="(score, index) in serverDetails.topScores" :key="index" class="score-row">
-                    <div class="score-rank">
-                      <span v-if="index === 0" class="rank-medal">🥇</span>
-                      <span v-else-if="index === 1" class="rank-medal">🥈</span>
-                      <span v-else-if="index === 2" class="rank-medal">🥉</span>
-                      <span v-else class="rank-number">{{ index + 1 }}</span>
-                    </div>
-                    <div class="score-name">
-                      <router-link :to="`/player/${encodeURIComponent(score.playerName)}`" class="player-link">
-                        {{ score.playerName }}
-                      </router-link>
-                    </div>
-                    <div class="score-value">
-                      <router-link 
-                        :to="{
-                          path: '/servers/round-report',
-                          query: {
-                            serverGuid: serverDetails.serverGuid,
-                            mapName: score.mapName,
-                            startTime: score.timestamp
-                          }
-                        }" 
-                        class="session-link"
-                      >
-                        {{ score.score.toLocaleString() }}
-                      </router-link>
-                    </div>
-                    <div class="score-kd">
-                      <span class="kills">{{ score.kills }}</span>
-                      <span class="separator">/</span>
-                      <span class="deaths">{{ score.deaths }}</span>
-                    </div>
-                    <div class="score-map">{{ score.mapName }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recent Rounds -->
-            <div v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0" class="leaderboard-section recent-rounds-section">
-              <div class="leaderboard-header">
-                <h3>🎮 Recent Rounds</h3>
-              </div>
-              <div class="leaderboard-content">
-                <div class="rounds-header">
-                  <div class="header-map">Map</div>
-                  <div class="header-end-time">End Time</div>
-                  <div class="header-report">Report</div>
-                </div>
-                <div class="rounds-list">
-                  <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-row">
-                    <div class="round-map">
-                      {{ round.mapName }}
-                    </div>
-                    <div class="round-end-time">
-                      <span v-if="round.isActive && index === 0" class="badge-active">In Progress</span>
-                      <span v-else>{{ formatDate(round.endTime) }}</span>
-                    </div>
-                    <div class="round-report">
-                      <router-link
-                        :to="{
-                          path: '/servers/round-report',
-                          query: {
-                            serverGuid: serverDetails.serverGuid,
-                            mapName: round.mapName,
-                            startTime: round.startTime
-                          }
-                        }"
-                        class="report-link"
-                      >
-                        View Report
-                      </router-link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-else class="no-data-container">
-          <p>No server details available.</p>
-        </div>
+      <div v-else class="no-data-container">
+        <p>No server details available.</p>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.server-details-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.server-details-modal-content {
+.server-details-container {
   background-color: var(--color-background);
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 1200px;
-  max-height: 90vh;
-  overflow: auto;
-  padding: 0;
-  animation: popup-fade-in 0.3s ease-out;
-  color: var(--color-text);
-}
-
-@keyframes popup-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 20px;
 }
 
 .server-details-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding-bottom: 20px;
   border-bottom: 1px solid var(--color-border);
+  margin-bottom: 20px;
 }
 
 .server-name-container {
@@ -570,21 +499,30 @@ onMounted(() => {
   color: var(--color-heading);
 }
 
-.close-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--color-text);
-  transition: color 0.2s;
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
-.close-button:hover {
-  color: var(--color-primary);
+.rankings-button {
+  padding: 8px 16px;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.rankings-button:hover {
+  background-color: var(--color-primary-hover);
 }
 
 .server-details-body {
-  padding: 20px;
+  padding: 0;
 }
 
 .loading-container, .error-container, .no-data-container {
@@ -698,8 +636,6 @@ onMounted(() => {
   box-shadow: 0 8px 25px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
   background: var(--color-background);
 }
-
-
 
 /* Activity zones background for collapsed view */
 .activity-zones {
@@ -985,8 +921,6 @@ onMounted(() => {
   text-align: center;
 }
 
-
-
 .round-report {
   text-align: center;
 }
@@ -1066,7 +1000,7 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .server-details-modal-content {
+  .server-details-container {
     width: 95%;
   }
 
@@ -1159,27 +1093,5 @@ onMounted(() => {
     font-size: 0.55rem;
     padding: 1px 4px;
   }
-}
-
-.modal-actions {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.rankings-button {
-  padding: 8px 16px;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.rankings-button:hover {
-  background-color: var(--color-primary-hover);
 }
 </style>

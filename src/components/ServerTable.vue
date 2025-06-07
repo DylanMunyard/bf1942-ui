@@ -2,15 +2,10 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
-import { ServerInfo, PlayerWithKdr } from '../types/server';
+import { ServerInfo } from '../types/server';
 import TimeDisplay from './TimeDisplay.vue';
-import LineChart from './LineChart.vue';
-import ServerDetailsModal from './ServerDetailsModal.vue';
-import PlayerStatsModal from './PlayerStatsModal.vue';
 import { queryAI } from '../services/aiService';
 import { marked } from 'marked';
-import { fetchServerDetails } from '../services/serverDetailsService';
-import { fetchPlayerStats, PlayerTimeStatistics } from '../services/playerStatsService';
 
 // Router
 const router = useRouter();
@@ -19,9 +14,6 @@ const route = useRoute();
 // Props from router
 interface Props {
   initialMode?: 'FH2' | '42';
-  selectedServerName?: string;
-  showServerModal?: boolean;
-  showChartModal?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -35,22 +27,11 @@ const formatTime = (seconds: number): string => {
 
 const servers = ref<ServerInfo[]>([]);
 const loading = ref(true);
-const updating = ref(false); // New ref for tracking updates separately from initial load
-const tabSwitchLoading = ref(false); // New ref for tracking loading state during tab switching
+const updating = ref(false);
+const tabSwitchLoading = ref(false);
 const error = ref<string | null>(null);
-const showPlayerModal = ref(false);
-const showServerInfoModal = ref(false);
-const selectedTeamPlayers = ref<{ team1: PlayerWithKdr[], team2: PlayerWithKdr[] }>({ team1: [], team2: [] });
-const selectedTeamLabels = ref<{ team1: string, team2: string }>({ team1: '', team2: '' });
-const selectedServer = ref<ServerInfo | null>(null);
 const refreshTimer = ref<number | null>(null);
-const previousServersData = ref<Record<string, ServerInfo>>({});
-const sortBy = ref<string>('score');
-const sortDirection = ref<'asc' | 'desc'>('desc');
-const serverMode = ref<'42' | 'FH2'>(props.initialMode || '42'); // Track which server list to display
-
-// Server details modal state
-const showChartModal = ref(false);
+const serverMode = ref<'42' | 'FH2'>(props.initialMode || '42');
 
 // AI Chat state
 const showAIChatModal = ref(false);
@@ -59,44 +40,32 @@ const aiResponse = ref('');
 const aiLoading = ref(false);
 const lastQuestion = ref('');
 
-// Player Stats Modal state
-const showPlayerStatsModal = ref(false);
-const selectedPlayerName = ref('');
-const playerStats = ref<PlayerTimeStatistics | null>(null);
-const playerStatsLoading = ref(false);
-const playerStatsError = ref<string | null>(null);
+watch(() => props.initialMode, (newMode) => {
+  if (newMode) {
+    if (serverMode.value !== newMode) {
+      serverMode.value = newMode;
+      fetchServerData();
+    }
+  }
+}, { immediate: true });
+
 
 const fetchServerData = async () => {
-  // If servers are already loaded, use updating state instead of loading
   if (servers.value.length > 0) {
     updating.value = true;
   } else {
     loading.value = true;
   }
   error.value = null;
+  tabSwitchLoading.value = true;
 
   try {
-    // Use different API URL based on selected mode
-    const apiUrl = serverMode.value === '42' 
+    const apiUrl = serverMode.value === '42'
       ? 'https://api.bflist.io/bf1942/v1/servers/1?perPage=100'
       : 'https://api.bflist.io/fh2/v1/servers/1?perPage=100';
 
     const response = await axios.get<ServerInfo[]>(apiUrl);
-
-    // Before updating servers, store the current data as previous data
-    if (servers.value.length > 0) {
-      // Create a map of current servers by GUID
-      const newPreviousData: Record<string, ServerInfo> = {};
-      servers.value.forEach(server => {
-        newPreviousData[server.guid] = server;
-      });
-      previousServersData.value = newPreviousData;
-    }
-
-    // In a real application, we would fetch multiple servers and sort them
     servers.value = response.data;
-
-    // Sort servers by numPlayers in descending order
     servers.value.sort((a, b) => b.numPlayers - a.numPlayers);
   } catch (err) {
     error.value = 'Failed to fetch server data. Please try again.';
@@ -108,270 +77,36 @@ const fetchServerData = async () => {
   }
 };
 
-const openPlayerModal = (server: ServerInfo) => {
-  // If we're already on the server players page, just update the state
-  // Otherwise, navigate to the server players page
-  if (route.name === 'server-players' && route.params.serverName === server.name) {
-    processServerPlayers(server);
-  } else {
-    router.push(`/servers/${encodeURIComponent(server.name)}/players`);
-  }
-};
-
-const processServerPlayers = (server: ServerInfo) => {
-  selectedServer.value = server;
-
-  // Group players by team and calculate KDR
-  const team1Players: PlayerWithKdr[] = [];
-  const team2Players: PlayerWithKdr[] = [];
-  const teamLabels: Record<number, string> = {};
-
-  // Get team labels
-  server.teams.forEach(team => {
-    teamLabels[team.index] = team.label;
-  });
-
-  // Get previous server data if available
-  const previousServer = previousServersData.value[server.guid];
-
-  // Process players
-  server.players.forEach(player => {
-    const kdr = player.deaths > 0 ? +(player.kills / player.deaths).toFixed(2) : player.kills;
-    const playerWithKdr: PlayerWithKdr = { ...player, kdr };
-
-    // Check if we have previous data for this server
-    if (previousServer) {
-      // Find the player in the previous data
-      const previousPlayer = previousServer.players.find(p => p.name === player.name);
-      if (previousPlayer) {
-        playerWithKdr.previousScore = previousPlayer.score;
-
-        // Determine if score has changed
-        if (player.score > previousPlayer.score) {
-          playerWithKdr.scoreChanged = 'up';
-        } else if (player.score < previousPlayer.score) {
-          playerWithKdr.scoreChanged = 'down';
-        } else {
-          playerWithKdr.scoreChanged = 'none';
-        }
-      }
-    }
-
-    if (player.team === 1) {
-      team1Players.push(playerWithKdr);
-    } else {
-      team2Players.push(playerWithKdr);
-    }
-  });
-
-  // Sort players based on the current sort settings
-  const sortPlayers = (players: PlayerWithKdr[]) => {
-    return [...players].sort((a, b) => {
-      let comparison = 0;
-
-      if (sortBy.value === 'kdr') {
-        comparison = a.kdr - b.kdr;
-      } else if (sortBy.value === 'score') {
-        comparison = a.score - b.score;
-      } else if (sortBy.value === 'kills') {
-        comparison = a.kills - b.kills;
-      } else if (sortBy.value === 'deaths') {
-        comparison = a.deaths - b.deaths;
-      }
-
-      return sortDirection.value === 'desc' ? -comparison : comparison;
-    });
-  };
-
-  selectedTeamPlayers.value = { 
-    team1: sortPlayers(team1Players), 
-    team2: sortPlayers(team2Players) 
-  };
-
-  selectedTeamLabels.value = { 
-    team1: teamLabels[1] || 'Team 1', 
-    team2: teamLabels[2] || 'Team 2' 
-  };
-
-  showPlayerModal.value = true;
-  window.addEventListener('keydown', handleKeyDown);
-};
-
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    closePlayerModal();
-  }
-};
-
-const closePlayerModal = () => {
-  showPlayerModal.value = false;
-  window.removeEventListener('keydown', handleKeyDown);
-
-  // If we're on the server players page, navigate back using browser history
-  if (route.name === 'server-players') {
-    router.back();
-  }
-};
-
-const openServerInfoModal = (server: ServerInfo) => {
-  selectedServer.value = server;
-  showServerInfoModal.value = true;
-  window.addEventListener('keydown', handleServerInfoKeyDown);
-};
-
-const handleServerInfoKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    closeServerInfoModal();
-  }
-};
-
-const closeServerInfoModal = () => {
-  showServerInfoModal.value = false;
-  window.removeEventListener('keydown', handleServerInfoKeyDown);
-};
-
-// Function to open the chart popup
-const openChartModal = async (server: ServerInfo) => {
-  // If we're already on the server details page, just update the state
-  // Otherwise, navigate to the server details page
-  if (route.name === 'server-details' && route.params.serverName === server.name) {
-    await loadChartData(server);
-  } else {
-    router.push(`/servers/${encodeURIComponent(server.name)}`);
-  }
-};
-
-// Function to open server details modal
-const loadChartData = async (server: ServerInfo) => {
-  selectedServer.value = server;
-  showChartModal.value = true;
-
-  // No need to fetch data here as the ServerDetailsModal will handle that
-  // Just set up the event listener for key presses
-  window.addEventListener('keydown', handleChartKeyDown);
-};
-
-// Function to handle key events for the chart popup
-const handleChartKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    closeChartModal();
-  }
-};
-
-// Function to close the chart popup
-const closeChartModal = () => {
-  showChartModal.value = false;
-  window.removeEventListener('keydown', handleChartKeyDown);
-
-  // If we're on the server details page, navigate back using browser history
-  if (route.name === 'server-details') {
-    router.back();
-  }
-};
-
-
-const handleSort = (column: string) => {
-  // If clicking the same column, toggle direction
-  if (sortBy.value === column) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    // If clicking a new column, set it as the sort column and default to descending
-    sortBy.value = column;
-    sortDirection.value = 'desc';
-  }
-
-  // Re-sort the players
-  if (selectedServer.value) {
-    openPlayerModal(selectedServer.value);
-  }
-};
-
-// Function to join a server without changing focus
 const joinServer = (server: ServerInfo) => {
-  // Open the link in a new tab without changing focus
   const newWindow = window.open(server.joinLink, '_blank', 'noopener,noreferrer');
   if (newWindow) {
-    // Immediately blur the new window to return focus to the current window
     newWindow.blur();
     window.focus();
   }
 };
 
-// Watch for route props changes
-watch(() => [props.selectedServerName, props.showServerModal, props.showChartModal], ([newServerName, newShowServerModal, newShowChartModal]) => {
-  if (newServerName && servers.value.length > 0) {
-    const server = servers.value.find(s => s.name === newServerName);
-    if (server) {
-      if (newShowServerModal) {
-        processServerPlayers(server);
-      } else if (newShowChartModal) {
-        loadChartData(server);
-      }
-    }
-  }
-}, { immediate: true });
-
-// Watch for servers changes to handle the case when servers are loaded after component is mounted
-watch(() => servers.value, (newServers) => {
-  if (props.selectedServerName && newServers.length > 0) {
-    const server = newServers.find(s => s.name === props.selectedServerName);
-    if (server) {
-      if (props.showServerModal) {
-        processServerPlayers(server);
-      } else if (props.showChartModal) {
-        loadChartData(server);
-      }
-    }
-  }
-});
-
-// Watch for route changes to close the modals when navigating back
-watch(() => route.name, (newRouteName) => {
-  if (showPlayerModal.value && newRouteName !== 'server-players') {
-    showPlayerModal.value = false;
-  }
-  if (showChartModal.value && newRouteName !== 'server-details') {
-    showChartModal.value = false;
-  }
-});
-
 onMounted(() => {
   fetchServerData();
-
-  // Set up auto-refresh every 15 seconds
   refreshTimer.value = window.setInterval(() => {
     fetchServerData();
   }, 15000);
 });
 
-// Function to render markdown as HTML
 const renderMarkdown = (text: string): string => {
-  // Configure marked to minimize whitespace
   marked.setOptions({
     gfm: true,
     breaks: true,
-    sanitize: false
   });
-
-  // Process the markdown and return HTML
-  return marked(text);
+  return marked(text) as string;
 };
 
 // AI Chat functions
 const openAIChatModal = () => {
   showAIChatModal.value = true;
-  window.addEventListener('keydown', handleAIChatKeyDown);
 };
 
 const closeAIChatModal = () => {
   showAIChatModal.value = false;
-  window.removeEventListener('keydown', handleAIChatKeyDown);
-};
-
-const handleAIChatKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    closeAIChatModal();
-  }
 };
 
 const submitAIQuestion = async () => {
@@ -379,10 +114,8 @@ const submitAIQuestion = async () => {
 
   aiLoading.value = true;
   try {
-    // Store the question before sending it
     lastQuestion.value = aiQuestion.value;
     aiResponse.value = await queryAI(aiQuestion.value);
-    // Clear the question field after receiving a response
     aiQuestion.value = '';
   } catch (error) {
     aiResponse.value = 'Sorry, I encountered an error while processing your question.';
@@ -392,17 +125,7 @@ const submitAIQuestion = async () => {
   }
 };
 
-// Function to toggle between 42 and FH2 server modes
-const toggleServerMode = () => {
-  serverMode.value = serverMode.value === '42' ? 'FH2' : '42';
-  // Set tab switch loading state
-  tabSwitchLoading.value = true;
-  // Refresh data when mode changes
-  fetchServerData();
-};
-
 onUnmounted(() => {
-  // Clear the timer when component is unmounted
   if (refreshTimer.value !== null) {
     clearInterval(refreshTimer.value);
     refreshTimer.value = null;
@@ -414,20 +137,20 @@ onUnmounted(() => {
   <div class="server-table-container">
     <div class="tabs-container">
       <div class="tabs">
-        <div 
-          class="tab" 
-          :class="{ 'active': serverMode === '42' }" 
-          @click="serverMode !== '42' && toggleServerMode()"
+        <router-link
+          to="/servers/bf1942"
+          class="tab"
+          active-class="active"
         >
           BF1942
-        </div>
-        <div 
-          class="tab" 
-          :class="{ 'active': serverMode === 'FH2' }" 
-          @click="serverMode !== 'FH2' && toggleServerMode()"
+        </router-link>
+        <router-link
+          to="/servers/fh2"
+          class="tab"
+          active-class="active"
         >
           FH2
-        </div>
+        </router-link>
       </div>
       <div class="header-right">
         <TimeDisplay />
@@ -458,15 +181,13 @@ onUnmounted(() => {
           <tbody>
             <tr v-for="server in servers" :key="server.guid">
               <td>
-                <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="server-name-link">
+                <router-link :to="`/servers/${encodeURIComponent(server.name)}?game=${serverMode}`" class="server-name-link">
                   {{ server.name }}
-                </router-link> 
+                </router-link>
                 ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
               </td>
               <td>
-                <router-link :to="`/servers/${encodeURIComponent(server.name)}/players`">
-                  {{ server.numPlayers }} / {{ server.maxPlayers }}
-                </router-link>
+                {{ server.numPlayers }} / {{ server.maxPlayers }}
               </td>
               <td>{{ server.mapName }}</td>
               <td>{{ server.gameType }}</td>
@@ -476,146 +197,9 @@ onUnmounted(() => {
             </tr>
           </tbody>
         </table>
-        <!-- Transparent loading overlay for tab switching -->
         <div v-if="tabSwitchLoading" class="table-loading-overlay">
           <div class="loading-spinner"></div>
           <div class="loading-text">Loading data...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Player Modal -->
-    <div v-if="showPlayerModal" class="modal-overlay" @click="closePlayerModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Player List</h2>
-          <button @click="closePlayerModal" class="close-button">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="teams-container">
-            <div class="team">
-              <h3>{{ selectedTeamLabels.team1 }}</h3>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th @click="handleSort('score')" class="sortable">
-                      Score
-                      <span v-if="sortBy === 'score'" class="sort-indicator">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                    <th @click="handleSort('kills')" class="sortable">
-                      🎯
-                      <span v-if="sortBy === 'kills'" class="sort-indicator">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                    <th @click="handleSort('deaths')" class="sortable">
-                      💀
-                      <span v-if="sortBy === 'deaths'" class="sort-indicator">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                    <th @click="handleSort('kdr')" class="sortable">
-                      KDR
-                      <span v-if="sortBy === 'kdr'" class="sort-indicator">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="player in selectedTeamPlayers.team1" :key="player.name">
-                    <td>
-                      <router-link :to="`/players/${encodeURIComponent(player.name)}`" class="player-name-link">
-                        {{ player.name }}
-                      </router-link>
-                      <span v-if="player.scoreChanged === 'up'" class="score-up">▲</span>
-                      <span v-else-if="player.scoreChanged === 'down'" class="score-down">▼</span>
-                    </td>
-                    <td>{{ player.score }}</td>
-                    <td>{{ player.kills }}</td>
-                    <td>{{ player.deaths }}</td>
-                    <td>{{ player.kdr }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="team">
-              <h3>{{ selectedTeamLabels.team2 }}</h3>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th @click="handleSort('score')" class="sortable">
-                      Score
-                      <span v-if="sortBy === 'score'" class="sort-indicator">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                    <th @click="handleSort('kills')" class="sortable">
-                      🎯
-                      <span v-if="sortBy === 'kills'" class="sort-indicator">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                    <th @click="handleSort('deaths')" class="sortable">
-                      💀
-                      <span v-if="sortBy === 'deaths'" class="sort-indicator">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                    <th @click="handleSort('kdr')" class="sortable">
-                      KDR
-                      <span v-if="sortBy === 'kdr'" class="sort-indicator">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="player in selectedTeamPlayers.team2" :key="player.name">
-                    <td>
-                      <router-link :to="`/players/${encodeURIComponent(player.name)}`" class="player-name-link">
-                        {{ player.name }}
-                      </router-link>
-                      <span v-if="player.scoreChanged === 'up'" class="score-up">▲</span>
-                      <span v-else-if="player.scoreChanged === 'down'" class="score-down">▼</span>
-                    </td>
-                    <td>{{ player.score }}</td>
-                    <td>{{ player.kills }}</td>
-                    <td>{{ player.deaths }}</td>
-                    <td>{{ player.kdr }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Server Info Modal -->
-    <div v-if="showServerInfoModal" class="modal-overlay" @click="closeServerInfoModal">
-      <div class="modal-content server-info-modal" @click.stop>
-        <div class="modal-header">
-          <h2>Server Information</h2>
-          <button @click="closeServerInfoModal" class="close-button">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div v-if="selectedServer" class="server-details">
-            <div class="server-detail-item">
-              <strong>Server Name:</strong> {{ selectedServer.name }}
-            </div>
-            <div class="server-detail-item">
-              <strong>IP Address:</strong> {{ selectedServer.ip }}
-            </div>
-            <div class="server-detail-item">
-              <strong>Port:</strong> {{ selectedServer.port }}
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -643,15 +227,15 @@ onUnmounted(() => {
               </div>
             </div>
             <div class="ai-input-container">
-              <input 
-                v-model="aiQuestion" 
+              <input
+                v-model="aiQuestion"
                 @keyup.enter="submitAIQuestion"
-                placeholder="Ask a question about metrics..." 
+                placeholder="Ask a question about metrics..."
                 class="ai-input"
                 :disabled="aiLoading"
               />
-              <button 
-                @click="submitAIQuestion" 
+              <button
+                @click="submitAIQuestion"
                 class="ai-submit-button"
                 :disabled="aiLoading || !aiQuestion.trim()"
               >
@@ -663,320 +247,17 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-
-    <!-- Server Details Modal -->
-    <ServerDetailsModal 
-      v-if="showChartModal"
-      :server-name="selectedServer?.name || ''"
-      :game="serverMode === '42' ? 'bf1942' : 'fh2'"
-      :is-open="showChartModal"
-      @close="closeChartModal"
-    />
-
-    <!-- Player Stats Modal -->
-    <PlayerStatsModal
-      v-if="showPlayerStatsModal"
-      :player-name="selectedPlayerName"
-      :player-stats="playerStats"
-      :is-open="showPlayerStatsModal"
-      :is-loading="playerStatsLoading"
-      :error="playerStatsError"
-      :servers="servers"
-      @close="closePlayerStatsModal"
-    />
   </div>
 </template>
 
 <style scoped>
 .server-table-container {
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  height: auto;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.header-left h1 {
-  margin: 0;
-}
-
-.update-button {
-  padding: 8px 16px;
-  background-color: var(--color-accent);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.update-button:hover {
-  background-color: var(--color-accent-hover);
-}
-
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-}
-
-th, td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text);
-}
-
-/* Add alternating row colors for better readability */
-tbody tr:nth-child(even) {
-  background-color: var(--color-background-soft);
-}
-
-tbody tr:hover {
-  background-color: var(--color-background-mute);
-}
-
-th {
-  background-color: var(--color-background-mute);
-  font-weight: bold;
-  color: var(--color-heading);
-}
-
-.join-link {
-  display: inline-block;
-  padding: 6px 12px;
-  background-color: var(--color-primary);
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-}
-
-.join-link:hover {
-  background-color: var(--color-primary-hover);
-}
-
-.loading, .error {
+  background: #fff;
   padding: 20px;
-  text-align: center;
-}
-
-.error {
-  color: #ff5252; /* A red that works well in both light and dark modes */
-}
-
-.server-info {
-  align-self: flex-start;
-  width: 100%;
-}
-
-.table-container {
-  position: relative;
-  width: 100%;
-}
-
-.table-loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(var(--color-background-rgb, 255, 255, 255), 0.7);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-}
-
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
-  border-radius: 50%;
-  border-top-color: var(--color-primary);
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 15px;
-}
-
-.loading-text {
-  font-size: 18px;
-  font-weight: bold;
-  color: var(--color-primary);
-}
-
-/* Modal styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5); /* Slightly darker for better contrast in both modes */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: var(--color-background);
   border-radius: 8px;
-  width: 90%;
-  max-width: 1000px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for better visibility */
-  color: var(--color-text);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-}
-
-.modal-body {
-  padding: 16px;
-}
-
-.teams-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.team {
-  flex: 1;
-  min-width: 300px;
-}
-
-@media (max-width: 768px) {
-  .teams-container {
-    flex-direction: column;
-  }
-}
-
-/* Styles for sortable headers and score indicators */
-.sortable {
-  cursor: pointer;
-  position: relative;
-  user-select: none;
-}
-
-.sortable:hover {
-  background-color: #e8e8e8;
-}
-
-.sort-indicator {
-  margin-left: 5px;
-  font-size: 12px;
-}
-
-.score-up {
-  color: var(--color-accent);
-  margin-left: 5px;
-  font-size: 12px;
-}
-
-.score-down {
-  color: #ff5252; /* A red that works well in both light and dark modes */
-  margin-left: 5px;
-  font-size: 12px;
-}
-
-/* Server name link styles */
-.server-name-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.server-name-link:hover {
-  text-decoration: underline;
-}
-
-/* Player name link styles */
-.player-name-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.player-name-link:hover {
-  text-decoration: underline;
-}
-
-/* Chart link styles */
-.chart-link {
-  display: inline-block;
-  margin-left: 5px;
-  color: var(--color-primary);
-  text-decoration: none;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.chart-link:hover {
-  transform: scale(1.2);
-}
-
-.chart-icon {
-  font-size: 14px;
-}
-
-/* Server info modal styles */
-.server-info-modal {
-  max-width: 500px;
-}
-
-.server-details {
-  padding: 10px;
-}
-
-.server-detail-item {
-  margin-bottom: 10px;
-  font-size: 16px;
-}
-
-/* Tabs container and tabs styles */
 .tabs-container {
   display: flex;
   justify-content: space-between;
@@ -1000,6 +281,7 @@ th {
   border: 1px solid var(--color-border);
   border-bottom: none;
   transition: all 0.2s ease;
+  text-decoration: none;
 }
 
 .tab:hover {
@@ -1014,14 +296,11 @@ th {
   z-index: 1;
 }
 
-/* Header right section */
 .header-right {
   display: flex;
   align-items: center;
   gap: 15px;
 }
-
-/* Metrics Chat button styles */
 .ai-chat-button {
   padding: 8px 16px;
   background-color: var(--color-background);
@@ -1032,16 +311,129 @@ th {
   cursor: pointer;
   font-size: 16px;
 }
-
-.ai-chat-button:hover {
-  transform: scale(1.05);
-  transition: transform 0.2s;
-  background-color: var(--color-background-soft);
+.update-button {
+  padding: 8px 16px;
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
 }
 
-/* Metrics Chat modal styles */
-.ai-chat-modal {
+.loading, .error {
+  padding: 20px;
+  text-align: center;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+th {
+  background-color: var(--color-background-mute);
+}
+
+.server-name-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.join-link {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: var(--color-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.table-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
+  border-radius: 50%;
+  border-top-color: var(--color-primary);
+  animation: spin 1s ease-in-out infinite;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--color-background);
+  border-radius: 8px;
+  width: 90%;
   max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  color: var(--color-text);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 16px;
 }
 
 .ai-chat-container {
@@ -1059,81 +451,6 @@ th {
   overflow-y: auto;
 }
 
-.ai-response {
-  line-height: 1.5;
-}
-
-.ai-question {
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.ai-answer {
-  margin-top: 5px;
-}
-
-/* Markdown styling */
-.ai-answer ul, .ai-answer ol {
-  padding-left: 20px;
-  margin: 5px 0;
-}
-
-.ai-answer li {
-  margin-bottom: 5px;
-}
-
-/* Reduce space between paragraphs and lists */
-.ai-answer p + ul, 
-.ai-answer p + ol {
-  margin-top: 0;
-}
-
-.ai-answer code {
-  background-color: var(--color-background-mute);
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: monospace;
-}
-
-.ai-answer pre {
-  background-color: var(--color-background-mute);
-  padding: 10px;
-  border-radius: 5px;
-  overflow-x: auto;
-  margin: 10px 0;
-}
-
-.ai-answer blockquote {
-  border-left: 4px solid var(--color-border);
-  padding-left: 10px;
-  margin-left: 0;
-  color: var(--color-text-muted, var(--color-text));
-}
-
-.ai-answer h1, .ai-answer h2, .ai-answer h3, .ai-answer h4, .ai-answer h5, .ai-answer h6 {
-  margin-top: 15px;
-  margin-bottom: 10px;
-}
-
-.ai-answer p {
-  margin: 5px 0;
-}
-
-/* Ensure no extra space between elements */
-.ai-answer > *:first-child {
-  margin-top: 0;
-}
-
-.ai-answer > *:last-child {
-  margin-bottom: 0;
-}
-
-.ai-response-placeholder {
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
 .ai-input-container {
   display: flex;
   gap: 10px;
@@ -1144,9 +461,6 @@ th {
   padding: 10px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  font-size: 16px;
-  background-color: var(--color-background);
-  color: var(--color-text);
 }
 
 .ai-submit-button {
@@ -1156,16 +470,5 @@ th {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
-}
-
-.ai-submit-button:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
-}
-
-.ai-submit-button:disabled {
-  background-color: var(--color-background-mute);
-  color: var(--color-border);
-  cursor: not-allowed;
 }
 </style>

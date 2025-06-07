@@ -1,23 +1,42 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { PlayerTimeStatistics } from '../services/playerStatsService';
+import { PlayerTimeStatistics, fetchPlayerStats } from '../services/playerStatsService';
+import axios from 'axios';
 
 // Router
 const router = useRouter();
 const route = useRoute();
 
-interface Props {
-  playerName: string;
-  playerStats: PlayerTimeStatistics | null;
-  isOpen: boolean;
-  isLoading: boolean;
-  error: string | null;
-  servers?: any[]; // Add servers prop to get player count
-}
+const playerName = ref(route.params.playerName as string);
+const playerStats = ref<PlayerTimeStatistics | null>(null);
+const isLoading = ref(true);
+const error = ref<string | null>(null);
+const servers = ref<any[]>([]);
 
-const props = defineProps<Props>();
-const emit = defineEmits(['close']);
+const fetchServersData = async () => {
+  try {
+    const apiUrl = 'https://api.bflist.io/bf1942/v1/servers/1?perPage=100';
+    const response = await axios.get(apiUrl);
+    servers.value = response.data;
+  } catch (err) {
+    console.error('Error fetching servers data:', err);
+  }
+};
+
+const fetchData = async () => {
+  isLoading.value = true;
+  error.value = null;
+  await fetchServersData();
+  try {
+    playerStats.value = await fetchPlayerStats(playerName.value);
+  } catch (err) {
+    error.value = `Failed to fetch player stats for ${playerName.value}.`;
+    console.error(err);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 // Function to open the round report page
 const openSessionDetailsModal = (serverGuid: string, mapName: string, startTime: string, event?: Event) => {
@@ -35,11 +54,6 @@ const openSessionDetailsModal = (serverGuid: string, mapName: string, startTime:
       startTime
     }
   });
-};
-
-// Function to close the player stats modal
-const closePlayerStatsModal = () => {
-  router.back();
 };
 
 // Format minutes to hours and minutes
@@ -130,9 +144,9 @@ const formatRelativeTime = (dateString: string): string => {
 
 // Get the number of players online for a server
 const getServerPlayerCount = (serverGuid: string): number | null => {
-  if (!props.servers || !serverGuid) return null;
+  if (!servers.value || !serverGuid) return null;
 
-  const server = props.servers.find(s => s.guid === serverGuid);
+  const server = servers.value.find(s => s.guid === serverGuid);
   return server ? server.numPlayers : null;
 };
 
@@ -156,53 +170,21 @@ const getRoundReportRoute = (session: any) => {
   }
   
   // Fallback to player details if serverGuid not found
-  return `/player/${encodeURIComponent(props.playerName)}`;
+  return `/player/${encodeURIComponent(playerName.value)}`;
 };
-
-// Close the popup when clicking outside or pressing ESC
-const handleOutsideClick = (event: MouseEvent) => {
-  const popup = document.querySelector('.player-stats-modal-content');
-  if (popup && !popup.contains(event.target as Node)) {
-    emit('close');
-  }
-};
-
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    emit('close');
-  }
-};
-
-// Add and remove event listeners
-watch(() => props.isOpen, (newValue) => {
-  if (newValue) {
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('keydown', handleKeyDown);
-  } else {
-    document.removeEventListener('mousedown', handleOutsideClick);
-    document.removeEventListener('keydown', handleKeyDown);
-  }
-});
-
-// Watch for route changes to close the modal when navigating back
-watch(() => route.name, (newRouteName) => {
-  if (props.isOpen && newRouteName !== 'player-details') {
-    emit('close');
-  }
-});
 
 // Computed property to sort server play times by minutes played (descending)
 const sortedServerPlayTimes = computed(() => {
-  if (!props.playerStats?.insights?.serverPlayTimes) return [];
-  return [...props.playerStats.insights.serverPlayTimes].sort((a, b) => b.minutesPlayed - a.minutesPlayed);
+  if (!playerStats.value?.insights?.serverPlayTimes) return [];
+  return [...playerStats.value.insights.serverPlayTimes].sort((a, b) => b.minutesPlayed - a.minutesPlayed);
 });
 
 // Computed property to sort activity hours chronologically by local hour (0-23)
 const sortedLocalActivityHours = computed(() => {
-  if (!props.playerStats?.insights?.activityByHour) return [];
+  if (!playerStats.value?.insights?.activityByHour) return [];
 
   // Create a new array with local hour information
-  const hoursWithLocalTime = props.playerStats.insights.activityByHour.map(hourData => ({
+  const hoursWithLocalTime = playerStats.value.insights.activityByHour.map(hourData => ({
     ...hourData,
     localHour: convertToLocalHour(hourData.hour)
   }));
@@ -229,9 +211,9 @@ const changeFavoriteMapsSort = (field: string) => {
 
 // Computed property to sort favorite maps
 const sortedFavoriteMaps = computed(() => {
-  if (!props.playerStats?.insights?.favoriteMaps) return [];
+  if (!playerStats.value?.insights?.favoriteMaps) return [];
 
-  return [...props.playerStats.insights.favoriteMaps].sort((a, b) => {
+  return [...playerStats.value.insights.favoriteMaps].sort((a, b) => {
     const direction = favoriteMapsSortDirection.value === 'asc' ? 1 : -1;
 
     switch (favoriteMapsSortField.value) {
@@ -260,10 +242,10 @@ const convertToLocalHour = (utcHour: number): number => {
 
 // Function to calculate the height of each bar in the activity chart
 const getActivityBarHeight = (minutesActive: number): string => {
-  if (!props.playerStats?.insights?.activityByHour) return "0%";
+  if (!playerStats.value?.insights?.activityByHour) return "0%";
 
   // Find the maximum minutes active
-  const maxMinutes = Math.max(...props.playerStats.insights.activityByHour.map(hour => hour.minutesActive));
+  const maxMinutes = Math.max(...playerStats.value.insights.activityByHour.map(hour => hour.minutesActive));
 
   if (maxMinutes === 0) return "0%";
 
@@ -274,323 +256,287 @@ const getActivityBarHeight = (minutesActive: number): string => {
 
 // Clean up event listeners when component is unmounted
 onMounted(() => {
-  if (props.isOpen) {
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('keydown', handleKeyDown);
-  }
+  fetchData();
 });
 </script>
 
 <template>
-  <div v-if="isOpen" class="player-stats-modal-overlay">
-    <div class="player-stats-modal-content">
-      <div class="player-stats-header">
-        <div class="player-name-container">
-          <h2>Player Statistics: {{ playerName }}</h2>
-          <span v-if="playerStats && playerStats.isActive" class="status-badge active">Active</span>
-        </div>
-        <button class="close-button" @click="$emit('close')">&times;</button>
+  <div class="player-details-container">
+    <div class="player-stats-header">
+      <div class="player-name-container">
+        <h2>Player Statistics: {{ playerName }}</h2>
+        <span v-if="playerStats && playerStats.isActive" class="status-badge active">Active</span>
       </div>
-      <div class="player-stats-body">
-        <div v-if="isLoading" class="loading-container">
-          <div class="loading-spinner"></div>
-          <p>Loading player statistics...</p>
+    </div>
+    <div class="player-stats-body">
+      <div v-if="isLoading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading player statistics...</p>
+      </div>
+      <div v-else-if="error" class="error-container">
+        <p class="error-message">{{ error }}</p>
+      </div>
+      <div v-else-if="playerStats" class="stats-container">
+        <div v-if="playerStats.isActive && playerStats.currentServer" class="current-server-banner">
+          <div>
+            <router-link
+              :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}/rankings`"
+              class="server-link"
+            >
+              {{ playerStats.currentServer.serverName }}
+            </router-link>
+            <span v-if="getServerPlayerCount(playerStats.currentServer.serverGuid)" class="player-count">
+              ({{ getServerPlayerCount(playerStats.currentServer.serverGuid) }} players online)
+            </span>
+            <span v-if="playerStats.currentServer.gameId" class="game-id">
+              Game: {{ playerStats.currentServer.gameId }}
+            </span>
+          </div>
+          <div v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined" class="session-stats">
+            Session: {{ playerStats.currentServer.sessionKills }} 🔫 / {{ playerStats.currentServer.sessionDeaths }} 💀
+            (K/D: {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }})
+          </div>
         </div>
-        <div v-else-if="error" class="error-container">
-          <p class="error-message">{{ error }}</p>
-        </div>
-        <div v-else-if="playerStats" class="stats-container">
-          <div v-if="playerStats.isActive && playerStats.currentServer" class="current-server-banner">
-            <div>
-              <router-link 
-                :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}/rankings`" 
-                class="server-link"
+
+        <!-- General statistics section -->
+        <div class="stats-section">
+          <h3>General Statistics</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-label">Total Play Time</div>
+              <div class="stat-value">{{ formatPlayTime(playerStats.totalPlayTimeMinutes) }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Last Seen</div>
+              <div class="stat-value">
+                <div>{{ formatRelativeTime(playerStats.lastPlayed) }}</div>
+                <div class="stat-value-secondary">{{ formatDate(playerStats.lastPlayed) }}</div>
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Combat Stats</div>
+              <div class="stat-value">
+                <div class="combat-stats">
+                  <span class="stat-badge">🔫 {{ playerStats.totalKills }}</span>
+                  <span class="stat-badge">💀 {{ playerStats.totalDeaths }}</span>
+                  <span class="stat-badge">KDR: {{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="stat-item best-session-container" v-if="playerStats.bestSession">
+              <div class="stat-label">
+                <span class="trophy-icon">🏆</span> Best Session
+              </div>
+              <div 
+                class="best-session-card clickable-best-session" 
+                @click="openSessionDetailsModal(playerStats.bestSession.serverGuid, playerStats.bestSession.mapName, playerStats.bestSession.startTime)"
+                title="Click to view round report"
               >
-                {{ playerStats.currentServer.serverName }}
-              </router-link>
-              <span v-if="getServerPlayerCount(playerStats.currentServer.serverGuid)" class="player-count">
-                ({{ getServerPlayerCount(playerStats.currentServer.serverGuid) }} players online)
-              </span>
-              <span v-if="playerStats.currentServer.gameId" class="game-id">
-                Game: {{ playerStats.currentServer.gameId }}
-              </span>
-            </div>
-            <div v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined" class="session-stats">
-              Session: {{ playerStats.currentServer.sessionKills }} 🔫 / {{ playerStats.currentServer.sessionDeaths }} 💀
-              (K/D: {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }})
-            </div>
-          </div>
-
-          <!-- General statistics section -->
-          <div class="stats-section">
-            <h3>General Statistics</h3>
-            <div class="stats-grid">
-              <div class="stat-item">
-                <div class="stat-label">Total Play Time</div>
-                <div class="stat-value">{{ formatPlayTime(playerStats.totalPlayTimeMinutes) }}</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-label">Last Seen</div>
-                <div class="stat-value">
-                  <div>{{ formatRelativeTime(playerStats.lastPlayed) }}</div>
-                  <div class="stat-value-secondary">{{ formatDate(playerStats.lastPlayed) }}</div>
+                <div class="best-session-header">
+                  <div class="best-session-score">{{ playerStats.bestSession.totalScore }}</div>
+                  <span class="best-session-badge">
+                    KDR: {{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }}
+                  </span>
+                  <span class="best-session-badge">
+                    🔫 {{ playerStats.bestSession.totalKills }}
+                  </span>
+                  <span class="best-session-badge">
+                    💀 {{ playerStats.bestSession.totalDeaths }}
+                  </span>
+                  <span v-if="playerStats.bestSession.isActive" class="active-session-badge">Active</span>
                 </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-label">Combat Stats</div>
-                <div class="stat-value">
-                  <div class="combat-stats">
-                    <span class="stat-badge">🔫 {{ playerStats.totalKills }}</span>
-                    <span class="stat-badge">💀 {{ playerStats.totalDeaths }}</span>
-                    <span class="stat-badge">KDR: {{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="stat-item best-session-container" v-if="playerStats.bestSession">
-                <div class="stat-label">
-                  <span class="trophy-icon">🏆</span> Best Session
-                </div>
-                <div 
-                  class="best-session-card clickable-best-session" 
-                  @click="openSessionDetailsModal(playerStats.bestSession.serverGuid, playerStats.bestSession.mapName, playerStats.bestSession.startTime)"
-                  title="Click to view round report"
-                >
-                  <div class="best-session-header">
-                    <div class="best-session-score">{{ playerStats.bestSession.totalScore }}</div>
-                    <span class="best-session-badge">
-                      KDR: {{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }}
-                    </span>
-                    <span class="best-session-badge">
-                      🔫 {{ playerStats.bestSession.totalKills }}
-                    </span>
-                    <span class="best-session-badge">
-                      💀 {{ playerStats.bestSession.totalDeaths }}
-                    </span>
-                    <span v-if="playerStats.bestSession.isActive" class="active-session-badge">Active</span>
-                  </div>
-                  <div class="best-session-details">
-                    {{ playerStats.bestSession.mapName }} ({{ playerStats.bestSession.gameType }})
-                    | {{ playerStats.bestSession.serverName }}
-                    | {{ formatDate(playerStats.bestSession.startTime) }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Activity By Hour -->
-            <div v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0" class="online-times-section">
-              <h4>When they're typically online (Local Time)</h4>
-              <div class="activity-hours-container">
-                <div class="activity-hours-chart">
-                  <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
-                       class="activity-hour-bar" 
-                       :style="{ height: getActivityBarHeight(hourData.minutesActive) }">
-                    <div class="activity-hour-value" v-if="hourData.minutesActive > 0">
-                      {{ hourData.minutesActive }}m
-                    </div>
-                  </div>
-                </div>
-                <div class="activity-hours-labels">
-                  <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
-                       class="activity-hour-label">
-                    {{ hourData.localHour.toString().padStart(2, '0') }}
-                  </div>
+                <div class="best-session-details">
+                  {{ playerStats.bestSession.mapName }} ({{ playerStats.bestSession.gameType }})
+                  | {{ playerStats.bestSession.serverName }}
+                  | {{ formatDate(playerStats.bestSession.startTime) }}
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Insights section -->
-          <div v-if="playerStats.insights" class="stats-section">
-            <h3>Player Insights</h3>
-            <div class="insights-period">
-              Data from {{ formatDate(playerStats.insights.startPeriod) }} to {{ formatDate(playerStats.insights.endPeriod) }}
-            </div>
-
-            <!-- Server Rankings -->
-            <div v-if="playerStats.insights?.serverRankings && playerStats.insights.serverRankings.length > 0" class="insights-subsection">
-              <h4>Server Rankings</h4>
-              <div class="server-rankings-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Server Name</th>
-                      <th>Rank</th>
-                      <th>Score</th>
-                      <th>Ping</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(ranking, index) in playerStats.insights.serverRankings" :key="index">
-                      <td>{{ ranking.serverName }}</td>
-                      <td>{{ ranking.rankDisplay }}</td>
-                      <td>{{ ranking.scoreDisplay }}</td>
-                      <td>
-                        <span class="player-ping" :class="{
-                          'ping-good': ranking.averagePing < 50,
-                          'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
-                          'ping-bad': ranking.averagePing >= 100
-                        }">
-                          {{ ranking.averagePing }}ms
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+          <!-- Activity By Hour -->
+          <div v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0" class="online-times-section">
+            <h4>When they're typically online (Local Time)</h4>
+            <div class="activity-hours-container">
+              <div class="activity-hours-chart">
+                <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
+                     class="activity-hour-bar" 
+                     :style="{ height: getActivityBarHeight(hourData.minutesActive) }">
+                  <div class="activity-hour-value" v-if="hourData.minutesActive > 0">
+                    {{ hourData.minutesActive }}m
+                  </div>
+                </div>
+              </div>
+              <div class="activity-hours-labels">
+                <div v-for="(hourData, index) in sortedLocalActivityHours" :key="index" 
+                     class="activity-hour-label">
+                  {{ hourData.localHour.toString().padStart(2, '0') }}
+                </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Favorite Maps -->
-            <div v-if="playerStats.insights.favoriteMaps && playerStats.insights.favoriteMaps.length > 0" class="insights-subsection">
-              <h4>Favorite Maps</h4>
-              <div class="favorite-maps-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th @click="changeFavoriteMapsSort('mapName')" class="sortable-header">
-                        Map Name
-                        <span v-if="favoriteMapsSortField === 'mapName'" class="sort-indicator">
-                          {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                        </span>
-                      </th>
-                      <th @click="changeFavoriteMapsSort('minutesPlayed')" class="sortable-header">
-                        Play Time
-                        <span v-if="favoriteMapsSortField === 'minutesPlayed'" class="sort-indicator">
-                          {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                        </span>
-                      </th>
-                      <th @click="changeFavoriteMapsSort('kdRatio')" class="sortable-header">
-                        K/D Ratio
-                        <span v-if="favoriteMapsSortField === 'kdRatio'" class="sort-indicator">
-                          {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                        </span>
-                      </th>
-                      <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header">
-                        🔫
-                        <span v-if="favoriteMapsSortField === 'totalKills'" class="sort-indicator">
-                          {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                        </span>
-                      </th>
-                      <th @click="changeFavoriteMapsSort('totalDeaths')" class="sortable-header">
-                        💀
-                        <span v-if="favoriteMapsSortField === 'totalDeaths'" class="sort-indicator">
-                          {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                        </span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(map, index) in sortedFavoriteMaps" :key="index">
-                      <td>{{ map.mapName }}</td>
-                      <td>{{ formatPlayTime(map.minutesPlayed) }}</td>
-                      <td>{{ map.kdRatio.toFixed(2) }}</td>
-                      <td>{{ map.totalKills }}</td>
-                      <td>{{ map.totalDeaths }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
+        <!-- Insights section -->
+        <div v-if="playerStats.insights" class="stats-section">
+          <h3>Player Insights</h3>
+          <div class="insights-period">
+            Data from {{ formatDate(playerStats.insights.startPeriod) }} to {{ formatDate(playerStats.insights.endPeriod) }}
           </div>
 
-          <!-- Recent sessions section -->
-          <div v-if="playerStats.recentSessions.length > 0" class="stats-section">
-            <div class="section-header-with-action">
-              <h3>Recent Sessions</h3>
-              <router-link :to="`/players/${encodeURIComponent(playerName)}/sessions`" class="view-all-button">
-                View All Sessions
-              </router-link>
-            </div>
-            <div class="recent-servers-table">
+          <!-- Server Rankings -->
+          <div v-if="playerStats.insights?.serverRankings && playerStats.insights.serverRankings.length > 0" class="insights-subsection">
+            <h4>Server Rankings</h4>
+            <div class="server-rankings-table">
               <table>
                 <thead>
                   <tr>
-                    <th>Time</th>
                     <th>Server Name</th>
-                    <th>Map</th>
-                    <th>Game Type</th>
+                    <th>Rank</th>
                     <th>Score</th>
-                    <th>🔫</th>
-                    <th>💀</th>
-                    <th>K/D</th>
-                    <th>Status</th>
+                    <th>Ping</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(session, index) in playerStats.recentSessions" :key="index" 
-                      @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)" 
-                      class="clickable-row">
+                  <tr v-for="(ranking, index) in playerStats.insights.serverRankings" :key="index">
+                    <td>{{ ranking.serverName }}</td>
+                    <td>{{ ranking.rankDisplay }}</td>
+                    <td>{{ ranking.scoreDisplay }}</td>
                     <td>
-                      <router-link 
-                        :to="getRoundReportRoute(session)" 
-                        class="time-link"
-                        style="color: #1a73e8; text-decoration: underline;"
-                      >
-                        <div>{{ formatRelativeTime(session.startTime) }}</div>
-                        <div class="table-secondary-text">{{ formatDate(session.startTime) }}</div>
-                      </router-link>
-                    </td>
-                    <td>{{ session.serverName }}</td>
-                    <td>{{ session.mapName }}</td>
-                    <td>{{ session.gameType }}</td>
-                    <td>{{ session.totalScore }}</td>
-                    <td>{{ session.totalKills }}</td>
-                    <td>{{ session.totalDeaths }}</td>
-                    <td>{{ calculateKDR(session.totalKills, session.totalDeaths) }}</td>
-                    <td>
-                      <span v-if="session.isActive" class="active-session-badge">Active</span>
+                      <span class="player-ping" :class="{
+                        'ping-good': ranking.averagePing < 50,
+                        'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                        'ping-bad': ranking.averagePing >= 100
+                      }">
+                        {{ ranking.averagePing }}ms
+                      </span>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
+
+          <!-- Favorite Maps -->
+          <div v-if="playerStats.insights.favoriteMaps && playerStats.insights.favoriteMaps.length > 0" class="insights-subsection">
+            <h4>Favorite Maps</h4>
+            <div class="favorite-maps-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th @click="changeFavoriteMapsSort('mapName')" class="sortable-header">
+                      Map Name
+                      <span v-if="favoriteMapsSortField === 'mapName'" class="sort-indicator">
+                        {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </th>
+                    <th @click="changeFavoriteMapsSort('minutesPlayed')" class="sortable-header">
+                      Play Time
+                      <span v-if="favoriteMapsSortField === 'minutesPlayed'" class="sort-indicator">
+                        {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </th>
+                    <th @click="changeFavoriteMapsSort('kdRatio')" class="sortable-header">
+                      K/D Ratio
+                      <span v-if="favoriteMapsSortField === 'kdRatio'" class="sort-indicator">
+                        {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </th>
+                    <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header">
+                      🔫
+                      <span v-if="favoriteMapsSortField === 'totalKills'" class="sort-indicator">
+                        {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </th>
+                    <th @click="changeFavoriteMapsSort('totalDeaths')" class="sortable-header">
+                      💀
+                      <span v-if="favoriteMapsSortField === 'totalDeaths'" class="sort-indicator">
+                        {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(map, index) in sortedFavoriteMaps" :key="index">
+                    <td>{{ map.mapName }}</td>
+                    <td>{{ formatPlayTime(map.minutesPlayed) }}</td>
+                    <td>{{ map.kdRatio.toFixed(2) }}</td>
+                    <td>{{ map.totalKills }}</td>
+                    <td>{{ map.totalDeaths }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
-        <div v-else class="no-data-container">
-          <p>No player statistics available.</p>
+
+        <!-- Recent sessions section -->
+        <div v-if="playerStats.recentSessions.length > 0" class="stats-section">
+          <div class="section-header-with-action">
+            <h3>Recent Sessions</h3>
+            <router-link :to="`/players/${encodeURIComponent(playerName)}/sessions`" class="view-all-button">
+              View All Sessions
+            </router-link>
+          </div>
+          <div class="recent-servers-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Server Name</th>
+                  <th>Map</th>
+                  <th>Game Type</th>
+                  <th>Score</th>
+                  <th>🔫</th>
+                  <th>💀</th>
+                  <th>K/D</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(session, index) in playerStats.recentSessions" :key="index" 
+                    @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)" 
+                    class="clickable-row">
+                  <td>
+                    <router-link 
+                      :to="getRoundReportRoute(session)" 
+                      class="time-link"
+                      style="color: #1a73e8; text-decoration: underline;"
+                    >
+                      <div>{{ formatRelativeTime(session.startTime) }}</div>
+                      <div class="table-secondary-text">{{ formatDate(session.startTime) }}</div>
+                    </router-link>
+                  </td>
+                  <td>{{ session.serverName }}</td>
+                  <td>{{ session.mapName }}</td>
+                  <td>{{ session.gameType }}</td>
+                  <td>{{ session.totalScore }}</td>
+                  <td>{{ session.totalKills }}</td>
+                  <td>{{ session.totalDeaths }}</td>
+                  <td>{{ calculateKDR(session.totalKills, session.totalDeaths) }}</td>
+                  <td>
+                    <span v-if="session.isActive" class="active-session-badge">Active</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
+      <div v-else class="no-data-container">
+        <p>No player statistics available.</p>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.player-stats-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.player-stats-modal-content {
+.player-details-container {
   background-color: var(--color-background);
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  width: 80%;
-  max-width: 900px;
-  max-height: 90vh;
-  overflow: auto;
-  padding: 0;
-  animation: popup-fade-in 0.3s ease-out;
-  color: var(--color-text);
-}
-
-@keyframes popup-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 20px;
 }
 
 .player-stats-header {
@@ -644,21 +590,8 @@ onMounted(() => {
   font-weight: normal;
 }
 
-.close-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--color-text);
-  transition: color 0.2s;
-}
-
-.close-button:hover {
-  color: var(--color-primary);
-}
-
 .player-stats-body {
-  padding: 20px;
+  padding-top: 20px;
 }
 
 .loading-container, .error-container, .no-data-container {
