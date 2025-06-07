@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import axios from 'axios';
 import { ServerInfo } from '../types/server';
+import { fetchAllServers } from '../services/serverDetailsService';
 import TimeDisplay from './TimeDisplay.vue';
 import { queryAI } from '../services/aiService';
 import { marked } from 'marked';
@@ -67,13 +67,8 @@ const fetchServerData = async (isManualRefresh: boolean = false) => {
   }
 
   try {
-    const apiUrl = serverMode.value === '42'
-      ? 'https://api.bflist.io/bf1942/v1/servers/1?perPage=100'
-      : 'https://api.bflist.io/fh2/v1/servers/1?perPage=100';
-
-    const response = await axios.get<ServerInfo[]>(apiUrl);
-    servers.value = response.data;
-    servers.value.sort((a, b) => b.numPlayers - a.numPlayers);
+    const game = serverMode.value === '42' ? 'bf1942' : 'fh2';
+    servers.value = await fetchAllServers(game);
   } catch (err) {
     error.value = 'Failed to fetch server data. Please try again.';
     console.error(err);

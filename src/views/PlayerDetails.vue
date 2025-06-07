@@ -2,7 +2,6 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics, fetchPlayerStats } from '../services/playerStatsService';
-import axios from 'axios';
 
 // Router
 const router = useRouter();
@@ -12,22 +11,10 @@ const playerName = ref(route.params.playerName as string);
 const playerStats = ref<PlayerTimeStatistics | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
-const servers = ref<any[]>([]);
-
-const fetchServersData = async () => {
-  try {
-    const apiUrl = 'https://api.bflist.io/bf1942/v1/servers/1?perPage=100';
-    const response = await axios.get(apiUrl);
-    servers.value = response.data;
-  } catch (err) {
-    console.error('Error fetching servers data:', err);
-  }
-};
 
 const fetchData = async () => {
   isLoading.value = true;
   error.value = null;
-  await fetchServersData();
   try {
     playerStats.value = await fetchPlayerStats(playerName.value);
   } catch (err) {
@@ -142,13 +129,7 @@ const formatRelativeTime = (dateString: string): string => {
   }
 };
 
-// Get the number of players online for a server
-const getServerPlayerCount = (serverGuid: string): number | null => {
-  if (!servers.value || !serverGuid) return null;
 
-  const server = servers.value.find(s => s.guid === serverGuid);
-  return server ? server.numPlayers : null;
-};
 
 // Calculate K/D ratio
 const calculateKDR = (kills: number, deaths: number): string => {
@@ -289,9 +270,6 @@ onMounted(() => {
             >
               {{ playerStats.currentServer.serverName }}
             </router-link>
-            <span v-if="getServerPlayerCount(playerStats.currentServer.serverGuid)" class="player-count">
-              ({{ getServerPlayerCount(playerStats.currentServer.serverGuid) }} players online)
-            </span>
             <span v-if="playerStats.currentServer.gameId" class="game-id">
               Game: {{ playerStats.currentServer.gameId }}
             </span>

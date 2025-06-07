@@ -14,8 +14,6 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const sortBy = ref<string>('lastSeen');
 const sortOrder = ref<'asc' | 'desc'>('desc');
-const servers = ref<any[]>([]);
-
 // Pagination state
 const currentPage = ref(1);
 const pageSize = ref(50);
@@ -91,17 +89,7 @@ const formatRelativeTime = (dateString: string): string => {
   }
 };
 
-// Fetch servers data
-const fetchServersData = async () => {
-  try {
-    // Use the same API URL as in ServerTable.vue
-    const apiUrl = 'https://api.bflist.io/bf1942/v1/servers/1?perPage=100';
-    const response = await axios.get(apiUrl);
-    servers.value = response.data;
-  } catch (err) {
-    console.error('Error fetching servers data:', err);
-  }
-};
+
 
 // Fetch players data with pagination, sorting, and filtering
 const fetchPlayersData = async () => {
@@ -127,11 +115,6 @@ const fetchPlayersData = async () => {
     players.value = result.items;
     totalItems.value = result.totalItems;
     totalPages.value = result.totalPages;
-
-    // Fetch server data if not already loaded (for filter dropdowns)
-    if (servers.value.length === 0) {
-      await fetchServersData();
-    }
 
     // Update unique values for filters (these will come from server response eventually)
     updateUniqueGameIds();
@@ -284,10 +267,7 @@ const paginationRange = computed(() => {
 
 // Fetch data when component is mounted
 onMounted(() => {
-  // Fetch servers data first, then fetch players data
-  fetchServersData().then(() => {
-    fetchPlayersData();
-  });
+  fetchPlayersData();
 });
 
 // Watch for external changes to nameFilter and sync with input

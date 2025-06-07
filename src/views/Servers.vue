@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ServerTable @show-players="showPlayersModal" />
+    <ServerTable :initialMode="props.initialMode" @show-players="showPlayersModal" />
     
     <!-- Players Modal -->
     <div v-if="showModal" class="modal-overlay" @click="closeModal">
@@ -104,6 +104,13 @@
 import { ref, computed } from 'vue';
 import ServerTable from '../components/ServerTable.vue';
 import { ServerInfo } from '../types/server';
+
+// Props from router
+interface Props {
+  initialMode?: 'FH2' | '42';
+}
+
+const props = defineProps<Props>();
 
 const showModal = ref(false);
 const selectedServer = ref<ServerInfo | null>(null);
