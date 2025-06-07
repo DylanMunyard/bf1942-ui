@@ -11,8 +11,18 @@
           <i class="icon-arrow open"></i>
         </div>
         <ul class="submenu">
-          <li><router-link to="/servers/bf1942" active-class="active">BF1942</router-link></li>
-          <li><router-link to="/servers/fh2" active-class="active">FH2</router-link></li>
+          <li>
+            <router-link to="/servers/bf1942" active-class="active">
+              <i class="icon-bf1942"></i>
+              <span>BF1942</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/servers/fh2" active-class="active">
+              <i class="icon-fh2"></i>
+              <span>FH2</span>
+            </router-link>
+          </li>
         </ul>
       </li>
       <li>
@@ -27,6 +37,8 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
+import bf1942Icon from '../assets/bf1942.png';
+import fh2Icon from '../assets/fh2.png';
 
 const route = useRoute();
 </script>
@@ -110,8 +122,9 @@ const route = useRoute();
 }
 
 .submenu li a {
-  display: block;
-  padding: 12px 20px 12px 50px;
+  display: flex;
+  align-items: center;
+  padding: 12px 20px 12px 40px;
   color: #bdc3c7;
   text-decoration: none;
   transition: background-color 0.3s;
@@ -126,5 +139,24 @@ const route = useRoute();
   background-color: #1a5276;
   color: #ffffff;
   font-weight: 500;
+}
+
+.submenu li a i {
+  margin-right: 12px;
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.icon-bf1942 {
+  background-image: url('../assets/bf1942.png');
+}
+
+.icon-fh2 {
+  background-image: url('../assets/fh2.png');
 }
 </style> 
