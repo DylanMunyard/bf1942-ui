@@ -59,6 +59,11 @@ watch(isDarkMode, () => {
 </script>
 
 <template>
+  <div class="theme-toggle">
+    <button @click="toggleDarkMode" class="theme-toggle-button" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+      <span class="toggle-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
+    </button>
+  </div>
   <DashboardLayout />
 </template>
 
@@ -77,6 +82,63 @@ watch(isDarkMode, () => {
   --color-text-muted: #7f8c8d;
   --color-heading: #2c3e50;
   --color-primary-rgb: 52, 152, 219;
+  --sidebar-bg: #0f172a;
+  --sidebar-border: #334155;
+  --sidebar-text: #f8fafc;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-hover: #1e293b;
+  --sidebar-active: #475569;
+  --sidebar-submenu: #020617;
+}
+
+/* Dark mode styles */
+.dark-mode {
+  --color-primary: #60a5fa;
+  --color-primary-hover: #3b82f6;
+  --color-accent: #f59e0b;
+  --color-accent-hover: #d97706;
+  --color-background: #0f172a;
+  --color-background-soft: #1e293b;
+  --color-background-mute: #334155;
+  --color-border: #475569;
+  --color-text: #f8fafc;
+  --color-text-muted: #cbd5e1;
+  --color-heading: #f1f5f9;
+  --color-primary-rgb: 96, 165, 250;
+  --sidebar-bg: #020617;
+  --sidebar-border: #1e293b;
+  --sidebar-text: #f8fafc;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-hover: #0f172a;
+  --sidebar-active: #334155;
+  --sidebar-submenu: #000000;
+}
+
+/* Light mode styles (explicit) */
+.light-mode {
+  --color-primary: #3498db;
+  --color-primary-hover: #2980b9;
+  --color-accent: #e67e22;
+  --color-accent-hover: #d35400;
+  --color-background: #ffffff;
+  --color-background-soft: #f8f9f9;
+  --color-background-mute: #e5e8e8;
+  --color-border: #d7dbdd;
+  --color-text: #2c3e50;
+  --color-text-muted: #7f8c8d;
+  --color-heading: #2c3e50;
+  --color-primary-rgb: 52, 152, 219;
+  --sidebar-bg: #0f172a;
+  --sidebar-border: #334155;
+  --sidebar-text: #f8fafc;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-hover: #1e293b;
+  --sidebar-active: #475569;
+  --sidebar-submenu: #020617;
+}
+
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 body {
@@ -119,27 +181,33 @@ a:hover {
 }
 
 .theme-toggle-button {
-  background-color: var(--color-background-soft);
+  background-color: var(--color-background);
   color: var(--color-text);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .theme-toggle-button:hover {
   transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  background-color: var(--color-background-mute);
+}
+
+.theme-toggle-button:active {
+  transform: scale(0.95);
 }
 
 .toggle-icon {
-  font-size: 20px;
+  font-size: 22px;
+  user-select: none;
 }
 
 .main-navigation {

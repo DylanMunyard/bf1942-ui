@@ -14,7 +14,7 @@ import Sidebar from '../components/Sidebar.vue';
 <style scoped>
 .dashboard-layout {
   display: flex;
-  background-color: #f4f7f6;
+  background-color: var(--color-background-soft);
 }
 
 .content-area {
@@ -23,5 +23,7 @@ import Sidebar from '../components/Sidebar.vue';
   padding: 30px;
   width: calc(100% - 250px);
   min-height: 100vh;
+  background-color: var(--color-background-soft);
+  color: var(--color-text);
 }
 </style> 

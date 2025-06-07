@@ -49,8 +49,8 @@ const route = useRoute();
 <style scoped>
 .sidebar {
   width: 250px;
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -63,12 +63,12 @@ const route = useRoute();
 .sidebar-header {
   padding: 20px;
   text-align: center;
-  border-bottom: 1px solid #334155;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-bottom: 1px solid var(--sidebar-border);
+  background: linear-gradient(135deg, var(--sidebar-bg) 0%, var(--sidebar-hover) 100%);
 }
 
 .logo {
-  color: #f8fafc;
+  color: var(--sidebar-text);
   font-size: 1.5rem;
   font-weight: bold;
   text-decoration: none;
@@ -92,7 +92,7 @@ const route = useRoute();
   margin-top: 8px;
   font-size: 14px;
   font-weight: 300;
-  color: #94a3b8;
+  color: var(--sidebar-text-muted);
   letter-spacing: 0.5px;
 }
 
@@ -119,13 +119,13 @@ const route = useRoute();
 }
 
 .nav-menu > li > a:hover, .nav-menu > li > .router-link-exact-active:hover {
-  background-color: #1e293b;
-  color: #f8fafc;
+  background-color: var(--sidebar-hover);
+  color: var(--sidebar-text);
   transform: translateX(4px);
 }
 
 .nav-menu > li > a.active, .nav-menu > li > .router-link-exact-active, .nav-menu > li > div.active-parent {
-  background-color: #475569;
+  background-color: var(--sidebar-active);
   color: #ffffff;
   font-weight: 500;
   border-left: 3px solid #06b6d4;
@@ -151,14 +151,14 @@ const route = useRoute();
   list-style: none;
   padding: 0;
   margin: 0;
-  background-color: #020617;
+  background-color: var(--sidebar-submenu);
 }
 
 .submenu li a {
   display: flex;
   align-items: center;
   padding: 12px 20px 12px 40px;
-  color: #94a3b8;
+  color: var(--sidebar-text-muted);
   text-decoration: none;
   transition: all 0.3s ease;
   border-radius: 0 20px 20px 0;
@@ -166,7 +166,7 @@ const route = useRoute();
 }
 
 .submenu li a:hover {
-  background-color: #0f172a;
+  background-color: var(--sidebar-hover);
   color: #e2e8f0;
   transform: translateX(4px);
 }
