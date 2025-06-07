@@ -9,6 +9,9 @@
           <div class="header-left">
             <h2>🗺️ {{ selectedServer?.mapName || 'Unknown Map' }}</h2>
             <div class="server-name-header">{{ selectedServer?.name || 'Unknown Server' }}</div>
+            <div v-if="selectedServer?.ip && selectedServer?.port" class="server-address-header">
+              🌐 {{ selectedServer.ip }}:{{ selectedServer.port }}
+            </div>
           </div>
           <button @click="closeModal" class="close-button">&times;</button>
         </div>
@@ -220,6 +223,13 @@ const teamGroups = computed(() => {
 .server-name-header {
   font-size: 0.9rem;
   color: var(--color-primary);
+}
+
+.server-address-header {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-family: monospace;
+  margin-top: 2px;
 }
 
 .close-button {
