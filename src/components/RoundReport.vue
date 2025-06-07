@@ -468,12 +468,10 @@ const goBack = () => {
                 <span class="game-id">#{{ roundReport.session.gameId }}</span>
                 <span class="separator">•</span>
                 <span class="match-time">{{ formatDate(roundReport.round.startTime) }}</span>
-                <span class="separator">•</span>
                 <span v-if="roundReport.round.isActive" class="status-badge active" :class="{ 'live-updating': isLiveUpdating }">
                   Live
                   <span v-if="isLiveUpdating" class="live-dot"></span>
                 </span>
-                <span v-else class="status-badge completed">Match Complete</span>
               </div>
             </div>
             <div class="header-controls">
@@ -636,17 +634,20 @@ const goBack = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background-color: #6c757d;
-  color: white;
+  padding: 8px 12px;
+  background-color: var(--color-background-mute);
+  border-radius: 6px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 500;
   border: none;
-  border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .back-button:hover {
-  background-color: #5a6268;
+  background-color: var(--color-primary);
+  color: white;
 }
 
 .header-titles {
@@ -1081,22 +1082,22 @@ body.dragging * {
 .match-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  color: var(--color-text);
-  background: var(--color-background-soft);
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--color-border);
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  background: transparent;
+  padding: 4px 0;
+  border-radius: 0;
+  border: none;
 }
 
 .game-id {
-  background: var(--color-accent);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  background: var(--color-background-mute);
+  color: var(--color-text-muted);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 500;
 }
 
 .separator {
