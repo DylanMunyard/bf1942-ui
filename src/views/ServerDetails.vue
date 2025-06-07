@@ -225,44 +225,7 @@ const chartOptions = computed(() => {
   return baseOptions;
 });
 
-// Analyze player count data to determine activity levels
-const activityAnalysis = computed(() => {
-  if (!serverDetails.value?.playerCountMetrics || serverDetails.value.playerCountMetrics.length === 0) {
-    return { zones: [], labels: [], timeRanges: [] };
-  }
 
-  const metrics = serverDetails.value.playerCountMetrics;
-  
-  // Calculate average player count for each time period
-  const averages = [];
-  const chunkSize = Math.ceil(metrics.length / 3);
-  
-  for (let i = 0; i < 3; i++) {
-    const chunk = metrics.slice(i * chunkSize, (i + 1) * chunkSize);
-    const average = chunk.reduce((sum, metric) => sum + metric.value, 0) / chunk.length;
-    averages.push({ index: i, average });
-  }
-  
-  // Sort by average player count
-  averages.sort((a, b) => b.average - a.average);
-  
-  // Fixed time ranges for the thirds
-  const timeRanges = ['Midnight - 8am', '8am - 4pm', '4pm - Late'];
-  
-  // Assign labels based on activity level
-  const labels = ['', '', ''];
-  const zones = ['', '', ''];
-  
-  labels[averages[0].index] = 'Busiest';
-  labels[averages[1].index] = 'Busy';
-  labels[averages[2].index] = 'Quietest';
-  
-  zones[averages[0].index] = 'busiest-zone';
-  zones[averages[1].index] = 'busy-zone';
-  zones[averages[2].index] = 'quietest-zone';
-  
-  return { zones, labels, timeRanges };
-});
 
 // Toggle chart expansion
 const toggleChartExpansion = () => {
@@ -320,36 +283,7 @@ const toggleChartExpansion = () => {
              :class="{ 'chart-expanded': isChartExpanded }"
              @click="!isChartExpanded && toggleChartExpansion()"
            >
-                             <!-- Activity zone backgrounds for collapsed view -->
-              <div v-if="!isChartExpanded && activityAnalysis.zones.length > 0" class="activity-zones">
-                <div
-                  v-for="(zone, index) in activityAnalysis.zones"
-                  :key="index"
-                  class="activity-zone"
-                  :class="zone"
-                  :title="`${activityAnalysis.labels[index]} - ${activityAnalysis.timeRanges[index]}`"
-                >
-                  <div class="time-range-label">{{ activityAnalysis.timeRanges[index] }}</div>
-                </div>
-              </div>
-
              <Line :data="chartData" :options="chartOptions" />
-           </div>
-
-           <!-- Activity level legend for collapsed view -->
-           <div v-if="!isChartExpanded && activityAnalysis.labels.length > 0" class="activity-legend">
-             <div class="legend-item">
-               <div class="legend-color busiest-color"></div>
-               <span>Busiest</span>
-             </div>
-             <div class="legend-item">
-               <div class="legend-color busy-color"></div>
-               <span>Busy</span>
-             </div>
-             <div class="legend-item">
-               <div class="legend-color quietest-color"></div>
-               <span>Quietest</span>
-             </div>
            </div>
         </div>
 
@@ -676,113 +610,7 @@ const toggleChartExpansion = () => {
   background: var(--color-background);
 }
 
-/* Activity zones background for collapsed view */
-.activity-zones {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  z-index: 1;
-  pointer-events: none;
-}
 
-.activity-zone {
-  flex: 1;
-  transition: all 0.2s ease;
-  border-right: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.activity-zone:last-child {
-  border-right: none;
-}
-
-.busiest-zone {
-  background: linear-gradient(to right, rgba(34, 197, 94, 0.08), rgba(34, 197, 94, 0.15));
-  border-right-color: rgba(34, 197, 94, 0.1);
-}
-
-.busy-zone {
-  background: linear-gradient(to right, rgba(251, 191, 36, 0.08), rgba(251, 191, 36, 0.15));
-  border-right-color: rgba(251, 191, 36, 0.1);
-}
-
-.quietest-zone {
-  background: linear-gradient(to right, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.15));
-  border-right-color: rgba(239, 68, 68, 0.1);
-}
-
-.chart-container:hover .activity-zones .activity-zone {
-  opacity: 0.8;
-}
-
-/* Time range labels on activity zones */
-.activity-zone {
-  position: relative;
-}
-
-.time-range-label {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--color-text);
-  text-align: center;
-  pointer-events: none;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 2px 6px;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  white-space: nowrap;
-  opacity: 0.8;
-  transition: all 0.2s ease;
-  z-index: 2;
-}
-
-.activity-zone:hover .time-range-label {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.05);
-}
-
-/* Activity level legend */
-.activity-legend {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 8px;
-  padding: 8px;
-  font-size: 0.75rem;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
-
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.busiest-color {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(34, 197, 94, 0.6));
-}
-
-.busy-color {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.4), rgba(251, 191, 36, 0.6));
-}
-
-.quietest-color {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(239, 68, 68, 0.6));
-}
 
 /* Leaderboards Container */
 .leaderboards-container {
@@ -1118,19 +946,6 @@ const toggleChartExpansion = () => {
     font-size: 1rem;
   }
 
-  .activity-legend {
-    gap: 15px;
-    font-size: 0.7rem;
-  }
 
-  .legend-color {
-    width: 10px;
-    height: 10px;
-  }
-
-  .time-range-label {
-    font-size: 0.55rem;
-    padding: 1px 4px;
-  }
 }
 </style>
