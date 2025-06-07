@@ -609,7 +609,7 @@ const goBack = () => {
 
 <style scoped>
 .round-report-container {
-  background: #fff;
+  background: var(--color-background);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -707,10 +707,11 @@ const goBack = () => {
 }
 
 .leaderboard-section {
-  background: #fff;
+  background: var(--color-background-soft);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
+  border: 1px solid var(--color-border);
 }
 
 .leaderboard-header {
@@ -883,7 +884,7 @@ body.dragging * {
 }
 
 .team-column {
-  background: #fff;
+  background: var(--color-background-soft);
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);

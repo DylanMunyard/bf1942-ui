@@ -58,6 +58,7 @@ const route = useRoute();
   left: 0;
   top: 0;
   box-shadow: 2px 0 20px rgba(0, 0, 0, 0.4);
+  border-right: 1px solid var(--sidebar-border);
 }
 
 .sidebar-header {

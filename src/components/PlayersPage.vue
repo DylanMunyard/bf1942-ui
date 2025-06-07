@@ -490,7 +490,7 @@ onUnmounted(() => {
 
 <style scoped>
 .players-page-container {
-  background: #fff;
+  background: var(--color-background);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -544,7 +544,7 @@ onUnmounted(() => {
 
 .filter-input, .filter-select {
   padding: 8px 12px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 14px;
   background-color: var(--color-background-soft);
@@ -566,7 +566,7 @@ onUnmounted(() => {
   position: absolute;
   right: 10px;
   font-size: 18px;
-  color: #999;
+  color: var(--color-text-muted);
   cursor: pointer;
   width: 20px;
   height: 20px;
@@ -580,7 +580,7 @@ onUnmounted(() => {
   position: absolute;
   right: 10px;
   font-size: 18px;
-  color: #999;
+  color: var(--color-text-muted);
   cursor: pointer;
   width: 20px;
   height: 20px;
@@ -591,8 +591,8 @@ onUnmounted(() => {
 }
 
 .clear-input:hover {
-  color: #666;
-  background-color: #f0f0f0;
+  color: var(--color-text-muted);
+  background-color: var(--color-background-mute);
 }
 
 .reset-filters-button {

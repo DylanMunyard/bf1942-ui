@@ -184,7 +184,7 @@ const teamGroups = computed(() => {
 }
 
 .modal-content {
-  background-color: white;
+  background-color: var(--color-background);
   border-radius: 8px;
   width: 95%;
   max-width: 1200px;
@@ -194,7 +194,7 @@ const teamGroups = computed(() => {
 }
 
 .players-modal {
-  background: #fff;
+  background: var(--color-background);
 }
 
 .modal-header {
