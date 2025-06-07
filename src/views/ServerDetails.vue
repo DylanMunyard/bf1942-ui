@@ -130,6 +130,17 @@ const chartData = computed(() => {
 
 // Chart options - computed to handle expanded vs compact view
 const chartOptions = computed(() => {
+  // Get computed styles to access CSS variables
+  const computedStyles = window.getComputedStyle(document.documentElement);
+  const textColor = computedStyles.getPropertyValue('--color-text').trim() || '#333333';
+  const textMutedColor = computedStyles.getPropertyValue('--color-text-muted').trim() || '#666666';
+  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') || 
+                    document.documentElement.classList.contains('dark-mode') ||
+                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  
+  // Dynamic grid color based on theme
+  const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+  
   const baseOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -143,34 +154,34 @@ const chartOptions = computed(() => {
         display: isChartExpanded.value,
         grid: {
           display: isChartExpanded.value,
-          color: 'rgba(0, 0, 0, 0.1)'
+          color: gridColor
         },
         title: {
           display: isChartExpanded.value,
           text: 'Player Count',
-          color: 'var(--color-text)'
+          color: textColor
         },
         ticks: {
           display: isChartExpanded.value,
-          color: 'var(--color-text-muted)'
+          color: textMutedColor
         }
       },
               x: {
           display: isChartExpanded.value,
           grid: {
             display: isChartExpanded.value,
-            color: 'rgba(0, 0, 0, 0.1)'
+            color: gridColor
           },
           title: {
             display: isChartExpanded.value,
             text: 'Time',
-            color: 'var(--color-text)'
+            color: textColor
           },
           ticks: {
             display: isChartExpanded.value,
             maxRotation: 45,
             minRotation: 45,
-            color: 'var(--color-text-muted)',
+            color: textMutedColor,
             maxTicksLimit: isChartExpanded.value ? 8 : undefined,
             callback: function(tickValue: any, index: number) {
               if (!isChartExpanded.value) return '';
@@ -198,10 +209,10 @@ const chartOptions = computed(() => {
       },
       tooltip: {
         enabled: isChartExpanded.value,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#ffffff',
-        bodyColor: '#ffffff',
-        borderColor: '#666666',
+        backgroundColor: isDarkMode ? 'rgba(35, 21, 53, 0.95)' : 'rgba(0, 0, 0, 0.8)',
+        titleColor: isDarkMode ? '#ffffff' : '#ffffff',
+        bodyColor: isDarkMode ? '#ffffff' : '#ffffff',
+        borderColor: isDarkMode ? '#805ad5' : '#666666',
         borderWidth: 1,
         cornerRadius: 6,
         displayColors: true,
