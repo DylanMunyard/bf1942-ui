@@ -418,7 +418,7 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .table-scroll-wrapper::after {
-    opacity: 1;
+    display: none; /* Hide swipe indicator on mobile since columns are hidden */
   }
 }
 
@@ -426,6 +426,12 @@ table {
   width: 100%;
   border-collapse: collapse;
   min-width: 800px; /* Minimum width to ensure readability */
+}
+
+@media (max-width: 768px) {
+  table {
+    min-width: 100%; /* Remove fixed min-width on mobile */
+  }
 }
 
 th, td {
