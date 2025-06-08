@@ -238,4 +238,37 @@ a:hover {
   color: white;
   border-color: var(--color-primary);
 }
+
+/* Mobile responsiveness for theme toggle */
+@media (max-width: 768px) {
+  .theme-toggle {
+    top: 15px;
+    right: 15px;
+  }
+  
+  .theme-toggle-button {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .toggle-icon {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .theme-toggle {
+    top: 10px;
+    right: 10px;
+  }
+  
+  .theme-toggle-button {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .toggle-icon {
+    font-size: 18px;
+  }
+}
 </style>

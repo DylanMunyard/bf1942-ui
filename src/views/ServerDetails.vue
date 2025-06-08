@@ -626,8 +626,10 @@ const toggleChartExpansion = () => {
 /* Leaderboards Container */
 .leaderboards-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Leaderboard Section */
@@ -877,9 +879,69 @@ const toggleChartExpansion = () => {
   vertical-align: middle;
 }
 
+/* Base mobile improvements */
+.server-details-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Tablet styles */
+@media (max-width: 1024px) {
+  .leaderboards-container {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+  }
+  
+  .server-details-container {
+    padding: 18px;
+  }
+}
+
+/* Mobile styles */
 @media (max-width: 768px) {
   .server-details-container {
-    width: 95%;
+    padding: 15px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .server-details-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+  }
+
+  .server-name-container {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .server-name-container h2 {
+    font-size: 1.3rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .modal-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rankings-button {
+    width: 100%;
+    text-align: center;
+    padding: 12px 16px;
+  }
+
+  .back-button {
+    width: fit-content;
+    padding: 10px 16px;
   }
 
   .leaderboards-container {
@@ -889,6 +951,7 @@ const toggleChartExpansion = () => {
 
   .leaderboard-section {
     padding: 15px;
+    border-radius: 8px;
   }
 
   .players-header, .scores-header {
@@ -897,43 +960,44 @@ const toggleChartExpansion = () => {
   }
 
   .players-header {
-    grid-template-columns: 40px 1fr 100px 70px;
-    gap: 8px;
-  }
-
-  .scores-header {
-    grid-template-columns: 40px 1fr 80px 70px 80px;
-    gap: 8px;
-  }
-
-  .rounds-header {
-    grid-template-columns: 1fr 120px 80px;
+    grid-template-columns: 40px 1fr 80px 60px;
     gap: 6px;
   }
 
-  .player-row, .score-row {
+  .scores-header {
+    grid-template-columns: 40px 1fr 70px 60px 80px;
+    gap: 4px;
+  }
+
+  .rounds-header {
+    grid-template-columns: 1fr 100px 80px;
+    gap: 6px;
+  }
+
+  .player-row, .score-row, .round-row {
     padding: 10px 12px;
     font-size: 0.85rem;
   }
 
   .player-row {
-    grid-template-columns: 40px 1fr 100px 70px;
-    gap: 8px;
+    grid-template-columns: 40px 1fr 80px 60px;
+    gap: 6px;
   }
 
   .score-row {
-    grid-template-columns: 40px 1fr 80px 70px 80px;
-    gap: 8px;
+    grid-template-columns: 40px 1fr 70px 60px 80px;
+    gap: 4px;
   }
 
   .round-row {
-    grid-template-columns: 1fr 120px 80px;
+    grid-template-columns: 1fr 100px 80px;
     gap: 6px;
   }
 
   .rank-number {
     width: 24px;
     height: 24px;
+    font-size: 0.8rem;
   }
 
   .rank-medal {
@@ -949,7 +1013,7 @@ const toggleChartExpansion = () => {
   }
 
   .chart-container.chart-expanded {
-    height: 300px;
+    height: 280px;
   }
 
   .expand-chart-button {
@@ -957,6 +1021,188 @@ const toggleChartExpansion = () => {
     font-size: 1rem;
   }
 
+  .period-info {
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 8px;
+    background: var(--color-background-soft);
+    border-radius: 6px;
+  }
+}
 
+/* Small mobile styles */
+@media (max-width: 480px) {
+  .server-details-container {
+    padding: 10px;
+  }
+
+  .server-details-header {
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+
+  .server-name-container h2 {
+    font-size: 1.2rem;
+    line-height: 1.3;
+  }
+
+  .back-button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  .rankings-button {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  .leaderboard-section {
+    padding: 12px;
+  }
+
+  .leaderboard-header {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+
+  .leaderboard-header h3 {
+    font-size: 1rem;
+  }
+
+  .players-header, .scores-header, .rounds-header {
+    padding: 8px 10px;
+    font-size: 0.7rem;
+  }
+
+  .players-header {
+    grid-template-columns: 35px 1fr 70px 50px;
+    gap: 4px;
+  }
+
+  .scores-header {
+    grid-template-columns: 35px 1fr 60px 50px 70px;
+    gap: 3px;
+  }
+
+  .rounds-header {
+    grid-template-columns: 1fr 90px 70px;
+    gap: 4px;
+  }
+
+  .player-row, .score-row, .round-row {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .player-row {
+    grid-template-columns: 35px 1fr 70px 50px;
+    gap: 4px;
+  }
+
+  .score-row {
+    grid-template-columns: 35px 1fr 60px 50px 70px;
+    gap: 3px;
+  }
+
+  .round-row {
+    grid-template-columns: 1fr 90px 70px;
+    gap: 4px;
+  }
+
+  .rank-number {
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+  }
+
+  .rank-medal {
+    font-size: 0.9rem;
+  }
+
+  .player-kd, .score-kd {
+    font-size: 0.8rem;
+    gap: 1px;
+  }
+
+  .chart-container {
+    height: 50px;
+  }
+
+  .chart-container.chart-expanded {
+    height: 250px;
+  }
+
+  .expand-chart-button {
+    padding: 5px 8px;
+    font-size: 0.9rem;
+  }
+
+  .report-link {
+    padding: 3px 6px;
+    font-size: 0.75rem;
+  }
+
+  .badge-active {
+    padding: 2px 6px;
+    font-size: 0.7rem;
+  }
+
+  .round-end-time {
+    font-size: 0.75rem;
+  }
+
+  /* Make player names more readable on small screens */
+  .player-name, .score-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Adjust map names for small screens */
+  .score-map, .round-map {
+    font-size: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .server-details-container {
+    padding: 8px;
+  }
+
+  .server-name-container h2 {
+    font-size: 1.1rem;
+  }
+
+  .players-header {
+    grid-template-columns: 30px 1fr 60px 45px;
+  }
+
+  .scores-header {
+    grid-template-columns: 30px 1fr 50px 45px 60px;
+  }
+
+  .player-row {
+    grid-template-columns: 30px 1fr 60px 45px;
+  }
+
+  .score-row {
+    grid-template-columns: 30px 1fr 50px 45px 60px;
+  }
+
+  .rank-number {
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+  }
+
+  .rank-medal {
+    font-size: 0.8rem;
+  }
 }
 </style>
