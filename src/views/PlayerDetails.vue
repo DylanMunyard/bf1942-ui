@@ -920,7 +920,7 @@ onMounted(() => {
 /* Small mobile styles */
 @media (max-width: 480px) {
   .player-details-container {
-    padding: 2px;
+    padding: 4px;
   }
 
   .player-stats-header {
@@ -1092,7 +1092,7 @@ onMounted(() => {
 /* Extra small screens */
 @media (max-width: 360px) {
   .player-details-container {
-    padding: 1px;
+    padding: 4px;
   }
 
   .player-stats-header {
@@ -1230,7 +1230,7 @@ onMounted(() => {
 
 .player-stats-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--color-border);
@@ -1241,6 +1241,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
 }
 
 .player-name-heading {

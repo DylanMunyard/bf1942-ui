@@ -922,17 +922,14 @@ const toggleChartExpansion = () => {
   }
   
   .server-details-container {
-    padding: 10px;
+    padding: 8px;
   }
 }
 
 /* Mobile styles */
 @media (max-width: 768px) {
   .server-details-container {
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
-    background: transparent;
+    padding: 4px;
   }
 
   .server-details-header {
@@ -1079,7 +1076,6 @@ const toggleChartExpansion = () => {
   }
 
   .stats-container {
-    padding: 0;
     gap: 8px;
   }
 
@@ -1109,7 +1105,7 @@ const toggleChartExpansion = () => {
 /* Small mobile styles */
 @media (max-width: 480px) {
   .server-details-container {
-    padding: 0;
+    padding: 4px;
   }
 
   .server-details-header {
@@ -1226,7 +1222,6 @@ const toggleChartExpansion = () => {
   }
 
   .stats-container {
-    padding: 0;
     gap: 6px;
   }
 
@@ -1247,7 +1242,7 @@ const toggleChartExpansion = () => {
 /* Extra small screens */
 @media (max-width: 360px) {
   .server-details-container {
-    padding: 0;
+    padding: 2px;
   }
 
   .server-details-header {
@@ -1308,7 +1303,6 @@ const toggleChartExpansion = () => {
   }
 
   .stats-container {
-    padding: 0;
   }
 
   .period-info {
