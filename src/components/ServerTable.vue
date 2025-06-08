@@ -194,6 +194,11 @@ onUnmounted(() => {
                   <div class="server-details">
                     ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
                   </div>
+                  <!-- Mobile condensed map and player info -->
+                  <div class="mobile-details mobile-only">
+                    <div class="mobile-detail"><strong>Map:</strong> {{ server.mapName }}</div>
+                    <div class="mobile-detail" @click="showPlayers(server)" style="cursor: pointer;"><strong>Players:</strong> {{ server.numPlayers }} / {{ server.maxPlayers }}</div>
+                  </div>
                 </td>
                 <td class="players-column" @click="showPlayers(server)">
                   {{ server.numPlayers }} / {{ server.maxPlayers }}
@@ -625,5 +630,12 @@ th {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+/* Add mobile-only visibility and hide columns on mobile */
+.mobile-only { display: none; }
+@media (max-width: 768px) {
+  .mobile-only { display: block; }
+  .map-cell, .players-column, .join-link { display: none !important; }
 }
 </style>

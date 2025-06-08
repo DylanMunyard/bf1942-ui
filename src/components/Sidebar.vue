@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar">
     <div class="nav-menu">
-      <div class="nav-group">
+      <div class="nav-group desktop-only">
         <div :class="{ 'nav-item': true, 'active-parent': $route.path.startsWith('/servers') }">
           <i class="icon-server"></i>
           <i class="icon-arrow" :class="{ 'open': $route.path.startsWith('/servers') }"></i>
@@ -17,19 +17,33 @@
           </router-link>
         </div>
       </div>
+      <router-link to="/servers/bf1942" active-class="active" class="nav-item mobile-only" title="42">
+        <i class="icon-bf1942"></i>
+        <span class="nav-text">42</span>
+      </router-link>
+      <router-link to="/servers/fh2" active-class="active" class="nav-item mobile-only" title="FH2">
+        <i class="icon-fh2"></i>
+        <span class="nav-text">FH2</span>
+      </router-link>
       <router-link to="/players" active-class="active" class="nav-item">
         <div class="icon-placeholder">
           <!-- Icon will be provided shortly -->
         </div>
       </router-link>
+      <div class="nav-item theme-toggle-item" @click="toggleDarkMode" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+        <span class="toggle-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
+import { inject, type Ref } from 'vue';
 
 const route = useRoute();
+const isDarkMode = inject<Ref<boolean>>('isDarkMode')!;
+const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 </script>
 
 <style scoped>
@@ -204,5 +218,30 @@ const route = useRoute();
   .nav-text {
     font-size: 0.6rem;
   }
+}
+
+/* Helpers for mobile-only and desktop-only visibility */
+.mobile-only {
+  display: none;
+}
+.desktop-only {
+  display: flex;
+}
+@media (max-width: 768px) {
+  .mobile-only {
+    display: flex;
+  }
+  .desktop-only {
+    display: none;
+  }
+}
+
+/* Style theme-toggle nav-item inside sidebar */
+.theme-toggle-item {
+  margin-top: auto;
+}
+.theme-toggle-item .toggle-icon {
+  font-size: 1.2rem;
+  user-select: none;
 }
 </style> 
