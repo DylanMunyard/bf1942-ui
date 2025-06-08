@@ -308,9 +308,9 @@ const toggleChartExpansion = () => {
             <div class="leaderboard-content">
               <div class="players-header">
                 <div class="header-rank">#</div>
-                <div class="header-name">Player</div>
-                <div class="header-playtime">Time</div>
-                <div class="header-kd">K/D</div>
+                <div class="header-player-info">Player</div>
+                <div class="header-playtime desktop-only">Time</div>
+                <div class="header-kd desktop-only">K/D</div>
               </div>
               <div class="players-list">
                 <div v-for="(player, index) in serverDetails.mostActivePlayersByTime" :key="index" class="player-row">
@@ -320,13 +320,22 @@ const toggleChartExpansion = () => {
                     <span v-else-if="index === 2" class="rank-medal">🥉</span>
                     <span v-else class="rank-number">{{ index + 1 }}</span>
                   </div>
-                  <div class="player-name">
-                    <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
-                      {{ player.playerName }}
-                    </router-link>
+                  <div class="player-info">
+                    <div class="player-name">
+                      <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
+                        {{ player.playerName }}
+                      </router-link>
+                    </div>
+                    <div class="player-details mobile-only">
+                      <span class="detail-item">{{ formatPlayTime(player.minutesPlayed) }}</span>
+                      <span class="detail-separator">•</span>
+                      <span class="detail-item">
+                        <span class="kills">{{ player.totalKills }}</span>/<span class="deaths">{{ player.totalDeaths }}</span>
+                      </span>
+                    </div>
                   </div>
-                  <div class="player-playtime">{{ formatPlayTime(player.minutesPlayed) }}</div>
-                  <div class="player-kd">
+                  <div class="player-playtime desktop-only">{{ formatPlayTime(player.minutesPlayed) }}</div>
+                  <div class="player-kd desktop-only">
                     <span class="kills">{{ player.totalKills }}</span>
                     <span class="separator">/</span>
                     <span class="deaths">{{ player.totalDeaths }}</span>
@@ -344,10 +353,10 @@ const toggleChartExpansion = () => {
             <div class="leaderboard-content">
               <div class="scores-header">
                 <div class="header-rank">#</div>
-                <div class="header-name">Player</div>
-                <div class="header-score">Score</div>
-                <div class="header-kd">K/D</div>
-                <div class="header-map">Map</div>
+                <div class="header-player-info">Player</div>
+                <div class="header-score desktop-only">Score</div>
+                <div class="header-kd desktop-only">K/D</div>
+                <div class="header-map desktop-only">Map</div>
               </div>
               <div class="scores-list">
                 <div v-for="(score, index) in serverDetails.topScores" :key="index" class="score-row">
@@ -357,12 +366,37 @@ const toggleChartExpansion = () => {
                     <span v-else-if="index === 2" class="rank-medal">🥉</span>
                     <span v-else class="rank-number">{{ index + 1 }}</span>
                   </div>
-                  <div class="score-name">
-                    <router-link :to="`/player/${encodeURIComponent(score.playerName)}`" class="player-link">
-                      {{ score.playerName }}
-                    </router-link>
+                  <div class="player-info">
+                    <div class="score-name">
+                      <router-link :to="`/player/${encodeURIComponent(score.playerName)}`" class="player-link">
+                        {{ score.playerName }}
+                      </router-link>
+                    </div>
+                    <div class="score-details mobile-only">
+                      <span class="detail-item">
+                        <router-link
+                          :to="{
+                            path: '/servers/round-report',
+                            query: {
+                              serverGuid: serverDetails.serverGuid,
+                              mapName: score.mapName,
+                              startTime: score.timestamp
+                            }
+                          }"
+                          class="session-link"
+                        >
+                          {{ score.score.toLocaleString() }}
+                        </router-link>
+                      </span>
+                      <span class="detail-separator">•</span>
+                      <span class="detail-item">
+                        <span class="kills">{{ score.kills }}</span>/<span class="deaths">{{ score.deaths }}</span>
+                      </span>
+                      <span class="detail-separator">•</span>
+                      <span class="detail-item">{{ score.mapName }}</span>
+                    </div>
                   </div>
-                  <div class="score-value">
+                  <div class="score-value desktop-only">
                     <router-link
                       :to="{
                         path: '/servers/round-report',
@@ -377,12 +411,12 @@ const toggleChartExpansion = () => {
                       {{ score.score.toLocaleString() }}
                     </router-link>
                   </div>
-                  <div class="score-kd">
+                  <div class="score-kd desktop-only">
                     <span class="kills">{{ score.kills }}</span>
                     <span class="separator">/</span>
                     <span class="deaths">{{ score.deaths }}</span>
                   </div>
-                  <div class="score-map">{{ score.mapName }}</div>
+                  <div class="score-map desktop-only">{{ score.mapName }}</div>
                 </div>
               </div>
             </div>
@@ -395,20 +429,44 @@ const toggleChartExpansion = () => {
             </div>
             <div class="leaderboard-content">
               <div class="rounds-header">
-                <div class="header-map">Map</div>
-                <div class="header-end-time">End Time</div>
-                <div class="header-report">Report</div>
+                <div class="header-round-info">Round</div>
+                <div class="header-end-time desktop-only">End Time</div>
+                <div class="header-report desktop-only">Report</div>
               </div>
               <div class="rounds-list">
                 <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-row">
-                  <div class="round-map">
-                    {{ round.mapName }}
+                  <div class="round-info">
+                    <div class="round-map">
+                      {{ round.mapName }}
+                    </div>
+                    <div class="round-details mobile-only">
+                      <span class="detail-item">
+                        <span v-if="round.isActive && index === 0" class="badge-active">In Progress</span>
+                        <span v-else>{{ formatDate(round.endTime) }}</span>
+                      </span>
+                      <span class="detail-separator">•</span>
+                      <span class="detail-item">
+                        <router-link
+                          :to="{
+                            path: '/servers/round-report',
+                            query: {
+                              serverGuid: serverDetails.serverGuid,
+                              mapName: round.mapName,
+                              startTime: round.startTime
+                            }
+                          }"
+                          class="report-link-inline"
+                        >
+                          View Report
+                        </router-link>
+                      </span>
+                    </div>
                   </div>
-                  <div class="round-end-time">
+                  <div class="round-end-time desktop-only">
                     <span v-if="round.isActive && index === 0" class="badge-active">In Progress</span>
                     <span v-else>{{ formatDate(round.endTime) }}</span>
                   </div>
-                  <div class="round-report">
+                  <div class="round-report desktop-only">
                     <router-link
                       :to="{
                         path: '/servers/round-report',
@@ -668,20 +726,6 @@ const toggleChartExpansion = () => {
   border: 1px solid var(--color-border);
 }
 
-/* Players Header */
-.players-header, .scores-header, .rounds-header {
-  display: grid;
-  padding: 12px 15px;
-  background: var(--color-background-mute);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text-muted);
-  border-bottom: 1px solid var(--color-border);
-  align-items: center;
-}
-
 /* Header cell alignment */
 .header-rank, .header-score {
   text-align: center;
@@ -691,7 +735,7 @@ const toggleChartExpansion = () => {
   text-align: center;
 }
 
-.header-map {
+.header-map, .header-player-info, .header-round-info {
   text-align: left;
 }
 
@@ -704,15 +748,24 @@ const toggleChartExpansion = () => {
   gap: 10px;
 }
 
-  .scores-header {
-    grid-template-columns: 50px 1fr 100px 80px 100px;
-    gap: 10px;
-  }
+.scores-header {
+  grid-template-columns: 50px 1fr 100px 80px 100px;
+  gap: 10px;
+}
 
-  .rounds-header {
-    grid-template-columns: 1fr 180px 120px;
-    gap: 10px;
-  }
+.rounds-header {
+  grid-template-columns: 1fr 180px 120px;
+  gap: 10px;
+}
+
+/* Show/hide classes for responsive design */
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
 
 /* Players List */
 .players-list, .scores-list, .rounds-list {
@@ -749,6 +802,52 @@ const toggleChartExpansion = () => {
   border-bottom: none;
 }
 
+/* Player Info Container */
+.player-info, .round-info {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.player-name, .score-name, .round-map {
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+/* Mobile condensed details */
+.player-details, .score-details, .round-details {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.detail-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.detail-separator {
+  color: var(--color-text-muted);
+  font-weight: normal;
+  opacity: 0.6;
+}
+
+.report-link-inline {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.report-link-inline:hover {
+  text-decoration: underline;
+}
+
 /* Rank Styling */
 .player-rank, .score-rank {
   display: flex;
@@ -775,12 +874,483 @@ const toggleChartExpansion = () => {
   font-weight: 600;
 }
 
-/* Player Name */
-.player-name, .score-name {
-  font-weight: 500;
-  color: var(--color-text);
-  min-width: 0;
-  overflow: hidden;
+/* Link styles */
+.player-link, .report-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.player-link:hover, .report-link:hover {
+  text-decoration: underline;
+  color: var(--color-primary-hover, var(--color-primary));
+}
+
+.report-link {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background-color: var(--color-background-mute);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.report-link:hover {
+  background-color: var(--color-primary);
+  color: white;
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.badge-active {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background-color: #4caf50;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* Base mobile improvements */
+.server-details-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Tablet styles */
+@media (max-width: 1024px) {
+  .leaderboards-container {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+  }
+  
+  .server-details-container {
+    padding: 18px;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .server-details-container {
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .server-details-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    padding: 10px 5px;
+    margin-bottom: 10px;
+  }
+
+  .server-name-container {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .server-name-container h2 {
+    font-size: 1.3rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin: 0;
+  }
+
+  .modal-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rankings-button {
+    width: 100%;
+    text-align: center;
+    padding: 10px 16px;
+  }
+
+  .back-button {
+    width: fit-content;
+    padding: 8px 12px;
+  }
+
+  .leaderboards-container {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .leaderboard-section {
+    padding: 12px 5px;
+    border-radius: 8px;
+    margin: 0;
+  }
+
+  .leaderboard-header {
+    margin-bottom: 10px;
+    padding: 0 8px 10px 8px;
+  }
+
+  .leaderboard-content {
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  /* Show/hide content for mobile */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
+  }
+
+  .players-header, .scores-header, .rounds-header {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+
+  .players-header {
+    grid-template-columns: 50px 1fr;
+    gap: 10px;
+  }
+
+  .scores-header {
+    grid-template-columns: 50px 1fr;
+    gap: 10px;
+  }
+
+  .rounds-header {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .player-row, .score-row, .round-row {
+    padding: 12px 10px;
+    font-size: 0.9rem;
+  }
+
+  .player-row {
+    grid-template-columns: 50px 1fr;
+    gap: 10px;
+  }
+
+  .score-row {
+    grid-template-columns: 50px 1fr;
+    gap: 10px;
+  }
+
+  .round-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .rank-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+  }
+
+  .rank-medal {
+    font-size: 1.1rem;
+  }
+
+  .leaderboard-header h3 {
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  .chart-container {
+    height: 60px;
+    margin: 0 5px;
+  }
+
+  .chart-container.chart-expanded {
+    height: 280px;
+  }
+
+  .expand-chart-button {
+    padding: 6px 10px;
+    font-size: 1rem;
+  }
+
+  .period-info {
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 8px;
+    margin: 0 5px 10px 5px;
+    background: var(--color-background-soft);
+    border-radius: 6px;
+  }
+
+  .stats-container {
+    padding: 0 5px;
+    gap: 10px;
+  }
+
+  .stats-section {
+    padding: 10px 5px;
+    margin: 0;
+  }
+
+  /* Mobile specific details styling */
+  .player-details, .score-details, .round-details {
+    font-size: 0.8rem;
+    margin-top: 6px;
+    line-height: 1.3;
+  }
+
+  .detail-item {
+    white-space: nowrap;
+  }
+
+  .badge-active {
+    margin-left: 0;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+}
+
+/* Small mobile styles */
+@media (max-width: 480px) {
+  .server-details-container {
+    padding: 0;
+  }
+
+  .server-details-header {
+    gap: 8px;
+    padding: 8px 3px;
+    margin-bottom: 8px;
+  }
+
+  .server-name-container h2 {
+    font-size: 1.2rem;
+    line-height: 1.3;
+  }
+
+  .back-button {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+
+  .rankings-button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  .leaderboard-section {
+    padding: 10px 3px;
+  }
+
+  .leaderboard-header {
+    margin-bottom: 8px;
+    padding: 0 5px 8px 5px;
+  }
+
+  .leaderboard-header h3 {
+    font-size: 1rem;
+  }
+
+  .players-header, .scores-header, .rounds-header {
+    padding: 6px 8px;
+    font-size: 0.7rem;
+  }
+
+  .players-header {
+    grid-template-columns: 45px 1fr;
+    gap: 8px;
+  }
+
+  .scores-header {
+    grid-template-columns: 45px 1fr;
+    gap: 8px;
+  }
+
+  .rounds-header {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .player-row, .score-row, .round-row {
+    padding: 10px 8px;
+    font-size: 0.85rem;
+  }
+
+  .player-row {
+    grid-template-columns: 45px 1fr;
+    gap: 8px;
+  }
+
+  .score-row {
+    grid-template-columns: 45px 1fr;
+    gap: 8px;
+  }
+
+  .round-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .rank-number {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+
+  .rank-medal {
+    font-size: 0.95rem;
+  }
+
+  .player-details, .score-details, .round-details {
+    font-size: 0.75rem;
+    margin-top: 4px;
+    gap: 3px;
+  }
+
+  .detail-item {
+    font-size: 0.75rem;
+  }
+
+  .chart-container {
+    height: 50px;
+    margin: 0 3px;
+  }
+
+  .chart-container.chart-expanded {
+    height: 250px;
+  }
+
+  .expand-chart-button {
+    padding: 5px 8px;
+    font-size: 0.9rem;
+  }
+
+  .period-info {
+    margin: 0 3px 8px 3px;
+    padding: 6px;
+  }
+
+  .stats-container {
+    padding: 0 3px;
+    gap: 8px;
+  }
+
+  .stats-section {
+    padding: 8px 3px;
+  }
+
+  .badge-active {
+    padding: 2px 4px;
+    font-size: 0.65rem;
+  }
+
+  .report-link-inline {
+    font-size: 0.75rem;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .server-details-container {
+    padding: 0;
+  }
+
+  .server-details-header {
+    padding: 5px 2px;
+  }
+
+  .server-name-container h2 {
+    font-size: 1.1rem;
+  }
+
+  .players-header {
+    grid-template-columns: 40px 1fr;
+    gap: 6px;
+  }
+
+  .scores-header {
+    grid-template-columns: 40px 1fr;
+    gap: 6px;
+  }
+
+  .rounds-header {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .player-row {
+    grid-template-columns: 40px 1fr;
+    gap: 6px;
+  }
+
+  .score-row {
+    grid-template-columns: 40px 1fr;
+    gap: 6px;
+  }
+
+  .round-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .rank-number {
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+  }
+
+  .rank-medal {
+    font-size: 0.85rem;
+  }
+
+  .player-details, .score-details, .round-details {
+    font-size: 0.7rem;
+    gap: 2px;
+  }
+
+  .detail-item {
+    font-size: 0.7rem;
+  }
+
+  .stats-container {
+    padding: 0 2px;
+  }
+
+  .period-info {
+    margin: 0 2px 6px 2px;
+  }
+
+  .badge-active {
+    padding: 1px 3px;
+    font-size: 0.6rem;
+  }
+
+  .report-link-inline {
+    font-size: 0.7rem;
+  }
+}
+
+/* Players Header */
+.players-header, .scores-header, .rounds-header {
+  display: grid;
+  padding: 12px 15px;
+  background: var(--color-background-mute);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  align-items: center;
 }
 
 .player-playtime, .score-value, .score-map {
@@ -790,11 +1360,6 @@ const toggleChartExpansion = () => {
 }
 
 /* Round row styling */
-.round-map {
-  font-weight: 600;
-  color: var(--color-text);
-}
-
 .round-end-time {
   font-size: 0.85rem;
   color: var(--color-text-muted);
@@ -877,346 +1442,5 @@ const toggleChartExpansion = () => {
   font-size: 0.75rem;
   font-weight: 600;
   vertical-align: middle;
-}
-
-/* Base mobile improvements */
-.server-details-container {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  box-sizing: border-box;
-  overflow-x: hidden;
-}
-
-/* Tablet styles */
-@media (max-width: 1024px) {
-  .leaderboards-container {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 15px;
-  }
-  
-  .server-details-container {
-    padding: 18px;
-  }
-}
-
-/* Mobile styles */
-@media (max-width: 768px) {
-  .server-details-container {
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
-    background: transparent;
-  }
-
-  .server-details-header {
-    flex-direction: column;
-    gap: 15px;
-    align-items: stretch;
-    padding: 15px 8px;
-    margin-bottom: 15px;
-  }
-
-  .server-name-container {
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
-  }
-
-  .server-name-container h2 {
-    font-size: 1.3rem;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
-
-  .modal-actions {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .rankings-button {
-    width: 100%;
-    text-align: center;
-    padding: 12px 16px;
-  }
-
-  .back-button {
-    width: fit-content;
-    padding: 10px 16px;
-  }
-
-  .leaderboards-container {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-
-  .leaderboard-section {
-    padding: 15px 10px;
-    border-radius: 8px;
-  }
-
-  .players-header, .scores-header {
-    padding: 10px 8px;
-    font-size: 0.75rem;
-  }
-
-  .players-header {
-    grid-template-columns: 40px 1fr 80px 60px;
-    gap: 6px;
-  }
-
-  .scores-header {
-    grid-template-columns: 40px 1fr 70px 60px 80px;
-    gap: 4px;
-  }
-
-  .rounds-header {
-    grid-template-columns: 1fr 100px 80px;
-    gap: 6px;
-  }
-
-  .player-row, .score-row, .round-row {
-    padding: 10px 8px;
-    font-size: 0.85rem;
-  }
-
-  .player-row {
-    grid-template-columns: 40px 1fr 80px 60px;
-    gap: 6px;
-  }
-
-  .score-row {
-    grid-template-columns: 40px 1fr 70px 60px 80px;
-    gap: 4px;
-  }
-
-  .round-row {
-    grid-template-columns: 1fr 100px 80px;
-    gap: 6px;
-  }
-
-  .rank-number {
-    width: 24px;
-    height: 24px;
-    font-size: 0.8rem;
-  }
-
-  .rank-medal {
-    font-size: 1rem;
-  }
-
-  .leaderboard-header h3 {
-    font-size: 1.1rem;
-  }
-
-  .chart-container {
-    height: 60px;
-  }
-
-  .chart-container.chart-expanded {
-    height: 280px;
-  }
-
-  .expand-chart-button {
-    padding: 6px 10px;
-    font-size: 1rem;
-  }
-
-  .period-info {
-    font-size: 0.85rem;
-    text-align: center;
-    padding: 8px;
-    margin: 0 8px;
-    background: var(--color-background-soft);
-    border-radius: 6px;
-  }
-
-  .stats-container {
-    padding: 0 8px;
-  }
-}
-
-/* Small mobile styles */
-@media (max-width: 480px) {
-  .server-details-container {
-    padding: 0;
-  }
-
-  .server-details-header {
-    gap: 12px;
-    padding: 12px 5px;
-    margin-bottom: 12px;
-  }
-
-  .server-name-container h2 {
-    font-size: 1.2rem;
-    line-height: 1.3;
-  }
-
-  .back-button {
-    padding: 8px 12px;
-    font-size: 0.9rem;
-  }
-
-  .rankings-button {
-    padding: 10px 14px;
-    font-size: 0.9rem;
-  }
-
-  .leaderboard-section {
-    padding: 12px 8px;
-  }
-
-  .leaderboard-header {
-    margin-bottom: 12px;
-    padding-bottom: 12px;
-  }
-
-  .leaderboard-header h3 {
-    font-size: 1rem;
-  }
-
-  .players-header, .scores-header, .rounds-header {
-    padding: 8px 6px;
-    font-size: 0.7rem;
-  }
-
-  .players-header {
-    grid-template-columns: 35px 1fr 70px 50px;
-    gap: 4px;
-  }
-
-  .scores-header {
-    grid-template-columns: 35px 1fr 60px 50px 70px;
-    gap: 3px;
-  }
-
-  .rounds-header {
-    grid-template-columns: 1fr 90px 70px;
-    gap: 4px;
-  }
-
-  .player-row, .score-row, .round-row {
-    padding: 8px 6px;
-    font-size: 0.8rem;
-  }
-
-  .player-row {
-    grid-template-columns: 35px 1fr 70px 50px;
-    gap: 4px;
-  }
-
-  .score-row {
-    grid-template-columns: 35px 1fr 60px 50px 70px;
-    gap: 3px;
-  }
-
-  .round-row {
-    grid-template-columns: 1fr 90px 70px;
-    gap: 4px;
-  }
-
-  .rank-number {
-    width: 20px;
-    height: 20px;
-    font-size: 0.75rem;
-  }
-
-  .rank-medal {
-    font-size: 0.9rem;
-  }
-
-  .player-kd, .score-kd {
-    font-size: 0.8rem;
-    gap: 1px;
-  }
-
-  .chart-container {
-    height: 50px;
-  }
-
-  .chart-container.chart-expanded {
-    height: 250px;
-  }
-
-  .expand-chart-button {
-    padding: 5px 8px;
-    font-size: 0.9rem;
-  }
-
-  .report-link {
-    padding: 3px 6px;
-    font-size: 0.75rem;
-  }
-
-  .badge-active {
-    padding: 2px 6px;
-    font-size: 0.7rem;
-  }
-
-  .round-end-time {
-    font-size: 0.75rem;
-  }
-
-  .period-info {
-    margin: 0 5px;
-  }
-
-  .stats-container {
-    padding: 0 5px;
-  }
-
-  /* Make player names more readable on small screens */
-  .player-name, .score-name {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* Adjust map names for small screens */
-  .score-map, .round-map {
-    font-size: 0.75rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
-/* Extra small screens */
-@media (max-width: 360px) {
-  .server-details-container {
-    padding: 0;
-  }
-
-  .server-name-container h2 {
-    font-size: 1.1rem;
-  }
-
-  .players-header {
-    grid-template-columns: 30px 1fr 60px 45px;
-  }
-
-  .scores-header {
-    grid-template-columns: 30px 1fr 50px 45px 60px;
-  }
-
-  .player-row {
-    grid-template-columns: 30px 1fr 60px 45px;
-  }
-
-  .score-row {
-    grid-template-columns: 30px 1fr 50px 45px 60px;
-  }
-
-  .rank-number {
-    width: 18px;
-    height: 18px;
-    font-size: 0.7rem;
-  }
-
-  .rank-medal {
-    font-size: 0.8rem;
-  }
 }
 </style>
