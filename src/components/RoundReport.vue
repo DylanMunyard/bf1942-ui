@@ -26,6 +26,7 @@ const isDragging = ref(false);
 const scrubberElement = ref<HTMLElement | null>(null);
 const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
 const isLiveUpdating = ref(false);
+const selectedTeamTab = ref(0); // For mobile tabbed interface
 
 // Fetch round report when component is mounted or when props change
 const fetchData = async () => {
@@ -525,6 +526,106 @@ const goBack = () => {
             </div>
           </div>
           
+          <!-- Mobile Team Tabs -->
+          <div class="mobile-team-tabs">
+            <div class="tab-buttons">
+              <button 
+                v-for="(team, index) in teamGroups" 
+                :key="team.teamName"
+                class="tab-button"
+                :class="{ 'active': selectedTeamTab === index }"
+                @click="selectedTeamTab = index"
+              >
+                <span class="team-icon">🛡️</span>
+                {{ team.teamName }}
+                <span class="team-score-badge">{{ team.totalScore.toLocaleString() }}</span>
+              </button>
+            </div>
+            <div class="tab-content">
+              <div 
+                v-for="(team, index) in teamGroups" 
+                :key="team.teamName"
+                v-show="selectedTeamTab === index"
+                class="team-column mobile-tab-panel"
+                :class="`team-${team.teamName.toLowerCase()}`"
+              >
+                <!-- Team Header -->
+                <div class="team-header">
+                  <div class="team-name">
+                    <span class="team-icon">🛡️</span>
+                    {{ team.teamName }}
+                  </div>
+                  <div class="team-stats">
+                    <div class="team-stat">
+                      <span class="stat-label">Score</span>
+                      <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
+                    </div>
+                    <div class="team-stat">
+                      <span class="stat-label">K/D</span>
+                      <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Team Players -->
+                <div class="team-players">
+                  <div class="players-header">
+                    <div class="header-rank">#</div>
+                    <div class="header-player">Player</div>
+                    <div class="header-score">Score</div>
+                    <div class="header-kd">K/D</div>
+                    <div class="header-ping">Ping</div>
+                  </div>
+                  
+                  <div class="players-list">
+                    <div
+                      v-for="player in team.players"
+                      :key="player.playerName"
+                      class="player-row"
+                      :class="{ 
+                        'top-player': player.rank === 1
+                      }"
+                    >
+                      <div class="player-rank">
+                        <span v-if="player.rank === 1" class="rank-medal">🥇</span>
+                        <span v-else-if="player.rank === 2" class="rank-medal">🥈</span>
+                        <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
+                        <span v-else class="rank-number">{{ player.rank }}</span>
+                      </div>
+                      <div class="player-name">
+                        <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
+                          {{ player.playerName }}
+                        </router-link>
+                      </div>
+                      <div class="player-score">{{ player.score.toLocaleString() }}</div>
+                      <div class="player-kd">
+                        <div class="kd-section">
+                          <span class="kd-label">K/D:</span>
+                          <span class="kd-values">
+                            <span class="kills">{{ player.kills }}</span>
+                            <span class="separator">/</span>
+                            <span class="deaths">{{ player.deaths }}</span>
+                          </span>
+                        </div>
+                        <div class="ping-section">
+                          <span class="ping-label">Ping:</span>
+                          <span class="player-ping" :class="{ 
+                            'ping-good': player.ping < 50, 
+                            'ping-ok': player.ping >= 50 && player.ping < 100,
+                            'ping-bad': player.ping >= 100
+                          }">
+                            {{ player.ping }}ms
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Teams Grid -->
           <div class="teams-container">
             <div 
               v-for="team in teamGroups" 
@@ -613,6 +714,11 @@ const goBack = () => {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 
@@ -875,6 +981,11 @@ body.dragging {
 
 body.dragging * {
   cursor: grabbing !important;
+}
+
+/* Mobile Team Tabs - Hidden on desktop */
+.mobile-team-tabs {
+  display: none;
 }
 
 .teams-container {
@@ -1153,5 +1264,656 @@ body.dragging * {
 @keyframes live-blink {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0.3; }
+}
+
+/* Base mobile improvements */
+.round-report-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Tablet styles */
+@media (max-width: 1024px) {
+  .teams-container {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+  }
+  
+  .round-report-container {
+    padding: 15px;
+  }
+  
+  .leaderboard-section {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .round-report-container {
+    padding: 8px;
+  }
+
+  /* Show mobile tabs, hide desktop grid */
+  .mobile-team-tabs {
+    display: block;
+  }
+
+  .teams-container {
+    display: none;
+  }
+
+  /* Mobile tab styles */
+  .tab-buttons {
+    display: flex;
+    background: var(--color-background-mute);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 12px;
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 80px;
+    white-space: nowrap;
+  }
+
+  .tab-button.active {
+    background: var(--color-primary);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .tab-button:hover:not(.active) {
+    background: var(--color-background-soft);
+    color: var(--color-text);
+  }
+
+  .team-score-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+
+  .tab-button.active .team-score-badge {
+    opacity: 1;
+  }
+
+  .tab-content {
+    min-height: 400px;
+  }
+
+  .mobile-tab-panel {
+    width: 100%;
+    margin: 0;
+  }
+
+  .round-report-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+
+  .header-left {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .header-titles h2 {
+    font-size: 1.3rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin: 0;
+  }
+
+  .back-button {
+    width: fit-content;
+    padding: 6px 10px;
+  }
+
+  .leaderboard-section {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .leaderboard-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  .timeline-section {
+    margin: 15px 0;
+  }
+
+  .timeline-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+    margin-bottom: 8px;
+  }
+
+  .timeline-controls-compact {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .instructions-text {
+    font-size: 0.75rem;
+    text-align: center;
+    padding: 4px 8px;
+  }
+
+
+
+  .team-header {
+    padding: 12px;
+  }
+
+  .team-stats {
+    gap: 12px;
+  }
+
+  /* Mobile leaderboard layout - two rows per player */
+  .players-header {
+    display: grid;
+    grid-template-columns: 30px 1fr 70px;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+  }
+
+  .header-kd,
+  .header-ping {
+    display: none;
+  }
+
+  .player-row {
+    display: grid;
+    grid-template-columns: 30px 1fr 70px;
+    gap: 8px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .player-row .player-kd,
+  .player-row .player-ping {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .player-row .player-kd {
+    border-top: none;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--color-background-mute);
+    padding: 6px 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+  }
+
+  .kd-section,
+  .ping-section {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .ping-section {
+    align-items: center;
+  }
+
+  .kd-label,
+  .ping-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    line-height: 1;
+  }
+
+  .ping-label {
+    padding: 2px 0;
+  }
+
+  .kd-values {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  /* Preserve ping styling in mobile layout */
+  .player-row .player-ping {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .player-row .player-ping.ping-good {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+  }
+
+  .player-row .player-ping.ping-ok {
+    background: rgba(255, 152, 0, 0.2);
+    color: #ff9800;
+  }
+
+  .player-row .player-ping.ping-bad {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+  }
+
+  .rank-medal {
+    font-size: 1.1rem;
+  }
+
+  .rank-number {
+    width: 22px;
+    height: 22px;
+    font-size: 0.8rem;
+  }
+
+  .match-meta {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .game-id {
+    font-size: 0.65rem;
+  }
+
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+  }
+}
+
+/* Small mobile styles */
+@media (max-width: 480px) {
+  .round-report-container {
+    padding: 4px;
+  }
+
+  /* Ensure mobile tabs are shown and desktop grid is hidden */
+  .mobile-team-tabs {
+    display: block;
+  }
+
+  .teams-container {
+    display: none;
+  }
+
+  /* Smaller tab buttons for small screens */
+  .tab-button {
+    font-size: 0.75rem;
+    padding: 6px 4px;
+    min-width: 70px;
+  }
+
+  .team-score-badge {
+    font-size: 0.65rem;
+  }
+
+  .tab-content {
+    min-height: 350px;
+  }
+
+  .round-report-header {
+    gap: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
+
+  .header-titles h2 {
+    font-size: 1.2rem;
+    line-height: 1.3;
+  }
+
+  .back-button {
+    padding: 5px 8px;
+    font-size: 0.9rem;
+  }
+
+  .leaderboard-section {
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+
+  .leaderboard-header {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
+
+  .timeline-section {
+    margin: 10px 0;
+  }
+
+  .timeline-header {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .instructions-text {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+
+  .compact-playback {
+    padding: 3px 6px;
+    gap: 4px;
+  }
+
+  .mini-button {
+    padding: 3px 5px;
+    font-size: 0.9rem;
+  }
+
+  .mini-select {
+    font-size: 0.7rem;
+    padding: 1px 3px;
+    min-width: 40px;
+  }
+
+  .elapsed-badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+
+  .team-header {
+    padding: 8px;
+  }
+
+  .team-name {
+    font-size: 0.9rem;
+  }
+
+  .team-stats {
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+  }
+
+  .stat-value {
+    font-size: 0.8rem;
+  }
+
+  .players-header {
+    grid-template-columns: 25px 1fr 60px;
+    gap: 6px;
+    padding: 6px 8px;
+    font-size: 0.7rem;
+  }
+
+  .player-row {
+    grid-template-columns: 25px 1fr 60px;
+    gap: 6px;
+    padding: 8px;
+    font-size: 0.85rem;
+  }
+
+  .player-row .player-kd {
+    font-size: 0.75rem;
+    gap: 6px;
+  }
+
+  .kd-label,
+  .ping-label {
+    font-size: 0.65rem;
+  }
+
+  .rank-medal {
+    font-size: 1rem;
+  }
+
+  .rank-number {
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+  }
+
+  .player-link {
+    font-size: 0.85rem;
+  }
+
+  .player-score, .player-kd, .player-ping {
+    font-size: 0.8rem;
+  }
+
+  .match-meta {
+    font-size: 0.7rem;
+    gap: 3px;
+  }
+
+  .game-id {
+    font-size: 0.6rem;
+    padding: 1px 3px;
+  }
+
+  .status-badge {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+  }
+
+  .mini-progress-bar {
+    height: 16px;
+  }
+
+  .scrubber-dot {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .round-report-container {
+    padding: 2px;
+  }
+
+  /* Ensure mobile tabs are shown and desktop grid is hidden */
+  .mobile-team-tabs {
+    display: block;
+  }
+
+  .teams-container {
+    display: none;
+  }
+
+  /* Even smaller tab buttons for extra small screens */
+  .tab-button {
+    font-size: 0.7rem;
+    padding: 5px 3px;
+    min-width: 60px;
+  }
+
+  .team-score-badge {
+    font-size: 0.6rem;
+  }
+
+  .tab-content {
+    min-height: 300px;
+  }
+
+  .round-report-header {
+    gap: 4px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+  }
+
+  .header-titles h2 {
+    font-size: 1.1rem;
+  }
+
+  .back-button {
+    padding: 4px 6px;
+    font-size: 0.85rem;
+  }
+
+  .leaderboard-section {
+    padding: 6px;
+    margin-bottom: 6px;
+  }
+
+  .leaderboard-header {
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+  }
+
+  .timeline-section {
+    margin: 8px 0;
+  }
+
+  .timeline-header {
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .instructions-text {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+  }
+
+  .team-header {
+    padding: 6px;
+  }
+
+  .team-name {
+    font-size: 0.85rem;
+  }
+
+  .team-stats {
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+  }
+
+  .stat-value {
+    font-size: 0.75rem;
+  }
+
+  .players-header {
+    grid-template-columns: 22px 1fr 55px;
+    gap: 4px;
+    padding: 4px 6px;
+    font-size: 0.65rem;
+  }
+
+  .player-row {
+    grid-template-columns: 22px 1fr 55px;
+    gap: 4px;
+    padding: 6px;
+    font-size: 0.8rem;
+  }
+
+  .player-row .player-kd {
+    font-size: 0.7rem;
+    gap: 4px;
+  }
+
+  .kd-label,
+  .ping-label {
+    font-size: 0.6rem;
+  }
+
+  .rank-medal {
+    font-size: 0.9rem;
+  }
+
+  .rank-number {
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+  }
+
+  .player-link {
+    font-size: 0.8rem;
+  }
+
+  .player-score, .player-kd, .player-ping {
+    font-size: 0.75rem;
+  }
+
+  .match-meta {
+    font-size: 0.65rem;
+    gap: 2px;
+  }
+
+  .game-id {
+    font-size: 0.55rem;
+    padding: 1px 2px;
+  }
+
+  .status-badge {
+    font-size: 0.65rem;
+    padding: 1px 3px;
+  }
+
+  .compact-playback {
+    padding: 2px 4px;
+    gap: 3px;
+  }
+
+  .mini-button {
+    padding: 2px 4px;
+    font-size: 0.8rem;
+  }
+
+  .mini-select {
+    font-size: 0.65rem;
+    padding: 1px 2px;
+    min-width: 35px;
+  }
+
+  .elapsed-badge {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+  }
+
+  .mini-progress-bar {
+    height: 14px;
+  }
+
+  .scrubber-dot {
+    width: 10px;
+    height: 10px;
+  }
 }
 </style>
