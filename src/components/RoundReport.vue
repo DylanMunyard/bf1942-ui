@@ -229,7 +229,7 @@ const teamGroups = computed(() => {
     totalScore: players.reduce((sum, player) => sum + player.score, 0),
     totalKills: players.reduce((sum, player) => sum + player.kills, 0),
     totalDeaths: players.reduce((sum, player) => sum + player.deaths, 0)
-  })); // No sorting - just display teams as they are
+  })).sort((a, b) => a.teamName.localeCompare(b.teamName)); // Sort teams alphabetically by name
 });
 
 // Cleanup on unmount - ensure all intervals are cleared
@@ -1295,7 +1295,16 @@ body.dragging * {
 /* Mobile styles */
 @media (max-width: 768px) {
   .round-report-container {
-    padding: 8px;
+    padding: 4px;
+  }
+
+  /* Remove leaderboard container styling on mobile */
+  .leaderboard-section {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 12px;
   }
 
   /* Show mobile tabs, hide desktop grid */
@@ -1393,11 +1402,6 @@ body.dragging * {
   .back-button {
     width: fit-content;
     padding: 6px 10px;
-  }
-
-  .leaderboard-section {
-    padding: 12px;
-    margin-bottom: 12px;
   }
 
   .leaderboard-header {
@@ -1563,7 +1567,7 @@ body.dragging * {
 /* Small mobile styles */
 @media (max-width: 480px) {
   .round-report-container {
-    padding: 4px;
+    padding: 2px;
   }
 
   /* Ensure mobile tabs are shown and desktop grid is hidden */
@@ -1606,10 +1610,7 @@ body.dragging * {
     font-size: 0.9rem;
   }
 
-  .leaderboard-section {
-    padding: 8px;
-    margin-bottom: 8px;
-  }
+
 
   .leaderboard-header {
     margin-bottom: 8px;
@@ -1784,10 +1785,7 @@ body.dragging * {
     font-size: 0.85rem;
   }
 
-  .leaderboard-section {
-    padding: 6px;
-    margin-bottom: 6px;
-  }
+
 
   .leaderboard-header {
     margin-bottom: 6px;
