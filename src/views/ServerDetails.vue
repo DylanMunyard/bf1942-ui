@@ -903,16 +903,17 @@ const toggleChartExpansion = () => {
 /* Mobile styles */
 @media (max-width: 768px) {
   .server-details-container {
-    padding: 15px;
+    padding: 0;
     border-radius: 0;
     box-shadow: none;
+    background: transparent;
   }
 
   .server-details-header {
     flex-direction: column;
     gap: 15px;
     align-items: stretch;
-    padding-bottom: 15px;
+    padding: 15px 8px;
     margin-bottom: 15px;
   }
 
@@ -950,12 +951,12 @@ const toggleChartExpansion = () => {
   }
 
   .leaderboard-section {
-    padding: 15px;
+    padding: 15px 10px;
     border-radius: 8px;
   }
 
   .players-header, .scores-header {
-    padding: 10px 12px;
+    padding: 10px 8px;
     font-size: 0.75rem;
   }
 
@@ -975,7 +976,7 @@ const toggleChartExpansion = () => {
   }
 
   .player-row, .score-row, .round-row {
-    padding: 10px 12px;
+    padding: 10px 8px;
     font-size: 0.85rem;
   }
 
@@ -1025,20 +1026,25 @@ const toggleChartExpansion = () => {
     font-size: 0.85rem;
     text-align: center;
     padding: 8px;
+    margin: 0 8px;
     background: var(--color-background-soft);
     border-radius: 6px;
+  }
+
+  .stats-container {
+    padding: 0 8px;
   }
 }
 
 /* Small mobile styles */
 @media (max-width: 480px) {
   .server-details-container {
-    padding: 10px;
+    padding: 0;
   }
 
   .server-details-header {
     gap: 12px;
-    padding-bottom: 12px;
+    padding: 12px 5px;
     margin-bottom: 12px;
   }
 
@@ -1058,7 +1064,7 @@ const toggleChartExpansion = () => {
   }
 
   .leaderboard-section {
-    padding: 12px;
+    padding: 12px 8px;
   }
 
   .leaderboard-header {
@@ -1071,7 +1077,7 @@ const toggleChartExpansion = () => {
   }
 
   .players-header, .scores-header, .rounds-header {
-    padding: 8px 10px;
+    padding: 8px 6px;
     font-size: 0.7rem;
   }
 
@@ -1091,7 +1097,7 @@ const toggleChartExpansion = () => {
   }
 
   .player-row, .score-row, .round-row {
-    padding: 8px 10px;
+    padding: 8px 6px;
     font-size: 0.8rem;
   }
 
@@ -1152,6 +1158,14 @@ const toggleChartExpansion = () => {
     font-size: 0.75rem;
   }
 
+  .period-info {
+    margin: 0 5px;
+  }
+
+  .stats-container {
+    padding: 0 5px;
+  }
+
   /* Make player names more readable on small screens */
   .player-name, .score-name {
     min-width: 0;
@@ -1172,7 +1186,7 @@ const toggleChartExpansion = () => {
 /* Extra small screens */
 @media (max-width: 360px) {
   .server-details-container {
-    padding: 8px;
+    padding: 0;
   }
 
   .server-name-container h2 {

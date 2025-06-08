@@ -32,13 +32,19 @@ import Sidebar from '../components/Sidebar.vue';
   .content-area {
     margin-right: 50px; /* Adjusted for mobile sidebar width */
     width: calc(100% - 50px);
-    padding: 15px;
+    padding: 15px 8px;
   }
 }
 
 @media (max-width: 480px) {
   .content-area {
-    padding: 10px;
+    padding: 10px 5px;
+  }
+}
+
+@media (max-width: 360px) {
+  .content-area {
+    padding: 8px 3px;
   }
 }
 </style> 
