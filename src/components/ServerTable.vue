@@ -638,4 +638,12 @@ th {
   .mobile-only { display: block; }
   .map-cell, .players-column, .join-link { display: none !important; }
 }
+
+/* Add CSS to hide all columns except the first on mobile */
+@media (max-width: 768px) {
+  .table-scroll-wrapper table th:not(:first-child),
+  .table-scroll-wrapper table td:not(:first-child) {
+    display: none !important;
+  }
+}
 </style>

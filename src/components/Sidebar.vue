@@ -19,16 +19,12 @@
       </div>
       <router-link to="/servers/bf1942" active-class="active" class="nav-item mobile-only" title="42">
         <i class="icon-bf1942"></i>
-        <span class="nav-text">42</span>
       </router-link>
       <router-link to="/servers/fh2" active-class="active" class="nav-item mobile-only" title="FH2">
         <i class="icon-fh2"></i>
-        <span class="nav-text">FH2</span>
       </router-link>
       <router-link to="/players" active-class="active" class="nav-item">
-        <div class="icon-placeholder">
-          <!-- Icon will be provided shortly -->
-        </div>
+        <i class="icon-players"></i>
       </router-link>
       <div class="nav-item theme-toggle-item" @click="toggleDarkMode" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
         <span class="toggle-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
@@ -192,10 +188,41 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 
 .icon-bf1942 {
   background-image: url('../assets/bf1942.png');
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 .icon-fh2 {
   background-image: url('../assets/fh2.png');
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.icon-players {
+  background-image: url('../assets/players.png');
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Round icons */
+.icon-server,
+.icon-players,
+.icon-bf1942,
+.icon-fh2 {
+  border-radius: 50%;
+  overflow: hidden;
 }
 
 /* Mobile responsiveness */
