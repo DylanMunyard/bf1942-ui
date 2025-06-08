@@ -197,7 +197,7 @@ onUnmounted(() => {
                   <!-- Mobile condensed map and player info -->
                   <div class="mobile-details mobile-only">
                     <div class="mobile-detail"><strong>Map:</strong> {{ server.mapName }}</div>
-                    <div class="mobile-detail" @click="showPlayers(server)" style="cursor: pointer;"><strong>Players:</strong> {{ server.numPlayers }} / {{ server.maxPlayers }}</div>
+                    <div class="mobile-detail players-link" @click="showPlayers(server)"><strong>Players:</strong> {{ server.numPlayers }} / {{ server.maxPlayers }}</div>
                   </div>
                 </td>
                 <td class="players-column" @click="showPlayers(server)">
@@ -643,6 +643,26 @@ th {
 @media (max-width: 768px) {
   .mobile-only { display: block; }
   .map-cell, .players-column, .join-link { display: none !important; }
+}
+
+/* Mobile players link styling */
+@media (max-width: 768px) {
+  .players-link {
+    cursor: pointer;
+    color: var(--color-primary);
+    transition: all 0.2s ease;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  
+  .players-link:hover {
+    background-color: var(--color-background-soft);
+    text-decoration: underline;
+  }
+  
+  .players-link:active {
+    transform: translateY(1px);
+  }
 }
 
 /* Add CSS to hide all columns except the first on mobile */
