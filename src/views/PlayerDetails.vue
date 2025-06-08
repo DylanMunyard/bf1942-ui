@@ -341,7 +341,6 @@ onMounted(() => {
           Back to Players
         </router-link>
         <h2 class="player-name-heading">Player Statistics: {{ playerName }}</h2>
-        <span v-if="playerStats && playerStats.isActive" class="status-badge active">Active</span>
       </div>
     </div>
     <div class="player-stats-body">
@@ -354,13 +353,14 @@ onMounted(() => {
       </div>
       <div v-else-if="playerStats" class="stats-container">
         <div v-if="playerStats.isActive && playerStats.currentServer" class="current-server-banner">
-          <div>
+          <div class="server-info-line">
             <router-link
               :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}`"
               class="server-link"
             >
               {{ playerStats.currentServer.serverName }}
             </router-link>
+            <span v-if="playerStats && playerStats.isActive" class="status-badge active">Active</span>
             <span v-if="playerStats.currentServer.gameId" class="game-id">
               Game: {{ playerStats.currentServer.gameId }}
             </span>
@@ -475,9 +475,9 @@ onMounted(() => {
                 <thead>
                   <tr>
                     <th>Server Name</th>
-                    <th>Rank</th>
-                    <th>Score</th>
-                    <th>Ping</th>
+                    <th class="desktop-only">Rank</th>
+                    <th class="desktop-only">Score</th>
+                    <th class="desktop-only">Ping</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -489,10 +489,25 @@ onMounted(() => {
                       >
                         {{ ranking.serverName }}
                       </router-link>
+                      <div class="mobile-only ranking-details">
+                        <span class="detail-item">Rank: {{ ranking.rankDisplay }}</span>
+                        <span class="detail-separator">•</span>
+                        <span class="detail-item">Score: {{ ranking.scoreDisplay }}</span>
+                        <span class="detail-separator">•</span>
+                        <span class="detail-item">
+                          <span class="player-ping" :class="{
+                            'ping-good': ranking.averagePing < 50,
+                            'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                            'ping-bad': ranking.averagePing >= 100
+                          }">
+                            {{ ranking.averagePing }}ms
+                          </span>
+                        </span>
+                      </div>
                     </td>
-                    <td>{{ ranking.rankDisplay }}</td>
-                    <td>{{ ranking.scoreDisplay }}</td>
-                    <td>
+                    <td class="desktop-only">{{ ranking.rankDisplay }}</td>
+                    <td class="desktop-only">{{ ranking.scoreDisplay }}</td>
+                    <td class="desktop-only">
                       <span class="player-ping" :class="{
                         'ping-good': ranking.averagePing < 50,
                         'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
@@ -520,25 +535,25 @@ onMounted(() => {
                         {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </th>
-                    <th @click="changeFavoriteMapsSort('minutesPlayed')" class="sortable-header">
+                    <th @click="changeFavoriteMapsSort('minutesPlayed')" class="sortable-header desktop-only">
                       Play Time
                       <span v-if="favoriteMapsSortField === 'minutesPlayed'" class="sort-indicator">
                         {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </th>
-                    <th @click="changeFavoriteMapsSort('kdRatio')" class="sortable-header">
+                    <th @click="changeFavoriteMapsSort('kdRatio')" class="sortable-header desktop-only">
                       K/D Ratio
                       <span v-if="favoriteMapsSortField === 'kdRatio'" class="sort-indicator">
                         {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </th>
-                    <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header">
+                    <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header desktop-only">
                       🔫
                       <span v-if="favoriteMapsSortField === 'totalKills'" class="sort-indicator">
                         {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </th>
-                    <th @click="changeFavoriteMapsSort('totalDeaths')" class="sortable-header">
+                    <th @click="changeFavoriteMapsSort('totalDeaths')" class="sortable-header desktop-only">
                       💀
                       <span v-if="favoriteMapsSortField === 'totalDeaths'" class="sort-indicator">
                         {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
@@ -548,11 +563,22 @@ onMounted(() => {
                 </thead>
                 <tbody>
                   <tr v-for="(map, index) in sortedFavoriteMaps" :key="index">
-                    <td>{{ map.mapName }}</td>
-                    <td>{{ formatPlayTime(map.minutesPlayed) }}</td>
-                    <td>{{ map.kdRatio.toFixed(2) }}</td>
-                    <td>{{ map.totalKills }}</td>
-                    <td>{{ map.totalDeaths }}</td>
+                    <td>
+                      {{ map.mapName }}
+                      <div class="mobile-only map-details">
+                        <span class="detail-item">{{ formatPlayTime(map.minutesPlayed) }}</span>
+                        <span class="detail-separator">•</span>
+                        <span class="detail-item">K/D: {{ map.kdRatio.toFixed(2) }}</span>
+                        <span class="detail-separator">•</span>
+                        <span class="detail-item">
+                          <span class="kills">{{ map.totalKills }}</span>/<span class="deaths">{{ map.totalDeaths }}</span>
+                        </span>
+                      </div>
+                    </td>
+                    <td class="desktop-only">{{ formatPlayTime(map.minutesPlayed) }}</td>
+                    <td class="desktop-only">{{ map.kdRatio.toFixed(2) }}</td>
+                    <td class="desktop-only">{{ map.totalKills }}</td>
+                    <td class="desktop-only">{{ map.totalDeaths }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -573,15 +599,15 @@ onMounted(() => {
             <table>
               <thead>
                 <tr>
-                  <th>Time</th>
-                  <th>Server Name</th>
-                  <th>Map</th>
-                  <th>Game Type</th>
-                  <th>Score</th>
-                  <th>🔫</th>
-                  <th>💀</th>
-                  <th>K/D</th>
-                  <th>Status</th>
+                  <th>Session</th>
+                  <th class="desktop-only">Server Name</th>
+                  <th class="desktop-only">Map</th>
+                  <th class="desktop-only">Game Type</th>
+                  <th class="desktop-only">Score</th>
+                  <th class="desktop-only">🔫</th>
+                  <th class="desktop-only">💀</th>
+                  <th class="desktop-only">K/D</th>
+                  <th class="desktop-only">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -597,15 +623,34 @@ onMounted(() => {
                       <div>{{ formatRelativeTime(session.startTime) }}</div>
                       <div class="table-secondary-text">{{ formatDate(session.startTime) }}</div>
                     </router-link>
+                    <div class="mobile-only session-details">
+                      <div class="session-info">
+                        <span class="detail-item">{{ session.serverName }}</span>
+                        <span class="detail-separator">•</span>
+                        <span class="detail-item">{{ session.mapName }}</span>
+                        <span class="detail-separator">•</span>
+                        <span class="detail-item">{{ session.gameType }}</span>
+                      </div>
+                      <div class="session-stats">
+                        <span class="detail-item">Score: {{ session.totalScore }}</span>
+                        <span class="detail-separator">•</span>
+                        <span class="detail-item">
+                          <span class="kills">{{ session.totalKills }}</span>/<span class="deaths">{{ session.totalDeaths }}</span>
+                        </span>
+                        <span class="detail-separator">•</span>
+                        <span class="detail-item">K/D: {{ calculateKDR(session.totalKills, session.totalDeaths) }}</span>
+                        <span v-if="session.isActive" class="active-session-badge">Active</span>
+                      </div>
+                    </div>
                   </td>
-                  <td>{{ session.serverName }}</td>
-                  <td>{{ session.mapName }}</td>
-                  <td>{{ session.gameType }}</td>
-                  <td>{{ session.totalScore }}</td>
-                  <td>{{ session.totalKills }}</td>
-                  <td>{{ session.totalDeaths }}</td>
-                  <td>{{ calculateKDR(session.totalKills, session.totalDeaths) }}</td>
-                  <td>
+                  <td class="desktop-only">{{ session.serverName }}</td>
+                  <td class="desktop-only">{{ session.mapName }}</td>
+                  <td class="desktop-only">{{ session.gameType }}</td>
+                  <td class="desktop-only">{{ session.totalScore }}</td>
+                  <td class="desktop-only">{{ session.totalKills }}</td>
+                  <td class="desktop-only">{{ session.totalDeaths }}</td>
+                  <td class="desktop-only">{{ calculateKDR(session.totalKills, session.totalDeaths) }}</td>
+                  <td class="desktop-only">
                     <span v-if="session.isActive" class="active-session-badge">Active</span>
                   </td>
                 </tr>
@@ -622,19 +667,574 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Show/hide classes for responsive design */
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
+/* Base mobile improvements */
 .player-details-container {
-  background-color: var(--color-background);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Tablet styles */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+  }
+  
+  .player-details-container {
+    padding: 8px;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .player-details-container {
+    padding: 4px;
+  }
+
+  .player-stats-header {
+    flex-direction: column;
+    gap: 6px;
+    align-items: stretch;
+    padding: 4px 0;
+    margin-bottom: 6px;
+  }
+
+  .player-name-container {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .player-name-heading {
+    font-size: 1.3rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin: 0;
+  }
+
+  .back-button {
+    width: fit-content;
+    padding: 6px 10px;
+  }
+
+  .stats-container {
+    padding: 0;
+    gap: 6px;
+  }
+
+  .stats-section {
+    padding: 6px 0;
+    margin: 0;
+    background: transparent;
+    border-radius: 0;
+  }
+
+  .stats-section h3 {
+    font-size: 1.1rem;
+    margin: 0 0 6px 0;
+    padding: 0 0 4px 0;
+  }
+
+  .section-header-with-action h3 {
+    font-size: 1.1rem;
+  }
+
+  .view-all-button {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .best-session-container {
+    grid-column: 1;
+  }
+
+  .insights-period {
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 4px;
+    margin: 0 0 6px 0;
+    background: var(--color-background-soft);
+    border-radius: 6px;
+  }
+
+  .insights-subsection {
+    margin-top: 12px;
+    padding-top: 8px;
+  }
+
+  .insights-subsection h4 {
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+
+  .activity-chart-container {
+    height: 60px;
+    margin: 6px 0;
+  }
+
+  .time-period-labels {
+    margin: 4px 0 2px 0;
+  }
+
+  .period-name {
+    font-size: 0.75rem;
+  }
+
+  .period-hours {
+    font-size: 0.65rem;
+  }
+
+  /* Show/hide content for mobile */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* Table improvements for mobile */
+  .recent-servers-table, .server-rankings-table, .favorite-maps-table {
+    overflow-x: auto;
+    margin: 0;
+  }
+
+  table {
+    font-size: 0.85rem;
+  }
+
+  th, td {
+    padding: 6px 4px;
+  }
+
+  th {
+    font-size: 0.75rem;
+  }
+
+  .table-secondary-text {
+    font-size: 0.75rem;
+    margin-top: 2px;
+  }
+
+  .time-link {
+    font-size: 0.85rem;
+  }
+
+  .current-server-banner {
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+  }
+
+  .session-stats {
+    font-size: 0.8rem;
+    margin-top: 4px;
+  }
+
+  .best-session-card {
+    padding: 8px;
+    margin-top: 4px;
+  }
+
+  .best-session-score {
+    font-size: 1.5rem;
+    margin-right: 6px;
+  }
+
+  .best-session-badge {
+    padding: 3px 6px;
+    font-size: 0.8rem;
+  }
+
+  .best-session-details {
+    font-size: 0.8rem;
+    line-height: 1.3;
+  }
+
+  .stat-badge {
+    font-size: 0.8rem;
+    padding: 3px 6px;
+  }
+
+  .player-ping {
+    font-size: 0.75rem;
+    padding: 3px 5px;
+  }
+
+  .active-session-badge {
+    font-size: 0.75rem;
+    padding: 2px 5px;
+  }
+
+  /* Mobile details styling */
+  .ranking-details, .map-details, .session-details {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+
+  .session-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .session-info, .session-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .detail-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .detail-separator {
+    color: var(--color-text-muted);
+    font-weight: normal;
+    opacity: 0.6;
+  }
+}
+
+/* Small mobile styles */
+@media (max-width: 480px) {
+  .player-details-container {
+    padding: 2px;
+  }
+
+  .player-stats-header {
+    gap: 4px;
+    padding: 2px 0;
+    margin-bottom: 4px;
+  }
+
+  .player-name-heading {
+    font-size: 1.2rem;
+    line-height: 1.3;
+  }
+
+  .back-button {
+    padding: 5px 8px;
+    font-size: 0.9rem;
+  }
+
+  .stats-container {
+    gap: 4px;
+  }
+
+  .stats-section {
+    padding: 4px 0;
+  }
+
+  .stats-section h3 {
+    font-size: 1rem;
+    margin: 0 0 4px 0;
+    padding: 0 0 2px 0;
+  }
+
+  .section-header-with-action h3 {
+    font-size: 1rem;
+  }
+
+  .view-all-button {
+    padding: 4px 6px;
+    font-size: 0.8rem;
+  }
+
+  .stats-grid {
+    gap: 8px;
+  }
+
+  .insights-period {
+    margin: 0 0 4px 0;
+    padding: 3px;
+    font-size: 0.8rem;
+  }
+
+  .insights-subsection {
+    margin-top: 10px;
+    padding-top: 6px;
+  }
+
+  .insights-subsection h4 {
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+  }
+
+  .activity-chart-container {
+    height: 50px;
+    margin: 4px 0;
+  }
+
+  .time-period-labels {
+    margin: 2px 0 1px 0;
+  }
+
+  .period-name {
+    font-size: 0.7rem;
+  }
+
+  .period-hours {
+    font-size: 0.6rem;
+  }
+
+  table {
+    font-size: 0.8rem;
+  }
+
+  th, td {
+    padding: 4px 3px;
+  }
+
+  th {
+    font-size: 0.7rem;
+  }
+
+  .table-secondary-text {
+    font-size: 0.7rem;
+  }
+
+  .time-link {
+    font-size: 0.8rem;
+  }
+
+  .current-server-banner {
+    padding: 4px 6px;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+  }
+
+  .session-stats {
+    font-size: 0.75rem;
+  }
+
+  .best-session-card {
+    padding: 6px;
+  }
+
+  .best-session-score {
+    font-size: 1.3rem;
+    margin-right: 4px;
+  }
+
+  .best-session-badge {
+    padding: 2px 4px;
+    font-size: 0.75rem;
+  }
+
+  .best-session-details {
+    font-size: 0.75rem;
+  }
+
+  .stat-badge {
+    font-size: 0.75rem;
+    padding: 2px 4px;
+  }
+
+  .player-ping {
+    font-size: 0.7rem;
+    padding: 1px 3px;
+  }
+
+  .active-session-badge {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+  }
+
+  .trophy-icon {
+    font-size: 1rem;
+  }
+
+  .activity-chart-container {
+    height: 45px;
+  }
+
+  .stats-grid {
+    gap: 6px;
+  }
+
+  /* Mobile details styling for smaller screens */
+  .ranking-details, .map-details, .session-details {
+    font-size: 0.75rem;
+    margin-top: 3px;
+  }
+
+  .session-info, .session-stats {
+    gap: 3px;
+  }
+
+  .detail-item {
+    font-size: 0.75rem;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .player-details-container {
+    padding: 1px;
+  }
+
+  .player-stats-header {
+    padding: 2px 0;
+  }
+
+  .player-name-heading {
+    font-size: 1.1rem;
+  }
+
+  .back-button {
+    padding: 4px 6px;
+    font-size: 0.85rem;
+  }
+
+  .stats-container {
+    gap: 3px;
+  }
+
+  .stats-section {
+    padding: 3px 0;
+  }
+
+  .insights-period {
+    margin: 0 0 3px 0;
+    padding: 2px;
+    font-size: 0.75rem;
+  }
+
+  .insights-subsection {
+    margin-top: 8px;
+    padding-top: 4px;
+  }
+
+  .insights-subsection h4 {
+    font-size: 0.9rem;
+    margin-bottom: 3px;
+  }
+
+  table {
+    font-size: 0.75rem;
+  }
+
+  th, td {
+    padding: 3px 2px;
+  }
+
+  th {
+    font-size: 0.65rem;
+  }
+
+  .table-secondary-text {
+    font-size: 0.65rem;
+  }
+
+  .time-link {
+    font-size: 0.75rem;
+  }
+
+  .current-server-banner {
+    padding: 3px 4px;
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+  }
+
+  .session-stats {
+    font-size: 0.7rem;
+  }
+
+  .best-session-card {
+    padding: 4px;
+  }
+
+  .best-session-score {
+    font-size: 1.2rem;
+  }
+
+  .best-session-badge {
+    padding: 1px 3px;
+    font-size: 0.7rem;
+  }
+
+  .best-session-details {
+    font-size: 0.7rem;
+  }
+
+  .stat-badge {
+    font-size: 0.7rem;
+    padding: 1px 3px;
+  }
+
+  .player-ping {
+    font-size: 0.65rem;
+    padding: 1px 2px;
+  }
+
+  .active-session-badge {
+    font-size: 0.65rem;
+    padding: 1px 3px;
+  }
+
+  .trophy-icon {
+    font-size: 0.9rem;
+  }
+
+  .activity-chart-container {
+    height: 45px;
+  }
+
+  .stats-grid {
+    gap: 6px;
+  }
+
+  /* Mobile details styling for extra small screens */
+  .ranking-details, .map-details, .session-details {
+    font-size: 0.7rem;
+    margin-top: 2px;
+  }
+
+  .session-info, .session-stats {
+    gap: 2px;
+  }
+
+  .detail-item {
+    font-size: 0.7rem;
+  }
+}
+
+.player-details-container {
+  background-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px;
 }
 
 .player-stats-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--color-border);
+  margin-bottom: 8px;
 }
 
 .player-name-container {
@@ -683,12 +1283,26 @@ onMounted(() => {
 
 .current-server-banner {
   background-color: var(--color-background-mute);
-  padding: 10px 15px;
+  padding: 12px 16px;
   border-radius: 6px;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
   font-weight: bold;
   color: var(--color-heading);
   border-left: 4px solid #4CAF50;
+}
+
+.server-info-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.game-id {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  font-weight: normal;
 }
 
 .session-stats {
@@ -699,7 +1313,7 @@ onMounted(() => {
 }
 
 .player-stats-body {
-  padding-top: 20px;
+  padding: 0;
 }
 
 .loading-container, .error-container, .no-data-container {
@@ -732,31 +1346,31 @@ onMounted(() => {
 .stats-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
 .stats-section {
   background-color: var(--color-background-soft);
   border-radius: 8px;
-  padding: 15px;
+  padding: 8px;
 }
 
 .stats-section h3 {
   margin-top: 0;
-  margin-bottom: 15px;
+  margin-bottom: 8px;
   color: var(--color-heading);
   font-size: 1.2rem;
   border-bottom: 1px solid var(--color-border);
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 
 .section-header-with-action {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 8px;
   border-bottom: 1px solid var(--color-border);
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 
 .section-header-with-action h3 {
@@ -783,7 +1397,7 @@ onMounted(() => {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 15px;
+  gap: 12px;
 }
 
 .stat-item {
@@ -1148,8 +1762,6 @@ tbody tr:hover {
 :root.dark-mode .night-label .period-name {
   color: rgba(149, 117, 205, 0.9); /* Lighter purple for dark mode */
 }
-
-
 
 /* Favorite Maps Table Styles */
 .favorite-maps-table {
