@@ -174,35 +174,39 @@ onUnmounted(() => {
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="servers.length > 0" class="server-info">
       <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Server Name</th>
-              <th>Players</th>
-              <th>Map</th>
-              <th>Game Type</th>
-              <th>Join</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="server in servers" :key="server.guid">
-              <td>
-                <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="server-name-link">
-                  {{ server.name }}
-                </router-link>
-                ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
-              </td>
-              <td class="players-column" @click="showPlayers(server)">
-                {{ server.numPlayers }} / {{ server.maxPlayers }}
-              </td>
-              <td>{{ server.mapName }}</td>
-              <td>{{ server.gameType }}</td>
-              <td>
-                <a href="#" @click.prevent="joinServer(server)" class="join-link">Join Server</a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-scroll-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Server Name</th>
+                <th>Players</th>
+                <th>Map</th>
+                <th>Game Type</th>
+                <th>Join</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="server in servers" :key="server.guid">
+                <td class="server-name-cell">
+                  <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="server-name-link">
+                    {{ server.name }}
+                  </router-link>
+                  <div class="server-details">
+                    ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
+                  </div>
+                </td>
+                <td class="players-column" @click="showPlayers(server)">
+                  {{ server.numPlayers }} / {{ server.maxPlayers }}
+                </td>
+                <td class="map-cell">{{ server.mapName }}</td>
+                <td class="gametype-cell">{{ server.gameType }}</td>
+                <td>
+                  <a href="#" @click.prevent="joinServer(server)" class="join-link">Join Server</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div v-if="tabSwitchLoading" class="table-loading-overlay">
           <div class="loading-spinner"></div>
           <div class="loading-text">Loading data...</div>
@@ -264,12 +268,29 @@ onUnmounted(() => {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+@media (max-width: 768px) {
+  .server-table-container {
+    padding: 15px;
+    margin-right: -15px;
+    margin-left: -15px;
+    border-radius: 0;
+  }
+}
+
 .tabs-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .tabs-container {
+    margin-bottom: 15px;
+  }
 }
 
 .tabs {
@@ -290,6 +311,13 @@ onUnmounted(() => {
   text-decoration: none;
 }
 
+@media (max-width: 768px) {
+  .tab {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+}
+
 .tab:hover {
   background-color: var(--color-background-mute);
 }
@@ -306,6 +334,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 15px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .header-right {
+    gap: 8px;
+  }
 }
 .ai-chat-button {
   padding: 8px 16px;
@@ -317,6 +352,7 @@ onUnmounted(() => {
   cursor: pointer;
   font-size: 16px;
 }
+
 .update-button {
   padding: 8px 16px;
   background-color: var(--color-accent);
@@ -327,24 +363,125 @@ onUnmounted(() => {
   font-size: 16px;
 }
 
+@media (max-width: 768px) {
+  .ai-chat-button,
+  .update-button {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+  
+  .ai-chat-button span,
+  .update-button span {
+    display: none;
+  }
+  
+  .ai-chat-button::after {
+    content: "💬";
+  }
+  
+  .update-button::after {
+    content: "🔄";
+  }
+}
+
 .loading, .error {
   padding: 20px;
   text-align: center;
 }
 
+.table-scroll-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  position: relative;
+}
+
+.table-scroll-wrapper::after {
+  content: "← Swipe to see more →";
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .table-scroll-wrapper::after {
+    opacity: 1;
+  }
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 800px; /* Minimum width to ensure readability */
 }
 
 th, td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
 }
 
 th {
   background-color: var(--color-background-mute);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.server-name-cell {
+  min-width: 300px;
+  max-width: 350px;
+}
+
+.server-name-cell .server-details {
+  font-size: 0.85em;
+  color: var(--color-text-muted, #666);
+  margin-top: 4px;
+}
+
+.map-cell {
+  min-width: 150px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gametype-cell {
+  min-width: 120px;
+}
+
+@media (max-width: 768px) {
+  th, td {
+    padding: 8px;
+    font-size: 0.9em;
+  }
+  
+  .server-name-cell {
+    min-width: 250px;
+    max-width: 280px;
+  }
+  
+  .server-name-cell .server-details {
+    font-size: 0.8em;
+  }
+  
+  .map-cell {
+    min-width: 120px;
+    max-width: 150px;
+  }
+  
+  .gametype-cell {
+    min-width: 100px;
+  }
 }
 
 .server-name-link {
