@@ -441,7 +441,7 @@ const toggleChartExpansion = () => {
                     </div>
                     <div class="round-details mobile-only">
                       <span class="detail-item">
-                        <span v-if="round.isActive && index === 0" class="badge-active">In Progress</span>
+                        <span v-if="round.isActive && index === 0" class="badge-active">Live</span>
                         <span v-else>{{ formatDate(round.endTime) }}</span>
                       </span>
                       <span class="detail-separator">•</span>
@@ -463,7 +463,7 @@ const toggleChartExpansion = () => {
                     </div>
                   </div>
                   <div class="round-end-time desktop-only">
-                    <span v-if="round.isActive && index === 0" class="badge-active">In Progress</span>
+                    <span v-if="round.isActive && index === 0" class="badge-active">Live</span>
                     <span v-else>{{ formatDate(round.endTime) }}</span>
                   </div>
                   <div class="round-report desktop-only">
@@ -499,16 +499,16 @@ const toggleChartExpansion = () => {
   background-color: var(--color-background);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  padding: 12px;
 }
 
 .server-details-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 20px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--color-border);
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .server-name-container {
@@ -597,7 +597,7 @@ const toggleChartExpansion = () => {
 .stats-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
 .period-info {
@@ -609,7 +609,7 @@ const toggleChartExpansion = () => {
 .stats-section {
   background-color: var(--color-background-soft);
   border-radius: 8px;
-  padding: 15px;
+  padding: 12px;
 }
 
 .stats-section h3 {
@@ -655,7 +655,7 @@ const toggleChartExpansion = () => {
 
 .chart-container {
   height: 80px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   position: relative;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -685,30 +685,20 @@ const toggleChartExpansion = () => {
 .leaderboards-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 20px;
+  gap: 12px;
   width: 100%;
   box-sizing: border-box;
 }
 
 /* Leaderboard Section */
 .leaderboard-section {
-  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.leaderboard-section:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
 }
 
 .leaderboard-header {
-  margin-bottom: 15px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .leaderboard-header h3 {
@@ -720,10 +710,7 @@ const toggleChartExpansion = () => {
 }
 
 .leaderboard-content {
-  background: var(--color-background);
-  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--color-border);
 }
 
 /* Header cell alignment */
@@ -907,14 +894,15 @@ const toggleChartExpansion = () => {
 
 .badge-active {
   display: inline-block;
-  margin-left: 8px;
-  padding: 3px 8px;
-  border-radius: 12px;
+  margin-left: 4px;
+  padding: 2px 6px;
+  border-radius: 8px;
   background-color: #4caf50;
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 600;
   vertical-align: middle;
+  line-height: 1;
 }
 
 /* Base mobile improvements */
@@ -930,11 +918,11 @@ const toggleChartExpansion = () => {
 @media (max-width: 1024px) {
   .leaderboards-container {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 15px;
+    gap: 10px;
   }
   
   .server-details-container {
-    padding: 18px;
+    padding: 10px;
   }
 }
 
@@ -949,10 +937,10 @@ const toggleChartExpansion = () => {
 
   .server-details-header {
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     align-items: stretch;
-    padding: 10px 5px;
-    margin-bottom: 10px;
+    padding: 8px 0;
+    margin-bottom: 8px;
   }
 
   .server-name-container {
@@ -986,22 +974,20 @@ const toggleChartExpansion = () => {
 
   .leaderboards-container {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 8px;
   }
 
   .leaderboard-section {
-    padding: 12px 5px;
-    border-radius: 8px;
+    padding: 8px 0;
     margin: 0;
   }
 
   .leaderboard-header {
-    margin-bottom: 10px;
-    padding: 0 8px 10px 8px;
+    margin-bottom: 8px;
+    padding: 0 0 8px 0;
   }
 
   .leaderboard-content {
-    border-radius: 6px;
     overflow: hidden;
   }
 
@@ -1071,7 +1057,7 @@ const toggleChartExpansion = () => {
 
   .chart-container {
     height: 60px;
-    margin: 0 5px;
+    margin: 0;
   }
 
   .chart-container.chart-expanded {
@@ -1086,19 +1072,19 @@ const toggleChartExpansion = () => {
   .period-info {
     font-size: 0.85rem;
     text-align: center;
-    padding: 8px;
-    margin: 0 5px 10px 5px;
+    padding: 6px;
+    margin: 0 0 8px 0;
     background: var(--color-background-soft);
     border-radius: 6px;
   }
 
   .stats-container {
-    padding: 0 5px;
-    gap: 10px;
+    padding: 0;
+    gap: 8px;
   }
 
   .stats-section {
-    padding: 10px 5px;
+    padding: 8px 0;
     margin: 0;
   }
 
@@ -1115,8 +1101,8 @@ const toggleChartExpansion = () => {
 
   .badge-active {
     margin-left: 0;
-    font-size: 0.7rem;
-    padding: 2px 6px;
+    font-size: 0.6rem;
+    padding: 1px 4px;
   }
 }
 
@@ -1127,9 +1113,9 @@ const toggleChartExpansion = () => {
   }
 
   .server-details-header {
-    gap: 8px;
-    padding: 8px 3px;
-    margin-bottom: 8px;
+    gap: 6px;
+    padding: 6px 0;
+    margin-bottom: 6px;
   }
 
   .server-name-container h2 {
@@ -1148,12 +1134,12 @@ const toggleChartExpansion = () => {
   }
 
   .leaderboard-section {
-    padding: 10px 3px;
+    padding: 6px 0;
   }
 
   .leaderboard-header {
-    margin-bottom: 8px;
-    padding: 0 5px 8px 5px;
+    margin-bottom: 6px;
+    padding: 0 0 6px 0;
   }
 
   .leaderboard-header h3 {
@@ -1222,7 +1208,7 @@ const toggleChartExpansion = () => {
 
   .chart-container {
     height: 50px;
-    margin: 0 3px;
+    margin: 0;
   }
 
   .chart-container.chart-expanded {
@@ -1235,22 +1221,22 @@ const toggleChartExpansion = () => {
   }
 
   .period-info {
-    margin: 0 3px 8px 3px;
-    padding: 6px;
+    margin: 0 0 6px 0;
+    padding: 4px;
   }
 
   .stats-container {
-    padding: 0 3px;
-    gap: 8px;
+    padding: 0;
+    gap: 6px;
   }
 
   .stats-section {
-    padding: 8px 3px;
+    padding: 6px 0;
   }
 
   .badge-active {
-    padding: 2px 4px;
-    font-size: 0.65rem;
+    padding: 1px 3px;
+    font-size: 0.55rem;
   }
 
   .report-link-inline {
@@ -1265,7 +1251,7 @@ const toggleChartExpansion = () => {
   }
 
   .server-details-header {
-    padding: 5px 2px;
+    padding: 4px 0;
   }
 
   .server-name-container h2 {
@@ -1322,16 +1308,16 @@ const toggleChartExpansion = () => {
   }
 
   .stats-container {
-    padding: 0 2px;
+    padding: 0;
   }
 
   .period-info {
-    margin: 0 2px 6px 2px;
+    margin: 0 0 4px 0;
   }
 
   .badge-active {
-    padding: 1px 3px;
-    font-size: 0.6rem;
+    padding: 1px 2px;
+    font-size: 0.5rem;
   }
 
   .report-link-inline {
@@ -1434,13 +1420,14 @@ const toggleChartExpansion = () => {
 
 .badge-active {
   display: inline-block;
-  margin-left: 8px;
-  padding: 3px 8px;
-  border-radius: 12px;
+  margin-left: 4px;
+  padding: 2px 6px;
+  border-radius: 8px;
   background-color: #4caf50;
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 600;
   vertical-align: middle;
+  line-height: 1;
 }
 </style>
