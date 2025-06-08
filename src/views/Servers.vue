@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="servers-container">
     <ServerTable :initialMode="props.initialMode" @show-players="showPlayersModal" />
     
     <!-- Players Modal -->
@@ -172,6 +172,41 @@ const teamGroups = computed(() => {
 </script>
 
 <style scoped>
+.servers-container {
+  background-color: var(--color-background);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px;
+}
+
+/* Tablet styles */
+@media (max-width: 1024px) {
+  .servers-container {
+    padding: 8px;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .servers-container {
+    padding: 4px;
+  }
+}
+
+/* Small mobile styles */
+@media (max-width: 480px) {
+  .servers-container {
+    padding: 4px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .servers-container {
+    padding: 4px;
+  }
+}
+
 /* Modal styles */
 .modal-overlay {
   position: fixed;

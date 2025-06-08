@@ -142,181 +142,35 @@ provide('toggleDarkMode', toggleDarkMode);
 
 body {
   margin: 0;
+  padding: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-background-soft);
-  color: var(--color-text);
-}
-
-#app {
-  width: 100%;
-  height: 100%;
-}
-
-a {
-  text-decoration: none;
-  color: var(--color-primary);
-  transition: color 0.2s ease-in-out;
-}
-
-a:hover {
-  color: var(--color-primary-hover);
-}
-
-.app {
-  font-family: Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: var(--color-text);
-  margin-top: 20px;
-}
-
-/* Hide old theme toggle since it's moved into the sidebar */
-.theme-toggle {
-  display: none;
-}
-
-/* Global styles */
-:root {
-  --color-primary: #3498db;
-  --color-primary-hover: #2980b9;
-  --color-accent: #e67e22;
-  --color-accent-hover: #d35400;
-  --color-background: #ffffff;
-  --color-background-soft: #f8f9f9;
-  --color-background-mute: #e5e8e8;
-  --color-border: #d7dbdd;
-  --color-text: #2c3e50;
-  --color-text-muted: #7f8c8d;
-  --color-heading: #2c3e50;
-  --color-primary-rgb: 52, 152, 219;
-  --sidebar-bg: #0f172a;
-  --sidebar-border: #334155;
-  --sidebar-text: #f8fafc;
-  --sidebar-text-muted: #94a3b8;
-  --sidebar-hover: #1e293b;
-  --sidebar-active: #475569;
-  --sidebar-submenu: #020617;
-}
-
-/* Dark mode styles */
-.dark-mode {
-  --color-primary: #60a5fa;
-  --color-primary-hover: #3b82f6;
-  --color-accent: #f59e0b;
-  --color-accent-hover: #d97706;
-  --color-background: #0f172a;
-  --color-background-soft: #1e293b;
-  --color-background-mute: #334155;
-  --color-border: #475569;
-  --color-text: #f8fafc;
-  --color-text-muted: #cbd5e1;
-  --color-heading: #f1f5f9;
-  --color-primary-rgb: 96, 165, 250;
-  --sidebar-bg: #020617;
-  --sidebar-border: #1e293b;
-  --sidebar-text: #f8fafc;
-  --sidebar-text-muted: #94a3b8;
-  --sidebar-hover: #0f172a;
-  --sidebar-active: #334155;
-  --sidebar-submenu: #000000;
-}
-
-/* Light mode styles (explicit) */
-.light-mode {
-  --color-primary: #3498db;
-  --color-primary-hover: #2980b9;
-  --color-accent: #e67e22;
-  --color-accent-hover: #d35400;
-  --color-background: #ffffff;
-  --color-background-soft: #f8f9f9;
-  --color-background-mute: #e5e8e8;
-  --color-border: #d7dbdd;
-  --color-text: #2c3e50;
-  --color-text-muted: #7f8c8d;
-  --color-heading: #2c3e50;
-  --color-primary-rgb: 52, 152, 219;
-  --sidebar-bg: #0f172a;
-  --sidebar-border: #334155;
-  --sidebar-text: #f8fafc;
-  --sidebar-text-muted: #94a3b8;
-  --sidebar-hover: #1e293b;
-  --sidebar-active: #475569;
-  --sidebar-submenu: #020617;
-}
-
-* {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-body {
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-background-soft);
-  color: var(--color-text);
-}
-
-#app {
-  width: 100%;
-  height: 100%;
-}
-
-a {
-  text-decoration: none;
-  color: var(--color-primary);
-  transition: color 0.2s ease-in-out;
-}
-
-a:hover {
-  color: var(--color-primary-hover);
-}
-
-.app {
-  font-family: Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: var(--color-text);
-  margin-top: 20px;
-}
-
-.theme-toggle {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-}
-
-.theme-toggle-button {
   background-color: var(--color-background);
   color: var(--color-text);
-  border: 2px solid var(--color-border);
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.theme-toggle-button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  background-color: var(--color-background-mute);
+#app {
+  width: 100%;
+  height: 100%;
 }
 
-.theme-toggle-button:active {
-  transform: scale(0.95);
+a {
+  text-decoration: none;
+  color: var(--color-primary);
+  transition: color 0.2s ease-in-out;
 }
 
-.toggle-icon {
-  font-size: 22px;
-  user-select: none;
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+.app {
+  font-family: Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--color-text);
+  margin-top: 20px;
 }
 
 .main-navigation {
@@ -346,38 +200,5 @@ a:hover {
   background-color: var(--color-primary);
   color: white;
   border-color: var(--color-primary);
-}
-
-/* Mobile responsiveness for theme toggle */
-@media (max-width: 768px) {
-  .theme-toggle {
-    top: 15px;
-    right: 15px;
-  }
-  
-  .theme-toggle-button {
-    width: 45px;
-    height: 45px;
-  }
-  
-  .toggle-icon {
-    font-size: 20px;
-  }
-}
-
-@media (max-width: 480px) {
-  .theme-toggle {
-    top: 10px;
-    right: 10px;
-  }
-  
-  .theme-toggle-button {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .toggle-icon {
-    font-size: 18px;
-  }
 }
 </style>

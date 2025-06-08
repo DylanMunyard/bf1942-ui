@@ -14,7 +14,8 @@ import Sidebar from '../components/Sidebar.vue';
 <style scoped>
 .dashboard-layout {
   display: flex;
-  background-color: var(--color-background-soft);
+  background-color: var(--color-background);
+  min-height: 100vh;
 }
 
 .content-area {
@@ -23,28 +24,43 @@ import Sidebar from '../components/Sidebar.vue';
   padding: 30px;
   width: calc(100% - 60px);
   min-height: 100vh;
-  background-color: var(--color-background-soft);
+  background-color: var(--color-background);
   color: var(--color-text);
 }
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+  .dashboard-layout {
+    background-color: var(--color-background);
+  }
+  
   .content-area {
     margin-right: 50px; /* Adjusted for mobile sidebar width */
     width: calc(100% - 50px);
     padding: 15px 8px;
+    background-color: var(--color-background);
   }
 }
 
 @media (max-width: 480px) {
+  .dashboard-layout {
+    background-color: var(--color-background);
+  }
+  
   .content-area {
     padding: 10px 5px;
+    background-color: var(--color-background);
   }
 }
 
 @media (max-width: 360px) {
+  .dashboard-layout {
+    background-color: var(--color-background);
+  }
+  
   .content-area {
     padding: 8px 3px;
+    background-color: var(--color-background);
   }
 }
 </style> 

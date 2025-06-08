@@ -340,7 +340,7 @@ onMounted(() => {
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           Back to Players
         </router-link>
-        <h2 class="player-name-heading">Player Statistics: {{ playerName }}</h2>
+        <h2 class="player-name-heading">{{ playerName }}</h2>
       </div>
     </div>
     <div class="player-stats-body">
@@ -1222,7 +1222,7 @@ onMounted(() => {
 }
 
 .player-details-container {
-  background-color: transparent;
+  background-color: var(--color-background);
   border-radius: 0;
   box-shadow: none;
   padding: 12px;
@@ -1552,12 +1552,14 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
+  table-layout: fixed;
 }
 
 th, td {
   padding: 10px;
   text-align: left;
   border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
 }
 
 th {
@@ -1568,6 +1570,137 @@ th {
 
 tbody tr:hover {
   background-color: var(--color-background-mute);
+}
+
+/* Desktop table styles - ensure proper column layout */
+@media (min-width: 769px) {
+  .server-rankings-table table {
+    table-layout: auto;
+  }
+  
+  .server-rankings-table th,
+  .server-rankings-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .server-rankings-table th:first-child,
+  .server-rankings-table td:first-child {
+    width: 40%;
+    white-space: normal;
+  }
+  
+  .server-rankings-table th:nth-child(2),
+  .server-rankings-table td:nth-child(2) {
+    width: 15%;
+    text-align: center;
+  }
+  
+  .server-rankings-table th:nth-child(3),
+  .server-rankings-table td:nth-child(3) {
+    width: 20%;
+    text-align: center;
+  }
+  
+  .server-rankings-table th:nth-child(4),
+  .server-rankings-table td:nth-child(4) {
+    width: 15%;
+    text-align: center;
+  }
+  
+  /* Ensure desktop-only columns are properly displayed */
+  .desktop-only {
+    display: table-cell !important;
+  }
+  
+  .mobile-only {
+    display: none !important;
+  }
+  
+  /* Desktop styles for favorite maps table */
+  .favorite-maps-table th:first-child,
+  .favorite-maps-table td:first-child {
+    width: 25%;
+    white-space: normal;
+  }
+  
+  .favorite-maps-table th:nth-child(2),
+  .favorite-maps-table td:nth-child(2) {
+    width: 20%;
+    text-align: center;
+  }
+  
+  .favorite-maps-table th:nth-child(3),
+  .favorite-maps-table td:nth-child(3) {
+    width: 15%;
+    text-align: center;
+  }
+  
+  .favorite-maps-table th:nth-child(4),
+  .favorite-maps-table td:nth-child(4) {
+    width: 12%;
+    text-align: center;
+  }
+  
+  .favorite-maps-table th:nth-child(5),
+  .favorite-maps-table td:nth-child(5) {
+    width: 12%;
+    text-align: center;
+  }
+  
+  /* Desktop styles for recent sessions table */
+  .recent-servers-table th:first-child,
+  .recent-servers-table td:first-child {
+    width: 15%;
+    white-space: normal;
+  }
+  
+  .recent-servers-table th:nth-child(2),
+  .recent-servers-table td:nth-child(2) {
+    width: 20%;
+  }
+  
+  .recent-servers-table th:nth-child(3),
+  .recent-servers-table td:nth-child(3) {
+    width: 15%;
+  }
+  
+  .recent-servers-table th:nth-child(4),
+  .recent-servers-table td:nth-child(4) {
+    width: 12%;
+    text-align: center;
+  }
+  
+  .recent-servers-table th:nth-child(5),
+  .recent-servers-table td:nth-child(5) {
+    width: 10%;
+    text-align: center;
+  }
+  
+  .recent-servers-table th:nth-child(6),
+  .recent-servers-table td:nth-child(6) {
+    width: 8%;
+    text-align: center;
+  }
+  
+  .recent-servers-table th:nth-child(7),
+  .recent-servers-table td:nth-child(7) {
+    width: 8%;
+    text-align: center;
+  }
+  
+  .recent-servers-table th:nth-child(8),
+  .recent-servers-table td:nth-child(8) {
+    width: 8%;
+    text-align: center;
+  }
+  
+  .recent-servers-table th:nth-child(9),
+  .recent-servers-table td:nth-child(9) {
+    width: 10%;
+    text-align: center;
+  }
 }
 
 .clickable-row {

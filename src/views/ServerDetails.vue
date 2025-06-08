@@ -309,8 +309,6 @@ const toggleChartExpansion = () => {
               <div class="players-header">
                 <div class="header-rank">#</div>
                 <div class="header-player-info">Player</div>
-                <div class="header-playtime desktop-only">Time</div>
-                <div class="header-kd desktop-only">K/D</div>
               </div>
               <div class="players-list">
                 <div v-for="(player, index) in serverDetails.mostActivePlayersByTime" :key="index" class="player-row">
@@ -326,19 +324,13 @@ const toggleChartExpansion = () => {
                         {{ player.playerName }}
                       </router-link>
                     </div>
-                    <div class="player-details mobile-only">
+                    <div class="player-details">
                       <span class="detail-item">{{ formatPlayTime(player.minutesPlayed) }}</span>
                       <span class="detail-separator">•</span>
                       <span class="detail-item">
                         <span class="kills">{{ player.totalKills }}</span>/<span class="deaths">{{ player.totalDeaths }}</span>
                       </span>
                     </div>
-                  </div>
-                  <div class="player-playtime desktop-only">{{ formatPlayTime(player.minutesPlayed) }}</div>
-                  <div class="player-kd desktop-only">
-                    <span class="kills">{{ player.totalKills }}</span>
-                    <span class="separator">/</span>
-                    <span class="deaths">{{ player.totalDeaths }}</span>
                   </div>
                 </div>
               </div>
@@ -354,9 +346,6 @@ const toggleChartExpansion = () => {
               <div class="scores-header">
                 <div class="header-rank">#</div>
                 <div class="header-player-info">Player</div>
-                <div class="header-score desktop-only">Score</div>
-                <div class="header-kd desktop-only">K/D</div>
-                <div class="header-map desktop-only">Map</div>
               </div>
               <div class="scores-list">
                 <div v-for="(score, index) in serverDetails.topScores" :key="index" class="score-row">
@@ -372,7 +361,7 @@ const toggleChartExpansion = () => {
                         {{ score.playerName }}
                       </router-link>
                     </div>
-                    <div class="score-details mobile-only">
+                    <div class="score-details">
                       <span class="detail-item">
                         <router-link
                           :to="{
@@ -396,27 +385,6 @@ const toggleChartExpansion = () => {
                       <span class="detail-item">{{ score.mapName }}</span>
                     </div>
                   </div>
-                  <div class="score-value desktop-only">
-                    <router-link
-                      :to="{
-                        path: '/servers/round-report',
-                        query: {
-                          serverGuid: serverDetails.serverGuid,
-                          mapName: score.mapName,
-                          startTime: score.timestamp
-                        }
-                      }"
-                      class="session-link"
-                    >
-                      {{ score.score.toLocaleString() }}
-                    </router-link>
-                  </div>
-                  <div class="score-kd desktop-only">
-                    <span class="kills">{{ score.kills }}</span>
-                    <span class="separator">/</span>
-                    <span class="deaths">{{ score.deaths }}</span>
-                  </div>
-                  <div class="score-map desktop-only">{{ score.mapName }}</div>
                 </div>
               </div>
             </div>
@@ -430,8 +398,6 @@ const toggleChartExpansion = () => {
             <div class="leaderboard-content">
               <div class="rounds-header">
                 <div class="header-round-info">Round</div>
-                <div class="header-end-time desktop-only">End Time</div>
-                <div class="header-report desktop-only">Report</div>
               </div>
               <div class="rounds-list">
                 <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-row">
@@ -439,7 +405,7 @@ const toggleChartExpansion = () => {
                     <div class="round-map">
                       {{ round.mapName }}
                     </div>
-                    <div class="round-details mobile-only">
+                    <div class="round-details">
                       <span class="detail-item">
                         <span v-if="round.isActive && index === 0" class="badge-active">Live</span>
                         <span v-else>{{ formatDate(round.endTime) }}</span>
@@ -462,25 +428,6 @@ const toggleChartExpansion = () => {
                       </span>
                     </div>
                   </div>
-                  <div class="round-end-time desktop-only">
-                    <span v-if="round.isActive && index === 0" class="badge-active">Live</span>
-                    <span v-else>{{ formatDate(round.endTime) }}</span>
-                  </div>
-                  <div class="round-report desktop-only">
-                    <router-link
-                      :to="{
-                        path: '/servers/round-report',
-                        query: {
-                          serverGuid: serverDetails.serverGuid,
-                          mapName: round.mapName,
-                          startTime: round.startTime
-                        }
-                      }"
-                      class="report-link"
-                    >
-                      View Report
-                    </router-link>
-                  </div>
                 </div>
               </div>
             </div>
@@ -497,8 +444,8 @@ const toggleChartExpansion = () => {
 <style scoped>
 .server-details-container {
   background-color: var(--color-background);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 0;
+  box-shadow: none;
   padding: 12px;
 }
 
@@ -731,28 +678,21 @@ const toggleChartExpansion = () => {
 }
 
 .players-header {
-  grid-template-columns: 50px 1fr 120px 80px;
+  grid-template-columns: 50px 1fr;
   gap: 10px;
 }
 
 .scores-header {
-  grid-template-columns: 50px 1fr 100px 80px 100px;
+  grid-template-columns: 50px 1fr;
   gap: 10px;
 }
 
 .rounds-header {
-  grid-template-columns: 1fr 180px 120px;
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
-/* Show/hide classes for responsive design */
-.desktop-only {
-  display: block;
-}
 
-.mobile-only {
-  display: none;
-}
 
 /* Players List */
 .players-list, .scores-list, .rounds-list {
@@ -770,15 +710,16 @@ const toggleChartExpansion = () => {
 }
 
 .player-row {
-  grid-template-columns: 50px 1fr 120px 80px;
+  grid-template-columns: 50px 1fr;
 }
 
 .score-row {
-  grid-template-columns: 50px 1fr 100px 80px 100px;
+  grid-template-columns: 50px 1fr;
 }
 
 .round-row {
-  grid-template-columns: 1fr 180px 120px;
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 
 .player-row:hover, .score-row:hover, .round-row:hover {
@@ -931,6 +872,20 @@ const toggleChartExpansion = () => {
   .server-details-container {
     padding: 4px;
   }
+}
+
+/* Small mobile styles */
+@media (max-width: 480px) {
+  .server-details-container {
+    padding: 4px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .server-details-container {
+    padding: 4px;
+  }
 
   .server-details-header {
     flex-direction: column;
@@ -988,54 +943,21 @@ const toggleChartExpansion = () => {
     overflow: hidden;
   }
 
-  /* Show/hide content for mobile */
-  .desktop-only {
-    display: none !important;
-  }
 
-  .mobile-only {
-    display: block !important;
-  }
 
   .players-header, .scores-header, .rounds-header {
     padding: 8px 10px;
     font-size: 0.75rem;
   }
 
-  .players-header {
-    grid-template-columns: 50px 1fr;
-    gap: 10px;
-  }
 
-  .scores-header {
-    grid-template-columns: 50px 1fr;
-    gap: 10px;
-  }
-
-  .rounds-header {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
 
   .player-row, .score-row, .round-row {
     padding: 12px 10px;
     font-size: 0.9rem;
   }
 
-  .player-row {
-    grid-template-columns: 50px 1fr;
-    gap: 10px;
-  }
 
-  .score-row {
-    grid-template-columns: 50px 1fr;
-    gap: 10px;
-  }
-
-  .round-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
 
   .rank-number {
     width: 28px;
@@ -1147,40 +1069,14 @@ const toggleChartExpansion = () => {
     font-size: 0.7rem;
   }
 
-  .players-header {
-    grid-template-columns: 45px 1fr;
-    gap: 8px;
-  }
 
-  .scores-header {
-    grid-template-columns: 45px 1fr;
-    gap: 8px;
-  }
-
-  .rounds-header {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
 
   .player-row, .score-row, .round-row {
     padding: 10px 8px;
     font-size: 0.85rem;
   }
 
-  .player-row {
-    grid-template-columns: 45px 1fr;
-    gap: 8px;
-  }
 
-  .score-row {
-    grid-template-columns: 45px 1fr;
-    gap: 8px;
-  }
-
-  .round-row {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
 
   .rank-number {
     width: 24px;
@@ -1253,35 +1149,9 @@ const toggleChartExpansion = () => {
     font-size: 1.1rem;
   }
 
-  .players-header {
-    grid-template-columns: 40px 1fr;
-    gap: 6px;
-  }
 
-  .scores-header {
-    grid-template-columns: 40px 1fr;
-    gap: 6px;
-  }
 
-  .rounds-header {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
 
-  .player-row {
-    grid-template-columns: 40px 1fr;
-    gap: 6px;
-  }
-
-  .score-row {
-    grid-template-columns: 40px 1fr;
-    gap: 6px;
-  }
-
-  .round-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
 
   .rank-number {
     width: 20px;
