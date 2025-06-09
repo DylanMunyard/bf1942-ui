@@ -456,7 +456,7 @@ onUnmounted(() => {
                 {{ formatPlayTime(player.totalPlayTimeMinutes) }} • {{ formatRelativeTime(player.lastSeen) }}
               </div>
               <div v-if="player.isActive && player.currentServer" class="active-status-mobile">
-                Active on {{ player.currentServer.serverName }}
+                {{ player.currentServer.serverName }} • ⚔️{{ player.currentServer.sessionKills || 0 }} • 💀{{ player.currentServer.sessionDeaths || 0 }} • KDR: {{ player.currentServer.sessionDeaths ? ((player.currentServer.sessionKills || 0) / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}
               </div>
             </td>
           </tr>
@@ -998,9 +998,9 @@ th {
   }
 
   /* Hide desktop cells on mobile */
-  .play-time-cell,
-  .last-seen-cell,
-  .status-cell {
+  .player-row .play-time-cell,
+  .player-row .last-seen-cell,
+  .player-row .status-cell {
     display: none;
   }
 
@@ -1035,13 +1035,15 @@ th {
   }
 
   .active-status-mobile {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #4CAF50;
-    font-weight: 600;
-    padding: 4px 8px;
+    font-weight: 500;
+    padding: 2px 6px;
     background: rgba(76, 175, 80, 0.1);
-    border-radius: 4px;
-    border-left: 3px solid #4CAF50;
+    border-radius: 3px;
+    border-left: 2px solid #4CAF50;
+    display: inline-block;
+    margin-top: 4px;
   }
 
   .table-header {
