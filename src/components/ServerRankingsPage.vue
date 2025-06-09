@@ -167,40 +167,60 @@ watch(
         <p class="error-message">{{ error }}</p>
       </div>
       <div v-else-if="rankings.length > 0" class="rankings-table-container">
+        <!-- Table header info -->
+        <div class="table-header">
+          <div class="rankings-count">
+            Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} players
+          </div>
+          <div class="page-size-selector">
+            <label for="pageSize">Items per page:</label>
+            <select id="pageSize" v-model="pageSize" @change="handlePageSizeChange">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+
         <table>
           <thead>
             <tr>
               <th>Rank</th>
               <th>Player</th>
-              <th>Score</th>
-              <th>Kills</th>
-              <th>Deaths</th>
-              <th>K/D</th>
-              <th>Play Time</th>
+              <th>Stats</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="ranking in rankings" :key="ranking.playerName">
+            <tr v-for="ranking in rankings" :key="ranking.playerName" class="ranking-row">
               <td class="rank-cell">#{{ ranking.rank }}</td>
-              <td>
+              <td class="player-cell">
                 <router-link :to="`/player/${encodeURIComponent(ranking.playerName)}`" class="player-link">
                   {{ ranking.playerName }}
                 </router-link>
               </td>
-              <td>{{ ranking.totalScore }}</td>
-              <td>{{ ranking.totalKills }}</td>
-              <td>{{ ranking.totalDeaths }}</td>
-              <td>{{ ranking.kdRatio.toFixed(2) }}</td>
-              <td>{{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</td>
+              <td class="stats-cell">
+                <div class="desktop-stats">
+                  <span class="score">{{ ranking.totalScore }}</span>
+                  <span class="kills">{{ ranking.totalKills }}</span>
+                  <span class="deaths">{{ ranking.totalDeaths }}</span>
+                  <span class="kd">{{ ranking.kdRatio.toFixed(2) }}</span>
+                  <span class="playtime">{{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
+                </div>
+                <div class="mobile-stats">
+                  <span class="stat-item">Score: {{ ranking.totalScore }}</span>
+                  <span class="stat-item">K: {{ ranking.totalKills }}</span>
+                  <span class="stat-item">D: {{ ranking.totalDeaths }}</span>
+                  <span class="stat-item">K/D: {{ ranking.kdRatio.toFixed(2) }}</span>
+                  <span class="stat-item">{{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
 
         <!-- Pagination -->
         <div v-if="totalPages > 1" class="pagination-container">
-          <div class="pagination-info">
-            Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} players
-          </div>
           <div class="pagination-controls">
             <button 
               @click="changePage(1)" 
@@ -243,15 +263,6 @@ watch(
             >
               &raquo;
             </button>
-          </div>
-          <div class="page-size-selector">
-            <label for="pageSize">Items per page:</label>
-            <select id="pageSize" v-model="pageSize" @change="handlePageSizeChange">
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
           </div>
         </div>
       </div>
@@ -410,6 +421,18 @@ tbody tr:hover {
   color: white;
 }
 
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.rankings-count {
+  font-weight: bold;
+  color: var(--color-text);
+}
+
 .page-size-selector {
   display: flex;
   align-items: center;
@@ -429,14 +452,142 @@ tbody tr:hover {
   color: var(--color-text);
 }
 
+/* Desktop stats styling */
+.desktop-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  text-align: center;
+}
+
+.desktop-stats .score {
+  font-weight: bold;
+  color: var(--color-heading);
+}
+
+/* Hide mobile stats on desktop */
+.mobile-stats {
+  display: none;
+}
+
+/* Mobile styles */
 @media (max-width: 768px) {
   .server-rankings-container {
     padding: 0 20px;
   }
 
-  .pagination-container {
+  .table-header {
     flex-direction: column;
     gap: 10px;
+    align-items: flex-start;
+  }
+
+  .page-size-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Mobile table layout: Use grid to create a compact layout per ranking */
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  thead th {
+    display: none;
+  }
+
+  .ranking-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "player rank"
+      "stats stats";
+    gap: 4px 10px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    margin-bottom: 0;
+    padding: 12px 0;
+    box-shadow: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .ranking-row:hover {
+    box-shadow: none;
+    background-color: var(--color-background-mute);
+  }
+
+  .ranking-row td {
+    display: block;
+    width: 100%;
+    border: none;
+    padding: 0;
+    background: transparent;
+  }
+
+  /* Grid cell placement and styling */
+  .rank-cell {
+    grid-area: rank;
+    align-self: center;
+    text-align: right;
+    font-weight: bold;
+    color: var(--color-heading);
+    font-size: 1.1rem;
+  }
+
+  .player-cell {
+    grid-area: player;
+    align-self: center;
+    text-align: left;
+    word-break: break-word;
+    min-width: 0;
+  }
+
+  .player-link {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  /* Hide desktop stats on mobile */
+  .desktop-stats {
+    display: none;
+  }
+
+  /* Show mobile stats cell */
+  .stats-cell {
+    grid-area: stats;
+  }
+
+  .mobile-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .mobile-stats .stat-item {
+    background-color: var(--color-background);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .pagination-container {
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pagination-button {
+    padding: 6px 12px;
+    font-size: 0.9rem;
   }
 }
 </style> 
