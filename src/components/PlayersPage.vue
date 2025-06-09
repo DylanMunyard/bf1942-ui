@@ -425,7 +425,9 @@ onUnmounted(() => {
                 {{ player.playerName }}
               </router-link>
               <div v-if="player.currentServer" class="current-server">
-                {{ player.currentServer.serverName }}
+                <router-link :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" class="server-name-link">
+                  {{ player.currentServer.serverName }}
+                </router-link>
               </div>
             </td>
             <td class="play-time-cell">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</td>
@@ -436,7 +438,10 @@ onUnmounted(() => {
             <td class="status-cell">
               <div v-if="player.isActive" class="active-status">
                 <div class="server-info">
-                  {{ player.currentServer ? player.currentServer.serverName : 'Online' }}
+                  <router-link v-if="player.currentServer" :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" class="server-name-link">
+                    {{ player.currentServer.serverName }}
+                  </router-link>
+                  <span v-else>Online</span>
                 </div>
                 <div v-if="player.currentServer && (player.currentServer.sessionKills !== undefined || player.currentServer.sessionDeaths !== undefined)" class="player-stats">
                   <span class="stat-item">K: {{ player.currentServer.sessionKills || 0 }}</span>
@@ -811,6 +816,18 @@ th {
 
 .player-name-link:hover {
   text-decoration: underline;
+}
+
+.server-name-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.server-name-link:hover {
+  text-decoration: underline;
+  color: var(--color-accent-hover);
 }
 
 .status-badge {
