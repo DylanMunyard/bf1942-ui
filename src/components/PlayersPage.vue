@@ -429,34 +429,23 @@ onUnmounted(() => {
               </div>
             </td>
             <td class="play-time-cell">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</td>
-            <td class="last-seen-cell">
-              <div>{{ formatRelativeTime(player.lastSeen) }}</div>
-              <div class="secondary-text">{{ formatDate(player.lastSeen) }}</div>
+            <td class="last-seen-cell" :title="formatDate(player.lastSeen)">
+              <span v-if="formatRelativeTime(player.lastSeen) === 'Just now'" class="online-badge">Online</span>
+              <span v-else>{{ formatRelativeTime(player.lastSeen) }}</span>
             </td>
             <td class="status-cell">
               <div v-if="player.isActive" class="active-status">
                 <div class="server-info">
-                  {{ player.currentServer ? 
-                    `Currently active on ${player.currentServer.serverName}` : 
-                    'Currently active' }}
+                  {{ player.currentServer ? player.currentServer.serverName : 'Online' }}
                 </div>
                 <div v-if="player.currentServer && (player.currentServer.sessionKills !== undefined || player.currentServer.sessionDeaths !== undefined)" class="player-stats">
-                  <span class="stat-item">Kills: {{ player.currentServer.sessionKills || 0 }}</span>
-                  <span class="stat-item">Deaths: {{ player.currentServer.sessionDeaths || 0 }}</span>
+                  <span class="stat-item">K: {{ player.currentServer.sessionKills || 0 }}</span>
+                  <span class="stat-item">D: {{ player.currentServer.sessionDeaths || 0 }}</span>
                   <span class="stat-item">KDR: {{ player.currentServer.sessionDeaths ? ((player.currentServer.sessionKills || 0) / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}</span>
                 </div>
               </div>
               <div v-else class="inactive-status">
                 Offline
-              </div>
-            </td>
-            <!-- Mobile-specific additional row -->
-            <td class="mobile-details-cell">
-              <div class="player-summary">
-                {{ formatPlayTime(player.totalPlayTimeMinutes) }} • {{ formatRelativeTime(player.lastSeen) }}
-              </div>
-              <div v-if="player.isActive && player.currentServer" class="active-status-mobile">
-                {{ player.currentServer.serverName }} • ⚔️{{ player.currentServer.sessionKills || 0 }} • 💀{{ player.currentServer.sessionDeaths || 0 }} • KDR: {{ player.currentServer.sessionDeaths ? ((player.currentServer.sessionKills || 0) / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}
               </div>
             </td>
           </tr>
@@ -816,6 +805,8 @@ th {
   color: var(--color-primary);
   text-decoration: none;
   cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .player-name-link:hover {
@@ -839,31 +830,30 @@ th {
   background-color: #9e9e9e;
 }
 
-.secondary-text {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
-
 .active-status {
   background-color: var(--color-background-mute);
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 6px;
   font-weight: bold;
   color: var(--color-heading);
   border-left: 4px solid #4CAF50;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .server-info {
   font-size: 0.9rem;
   color: var(--color-text);
+  font-weight: 600;
 }
 
 .player-stats {
-  margin-top: 8px;
+  margin-top: 0;
   display: flex;
-  gap: 12px;
-  font-size: 0.85rem;
+  gap: 8px;
+  font-size: 0.8rem;
 }
 
 .stat-item {
@@ -965,9 +955,9 @@ th {
     align-self: stretch;
   }
 
-  /* Mobile table layout */
+  /* Mobile table layout: Use grid to create a two-line layout per player */
   table {
-    border-collapse: separate;
+    border-collapse: collapse;
     border-spacing: 0;
   }
 
@@ -976,18 +966,25 @@ th {
   }
 
   .player-row {
-    display: block;
-    background: var(--color-background-soft);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    padding: 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "name lastseen"
+      "status status";
+    gap: 4px 10px;
+    /* Remove box styles and adopt row styles */
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    margin-bottom: 0;
+    padding: 12px 0;
+    box-shadow: none;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .player-row:hover {
-    background: var(--color-background-soft);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: none;
+    background-color: var(--color-background-mute);
   }
 
   .player-row td {
@@ -995,55 +992,76 @@ th {
     width: 100%;
     border: none;
     padding: 0;
+    background: transparent; /* Cells inherit background from row */
   }
 
-  /* Hide desktop cells on mobile */
-  .player-row .play-time-cell,
-  .player-row .last-seen-cell,
-  .player-row .status-cell {
+  /* Hide desktop-only cells on mobile */
+  .player-row .play-time-cell {
     display: none;
   }
-
-  /* Show mobile details cell */
-  .mobile-details-cell {
-    display: block !important;
-  }
+  
+  /* --- Grid cell placement and styling --- */
 
   .player-name-cell {
-    padding: 15px 15px 10px 15px;
-    border-bottom: 1px solid var(--color-border);
+    grid-area: name;
+    align-self: center;
+    /* Allow long names to break and prevent overflow */
+    word-break: break-all;
+    min-width: 0; /* Ensures the cell can shrink */
   }
 
   .player-name-link {
     font-size: 1.1rem;
     font-weight: 600;
   }
-
-  /* Hide current server on mobile since we show it in status section */
+  
   .current-server {
+    display: none; /* Hide desktop server name under player name */
+  }
+
+  .last-seen-cell {
+    grid-area: lastseen;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    text-align: right;
+    align-self: center;
+  }
+  
+  .status-cell {
+    grid-area: status;
+  }
+  
+  /* Re-style active/inactive status for mobile's second row */
+  .status-cell .active-status {
+    background: var(--color-background-mute);
+    padding: 6px 8px;
+    border-radius: 4px;
+    border-left: 4px solid #4CAF50;
+    font-size: 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+
+  .status-cell .inactive-status {
     display: none;
   }
 
-  .mobile-details-cell {
-    padding: 8px 15px 15px 15px;
+  .status-cell .server-info {
+    font-weight: 600;
   }
 
-  .player-summary {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    margin-bottom: 6px;
-  }
-
-  .active-status-mobile {
+  .status-cell .player-stats {
+    gap: 6px;
     font-size: 0.8rem;
-    color: #4CAF50;
-    font-weight: 500;
-    padding: 2px 6px;
-    background: rgba(76, 175, 80, 0.1);
-    border-radius: 3px;
-    border-left: 2px solid #4CAF50;
-    display: inline-block;
-    margin-top: 4px;
+  }
+
+  .status-cell .stat-item {
+    padding: 2px 4px;
+    font-size: 0.75rem;
   }
 
   .table-header {
@@ -1073,5 +1091,15 @@ th {
   .mobile-details-cell {
     display: none;
   }
+}
+
+.online-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: white;
+  background-color: #4CAF50;
 }
 </style>
