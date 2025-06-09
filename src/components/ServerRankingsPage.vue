@@ -201,18 +201,18 @@ watch(
               </td>
               <td class="stats-cell">
                 <div class="desktop-stats">
-                  <span class="score">{{ ranking.totalScore }}</span>
-                  <span class="kills">{{ ranking.totalKills }}</span>
-                  <span class="deaths">{{ ranking.totalDeaths }}</span>
-                  <span class="kd">{{ ranking.kdRatio.toFixed(2) }}</span>
-                  <span class="playtime">{{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
+                  <span class="score" title="Score">🏆 {{ ranking.totalScore }}</span>
+                  <span class="combat-badge" title="Kills • Deaths • K/D Ratio">
+                    🎯 {{ ranking.totalKills }} • 💀 {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
+                  </span>
+                  <span class="playtime" title="Play Time">⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
                 </div>
                 <div class="mobile-stats">
-                  <span class="stat-item">Score: {{ ranking.totalScore }}</span>
-                  <span class="stat-item">K: {{ ranking.totalKills }}</span>
-                  <span class="stat-item">D: {{ ranking.totalDeaths }}</span>
-                  <span class="stat-item">K/D: {{ ranking.kdRatio.toFixed(2) }}</span>
-                  <span class="stat-item">{{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
+                  <span class="stat-item" title="Score">🏆 {{ ranking.totalScore }}</span>
+                  <span class="stat-item combat-badge" title="Kills • Deaths • K/D Ratio">
+                    🎯 {{ ranking.totalKills }} • 💀 {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
+                  </span>
+                  <span class="stat-item" title="Play Time">⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
                 </div>
               </td>
             </tr>
@@ -332,9 +332,7 @@ th {
   color: var(--color-heading);
 }
 
-tbody tr:hover {
-  background-color: var(--color-background-mute);
-}
+/* Row hover highlight removed */
 
 .rank-cell {
   font-weight: bold;
@@ -455,7 +453,7 @@ tbody tr:hover {
 /* Desktop stats styling */
 .desktop-stats {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   text-align: center;
 }
@@ -463,6 +461,14 @@ tbody tr:hover {
 .desktop-stats .score {
   font-weight: bold;
   color: var(--color-heading);
+}
+
+.combat-badge {
+  background-color: var(--color-background);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
 }
 
 /* Hide mobile stats on desktop */
@@ -513,10 +519,7 @@ tbody tr:hover {
     border-bottom: 1px solid var(--color-border);
   }
 
-  .ranking-row:hover {
-    box-shadow: none;
-    background-color: var(--color-background-mute);
-  }
+  /* Mobile row hover highlight removed */
 
   .ranking-row td {
     display: block;
