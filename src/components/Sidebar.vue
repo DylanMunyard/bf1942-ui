@@ -119,23 +119,60 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
   overflow: hidden;
 }
 
+/* Desktop-specific styles */
+@media (min-width: 769px) {
+  .theme-toggle-item {
+    margin-top: auto;
+  }
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .sidebar {
-    width: 50px;
+    width: 100vw;
+    height: 60px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: auto;
+    flex-direction: row;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+    border-left: none;
+    border-bottom: 1px solid var(--sidebar-border);
+    align-items: center;
+  }
+  
+  .nav-menu {
+    padding: 0 20px;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    gap: 15px;
   }
   
   .nav-item {
-    width: 36px;
-    height: 36px;
-    padding: 8px 6px;
+    width: 44px;
+    height: 44px;
+    padding: 10px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+  
+  .theme-toggle-item {
+    margin: 0 !important;
+    margin-left: auto !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
   }
 }
 
 /* Style theme-toggle nav-item inside sidebar */
-.theme-toggle-item {
-  margin-top: auto;
-}
 .theme-toggle-item .toggle-icon {
   font-size: 1.2rem;
   user-select: none;

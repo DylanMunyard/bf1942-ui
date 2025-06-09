@@ -32,11 +32,13 @@ import Sidebar from '../components/Sidebar.vue';
 @media (max-width: 768px) {
   .dashboard-layout {
     background-color: var(--color-background);
+    flex-direction: column;
   }
   
   .content-area {
-    margin-right: 50px; /* Adjusted for mobile sidebar width */
-    width: calc(100% - 50px);
+    margin-right: 0;
+    margin-top: 60px; /* Height of mobile sidebar */
+    width: 100%;
     padding: 15px 8px;
     background-color: var(--color-background);
   }
