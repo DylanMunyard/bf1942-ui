@@ -19,6 +19,8 @@ const currentPage = ref(1);
 const pageSize = ref(50);
 const totalItems = ref(0);
 const totalPages = ref(0);
+// Mobile filters state
+const showFilters = ref(false);
 
 // Filter variables
 const nameFilter = ref('');
@@ -297,61 +299,76 @@ onUnmounted(() => {
     </div>
 
     <!-- Filter controls -->
-    <div class="filter-container">
-      <div class="filter-group">
-        <label for="nameFilter">Filter by Name:</label>
-        <div class="input-with-clear">
-          <input 
-            type="text" 
-            id="nameFilter" 
-            v-model="nameInputValue"
-            @input="handleNameFilterChange(nameInputValue)" 
-            placeholder="Enter player name"
-            class="filter-input"
-          />
-          <span v-if="isSearching" class="search-indicator">🔍</span>
-          <span 
-            v-if="nameInputValue && !isSearching" 
-            class="clear-input" 
-            @click="clearNameFilter"
-            title="Clear filter"
-          >×</span>
+    <div class="filter-section">
+      <div class="filter-toggle">
+        <button @click="showFilters = !showFilters" class="filter-toggle-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="filter-icon">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          </svg>
+          Filters
+          <span v-if="nameFilter || gameIdFilter || serverNameFilter" class="active-filter-indicator">●</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon" :class="{ 'rotated': showFilters }">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="filter-container" :class="{ 'filters-visible': showFilters }">
+        <div class="filter-group">
+          <label for="nameFilter">Filter by Name:</label>
+          <div class="input-with-clear">
+            <input 
+              type="text" 
+              id="nameFilter" 
+              v-model="nameInputValue"
+              @input="handleNameFilterChange(nameInputValue)" 
+              placeholder="Enter player name"
+              class="filter-input"
+            />
+            <span v-if="isSearching" class="search-indicator">🔍</span>
+            <span 
+              v-if="nameInputValue && !isSearching" 
+              class="clear-input" 
+              @click="clearNameFilter"
+              title="Clear filter"
+            >×</span>
+          </div>
         </div>
-      </div>
 
-      <div class="filter-group">
-        <label for="gameIdFilter">Currently Playing:</label>
-        <select 
-          id="gameIdFilter" 
-          v-model="gameIdFilter" 
-          @change="handleGameIdFilterChange"
-          class="filter-select"
-        >
-          <option value="">All Games</option>
-          <option v-for="gameId in uniqueGameIds" :key="gameId" :value="gameId">
-            {{ gameId }}
-          </option>
-        </select>
-      </div>
+        <div class="filter-group">
+          <label for="gameIdFilter">Currently Playing:</label>
+          <select 
+            id="gameIdFilter" 
+            v-model="gameIdFilter" 
+            @change="handleGameIdFilterChange"
+            class="filter-select"
+          >
+            <option value="">All Games</option>
+            <option v-for="gameId in uniqueGameIds" :key="gameId" :value="gameId">
+              {{ gameId }}
+            </option>
+          </select>
+        </div>
 
-      <div class="filter-group">
-        <label for="serverNameFilter">Currently Playing On:</label>
-        <select 
-          id="serverNameFilter" 
-          v-model="serverNameFilter" 
-          @change="handleServerNameFilterChange"
-          class="filter-select"
-        >
-          <option value="">All Servers</option>
-          <option v-for="serverName in uniqueServerNames" :key="serverName" :value="serverName">
-            {{ serverName }}
-          </option>
-        </select>
-      </div>
+        <div class="filter-group">
+          <label for="serverNameFilter">Currently Playing On:</label>
+          <select 
+            id="serverNameFilter" 
+            v-model="serverNameFilter" 
+            @change="handleServerNameFilterChange"
+            class="filter-select"
+          >
+            <option value="">All Servers</option>
+            <option v-for="serverName in uniqueServerNames" :key="serverName" :value="serverName">
+              {{ serverName }}
+            </option>
+          </select>
+        </div>
 
-      <button @click="resetFilters" class="reset-filters-button">
-        Reset Filters
-      </button>
+        <button @click="resetFilters" class="reset-filters-button">
+          Reset Filters
+        </button>
+      </div>
     </div>
 
     <div v-if="loading && players.length === 0" class="loading">Loading players data...</div>
@@ -402,8 +419,8 @@ onUnmounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="player in players" :key="player.playerName">
-            <td>
+          <tr v-for="player in players" :key="player.playerName" class="player-row">
+            <td class="player-name-cell">
               <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-name-link">
                 {{ player.playerName }}
               </router-link>
@@ -411,12 +428,12 @@ onUnmounted(() => {
                 {{ player.currentServer.serverName }}
               </div>
             </td>
-            <td>{{ formatPlayTime(player.totalPlayTimeMinutes) }}</td>
-            <td>
+            <td class="play-time-cell">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</td>
+            <td class="last-seen-cell">
               <div>{{ formatRelativeTime(player.lastSeen) }}</div>
               <div class="secondary-text">{{ formatDate(player.lastSeen) }}</div>
             </td>
-            <td>
+            <td class="status-cell">
               <div v-if="player.isActive" class="active-status">
                 <div class="server-info">
                   {{ player.currentServer ? 
@@ -431,6 +448,15 @@ onUnmounted(() => {
               </div>
               <div v-else class="inactive-status">
                 Offline
+              </div>
+            </td>
+            <!-- Mobile-specific additional row -->
+            <td class="mobile-details-cell">
+              <div class="player-summary">
+                {{ formatPlayTime(player.totalPlayTimeMinutes) }} • {{ formatRelativeTime(player.lastSeen) }}
+              </div>
+              <div v-if="player.isActive && player.currentServer" class="active-status-mobile">
+                Active on {{ player.currentServer.serverName }}
               </div>
             </td>
           </tr>
@@ -522,12 +548,67 @@ onUnmounted(() => {
   background-color: var(--color-accent-hover);
 }
 
+.filter-section {
+  margin-bottom: 20px;
+}
+
+.filter-toggle {
+  display: none;
+  margin-bottom: 15px;
+}
+
+.filter-toggle-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.filter-toggle-button:hover {
+  background-color: var(--color-background-mute);
+  border-color: var(--color-accent);
+}
+
+.filter-toggle-button:active {
+  transform: translateY(1px);
+}
+
+.filter-icon {
+  color: var(--color-accent);
+}
+
+.active-filter-indicator {
+  color: var(--color-accent);
+  font-size: 12px;
+  margin-left: auto;
+  margin-right: -4px;
+}
+
+.chevron-icon {
+  transition: transform 0.2s ease;
+  margin-left: auto;
+}
+
+.chevron-icon.rotated {
+  transform: rotate(180deg);
+}
+
 .filter-container {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
-  margin-bottom: 20px;
   align-items: flex-end;
+  transition: all 0.3s ease;
 }
 
 .filter-group {
@@ -848,13 +929,147 @@ th {
   color: white;
 }
 
+/* Mobile styles */
 @media (max-width: 768px) {
   .players-page-container {
-    padding: 0 20px;
+    padding: 15px;
   }
 
-  th, td {
-    padding: 8px;
+  /* Show filter toggle on mobile */
+  .filter-toggle {
+    display: block;
+  }
+
+  /* Hide filters by default on mobile */
+  .filter-container {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-bottom: 0;
+  }
+
+  /* Show filters when toggled */
+  .filter-container.filters-visible {
+    max-height: 500px;
+    opacity: 1;
+    margin-bottom: 20px;
+  }
+
+  .filter-group {
+    min-width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .reset-filters-button {
+    width: 100%;
+    align-self: stretch;
+  }
+
+  /* Mobile table layout */
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  thead th {
+    display: none;
+  }
+
+  .player-row {
+    display: block;
+    background: var(--color-background-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .player-row:hover {
+    background: var(--color-background-soft);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  .player-row td {
+    display: block;
+    width: 100%;
+    border: none;
+    padding: 0;
+  }
+
+  /* Hide desktop cells on mobile */
+  .play-time-cell,
+  .last-seen-cell,
+  .status-cell {
+    display: none;
+  }
+
+  /* Show mobile details cell */
+  .mobile-details-cell {
+    display: block !important;
+  }
+
+  .player-name-cell {
+    padding: 15px 15px 10px 15px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .player-name-link {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  /* Hide current server on mobile since we show it in status section */
+  .current-server {
+    display: none;
+  }
+
+  .mobile-details-cell {
+    padding: 8px 15px 15px 15px;
+  }
+
+  .player-summary {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin-bottom: 6px;
+  }
+
+  .active-status-mobile {
+    font-size: 0.85rem;
+    color: #4CAF50;
+    font-weight: 600;
+    padding: 4px 8px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 4px;
+    border-left: 3px solid #4CAF50;
+  }
+
+  .table-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .page-size-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pagination-button {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Hide mobile details on desktop */
+@media (min-width: 769px) {
+  .mobile-details-cell {
+    display: none;
   }
 }
 </style>
