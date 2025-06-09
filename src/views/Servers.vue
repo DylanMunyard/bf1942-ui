@@ -52,7 +52,7 @@
                         <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
                       </div>
                       <div class="team-stat">
-                        <span class="stat-label">K/D</span>
+                        <span class="stat-label"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></span>
                         <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
                       </div>
                     </div>
@@ -64,7 +64,7 @@
                       <div class="header-rank">#</div>
                       <div class="header-player">Player</div>
                       <div class="header-score">Score</div>
-                      <div class="header-kd">K/D</div>
+                      <div class="header-kd"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></div>
                       <div class="header-ping">Ping</div>
                     </div>
                     
@@ -91,7 +91,7 @@
                         <div class="player-score">{{ player.score.toLocaleString() }}</div>
                         <div class="player-kd">
                           <div class="kd-section">
-                            <span class="kd-label">K/D:</span>
+                            <span class="kd-label"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></span>
                             <span class="kd-values">
                               <span class="kills">{{ player.kills }}</span>
                               <span class="separator">/</span>
@@ -136,7 +136,7 @@
                       <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
                     </div>
                     <div class="team-stat">
-                      <span class="stat-label">K/D</span>
+                      <span class="stat-label"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></span>
                       <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
                     </div>
                   </div>
@@ -148,7 +148,7 @@
                     <div class="header-rank">#</div>
                     <div class="header-player">Player</div>
                     <div class="header-score">Score</div>
-                    <div class="header-kd">K/D</div>
+                    <div class="header-kd"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></div>
                     <div class="header-ping">Ping</div>
                   </div>
                   
@@ -835,5 +835,12 @@ const teamGroups = computed(() => {
   .ping-label {
     font-size: 0.6rem;
   }
+}
+
+.kdr-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 </style> 

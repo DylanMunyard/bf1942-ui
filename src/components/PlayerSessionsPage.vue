@@ -290,7 +290,7 @@ onUnmounted(() => {
             <span class="info-value">{{ playerInfo.totalSessions }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">K/D Ratio:</span>
+            <span class="info-label"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></span>
             <span class="info-value">{{ calculateKDR(playerInfo.totalKills, playerInfo.totalDeaths) }}</span>
           </div>
         </div>
@@ -405,7 +405,7 @@ onUnmounted(() => {
               </span>
             </th>
             <th @click="handleSort('kills')" class="sortable">
-              Kills
+              <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> Kills
               <span v-if="sortBy === 'kills'" class="sort-indicator">
                 {{ sortOrder === 'asc' ? '▲' : '▼' }}
               </span>
@@ -417,7 +417,7 @@ onUnmounted(() => {
               </span>
             </th>
             <th @click="handleSort('kdr')" class="sortable">
-              K/D
+              <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
               <span v-if="sortBy === 'kdr'" class="sort-indicator">
                 {{ sortOrder === 'asc' ? '▲' : '▼' }}
               </span>
@@ -914,5 +914,26 @@ th {
     order: 3;
     margin-top: 10px;
   }
+}
+
+.kills-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.deaths-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.kdr-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 </style>

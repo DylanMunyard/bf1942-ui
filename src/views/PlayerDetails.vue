@@ -366,8 +366,8 @@ onMounted(() => {
             </span>
           </div>
           <div v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined" class="session-stats">
-            Session: {{ playerStats.currentServer.sessionKills }} 🔫 / {{ playerStats.currentServer.sessionDeaths }} 💀
-            (K/D: {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }})
+            Session: {{ playerStats.currentServer.sessionKills }} <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> / {{ playerStats.currentServer.sessionDeaths }} <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
+            (<img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }})
           </div>
         </div>
 
@@ -390,9 +390,9 @@ onMounted(() => {
               <div class="stat-label">Combat Stats</div>
               <div class="stat-value">
                 <div class="combat-stats">
-                  <span class="stat-badge">🔫 {{ playerStats.totalKills }}</span>
-                  <span class="stat-badge">💀 {{ playerStats.totalDeaths }}</span>
-                  <span class="stat-badge">KDR: {{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
+                  <span class="stat-badge"><img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> {{ playerStats.totalKills }}</span>
+                  <span class="stat-badge"><img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /> {{ playerStats.totalDeaths }}</span>
+                  <span class="stat-badge"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
                 </div>
               </div>
             </div>
@@ -408,13 +408,13 @@ onMounted(() => {
                 <div class="best-session-header">
                   <div class="best-session-score">{{ playerStats.bestSession.totalScore }}</div>
                   <span class="best-session-badge">
-                    KDR: {{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }}
+                    <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }}
                   </span>
                   <span class="best-session-badge">
-                    🔫 {{ playerStats.bestSession.totalKills }}
+                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> {{ playerStats.bestSession.totalKills }}
                   </span>
                   <span class="best-session-badge">
-                    💀 {{ playerStats.bestSession.totalDeaths }}
+                    <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /> {{ playerStats.bestSession.totalDeaths }}
                   </span>
                   <span v-if="playerStats.bestSession.isActive" class="active-session-badge">Active</span>
                 </div>
@@ -542,19 +542,19 @@ onMounted(() => {
                       </span>
                     </th>
                     <th @click="changeFavoriteMapsSort('kdRatio')" class="sortable-header desktop-only">
-                      K/D Ratio
+                      <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
                       <span v-if="favoriteMapsSortField === 'kdRatio'" class="sort-indicator">
                         {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </th>
                     <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header desktop-only">
-                      🔫
+                      <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
                       <span v-if="favoriteMapsSortField === 'totalKills'" class="sort-indicator">
                         {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </th>
                     <th @click="changeFavoriteMapsSort('totalDeaths')" class="sortable-header desktop-only">
-                      💀
+                      <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
                       <span v-if="favoriteMapsSortField === 'totalDeaths'" class="sort-indicator">
                         {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
@@ -568,7 +568,7 @@ onMounted(() => {
                       <div class="mobile-only map-details">
                         <span class="detail-item">{{ formatPlayTime(map.minutesPlayed) }}</span>
                         <span class="detail-separator">•</span>
-                        <span class="detail-item">K/D: {{ map.kdRatio.toFixed(2) }}</span>
+                        <span class="detail-item"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ map.kdRatio.toFixed(2) }}</span>
                         <span class="detail-separator">•</span>
                         <span class="detail-item">
                           <span class="kills">{{ map.totalKills }}</span>/<span class="deaths">{{ map.totalDeaths }}</span>
@@ -604,9 +604,9 @@ onMounted(() => {
                   <th class="desktop-only">Map</th>
                   <th class="desktop-only">Game Type</th>
                   <th class="desktop-only">Score</th>
-                  <th class="desktop-only">🔫</th>
-                  <th class="desktop-only">💀</th>
-                  <th class="desktop-only">K/D</th>
+                  <th class="desktop-only"><img src="@/assets/kills.png" alt="Kills" class="kills-icon" /></th>
+                  <th class="desktop-only"><img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /></th>
+                  <th class="desktop-only"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></th>
                   <th class="desktop-only">Status</th>
                 </tr>
               </thead>
@@ -638,7 +638,7 @@ onMounted(() => {
                           <span class="kills">{{ session.totalKills }}</span>/<span class="deaths">{{ session.totalDeaths }}</span>
                         </span>
                         <span class="detail-separator">•</span>
-                        <span class="detail-item">K/D: {{ calculateKDR(session.totalKills, session.totalDeaths) }}</span>
+                        <span class="detail-item"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ calculateKDR(session.totalKills, session.totalDeaths) }}</span>
                         <span v-if="session.isActive" class="active-session-badge">Active</span>
                       </div>
                     </div>
@@ -1980,5 +1980,26 @@ tbody tr:hover {
 .ping-bad {
   background: rgba(244, 67, 54, 0.2);
   color: #f44336;
+}
+
+.kills-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.deaths-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.kdr-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 </style>

@@ -203,14 +203,14 @@ watch(
                 <div class="desktop-stats">
                   <span class="score" title="Score">🏆 {{ ranking.totalScore }}</span>
                   <span class="combat-badge" title="Kills • Deaths • K/D Ratio">
-                    🎯 {{ ranking.totalKills }} • 💀 {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
+                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> {{ ranking.totalKills }} • <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /> {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
                   </span>
                   <span class="playtime" title="Play Time">⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
                 </div>
                 <div class="mobile-stats">
                   <span class="stat-item" title="Score">🏆 {{ ranking.totalScore }}</span>
                   <span class="stat-item combat-badge" title="Kills • Deaths • K/D Ratio">
-                    🎯 {{ ranking.totalKills }} • 💀 {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
+                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> {{ ranking.totalKills }} • <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /> {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
                   </span>
                   <span class="stat-item" title="Play Time">⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
                 </div>
@@ -592,5 +592,19 @@ th {
     padding: 6px 12px;
     font-size: 0.9rem;
   }
+}
+
+.kills-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.deaths-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 </style> 

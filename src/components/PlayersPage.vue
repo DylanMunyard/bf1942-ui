@@ -446,7 +446,7 @@ onUnmounted(() => {
                 <div v-if="player.currentServer && (player.currentServer.sessionKills !== undefined || player.currentServer.sessionDeaths !== undefined)" class="player-stats">
                   <span class="stat-item">K: {{ player.currentServer.sessionKills || 0 }}</span>
                   <span class="stat-item">D: {{ player.currentServer.sessionDeaths || 0 }}</span>
-                  <span class="stat-item">KDR: {{ player.currentServer.sessionDeaths ? ((player.currentServer.sessionKills || 0) / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}</span>
+                  <span class="stat-item"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ player.currentServer.sessionDeaths ? ((player.currentServer.sessionKills || 0) / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}</span>
                 </div>
               </div>
               <div v-else class="inactive-status">
@@ -1118,5 +1118,12 @@ th {
   font-weight: bold;
   color: white;
   background-color: #4CAF50;
+}
+
+.kdr-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 </style>
