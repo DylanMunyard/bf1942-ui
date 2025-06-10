@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { ServerDetails, RecentRoundInfo, ServerInsights, fetchServerDetails, fetchServerInsights } from '../services/serverDetailsService';
 import { Line, Bar } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import { countryCodeToName } from '../types/countryCodes';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
@@ -463,17 +464,55 @@ const pingChartOptions = computed(() => {
     }
   };
 });
+
+// Helper to get current time and UTC offset for a timezone string
+function getTimezoneDisplay(timezone: string | undefined): string | null {
+  if (!timezone) return null;
+  try {
+    const now = new Date();
+    // Get current time in the timezone
+    const time = new Intl.DateTimeFormat(undefined, {
+      hour: '2-digit', minute: '2-digit', timeZone: timezone
+    }).format(now);
+    // Get UTC offset in hours
+    const tzDate = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+    const offsetMinutes = (tzDate.getTime() - now.getTime()) / 60000;
+    const offsetHours = Math.round(offsetMinutes / 60);
+    const sign = offsetHours >= 0 ? '+' : '-';
+    return `${time} (${sign}${Math.abs(offsetHours)})`;
+  } catch (e) {
+    return timezone;
+  }
+}
+
+// Helper to get full country name from code
+function getCountryName(code: string | undefined, fallback: string | undefined): string | undefined {
+  if (!code) return fallback;
+  const name = countryCodeToName[code.toUpperCase()];
+  return name || fallback;
+}
 </script>
 
 <template>
   <div class="server-details-container">
     <div class="server-details-header">
-      <div class="server-name-container">
+      <div class="server-name-container" style="flex-direction: column; align-items: flex-start;">
         <router-link to="/servers" class="back-button">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           Back to Servers
         </router-link>
         <h2>Server Details: {{ serverName }}</h2>
+        <div v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone)" class="server-region-badge">
+          <span>
+            <template v-if="serverDetails.region">{{ serverDetails.region }}</template>
+            <template v-if="serverDetails.region && (serverDetails.country || serverDetails.countryCode)"> <span class="dot">•</span> </template>
+            <template v-if="serverDetails.country || serverDetails.countryCode">{{ getCountryName(serverDetails.country, serverDetails.country) }}</template>
+            <template v-if="(serverDetails.region || serverDetails.country || serverDetails.countryCode) && serverDetails.timezone"> <span class="dot">•</span> </template>
+            <template v-if="serverDetails.timezone">
+              <span v-if="getTimezoneDisplay(serverDetails.timezone)"> {{ getTimezoneDisplay(serverDetails.timezone) }}</span>
+            </template>
+          </span>
+        </div>
       </div>
       <div class="modal-actions">
         <router-link
@@ -518,9 +557,6 @@ const pingChartOptions = computed(() => {
                 {{ isPingChartExpanded ? '📉' : '📊' }}
               </button>
             </div>
-          </div>
-          <div class="ping-period-info">
-            Ping data from {{ formatDate(serverInsights.startPeriod) }} to {{ formatDate(serverInsights.endPeriod) }}
           </div>
           <div class="ping-explainer" :class="{ 'collapsed': isPingExplainerCollapsed }">
             <div class="ping-explainer-header" @click="togglePingExplainer">
@@ -752,7 +788,8 @@ const pingChartOptions = computed(() => {
 
 .server-name-container {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 10px;
 }
 
@@ -915,16 +952,6 @@ const pingChartOptions = computed(() => {
   background: var(--color-primary);
   color: white;
   transform: translateY(-1px);
-}
-
-.ping-period-info {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-  margin-bottom: 12px;
-  padding: 6px 12px;
-  background: var(--color-background-mute);
-  border-radius: 4px;
-  border-left: 3px solid #9c27b0;
 }
 
 .ping-explainer {
@@ -1878,5 +1905,50 @@ const pingChartOptions = computed(() => {
   font-weight: 600;
   vertical-align: middle;
   line-height: 1;
+}
+
+.server-region-badge {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 14px;
+  margin-bottom: 0;
+  padding: 0;
+  width: auto;
+}
+.server-region-badge > span {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(90deg, #7b2ff2 0%, #f357a8 100%);
+  color: #fff;
+  border-radius: 7px;
+  padding: 3px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(123,47,242,0.10);
+  letter-spacing: 0.01em;
+  min-height: 22px;
+  min-width: 50px;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+.server-region-badge .dot {
+  font-size: 1.2em;
+  margin: 0 8px;
+  color: #fff;
+  opacity: 0.7;
+}
+@media (max-width: 600px) {
+  .server-region-badge {
+    margin-top: 10px;
+    margin-bottom: 0;
+    justify-content: flex-start;
+  }
+  .server-region-badge > span {
+    font-size: 0.8rem;
+    padding: 2px 7px;
+    min-height: 18px;
+    min-width: 36px;
+  }
 }
 </style>
