@@ -19,12 +19,10 @@ const error = ref<string | null>(null);
 const isChartExpanded = ref(false);
 
 // Fetch server details
-const fetchData = async (isRefreshing = false) => {
+const fetchData = async () => {
   if (!serverName.value) return;
 
-  if (!isRefreshing) {
-    isLoading.value = true;
-  }
+  isLoading.value = true;
   error.value = null;
 
   try {
@@ -33,14 +31,8 @@ const fetchData = async (isRefreshing = false) => {
     console.error('Error fetching server details:', err);
     error.value = 'Failed to load server details. Please try again later.';
   } finally {
-    if (!isRefreshing) {
-      isLoading.value = false;
-    }
+    isLoading.value = false;
   }
-};
-
-const autoRefreshData = () => {
-  fetchData(true);
 };
 
 watch(
@@ -55,7 +47,6 @@ watch(
 
 onMounted(() => {
   fetchData();
-  setInterval(autoRefreshData, 30000); // Auto-refresh every 30 seconds
 });
 
 // Format minutes to hours and minutes
@@ -690,6 +681,16 @@ const toggleChartExpansion = () => {
 
 .stat-median {
   color: var(--color-primary);
+}
+
+.stat-positive {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.stat-negative {
+  color: #f44336;
+  font-weight: 600;
 }
 
 .chart-container {

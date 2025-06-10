@@ -93,6 +93,7 @@ export interface ServerDetails {
   startPeriod: string; // ISO date string
   topScores: TopScore[];
   lastRounds: RecentRoundInfo[];
+  averagePlayerCountChangePercent?: number; // Change in player counts from last 7 days vs 7 days before that
 }
 
 /**
