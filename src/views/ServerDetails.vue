@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ServerDetails, RecentRoundInfo, fetchServerDetails } from '../services/serverDetailsService';
-import { Line } from 'vue-chartjs';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import { ServerDetails, RecentRoundInfo, ServerInsights, fetchServerDetails, fetchServerInsights } from '../services/serverDetailsService';
+import { Line, Bar } from 'vue-chartjs';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 
 // Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
 const route = useRoute();
 const router = useRouter();
@@ -14,24 +14,52 @@ const router = useRouter();
 // State
 const serverName = ref(route.params.serverName as string);
 const serverDetails = ref<ServerDetails | null>(null);
+const serverInsights = ref<ServerInsights | null>(null);
 const isLoading = ref(true);
+const isInsightsLoading = ref(true);
 const error = ref<string | null>(null);
+const insightsError = ref<string | null>(null);
 const isChartExpanded = ref(false);
+const isPingChartExpanded = ref(false);
+const pingMetric = ref<'median' | 'p95'>('median');
 
-// Fetch server details
+// Fetch server details and insights in parallel
 const fetchData = async () => {
   if (!serverName.value) return;
 
   isLoading.value = true;
+  isInsightsLoading.value = true;
   error.value = null;
+  insightsError.value = null;
 
   try {
-    serverDetails.value = await fetchServerDetails(serverName.value);
+    // Fetch both server details and insights in parallel
+    const [detailsResult, insightsResult] = await Promise.allSettled([
+      fetchServerDetails(serverName.value),
+      fetchServerInsights(serverName.value)
+    ]);
+
+    // Handle server details result
+    if (detailsResult.status === 'fulfilled') {
+      serverDetails.value = detailsResult.value;
+    } else {
+      console.error('Error fetching server details:', detailsResult.reason);
+      error.value = 'Failed to load server details. Please try again later.';
+    }
+
+    // Handle insights result
+    if (insightsResult.status === 'fulfilled') {
+      serverInsights.value = insightsResult.value;
+    } else {
+      console.error('Error fetching server insights:', insightsResult.reason);
+      insightsError.value = 'Failed to load server insights.';
+    }
   } catch (err) {
-    console.error('Error fetching server details:', err);
-    error.value = 'Failed to load server details. Please try again later.';
+    console.error('Unexpected error during fetch:', err);
+    error.value = 'An unexpected error occurred. Please try again later.';
   } finally {
     isLoading.value = false;
+    isInsightsLoading.value = false;
   }
 };
 
@@ -271,6 +299,164 @@ const chartOptions = computed(() => {
 const toggleChartExpansion = () => {
   isChartExpanded.value = !isChartExpanded.value;
 };
+
+// Toggle ping chart expansion
+const togglePingChartExpansion = () => {
+  isPingChartExpanded.value = !isPingChartExpanded.value;
+};
+
+// Toggle ping metric between median and p95
+const togglePingMetric = () => {
+  pingMetric.value = pingMetric.value === 'median' ? 'p95' : 'median';
+};
+
+// Chart data for ping by hour
+const pingChartData = computed(() => {
+  if (!serverInsights.value?.pingByHour?.data) return { labels: [], datasets: [] };
+
+  const utcData = serverInsights.value.pingByHour.data;
+  
+  // Convert UTC hours to local timezone and re-group the data
+  const localDataMap = new Map<number, { totalPing: number; count: number; p95Values: number[]; medianValues: number[] }>();
+  
+  utcData.forEach(item => {
+    // Create a UTC date for the hour bucket (using a reference date)
+    const utcDate = new Date();
+    utcDate.setUTCHours(item.hour, 0, 0, 0);
+    
+    // Get the local hour for this UTC time
+    const localHour = utcDate.getHours();
+    
+    // Group data by local hour
+    if (!localDataMap.has(localHour)) {
+      localDataMap.set(localHour, { 
+        totalPing: 0, 
+        count: 0, 
+        p95Values: [], 
+        medianValues: [] 
+      });
+    }
+    
+    const bucket = localDataMap.get(localHour)!;
+    bucket.totalPing += item.averagePing;
+    bucket.count += 1;
+    bucket.p95Values.push(item.p95Ping);
+    bucket.medianValues.push(item.medianPing);
+  });
+  
+  // Create sorted array of local hours and their data
+  const sortedLocalHours = Array.from(localDataMap.keys()).sort((a, b) => a - b);
+  
+  const labels = sortedLocalHours.map(hour => {
+    const date = new Date();
+    date.setHours(hour, 0, 0, 0);
+    
+    return date.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      hour12: undefined // Let the locale decide 12/24 hour format
+    });
+  });
+
+  // Calculate ping values for each local hour
+  const pingValues = sortedLocalHours.map(hour => {
+    const bucket = localDataMap.get(hour)!;
+    
+    if (pingMetric.value === 'median') {
+      // For median, we take the average of median values if multiple UTC hours map to same local hour
+      return bucket.medianValues.reduce((sum, val) => sum + val, 0) / bucket.medianValues.length;
+    } else {
+      // For P95, we take the average of P95 values if multiple UTC hours map to same local hour
+      return bucket.p95Values.reduce((sum, val) => sum + val, 0) / bucket.p95Values.length;
+    }
+  });
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: `${pingMetric.value === 'median' ? 'Median' : 'P95'} Ping (ms)`,
+        backgroundColor: 'rgba(156, 39, 176, 0.7)',
+        borderColor: 'rgba(156, 39, 176, 1)',
+        borderWidth: 1,
+        data: pingValues
+      }
+    ]
+  };
+});
+
+// Chart options for ping chart
+const pingChartOptions = computed(() => {
+  const computedStyles = window.getComputedStyle(document.documentElement);
+  const textColor = computedStyles.getPropertyValue('--color-text').trim() || '#333333';
+  const textMutedColor = computedStyles.getPropertyValue('--color-text-muted').trim() || '#666666';
+  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') || 
+                    document.documentElement.classList.contains('dark-mode') ||
+                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  
+  const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        display: isPingChartExpanded.value,
+        grid: {
+          display: isPingChartExpanded.value,
+          color: gridColor
+        },
+        title: {
+          display: isPingChartExpanded.value,
+          text: `${pingMetric.value === 'median' ? 'Median' : 'P95'} Ping (ms)`,
+          color: textColor
+        },
+        ticks: {
+          display: isPingChartExpanded.value,
+          color: textMutedColor
+        }
+      },
+      x: {
+        display: isPingChartExpanded.value,
+        grid: {
+          display: isPingChartExpanded.value,
+          color: gridColor
+        },
+        title: {
+          display: isPingChartExpanded.value,
+          text: 'Hour of Day',
+          color: textColor
+        },
+        ticks: {
+          display: isPingChartExpanded.value,
+          color: textMutedColor
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        enabled: isPingChartExpanded.value,
+        backgroundColor: isDarkMode ? 'rgba(35, 21, 53, 0.95)' : 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        borderColor: isDarkMode ? '#9c27b0' : '#666666',
+        borderWidth: 1,
+        cornerRadius: 6,
+        callbacks: {
+          title: function(context: any) {
+            return `Hour: ${context[0].label}`;
+          },
+          label: function(context: any) {
+            return `${pingMetric.value === 'median' ? 'Median' : 'P95'} Ping: ${context.parsed.y}ms`;
+          }
+        }
+      }
+    }
+  };
+});
 </script>
 
 <template>
@@ -304,6 +490,46 @@ const toggleChartExpansion = () => {
         <!-- Period information -->
         <div class="period-info">
           Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
+        </div>
+
+        <!-- Server Insights Section -->
+        <div v-if="serverInsights?.pingByHour?.data && serverInsights.pingByHour.data.length > 0" class="stats-section">
+          <div class="chart-header">
+            <h3>📊 Server Insights</h3>
+            <div class="insights-controls">
+              <button
+                class="metric-toggle-button"
+                @click="togglePingMetric"
+                :title="`Switch to ${pingMetric === 'median' ? 'P95' : 'Median'} ping`"
+              >
+                {{ pingMetric === 'median' ? 'Median' : 'P95' }}
+              </button>
+              <button
+                class="expand-chart-button"
+                @click="togglePingChartExpansion"
+                :title="isPingChartExpanded ? 'Collapse chart' : 'Expand chart'"
+              >
+                {{ isPingChartExpanded ? '📉' : '📊' }}
+              </button>
+            </div>
+          </div>
+          <div class="ping-period-info">
+            Ping data from {{ formatDate(serverInsights.startPeriod) }} to {{ formatDate(serverInsights.endPeriod) }}
+          </div>
+          <div
+            class="chart-container ping-chart-container"
+            :class="{ 'chart-expanded': isPingChartExpanded }"
+            @click="!isPingChartExpanded && togglePingChartExpansion()"
+          >
+            <Bar :data="pingChartData" :options="pingChartOptions" />
+          </div>
+        </div>
+        <div v-else-if="isInsightsLoading" class="insights-loading">
+          <div class="loading-spinner small"></div>
+          <p>Loading insights...</p>
+        </div>
+        <div v-else-if="insightsError" class="insights-error">
+          <p class="error-message-small">{{ insightsError }}</p>
         </div>
 
         <!-- Player Count Chart -->
@@ -646,6 +872,80 @@ const toggleChartExpansion = () => {
   background: var(--color-primary);
   color: white;
   transform: translateY(-1px);
+}
+
+.insights-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.metric-toggle-button {
+  background: var(--color-background-mute);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  color: var(--color-text);
+  min-width: 70px;
+}
+
+.metric-toggle-button:hover {
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.ping-period-info {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  background: var(--color-background-mute);
+  border-radius: 4px;
+  border-left: 3px solid #9c27b0;
+}
+
+.ping-chart-container {
+  height: 80px;
+  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-background-soft) 100%);
+}
+
+.ping-chart-container:hover:not(.chart-expanded) {
+  border-color: #9c27b0;
+  box-shadow: 0 4px 12px rgba(156, 39, 176, 0.2);
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(156, 39, 176, 0.05) 100%);
+}
+
+.ping-chart-container.chart-expanded {
+  height: 400px;
+  border-color: #9c27b0;
+  box-shadow: 0 8px 25px rgba(156, 39, 176, 0.3);
+}
+
+.insights-loading, .insights-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--color-background-soft);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.loading-spinner.small {
+  width: 20px;
+  height: 20px;
+  margin-bottom: 0;
+}
+
+.error-message-small {
+  color: #ff5252;
+  font-size: 0.9rem;
+  margin: 0;
 }
 
 .chart-stats {
@@ -1076,9 +1376,23 @@ const toggleChartExpansion = () => {
     height: 280px;
   }
 
+  .ping-chart-container.chart-expanded {
+    height: 280px;
+  }
+
   .expand-chart-button {
     padding: 6px 10px;
     font-size: 1rem;
+  }
+
+  .metric-toggle-button {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    min-width: 60px;
+  }
+
+  .insights-controls {
+    gap: 6px;
   }
 
   .chart-stats {
@@ -1210,9 +1524,19 @@ const toggleChartExpansion = () => {
     height: 250px;
   }
 
+  .ping-chart-container.chart-expanded {
+    height: 250px;
+  }
+
   .expand-chart-button {
     padding: 5px 8px;
     font-size: 0.9rem;
+  }
+
+  .metric-toggle-button {
+    padding: 5px 8px;
+    font-size: 0.8rem;
+    min-width: 55px;
   }
 
   .chart-stats {

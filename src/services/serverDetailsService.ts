@@ -40,6 +40,26 @@ export interface RecentRoundInfo {
   isActive?: boolean;
 }
 
+// New interfaces for server insights
+export interface PingByHourData {
+  hour: number;
+  averagePing: number;
+  medianPing: number;
+  p95Ping: number;
+}
+
+export interface PingByHour {
+  data: PingByHourData[];
+}
+
+export interface ServerInsights {
+  serverGuid: string;
+  serverName: string;
+  startPeriod: string; // ISO date string
+  endPeriod: string; // ISO date string
+  pingByHour: PingByHour;
+}
+
 export interface LeaderboardEntry {
   rank: number;
   playerName: string;
@@ -113,6 +133,26 @@ export async function fetchServerDetails(
   } catch (err) {
     console.error('Error fetching server details:', err);
     throw new Error('Failed to get server details');
+  }
+}
+
+/**
+ * Fetches server insights from the API
+ * @param serverName The name of the server to fetch insights for
+ * @returns Server insights including ping data
+ */
+export async function fetchServerInsights(
+  serverName: string
+): Promise<ServerInsights> {
+  try {
+    // Make the request to the API endpoint
+    const response = await axios.get<ServerInsights>(`/stats/servers/${encodeURIComponent(serverName)}/insights`);
+
+    // Return the response data
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching server insights:', err);
+    throw new Error('Failed to get server insights');
   }
 }
 
