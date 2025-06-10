@@ -195,7 +195,7 @@ watch(
             <tr v-for="ranking in rankings" :key="ranking.playerName" class="ranking-row">
               <td class="rank-cell">#{{ ranking.rank }}</td>
               <td class="player-cell">
-                <router-link :to="`/player/${encodeURIComponent(ranking.playerName)}`" class="player-link">
+                <router-link :to="`/players/${encodeURIComponent(ranking.playerName)}`" class="player-link">
                   {{ ranking.playerName }}
                 </router-link>
               </td>
@@ -595,15 +595,15 @@ th {
 }
 
 .kills-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }
 
 .deaths-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }

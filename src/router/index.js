@@ -50,7 +50,7 @@ const router = createRouter({
       component: Players
     },
     {
-      path: '/player/:playerName',
+      path: '/players/:playerName',
       name: 'player-details',
       component: PlayerDetails,
       props: true

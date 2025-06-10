@@ -154,7 +154,7 @@ const getRoundReportRoute = (session: any) => {
   }
   
   // Fallback to player details if serverGuid not found
-  return `/player/${encodeURIComponent(playerName.value)}`;
+  return `/players/${encodeURIComponent(playerName.value)}`;
 };
 
 // Computed property to sort server play times by minutes played (descending)
@@ -1983,22 +1983,22 @@ tbody tr:hover {
 }
 
 .kills-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }
 
 .deaths-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }
 
 .kdr-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }

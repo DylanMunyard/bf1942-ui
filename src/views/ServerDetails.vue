@@ -128,6 +128,24 @@ const chartData = computed(() => {
   };
 });
 
+// Calculate max and median values for player count
+const playerCountStats = computed(() => {
+  if (!serverDetails.value?.playerCountMetrics || serverDetails.value.playerCountMetrics.length === 0) {
+    return { max: 0, median: 0 };
+  }
+
+  const values = serverDetails.value.playerCountMetrics.map(metric => metric.value);
+  const max = Math.max(...values);
+  
+  // Calculate median
+  const sortedValues = [...values].sort((a, b) => a - b);
+  const median = sortedValues.length % 2 === 0
+    ? (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2
+    : sortedValues[Math.floor(sortedValues.length / 2)];
+
+  return { max, median: Math.round(median) };
+});
+
 // Chart options - computed to handle expanded vs compact view
 const chartOptions = computed(() => {
   // Get computed styles to access CSS variables
@@ -152,18 +170,38 @@ const chartOptions = computed(() => {
       y: {
         beginAtZero: true,
         display: isChartExpanded.value,
+        suggestedMax: Math.max(playerCountStats.value.max * 1.1, playerCountStats.value.max + 5),
         grid: {
           display: isChartExpanded.value,
           color: gridColor
         },
         title: {
           display: isChartExpanded.value,
-          text: 'Player Count',
+          text: `Player Count (Max: ${playerCountStats.value.max}, Median: ${playerCountStats.value.median})`,
           color: textColor
         },
         ticks: {
           display: isChartExpanded.value,
-          color: textMutedColor
+          color: textMutedColor,
+          callback: function(tickValue: any, index: number, ticks: any[]) {
+            const value = Number(tickValue);
+            const { max, median } = playerCountStats.value;
+            
+            // Always show 0, max, and median values
+            if (value === 0 || value === max || value === median) {
+              if (value === max) return `${value} (MAX)`;
+              if (value === median) return `${value} (MED)`;
+              return value.toString();
+            }
+            
+            // Show other significant values
+            const stepSize = Math.max(1, Math.floor(max / 5));
+            if (value % stepSize === 0) {
+              return value.toString();
+            }
+            
+            return '';
+          }
         }
       },
               x: {
@@ -289,6 +327,25 @@ const toggleChartExpansion = () => {
               {{ isChartExpanded ? '📉' : '📊' }}
             </button>
           </div>
+          <div class="chart-stats">
+            <div class="stat-item">
+              <span class="stat-label">Peak:</span>
+              <span class="stat-value stat-max">{{ playerCountStats.max }} players</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Median:</span>
+              <span class="stat-value stat-median">{{ playerCountStats.median }} players</span>
+            </div>
+            <div v-if="serverDetails.averagePlayerCountChangePercent && serverDetails.averagePlayerCountChangePercent !== 0" class="stat-item">
+              <span class="stat-label">7-day Change:</span>
+              <span class="stat-value" :class="{ 
+                'stat-positive': serverDetails.averagePlayerCountChangePercent > 0, 
+                'stat-negative': serverDetails.averagePlayerCountChangePercent < 0 
+              }">
+                {{ serverDetails.averagePlayerCountChangePercent > 0 ? '+' : '' }}{{ serverDetails.averagePlayerCountChangePercent.toFixed(1) }}%
+              </span>
+            </div>
+          </div>
                        <div
              class="chart-container"
              :class="{ 'chart-expanded': isChartExpanded }"
@@ -320,7 +377,7 @@ const toggleChartExpansion = () => {
                   </div>
                   <div class="player-info">
                     <div class="player-name">
-                      <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
+                      <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
                         {{ player.playerName }}
                       </router-link>
                     </div>
@@ -357,7 +414,7 @@ const toggleChartExpansion = () => {
                   </div>
                   <div class="player-info">
                     <div class="score-name">
-                      <router-link :to="`/player/${encodeURIComponent(score.playerName)}`" class="player-link">
+                      <router-link :to="`/players/${encodeURIComponent(score.playerName)}`" class="player-link">
                         {{ score.playerName }}
                       </router-link>
                     </div>
@@ -598,6 +655,41 @@ const toggleChartExpansion = () => {
   background: var(--color-primary);
   color: white;
   transform: translateY(-1px);
+}
+
+.chart-stats {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+  padding: 8px 12px;
+  background: var(--color-background-mute);
+  border-radius: 6px;
+  border-left: 3px solid var(--color-primary);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.stat-value {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.stat-max {
+  color: #4caf50;
+}
+
+.stat-median {
+  color: var(--color-primary);
 }
 
 .chart-container {
@@ -988,6 +1080,16 @@ const toggleChartExpansion = () => {
     font-size: 1rem;
   }
 
+  .chart-stats {
+    gap: 15px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+  }
+
+  .stat-label, .stat-value {
+    font-size: 0.85rem;
+  }
+
   .period-info {
     font-size: 0.85rem;
     text-align: center;
@@ -1110,6 +1212,21 @@ const toggleChartExpansion = () => {
   .expand-chart-button {
     padding: 5px 8px;
     font-size: 0.9rem;
+  }
+
+  .chart-stats {
+    gap: 12px;
+    padding: 5px 8px;
+    margin-bottom: 8px;
+    flex-direction: column;
+  }
+
+  .stat-item {
+    justify-content: space-between;
+  }
+
+  .stat-label, .stat-value {
+    font-size: 0.8rem;
   }
 
   .period-info {

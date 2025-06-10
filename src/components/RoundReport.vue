@@ -593,7 +593,7 @@ const goBack = () => {
                         <span v-else class="rank-number">{{ player.rank }}</span>
                       </div>
                       <div class="player-name">
-                        <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
+                        <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
                           {{ player.playerName }}
                         </router-link>
                       </div>
@@ -677,7 +677,7 @@ const goBack = () => {
                       <span v-else class="rank-number">{{ player.rank }}</span>
                     </div>
                     <div class="player-name">
-                      <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-link">
+                      <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
                         {{ player.playerName }}
                       </router-link>
                     </div>
@@ -1916,8 +1916,8 @@ body.dragging * {
 }
 
 .kdr-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }

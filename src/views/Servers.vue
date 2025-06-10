@@ -84,7 +84,7 @@
                           <span v-else class="rank-number">{{ player.rank }}</span>
                         </div>
                         <div class="player-name">
-                          <router-link :to="`/player/${encodeURIComponent(player.name)}`" class="player-link">
+                          <router-link :to="`/players/${encodeURIComponent(player.name)}`" class="player-link">
                             {{ player.name }}
                           </router-link>
                         </div>
@@ -168,7 +168,7 @@
                         <span v-else class="rank-number">{{ player.rank }}</span>
                       </div>
                       <div class="player-name">
-                        <router-link :to="`/player/${encodeURIComponent(player.name)}`" class="player-link">
+                        <router-link :to="`/players/${encodeURIComponent(player.name)}`" class="player-link">
                           {{ player.name }}
                         </router-link>
                       </div>
@@ -838,8 +838,8 @@ const teamGroups = computed(() => {
 }
 
 .kdr-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }

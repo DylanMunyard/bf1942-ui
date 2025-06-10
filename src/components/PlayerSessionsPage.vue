@@ -917,22 +917,22 @@ th {
 }
 
 .kills-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }
 
 .deaths-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }
 
 .kdr-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }

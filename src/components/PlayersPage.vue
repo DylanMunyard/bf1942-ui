@@ -421,7 +421,7 @@ onUnmounted(() => {
         <tbody>
           <tr v-for="player in players" :key="player.playerName" class="player-row">
             <td class="player-name-cell">
-              <router-link :to="`/player/${encodeURIComponent(player.playerName)}`" class="player-name-link">
+              <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-name-link">
                 {{ player.playerName }}
               </router-link>
               <div v-if="player.currentServer" class="current-server">
@@ -1121,8 +1121,8 @@ th {
 }
 
 .kdr-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }

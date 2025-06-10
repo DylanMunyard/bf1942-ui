@@ -28,7 +28,7 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 
 <style scoped>
 .sidebar {
-  width: 60px;
+  width: 120px;
   background-color: var(--sidebar-bg);
   color: var(--sidebar-text);
   display: flex;
@@ -55,13 +55,13 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 12px 8px;
+  padding: 16px 12px;
   color: #cbd5e1;
   text-decoration: none;
   transition: all 0.3s ease;
-  border-radius: 8px;
-  width: 44px;
-  height: 44px;
+  border-radius: 12px;
+  width: 68px;
+  height: 68px;
   font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
@@ -84,8 +84,8 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 .icon-bf1942 {
   background-image: url('../assets/bf1942.png');
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 36px;
+  height: 36px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -94,8 +94,8 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 .icon-fh2 {
   background-image: url('../assets/fh2.png');
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 36px;
+  height: 36px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -104,8 +104,8 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 .icon-players {
   background-image: url('../assets/players.png');
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 36px;
+  height: 36px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
