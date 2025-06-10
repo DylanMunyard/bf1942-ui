@@ -328,12 +328,12 @@ const toggleChartExpansion = () => {
               <span class="stat-value stat-median">{{ playerCountStats.median }} players</span>
             </div>
             <div v-if="serverDetails.averagePlayerCountChangePercent && serverDetails.averagePlayerCountChangePercent !== 0" class="stat-item">
-              <span class="stat-label">7-day Change:</span>
+              <span class="stat-label">7-day change:</span>
               <span class="stat-value" :class="{ 
                 'stat-positive': serverDetails.averagePlayerCountChangePercent > 0, 
                 'stat-negative': serverDetails.averagePlayerCountChangePercent < 0 
               }">
-                {{ serverDetails.averagePlayerCountChangePercent > 0 ? '+' : '' }}{{ serverDetails.averagePlayerCountChangePercent.toFixed(1) }}%
+                {{ serverDetails.averagePlayerCountChangePercent > 0 ? '+' : '' }}{{ serverDetails.averagePlayerCountChangePercent }}%
               </span>
             </div>
           </div>
