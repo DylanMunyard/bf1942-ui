@@ -22,6 +22,7 @@ const insightsError = ref<string | null>(null);
 const isChartExpanded = ref(false);
 const isPingChartExpanded = ref(false);
 const pingMetric = ref<'median' | 'p95'>('median');
+const isPingExplainerCollapsed = ref(false);
 
 // Fetch server details and insights in parallel
 const fetchData = async () => {
@@ -310,6 +311,11 @@ const togglePingMetric = () => {
   pingMetric.value = pingMetric.value === 'median' ? 'p95' : 'median';
 };
 
+// Toggle ping explainer collapse state
+const togglePingExplainer = () => {
+  isPingExplainerCollapsed.value = !isPingExplainerCollapsed.value;
+};
+
 // Chart data for ping by hour
 const pingChartData = computed(() => {
   if (!serverInsights.value?.pingByHour?.data) return { labels: [], datasets: [] };
@@ -515,6 +521,18 @@ const pingChartOptions = computed(() => {
           </div>
           <div class="ping-period-info">
             Ping data from {{ formatDate(serverInsights.startPeriod) }} to {{ formatDate(serverInsights.endPeriod) }}
+          </div>
+          <div class="ping-explainer" :class="{ 'collapsed': isPingExplainerCollapsed }">
+            <div class="ping-explainer-header" @click="togglePingExplainer">
+              <span class="ping-explainer-title">💡 How to interpret ping data</span>
+              <button class="collapse-toggle" :title="isPingExplainerCollapsed ? 'Show explanation' : 'Hide explanation'">
+                {{ isPingExplainerCollapsed ? '▶' : '▼' }}
+              </button>
+            </div>
+            <div class="ping-explainer-content" v-show="!isPingExplainerCollapsed">
+              <p>Higher ping times typically indicate players connecting from outside the server's host country. Lower ping times suggest local players are online.</p>
+              <p>If you're playing from outside the host country, look for hours with higher ping averages to find when players with similar connections are online for more balanced gameplay.</p>
+            </div>
           </div>
           <div
             class="chart-container ping-chart-container"
@@ -907,6 +925,78 @@ const pingChartOptions = computed(() => {
   background: var(--color-background-mute);
   border-radius: 4px;
   border-left: 3px solid #9c27b0;
+}
+
+.ping-explainer {
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(156, 39, 176, 0.03) 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(156, 39, 176, 0.2);
+  transition: all 0.3s ease;
+}
+
+.ping-explainer.collapsed {
+  background: linear-gradient(135deg, var(--color-background-mute) 0%, rgba(156, 39, 176, 0.02) 100%);
+}
+
+.ping-explainer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.ping-explainer-header:hover {
+  background: rgba(156, 39, 176, 0.05);
+  border-radius: 8px;
+}
+
+.ping-explainer-title {
+  font-weight: 600;
+  color: var(--color-heading);
+  font-size: 0.95rem;
+}
+
+.collapse-toggle {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  min-width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collapse-toggle:hover {
+  background: rgba(156, 39, 176, 0.1);
+  color: #9c27b0;
+}
+
+.ping-explainer-content {
+  padding: 0 12px 12px 12px;
+  transition: all 0.3s ease;
+}
+
+.ping-explainer-content p {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.ping-explainer-content p:last-child {
+  margin-bottom: 0;
+}
+
+.ping-explainer-content strong {
+  color: var(--color-heading);
 }
 
 .ping-chart-container {
@@ -1414,6 +1504,32 @@ const pingChartOptions = computed(() => {
     border-radius: 6px;
   }
 
+  .ping-explainer {
+    margin-bottom: 10px;
+  }
+
+  .ping-explainer-header {
+    padding: 8px;
+  }
+
+  .ping-explainer-title {
+    font-size: 0.9rem;
+  }
+
+  .collapse-toggle {
+    font-size: 0.75rem;
+    min-width: 18px;
+  }
+
+  .ping-explainer-content {
+    padding: 0 8px 8px 8px;
+  }
+
+  .ping-explainer-content p {
+    font-size: 0.85rem;
+    line-height: 1.3;
+  }
+
   .stats-container {
     gap: 8px;
   }
@@ -1557,6 +1673,33 @@ const pingChartOptions = computed(() => {
   .period-info {
     margin: 0 0 6px 0;
     padding: 4px;
+  }
+
+  .ping-explainer {
+    margin-bottom: 8px;
+  }
+
+  .ping-explainer-header {
+    padding: 6px;
+  }
+
+  .ping-explainer-title {
+    font-size: 0.85rem;
+  }
+
+  .collapse-toggle {
+    font-size: 0.7rem;
+    min-width: 16px;
+  }
+
+  .ping-explainer-content {
+    padding: 0 6px 6px 6px;
+  }
+
+  .ping-explainer-content p {
+    font-size: 0.8rem;
+    line-height: 1.25;
+    margin: 0 0 6px 0;
   }
 
   .stats-container {
