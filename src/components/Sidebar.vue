@@ -10,6 +10,9 @@
       <router-link to="/players" active-class="active" class="nav-item">
         <i class="icon-players"></i>
       </router-link>
+      <router-link to="/tk-livewire" active-class="active" class="nav-item" title="TK Livewire">
+        <i class="icon-tk-livewire"></i>
+      </router-link>
       <div class="nav-item theme-toggle-item" @click="toggleDarkMode" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
         <span class="toggle-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
       </div>
@@ -109,6 +112,18 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+}
+
+.icon-tk-livewire {
+  background-image: url('../assets/team_killers.png');
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 50%;
+  overflow: hidden;
 }
 
 /* Round icons */

@@ -130,6 +130,21 @@ export interface PlayerTimeStatistics {
   insights?: PlayerInsights;
 }
 
+export interface TeamKillerMetric {
+  serverName: string;
+  serverGuid: string;
+  playerName: string;
+  teamName: string;
+  mapName: string;
+  currentScore: number;
+  currentKills: number;
+  currentDeaths: number;
+  unexplainedDropsLast10Min: number;
+  totalPenaltiesLast10Min: number;
+  tkProbability: number;
+  lastActivity: string; // ISO date string
+}
+
 /**
  * Fetches player statistics from the API
  * @param playerName The name of the player to fetch statistics for
@@ -293,6 +308,22 @@ export async function fetchPlayerSessions(
   } catch (err) {
     console.error('Error fetching player sessions:', err);
     throw new Error('Failed to get player sessions');
+  }
+}
+
+/**
+ * Fetches team killer metrics from the analytics API
+ * @returns List of team killer metrics
+ */
+export async function fetchTeamKillerMetrics(): Promise<TeamKillerMetric[]> {
+  try {
+    const response = await axios.get<TeamKillerMetric[]>(
+      '/stats/realtimeanalytics/teamkillers'
+    );
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching team killer metrics:', err);
+    throw new Error('Failed to get team killer metrics');
   }
 }
 

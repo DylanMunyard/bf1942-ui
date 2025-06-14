@@ -6,6 +6,7 @@ import ServerDetails from '../views/ServerDetails.vue'
 import ServerRankingsPage from '../components/ServerRankingsPage.vue'
 import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
 import RoundReportPage from '../components/RoundReportPage.vue'
+import TKLivewirePage from '../components/TKLivewirePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -70,6 +71,11 @@ const router = createRouter({
         mapName: route.query.mapName,
         startTime: route.query.startTime
       })
+    },
+    {
+      path: '/tk-livewire',
+      name: 'tk-livewire',
+      component: TKLivewirePage
     }
   ]
 })
