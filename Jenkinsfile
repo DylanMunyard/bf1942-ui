@@ -15,6 +15,17 @@ pipeline {
         }
       }
     }
+    stage('Deploy front end') {
+      steps {
+        withCredentials([string(credentialsId: 'OPENAI_API_KEY', variable: 'OPENAI_API_KEY')]) {
+            container('kubectl') {
+                withKubeConfig([namespace: "bf42-servers"]) {
+                  sh 'kubectl rollout restart deployment/bf42-servers'
+                }
+              }
+            }
+        }
+    }
     stage('Docker build AI back end') {
       steps {
         container('dind') {
@@ -32,8 +43,6 @@ pipeline {
                 withKubeConfig([namespace: "bf42-servers"]) {
                   sh 'kubectl delete secret openai-api-key'
                   sh 'kubectl create secret generic openai-api-key --from-literal=openai-key="$OPENAI_API_KEY"'
-                  sh 'kubectl rollout restart deployment/bf42-servers'
-                  sh 'kubectl rollout restart deployment/bf42-servers-backend'
                   sh 'kubectl rollout restart deployment/bf42-servers-ai-backend'
                 }
               }
