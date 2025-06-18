@@ -5,14 +5,14 @@
         <i class="icon-bf1942"></i>
         <div class="tooltip">
           <div class="tooltip-icon icon-bf1942"></div>
-          <div class="tooltip-text">Find a BF1942 server. Thanks to @cetteup for providing these APIs</div>
+          <div class="tooltip-text">Find a BF1942 server. Thanks to <a href="https://github.com/cetteup" target="_blank" rel="noopener">@cetteup</a> for providing these APIs</div>
         </div>
       </router-link>
       <router-link to="/servers/fh2" active-class="active" class="nav-item" data-tooltip="true">
         <i class="icon-fh2"></i>
         <div class="tooltip">
           <div class="tooltip-icon icon-fh2"></div>
-          <div class="tooltip-text">Find a FH2 server. Thanks to @cetteup for providing these APIs</div>
+          <div class="tooltip-text">Find a FH2 server. Thanks to <a href="https://github.com/cetteup" target="_blank" rel="noopener">@cetteup</a> for providing these APIs</div>
         </div>
       </router-link>
       <router-link to="/players" active-class="active" class="nav-item" data-tooltip="true">
@@ -26,7 +26,7 @@
         <i class="icon-tk-livewire"></i>
         <div class="tooltip">
           <div class="tooltip-icon icon-tk-livewire"></div>
-          <div class="tooltip-text">Real time monitoring of players whose are losing points</div>
+          <div class="tooltip-text">Real time monitoring of players whose score is decreasing</div>
         </div>
       </router-link>
       <div class="nav-item theme-toggle-item" @click="toggleDarkMode" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
@@ -267,6 +267,16 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
   text-align: center;
   line-height: 1.5;
   padding: 0 10px;
+}
+
+.tooltip-text a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.tooltip-text a:hover {
+  text-decoration-style: solid;
 }
 
 /* Mobile tooltip adjustments */
