@@ -522,77 +522,14 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Favorite Maps -->
-          <div v-if="playerStats.insights.favoriteMaps && playerStats.insights.favoriteMaps.length > 0" class="insights-subsection">
-            <h4>Favorite Maps</h4>
-            <div class="favorite-maps-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th @click="changeFavoriteMapsSort('mapName')" class="sortable-header">
-                      Map Name
-                      <span v-if="favoriteMapsSortField === 'mapName'" class="sort-indicator">
-                        {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                    <th @click="changeFavoriteMapsSort('minutesPlayed')" class="sortable-header desktop-only">
-                      Play Time
-                      <span v-if="favoriteMapsSortField === 'minutesPlayed'" class="sort-indicator">
-                        {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                    <th @click="changeFavoriteMapsSort('kdRatio')" class="sortable-header desktop-only">
-                      <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
-                      <span v-if="favoriteMapsSortField === 'kdRatio'" class="sort-indicator">
-                        {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                    <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header desktop-only">
-                      <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
-                      <span v-if="favoriteMapsSortField === 'totalKills'" class="sort-indicator">
-                        {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                    <th @click="changeFavoriteMapsSort('totalDeaths')" class="sortable-header desktop-only">
-                      <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
-                      <span v-if="favoriteMapsSortField === 'totalDeaths'" class="sort-indicator">
-                        {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(map, index) in sortedFavoriteMaps" :key="index">
-                    <td>
-                      {{ map.mapName }}
-                      <div class="mobile-only map-details">
-                        <span class="detail-item">{{ formatPlayTime(map.minutesPlayed) }}</span>
-                        <span class="detail-separator">•</span>
-                        <span class="detail-item"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ map.kdRatio.toFixed(2) }}</span>
-                        <span class="detail-separator">•</span>
-                        <span class="detail-item">
-                          <span class="kills">{{ map.totalKills }}</span>/<span class="deaths">{{ map.totalDeaths }}</span>
-                        </span>
-                      </div>
-                    </td>
-                    <td class="desktop-only">{{ formatPlayTime(map.minutesPlayed) }}</td>
-                    <td class="desktop-only">{{ map.kdRatio.toFixed(2) }}</td>
-                    <td class="desktop-only">{{ map.totalKills }}</td>
-                    <td class="desktop-only">{{ map.totalDeaths }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
         </div>
 
-        <!-- Recent sessions section -->
+        <!-- Recent rounds section -->
         <div v-if="playerStats.recentSessions.length > 0" class="stats-section">
           <div class="section-header-with-action">
-            <h3>Recent Sessions</h3>
+            <h3>Recent Rounds</h3>
             <router-link :to="`/players/${encodeURIComponent(playerName)}/sessions`" class="view-all-button">
-              View All Sessions
+              View All
             </router-link>
           </div>
           <div class="recent-servers-table">
@@ -658,6 +595,70 @@ onMounted(() => {
             </table>
           </div>
         </div>
+
+        <!-- Favorite Maps -->
+        <div v-if="playerStats?.insights?.favoriteMaps && playerStats.insights.favoriteMaps.length > 0" class="stats-section">
+          <h3>Favorite Maps</h3>
+          <div class="favorite-maps-table">
+            <table>
+              <thead>
+                <tr>
+                  <th @click="changeFavoriteMapsSort('mapName')" class="sortable-header">
+                    Map Name
+                    <span v-if="favoriteMapsSortField === 'mapName'" class="sort-indicator">
+                      {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                    </span>
+                  </th>
+                  <th @click="changeFavoriteMapsSort('minutesPlayed')" class="sortable-header desktop-only">
+                    Play Time
+                    <span v-if="favoriteMapsSortField === 'minutesPlayed'" class="sort-indicator">
+                      {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                    </span>
+                  </th>
+                  <th @click="changeFavoriteMapsSort('kdRatio')" class="sortable-header desktop-only">
+                    <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
+                    <span v-if="favoriteMapsSortField === 'kdRatio'" class="sort-indicator">
+                      {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                    </span>
+                  </th>
+                  <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header desktop-only">
+                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
+                    <span v-if="favoriteMapsSortField === 'totalKills'" class="sort-indicator">
+                      {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                    </span>
+                  </th>
+                  <th @click="changeFavoriteMapsSort('totalDeaths')" class="sortable-header desktop-only">
+                    <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
+                    <span v-if="favoriteMapsSortField === 'totalDeaths'" class="sort-indicator">
+                      {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(map, index) in sortedFavoriteMaps" :key="index">
+                  <td>
+                    {{ map.mapName }}
+                    <div class="mobile-only map-details">
+                      <span class="detail-item">{{ formatPlayTime(map.minutesPlayed) }}</span>
+                      <span class="detail-separator">•</span>
+                      <span class="detail-item"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ map.kdRatio.toFixed(2) }}</span>
+                      <span class="detail-separator">•</span>
+                      <span class="detail-item">
+                        <span class="kills">{{ map.totalKills }}</span>/<span class="deaths">{{ map.totalDeaths }}</span>
+                      </span>
+                    </div>
+                  </td>
+                  <td class="desktop-only">{{ formatPlayTime(map.minutesPlayed) }}</td>
+                  <td class="desktop-only">{{ map.kdRatio.toFixed(2) }}</td>
+                  <td class="desktop-only">{{ map.totalKills }}</td>
+                  <td class="desktop-only">{{ map.totalDeaths }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
       <div v-else class="no-data-container">
         <p>No player statistics available.</p>
