@@ -21,9 +21,9 @@ const error = ref<string | null>(null);
 const expandedServerId = ref<string | null>(null);
 const mapStats = ref<any[]>([]);
 const mapStatsLoading = ref(false);
-const selectedTimeRange = ref('LastMonth');
+const selectedTimeRange = ref('Last30Days');
 const timeRangeOptions = [
-  { value: 'LastMonth', label: 'This Month' },
+  { value: 'Last30Days', label: '30 days' },
   { value: 'ThisYear', label: 'This Year' },
   { value: 'LastYear', label: 'Last Year' }
 ];
