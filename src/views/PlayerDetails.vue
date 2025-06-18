@@ -17,6 +17,53 @@ const playerStats = ref<PlayerTimeStatistics | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 
+// New state for map stats
+const expandedServerId = ref<string | null>(null);
+const mapStats = ref<any[]>([]);
+const mapStatsLoading = ref(false);
+const selectedTimeRange = ref('LastMonth');
+const timeRangeOptions = [
+  { value: 'LastMonth', label: 'This Month' },
+  { value: 'ThisYear', label: 'This Year' },
+  { value: 'LastYear', label: 'Last Year' }
+];
+
+// New state for map stats sorting
+const mapStatsSortField = ref('totalScore');
+const mapStatsSortDirection = ref('desc');
+
+// Function to fetch map stats for a server
+const fetchMapStats = async (serverGuid: string) => {
+  mapStatsLoading.value = true;
+  try {
+    const response = await fetch(`/stats/players/${encodeURIComponent(playerName.value)}/server/${serverGuid}/mapstats?range=${selectedTimeRange.value}`);
+    if (!response.ok) throw new Error('Failed to fetch map stats');
+    mapStats.value = await response.json();
+  } catch (err) {
+    console.error('Error fetching map stats:', err);
+    mapStats.value = [];
+  } finally {
+    mapStatsLoading.value = false;
+  }
+};
+
+// Function to toggle server expansion and fetch map stats
+const toggleServerExpansion = async (serverGuid: string) => {
+  if (expandedServerId.value === serverGuid) {
+    expandedServerId.value = null;
+  } else {
+    expandedServerId.value = serverGuid;
+    await fetchMapStats(serverGuid);
+  }
+};
+
+// Watch for time range changes
+watch(selectedTimeRange, async () => {
+  if (expandedServerId.value) {
+    await fetchMapStats(expandedServerId.value);
+  }
+});
+
 const fetchData = async () => {
   isLoading.value = true;
   error.value = null;
@@ -177,46 +224,6 @@ const sortedLocalActivityHours = computed(() => {
   return [...hoursWithLocalTime].sort((a, b) => a.localHour - b.localHour);
 });
 
-// State for favorite maps sorting
-const favoriteMapsSortField = ref('kdRatio');
-const favoriteMapsSortDirection = ref('desc');
-
-// Function to change sort field and direction
-const changeFavoriteMapsSort = (field: string) => {
-  if (favoriteMapsSortField.value === field) {
-    // Toggle direction if clicking the same field
-    favoriteMapsSortDirection.value = favoriteMapsSortDirection.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    // Set new field and default to descending
-    favoriteMapsSortField.value = field;
-    favoriteMapsSortDirection.value = 'desc';
-  }
-};
-
-// Computed property to sort favorite maps
-const sortedFavoriteMaps = computed(() => {
-  if (!playerStats.value?.insights?.favoriteMaps) return [];
-
-  return [...playerStats.value.insights.favoriteMaps].sort((a, b) => {
-    const direction = favoriteMapsSortDirection.value === 'asc' ? 1 : -1;
-
-    switch (favoriteMapsSortField.value) {
-      case 'mapName':
-        return direction * a.mapName.localeCompare(b.mapName);
-      case 'minutesPlayed':
-        return direction * (a.minutesPlayed - b.minutesPlayed);
-      case 'kdRatio':
-        return direction * (a.kdRatio - b.kdRatio);
-      case 'totalKills':
-        return direction * (a.totalKills - b.totalKills);
-      case 'totalDeaths':
-        return direction * (a.totalDeaths - b.totalDeaths);
-      default:
-        return direction * (a.kdRatio - b.kdRatio);
-    }
-  });
-});
-
 // Function to convert UTC hour to local hour
 const convertToLocalHour = (utcHour: number): number => {
   const now = new Date();
@@ -324,6 +331,48 @@ const activityChartOptions = computed(() => {
       }
     }
   };
+});
+
+// Function to change sort field and direction for map stats
+const changeMapStatsSort = (field: string) => {
+  if (mapStatsSortField.value === field) {
+    // Toggle direction if clicking the same field
+    mapStatsSortDirection.value = mapStatsSortDirection.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    // Set new field and default to descending
+    mapStatsSortField.value = field;
+    mapStatsSortDirection.value = 'desc';
+  }
+};
+
+// Computed property to sort map stats
+const sortedMapStats = computed(() => {
+  if (!mapStats.value) return [];
+
+  return [...mapStats.value].sort((a, b) => {
+    const direction = mapStatsSortDirection.value === 'asc' ? 1 : -1;
+
+    switch (mapStatsSortField.value) {
+      case 'mapName':
+        return direction * a.mapName.localeCompare(b.mapName);
+      case 'totalScore':
+        return direction * (a.totalScore - b.totalScore);
+      case 'kdRatio':
+        const aKdr = a.totalDeaths === 0 ? a.totalKills : a.totalKills / a.totalDeaths;
+        const bKdr = b.totalDeaths === 0 ? b.totalKills : b.totalKills / b.totalDeaths;
+        return direction * (aKdr - bKdr);
+      case 'totalKills':
+        return direction * (a.totalKills - b.totalKills);
+      case 'totalDeaths':
+        return direction * (a.totalDeaths - b.totalDeaths);
+      case 'sessionsPlayed':
+        return direction * (a.sessionsPlayed - b.sessionsPlayed);
+      case 'totalPlayTimeMinutes':
+        return direction * (a.totalPlayTimeMinutes - b.totalPlayTimeMinutes);
+      default:
+        return direction * (a.totalScore - b.totalScore);
+    }
+  });
 });
 
 // Clean up event listeners when component is unmounted
@@ -481,42 +530,135 @@ onMounted(() => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(ranking, index) in playerStats.insights.serverRankings" :key="index">
-                    <td>
-                      <router-link
-                        :to="`/servers/${encodeURIComponent(ranking.serverName)}/rankings`"
-                        class="server-link"
-                      >
-                        {{ ranking.serverName }}
-                      </router-link>
-                      <div class="mobile-only ranking-details">
-                        <span class="detail-item">Rank: {{ ranking.rankDisplay }}</span>
-                        <span class="detail-separator">•</span>
-                        <span class="detail-item">Score: {{ ranking.scoreDisplay }}</span>
-                        <span class="detail-separator">•</span>
-                        <span class="detail-item">
-                          <span class="player-ping" :class="{
-                            'ping-good': ranking.averagePing < 50,
-                            'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
-                            'ping-bad': ranking.averagePing >= 100
-                          }">
-                            {{ ranking.averagePing }}ms
+                  <template v-for="(ranking, index) in playerStats.insights.serverRankings" :key="index">
+                    <tr class="server-row" @click="toggleServerExpansion(ranking.serverGuid)">
+                      <td>
+                        <div class="server-name-container">
+                          <span class="expand-icon">{{ expandedServerId === ranking.serverGuid ? '▼' : '▶' }}</span>
+                          <span class="server-link">{{ ranking.serverName }}</span>
+                        </div>
+                        <div class="mobile-only ranking-details">
+                          <span class="detail-item">Rank: {{ ranking.rankDisplay }}</span>
+                          <span class="detail-separator">•</span>
+                          <span class="detail-item">Score: {{ ranking.scoreDisplay }}</span>
+                          <span class="detail-separator">•</span>
+                          <span class="detail-item">
+                            <span class="player-ping" :class="{
+                              'ping-good': ranking.averagePing < 50,
+                              'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                              'ping-bad': ranking.averagePing >= 100
+                            }">
+                              {{ ranking.averagePing }}ms
+                            </span>
                           </span>
+                        </div>
+                      </td>
+                      <td class="desktop-only">{{ ranking.rankDisplay }}</td>
+                      <td class="desktop-only">{{ ranking.scoreDisplay }}</td>
+                      <td class="desktop-only">
+                        <span class="player-ping" :class="{
+                          'ping-good': ranking.averagePing < 50,
+                          'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                          'ping-bad': ranking.averagePing >= 100
+                        }">
+                          {{ ranking.averagePing }}ms
                         </span>
-                      </div>
-                    </td>
-                    <td class="desktop-only">{{ ranking.rankDisplay }}</td>
-                    <td class="desktop-only">{{ ranking.scoreDisplay }}</td>
-                    <td class="desktop-only">
-                      <span class="player-ping" :class="{
-                        'ping-good': ranking.averagePing < 50,
-                        'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
-                        'ping-bad': ranking.averagePing >= 100
-                      }">
-                        {{ ranking.averagePing }}ms
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+                    <!-- Expanded map stats section -->
+                    <tr v-if="expandedServerId === ranking.serverGuid">
+                      <td colspan="4" class="map-stats-container">
+                        <div class="time-range-filter">
+                          <span class="time-range-label">Time Range:</span>
+                          <div class="time-range-buttons">
+                            <button
+                              v-for="option in timeRangeOptions"
+                              :key="option.value"
+                              :class="['time-range-button', { active: selectedTimeRange === option.value }]"
+                              @click="selectedTimeRange = option.value"
+                            >
+                              {{ option.label }}
+                            </button>
+                          </div>
+                        </div>
+                        <div v-if="mapStatsLoading" class="map-stats-loading">
+                          <div class="loading-spinner"></div>
+                          <p>Loading map statistics...</p>
+                        </div>
+                        <div v-else-if="mapStats.length > 0" class="map-stats-table">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th @click="changeMapStatsSort('mapName')" class="sortable-header">
+                                  Map Name
+                                  <span v-if="mapStatsSortField === 'mapName'" class="sort-indicator">
+                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                                  </span>
+                                </th>
+                                <th @click="changeMapStatsSort('totalScore')" class="sortable-header">
+                                  Score
+                                  <span v-if="mapStatsSortField === 'totalScore'" class="sort-indicator">
+                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                                  </span>
+                                </th>
+                                <th @click="changeMapStatsSort('kdRatio')" class="sortable-header">
+                                  K/D
+                                  <span v-if="mapStatsSortField === 'kdRatio'" class="sort-indicator">
+                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                                  </span>
+                                </th>
+                                <th @click="changeMapStatsSort('totalKills')" class="sortable-header desktop-only">
+                                  Kills
+                                  <span v-if="mapStatsSortField === 'totalKills'" class="sort-indicator">
+                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                                  </span>
+                                </th>
+                                <th @click="changeMapStatsSort('totalDeaths')" class="sortable-header desktop-only">
+                                  Deaths
+                                  <span v-if="mapStatsSortField === 'totalDeaths'" class="sort-indicator">
+                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                                  </span>
+                                </th>
+                                <th @click="changeMapStatsSort('sessionsPlayed')" class="sortable-header desktop-only">
+                                  Sessions
+                                  <span v-if="mapStatsSortField === 'sessionsPlayed'" class="sort-indicator">
+                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                                  </span>
+                                </th>
+                                <th @click="changeMapStatsSort('totalPlayTimeMinutes')" class="sortable-header desktop-only">
+                                  Play Time
+                                  <span v-if="mapStatsSortField === 'totalPlayTimeMinutes'" class="sort-indicator">
+                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                                  </span>
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex">
+                                <td>
+                                  {{ map.mapName }}
+                                  <div class="mobile-only map-details">
+                                    <span class="detail-item">{{ map.totalKills }}/{{ map.totalDeaths }}</span>
+                                    <span class="detail-separator">•</span>
+                                    <span class="detail-item">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</span>
+                                  </div>
+                                </td>
+                                <td>{{ map.totalScore }}</td>
+                                <td>{{ calculateKDR(map.totalKills, map.totalDeaths) }}</td>
+                                <td class="desktop-only">{{ map.totalKills }}</td>
+                                <td class="desktop-only">{{ map.totalDeaths }}</td>
+                                <td class="desktop-only">{{ map.sessionsPlayed }}</td>
+                                <td class="desktop-only">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div v-else class="no-map-stats">
+                          <p>No map statistics available for the selected time range.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
                 </tbody>
               </table>
             </div>
@@ -590,69 +732,6 @@ onMounted(() => {
                   <td class="desktop-only">
                     <span v-if="session.isActive" class="active-session-badge">Active</span>
                   </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Favorite Maps -->
-        <div v-if="playerStats?.insights?.favoriteMaps && playerStats.insights.favoriteMaps.length > 0" class="stats-section">
-          <h3>Favorite Maps</h3>
-          <div class="favorite-maps-table">
-            <table>
-              <thead>
-                <tr>
-                  <th @click="changeFavoriteMapsSort('mapName')" class="sortable-header">
-                    Map Name
-                    <span v-if="favoriteMapsSortField === 'mapName'" class="sort-indicator">
-                      {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                    </span>
-                  </th>
-                  <th @click="changeFavoriteMapsSort('minutesPlayed')" class="sortable-header desktop-only">
-                    Play Time
-                    <span v-if="favoriteMapsSortField === 'minutesPlayed'" class="sort-indicator">
-                      {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                    </span>
-                  </th>
-                  <th @click="changeFavoriteMapsSort('kdRatio')" class="sortable-header desktop-only">
-                    <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
-                    <span v-if="favoriteMapsSortField === 'kdRatio'" class="sort-indicator">
-                      {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                    </span>
-                  </th>
-                  <th @click="changeFavoriteMapsSort('totalKills')" class="sortable-header desktop-only">
-                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
-                    <span v-if="favoriteMapsSortField === 'totalKills'" class="sort-indicator">
-                      {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                    </span>
-                  </th>
-                  <th @click="changeFavoriteMapsSort('totalDeaths')" class="sortable-header desktop-only">
-                    <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
-                    <span v-if="favoriteMapsSortField === 'totalDeaths'" class="sort-indicator">
-                      {{ favoriteMapsSortDirection === 'asc' ? '▲' : '▼' }}
-                    </span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(map, index) in sortedFavoriteMaps" :key="index">
-                  <td>
-                    {{ map.mapName }}
-                    <div class="mobile-only map-details">
-                      <span class="detail-item">{{ formatPlayTime(map.minutesPlayed) }}</span>
-                      <span class="detail-separator">•</span>
-                      <span class="detail-item"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ map.kdRatio.toFixed(2) }}</span>
-                      <span class="detail-separator">•</span>
-                      <span class="detail-item">
-                        <span class="kills">{{ map.totalKills }}</span>/<span class="deaths">{{ map.totalDeaths }}</span>
-                      </span>
-                    </div>
-                  </td>
-                  <td class="desktop-only">{{ formatPlayTime(map.minutesPlayed) }}</td>
-                  <td class="desktop-only">{{ map.kdRatio.toFixed(2) }}</td>
-                  <td class="desktop-only">{{ map.totalKills }}</td>
-                  <td class="desktop-only">{{ map.totalDeaths }}</td>
                 </tr>
               </tbody>
             </table>
@@ -1693,12 +1772,6 @@ tbody tr:hover {
   
   .recent-servers-table th:nth-child(8),
   .recent-servers-table td:nth-child(8) {
-    width: 8%;
-    text-align: center;
-  }
-  
-  .recent-servers-table th:nth-child(9),
-  .recent-servers-table td:nth-child(9) {
     width: 10%;
     text-align: center;
   }
@@ -2002,5 +2075,202 @@ tbody tr:hover {
   height: 24px;
   vertical-align: middle;
   margin-right: 4px;
+}
+
+/* Server Rankings and Map Stats Styles */
+.server-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.server-row:hover {
+  background-color: var(--color-background-mute);
+}
+
+.server-name-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expand-icon {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  transition: transform 0.2s;
+}
+
+.map-stats-container {
+  background-color: var(--color-background-soft);
+  padding: 16px;
+}
+
+.time-range-filter {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.time-range-label {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.time-range-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.time-range-button {
+  padding: 6px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.time-range-button:hover {
+  background-color: var(--color-background-mute);
+}
+
+.time-range-button.active {
+  background-color: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.map-stats-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--color-text-muted);
+}
+
+.map-stats-table {
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+.map-stats-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.map-stats-table th,
+.map-stats-table td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.map-stats-table th {
+  font-weight: bold;
+  color: var(--color-heading);
+  background-color: var(--color-background-mute);
+}
+
+.map-stats-table th.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  padding-right: 24px;
+  position: relative;
+}
+
+.map-stats-table th.sortable-header:hover {
+  background-color: var(--color-background);
+}
+
+.map-stats-table .sort-indicator {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.no-map-stats {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-text-muted);
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .map-stats-container {
+    padding: 8px;
+  }
+
+  .time-range-filter {
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .time-range-label {
+    width: 100%;
+  }
+
+  .time-range-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .time-range-button {
+    flex: 1;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  .map-stats-table th,
+  .map-stats-table td {
+    padding: 6px;
+    font-size: 0.9rem;
+  }
+
+  .map-stats-table th.sortable-header {
+    padding-right: 20px;
+  }
+
+  .map-stats-table .sort-indicator {
+    right: 6px;
+    font-size: 0.7rem;
+  }
+}
+
+/* Small Mobile Styles */
+@media (max-width: 480px) {
+  .map-stats-container {
+    padding: 6px;
+  }
+
+  .time-range-button {
+    padding: 3px 6px;
+    font-size: 0.75rem;
+  }
+
+  .map-stats-table th,
+  .map-stats-table td {
+    padding: 4px;
+    font-size: 0.8rem;
+  }
+
+  .map-stats-table th.sortable-header {
+    padding-right: 16px;
+  }
+
+  .map-stats-table .sort-indicator {
+    right: 4px;
+    font-size: 0.65rem;
+  }
 }
 </style>
