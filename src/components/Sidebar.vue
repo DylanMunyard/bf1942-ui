@@ -1,17 +1,33 @@
 <template>
   <div class="sidebar">
     <div class="nav-menu">
-      <router-link to="/servers/bf1942" active-class="active" class="nav-item" title="42">
+      <router-link to="/servers/bf1942" active-class="active" class="nav-item" data-tooltip="true">
         <i class="icon-bf1942"></i>
+        <div class="tooltip">
+          <div class="tooltip-icon icon-bf1942"></div>
+          <div class="tooltip-text">Find a BF1942 server. Thanks to @cetteup for providing these APIs</div>
+        </div>
       </router-link>
-      <router-link to="/servers/fh2" active-class="active" class="nav-item" title="FH2">
+      <router-link to="/servers/fh2" active-class="active" class="nav-item" data-tooltip="true">
         <i class="icon-fh2"></i>
+        <div class="tooltip">
+          <div class="tooltip-icon icon-fh2"></div>
+          <div class="tooltip-text">Find a FH2 server. Thanks to @cetteup for providing these APIs</div>
+        </div>
       </router-link>
-      <router-link to="/players" active-class="active" class="nav-item">
+      <router-link to="/players" active-class="active" class="nav-item" data-tooltip="true">
         <i class="icon-players"></i>
+        <div class="tooltip">
+          <div class="tooltip-icon icon-players"></div>
+          <div class="tooltip-text">See who is online, search for a player</div>
+        </div>
       </router-link>
-      <router-link to="/tk-livewire" active-class="active" class="nav-item" title="TK Livewire">
+      <router-link to="/tk-livewire" active-class="active" class="nav-item" data-tooltip="true">
         <i class="icon-tk-livewire"></i>
+        <div class="tooltip">
+          <div class="tooltip-icon icon-tk-livewire"></div>
+          <div class="tooltip-text">Real time monitoring of players whose are losing points</div>
+        </div>
       </router-link>
       <div class="nav-item theme-toggle-item" @click="toggleDarkMode" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
         <span class="toggle-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
@@ -191,5 +207,102 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 .theme-toggle-item .toggle-icon {
   font-size: 1.2rem;
   user-select: none;
+}
+
+/* Tooltip styles */
+.tooltip {
+  display: none;
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: var(--sidebar-bg);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  width: 300px;
+  border: 1px solid var(--sidebar-border);
+  margin-right: 15px;
+  z-index: 1000;
+}
+
+/* Adjust position for first nav item to prevent cut-off */
+.nav-menu > :first-child .tooltip {
+  top: 0;
+  transform: translateY(0);
+}
+
+.nav-item[data-tooltip="true"]:hover .tooltip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 10px 0 10px 10px;
+  border-style: solid;
+  border-color: transparent transparent transparent var(--sidebar-bg);
+}
+
+/* Adjust arrow for first nav item */
+.nav-menu > :first-child .tooltip::after {
+  top: 34px;
+}
+
+.tooltip-icon {
+  width: 128px !important;
+  height: 128px !important;
+  image-rendering: pixelated;
+}
+
+.tooltip-text {
+  color: var(--sidebar-text);
+  font-size: 0.95rem;
+  text-align: center;
+  line-height: 1.5;
+  padding: 0 10px;
+}
+
+/* Mobile tooltip adjustments */
+@media (max-width: 768px) {
+  .tooltip {
+    right: 50%;
+    top: 100%;
+    transform: translateX(50%);
+    margin-right: 0;
+    margin-top: 15px;
+    padding: 16px;
+  }
+
+  .nav-menu > :first-child .tooltip {
+    transform: translateX(50%);
+    top: 100%;
+  }
+
+  .tooltip::after {
+    right: 50%;
+    top: -10px;
+    transform: translateX(50%);
+    border-width: 0 10px 10px 10px;
+    border-color: transparent transparent var(--sidebar-bg) transparent;
+  }
+
+  /* Reset arrow position for first item on mobile */
+  .nav-menu > :first-child .tooltip::after {
+    top: -10px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+
+  .tooltip-icon {
+    width: 96px !important;
+    height: 96px !important;
+  }
 }
 </style> 
