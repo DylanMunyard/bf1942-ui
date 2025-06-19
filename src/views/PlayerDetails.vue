@@ -586,7 +586,8 @@ onMounted(() => {
                           <p>Loading map statistics...</p>
                         </div>
                         <div v-else-if="mapStats.length > 0" class="map-stats-table">
-                          <table>
+                          <!-- Desktop table view -->
+                          <table class="desktop-only">
                             <thead>
                               <tr>
                                 <th @click="changeMapStatsSort('mapName')" class="sortable-header">
@@ -607,25 +608,25 @@ onMounted(() => {
                                     {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                                   </span>
                                 </th>
-                                <th @click="changeMapStatsSort('totalKills')" class="sortable-header desktop-only">
+                                <th @click="changeMapStatsSort('totalKills')" class="sortable-header">
                                   Kills
                                   <span v-if="mapStatsSortField === 'totalKills'" class="sort-indicator">
                                     {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                                   </span>
                                 </th>
-                                <th @click="changeMapStatsSort('totalDeaths')" class="sortable-header desktop-only">
+                                <th @click="changeMapStatsSort('totalDeaths')" class="sortable-header">
                                   Deaths
                                   <span v-if="mapStatsSortField === 'totalDeaths'" class="sort-indicator">
                                     {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                                   </span>
                                 </th>
-                                <th @click="changeMapStatsSort('sessionsPlayed')" class="sortable-header desktop-only">
+                                <th @click="changeMapStatsSort('sessionsPlayed')" class="sortable-header">
                                   Sessions
                                   <span v-if="mapStatsSortField === 'sessionsPlayed'" class="sort-indicator">
                                     {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                                   </span>
                                 </th>
-                                <th @click="changeMapStatsSort('totalPlayTimeMinutes')" class="sortable-header desktop-only">
+                                <th @click="changeMapStatsSort('totalPlayTimeMinutes')" class="sortable-header">
                                   Play Time
                                   <span v-if="mapStatsSortField === 'totalPlayTimeMinutes'" class="sort-indicator">
                                     {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
@@ -635,23 +636,59 @@ onMounted(() => {
                             </thead>
                             <tbody>
                               <tr v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex">
-                                <td>
-                                  {{ map.mapName }}
-                                  <div class="mobile-only map-details">
-                                    <span class="detail-item">{{ map.totalKills }}/{{ map.totalDeaths }}</span>
-                                    <span class="detail-separator">•</span>
-                                    <span class="detail-item">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</span>
-                                  </div>
-                                </td>
+                                <td>{{ map.mapName }}</td>
                                 <td>{{ map.totalScore }}</td>
                                 <td>{{ calculateKDR(map.totalKills, map.totalDeaths) }}</td>
-                                <td class="desktop-only">{{ map.totalKills }}</td>
-                                <td class="desktop-only">{{ map.totalDeaths }}</td>
-                                <td class="desktop-only">{{ map.sessionsPlayed }}</td>
-                                <td class="desktop-only">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</td>
+                                <td>{{ map.totalKills }}</td>
+                                <td>{{ map.totalDeaths }}</td>
+                                <td>{{ map.sessionsPlayed }}</td>
+                                <td>{{ formatPlayTime(map.totalPlayTimeMinutes) }}</td>
                               </tr>
                             </tbody>
                           </table>
+
+                          <!-- Mobile card view -->
+                          <div class="mobile-only map-stats-cards">
+                            <div class="mobile-sort-controls">
+                              <label>Sort by:</label>
+                              <select v-model="mapStatsSortField" @change="changeMapStatsSort(mapStatsSortField)" class="mobile-sort-select">
+                                <option value="totalScore">Score</option>
+                                <option value="kdRatio">K/D Ratio</option>
+                                <option value="mapName">Map Name</option>
+                                <option value="totalKills">Kills</option>
+                                <option value="totalDeaths">Deaths</option>
+                                <option value="sessionsPlayed">Sessions</option>
+                                <option value="totalPlayTimeMinutes">Play Time</option>
+                              </select>
+                              <button @click="mapStatsSortDirection = mapStatsSortDirection === 'asc' ? 'desc' : 'asc'" class="mobile-sort-direction">
+                                {{ mapStatsSortDirection === 'asc' ? '↑' : '↓' }}
+                              </button>
+                            </div>
+                            <div v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex" class="map-stat-card">
+                              <div class="map-stat-header">
+                                <h5 class="map-name">{{ map.mapName }}</h5>
+                                <div class="map-score">{{ map.totalScore }}</div>
+                              </div>
+                              <div class="map-stat-details">
+                                <div class="stat-row">
+                                  <span class="stat-label">K/D:</span>
+                                  <span class="stat-value">{{ calculateKDR(map.totalKills, map.totalDeaths) }}</span>
+                                </div>
+                                <div class="stat-row">
+                                  <span class="stat-label">Kills/Deaths:</span>
+                                  <span class="stat-value">{{ map.totalKills }}/{{ map.totalDeaths }}</span>
+                                </div>
+                                <div class="stat-row">
+                                  <span class="stat-label">Sessions:</span>
+                                  <span class="stat-value">{{ map.sessionsPlayed }}</span>
+                                </div>
+                                <div class="stat-row">
+                                  <span class="stat-label">Play Time:</span>
+                                  <span class="stat-value">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         <div v-else class="no-map-stats">
                           <p>No map statistics available for the selected time range.</p>
@@ -2247,6 +2284,145 @@ tbody tr:hover {
   }
 }
 
+/* Mobile Card Layout Styles */
+.map-stats-cards {
+  display: none;
+}
+
+.mobile-sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background-color: var(--color-background);
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.mobile-sort-controls label {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  min-width: fit-content;
+}
+
+.mobile-sort-select {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.mobile-sort-direction {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-background-mute);
+  color: var(--color-text);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-width: 40px;
+}
+
+.mobile-sort-direction:hover {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.map-stat-card {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.map-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.map-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  flex: 1;
+  line-height: 1.2;
+}
+
+.map-score {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--color-primary);
+  min-width: fit-content;
+}
+
+.map-stat-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.stat-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .map-stats-cards {
+    display: block !important;
+  }
+
+  .time-range-filter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .time-range-label {
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .time-range-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .time-range-button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 /* Small Mobile Styles */
 @media (max-width: 480px) {
   .map-stats-container {
@@ -2254,8 +2430,54 @@ tbody tr:hover {
   }
 
   .time-range-button {
-    padding: 3px 6px;
-    font-size: 0.75rem;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    min-height: 40px;
+  }
+
+  .mobile-sort-controls {
+    padding: 6px;
+    margin-bottom: 8px;
+    gap: 6px;
+  }
+
+  .mobile-sort-controls label {
+    font-size: 0.8rem;
+  }
+
+  .mobile-sort-select {
+    padding: 4px 6px;
+    font-size: 0.8rem;
+  }
+
+  .mobile-sort-direction {
+    padding: 4px 8px;
+    min-width: 36px;
+  }
+
+  .map-stat-card {
+    padding: 8px;
+    margin-bottom: 6px;
+  }
+
+  .map-name {
+    font-size: 0.9rem;
+  }
+
+  .map-score {
+    font-size: 1.1rem;
+  }
+
+  .stat-row {
+    padding: 2px 0;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
+
+  .stat-value {
+    font-size: 0.85rem;
   }
 
   .map-stats-table th,
