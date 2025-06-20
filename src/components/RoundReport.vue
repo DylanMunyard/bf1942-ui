@@ -209,6 +209,7 @@ const pinnedPlayersChartOptions = computed(() => {
         display: true,
         position: 'top' as const,
         labels: {
+          color: textColor,
           usePointStyle: true,
           pointStyle: 'line',
           font: {
@@ -1371,6 +1372,18 @@ body.dragging * {
 
 .player-link:hover {
   text-decoration: underline;
+}
+
+/* Dark mode player link styling for better readability */
+@media (prefers-color-scheme: dark) {
+  .player-link {
+    color: #90caf9;
+  }
+}
+
+html[data-theme="dark"] .player-link,
+.dark-mode .player-link {
+  color: #90caf9;
 }
 
 .player-score {
