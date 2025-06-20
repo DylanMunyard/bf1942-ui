@@ -139,7 +139,42 @@ const pinnedPlayersChartData = computed(() => {
 });
 
 // Chart options for pinned players
+// Add a reactive ref to track theme changes
+const themeWatcher = ref(0);
+
+// Watch for theme changes and trigger chart updates
+const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+const handleThemeChange = () => {
+  themeWatcher.value++;
+};
+
+// Set up theme change listeners
+onMounted(() => {
+  mediaQuery.addEventListener('change', handleThemeChange);
+  // Also watch for manual theme changes via MutationObserver
+  const observer = new MutationObserver(handleThemeChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class', 'data-theme']
+  });
+  
+  // Store observer reference for cleanup
+  observer.disconnect = observer.disconnect.bind(observer);
+  window._themeObserver = observer;
+});
+
+onUnmounted(() => {
+  mediaQuery.removeEventListener('change', handleThemeChange);
+  if (window._themeObserver) {
+    window._themeObserver.disconnect();
+    delete window._themeObserver;
+  }
+});
+
 const pinnedPlayersChartOptions = computed(() => {
+  // Include themeWatcher in dependencies to make this reactive
+  themeWatcher.value;
+  
   // Get computed styles to access CSS variables - same approach as ServerDetails.vue
   const computedStyles = window.getComputedStyle(document.documentElement);
   const textColor = computedStyles.getPropertyValue('--color-text').trim() || '#333333';
