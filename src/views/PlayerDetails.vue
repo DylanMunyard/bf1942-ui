@@ -375,6 +375,17 @@ const sortedMapStats = computed(() => {
   });
 });
 
+// Handle back button navigation
+const goBack = () => {
+  // Check if there's history to go back to
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    // Fallback to players page if no history
+    router.push('/players');
+  }
+};
+
 // Clean up event listeners when component is unmounted
 onMounted(() => {
   fetchData();
@@ -385,10 +396,10 @@ onMounted(() => {
   <div class="player-details-container">
     <div class="player-stats-header">
       <div class="player-name-container">
-        <router-link to="/players" class="back-button">
+        <button @click="goBack" class="back-button">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           Back to Players
-        </router-link>
+        </button>
         <h2 class="player-name-heading">{{ playerName }}</h2>
       </div>
     </div>
@@ -1388,6 +1399,10 @@ onMounted(() => {
   text-decoration: none;
   font-weight: 500;
   transition: background-color 0.2s, color 0.2s;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 .back-button:hover {

@@ -181,18 +181,21 @@ const navigateToRoundReport = (sessionId: number, event?: Event) => {
 const handleMapFilterChange = (event: Event) => {
   mapFilter.value = (event.target as HTMLSelectElement).value;
   currentPage.value = 1; // Reset to first page when filtering
+  updateQueryParams();
   fetchData();
 };
 
 const handleServerFilterChange = (event: Event) => {
   serverFilter.value = (event.target as HTMLSelectElement).value;
   currentPage.value = 1; // Reset to first page when filtering
+  updateQueryParams();
   fetchData();
 };
 
 const handleGameTypeFilterChange = (event: Event) => {
   gameTypeFilter.value = (event.target as HTMLSelectElement).value;
   currentPage.value = 1; // Reset to first page when filtering
+  updateQueryParams();
   fetchData();
 };
 
@@ -202,6 +205,7 @@ const resetFilters = () => {
   serverFilter.value = '';
   gameTypeFilter.value = '';
   currentPage.value = 1; // Reset to first page when resetting filters
+  updateQueryParams();
   fetchData();
 };
 
@@ -218,6 +222,7 @@ const handleSort = (column: string) => {
 
   // Reset to first page and refetch data
   currentPage.value = 1;
+  updateQueryParams();
   fetchData();
 };
 
@@ -225,6 +230,7 @@ const handleSort = (column: string) => {
 const goToPage = (page: number) => {
   if (page < 1 || page > totalPages.value) return;
   currentPage.value = page;
+  updateQueryParams();
   fetchData();
 };
 
@@ -258,11 +264,72 @@ watch(() => props.playerName, (newPlayerName) => {
 // Watch for page size changes
 watch(() => pageSize.value, () => {
   currentPage.value = 1; // Reset to first page when changing page size
+  updateQueryParams();
   fetchData();
 });
 
+// Initialize state from URL query parameters
+const initializeFromQuery = () => {
+  const query = route.query;
+  
+  // Set filters from query params
+  if (query.map && typeof query.map === 'string') {
+    mapFilter.value = query.map;
+  }
+  if (query.server && typeof query.server === 'string') {
+    serverFilter.value = query.server;
+  }
+  if (query.gameType && typeof query.gameType === 'string') {
+    gameTypeFilter.value = query.gameType;
+  }
+  
+  // Set sorting from query params
+  if (query.sortBy && typeof query.sortBy === 'string') {
+    sortBy.value = query.sortBy;
+  }
+  if (query.sortOrder && (query.sortOrder === 'asc' || query.sortOrder === 'desc')) {
+    sortOrder.value = query.sortOrder;
+  }
+  
+  // Set pagination from query params
+  if (query.page && typeof query.page === 'string') {
+    const pageNum = parseInt(query.page);
+    if (!isNaN(pageNum) && pageNum > 0) {
+      currentPage.value = pageNum;
+    }
+  }
+  if (query.pageSize && typeof query.pageSize === 'string') {
+    const size = parseInt(query.pageSize);
+    if (!isNaN(size) && [10, 20, 50, 100].includes(size)) {
+      pageSize.value = size;
+    }
+  }
+};
+
+// Update URL query parameters
+const updateQueryParams = () => {
+  const query: Record<string, string> = {};
+  
+  // Add filters to query
+  if (mapFilter.value) query.map = mapFilter.value;
+  if (serverFilter.value) query.server = serverFilter.value;
+  if (gameTypeFilter.value) query.gameType = gameTypeFilter.value;
+  
+  // Add sorting to query
+  if (sortBy.value !== 'startTime') query.sortBy = sortBy.value;
+  if (sortOrder.value !== 'desc') query.sortOrder = sortOrder.value;
+  
+  // Add pagination to query
+  if (currentPage.value !== 1) query.page = currentPage.value.toString();
+  if (pageSize.value !== 20) query.pageSize = pageSize.value.toString();
+  
+  // Update URL without triggering navigation
+  router.replace({ query });
+};
+
 // Fetch data when component is mounted
 onMounted(() => {
+  initializeFromQuery();
   fetchData();
 });
 
@@ -368,7 +435,7 @@ onUnmounted(() => {
         </div>
         <div class="page-size-selector">
           <label for="pageSize">Sessions per page:</label>
-          <select id="pageSize" v-model="pageSize" @change="currentPage = 1; fetchData()">
+          <select id="pageSize" v-model="pageSize" @change="currentPage = 1; updateQueryParams(); fetchData()">
             <option value="10">10</option>
             <option value="20">20</option>
             <option value="50">50</option>

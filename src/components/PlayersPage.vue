@@ -168,6 +168,7 @@ const handleSort = (column: string) => {
 
   // Reset to first page and refetch data
   currentPage.value = 1;
+  updateQueryParams();
   fetchPlayersData();
 };
 
@@ -185,6 +186,7 @@ const debouncedNameSearch = (searchTerm: string) => {
     nameFilter.value = searchTerm;
     currentPage.value = 1; // Reset to first page when filtering
     isSearching.value = false;
+    updateQueryParams();
     fetchPlayersData();
   }, 500); // 500ms delay
 };
@@ -198,6 +200,7 @@ const handleNameFilterChange = (searchTerm: string) => {
 const handleGameIdFilterChange = (event: Event) => {
   gameIdFilter.value = (event.target as HTMLSelectElement).value;
   currentPage.value = 1; // Reset to first page when filtering
+  updateQueryParams();
   fetchPlayersData();
 };
 
@@ -205,6 +208,7 @@ const handleGameIdFilterChange = (event: Event) => {
 const handleServerNameFilterChange = (event: Event) => {
   serverNameFilter.value = (event.target as HTMLSelectElement).value;
   currentPage.value = 1; // Reset to first page when filtering
+  updateQueryParams();
   fetchPlayersData();
 };
 
@@ -220,6 +224,7 @@ const clearNameFilter = () => {
   nameInputValue.value = '';
   isSearching.value = false;
   currentPage.value = 1; // Reset to first page when clearing filter
+  updateQueryParams();
   fetchPlayersData();
 };
 
@@ -230,6 +235,7 @@ const resetFilters = () => {
   gameIdFilter.value = '';
   serverNameFilter.value = '';
   currentPage.value = 1; // Reset to first page when resetting filters
+  updateQueryParams();
   fetchPlayersData();
 };
 
@@ -237,6 +243,7 @@ const resetFilters = () => {
 const goToPage = (page: number) => {
   if (page < 1 || page > totalPages.value) return;
   currentPage.value = page;
+  updateQueryParams();
   fetchPlayersData();
 };
 
@@ -244,6 +251,7 @@ const goToPage = (page: number) => {
 const changePageSize = (newPageSize: number) => {
   pageSize.value = newPageSize;
   currentPage.value = 1; // Reset to first page
+  updateQueryParams();
   fetchPlayersData();
 };
 
@@ -267,8 +275,69 @@ const paginationRange = computed(() => {
   return range;
 });
 
+// Initialize state from URL query parameters
+const initializeFromQuery = () => {
+  const query = route.query;
+  
+  // Set filters from query params
+  if (query.name && typeof query.name === 'string') {
+    nameFilter.value = query.name;
+    nameInputValue.value = query.name;
+  }
+  if (query.gameId && typeof query.gameId === 'string') {
+    gameIdFilter.value = query.gameId;
+  }
+  if (query.server && typeof query.server === 'string') {
+    serverNameFilter.value = query.server;
+  }
+  
+  // Set sorting from query params
+  if (query.sortBy && typeof query.sortBy === 'string') {
+    sortBy.value = query.sortBy;
+  }
+  if (query.sortOrder && (query.sortOrder === 'asc' || query.sortOrder === 'desc')) {
+    sortOrder.value = query.sortOrder;
+  }
+  
+  // Set pagination from query params
+  if (query.page && typeof query.page === 'string') {
+    const pageNum = parseInt(query.page);
+    if (!isNaN(pageNum) && pageNum > 0) {
+      currentPage.value = pageNum;
+    }
+  }
+  if (query.pageSize && typeof query.pageSize === 'string') {
+    const size = parseInt(query.pageSize);
+    if (!isNaN(size) && [25, 50, 100].includes(size)) {
+      pageSize.value = size;
+    }
+  }
+};
+
+// Update URL query parameters
+const updateQueryParams = () => {
+  const query: Record<string, string> = {};
+  
+  // Add filters to query
+  if (nameFilter.value) query.name = nameFilter.value;
+  if (gameIdFilter.value) query.gameId = gameIdFilter.value;
+  if (serverNameFilter.value) query.server = serverNameFilter.value;
+  
+  // Add sorting to query
+  if (sortBy.value !== 'lastSeen') query.sortBy = sortBy.value;
+  if (sortOrder.value !== 'desc') query.sortOrder = sortOrder.value;
+  
+  // Add pagination to query
+  if (currentPage.value !== 1) query.page = currentPage.value.toString();
+  if (pageSize.value !== 50) query.pageSize = pageSize.value.toString();
+  
+  // Update URL without triggering navigation
+  router.replace({ query });
+};
+
 // Fetch data when component is mounted
 onMounted(() => {
+  initializeFromQuery();
   fetchPlayersData();
 });
 

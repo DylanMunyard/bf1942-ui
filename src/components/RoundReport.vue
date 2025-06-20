@@ -428,7 +428,13 @@ const stopAutoRefresh = () => {
 };
 
 const goBack = () => {
-  router.back();
+  // Use native browser back functionality
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    // Fallback to servers page if no history
+    router.push('/servers');
+  }
 };
 </script>
 
