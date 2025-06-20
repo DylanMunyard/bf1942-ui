@@ -616,19 +616,19 @@ onMounted(() => {
                                   </span>
                                 </th>
                                 <th @click="changeMapStatsSort('kdRatio')" class="sortable-header">
-                                  K/D
+                                  <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
                                   <span v-if="mapStatsSortField === 'kdRatio'" class="sort-indicator">
                                     {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                                   </span>
                                 </th>
                                 <th @click="changeMapStatsSort('totalKills')" class="sortable-header">
-                                  Kills
+                                  <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
                                   <span v-if="mapStatsSortField === 'totalKills'" class="sort-indicator">
                                     {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                                   </span>
                                 </th>
                                 <th @click="changeMapStatsSort('totalDeaths')" class="sortable-header">
-                                  Deaths
+                                  <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
                                   <span v-if="mapStatsSortField === 'totalDeaths'" class="sort-indicator">
                                     {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                                   </span>
@@ -683,21 +683,26 @@ onMounted(() => {
                                 <div class="map-score">{{ map.totalScore }}</div>
                               </div>
                               <div class="map-stat-details">
-                                <div class="stat-row">
-                                  <span class="stat-label">K/D:</span>
-                                  <span class="stat-value">{{ calculateKDR(map.totalKills, map.totalDeaths) }}</span>
+                                <div class="stat-row-condensed">
+                                  <span class="stat-item">
+                                    <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
+                                    {{ calculateKDR(map.totalKills, map.totalDeaths) }}
+                                  </span>
+                                  <span class="stat-separator">•</span>
+                                  <span class="stat-item">
+                                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
+                                    {{ map.totalKills }}
+                                  </span>
+                                  <span class="stat-separator">•</span>
+                                  <span class="stat-item">
+                                    <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
+                                    {{ map.totalDeaths }}
+                                  </span>
                                 </div>
-                                <div class="stat-row">
-                                  <span class="stat-label">Kills/Deaths:</span>
-                                  <span class="stat-value">{{ map.totalKills }}/{{ map.totalDeaths }}</span>
-                                </div>
-                                <div class="stat-row">
-                                  <span class="stat-label">Sessions:</span>
-                                  <span class="stat-value">{{ map.sessionsPlayed }}</span>
-                                </div>
-                                <div class="stat-row">
-                                  <span class="stat-label">Play Time:</span>
-                                  <span class="stat-value">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</span>
+                                <div class="stat-row-condensed">
+                                  <span class="stat-item">Sessions: {{ map.sessionsPlayed }}</span>
+                                  <span class="stat-separator">•</span>
+                                  <span class="stat-item">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</span>
                                 </div>
                               </div>
                             </div>
@@ -1585,6 +1590,35 @@ onMounted(() => {
   grid-column: 1 / -1; /* Make it span all columns */
 }
 
+/* Desktop alignment for best session */
+@media (min-width: 769px) {
+  .best-session-container {
+    text-align: left;
+    align-items: flex-start;
+    justify-self: stretch;
+  }
+  
+  .best-session-container .stat-item {
+    align-items: flex-start;
+    text-align: left;
+  }
+  
+  .best-session-card {
+    text-align: left;
+    width: 100%;
+    align-self: flex-start;
+  }
+  
+  .best-session-header {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  
+  .best-session-details {
+    text-align: left;
+  }
+}
+
 .trophy-icon {
   font-size: 1.2rem;
   margin-right: 5px;
@@ -2156,6 +2190,8 @@ tbody tr:hover {
 .map-stats-container {
   background-color: var(--color-background-soft);
   padding: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .time-range-filter {
@@ -2210,11 +2246,15 @@ tbody tr:hover {
 .map-stats-table {
   margin-top: 8px;
   overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
 }
 
 .map-stats-table table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 600px;
 }
 
 .map-stats-table th,
@@ -2258,6 +2298,48 @@ tbody tr:hover {
   color: var(--color-text-muted);
 }
 
+/* Map stats table column widths */
+.map-stats-table th:nth-child(1),
+.map-stats-table td:nth-child(1) {
+  width: 25%;
+}
+
+.map-stats-table th:nth-child(2),
+.map-stats-table td:nth-child(2) {
+  width: 15%;
+  text-align: center;
+}
+
+.map-stats-table th:nth-child(3),
+.map-stats-table td:nth-child(3) {
+  width: 10%;
+  text-align: center;
+}
+
+.map-stats-table th:nth-child(4),
+.map-stats-table td:nth-child(4) {
+  width: 10%;
+  text-align: center;
+}
+
+.map-stats-table th:nth-child(5),
+.map-stats-table td:nth-child(5) {
+  width: 10%;
+  text-align: center;
+}
+
+.map-stats-table th:nth-child(6),
+.map-stats-table td:nth-child(6) {
+  width: 15%;
+  text-align: center;
+}
+
+.map-stats-table th:nth-child(7),
+.map-stats-table td:nth-child(7) {
+  width: 15%;
+  text-align: center;
+}
+
 /* Mobile Styles */
 @media (max-width: 768px) {
   .map-stats-container {
@@ -2298,6 +2380,20 @@ tbody tr:hover {
   .map-stats-table .sort-indicator {
     right: 6px;
     font-size: 0.7rem;
+  }
+
+  .stat-row-condensed {
+    gap: 4px;
+    font-size: 0.85rem;
+  }
+
+  .stat-item {
+    gap: 3px;
+    font-size: 0.85rem;
+  }
+
+  .map-stat-details {
+    gap: 4px;
   }
 }
 
@@ -2394,6 +2490,28 @@ tbody tr:hover {
   justify-content: space-between;
   align-items: center;
   padding: 4px 0;
+}
+
+.stat-row-condensed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.stat-separator {
+  color: var(--color-text-muted);
+  font-weight: normal;
+  opacity: 0.6;
 }
 
 .stat-label {
