@@ -91,6 +91,16 @@ const pinnedPlayersChartData = computed(() => {
       return entry ? entry.score : null;
     });
     
+    // Create dynamic point styling based on current snapshot
+    const pointRadii = data.map((_, idx) => idx === selectedSnapshotIndex.value ? 8 : 3);
+    const pointBackgroundColors = data.map((_, idx) => 
+      idx === selectedSnapshotIndex.value ? '#FFD700' : colors[index % colors.length]
+    );
+    const pointBorderColors = data.map((_, idx) => 
+      idx === selectedSnapshotIndex.value ? '#FF6B00' : '#ffffff'
+    );
+    const pointBorderWidths = data.map((_, idx) => idx === selectedSnapshotIndex.value ? 3 : 2);
+    
     return {
       label: playerName,
       backgroundColor: colors[index % colors.length] + '20',
@@ -98,11 +108,11 @@ const pinnedPlayersChartData = computed(() => {
       borderWidth: 2,
       fill: false,
       tension: 0.3,
-      pointRadius: 3,
-      pointHoverRadius: 6,
-      pointBackgroundColor: colors[index % colors.length],
-      pointBorderColor: '#ffffff',
-      pointBorderWidth: 2,
+      pointRadius: pointRadii,
+      pointHoverRadius: 10,
+      pointBackgroundColor: pointBackgroundColors,
+      pointBorderColor: pointBorderColors,
+      pointBorderWidth: pointBorderWidths,
       data
     };
   });
@@ -127,6 +137,10 @@ const pinnedPlayersChartOptions = computed(() => {
     interaction: {
       intersect: false,
       mode: 'index' as const
+    },
+    animation: {
+      duration: 300,
+      easing: 'easeInOutQuad'
     },
     scales: {
       y: {
@@ -190,16 +204,6 @@ const pinnedPlayersChartOptions = computed(() => {
             return `${playerName}: ${context.parsed.y}`;
           }
         }
-      }
-    },
-    elements: {
-      point: {
-        radius: selectedSnapshotIndex.value >= 0 ? 
-          pinnedPlayersChartData.value.datasets.map((_, idx) => 
-            pinnedPlayersChartData.value.labels.map((_, labelIdx) => 
-              labelIdx === selectedSnapshotIndex.value ? 8 : 3
-            )
-          ) : 3
       }
     }
   };
@@ -662,7 +666,7 @@ const goBack = () => {
             </div>
             
             <div v-if="pinnedPlayersChartData.datasets.length > 0" class="performance-chart-container">
-              <div class="chart-wrapper">
+              <div class="chart-wrapper" :class="{ 'playing': isPlaying }">
                 <Line :data="pinnedPlayersChartData" :options="pinnedPlayersChartOptions" />
               </div>
             </div>
@@ -2249,6 +2253,11 @@ body.dragging * {
 .chart-wrapper {
   height: 200px;
   position: relative;
+}
+
+/* Clean chart styling without overall glow effects */
+.chart-wrapper canvas {
+  /* No special effects - let the data points do the talking */
 }
 
 </style>
