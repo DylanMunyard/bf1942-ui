@@ -90,7 +90,8 @@ const openSessionDetailsModal = (serverGuid: string, mapName: string, startTime:
     query: {
       serverGuid,
       mapName,
-      startTime
+      startTime,
+      players: playerName.value // Include the player name to pin them
     }
   });
 };
@@ -195,7 +196,8 @@ const getRoundReportRoute = (session: any) => {
       query: {
         serverGuid: session.serverGuid,
         mapName: session.mapName,
-        startTime: session.startTime
+        startTime: session.startTime,
+        players: playerName.value // Include the player name to pin them
       }
     };
   }

@@ -42,7 +42,8 @@
                     serverGuid: metric.serverGuid,
                     mapName: metric.mapName,
                     /* Live analytics might be fresher than the last recorded activity, so go back 2 minutes to be sure we have a session recorded */
-                    startTime: new Date(new Date(metric.lastActivity).getTime() - 2 * 60 * 1000).toISOString()
+                    startTime: new Date(new Date(metric.lastActivity).getTime() - 2 * 60 * 1000).toISOString(),
+                    players: metric.playerName // Include the player name to pin them
                   }
                 }"
                 class="penalties-link"

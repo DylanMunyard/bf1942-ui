@@ -710,7 +710,8 @@ function getCountryName(code: string | undefined, fallback: string | undefined):
                             query: {
                               serverGuid: serverDetails.serverGuid,
                               mapName: score.mapName,
-                              startTime: score.timestamp
+                              startTime: score.timestamp,
+                              players: score.playerName // Include the player name to pin them
                             }
                           }"
                           class="session-link"

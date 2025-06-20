@@ -171,7 +171,8 @@ const navigateToRoundReport = (sessionId: number, event?: Event) => {
       query: {
         serverGuid: session.serverGuid,
         mapName: session.mapName,
-        startTime: session.startTime
+        startTime: session.startTime,
+        players: props.playerName // Include the player name to pin them
       }
     });
   }

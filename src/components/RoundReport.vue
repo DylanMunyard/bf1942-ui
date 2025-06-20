@@ -34,7 +34,11 @@ const isLiveUpdating = ref(false);
 const selectedTeamTab = ref(0); // For mobile tabbed interface
 
 // --- Player pinning state (now handles both pinning and focusing) ---
-const pinnedPlayers = ref<Set<string>>(new Set(route.query.player ? [route.query.player as string] : []));
+const pinnedPlayers = ref<Set<string>>(new Set(
+  route.query.players ? 
+    (typeof route.query.players === 'string' ? route.query.players.split(',') : route.query.players) :
+    (route.query.player ? [route.query.player as string] : [])
+));
 
 function togglePlayerPin(playerName: string) {
   if (pinnedPlayers.value.has(playerName)) {
@@ -42,14 +46,28 @@ function togglePlayerPin(playerName: string) {
   } else {
     pinnedPlayers.value.add(playerName);
   }
-  // Update URL query param with first pinned player
-  const firstPlayer = Array.from(pinnedPlayers.value)[0];
-  router.replace({ query: { ...route.query, player: firstPlayer || undefined } });
+  updateUrlWithPinnedPlayers();
 }
 
 function clearAllPinnedPlayers() {
   pinnedPlayers.value.clear();
-  router.replace({ query: { ...route.query, player: undefined } });
+  updateUrlWithPinnedPlayers();
+}
+
+function updateUrlWithPinnedPlayers() {
+  const players = Array.from(pinnedPlayers.value);
+  const newQuery = { ...route.query };
+  
+  // Remove legacy single player param
+  delete newQuery.player;
+  
+  if (players.length > 0) {
+    newQuery.players = players.join(',');
+  } else {
+    delete newQuery.players;
+  }
+  
+  router.replace({ query: newQuery });
 }
 
 // Pinned players performance over time
@@ -122,6 +140,7 @@ const pinnedPlayersChartData = computed(() => {
 
 // Chart options for pinned players
 const pinnedPlayersChartOptions = computed(() => {
+  // Get computed styles to access CSS variables - same approach as ServerDetails.vue
   const computedStyles = window.getComputedStyle(document.documentElement);
   const textColor = computedStyles.getPropertyValue('--color-text').trim() || '#333333';
   const textMutedColor = computedStyles.getPropertyValue('--color-text-muted').trim() || '#666666';
@@ -129,6 +148,7 @@ const pinnedPlayersChartOptions = computed(() => {
                     document.documentElement.classList.contains('dark-mode') ||
                     (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   
+  // Dynamic grid color based on theme - same approach as ServerDetails.vue
   const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
   
   return {
@@ -151,10 +171,16 @@ const pinnedPlayersChartOptions = computed(() => {
         title: {
           display: true,
           text: 'Score',
-          color: textColor
+          color: textMutedColor,
+          font: {
+            weight: 'bold'
+          }
         },
         ticks: {
-          color: textMutedColor
+          color: textMutedColor,
+          font: {
+            weight: '500'
+          }
         }
       },
       x: {
@@ -164,11 +190,17 @@ const pinnedPlayersChartOptions = computed(() => {
         title: {
           display: true,
           text: 'Elapsed Time',
-          color: textColor
+          color: textMutedColor,
+          font: {
+            weight: 'bold'
+          }
         },
         ticks: {
           color: textMutedColor,
-          maxTicksLimit: 8
+          maxTicksLimit: 8,
+          font: {
+            weight: '500'
+          }
         }
       }
     },
@@ -177,18 +209,28 @@ const pinnedPlayersChartOptions = computed(() => {
         display: true,
         position: 'top' as const,
         labels: {
-          color: textColor,
           usePointStyle: true,
-          pointStyle: 'line'
+          pointStyle: 'line',
+          font: {
+            weight: '500'
+          }
         }
       },
       tooltip: {
         backgroundColor: isDarkMode ? 'rgba(35, 21, 53, 0.95)' : 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#ffffff',
-        bodyColor: '#ffffff',
+        titleColor: isDarkMode ? '#ffffff' : '#ffffff',
+        bodyColor: isDarkMode ? '#ffffff' : '#ffffff',
         borderColor: isDarkMode ? '#805ad5' : '#666666',
         borderWidth: 1,
         cornerRadius: 6,
+        displayColors: true,
+        titleFont: {
+          size: 14,
+          weight: 'bold' as const
+        },
+        bodyFont: {
+          size: 13
+        },
         callbacks: {
           label: function(context: any) {
             // Find the player performance data for additional info
@@ -1291,8 +1333,6 @@ body.dragging * {
   background: var(--color-background-soft);
 }
 
-
-
 .player-row.top-player {
   background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
 }
@@ -1363,17 +1403,65 @@ body.dragging * {
 
 .ping-good {
   background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
+  color: #2e7d32;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  font-weight: 600;
 }
 
 .ping-ok {
   background: rgba(255, 152, 0, 0.2);
-  color: #ff9800;
+  color: #e65100;
+  border: 1px solid rgba(255, 152, 0, 0.4);
+  font-weight: 600;
 }
 
 .ping-bad {
   background: rgba(244, 67, 54, 0.2);
-  color: #f44336;
+  color: #c62828;
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  font-weight: 600;
+}
+
+/* Dark mode ping styling */
+@media (prefers-color-scheme: dark) {
+  .ping-good {
+    background: rgba(76, 175, 80, 0.3);
+    color: #81c784;
+    border: 1px solid rgba(76, 175, 80, 0.5);
+  }
+
+  .ping-ok {
+    background: rgba(255, 152, 0, 0.3);
+    color: #ffb74d;
+    border: 1px solid rgba(255, 152, 0, 0.5);
+  }
+
+  .ping-bad {
+    background: rgba(244, 67, 54, 0.3);
+    color: #e57373;
+    border: 1px solid rgba(244, 67, 54, 0.5);
+  }
+}
+
+html[data-theme="dark"] .ping-good,
+.dark-mode .ping-good {
+  background: rgba(76, 175, 80, 0.3);
+  color: #81c784;
+  border: 1px solid rgba(76, 175, 80, 0.5);
+}
+
+html[data-theme="dark"] .ping-ok,
+.dark-mode .ping-ok {
+  background: rgba(255, 152, 0, 0.3);
+  color: #ffb74d;
+  border: 1px solid rgba(255, 152, 0, 0.5);
+}
+
+html[data-theme="dark"] .ping-bad,
+.dark-mode .ping-bad {
+  background: rgba(244, 67, 54, 0.3);
+  color: #e57373;
+  border: 1px solid rgba(244, 67, 54, 0.5);
 }
 
 @media (max-width: 768px) {
@@ -2171,6 +2259,90 @@ body.dragging * {
 .player-row.pinned-player-row {
   background: linear-gradient(90deg, #ffe082 0%, #fffde7 100%);
   border-left: 4px solid #ffd600;
+  color: #1a1a1a;
+}
+
+/* Dark mode pinned player styling - keep original background, just fix text contrast */
+@media (prefers-color-scheme: dark) {
+  .player-row.pinned-player-row {
+    color: #1a1a1a;
+  }
+  
+  .player-row.pinned-player-row .player-link {
+    color: #1a1a1a;
+    font-weight: 600;
+  }
+  
+  .player-row.pinned-player-row .player-score {
+    color: #1a1a1a;
+    font-weight: 600;
+  }
+  
+  .player-row.pinned-player-row .kills,
+  .player-row.pinned-player-row .deaths {
+    color: #1a1a1a;
+    font-weight: 600;
+  }
+}
+
+/* CSS variable based dark mode detection */
+html[data-theme="dark"] .player-row.pinned-player-row,
+.dark-mode .player-row.pinned-player-row {
+  color: #1a1a1a;
+}
+
+html[data-theme="dark"] .player-row.pinned-player-row .player-link,
+.dark-mode .player-row.pinned-player-row .player-link {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .player-row.pinned-player-row .player-score,
+.dark-mode .player-row.pinned-player-row .player-score {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .player-row.pinned-player-row .kills,
+html[data-theme="dark"] .player-row.pinned-player-row .deaths,
+.dark-mode .player-row.pinned-player-row .kills,
+.dark-mode .player-row.pinned-player-row .deaths {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* Ensure ping badges maintain proper contrast inside pinned rows */
+.player-row.pinned-player-row .ping-good,
+.player-row.pinned-player-row .ping-ok,
+.player-row.pinned-player-row .ping-bad {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1a1a1a;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  font-weight: 700;
+}
+
+/* Dark mode ping badges in pinned rows */
+@media (prefers-color-scheme: dark) {
+  .player-row.pinned-player-row .ping-good,
+  .player-row.pinned-player-row .ping-ok,
+  .player-row.pinned-player-row .ping-bad {
+    background: rgba(255, 255, 255, 0.9);
+    color: #1a1a1a;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    font-weight: 700;
+  }
+}
+
+html[data-theme="dark"] .player-row.pinned-player-row .ping-good,
+html[data-theme="dark"] .player-row.pinned-player-row .ping-ok,
+html[data-theme="dark"] .player-row.pinned-player-row .ping-bad,
+.dark-mode .player-row.pinned-player-row .ping-good,
+.dark-mode .player-row.pinned-player-row .ping-ok,
+.dark-mode .player-row.pinned-player-row .ping-bad {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1a1a1a;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  font-weight: 700;
 }
 .pinned-badge {
   background: #ffd600;
@@ -2180,6 +2352,20 @@ body.dragging * {
   margin-left: 6px;
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+/* Dark mode pinned badge styling */
+@media (prefers-color-scheme: dark) {
+  .pinned-badge {
+    background: #ffd700;
+    color: #1a1a1a;
+  }
+}
+
+html[data-theme="dark"] .pinned-badge,
+.dark-mode .pinned-badge {
+  background: #ffd700;
+  color: #1a1a1a;
 }
 .pin-player-btn {
   background: none;
@@ -2248,6 +2434,18 @@ body.dragging * {
   border-radius: 8px;
   padding: 12px;
   border: 1px solid var(--color-border);
+}
+
+/* Ensure chart container has proper contrast in both modes */
+@media (prefers-color-scheme: dark) {
+  .performance-chart-container {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+html[data-theme="dark"] .performance-chart-container,
+.dark-mode .performance-chart-container {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .chart-wrapper {
