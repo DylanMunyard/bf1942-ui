@@ -2630,4 +2630,15 @@ tbody tr:hover {
     font-size: 0.65rem;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Fix map stats grid layout on desktop                                */
+/* The generic desktop-only rule sets display: table-cell! important   */
+/* which breaks the CSS grid we rely on for the map stats section.     */
+/* Ensure the grid container keeps its grid display on ≥769px screens. */
+@media (min-width: 769px) {
+  .desktop-only.map-stats-grid {
+    display: grid !important;
+  }
+}
 </style>
