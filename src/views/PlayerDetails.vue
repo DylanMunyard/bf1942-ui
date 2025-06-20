@@ -459,14 +459,14 @@ onMounted(() => {
               </div>
             </div>
             <div class="stat-item best-session-container" v-if="playerStats.bestSession">
-              <div class="stat-label">
-                <span class="trophy-icon">🏆</span> Best Session
-              </div>
               <div 
                 class="best-session-card clickable-best-session" 
                 @click="openSessionDetailsModal(playerStats.bestSession.serverGuid, playerStats.bestSession.mapName, playerStats.bestSession.startTime)"
                 title="Click to view round report"
               >
+                <div class="best-session-title">
+                  <span class="trophy-icon">🏆</span> Best Session
+                </div>
                 <div class="best-session-header">
                   <div class="best-session-score">{{ playerStats.bestSession.totalScore }}</div>
                   <span class="best-session-badge">
@@ -578,144 +578,140 @@ onMounted(() => {
                         </span>
                       </td>
                     </tr>
-                    <!-- Expanded map stats section -->
-                    <tr v-if="expandedServerId === ranking.serverGuid">
-                      <td colspan="4" class="map-stats-container">
-                        <div class="time-range-filter">
-                          <span class="time-range-label">Time Range:</span>
-                          <div class="time-range-buttons">
-                            <button
-                              v-for="option in timeRangeOptions"
-                              :key="option.value"
-                              :class="['time-range-button', { active: selectedTimeRange === option.value }]"
-                              @click="selectedTimeRange = option.value"
-                            >
-                              {{ option.label }}
-                            </button>
-                          </div>
-                        </div>
-                        <div v-if="mapStatsLoading" class="map-stats-loading">
-                          <div class="loading-spinner"></div>
-                          <p>Loading map statistics...</p>
-                        </div>
-                        <div v-else-if="mapStats.length > 0" class="map-stats-table">
-                          <!-- Desktop table view -->
-                          <table class="desktop-only">
-                            <thead>
-                              <tr>
-                                <th @click="changeMapStatsSort('mapName')" class="sortable-header">
-                                  Map Name
-                                  <span v-if="mapStatsSortField === 'mapName'" class="sort-indicator">
-                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                                  </span>
-                                </th>
-                                <th @click="changeMapStatsSort('totalScore')" class="sortable-header">
-                                  Score
-                                  <span v-if="mapStatsSortField === 'totalScore'" class="sort-indicator">
-                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                                  </span>
-                                </th>
-                                <th @click="changeMapStatsSort('kdRatio')" class="sortable-header">
-                                  <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
-                                  <span v-if="mapStatsSortField === 'kdRatio'" class="sort-indicator">
-                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                                  </span>
-                                </th>
-                                <th @click="changeMapStatsSort('totalKills')" class="sortable-header">
-                                  <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
-                                  <span v-if="mapStatsSortField === 'totalKills'" class="sort-indicator">
-                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                                  </span>
-                                </th>
-                                <th @click="changeMapStatsSort('totalDeaths')" class="sortable-header">
-                                  <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
-                                  <span v-if="mapStatsSortField === 'totalDeaths'" class="sort-indicator">
-                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                                  </span>
-                                </th>
-                                <th @click="changeMapStatsSort('sessionsPlayed')" class="sortable-header">
-                                  Sessions
-                                  <span v-if="mapStatsSortField === 'sessionsPlayed'" class="sort-indicator">
-                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                                  </span>
-                                </th>
-                                <th @click="changeMapStatsSort('totalPlayTimeMinutes')" class="sortable-header">
-                                  Play Time
-                                  <span v-if="mapStatsSortField === 'totalPlayTimeMinutes'" class="sort-indicator">
-                                    {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                                  </span>
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex">
-                                <td>{{ map.mapName }}</td>
-                                <td>{{ map.totalScore }}</td>
-                                <td>{{ calculateKDR(map.totalKills, map.totalDeaths) }}</td>
-                                <td>{{ map.totalKills }}</td>
-                                <td>{{ map.totalDeaths }}</td>
-                                <td>{{ map.sessionsPlayed }}</td>
-                                <td>{{ formatPlayTime(map.totalPlayTimeMinutes) }}</td>
-                              </tr>
-                            </tbody>
-                          </table>
-
-                          <!-- Mobile card view -->
-                          <div class="mobile-only map-stats-cards">
-                            <div class="mobile-sort-controls">
-                              <label>Sort by:</label>
-                              <select v-model="mapStatsSortField" @change="changeMapStatsSort(mapStatsSortField)" class="mobile-sort-select">
-                                <option value="totalScore">Score</option>
-                                <option value="kdRatio">K/D Ratio</option>
-                                <option value="mapName">Map Name</option>
-                                <option value="totalKills">Kills</option>
-                                <option value="totalDeaths">Deaths</option>
-                                <option value="sessionsPlayed">Sessions</option>
-                                <option value="totalPlayTimeMinutes">Play Time</option>
-                              </select>
-                              <button @click="mapStatsSortDirection = mapStatsSortDirection === 'asc' ? 'desc' : 'asc'" class="mobile-sort-direction">
-                                {{ mapStatsSortDirection === 'asc' ? '↑' : '↓' }}
-                              </button>
-                            </div>
-                            <div v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex" class="map-stat-card">
-                              <div class="map-stat-header">
-                                <h5 class="map-name">{{ map.mapName }}</h5>
-                                <div class="map-score">{{ map.totalScore }}</div>
-                              </div>
-                              <div class="map-stat-details">
-                                <div class="stat-row-condensed">
-                                  <span class="stat-item">
-                                    <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
-                                    {{ calculateKDR(map.totalKills, map.totalDeaths) }}
-                                  </span>
-                                  <span class="stat-separator">•</span>
-                                  <span class="stat-item">
-                                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
-                                    {{ map.totalKills }}
-                                  </span>
-                                  <span class="stat-separator">•</span>
-                                  <span class="stat-item">
-                                    <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
-                                    {{ map.totalDeaths }}
-                                  </span>
-                                </div>
-                                <div class="stat-row-condensed">
-                                  <span class="stat-item">Sessions: {{ map.sessionsPlayed }}</span>
-                                  <span class="stat-separator">•</span>
-                                  <span class="stat-item">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div v-else class="no-map-stats">
-                          <p>No map statistics available for the selected time range.</p>
-                        </div>
-                      </td>
-                    </tr>
                   </template>
                 </tbody>
               </table>
+              
+              <!-- Expanded map stats section - outside the table -->
+              <div v-if="expandedServerId" class="map-stats-expansion">
+                <div class="time-range-filter">
+                  <span class="time-range-label">Time Range:</span>
+                  <div class="time-range-buttons">
+                    <button
+                      v-for="option in timeRangeOptions"
+                      :key="option.value"
+                      :class="['time-range-button', { active: selectedTimeRange === option.value }]"
+                      @click="selectedTimeRange = option.value"
+                    >
+                      {{ option.label }}
+                    </button>
+                  </div>
+                </div>
+                <div v-if="mapStatsLoading" class="map-stats-loading">
+                  <div class="loading-spinner"></div>
+                  <p>Loading map statistics...</p>
+                </div>
+                <div v-else-if="mapStats.length > 0" class="map-stats-content">
+                  <!-- Desktop grid view -->
+                  <div class="desktop-only map-stats-grid">
+                    <!-- Headers -->
+                    <div class="header-cell" @click="changeMapStatsSort('mapName')">
+                      Map Name
+                      <span v-if="mapStatsSortField === 'mapName'" class="sort-indicator">
+                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </div>
+                    <div class="header-cell" @click="changeMapStatsSort('totalScore')">
+                      Score
+                      <span v-if="mapStatsSortField === 'totalScore'" class="sort-indicator">
+                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </div>
+                    <div class="header-cell" @click="changeMapStatsSort('kdRatio')">
+                      <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
+                      <span v-if="mapStatsSortField === 'kdRatio'" class="sort-indicator">
+                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </div>
+                    <div class="header-cell" @click="changeMapStatsSort('totalKills')">
+                      <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
+                      <span v-if="mapStatsSortField === 'totalKills'" class="sort-indicator">
+                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </div>
+                    <div class="header-cell" @click="changeMapStatsSort('totalDeaths')">
+                      <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
+                      <span v-if="mapStatsSortField === 'totalDeaths'" class="sort-indicator">
+                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </div>
+                    <div class="header-cell" @click="changeMapStatsSort('sessionsPlayed')">
+                      Sessions
+                      <span v-if="mapStatsSortField === 'sessionsPlayed'" class="sort-indicator">
+                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </div>
+                    <div class="header-cell" @click="changeMapStatsSort('totalPlayTimeMinutes')">
+                      Play Time
+                      <span v-if="mapStatsSortField === 'totalPlayTimeMinutes'" class="sort-indicator">
+                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </div>
+                    
+                    <!-- Data rows -->
+                    <template v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex">
+                      <div class="data-cell">{{ map.mapName }}</div>
+                      <div class="data-cell">{{ map.totalScore }}</div>
+                      <div class="data-cell">{{ calculateKDR(map.totalKills, map.totalDeaths) }}</div>
+                      <div class="data-cell">{{ map.totalKills }}</div>
+                      <div class="data-cell">{{ map.totalDeaths }}</div>
+                      <div class="data-cell">{{ map.sessionsPlayed }}</div>
+                      <div class="data-cell">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</div>
+                    </template>
+                  </div>
+
+                  <!-- Mobile card view -->
+                  <div class="mobile-only map-stats-cards">
+                    <div class="mobile-sort-controls">
+                      <label>Sort by:</label>
+                      <select v-model="mapStatsSortField" @change="changeMapStatsSort(mapStatsSortField)" class="mobile-sort-select">
+                        <option value="totalScore">Score</option>
+                        <option value="kdRatio">K/D Ratio</option>
+                        <option value="mapName">Map Name</option>
+                        <option value="totalKills">Kills</option>
+                        <option value="totalDeaths">Deaths</option>
+                        <option value="sessionsPlayed">Sessions</option>
+                        <option value="totalPlayTimeMinutes">Play Time</option>
+                      </select>
+                      <button @click="mapStatsSortDirection = mapStatsSortDirection === 'asc' ? 'desc' : 'asc'" class="mobile-sort-direction">
+                        {{ mapStatsSortDirection === 'asc' ? '↑' : '↓' }}
+                      </button>
+                    </div>
+                    <div v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex" class="map-stat-card">
+                      <div class="map-stat-header">
+                        <h5 class="map-name">{{ map.mapName }}</h5>
+                        <div class="map-score">{{ map.totalScore }}</div>
+                      </div>
+                      <div class="map-stat-details">
+                        <div class="stat-row-condensed">
+                          <span class="stat-item">
+                            <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
+                            {{ calculateKDR(map.totalKills, map.totalDeaths) }}
+                          </span>
+                          <span class="stat-separator">•</span>
+                          <span class="stat-item">
+                            <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
+                            {{ map.totalKills }}
+                          </span>
+                          <span class="stat-separator">•</span>
+                          <span class="stat-item">
+                            <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
+                            {{ map.totalDeaths }}
+                          </span>
+                        </div>
+                        <div class="stat-row-condensed">
+                          <span class="stat-item">Sessions: {{ map.sessionsPlayed }}</span>
+                          <span class="stat-separator">•</span>
+                          <span class="stat-item">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="no-map-stats">
+                  <p>No map statistics available for the selected time range.</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1646,6 +1642,13 @@ onMounted(() => {
   border-color: var(--color-primary);
 }
 
+.best-session-title {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
 .best-session-header {
   display: flex;
   align-items: center;
@@ -1744,6 +1747,8 @@ tbody tr:hover {
 @media (min-width: 769px) {
   .server-rankings-table table {
     table-layout: auto;
+    width: 100%;
+    min-width: 100%;
   }
   
   .server-rankings-table th,
@@ -2187,11 +2192,73 @@ tbody tr:hover {
   transition: transform 0.2s;
 }
 
-.map-stats-container {
+.map-stats-expansion {
   background-color: var(--color-background-soft);
   padding: 16px;
+  margin-top: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.map-stats-content {
+  margin-top: 12px;
+  overflow-x: auto;
   width: 100%;
-  box-sizing: border-box;
+}
+
+.map-stats-grid {
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) minmax(80px, 1fr) minmax(60px, 1fr) minmax(60px, 1fr) minmax(60px, 1fr) minmax(80px, 1fr) minmax(100px, 1.2fr);
+  gap: 1px;
+  background-color: var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+  width: 100%;
+  min-width: 640px;
+}
+
+.header-cell {
+  background-color: var(--color-background-mute);
+  padding: 12px 8px;
+  font-weight: bold;
+  color: var(--color-heading);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+}
+
+.header-cell:nth-child(1) {
+  justify-content: flex-start;
+}
+
+.header-cell:hover {
+  background-color: var(--color-background);
+}
+
+.sort-indicator {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.data-cell {
+  background-color: var(--color-background);
+  padding: 10px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.data-cell:nth-child(7n+1) {
+  justify-content: flex-start;
 }
 
 .time-range-filter {
@@ -2243,53 +2310,26 @@ tbody tr:hover {
   color: var(--color-text-muted);
 }
 
-.map-stats-table {
-  margin-top: 8px;
-  overflow-x: auto;
-  width: 100%;
-  max-width: 100%;
-}
+/* Mobile responsive styles for map stats */
+@media (max-width: 768px) {
+  .map-stats-expansion {
+    padding: 12px;
+    margin-top: 8px;
+  }
 
-.map-stats-table table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  min-width: 600px;
-}
+  .map-stats-grid {
+    font-size: 0.9rem;
+  }
 
-.map-stats-table th,
-.map-stats-table td {
-  padding: 8px;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-}
+  .header-cell {
+    padding: 8px 6px;
+    font-size: 0.85rem;
+  }
 
-.map-stats-table th {
-  font-weight: bold;
-  color: var(--color-heading);
-  background-color: var(--color-background-mute);
-}
-
-.map-stats-table th.sortable-header {
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.2s;
-  white-space: nowrap;
-  padding-right: 24px;
-  position: relative;
-}
-
-.map-stats-table th.sortable-header:hover {
-  background-color: var(--color-background);
-}
-
-.map-stats-table .sort-indicator {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.8rem;
-  opacity: 0.7;
+  .data-cell {
+    padding: 8px 6px;
+    font-size: 0.85rem;
+  }
 }
 
 .no-map-stats {
@@ -2298,47 +2338,7 @@ tbody tr:hover {
   color: var(--color-text-muted);
 }
 
-/* Map stats table column widths */
-.map-stats-table th:nth-child(1),
-.map-stats-table td:nth-child(1) {
-  width: 25%;
-}
 
-.map-stats-table th:nth-child(2),
-.map-stats-table td:nth-child(2) {
-  width: 15%;
-  text-align: center;
-}
-
-.map-stats-table th:nth-child(3),
-.map-stats-table td:nth-child(3) {
-  width: 10%;
-  text-align: center;
-}
-
-.map-stats-table th:nth-child(4),
-.map-stats-table td:nth-child(4) {
-  width: 10%;
-  text-align: center;
-}
-
-.map-stats-table th:nth-child(5),
-.map-stats-table td:nth-child(5) {
-  width: 10%;
-  text-align: center;
-}
-
-.map-stats-table th:nth-child(6),
-.map-stats-table td:nth-child(6) {
-  width: 15%;
-  text-align: center;
-}
-
-.map-stats-table th:nth-child(7),
-.map-stats-table td:nth-child(7) {
-  width: 15%;
-  text-align: center;
-}
 
 /* Mobile Styles */
 @media (max-width: 768px) {
