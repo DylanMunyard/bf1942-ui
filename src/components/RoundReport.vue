@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchRoundReport, fetchLiveServerData, RoundReport, LeaderboardSnapshot } from '../services/serverDetailsService';
+import { Line } from 'vue-chartjs';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+
+// Register Chart.js components
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 // Router
 const router = useRouter();
@@ -27,6 +32,178 @@ const scrubberElement = ref<HTMLElement | null>(null);
 const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
 const isLiveUpdating = ref(false);
 const selectedTeamTab = ref(0); // For mobile tabbed interface
+
+// --- Player pinning state (now handles both pinning and focusing) ---
+const pinnedPlayers = ref<Set<string>>(new Set(route.query.player ? [route.query.player as string] : []));
+
+function togglePlayerPin(playerName: string) {
+  if (pinnedPlayers.value.has(playerName)) {
+    pinnedPlayers.value.delete(playerName);
+  } else {
+    pinnedPlayers.value.add(playerName);
+  }
+  // Update URL query param with first pinned player
+  const firstPlayer = Array.from(pinnedPlayers.value)[0];
+  router.replace({ query: { ...route.query, player: firstPlayer || undefined } });
+}
+
+function clearAllPinnedPlayers() {
+  pinnedPlayers.value.clear();
+  router.replace({ query: { ...route.query, player: undefined } });
+}
+
+// Pinned players performance over time
+const pinnedPlayersPerformance = computed(() => {
+  if (!pinnedPlayers.value.size || !roundReport.value) return {};
+  
+  const performances: Record<string, any[]> = {};
+  
+  Array.from(pinnedPlayers.value).forEach(playerName => {
+    performances[playerName] = roundReport.value!.leaderboardSnapshots.map((snap, idx) => {
+      const entry = snap.entries.find(e => e.playerName === playerName);
+      if (!entry) return null;
+      return {
+        snapshotIndex: idx,
+        timestamp: snap.timestamp,
+        ...entry
+      };
+    }).filter(Boolean);
+  });
+  
+  return performances;
+});
+
+// Chart data for pinned players
+const pinnedPlayersChartData = computed(() => {
+  if (!pinnedPlayers.value.size || !roundReport.value) return { labels: [], datasets: [] };
+  
+  // Create labels from timestamps
+  const labels = roundReport.value.leaderboardSnapshots.map((snap, idx) => 
+    getElapsedTime(snap.timestamp)
+  );
+  
+  // Generate a dataset for each pinned player
+  const colors = ['#2196F3', '#4CAF50', '#FF9800', '#E91E63', '#9C27B0', '#00BCD4'];
+  const datasets = Array.from(pinnedPlayers.value).map((playerName, index) => {
+    const performance = pinnedPlayersPerformance.value[playerName] || [];
+    const data = roundReport.value!.leaderboardSnapshots.map((snap, idx) => {
+      const entry = performance.find(p => p.snapshotIndex === idx);
+      return entry ? entry.score : null;
+    });
+    
+    return {
+      label: playerName,
+      backgroundColor: colors[index % colors.length] + '20',
+      borderColor: colors[index % colors.length],
+      borderWidth: 2,
+      fill: false,
+      tension: 0.3,
+      pointRadius: 3,
+      pointHoverRadius: 6,
+      pointBackgroundColor: colors[index % colors.length],
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2,
+      data
+    };
+  });
+  
+  return { labels, datasets };
+});
+
+// Chart options for pinned players
+const pinnedPlayersChartOptions = computed(() => {
+  const computedStyles = window.getComputedStyle(document.documentElement);
+  const textColor = computedStyles.getPropertyValue('--color-text').trim() || '#333333';
+  const textMutedColor = computedStyles.getPropertyValue('--color-text-muted').trim() || '#666666';
+  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') || 
+                    document.documentElement.classList.contains('dark-mode') ||
+                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  
+  const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+  
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      intersect: false,
+      mode: 'index' as const
+    },
+    scales: {
+      y: {
+        beginAtZero: false,
+        grid: {
+          color: gridColor
+        },
+        title: {
+          display: true,
+          text: 'Score',
+          color: textColor
+        },
+        ticks: {
+          color: textMutedColor
+        }
+      },
+      x: {
+        grid: {
+          color: gridColor
+        },
+        title: {
+          display: true,
+          text: 'Elapsed Time',
+          color: textColor
+        },
+        ticks: {
+          color: textMutedColor,
+          maxTicksLimit: 8
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top' as const,
+        labels: {
+          color: textColor,
+          usePointStyle: true,
+          pointStyle: 'line'
+        }
+      },
+      tooltip: {
+        backgroundColor: isDarkMode ? 'rgba(35, 21, 53, 0.95)' : 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        borderColor: isDarkMode ? '#805ad5' : '#666666',
+        borderWidth: 1,
+        cornerRadius: 6,
+        callbacks: {
+          label: function(context: any) {
+            // Find the player performance data for additional info
+            const playerName = context.dataset.label;
+            const snapshotIndex = context.dataIndex;
+            const performance = pinnedPlayersPerformance.value[playerName];
+            if (performance) {
+              const point = performance.find(p => p.snapshotIndex === snapshotIndex);
+              if (point) {
+                return `${playerName}: ${point.score} | ${point.kills} | ${point.deaths}`;
+              }
+            }
+            return `${playerName}: ${context.parsed.y}`;
+          }
+        }
+      }
+    },
+    elements: {
+      point: {
+        radius: selectedSnapshotIndex.value >= 0 ? 
+          pinnedPlayersChartData.value.datasets.map((_, idx) => 
+            pinnedPlayersChartData.value.labels.map((_, labelIdx) => 
+              labelIdx === selectedSnapshotIndex.value ? 8 : 3
+            )
+          ) : 3
+      }
+    }
+  };
+});
 
 // Fetch round report when component is mounted or when props change
 const fetchData = async () => {
@@ -209,27 +386,26 @@ const setPlaybackSpeed = (speed: number) => {
 // Group leaderboard entries by team
 const teamGroups = computed(() => {
   if (!currentSnapshot.value || !currentSnapshot.value.entries.length) return [];
-  
   const groups = currentSnapshot.value.entries.reduce((acc, entry) => {
-    if (!acc[entry.teamLabel]) {
-      acc[entry.teamLabel] = [];
-    }
+    if (!acc[entry.teamLabel]) acc[entry.teamLabel] = [];
     acc[entry.teamLabel].push(entry);
     return acc;
   }, {} as Record<string, typeof currentSnapshot.value.entries>);
-  
-  // Sort each team by rank
   Object.values(groups).forEach(team => {
-    team.sort((a, b) => a.rank - b.rank);
+    // Pin pinned players at the top
+    team.sort((a, b) => {
+      if (pinnedPlayers.value.has(a.playerName) && !pinnedPlayers.value.has(b.playerName)) return -1;
+      if (!pinnedPlayers.value.has(a.playerName) && pinnedPlayers.value.has(b.playerName)) return 1;
+      return a.rank - b.rank;
+    });
   });
-  
   return Object.entries(groups).map(([teamName, players]) => ({
     teamName,
     players,
     totalScore: players.reduce((sum, player) => sum + player.score, 0),
     totalKills: players.reduce((sum, player) => sum + player.kills, 0),
     totalDeaths: players.reduce((sum, player) => sum + player.deaths, 0)
-  })).sort((a, b) => a.teamName.localeCompare(b.teamName)); // Sort teams alphabetically by name
+  })).sort((a, b) => a.teamName.localeCompare(b.teamName));
 });
 
 // Cleanup on unmount - ensure all intervals are cleared
@@ -467,8 +643,31 @@ const goBack = () => {
         <p class="error-message">{{ error }}</p>
       </div>
       <div v-else-if="roundReport" class="details-container">
+
+        
         <!-- Consolidated Leaderboard Section with Session Details -->
         <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
+          <!-- Performance Chart for Pinned Players -->
+          <div v-if="pinnedPlayers.size > 0" class="performance-chart-section">
+            <div class="pinned-players-info">
+              <h3>📌 Pinned Players Performance</h3>
+              <div class="pinned-players-badges">
+                <div v-for="playerName in Array.from(pinnedPlayers)" :key="playerName" class="pinned-player-badge">
+                  {{ playerName }}
+                </div>
+                <button v-if="pinnedPlayers.size > 1" class="clear-all-button" @click="clearAllPinnedPlayers" title="Clear all pinned players">
+                  Clear All
+                </button>
+              </div>
+            </div>
+            
+            <div v-if="pinnedPlayersChartData.datasets.length > 0" class="performance-chart-container">
+              <div class="chart-wrapper">
+                <Line :data="pinnedPlayersChartData" :options="pinnedPlayersChartOptions" />
+              </div>
+            </div>
+          </div>
+          
           <div class="leaderboard-header">
             <div class="match-info">
               <div class="match-meta">
@@ -588,8 +787,9 @@ const goBack = () => {
                       v-for="player in team.players"
                       :key="player.playerName"
                       class="player-row"
-                      :class="{ 
-                        'top-player': player.rank === 1
+                      :class="{
+                        'top-player': player.rank === 1,
+                        'pinned-player-row': pinnedPlayers.has(player.playerName)
                       }"
                     >
                       <div class="player-rank">
@@ -602,6 +802,15 @@ const goBack = () => {
                         <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
                           {{ player.playerName }}
                         </router-link>
+                        <button
+                          class="pin-player-btn"
+                          :title="pinnedPlayers.has(player.playerName) ? 'Unpin & remove from chart' : 'Pin to top & show in chart'"
+                          @click.stop="togglePlayerPin(player.playerName)"
+                        >
+                          <span v-if="pinnedPlayers.has(player.playerName)">📌</span>
+                          <span v-else>📍</span>
+                        </button>
+                        <span v-if="pinnedPlayers.has(player.playerName)" class="pinned-badge">Pinned</span>
                       </div>
                       <div class="player-score">{{ player.score.toLocaleString() }}</div>
                       <div class="player-kd">
@@ -672,8 +881,9 @@ const goBack = () => {
                     v-for="player in team.players"
                     :key="player.playerName"
                     class="player-row"
-                    :class="{ 
-                      'top-player': player.rank === 1
+                    :class="{
+                      'top-player': player.rank === 1,
+                      'pinned-player-row': pinnedPlayers.has(player.playerName)
                     }"
                   >
                     <div class="player-rank">
@@ -686,6 +896,15 @@ const goBack = () => {
                       <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
                         {{ player.playerName }}
                       </router-link>
+                      <button
+                        class="pin-player-btn"
+                        :title="pinnedPlayers.has(player.playerName) ? 'Unpin & remove from chart' : 'Pin to top & show in chart'"
+                        @click.stop="togglePlayerPin(player.playerName)"
+                      >
+                        <span v-if="pinnedPlayers.has(player.playerName)">📌</span>
+                        <span v-else>📍</span>
+                      </button>
+                      <span v-if="pinnedPlayers.has(player.playerName)" class="pinned-badge">Pinned</span>
                     </div>
                     <div class="player-score">{{ player.score.toLocaleString() }}</div>
                     <div class="player-kd">
@@ -693,8 +912,8 @@ const goBack = () => {
                       <span class="separator">/</span>
                       <span class="deaths">{{ player.deaths }}</span>
                     </div>
-                    <div class="player-ping" :class="{ 
-                      'ping-good': player.ping < 50, 
+                    <div class="player-ping" :class="{
+                      'ping-good': player.ping < 50,
                       'ping-ok': player.ping >= 50 && player.ping < 100,
                       'ping-bad': player.ping >= 100
                     }">
@@ -726,8 +945,6 @@ const goBack = () => {
   box-sizing: border-box;
   overflow-x: hidden;
 }
-
-
 
 .round-report-header {
   display: flex;
@@ -1070,17 +1287,7 @@ body.dragging * {
   background: var(--color-background-soft);
 }
 
-.player-row.current-player-row {
-  background: linear-gradient(90deg, rgba(var(--color-primary-rgb, 33, 150, 243), 0.1) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
-  border-left: 4px solid var(--color-primary);
-  animation: pulse 2s infinite;
-}
 
-@keyframes pulse {
-  0% { background: linear-gradient(90deg, rgba(var(--color-primary-rgb, 33, 150, 243), 0.1) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%); }
-  50% { background: linear-gradient(90deg, rgba(var(--color-primary-rgb, 33, 150, 243), 0.15) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.08) 100%); }
-  100% { background: linear-gradient(90deg, rgba(var(--color-primary-rgb, 33, 150, 243), 0.1) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%); }
-}
 
 .player-row.top-player {
   background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
@@ -1437,8 +1644,6 @@ body.dragging * {
     padding: 4px 8px;
   }
 
-
-
   .team-header {
     padding: 12px;
   }
@@ -1616,8 +1821,6 @@ body.dragging * {
     font-size: 0.9rem;
   }
 
-
-
   .leaderboard-header {
     margin-bottom: 8px;
     padding-bottom: 6px;
@@ -1791,8 +1994,6 @@ body.dragging * {
     font-size: 0.85rem;
   }
 
-
-
   .leaderboard-header {
     margin-bottom: 6px;
     padding-bottom: 4px;
@@ -1921,10 +2122,133 @@ body.dragging * {
   }
 }
 
+/* Mobile responsive styles for performance chart */
+@media (max-width: 768px) {
+  .performance-chart-section {
+    padding: 8px;
+  }
+  
+  .pinned-players-info h3 {
+    font-size: 0.9rem;
+  }
+  
+  .pinned-players-badges {
+    justify-content: center;
+  }
+  
+  .chart-wrapper {
+    height: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pinned-player-badge {
+    font-size: 0.8rem;
+    padding: 3px 8px;
+  }
+  
+  .clear-all-button {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+  
+  .chart-wrapper {
+    height: 120px;
+  }
+}
+
 .kdr-icon {
   width: 24px;
   height: 24px;
   vertical-align: middle;
   margin-right: 4px;
 }
+
+.player-row.pinned-player-row {
+  background: linear-gradient(90deg, #ffe082 0%, #fffde7 100%);
+  border-left: 4px solid #ffd600;
+}
+.pinned-badge {
+  background: #ffd600;
+  color: #000;
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin-left: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.pin-player-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 6px;
+  font-size: 1rem;
+  color: #ffd600;
+  transition: color 0.2s;
+}
+.pin-player-btn:hover {
+  color: #ffab00;
+}
+
+.performance-chart-section {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--color-background-mute);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.pinned-players-info {
+  margin-bottom: 12px;
+}
+
+.pinned-players-info h3 {
+  margin: 0 0 8px 0;
+  color: var(--color-heading);
+  font-size: 1rem;
+}
+
+.pinned-players-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pinned-player-badge {
+  background: #ffd600;
+  color: #000;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.clear-all-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--color-text);
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-all-button:hover {
+  background: var(--color-background-mute);
+}
+
+.performance-chart-container {
+  background: var(--color-background);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.chart-wrapper {
+  height: 200px;
+  position: relative;
+}
+
 </style>

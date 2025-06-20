@@ -23,7 +23,8 @@ const insightsError = ref<string | null>(null);
 const isChartExpanded = ref(false);
 const isPingChartExpanded = ref(false);
 const pingMetric = ref<'median' | 'p95'>('median');
-const isPingExplainerCollapsed = ref(false);
+const isPingExplainerCollapsed = ref(true);
+const isServerInsightsCollapsed = ref(true);
 
 // Fetch server details and insights in parallel
 const fetchData = async () => {
@@ -317,6 +318,11 @@ const togglePingExplainer = () => {
   isPingExplainerCollapsed.value = !isPingExplainerCollapsed.value;
 };
 
+// Toggle server insights collapse state
+const toggleServerInsights = () => {
+  isServerInsightsCollapsed.value = !isServerInsightsCollapsed.value;
+};
+
 // Chart data for ping by hour
 const pingChartData = computed(() => {
   if (!serverInsights.value?.pingByHour?.data) return { labels: [], datasets: [] };
@@ -539,43 +545,50 @@ function getCountryName(code: string | undefined, fallback: string | undefined):
 
         <!-- Server Insights Section -->
         <div v-if="serverInsights?.pingByHour?.data && serverInsights.pingByHour.data.length > 0" class="stats-section">
-          <div class="chart-header">
+          <div class="insights-header" @click="toggleServerInsights">
             <h3>📊 Server Insights</h3>
-            <div class="insights-controls">
-              <button
-                class="metric-toggle-button"
-                @click="togglePingMetric"
-                :title="`Switch to ${pingMetric === 'median' ? 'P95' : 'Median'} ping`"
-              >
-                {{ pingMetric === 'median' ? 'Median' : 'P95' }}
-              </button>
-              <button
-                class="expand-chart-button"
-                @click="togglePingChartExpansion"
-                :title="isPingChartExpanded ? 'Collapse chart' : 'Expand chart'"
-              >
-                {{ isPingChartExpanded ? '📉' : '📊' }}
-              </button>
-            </div>
+            <button class="collapse-toggle" :title="isServerInsightsCollapsed ? 'Show insights' : 'Hide insights'">
+              {{ isServerInsightsCollapsed ? '▶' : '▼' }}
+            </button>
           </div>
-          <div class="ping-explainer" :class="{ 'collapsed': isPingExplainerCollapsed }">
-            <div class="ping-explainer-header" @click="togglePingExplainer">
-              <span class="ping-explainer-title">💡 How to interpret ping data</span>
-              <button class="collapse-toggle" :title="isPingExplainerCollapsed ? 'Show explanation' : 'Hide explanation'">
-                {{ isPingExplainerCollapsed ? '▶' : '▼' }}
-              </button>
+          <div class="insights-content" v-show="!isServerInsightsCollapsed">
+            <div class="chart-header">
+              <div class="insights-controls">
+                <button
+                  class="metric-toggle-button"
+                  @click="togglePingMetric"
+                  :title="`Switch to ${pingMetric === 'median' ? 'P95' : 'Median'} ping`"
+                >
+                  {{ pingMetric === 'median' ? 'Median' : 'P95' }}
+                </button>
+                <button
+                  class="expand-chart-button"
+                  @click="togglePingChartExpansion"
+                  :title="isPingChartExpanded ? 'Collapse chart' : 'Expand chart'"
+                >
+                  {{ isPingChartExpanded ? '📉' : '📊' }}
+                </button>
+              </div>
             </div>
-            <div class="ping-explainer-content" v-show="!isPingExplainerCollapsed">
-              <p>Higher ping times typically indicate players connecting from outside the server's host country. Lower ping times suggest local players are online.</p>
-              <p>If you're playing from outside the host country, look for hours with higher ping averages to find when players with similar connections are online for more balanced gameplay.</p>
+            <div class="ping-explainer" :class="{ 'collapsed': isPingExplainerCollapsed }">
+              <div class="ping-explainer-header" @click="togglePingExplainer">
+                <span class="ping-explainer-title">💡 How to interpret ping data</span>
+                <button class="collapse-toggle" :title="isPingExplainerCollapsed ? 'Show explanation' : 'Hide explanation'">
+                  {{ isPingExplainerCollapsed ? '▶' : '▼' }}
+                </button>
+              </div>
+              <div class="ping-explainer-content" v-show="!isPingExplainerCollapsed">
+                <p>Higher ping times typically indicate players connecting from outside the server's host country. Lower ping times suggest local players are online.</p>
+                <p>If you're playing from outside the host country, look for hours with higher ping averages to find when players with similar connections are online for more balanced gameplay.</p>
+              </div>
             </div>
-          </div>
-          <div
-            class="chart-container ping-chart-container"
-            :class="{ 'chart-expanded': isPingChartExpanded }"
-            @click="!isPingChartExpanded && togglePingChartExpansion()"
-          >
-            <Bar :data="pingChartData" :options="pingChartOptions" />
+            <div
+              class="chart-container ping-chart-container"
+              :class="{ 'chart-expanded': isPingChartExpanded }"
+              @click="!isPingChartExpanded && togglePingChartExpansion()"
+            >
+              <Bar :data="pingChartData" :options="pingChartOptions" />
+            </div>
           </div>
         </div>
         <div v-else-if="isInsightsLoading" class="insights-loading">
@@ -1950,5 +1963,32 @@ function getCountryName(code: string | undefined, fallback: string | undefined):
     min-height: 18px;
     min-width: 36px;
   }
+}
+
+.insights-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.insights-header:hover {
+  background: rgba(156, 39, 176, 0.05);
+}
+
+.insights-header h3 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1.2rem;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.insights-content {
+  transition: all 0.3s ease;
 }
 </style>
