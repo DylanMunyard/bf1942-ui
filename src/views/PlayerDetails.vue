@@ -1825,47 +1825,56 @@ tbody tr:hover {
   /* Desktop styles for recent sessions table */
   .recent-servers-table th:first-child,
   .recent-servers-table td:first-child {
-    width: 15%;
+    width: 18%;
     white-space: normal;
   }
   
   .recent-servers-table th:nth-child(2),
   .recent-servers-table td:nth-child(2) {
-    width: 20%;
+    width: 25%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 0;
   }
   
   .recent-servers-table th:nth-child(3),
   .recent-servers-table td:nth-child(3) {
-    width: 15%;
+    width: 18%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 0;
   }
   
   .recent-servers-table th:nth-child(4),
   .recent-servers-table td:nth-child(4) {
     width: 12%;
     text-align: center;
+    white-space: nowrap;
   }
   
   .recent-servers-table th:nth-child(5),
   .recent-servers-table td:nth-child(5) {
-    width: 10%;
+    width: 9%;
     text-align: center;
   }
   
   .recent-servers-table th:nth-child(6),
   .recent-servers-table td:nth-child(6) {
-    width: 8%;
+    width: 6%;
     text-align: center;
   }
   
   .recent-servers-table th:nth-child(7),
   .recent-servers-table td:nth-child(7) {
-    width: 8%;
+    width: 6%;
     text-align: center;
   }
   
   .recent-servers-table th:nth-child(8),
   .recent-servers-table td:nth-child(8) {
-    width: 10%;
+    width: 6%;
     text-align: center;
   }
 }
