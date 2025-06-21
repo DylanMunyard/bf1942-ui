@@ -36,6 +36,9 @@ const uniqueMaps = ref<string[]>([]);
 const uniqueServers = ref<string[]>([]);
 const uniqueGameTypes = ref<string[]>([]);
 
+// Mobile filters state
+const showFilters = ref(false);
+
 // Debounced search functionality
 const searchTimeout = ref<any>(null);
 
@@ -334,6 +337,44 @@ onMounted(() => {
   fetchData();
 });
 
+// Timeline helper functions
+const getPerformanceClass = (session: SessionListItem): string => {
+  const kdr = session.deaths === 0 ? session.kills : session.kills / session.deaths;
+  
+  if (kdr >= 2.0) return 'performance-excellent';
+  if (kdr >= 1.5) return 'performance-good';
+  if (kdr >= 1.0) return 'performance-average';
+  if (kdr >= 0.5) return 'performance-poor';
+  return 'performance-bad';
+};
+
+const getPerformanceLabel = (session: SessionListItem): string => {
+  const kdr = session.deaths === 0 ? session.kills : session.kills / session.deaths;
+  
+  if (kdr >= 2.0) return 'Excellent performance';
+  if (kdr >= 1.5) return 'Good performance';
+  if (kdr >= 1.0) return 'Average performance';
+  if (kdr >= 0.5) return 'Challenging round';
+  return 'Tough round';
+};
+
+const getTimeGap = (currentSession: SessionListItem, nextSession: SessionListItem): string => {
+  const current = new Date(currentSession.startTime.endsWith('Z') ? currentSession.startTime : currentSession.startTime + 'Z');
+  const next = new Date(nextSession.startTime.endsWith('Z') ? nextSession.startTime : nextSession.startTime + 'Z');
+  
+  const diffMs = current.getTime() - next.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffDays >= 1) {
+    return diffDays === 1 ? '1 day later' : `${diffDays} days later`;
+  } else if (diffHours >= 2) {
+    return `${diffHours} hours later`;
+  }
+  
+  return ''; // Don't show gap for sessions close together
+};
+
 // Cleanup when component is unmounted
 onUnmounted(() => {
   // Clear any pending search timeout
@@ -358,7 +399,7 @@ onUnmounted(() => {
             <span class="info-value">{{ playerInfo.totalSessions }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></span>
+            <span class="info-label">KDR:</span>
             <span class="info-value">{{ calculateKDR(playerInfo.totalKills, playerInfo.totalDeaths) }}</span>
           </div>
         </div>
@@ -374,8 +415,22 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <!-- Mobile filter toggle -->
+    <div class="filter-toggle">
+      <button @click="showFilters = !showFilters" class="filter-toggle-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="filter-icon">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        Filters
+        <span v-if="mapFilter || serverFilter || gameTypeFilter" class="active-filter-indicator">●</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon" :class="{ 'rotated': showFilters }">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+
     <!-- Filter controls -->
-    <div class="filter-container">
+    <div class="filter-container" :class="{ 'filters-visible': showFilters }">
       <div class="filter-group">
         <label for="mapFilter">Map:</label>
         <select 
@@ -445,88 +500,55 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th @click="handleSort('serverName')" class="sortable">
-              Server Name
-              <span v-if="sortBy === 'serverName'" class="sort-indicator">
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th @click="handleSort('mapName')" class="sortable">
-              Map
-              <span v-if="sortBy === 'mapName'" class="sort-indicator">
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th @click="handleSort('gameType')" class="sortable">
-              Game Type
-              <span v-if="sortBy === 'gameType'" class="sort-indicator">
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th @click="handleSort('score')" class="sortable">
-              Score
-              <span v-if="sortBy === 'score'" class="sort-indicator">
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th @click="handleSort('kills')" class="sortable">
-              <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> Kills
-              <span v-if="sortBy === 'kills'" class="sort-indicator">
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th @click="handleSort('deaths')" class="sortable">
-              Deaths
-              <span v-if="sortBy === 'deaths'" class="sort-indicator">
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th @click="handleSort('kdr')" class="sortable">
-              <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
-              <span v-if="sortBy === 'kdr'" class="sort-indicator">
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th @click="handleSort('startTime')" class="sortable">
-              Start Time
-              <span v-if="sortBy === 'startTime'" class="sort-indicator">
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th @click="handleSort('durationMinutes')" class="sortable">
-              Duration
-              <span v-if="sortBy === 'durationMinutes'" class="sort-indicator">
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="session in sessions" :key="session.sessionId" 
-              @click="(event) => navigateToRoundReport(session.sessionId, event)" 
-              class="clickable-row">
-            <td>
-              <router-link :to="`/servers/${encodeURIComponent(session.serverName)}`" class="server-link">
+      <div class="timeline-container">
+        <div v-for="(session, index) in sessions" :key="session.sessionId" class="timeline-item">
+          <!-- Timeline node -->
+          <div class="timeline-node-container">
+            <div 
+              class="timeline-node" 
+              :class="getPerformanceClass(session)"
+              :title="getPerformanceLabel(session)"
+            ></div>
+          </div>
+          
+          <!-- Session card -->
+          <div 
+            class="session-card"
+            @click="(event) => navigateToRoundReport(session.sessionId, event)"
+          >
+            <div class="session-line-1">
+              <span class="time-link">{{ formatRelativeTime(session.startTime) }}</span>
+              <span class="session-separator">-</span>
+              <router-link 
+                :to="`/servers/${encodeURIComponent(session.serverName)}`" 
+                class="server-link"
+              >
                 {{ session.serverName }}
               </router-link>
-            </td>
-            <td>{{ session.mapName }}</td>
-            <td>{{ session.gameType }}</td>
-            <td>{{ session.score }}</td>
-            <td>{{ session.kills }}</td>
-            <td>{{ session.deaths }}</td>
-            <td>{{ calculateKDR(session.kills, session.deaths) }}</td>
-            <td>
-              <div>{{ formatRelativeTime(session.startTime) }}</div>
-              <div class="secondary-text">{{ formatDate(session.startTime) }}</div>
-            </td>
-            <td>{{ formatPlayTime(session.durationMinutes) }}</td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+            
+            <div class="session-line-2">
+              <span class="map-name">{{ session.mapName }}</span>
+              <span class="game-type">({{ session.gameType }})</span>
+            </div>
+            
+            <div class="session-line-3">
+              <span class="session-score">{{ session.score }} pts</span>
+              <span class="stat-separator">•</span>
+              <span class="stat-item">
+                {{ calculateKDR(session.kills, session.deaths) }} KDR (<span class="kills-count">{{ session.kills }}</span> / <span class="deaths-count">{{ session.deaths }}</span>)
+              </span>
+              <span class="stat-separator">•</span>
+              <span class="duration-text">{{ formatPlayTime(session.durationMinutes) }}</span>
+            </div>
+          </div>
+          
+          <!-- Time gap indicator -->
+          <div v-if="index < sessions.length - 1 && getTimeGap(session, sessions[index + 1])" class="time-gap">
+            {{ getTimeGap(session, sessions[index + 1]) }}
+          </div>
+        </div>
+      </div>
 
       <!-- Pagination controls -->
       <div v-if="totalPages > 1" class="pagination-container">
@@ -753,64 +775,206 @@ onUnmounted(() => {
 
 .sessions-table-container {
   width: 100%;
-  overflow-x: auto;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
+/* Timeline Styles */
+.timeline-container {
+  position: relative;
+  padding: 0;
+  margin: 12px 0;
 }
 
-th, td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--color-border);
+  z-index: 1;
+}
+
+.timeline-node-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
+  min-width: 16px;
+  z-index: 2;
+  align-self: flex-start;
+  margin-top: 1.8em;
+}
+
+.timeline-node {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--color-background);
+  position: relative;
+  z-index: 3;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.timeline-node:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+}
+
+/* Performance-based node colors */
+.performance-excellent {
+  background-color: #4CAF50;
+  border-color: #2E7D32;
+}
+
+.performance-good {
+  background-color: #8BC34A;
+  border-color: #558B2F;
+}
+
+.performance-average {
+  background-color: #FFC107;
+  border-color: #F57F17;
+}
+
+.performance-poor {
+  background-color: #FF9800;
+  border-color: #E65100;
+}
+
+.performance-bad {
+  background-color: #F44336;
+  border-color: #C62828;
+}
+
+.session-card {
+  flex: 1;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+  border-radius: 4px;
+}
+
+.timeline-item:hover::before {
+  background: var(--color-primary);
+}
+
+.session-line-1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+
+.session-line-1 .time-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.session-line-1 .time-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.session-separator {
+  color: var(--color-text-muted);
+  font-weight: normal;
+  margin: 0 4px;
+}
+
+.session-line-1 .server-link {
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: normal;
+  transition: color 0.2s;
+}
+
+.session-line-1 .server-link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.session-line-2 {
+  margin-bottom: 3px;
+}
+
+.map-name {
+  font-weight: 500;
+  color: var(--color-text);
+  margin-right: 4px;
+  font-size: 0.9rem;
+}
+
+.game-type {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+
+.session-line-3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
   color: var(--color-text);
 }
 
-tbody tr:nth-child(even) {
-  background-color: var(--color-background-soft);
+.session-score {
+  font-weight: 500;
+  color: var(--color-text);
 }
 
-tbody tr:hover {
-  background-color: var(--color-background-mute);
+.session-line-3 .stat-item {
+  display: inline;
 }
 
-th {
-  background-color: var(--color-background-mute);
-  font-weight: bold;
-  color: var(--color-heading);
+.duration-text {
+  color: var(--color-text-muted);
+  font-style: italic;
 }
 
-.sortable {
-  cursor: pointer;
-  position: relative;
-  user-select: none;
+.kills-count {
+  color: #4CAF50;
+  font-weight: 500;
 }
 
-.sortable:hover {
-  background-color: var(--color-background-soft);
+.deaths-count {
+  color: #F44336;
+  font-weight: 500;
 }
 
-.sort-indicator {
-  margin-left: 5px;
-  font-size: 12px;
-}
-
-.clickable-row {
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.clickable-row:hover {
-  background-color: var(--color-background-mute);
-}
-
-.secondary-text {
+.time-gap {
+  position: absolute;
+  left: 28px;
+  bottom: -8px;
   font-size: 0.8rem;
   color: var(--color-text-muted);
-  margin-top: 2px;
+  font-style: italic;
+  background-color: var(--color-background);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-soft, var(--color-border));
+  z-index: 4;
 }
 
 .active-session-badge {
@@ -831,6 +995,58 @@ th {
   font-weight: bold;
   color: white;
   background-color: #9e9e9e;
+}
+
+/* Mobile filter toggle styles */
+.filter-toggle {
+  display: none;
+  margin-bottom: 15px;
+}
+
+.filter-toggle-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.filter-toggle-button:hover {
+  background-color: var(--color-background-mute);
+  border-color: var(--color-accent);
+}
+
+.filter-toggle-button:active {
+  transform: translateY(1px);
+}
+
+.filter-icon {
+  color: var(--color-accent);
+}
+
+.active-filter-indicator {
+  color: var(--color-accent);
+  font-size: 12px;
+  margin-left: auto;
+  margin-right: -4px;
+}
+
+.chevron-icon {
+  transition: transform 0.2s ease;
+  margin-left: auto;
+}
+
+.chevron-icon.rotated {
+  transform: rotate(180deg);
 }
 
 .server-link {
@@ -920,6 +1136,7 @@ th {
   color: var(--color-text);
 }
 
+/* Mobile responsive styles for timeline */
 @media (max-width: 768px) {
   .player-sessions-page-container {
     padding: 0 20px;
@@ -940,9 +1157,27 @@ th {
     gap: 5px;
   }
 
+  /* Show filter toggle on mobile */
+  .filter-toggle {
+    display: block;
+  }
+
+  /* Hide filters by default on mobile */
   .filter-container {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-bottom: 0;
     flex-direction: column;
     gap: 10px;
+    transition: all 0.3s ease;
+  }
+
+  /* Show filters when toggled */
+  .filter-container.filters-visible {
+    max-height: 500px;
+    opacity: 1;
+    margin-bottom: 20px;
   }
 
   .filter-group {
@@ -960,8 +1195,56 @@ th {
     align-items: flex-start;
   }
 
-  th, td {
-    padding: 8px;
+  .timeline-container {
+    margin: 8px 0;
+  }
+  
+  .timeline-item {
+    margin-bottom: 12px;
+  }
+  
+  .timeline-item::before {
+    left: 5px;
+  }
+  
+  .timeline-node-container {
+    margin-right: 10px;
+    min-width: 12px;
+    margin-top: 1.5em;
+  }
+  
+  .timeline-node {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .session-card {
+    padding: 4px 6px;
+  }
+  
+  .session-line-1 .time-link,
+  .session-line-1 .server-link {
+    font-size: 0.85rem;
+  }
+  
+  .map-name {
+    font-size: 0.85rem;
+  }
+  
+  .game-type {
+    font-size: 0.8rem;
+  }
+  
+  .session-line-3 {
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+  
+  .time-gap {
+    left: 15px;
+    bottom: -5px;
+    font-size: 0.7rem;
+    padding: 1px 6px;
   }
 
   .pagination-container {
@@ -984,24 +1267,59 @@ th {
   }
 }
 
-.kills-icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 4px;
+/* Small mobile styles */
+@media (max-width: 480px) {
+  .timeline-item::before {
+    left: 4px;
+  }
+  
+  .timeline-node-container {
+    margin-right: 8px;
+    min-width: 10px;
+    margin-top: 1.3em;
+  }
+  
+  .timeline-node {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .session-card {
+    padding: 3px 5px;
+  }
+  
+  .session-line-1 {
+    gap: 4px;
+    margin-bottom: 2px;
+  }
+  
+  .session-line-2 {
+    margin-bottom: 2px;
+  }
+  
+  .session-line-1 .time-link,
+  .session-line-1 .server-link {
+    font-size: 0.8rem;
+  }
+  
+  .map-name {
+    font-size: 0.8rem;
+  }
+  
+  .game-type {
+    font-size: 0.75rem;
+  }
+  
+  .session-line-3 {
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+  
+  .time-gap {
+    left: 12px;
+    bottom: -4px;
+    font-size: 0.65rem;
+  }
 }
 
-.deaths-icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 4px;
-}
-
-.kdr-icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 4px;
-}
 </style>

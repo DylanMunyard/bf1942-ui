@@ -388,6 +388,56 @@ const goBack = () => {
   }
 };
 
+// Timeline helper functions
+const getPerformanceClass = (session: any): string => {
+  const kdr = session.totalDeaths === 0 ? session.totalKills : session.totalKills / session.totalDeaths;
+  
+  if (kdr >= 2.0) return 'performance-excellent';
+  if (kdr >= 1.5) return 'performance-good';
+  if (kdr >= 1.0) return 'performance-average';
+  if (kdr >= 0.5) return 'performance-poor';
+  return 'performance-bad';
+};
+
+const getPerformanceLabel = (session: any): string => {
+  const kdr = session.totalDeaths === 0 ? session.totalKills : session.totalKills / session.totalDeaths;
+  
+  if (kdr >= 2.0) return 'Excellent performance';
+  if (kdr >= 1.5) return 'Good performance';
+  if (kdr >= 1.0) return 'Average performance';
+  if (kdr >= 0.5) return 'Challenging round';
+  return 'Tough round';
+};
+
+const getSessionDuration = (session: any): string => {
+  // If session has duration data, use it
+  if (session.duration) {
+    return `${session.duration}min`;
+  }
+  
+  // Otherwise estimate based on typical session length
+  // This is a placeholder - you might want to calculate this differently
+  const estimatedDuration = Math.max(15, Math.min(60, Math.floor(session.totalScore / 20)));
+  return `~${estimatedDuration}min`;
+};
+
+const getTimeGap = (currentSession: any, nextSession: any): string => {
+  const current = new Date(currentSession.startTime.endsWith('Z') ? currentSession.startTime : currentSession.startTime + 'Z');
+  const next = new Date(nextSession.startTime.endsWith('Z') ? nextSession.startTime : nextSession.startTime + 'Z');
+  
+  const diffMs = current.getTime() - next.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffDays >= 1) {
+    return diffDays === 1 ? '1 day later' : `${diffDays} days later`;
+  } else if (diffHours >= 2) {
+    return `${diffHours} hours later`;
+  }
+  
+  return ''; // Don't show gap for sessions close together
+};
+
 // Clean up event listeners when component is unmounted
 onMounted(() => {
   fetchData();
@@ -725,67 +775,58 @@ onMounted(() => {
               View All
             </router-link>
           </div>
-          <div class="recent-servers-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Session</th>
-                  <th class="desktop-only">Server Name</th>
-                  <th class="desktop-only">Map</th>
-                  <th class="desktop-only">Game Type</th>
-                  <th class="desktop-only">Score</th>
-                  <th class="desktop-only"><img src="@/assets/kills.png" alt="Kills" class="kills-icon" /></th>
-                  <th class="desktop-only"><img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /></th>
-                  <th class="desktop-only"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></th>
-                  <th class="desktop-only">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(session, index) in playerStats.recentSessions" :key="index" 
-                    @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)" 
-                    class="clickable-row">
-                  <td>
-                    <router-link 
-                      :to="getRoundReportRoute(session)" 
-                      class="time-link"
-                      style="color: #1a73e8; text-decoration: underline;"
-                    >
-                      <div>{{ formatRelativeTime(session.startTime) }}</div>
-                      <div class="table-secondary-text">{{ formatDate(session.startTime) }}</div>
-                    </router-link>
-                    <div class="mobile-only session-details">
-                      <div class="session-info">
-                        <span class="detail-item">{{ session.serverName }}</span>
-                        <span class="detail-separator">•</span>
-                        <span class="detail-item">{{ session.mapName }}</span>
-                        <span class="detail-separator">•</span>
-                        <span class="detail-item">{{ session.gameType }}</span>
-                      </div>
-                      <div class="session-stats">
-                        <span class="detail-item">Score: {{ session.totalScore }}</span>
-                        <span class="detail-separator">•</span>
-                        <span class="detail-item">
-                          <span class="kills">{{ session.totalKills }}</span>/<span class="deaths">{{ session.totalDeaths }}</span>
-                        </span>
-                        <span class="detail-separator">•</span>
-                        <span class="detail-item"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ calculateKDR(session.totalKills, session.totalDeaths) }}</span>
-                        <span v-if="session.isActive" class="active-session-badge">Active</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="desktop-only">{{ session.serverName }}</td>
-                  <td class="desktop-only">{{ session.mapName }}</td>
-                  <td class="desktop-only">{{ session.gameType }}</td>
-                  <td class="desktop-only">{{ session.totalScore }}</td>
-                  <td class="desktop-only">{{ session.totalKills }}</td>
-                  <td class="desktop-only">{{ session.totalDeaths }}</td>
-                  <td class="desktop-only">{{ calculateKDR(session.totalKills, session.totalDeaths) }}</td>
-                  <td class="desktop-only">
-                    <span v-if="session.isActive" class="active-session-badge">Active</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="timeline-container">
+            <div v-for="(session, index) in playerStats.recentSessions" :key="index" class="timeline-item">
+              <!-- Timeline node -->
+              <div class="timeline-node-container">
+                <div 
+                  class="timeline-node" 
+                  :class="getPerformanceClass(session)"
+                  :title="getPerformanceLabel(session)"
+                ></div>
+              </div>
+              
+              <!-- Session card -->
+              <div 
+                class="session-card"
+                @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)"
+              >
+                <div class="session-line-1">
+                  <router-link 
+                    :to="getRoundReportRoute(session)" 
+                    class="time-link"
+                  >
+                    {{ formatRelativeTime(session.startTime) }}
+                  </router-link>
+                  <span class="session-separator">-</span>
+                  <router-link 
+                    :to="`/servers/${encodeURIComponent(session.serverName)}`" 
+                    class="server-link"
+                  >
+                    {{ session.serverName }}
+                  </router-link>
+                  <span v-if="session.isActive" class="active-session-badge">Active</span>
+                </div>
+                
+                <div class="session-line-2">
+                  <span class="map-name">{{ session.mapName }}</span>
+                  <span class="game-type">({{ session.gameType }})</span>
+                </div>
+                
+                <div class="session-line-3">
+                  <span class="session-score">{{ session.totalScore }} pts</span>
+                  <span class="stat-separator">•</span>
+                  <span class="stat-item">
+                    {{ calculateKDR(session.totalKills, session.totalDeaths) }} KDR (<span class="kills-count">{{ session.totalKills }}</span> / <span class="deaths-count">{{ session.totalDeaths }}</span>)
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Time gap indicator -->
+              <div v-if="index < playerStats.recentSessions.length - 1 && getTimeGap(session, playerStats.recentSessions[index + 1])" class="time-gap">
+                {{ getTimeGap(session, playerStats.recentSessions[index + 1]) }}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1715,9 +1756,6 @@ onMounted(() => {
   margin-top: 2px;
 }
 
-.recent-servers-table {
-  overflow-x: auto;
-}
 
 table {
   width: 100%;
@@ -1822,61 +1860,6 @@ tbody tr:hover {
     text-align: center;
   }
   
-  /* Desktop styles for recent sessions table */
-  .recent-servers-table th:first-child,
-  .recent-servers-table td:first-child {
-    width: 18%;
-    white-space: normal;
-  }
-  
-  .recent-servers-table th:nth-child(2),
-  .recent-servers-table td:nth-child(2) {
-    width: 25%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 0;
-  }
-  
-  .recent-servers-table th:nth-child(3),
-  .recent-servers-table td:nth-child(3) {
-    width: 18%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 0;
-  }
-  
-  .recent-servers-table th:nth-child(4),
-  .recent-servers-table td:nth-child(4) {
-    width: 12%;
-    text-align: center;
-    white-space: nowrap;
-  }
-  
-  .recent-servers-table th:nth-child(5),
-  .recent-servers-table td:nth-child(5) {
-    width: 9%;
-    text-align: center;
-  }
-  
-  .recent-servers-table th:nth-child(6),
-  .recent-servers-table td:nth-child(6) {
-    width: 6%;
-    text-align: center;
-  }
-  
-  .recent-servers-table th:nth-child(7),
-  .recent-servers-table td:nth-child(7) {
-    width: 6%;
-    text-align: center;
-  }
-  
-  .recent-servers-table th:nth-child(8),
-  .recent-servers-table td:nth-child(8) {
-    width: 6%;
-    text-align: center;
-  }
 }
 
 .clickable-row {
@@ -2648,6 +2631,315 @@ tbody tr:hover {
 @media (min-width: 769px) {
   .desktop-only.map-stats-grid {
     display: grid !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Timeline Styles                                                     */
+/* ------------------------------------------------------------------ */
+
+.timeline-container {
+  position: relative;
+  padding: 0;
+  margin: 12px 0;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--color-border);
+  z-index: 1;
+}
+
+.timeline-node-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
+  min-width: 16px;
+  z-index: 2;
+  align-self: flex-start;
+  margin-top: 1.8em;
+}
+
+
+.timeline-node {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--color-background);
+  position: relative;
+  z-index: 3;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.timeline-node:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+}
+
+/* Performance-based node colors */
+.performance-excellent {
+  background-color: #4CAF50;
+  border-color: #2E7D32;
+}
+
+.performance-good {
+  background-color: #8BC34A;
+  border-color: #558B2F;
+}
+
+.performance-average {
+  background-color: #FFC107;
+  border-color: #F57F17;
+}
+
+.performance-poor {
+  background-color: #FF9800;
+  border-color: #E65100;
+}
+
+.performance-bad {
+  background-color: #F44336;
+  border-color: #C62828;
+}
+
+.session-card {
+  flex: 1;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+  border-radius: 4px;
+}
+
+.timeline-item:hover::before {
+  background: var(--color-primary);
+}
+
+.session-line-1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+
+.session-line-1 .time-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.session-line-1 .time-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.session-separator {
+  color: var(--color-text-muted);
+  font-weight: normal;
+  margin: 0 4px;
+}
+
+.session-line-1 .server-link {
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: normal;
+  transition: color 0.2s;
+}
+
+.session-line-1 .server-link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.session-line-2 {
+  margin-bottom: 3px;
+}
+
+.map-name {
+  font-weight: 500;
+  color: var(--color-text);
+  margin-right: 4px;
+  font-size: 0.9rem;
+}
+
+.game-type {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+
+.session-line-3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.session-score {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.session-line-3 .stat-item {
+  display: inline;
+}
+
+.kills-count {
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+.deaths-count {
+  color: #F44336;
+  font-weight: 500;
+}
+
+.time-gap {
+  position: absolute;
+  left: 28px;
+  bottom: -8px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  background-color: var(--color-background);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-soft, var(--color-border));
+  z-index: 4;
+}
+
+/* Mobile responsive styles for timeline */
+@media (max-width: 768px) {
+  .timeline-container {
+    margin: 8px 0;
+  }
+  
+  .timeline-item {
+    margin-bottom: 12px;
+  }
+  
+  .timeline-item::before {
+    left: 5px;
+  }
+  
+  .timeline-node-container {
+    margin-right: 10px;
+    min-width: 12px;
+    margin-top: 1.5em;
+  }
+  
+  .timeline-node {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .session-card {
+    padding: 4px 6px;
+  }
+  
+  .session-line-1 .time-link,
+  .session-line-1 .server-link {
+    font-size: 0.85rem;
+  }
+  
+  .map-name {
+    font-size: 0.85rem;
+  }
+  
+  .game-type {
+    font-size: 0.8rem;
+  }
+  
+  .session-line-3 {
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+  
+  .time-gap {
+    left: 15px;
+    bottom: -5px;
+    font-size: 0.7rem;
+    padding: 1px 6px;
+  }
+}
+
+/* Small mobile styles */
+@media (max-width: 480px) {
+  .timeline-item::before {
+    left: 4px;
+  }
+  
+  .timeline-node-container {
+    margin-right: 8px;
+    min-width: 10px;
+    margin-top: 1.3em;
+  }
+  
+  .timeline-node {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .session-card {
+    padding: 3px 5px;
+  }
+  
+  .session-line-1 {
+    gap: 4px;
+    margin-bottom: 2px;
+  }
+  
+  .session-line-2 {
+    margin-bottom: 2px;
+  }
+  
+  .session-line-1 .time-link,
+  .session-line-1 .server-link {
+    font-size: 0.8rem;
+  }
+  
+  .map-name {
+    font-size: 0.8rem;
+  }
+  
+  .game-type {
+    font-size: 0.75rem;
+  }
+  
+  .session-line-3 {
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+  
+  .time-gap {
+    left: 12px;
+    bottom: -4px;
+    font-size: 0.65rem;
   }
 }
 </style>
