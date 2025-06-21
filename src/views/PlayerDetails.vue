@@ -156,6 +156,7 @@ const formatDate = (dateString: string): string => {
 
 // Format date to a human-readable relative time (e.g., "2 days ago")
 const formatRelativeTime = (dateString: string): string => {
+  if (!dateString) return '';
   // Ensure the date is treated as UTC by appending 'Z' if it doesn't have timezone info
   const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
   const now = new Date();
@@ -443,6 +444,14 @@ onMounted(() => {
   fetchData();
 });
 
+// Add this helper function to the <script setup> section:
+const daysBetween = (start: string, end: string): number => {
+  const startDate = new Date(start.endsWith('Z') ? start : start + 'Z');
+  const endDate = new Date(end.endsWith('Z') ? end : end + 'Z');
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+  return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+};
+
 </script>
 
 <template>
@@ -453,7 +462,13 @@ onMounted(() => {
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           Back to Players
         </button>
-        <h2 class="player-name-heading">{{ playerName }}</h2>
+        <div class="player-header-info">
+          <h2 class="player-name-heading">{{ playerName }}</h2>
+          <div class="player-header-meta">
+            <span class="player-playtime">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
+            <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed) }}</span>
+          </div>
+        </div>
       </div>
     </div>
     <div class="player-stats-body">
@@ -486,55 +501,67 @@ onMounted(() => {
 
         <!-- General statistics section -->
         <div class="stats-section">
-          <h3>General Statistics</h3>
+          <h3>Combat Statistics</h3>
           <div class="stats-grid">
-            <div class="stat-item">
-              <div class="stat-label">Total Play Time</div>
-              <div class="stat-value">{{ formatPlayTime(playerStats.totalPlayTimeMinutes) }}</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label">Last Seen</div>
+            <div class="stat-item combat-stats-panel">
               <div class="stat-value">
-                <div>{{ formatRelativeTime(playerStats.lastPlayed) }}</div>
-                <div class="stat-value-secondary">{{ formatDate(playerStats.lastPlayed) }}</div>
-              </div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label">Combat Stats</div>
-              <div class="stat-value">
-                <div class="combat-stats">
-                  <span class="stat-badge"><img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> {{ playerStats.totalKills }}</span>
-                  <span class="stat-badge"><img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /> {{ playerStats.totalDeaths }}</span>
-                  <span class="stat-badge"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
+                <div class="combat-stats-large">
+                  <span class="stat-badge-large">
+                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon-large" />
+                    <span class="combat-value-large">{{ playerStats.totalKills }}</span>
+                    <span class="combat-label-large">Kills</span>
+                  </span>
+                  <span class="stat-badge-large">
+                    <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon-large" />
+                    <span class="combat-value-large">{{ playerStats.totalDeaths }}</span>
+                    <span class="combat-label-large">Deaths</span>
+                  </span>
+                  <span class="stat-badge-large">
+                    <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon-large" />
+                    <span class="combat-value-large">{{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
+                    <span class="combat-label-large">K/D</span>
+                  </span>
                 </div>
               </div>
             </div>
             <div class="stat-item best-session-container" v-if="playerStats.bestSession">
               <div 
-                class="best-session-card clickable-best-session" 
+                class="session-card best-session-card concise-best-session best-session-flex" 
                 @click="openSessionDetailsModal(playerStats.bestSession.serverGuid, playerStats.bestSession.mapName, playerStats.bestSession.startTime)"
                 title="Click to view round report"
               >
-                <div class="best-session-title">
-                  <span class="trophy-icon">🏆</span> Best Session
+                <div class="best-session-icon-col">
+                  <span class="trophy-icon" style="font-size: 2rem;">🏆</span>
+                  <span class="best-badge">Best</span>
                 </div>
-                <div class="best-session-header">
-                  <div class="best-session-score">{{ playerStats.bestSession.totalScore }}</div>
-                  <span class="best-session-badge">
-                    <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }}
-                  </span>
-                  <span class="best-session-badge">
-                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> {{ playerStats.bestSession.totalKills }}
-                  </span>
-                  <span class="best-session-badge">
-                    <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /> {{ playerStats.bestSession.totalDeaths }}
-                  </span>
-                  <span v-if="playerStats.bestSession.isActive" class="active-session-badge">Active</span>
-                </div>
-                <div class="best-session-details">
-                  {{ playerStats.bestSession.mapName }} ({{ playerStats.bestSession.gameType }})
-                  | {{ playerStats.bestSession.serverName }}
-                  | {{ formatDate(playerStats.bestSession.startTime) }}
+                <div class="best-session-details-col">
+                  <div class="session-line-1">
+                    <router-link 
+                      :to="getRoundReportRoute(playerStats.bestSession)" 
+                      class="time-link"
+                    >
+                      {{ formatRelativeTime(playerStats.bestSession.startTime) }}
+                    </router-link>
+                    <span class="session-separator">-</span>
+                    <router-link 
+                      :to="`/servers/${encodeURIComponent(playerStats.bestSession.serverName)}`" 
+                      class="server-link"
+                    >
+                      {{ playerStats.bestSession.serverName }}
+                    </router-link>
+                    <span v-if="playerStats.bestSession.isActive" class="active-session-badge">Active</span>
+                  </div>
+                  <div class="session-line-2">
+                    <span class="map-name">{{ playerStats.bestSession.mapName }}</span>
+                    <span class="game-type">({{ playerStats.bestSession.gameType }})</span>
+                  </div>
+                  <div class="session-line-3">
+                    <span class="session-score">{{ playerStats.bestSession.totalScore }} pts</span>
+                    <span class="stat-separator">•</span>
+                    <span class="stat-item">
+                      {{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }} KDR (<span class="kills-count">{{ playerStats.bestSession.totalKills }}</span> / <span class="deaths-count">{{ playerStats.bestSession.totalDeaths }}</span>)
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -544,13 +571,13 @@ onMounted(() => {
         <!-- Insights section -->
         <div v-if="playerStats.insights" class="stats-section">
           <h3>Player Insights</h3>
-          <div class="insights-period">
-            Data from {{ formatDate(playerStats.insights.startPeriod) }} to {{ formatDate(playerStats.insights.endPeriod) }}
-          </div>
+          <!-- Remove the .insights-period div -->
 
           <!-- Activity By Hour -->
           <div v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0" class="insights-subsection">
-            <h4>When they're typically online (Local Time)</h4>
+            <h4>
+              When they've been online in the last {{ daysBetween(playerStats.insights.startPeriod, playerStats.insights.endPeriod) }} days (your time)
+            </h4>
             <div class="activity-chart-wrapper">
               <div class="activity-chart-container">
                 <!-- Background zones for time periods -->
@@ -1681,8 +1708,32 @@ onMounted(() => {
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--color-border);
   margin-top: 5px;
+  display: block;
+}
+
+.best-session-flex {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+}
+
+.best-session-icon-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 100%;
+  gap: 4px;
+}
+
+.best-session-details-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .clickable-best-session {
@@ -1896,6 +1947,13 @@ tbody tr:hover {
   margin-top: 20px;
   padding-top: 15px;
   border-top: 1px solid var(--color-border);
+}
+
+/* Remove border-top from the first .insights-subsection after Player Insights heading */
+.stats-section > .insights-subsection:first-of-type {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .insights-subsection h4 {
@@ -3093,5 +3151,132 @@ tbody tr:hover {
     font-size: 0.75rem;
     padding: 1px 6px;
   }
+}
+
+.player-header-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.player-playtime {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin-top: -4px;
+  margin-bottom: 2px;
+  font-weight: 400;
+}
+
+.player-combat-header {
+  display: flex;
+  gap: 32px;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.combat-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.kdr-icon-large, .kills-icon-large, .deaths-icon-large {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 6px;
+}
+
+.combat-value-large {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-heading);
+}
+
+.combat-label-large {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* Add styles for .player-header-meta and .player-last-seen */
+.player-header-meta {
+  display: flex;
+  gap: 18px;
+  align-items: center; /* Ensure vertical alignment */
+  margin-top: -4px;
+  margin-bottom: 2px;
+}
+
+.player-playtime,
+.player-last-seen {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0; /* Remove any margin that could cause misalignment */
+  vertical-align: middle;
+  display: flex;
+  align-items: center;
+}
+
+/* Add new styles for large combat stats */
+.combat-stats-large {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  justify-content: center;
+  align-items: flex-end;
+  margin-top: 10px;
+}
+
+.stat-badge-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+.kills-icon-large, .deaths-icon-large, .kdr-icon-large {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 6px;
+}
+
+.combat-value-large {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-heading);
+  margin-bottom: 2px;
+}
+
+.combat-label-large {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Add a style for the best badge */
+.best-badge {
+  background: gold;
+  color: #333;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border-radius: 8px;
+  padding: 2px 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Add padding to the combat stats panel */
+.combat-stats-panel {
+  padding: 16px 0 16px 16px;
 }
 </style>
