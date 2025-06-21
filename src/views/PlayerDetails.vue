@@ -442,6 +442,7 @@ const getTimeGap = (currentSession: any, nextSession: any): string => {
 onMounted(() => {
   fetchData();
 });
+
 </script>
 
 <template>
@@ -775,64 +776,71 @@ onMounted(() => {
               View All
             </router-link>
           </div>
+          <!-- Timeline container -->
           <div class="timeline-container">
-            <div v-for="(session, index) in playerStats.recentSessions" :key="index" class="timeline-item">
-              <!-- Timeline node -->
-              <div class="timeline-node-container">
+            <template v-for="(session, index) in playerStats.recentSessions" :key="index">
+              <!-- Session timeline item -->
+              <div class="timeline-item">
+                <!-- Timeline node -->
+                <div class="timeline-node-container">
+                  <div 
+                    class="timeline-node" 
+                    :class="getPerformanceClass(session)"
+                    :title="getPerformanceLabel(session)"
+                  ></div>
+                </div>
+                
+                <!-- Session card -->
                 <div 
-                  class="timeline-node" 
-                  :class="getPerformanceClass(session)"
-                  :title="getPerformanceLabel(session)"
-                ></div>
+                  class="session-card"
+                  @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)"
+                >
+                  <div class="session-line-1">
+                    <router-link 
+                      :to="getRoundReportRoute(session)" 
+                      class="time-link"
+                    >
+                      {{ formatRelativeTime(session.startTime) }}
+                    </router-link>
+                    <span class="session-separator">-</span>
+                    <router-link 
+                      :to="`/servers/${encodeURIComponent(session.serverName)}`" 
+                      class="server-link"
+                    >
+                      {{ session.serverName }}
+                    </router-link>
+                    <span v-if="session.isActive" class="active-session-badge">Active</span>
+                  </div>
+                  
+                  <div class="session-line-2">
+                    <span class="map-name">{{ session.mapName }}</span>
+                    <span class="game-type">({{ session.gameType }})</span>
+                  </div>
+                  
+                  <div class="session-line-3">
+                    <span class="session-score">{{ session.totalScore }} pts</span>
+                    <span class="stat-separator">•</span>
+                    <span class="stat-item">
+                      {{ calculateKDR(session.totalKills, session.totalDeaths) }} KDR (<span class="kills-count">{{ session.totalKills }}</span> / <span class="deaths-count">{{ session.totalDeaths }}</span>)
+                    </span>
+                  </div>
+                </div>
               </div>
-              
-              <!-- Session card -->
+
+              <!-- Time gap as a separate timeline item -->
               <div 
-                class="session-card"
-                @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)"
+                v-if="index < playerStats.recentSessions.length - 1 && getTimeGap(session, playerStats.recentSessions[index + 1])" 
+                class="timeline-gap-item"
               >
-                <div class="session-line-1">
-                  <router-link 
-                    :to="getRoundReportRoute(session)" 
-                    class="time-link"
-                  >
-                    {{ formatRelativeTime(session.startTime) }}
-                  </router-link>
-                  <span class="session-separator">-</span>
-                  <router-link 
-                    :to="`/servers/${encodeURIComponent(session.serverName)}`" 
-                    class="server-link"
-                  >
-                    {{ session.serverName }}
-                  </router-link>
-                  <span v-if="session.isActive" class="active-session-badge">Active</span>
-                </div>
-                
-                <div class="session-line-2">
-                  <span class="map-name">{{ session.mapName }}</span>
-                  <span class="game-type">({{ session.gameType }})</span>
-                </div>
-                
-                <div class="session-line-3">
-                  <span class="session-score">{{ session.totalScore }} pts</span>
-                  <span class="stat-separator">•</span>
-                  <span class="stat-item">
-                    {{ calculateKDR(session.totalKills, session.totalDeaths) }} KDR (<span class="kills-count">{{ session.totalKills }}</span> / <span class="deaths-count">{{ session.totalDeaths }}</span>)
-                  </span>
-                </div>
-              </div>
-              
-              <!-- Time gap indicator -->
-              <div v-if="index < playerStats.recentSessions.length - 1 && getTimeGap(session, playerStats.recentSessions[index + 1])" class="time-gap-container">
                 <div class="time-gap-separator">
-                  <div class="time-gap-line left"></div>
+                  <div class="time-gap-line"></div>
                   <div class="time-gap-badge">
                     {{ getTimeGap(session, playerStats.recentSessions[index + 1]) }}
                   </div>
-                  <div class="time-gap-line right"></div>
+                  <div class="time-gap-line"></div>
                 </div>
               </div>
-            </div>
+            </template>
           </div>
         </div>
 
@@ -2825,18 +2833,105 @@ tbody tr:hover {
   font-weight: 500;
 }
 
-.time-gap {
-  position: absolute;
-  left: 28px;
-  bottom: -8px;
+.time-gap-container {
+  display: flex;
+  justify-content: flex-start;
+  margin: 8px 0 16px 16px; /* Adjust margin to align with timeline */
+  pointer-events: none;
+}
+
+.time-gap-separator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+}
+
+.time-gap-line {
+  flex: 1;
+  height: 8px;
+  background-image: repeating-linear-gradient(-45deg,
+    var(--color-border) 0px,
+    var(--color-border) 4px,
+    transparent 4px,
+    transparent 8px);
+  background-size: 8px 8px;
+}
+
+.time-gap-badge {
   font-size: 0.8rem;
   color: var(--color-text-muted);
-  font-style: italic;
   background-color: var(--color-background);
   padding: 2px 8px;
   border-radius: 12px;
-  border: 1px solid var(--color-border-soft, var(--color-border));
-  z-index: 4;
+  border: 1px solid var(--color-border);
+  font-style: italic;
+  white-space: nowrap;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+/* Mobile responsive styles for time gap */
+@media (max-width: 768px) {
+  .time-gap-container {
+    margin: 6px 0 12px 14px;
+  }
+  
+  .time-gap-badge {
+    font-size: 0.75rem;
+    padding: 1px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .time-gap-container {
+    margin: 4px 0 10px 12px;
+  }
+  
+  .time-gap-badge {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+  }
+}
+
+.time-gap-container {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0 0 12px 40px; /* left margin aligns with timeline content */
+  pointer-events: none;
+}
+
+.time-gap-separator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding-left: 0;
+}
+
+.time-gap-line {
+  width: 40px;
+  height: 8px;
+  background-image: repeating-linear-gradient(-45deg,
+    var(--color-border) 0px,
+    var(--color-border) 4px,
+    transparent 4px,
+    transparent 8px);
+  background-size: 8px 8px;
+}
+
+.time-gap-badge {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  background-color: var(--color-background);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  font-style: italic;
+  white-space: nowrap;
+  pointer-events: auto;
+  z-index: 2;
 }
 
 /* Mobile responsive styles for timeline */
@@ -2941,11 +3036,62 @@ tbody tr:hover {
     font-size: 0.75rem;
     gap: 4px;
   }
-  
-  .time-gap {
-    left: 12px;
-    bottom: -4px;
-    font-size: 0.65rem;
+}
+
+.time-gap-container {
+  display: flex;
+  justify-content: flex-start; /* left align the separator */
+  margin: 4px 0 12px 0;
+  pointer-events: none;
+}
+
+.time-gap-separator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 28px; /* align with timeline node */
+  width: fit-content;
+}
+
+.time-gap-line {
+  width: 40px;
+  height: 8px;
+  background-image: repeating-linear-gradient(-45deg,
+    var(--color-border) 0px,
+    var(--color-border) 4px,
+    transparent 4px,
+    transparent 8px);
+  background-size: 8px 8px;
+}
+
+.time-gap-badge {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  background-color: var(--color-background);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  font-style: italic;
+  white-space: nowrap;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+@media (max-width: 768px) {
+  .time-gap-separator {
+    padding-left: 20px;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .time-gap-separator {
+    padding-left: 16px;
+    gap: 4px;
+  }
+  .time-gap-badge {
+    font-size: 0.75rem;
+    padding: 1px 6px;
   }
 }
 </style>

@@ -501,53 +501,65 @@ onUnmounted(() => {
       </div>
 
       <div class="timeline-container">
-        <div v-for="(session, index) in sessions" :key="session.sessionId" class="timeline-item">
-          <!-- Timeline node -->
-          <div class="timeline-node-container">
+        <template v-for="(session, index) in sessions" :key="session.sessionId">
+          <!-- Session timeline item -->
+          <div class="timeline-item">
+            <!-- Timeline node -->
+            <div class="timeline-node-container">
+              <div 
+                class="timeline-node" 
+                :class="getPerformanceClass(session)"
+                :title="getPerformanceLabel(session)"
+              ></div>
+            </div>
+            
+            <!-- Session card -->
             <div 
-              class="timeline-node" 
-              :class="getPerformanceClass(session)"
-              :title="getPerformanceLabel(session)"
-            ></div>
+              class="session-card"
+              @click="(event) => navigateToRoundReport(session.sessionId, event)"
+            >
+              <div class="session-line-1">
+                <span class="time-link">{{ formatRelativeTime(session.startTime) }}</span>
+                <span class="session-separator">-</span>
+                <router-link 
+                  :to="`/servers/${encodeURIComponent(session.serverName)}`" 
+                  class="server-link"
+                >
+                  {{ session.serverName }}
+                </router-link>
+              </div>
+              
+              <div class="session-line-2">
+                <span class="map-name">{{ session.mapName }}</span>
+                <span class="game-type">({{ session.gameType }})</span>
+              </div>
+              
+              <div class="session-line-3">
+                <span class="session-score">{{ session.score }} pts</span>
+                <span class="stat-separator">•</span>
+                <span class="stat-item">
+                  {{ calculateKDR(session.kills, session.deaths) }} KDR (<span class="kills-count">{{ session.kills }}</span> / <span class="deaths-count">{{ session.deaths }}</span>)
+                </span>
+                <span class="stat-separator">•</span>
+                <span class="duration-text">{{ formatPlayTime(session.durationMinutes) }}</span>
+              </div>
+            </div>
           </div>
-          
-          <!-- Session card -->
+
+          <!-- Time gap as a separate timeline item -->
           <div 
-            class="session-card"
-            @click="(event) => navigateToRoundReport(session.sessionId, event)"
+            v-if="index < sessions.length - 1 && getTimeGap(session, sessions[index + 1])" 
+            class="timeline-gap-item"
           >
-            <div class="session-line-1">
-              <span class="time-link">{{ formatRelativeTime(session.startTime) }}</span>
-              <span class="session-separator">-</span>
-              <router-link 
-                :to="`/servers/${encodeURIComponent(session.serverName)}`" 
-                class="server-link"
-              >
-                {{ session.serverName }}
-              </router-link>
-            </div>
-            
-            <div class="session-line-2">
-              <span class="map-name">{{ session.mapName }}</span>
-              <span class="game-type">({{ session.gameType }})</span>
-            </div>
-            
-            <div class="session-line-3">
-              <span class="session-score">{{ session.score }} pts</span>
-              <span class="stat-separator">•</span>
-              <span class="stat-item">
-                {{ calculateKDR(session.kills, session.deaths) }} KDR (<span class="kills-count">{{ session.kills }}</span> / <span class="deaths-count">{{ session.deaths }}</span>)
-              </span>
-              <span class="stat-separator">•</span>
-              <span class="duration-text">{{ formatPlayTime(session.durationMinutes) }}</span>
+            <div class="time-gap-separator">
+              <div class="time-gap-line"></div>
+              <div class="time-gap-badge">
+                {{ getTimeGap(session, sessions[index + 1]) }}
+              </div>
+              <div class="time-gap-line"></div>
             </div>
           </div>
-          
-          <!-- Time gap indicator -->
-          <div v-if="index < sessions.length - 1 && getTimeGap(session, sessions[index + 1])" class="time-gap">
-            {{ getTimeGap(session, sessions[index + 1]) }}
-          </div>
-        </div>
+        </template>
       </div>
 
       <!-- Pagination controls -->
@@ -964,17 +976,7 @@ onUnmounted(() => {
 }
 
 .time-gap {
-  position: absolute;
-  left: 28px;
-  bottom: -8px;
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  font-style: italic;
-  background-color: var(--color-background);
-  padding: 2px 8px;
-  border-radius: 12px;
-  border: 1px solid var(--color-border-soft, var(--color-border));
-  z-index: 4;
+  display: none;
 }
 
 .active-session-badge {
@@ -1320,6 +1322,102 @@ onUnmounted(() => {
     bottom: -4px;
     font-size: 0.65rem;
   }
+}
+
+.timeline-gap-item {
+  position: relative;
+  padding: 8px 0;
+  margin-left: 28px; /* Align with the timeline content */
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.time-gap-separator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.time-gap-line {
+  flex: 1;
+  height: 2px;
+  min-width: 40px;
+  max-width: 100px;
+  background-image: repeating-linear-gradient(-45deg,
+    var(--color-border) 0px,
+    var(--color-border) 4px,
+    transparent 4px,
+    transparent 8px);
+  background-size: 8px 2px;
+}
+
+.time-gap-badge {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  background-color: var(--color-background);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  font-style: italic;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Mobile responsive styles for time gap */
+@media (max-width: 768px) {
+  .timeline-gap-item {
+    margin-left: 24px;
+    padding: 6px 0;
+    margin-bottom: 12px;
+  }
+  
+  .time-gap-separator {
+    min-width: 160px;
+    max-width: 300px;
+  }
+
+  .time-gap-line {
+    min-width: 30px;
+    max-width: 80px;
+    height: 1px;
+  }
+  
+  .time-gap-badge {
+    font-size: 0.75rem;
+    padding: 1px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .timeline-gap-item {
+    margin-left: 20px;
+    padding: 4px 0;
+    margin-bottom: 10px;
+  }
+  
+  .time-gap-separator {
+    min-width: 120px;
+    max-width: 240px;
+  }
+
+  .time-gap-line {
+    min-width: 20px;
+    max-width: 60px;
+  }
+  
+  .time-gap-badge {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+  }
+}
+
+/* Remove the old time-gap styles */
+.time-gap {
+  display: none;
 }
 
 </style>
