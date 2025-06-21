@@ -118,6 +118,8 @@ export interface ServerDetails {
   country?: string;
   countryCode?: string;
   timezone?: string;
+  serverIp?: string;
+  serverPort?: number;
 }
 
 /**

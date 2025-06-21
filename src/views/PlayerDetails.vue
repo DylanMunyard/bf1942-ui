@@ -823,8 +823,14 @@ onMounted(() => {
               </div>
               
               <!-- Time gap indicator -->
-              <div v-if="index < playerStats.recentSessions.length - 1 && getTimeGap(session, playerStats.recentSessions[index + 1])" class="time-gap">
-                {{ getTimeGap(session, playerStats.recentSessions[index + 1]) }}
+              <div v-if="index < playerStats.recentSessions.length - 1 && getTimeGap(session, playerStats.recentSessions[index + 1])" class="time-gap-container">
+                <div class="time-gap-separator">
+                  <div class="time-gap-line left"></div>
+                  <div class="time-gap-badge">
+                    {{ getTimeGap(session, playerStats.recentSessions[index + 1]) }}
+                  </div>
+                  <div class="time-gap-line right"></div>
+                </div>
               </div>
             </div>
           </div>
