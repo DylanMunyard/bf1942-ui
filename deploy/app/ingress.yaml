@@ -7,11 +7,6 @@ spec:
   entryPoints:
     - websecure
   routes:
-  - match: Host(`1942.home.net`) && PathPrefix(`/api`)
-    kind: Rule
-    services:
-    - name: bf42-servers-backend-service
-      port: 80
   - match: Host(`1942.home.net`)
     kind: Rule
     services:
