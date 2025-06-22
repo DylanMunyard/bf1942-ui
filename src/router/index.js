@@ -7,6 +7,7 @@ import ServerRankingsPage from '../components/ServerRankingsPage.vue'
 import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
 import RoundReportPage from '../components/RoundReportPage.vue'
 import TKLivewirePage from '../components/TKLivewirePage.vue'
+import PlayerComparison from '../views/PlayerComparison.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,6 +50,15 @@ const router = createRouter({
       path: '/players',
       name: 'players',
       component: Players
+    },
+    {
+      path: '/players/compare',
+      name: 'player-comparison',
+      component: PlayerComparison,
+      props: route => ({
+        player1: route.query.player1,
+        player2: route.query.player2
+      })
     },
     {
       path: '/players/:playerName',
