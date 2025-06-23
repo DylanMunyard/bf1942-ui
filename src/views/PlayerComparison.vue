@@ -221,6 +221,9 @@ const formatDate = (dateString: string): string => {
 const sortColumn = ref<string>('');
 const sortDirection = ref<'asc' | 'desc'>('asc');
 
+// Toggle state for extra columns
+const showExtraColumns = ref(false);
+
 const sortMapPerformance = (column: string) => {
   if (sortColumn.value === column) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
@@ -399,19 +402,24 @@ const sortedMapPerformance = computed(() => {
 
         <!-- Map Performance -->
         <div class="comparison-section" v-if="combinedMapPerformance.length > 0">
-            <h3>Map Performance</h3>
+            <div class="section-header">
+                <h3>Map Performance</h3>
+                <button class="toggle-columns-btn" @click="showExtraColumns = !showExtraColumns">
+                    {{ showExtraColumns ? 'Hide' : 'Show' }} Kills/Deaths
+                </button>
+            </div>
             <div class="map-performance-table">
-                <div class="table-header">
+                <div class="table-header" :class="{ 'expanded': showExtraColumns }">
                     <div class="map-name-header sortable" @click="sortMapPerformance('map')" :class="{ 'sort-active': sortColumn === 'map' }">
                         Map
                         <span class="sort-indicator" v-if="sortColumn === 'map'">
                             {{ sortDirection === 'asc' ? '↑' : '↓' }}
                         </span>
                     </div>
-                    <div class="player-group">{{ comparisonData.player1 }}</div>
-                    <div class="player-group">{{ comparisonData.player2 }}</div>
+                    <div class="player-group" :class="{ 'expanded': showExtraColumns }">{{ comparisonData.player1 }}</div>
+                    <div class="player-group" :class="{ 'expanded': showExtraColumns }">{{ comparisonData.player2 }}</div>
                 </div>
-                <div class="table-subheader">
+                <div class="table-subheader" :class="{ 'expanded': showExtraColumns }">
                     <div></div>
                     <div class="sortable" @click="sortMapPerformance('p1-score')" :class="{ 'sort-active': sortColumn === 'p1-score' }">
                         Score
@@ -419,13 +427,13 @@ const sortedMapPerformance = computed(() => {
                             {{ sortDirection === 'asc' ? '↑' : '↓' }}
                         </span>
                     </div>
-                    <div class="sortable" @click="sortMapPerformance('p1-kills')" :class="{ 'sort-active': sortColumn === 'p1-kills' }">
+                    <div class="sortable extra-column" v-show="showExtraColumns" @click="sortMapPerformance('p1-kills')" :class="{ 'sort-active': sortColumn === 'p1-kills' }">
                         Kills
                         <span class="sort-indicator" v-if="sortColumn === 'p1-kills'">
                             {{ sortDirection === 'asc' ? '↑' : '↓' }}
                         </span>
                     </div>
-                    <div class="sortable" @click="sortMapPerformance('p1-deaths')" :class="{ 'sort-active': sortColumn === 'p1-deaths' }">
+                    <div class="sortable extra-column" v-show="showExtraColumns" @click="sortMapPerformance('p1-deaths')" :class="{ 'sort-active': sortColumn === 'p1-deaths' }">
                         Deaths
                         <span class="sort-indicator" v-if="sortColumn === 'p1-deaths'">
                             {{ sortDirection === 'asc' ? '↑' : '↓' }}
@@ -443,13 +451,13 @@ const sortedMapPerformance = computed(() => {
                             {{ sortDirection === 'asc' ? '↑' : '↓' }}
                         </span>
                     </div>
-                    <div class="sortable" @click="sortMapPerformance('p2-kills')" :class="{ 'sort-active': sortColumn === 'p2-kills' }">
+                    <div class="sortable extra-column" v-show="showExtraColumns" @click="sortMapPerformance('p2-kills')" :class="{ 'sort-active': sortColumn === 'p2-kills' }">
                         Kills
                         <span class="sort-indicator" v-if="sortColumn === 'p2-kills'">
                             {{ sortDirection === 'asc' ? '↑' : '↓' }}
                         </span>
                     </div>
-                    <div class="sortable" @click="sortMapPerformance('p2-deaths')" :class="{ 'sort-active': sortColumn === 'p2-deaths' }">
+                    <div class="sortable extra-column" v-show="showExtraColumns" @click="sortMapPerformance('p2-deaths')" :class="{ 'sort-active': sortColumn === 'p2-deaths' }">
                         Deaths
                         <span class="sort-indicator" v-if="sortColumn === 'p2-deaths'">
                             {{ sortDirection === 'asc' ? '↑' : '↓' }}
@@ -463,17 +471,17 @@ const sortedMapPerformance = computed(() => {
                     </div>
                 </div>
                 <div class="table-body">
-                    <div v-for="map in sortedMapPerformance" :key="map.mapName" class="table-row">
+                    <div v-for="map in sortedMapPerformance" :key="map.mapName" class="table-row" :class="{ 'expanded': showExtraColumns }">
                         <div class="map-name">{{ map.mapName }}</div>
                         <div class="map-stat">{{ map.player1Totals.score }}</div>
-                        <div class="map-stat">{{ map.player1Totals.kills }}</div>
-                        <div class="map-stat">{{ map.player1Totals.deaths }}</div>
+                        <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player1Totals.kills }}</div>
+                        <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player1Totals.deaths }}</div>
                         <div class="map-kdr" :class="{ 'winner': calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) > calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) }">
                             {{ calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) }}
                         </div>
                         <div class="map-stat">{{ map.player2Totals.score }}</div>
-                        <div class="map-stat">{{ map.player2Totals.kills }}</div>
-                        <div class="map-stat">{{ map.player2Totals.deaths }}</div>
+                        <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player2Totals.kills }}</div>
+                        <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player2Totals.deaths }}</div>
                         <div class="map-kdr" :class="{ 'winner': calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) > calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) }">
                             {{ calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) }}
                         </div>
@@ -627,6 +635,35 @@ const sortedMapPerformance = computed(() => {
     padding-bottom: 10px;
 }
 
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h3 {
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.toggle-columns-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-columns-btn:hover {
+    background-color: var(--color-accent);
+    transform: translateY(-1px);
+}
+
 /* Summary Panel */
 .summary-panel {
     display: grid;
@@ -751,8 +788,14 @@ const sortedMapPerformance = computed(() => {
 }
 .table-header, .table-subheader, .table-row {
     display: grid;
-    grid-template-columns: 2fr repeat(8, 1fr);
+    grid-template-columns: 2fr repeat(4, 1fr);
     background-color: var(--color-background-soft);
+    min-width: 600px;
+    transition: grid-template-columns 0.3s ease;
+}
+
+.table-header.expanded, .table-subheader.expanded, .table-row.expanded {
+    grid-template-columns: 2fr repeat(8, 1fr);
     min-width: 900px;
 }
 .table-header {
@@ -784,9 +827,13 @@ const sortedMapPerformance = computed(() => {
     color: #4CAF50;
 }
 .player-group {
-    grid-column: span 4;
+    grid-column: span 2;
     text-align: center;
     font-weight: bold;
+}
+
+.player-group.expanded {
+    grid-column: span 4;
 }
 .map-stat {
     font-size: 0.95rem;
@@ -808,6 +855,30 @@ const sortedMapPerformance = computed(() => {
     margin-left: 4px;
     font-size: 0.8rem;
     opacity: 0.8;
+}
+
+.extra-column {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.extra-column.v-enter-active,
+.extra-column.v-leave-active {
+    transition: all 0.3s ease;
+}
+
+.extra-column.v-enter-from,
+.extra-column.v-leave-to {
+    opacity: 0;
+    max-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.extra-column.v-enter-to,
+.extra-column.v-leave-from {
+    opacity: 1;
+    max-width: 200px;
 }
 
 /* Head to Head */
@@ -866,6 +937,17 @@ const sortedMapPerformance = computed(() => {
     .p1-header, .p2-header { display: none; }
     .grid-value.p1 { grid-column: 1/2; }
     .grid-value.p2 { grid-column: 2/3; }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .toggle-columns-btn {
+        align-self: center;
+        width: fit-content;
+    }
 }
 
 </style> 
