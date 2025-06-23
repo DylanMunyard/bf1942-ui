@@ -217,6 +217,81 @@ const formatDate = (dateString: string): string => {
   });
 };
 
+// Sorting state and functions
+const sortColumn = ref<string>('');
+const sortDirection = ref<'asc' | 'desc'>('asc');
+
+const sortMapPerformance = (column: string) => {
+  if (sortColumn.value === column) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortColumn.value = column;
+    sortDirection.value = 'asc';
+  }
+};
+
+const sortedMapPerformance = computed(() => {
+  if (!comparisonData.value?.mapPerformance || !sortColumn.value) {
+    return comparisonData.value?.mapPerformance || [];
+  }
+
+  return [...comparisonData.value.mapPerformance].sort((a, b) => {
+    let aValue: number | string;
+    let bValue: number | string;
+
+    switch (sortColumn.value) {
+      case 'map':
+        aValue = a.mapName;
+        bValue = b.mapName;
+        break;
+      case 'p1-score':
+        aValue = a.player1Totals.score;
+        bValue = b.player1Totals.score;
+        break;
+      case 'p1-kills':
+        aValue = a.player1Totals.kills;
+        bValue = b.player1Totals.kills;
+        break;
+      case 'p1-deaths':
+        aValue = a.player1Totals.deaths;
+        bValue = b.player1Totals.deaths;
+        break;
+      case 'p1-kdr':
+        aValue = parseFloat(calculateKDR(a.player1Totals.kills, a.player1Totals.deaths));
+        bValue = parseFloat(calculateKDR(b.player1Totals.kills, b.player1Totals.deaths));
+        break;
+      case 'p2-score':
+        aValue = a.player2Totals.score;
+        bValue = b.player2Totals.score;
+        break;
+      case 'p2-kills':
+        aValue = a.player2Totals.kills;
+        bValue = b.player2Totals.kills;
+        break;
+      case 'p2-deaths':
+        aValue = a.player2Totals.deaths;
+        bValue = b.player2Totals.deaths;
+        break;
+      case 'p2-kdr':
+        aValue = parseFloat(calculateKDR(a.player2Totals.kills, a.player2Totals.deaths));
+        bValue = parseFloat(calculateKDR(b.player2Totals.kills, b.player2Totals.deaths));
+        break;
+      default:
+        return 0;
+    }
+
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortDirection.value === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+
+    const numA = Number(aValue);
+    const numB = Number(bValue);
+    return sortDirection.value === 'asc' ? numA - numB : numB - numA;
+  });
+});
+
 </script>
 
 <template>
@@ -327,15 +402,81 @@ const formatDate = (dateString: string): string => {
             <h3>Map Performance</h3>
             <div class="map-performance-table">
                 <div class="table-header">
-                    <div class="map-name-header">Map</div>
-                    <div>{{ comparisonData.player1 }} K/D</div>
-                    <div>{{ comparisonData.player2 }} K/D</div>
+                    <div class="map-name-header sortable" @click="sortMapPerformance('map')" :class="{ 'sort-active': sortColumn === 'map' }">
+                        Map
+                        <span class="sort-indicator" v-if="sortColumn === 'map'">
+                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                        </span>
+                    </div>
+                    <div class="player-group">{{ comparisonData.player1 }}</div>
+                    <div class="player-group">{{ comparisonData.player2 }}</div>
+                </div>
+                <div class="table-subheader">
+                    <div></div>
+                    <div class="sortable" @click="sortMapPerformance('p1-score')" :class="{ 'sort-active': sortColumn === 'p1-score' }">
+                        Score
+                        <span class="sort-indicator" v-if="sortColumn === 'p1-score'">
+                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                        </span>
+                    </div>
+                    <div class="sortable" @click="sortMapPerformance('p1-kills')" :class="{ 'sort-active': sortColumn === 'p1-kills' }">
+                        Kills
+                        <span class="sort-indicator" v-if="sortColumn === 'p1-kills'">
+                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                        </span>
+                    </div>
+                    <div class="sortable" @click="sortMapPerformance('p1-deaths')" :class="{ 'sort-active': sortColumn === 'p1-deaths' }">
+                        Deaths
+                        <span class="sort-indicator" v-if="sortColumn === 'p1-deaths'">
+                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                        </span>
+                    </div>
+                    <div class="sortable" @click="sortMapPerformance('p1-kdr')" :class="{ 'sort-active': sortColumn === 'p1-kdr' }">
+                        K/D
+                        <span class="sort-indicator" v-if="sortColumn === 'p1-kdr'">
+                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                        </span>
+                    </div>
+                    <div class="sortable" @click="sortMapPerformance('p2-score')" :class="{ 'sort-active': sortColumn === 'p2-score' }">
+                        Score
+                        <span class="sort-indicator" v-if="sortColumn === 'p2-score'">
+                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                        </span>
+                    </div>
+                    <div class="sortable" @click="sortMapPerformance('p2-kills')" :class="{ 'sort-active': sortColumn === 'p2-kills' }">
+                        Kills
+                        <span class="sort-indicator" v-if="sortColumn === 'p2-kills'">
+                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                        </span>
+                    </div>
+                    <div class="sortable" @click="sortMapPerformance('p2-deaths')" :class="{ 'sort-active': sortColumn === 'p2-deaths' }">
+                        Deaths
+                        <span class="sort-indicator" v-if="sortColumn === 'p2-deaths'">
+                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                        </span>
+                    </div>
+                    <div class="sortable" @click="sortMapPerformance('p2-kdr')" :class="{ 'sort-active': sortColumn === 'p2-kdr' }">
+                        K/D
+                        <span class="sort-indicator" v-if="sortColumn === 'p2-kdr'">
+                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                        </span>
+                    </div>
                 </div>
                 <div class="table-body">
-                    <div v-for="map in combinedMapPerformance" :key="map.mapName" class="table-row">
+                    <div v-for="map in sortedMapPerformance" :key="map.mapName" class="table-row">
                         <div class="map-name">{{ map.mapName }}</div>
-                        <div class="map-kdr" :class="{ 'winner': map.winner === 'p1' }">{{ map.player1KDR }}</div>
-                        <div class="map-kdr" :class="{ 'winner': map.winner === 'p2' }">{{ map.player2KDR }}</div>
+                        <div class="map-stat">{{ map.player1Totals.score }}</div>
+                        <div class="map-stat">{{ map.player1Totals.kills }}</div>
+                        <div class="map-stat">{{ map.player1Totals.deaths }}</div>
+                        <div class="map-kdr" :class="{ 'winner': calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) > calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) }">
+                            {{ calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) }}
+                        </div>
+                        <div class="map-stat">{{ map.player2Totals.score }}</div>
+                        <div class="map-stat">{{ map.player2Totals.kills }}</div>
+                        <div class="map-stat">{{ map.player2Totals.deaths }}</div>
+                        <div class="map-kdr" :class="{ 'winner': calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) > calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) }">
+                            {{ calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -606,28 +747,67 @@ const formatDate = (dateString: string): string => {
     border: 1px solid var(--color-border);
     border-radius: 6px;
     overflow: hidden;
+    overflow-x: auto;
 }
-.table-header, .table-row {
+.table-header, .table-subheader, .table-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 2fr repeat(8, 1fr);
     background-color: var(--color-background-soft);
+    min-width: 900px;
 }
 .table-header {
     font-weight: bold;
     color: var(--color-heading);
     background-color: var(--color-background-mute);
 }
-.table-header > div, .table-row > div {
-    padding: 12px 15px;
+.table-subheader {
+    font-weight: bold;
+    color: var(--color-text-muted);
+    background-color: var(--color-background-mute);
+    font-size: 0.9rem;
+}
+.table-header > div, .table-subheader > div, .table-row > div {
+    padding: 12px 8px;
     text-align: center;
+    border-right: 1px solid var(--color-border);
+}
+.table-header > div:last-child, .table-subheader > div:last-child, .table-row > div:last-child {
+    border-right: none;
 }
 .table-row > div.map-name {
     text-align: left;
     font-weight: 500;
+    padding-left: 15px;
 }
 .table-row .map-kdr.winner {
     font-weight: bold;
     color: #4CAF50;
+}
+.player-group {
+    grid-column: span 4;
+    text-align: center;
+    font-weight: bold;
+}
+.map-stat {
+    font-size: 0.95rem;
+}
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: background-color 0.2s ease;
+}
+.sortable:hover {
+    background-color: var(--color-background);
+}
+.sortable.sort-active {
+    color: var(--color-primary);
+    font-weight: bold;
+}
+.sort-indicator {
+    margin-left: 4px;
+    font-size: 0.8rem;
+    opacity: 0.8;
 }
 
 /* Head to Head */
