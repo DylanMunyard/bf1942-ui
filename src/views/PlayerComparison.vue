@@ -743,8 +743,22 @@ const sortedHeadToHead = computed(() => {
                 <div class="h2h-table-body">
                     <div v-for="(encounter, index) in sortedHeadToHead" :key="index" class="h2h-table-row">
                         <div class="h2h-date-cell">
-                            <div class="h2h-date">{{ formatDate(encounter.timestamp) }}</div>
-                            <div class="h2h-time">{{ formatTime(encounter.timestamp) }}</div>
+                            <router-link 
+                                :to="{
+                                    path: '/servers/round-report',
+                                    query: {
+                                        serverGuid: encounter.serverGuid,
+                                        mapName: encounter.mapName,
+                                        startTime: new Date(new Date(encounter.timestamp).getTime() + 2 * 60 * 1000).toISOString(),
+                                        players: `${player1Input},${player2Input}`
+                                    }
+                                }"
+                                class="h2h-date-link"
+                                :title="`View round report for ${encounter.mapName} on ${formatDate(encounter.timestamp)} with ${player1Input} and ${player2Input} highlighted`"
+                            >
+                                <div class="h2h-date">{{ formatDate(encounter.timestamp) }}</div>
+                                <div class="h2h-time">{{ formatTime(encounter.timestamp) }}</div>
+                            </router-link>
                         </div>
                         <div>{{ encounter.mapName }}</div>
                         <div>{{ encounter.player1Score }}</div>
@@ -1265,6 +1279,36 @@ const sortedHeadToHead = computed(() => {
     color: var(--color-text-muted);
     font-weight: 400;
     line-height: 1;
+}
+
+.h2h-date-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    padding: 4px 8px;
+    border-radius: 6px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.h2h-date-link:hover {
+    background-color: var(--color-primary);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.h2h-date-link:hover .h2h-date {
+    color: white;
+    font-weight: 600;
+}
+
+.h2h-date-link:hover .h2h-time {
+    color: rgba(255, 255, 255, 0.9);
 }
 
 
