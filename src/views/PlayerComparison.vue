@@ -376,7 +376,7 @@ const sortMapPerformance = (column: string) => {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
   } else {
     sortColumn.value = column;
-    sortDirection.value = 'asc';
+    sortDirection.value = 'desc';
   }
 };
 
@@ -706,13 +706,13 @@ const sortedHeadToHead = computed(() => {
                         <div class="map-stat">{{ map.player1Totals.score }}</div>
                         <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player1Totals.kills }}</div>
                         <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player1Totals.deaths }}</div>
-                        <div class="map-kdr" :class="{ 'winner': calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) > calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) }">
+                        <div class="map-kdr" :class="{ 'winner': parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) > parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) }">
                             {{ calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) }}
                         </div>
                         <div class="map-stat">{{ map.player2Totals.score }}</div>
                         <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player2Totals.kills }}</div>
                         <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player2Totals.deaths }}</div>
-                        <div class="map-kdr" :class="{ 'winner': calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) > calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) }">
+                        <div class="map-kdr" :class="{ 'winner': parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) > parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) }">
                             {{ calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) }}
                         </div>
                     </div>
