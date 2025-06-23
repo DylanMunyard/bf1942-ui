@@ -56,10 +56,15 @@ interface BucketTotal {
 }
 
 interface HeadToHeadEncounter {
-  date: string;
+  timestamp: string;
+  serverGuid: string;
   mapName: string;
-  player1Stats: PerformanceStats;
-  player2Stats: PerformanceStats;
+  player1Score: number;
+  player1Kills: number;
+  player1Deaths: number;
+  player2Score: number;
+  player2Kills: number;
+  player2Deaths: number;
 }
 
 interface ComparisonData {
@@ -352,6 +357,13 @@ const formatDate = (dateString: string): string => {
   });
 };
 
+const formatTime = (dateString: string): string => {
+  return new Date(dateString).toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
 // Sorting state and functions
 const sortColumn = ref<string>('');
 const sortDirection = ref<'asc' | 'desc'>('asc');
@@ -427,6 +439,14 @@ const sortedMapPerformance = computed(() => {
     const numA = Number(aValue);
     const numB = Number(bValue);
     return sortDirection.value === 'asc' ? numA - numB : numB - numA;
+  });
+});
+
+const sortedHeadToHead = computed(() => {
+  if (!comparisonData.value?.headToHead) return [];
+  
+  return [...comparisonData.value.headToHead].sort((a, b) => {
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
   });
 });
 
@@ -721,15 +741,18 @@ const sortedMapPerformance = computed(() => {
                     <div>Deaths</div>
                 </div>
                 <div class="h2h-table-body">
-                    <div v-for="(encounter, index) in comparisonData.headToHead" :key="index" class="h2h-table-row">
-                        <div>{{ formatDate(encounter.date) }}</div>
+                    <div v-for="(encounter, index) in sortedHeadToHead" :key="index" class="h2h-table-row">
+                        <div class="h2h-date-cell">
+                            <div class="h2h-date">{{ formatDate(encounter.timestamp) }}</div>
+                            <div class="h2h-time">{{ formatTime(encounter.timestamp) }}</div>
+                        </div>
                         <div>{{ encounter.mapName }}</div>
-                        <div>{{ encounter.player1Stats.score }}</div>
-                        <div>{{ encounter.player1Stats.kills }}</div>
-                        <div>{{ encounter.player1Stats.deaths }}</div>
-                        <div>{{ encounter.player2Stats.score }}</div>
-                        <div>{{ encounter.player2Stats.kills }}</div>
-                        <div>{{ encounter.player2Stats.deaths }}</div>
+                        <div>{{ encounter.player1Score }}</div>
+                        <div>{{ encounter.player1Kills }}</div>
+                        <div>{{ encounter.player1Deaths }}</div>
+                        <div>{{ encounter.player2Score }}</div>
+                        <div>{{ encounter.player2Kills }}</div>
+                        <div>{{ encounter.player2Deaths }}</div>
                     </div>
                 </div>
             </div>
@@ -1223,6 +1246,25 @@ const sortedMapPerformance = computed(() => {
 .h2h-player-header {
     grid-column: span 3;
     text-align: center;
+}
+
+.h2h-date-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.h2h-date {
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.h2h-time {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-weight: 400;
+    line-height: 1;
 }
 
 
