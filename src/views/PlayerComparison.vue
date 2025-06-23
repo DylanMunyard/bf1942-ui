@@ -2,6 +2,30 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+// Define the structure for player search results
+interface PlayerSearchResult {
+  playerName: string;
+  totalPlayTimeMinutes: number;
+  lastSeen: string;
+  isActive: boolean;
+  currentServer?: {
+    serverGuid: string;
+    serverName: string;
+    sessionKills: number;
+    sessionDeaths: number;
+    mapName: string;
+    gameId: string;
+  };
+}
+
+interface PlayerSearchResponse {
+  items: PlayerSearchResult[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
 // Define the structure for player and comparison data based on the API response
 interface PerformanceStats {
   score: number;
@@ -56,6 +80,15 @@ const player2Input = ref('');
 const comparisonData = ref<ComparisonData | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+
+// Search-related state
+const player1SearchResults = ref<PlayerSearchResult[]>([]);
+const player2SearchResults = ref<PlayerSearchResult[]>([]);
+const player1SearchLoading = ref(false);
+const player2SearchLoading = ref(false);
+const showPlayer1Dropdown = ref(false);
+const showPlayer2Dropdown = ref(false);
+const searchDebounceTimeout = ref<number | null>(null);
 
 const selectedTimePeriod = ref<'Last30Days' | 'Last6Months' | 'LastYear' | 'AllTime'>('Last30Days');
 const timePeriodOptions = [
@@ -127,6 +160,108 @@ const handleCompare = async () => {
   } else {
     console.log('Not calling fetchComparisonData - one or both inputs are empty');
   }
+};
+
+// Search functionality
+const searchPlayers = async (query: string, playerNumber: 1 | 2) => {
+  if (!query || query.length < 2) {
+    if (playerNumber === 1) {
+      player1SearchResults.value = [];
+      showPlayer1Dropdown.value = false;
+    } else {
+      player2SearchResults.value = [];
+      showPlayer2Dropdown.value = false;
+    }
+    return;
+  }
+
+  if (playerNumber === 1) {
+    player1SearchLoading.value = true;
+  } else {
+    player2SearchLoading.value = true;
+  }
+
+  try {
+    const response = await fetch(`/stats/Players/search?query=${encodeURIComponent(query)}&pageSize=10`);
+    if (!response.ok) {
+      throw new Error('Failed to search players');
+    }
+
+    const data: PlayerSearchResponse = await response.json();
+    
+    if (playerNumber === 1) {
+      player1SearchResults.value = data.items;
+      showPlayer1Dropdown.value = data.items.length > 0;
+    } else {
+      player2SearchResults.value = data.items;
+      showPlayer2Dropdown.value = data.items.length > 0;
+    }
+  } catch (error) {
+    console.error('Error searching players:', error);
+    if (playerNumber === 1) {
+      player1SearchResults.value = [];
+      showPlayer1Dropdown.value = false;
+    } else {
+      player2SearchResults.value = [];
+      showPlayer2Dropdown.value = false;
+    }
+  } finally {
+    if (playerNumber === 1) {
+      player1SearchLoading.value = false;
+    } else {
+      player2SearchLoading.value = false;
+    }
+  }
+};
+
+const onPlayerInput = (query: string, playerNumber: 1 | 2) => {
+  if (searchDebounceTimeout.value) {
+    clearTimeout(searchDebounceTimeout.value);
+  }
+
+  searchDebounceTimeout.value = setTimeout(() => {
+    searchPlayers(query, playerNumber);
+  }, 300);
+};
+
+const selectPlayer = (player: PlayerSearchResult, playerNumber: 1 | 2) => {
+  if (playerNumber === 1) {
+    player1Input.value = player.playerName;
+    showPlayer1Dropdown.value = false;
+    player1SearchResults.value = [];
+  } else {
+    player2Input.value = player.playerName;
+    showPlayer2Dropdown.value = false;
+    player2SearchResults.value = [];
+  }
+};
+
+const formatPlayTime = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours}h`;
+  }
+  const days = Math.floor(hours / 24);
+  return `${days}d ${hours % 24}h`;
+};
+
+const formatLastSeen = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}m ago`;
+  } else if (diffInMinutes < 1440) {
+    return `${Math.floor(diffInMinutes / 60)}h ago`;
+  } else {
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  }
+};
+
+const hideDropdowns = () => {
+  showPlayer1Dropdown.value = false;
+  showPlayer2Dropdown.value = false;
 };
 
 // Initialize from URL parameters on mount
@@ -301,10 +436,85 @@ const sortedMapPerformance = computed(() => {
   <div class="player-comparison-container">
     <div class="comparison-header">
       <h1>Player Comparison</h1>
-      <div class="input-form">
-        <input type="text" v-model="player1Input" placeholder="Player 1 Name" @keyup.enter="handleCompare" />
+      <div class="input-form" @click="hideDropdowns">
+        <!-- Player 1 Input with Search -->
+        <div class="player-input-container" @click.stop>
+          <input 
+            type="text" 
+            v-model="player1Input" 
+            placeholder="Player 1 Name" 
+            @keyup.enter="handleCompare"
+            @input="onPlayerInput(player1Input, 1)"
+            @focus="player1Input.length >= 2 && searchPlayers(player1Input, 1)"
+            autocomplete="off"
+          />
+          <div class="search-spinner" v-if="player1SearchLoading">🔄</div>
+          <div v-if="showPlayer1Dropdown" class="search-dropdown">
+            <div 
+              v-for="player in player1SearchResults" 
+              :key="player.playerName"
+              class="search-result-item"
+              @click="selectPlayer(player, 1)"
+            >
+              <div class="player-info">
+                <div class="player-name">{{ player.playerName }}</div>
+                <div class="player-details">
+                  <span class="play-time">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
+                  <span class="last-seen">{{ formatLastSeen(player.lastSeen) }}</span>
+                  <span v-if="player.isActive" class="active-badge">🟢 Online</span>
+                  <span v-else class="inactive-badge">⚫ Offline</span>
+                </div>
+                <div v-if="player.currentServer && player.isActive" class="current-server">
+                  {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
+                </div>
+              </div>
+            </div>
+            <div v-if="player1SearchResults.length === 0 && !player1SearchLoading" class="no-results">
+              No players found
+            </div>
+          </div>
+        </div>
+
         <span class="vs-text">vs</span>
-        <input type="text" v-model="player2Input" placeholder="Player 2 Name" @keyup.enter="handleCompare" />
+
+        <!-- Player 2 Input with Search -->
+        <div class="player-input-container" @click.stop>
+          <input 
+            type="text" 
+            v-model="player2Input" 
+            placeholder="Player 2 Name" 
+            @keyup.enter="handleCompare"
+            @input="onPlayerInput(player2Input, 2)"
+            @focus="player2Input.length >= 2 && searchPlayers(player2Input, 2)"
+            autocomplete="off"
+          />
+          <div class="search-spinner" v-if="player2SearchLoading">🔄</div>
+          <div v-if="showPlayer2Dropdown" class="search-dropdown">
+            <div 
+              v-for="player in player2SearchResults" 
+              :key="player.playerName"
+              class="search-result-item"
+              @click="selectPlayer(player, 2)"
+            >
+              <div class="player-info">
+                <div class="player-name">{{ player.playerName }}</div>
+                <div class="player-details">
+                  <span class="play-time">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
+                  <span class="last-seen">{{ formatLastSeen(player.lastSeen) }}</span>
+                  <span v-if="player.isActive" class="active-badge">🟢 Online</span>
+                  <span v-else class="inactive-badge">⚫ Offline</span>
+                </div>
+                <div v-if="player.currentServer && player.isActive" class="current-server">
+                  {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
+                </div>
+              </div>
+            </div>
+            <div v-if="player2SearchResults.length === 0 && !player2SearchLoading" class="no-results">
+              No players found
+            </div>
+          </div>
+        </div>
+
         <button @click="handleCompare" :disabled="isLoading || !player1Input.trim() || !player2Input.trim()">
           {{ isLoading ? 'Comparing...' : 'Compare' }}
         </button>
@@ -554,16 +764,116 @@ const sortedMapPerformance = computed(() => {
   align-items: center;
   gap: 15px;
   flex-wrap: wrap;
+  position: relative;
+}
+
+.player-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .input-form input {
-  padding: 12px 15px;
+  padding: 12px 40px 12px 15px;
   font-size: 1rem;
   background-color: var(--color-background-soft);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text);
   width: 250px;
+}
+
+.search-spinner {
+  position: absolute;
+  right: 10px;
+  font-size: 12px;
+  animation: spin 1s linear infinite;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-result-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.2s ease;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background-color: var(--color-background);
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.player-name {
+  font-weight: bold;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.player-details {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.play-time {
+  background-color: var(--color-background);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.last-seen {
+  color: var(--color-text-muted);
+}
+
+.active-badge {
+  color: #4CAF50;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.inactive-badge {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.current-server {
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.no-results {
+  padding: 15px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-style: italic;
 }
 
 .input-form .vs-text {
@@ -925,6 +1235,13 @@ const sortedMapPerformance = computed(() => {
     }
     .input-form input {
         width: 100%;
+    }
+    .player-input-container {
+        width: 100%;
+    }
+    .search-dropdown {
+        left: 0;
+        right: 0;
     }
     .summary-panel {
         grid-template-columns: 1fr;
