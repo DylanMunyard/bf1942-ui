@@ -51,8 +51,8 @@ interface AveragePingData {
 
 interface BucketTotal {
   bucket: 'Last30Days' | 'Last6Months' | 'LastYear' | 'AllTime';
-  player1Totals: PerformanceStats;
-  player2Totals: PerformanceStats;
+  player1Totals: PerformanceStats & { playTimeMinutes?: number };
+  player2Totals: PerformanceStats & { playTimeMinutes?: number };
 }
 
 interface HeadToHeadEncounter {
@@ -626,6 +626,10 @@ const sortedHeadToHead = computed(() => {
                     <div class="grid-label">Deaths</div>
                     <div class="grid-value p1">{{ getPerformanceData(selectedTimePeriod).player1Totals.deaths }}</div>
                     <div class="grid-value p2">{{ getPerformanceData(selectedTimePeriod).player2Totals.deaths }}</div>
+
+                    <div class="grid-label">Play Time</div>
+                    <div class="grid-value p1">{{ formatPlayTime(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0) }}</div>
+                    <div class="grid-value p2">{{ formatPlayTime(getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) }}</div>
                 </div>
             </div>
         </div>
