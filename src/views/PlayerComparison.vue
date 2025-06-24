@@ -115,7 +115,14 @@ const fetchComparisonData = async (player1: string, player2: string) => {
   comparisonData.value = null;
 
   try {
-    const url = `/stats/players/compare?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}`;
+    let url = `/stats/players/compare?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}`;
+    
+    // Add serverGuid parameter if available in URL
+    const serverGuid = route.query.serverGuid as string;
+    if (serverGuid) {
+      url += `&serverGuid=${encodeURIComponent(serverGuid)}`;
+    }
+    
     console.log(`Making API call to: ${url}`);
     
     const response = await fetch(url);
@@ -138,7 +145,11 @@ const fetchComparisonData = async (player1: string, player2: string) => {
     comparisonData.value = data;
     
     // Update URL for sharing/bookmarking (but don't rely on it for functionality)
-    router.replace({ query: { player1, player2 } });
+    const query: Record<string, string> = { player1, player2 };
+    if (serverGuid) {
+      query.serverGuid = serverGuid;
+    }
+    router.replace({ query });
     
   } catch (err: any) {
     console.error('Error fetching comparison data:', err);

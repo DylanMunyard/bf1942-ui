@@ -54,12 +54,20 @@ export function usePlayerComparison() {
     if (!canCompare.value) return;
     
     const [player1, player2] = selectedPlayers.value;
+    const query: Record<string, string> = {
+      player1: player1.name,
+      player2: player2.name
+    };
+    
+    // Add serverGuid if available from either player's source
+    const serverGuid = player1.source || player2.source;
+    if (serverGuid) {
+      query.serverGuid = serverGuid;
+    }
+    
     router.push({
       path: '/players/compare',
-      query: {
-        player1: player1.name,
-        player2: player2.name
-      }
+      query
     });
     
     // Clear selections after navigating
