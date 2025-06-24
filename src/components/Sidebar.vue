@@ -150,7 +150,7 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 }
 
 .icon-player-comparison {
-  background-image: url('../assets/player_comparison.jpg');
+  background-image: url('../assets/player_vs_player.png');
   display: inline-block;
   width: 36px;
   height: 36px;

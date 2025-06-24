@@ -38,6 +38,18 @@ const handleClick = (event: MouseEvent) => {
   }
 };
 
+const handleCompareClick = (event: MouseEvent) => {
+  if (!props.clickable) return;
+  
+  // Prevent event from bubbling up to parent link
+  event.preventDefault();
+  event.stopPropagation();
+  
+  if (canSelect.value) {
+    addPlayer(props.name, props.source);
+  }
+};
+
 const getTooltipText = () => {
   if (!props.clickable) return '';
   if (isSelected.value) return 'Already selected for comparison';
@@ -52,16 +64,8 @@ const containerClass = computed(() => {
     classes.push(props.class);
   }
   
-  if (props.clickable) {
-    classes.push('clickable');
-  }
-  
   if (isSelected.value) {
     classes.push('selected');
-  }
-  
-  if (canSelect.value) {
-    classes.push('selectable');
   }
   
   return classes.join(' ');
@@ -71,7 +75,6 @@ const containerClass = computed(() => {
 <template>
   <span 
     :class="containerClass"
-    @click="handleClick"
     :title="getTooltipText()"
   >
     <span class="player-name-text">{{ name }}</span>
@@ -79,8 +82,14 @@ const containerClass = computed(() => {
       v-if="showCompareIcon && clickable" 
       class="compare-icon"
       :class="{ 'visible': canSelect || isSelected }"
+      @click="handleCompareClick"
+      :title="canSelect ? 'Click to add to player comparison' : (isSelected ? 'Already selected for comparison' : 'Maximum 2 players can be selected')"
     >
-      {{ isSelected ? '✓' : '⚡' }}
+      <span v-if="isSelected">✓</span>
+      <span v-else class="fencer-pair">
+        <span class="fencer flipped">🤺</span>
+        <span class="fencer">🤺</span>
+      </span>
     </span>
   </span>
 </template>
@@ -100,19 +109,6 @@ const containerClass = computed(() => {
   transition: all 0.2s ease;
 }
 
-.player-name-container.clickable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.player-name-container.selectable:hover {
-  color: var(--color-primary);
-  transform: translateY(-1px);
-}
-
-.player-name-container.selectable:hover .player-name-text {
-  text-decoration: underline;
-}
 
 .player-name-container.selected {
   color: var(--color-primary);
@@ -124,10 +120,24 @@ const containerClass = computed(() => {
 }
 
 .compare-icon {
-  font-size: 0.8rem;
+  font-size: 1.3rem;
   opacity: 0;
   transition: all 0.2s ease;
   color: var(--color-primary);
+  cursor: pointer;
+}
+
+.fencer-pair {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.fencer {
+  font-size: 1rem;
+}
+
+.fencer.flipped {
+  transform: scaleX(-1);
 }
 
 .compare-icon.visible {
@@ -139,8 +149,8 @@ const containerClass = computed(() => {
   color: var(--color-primary);
 }
 
-.player-name-container.selectable:hover .compare-icon {
-  opacity: 1;
+.compare-icon:hover {
+  opacity: 1 !important;
   transform: scale(1.2);
 }
 
@@ -159,16 +169,5 @@ const containerClass = computed(() => {
   100% {
     transform: scale(1);
   }
-}
-
-/* Disable selection when max players reached */
-.player-name-container:not(.selectable):not(.selected).clickable {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.player-name-container:not(.selectable):not(.selected).clickable:hover {
-  color: var(--color-text-muted);
-  transform: none;
 }
 </style>
