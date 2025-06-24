@@ -349,6 +349,26 @@ const getPerformanceData = (bucket: string) => {
   return comparisonData.value.bucketTotals.find(bt => bt.bucket === bucket);
 };
 
+const calculateDelta = (value1: number, value2: number, decimals: number = 0): string => {
+  const higher = Math.max(value1, value2);
+  const lower = Math.min(value1, value2);
+  const diff = higher - lower;
+  return decimals > 0 ? `+ ${diff.toFixed(decimals)}` : `+ ${Math.round(diff)}`;
+};
+
+const calculateTimeDelta = (value1: number, value2: number): string => {
+  const higher = Math.max(value1, value2);
+  const lower = Math.min(value1, value2);
+  const diffMinutes = higher - lower;
+  return `+ ${formatPlayTime(diffMinutes)}`;
+};
+
+const getHigherValue = (value1: number, value2: number): 'p1' | 'p2' | 'tie' => {
+  if (value1 > value2) return 'p1';
+  if (value2 > value1) return 'p2';
+  return 'tie';
+};
+
 const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString(undefined, {
     year: 'numeric',
@@ -581,9 +601,15 @@ const sortedHeadToHead = computed(() => {
                 <div class="stat-label">Kill Rate (per min)</div>
                 <div class="stat-value p1" :class="{ 'better': player1KillRate > player2KillRate }">
                     {{ player1KillRate.toFixed(2) }}
+                    <span v-if="getHigherValue(player1KillRate, player2KillRate) === 'p1' && player1KillRate !== player2KillRate" class="delta">
+                        ({{ calculateDelta(player1KillRate, player2KillRate, 2) }})
+                    </span>
                 </div>
                 <div class="stat-value p2" :class="{ 'better': player2KillRate > player1KillRate }">
                     {{ player2KillRate.toFixed(2) }}
+                    <span v-if="getHigherValue(player1KillRate, player2KillRate) === 'p2' && player1KillRate !== player2KillRate" class="delta">
+                        ({{ calculateDelta(player1KillRate, player2KillRate, 2) }})
+                    </span>
                 </div>
 
                 <!-- Average Ping -->
@@ -616,20 +642,60 @@ const sortedHeadToHead = computed(() => {
                     <div class="grid-header p2-header">{{ comparisonData.player2 }}</div>
 
                     <div class="grid-label">Score</div>
-                    <div class="grid-value p1">{{ getPerformanceData(selectedTimePeriod).player1Totals.score }}</div>
-                    <div class="grid-value p2">{{ getPerformanceData(selectedTimePeriod).player2Totals.score }}</div>
+                    <div class="grid-value p1">
+                        {{ getPerformanceData(selectedTimePeriod).player1Totals.score }}
+                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.score, getPerformanceData(selectedTimePeriod).player2Totals.score) === 'p1'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.score, getPerformanceData(selectedTimePeriod).player2Totals.score) }})
+                        </span>
+                    </div>
+                    <div class="grid-value p2">
+                        {{ getPerformanceData(selectedTimePeriod).player2Totals.score }}
+                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.score, getPerformanceData(selectedTimePeriod).player2Totals.score) === 'p2'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.score, getPerformanceData(selectedTimePeriod).player2Totals.score) }})
+                        </span>
+                    </div>
                     
                     <div class="grid-label">Kills</div>
-                    <div class="grid-value p1">{{ getPerformanceData(selectedTimePeriod).player1Totals.kills }}</div>
-                    <div class="grid-value p2">{{ getPerformanceData(selectedTimePeriod).player2Totals.kills }}</div>
+                    <div class="grid-value p1">
+                        {{ getPerformanceData(selectedTimePeriod).player1Totals.kills }}
+                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.kills, getPerformanceData(selectedTimePeriod).player2Totals.kills) === 'p1'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.kills, getPerformanceData(selectedTimePeriod).player2Totals.kills) }})
+                        </span>
+                    </div>
+                    <div class="grid-value p2">
+                        {{ getPerformanceData(selectedTimePeriod).player2Totals.kills }}
+                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.kills, getPerformanceData(selectedTimePeriod).player2Totals.kills) === 'p2'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.kills, getPerformanceData(selectedTimePeriod).player2Totals.kills) }})
+                        </span>
+                    </div>
 
                     <div class="grid-label">Deaths</div>
-                    <div class="grid-value p1">{{ getPerformanceData(selectedTimePeriod).player1Totals.deaths }}</div>
-                    <div class="grid-value p2">{{ getPerformanceData(selectedTimePeriod).player2Totals.deaths }}</div>
+                    <div class="grid-value p1">
+                        {{ getPerformanceData(selectedTimePeriod).player1Totals.deaths }}
+                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.deaths, getPerformanceData(selectedTimePeriod).player2Totals.deaths) === 'p1'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.deaths, getPerformanceData(selectedTimePeriod).player2Totals.deaths) }})
+                        </span>
+                    </div>
+                    <div class="grid-value p2">
+                        {{ getPerformanceData(selectedTimePeriod).player2Totals.deaths }}
+                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.deaths, getPerformanceData(selectedTimePeriod).player2Totals.deaths) === 'p2'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.deaths, getPerformanceData(selectedTimePeriod).player2Totals.deaths) }})
+                        </span>
+                    </div>
 
                     <div class="grid-label">Play Time</div>
-                    <div class="grid-value p1">{{ formatPlayTime(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0) }}</div>
-                    <div class="grid-value p2">{{ formatPlayTime(getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) }}</div>
+                    <div class="grid-value p1">
+                        {{ formatPlayTime(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0) }}
+                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) === 'p1'" class="delta">
+                            ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) }})
+                        </span>
+                    </div>
+                    <div class="grid-value p2">
+                        {{ formatPlayTime(getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) }}
+                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) === 'p2'" class="delta">
+                            ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) }})
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1089,6 +1155,13 @@ const sortedHeadToHead = computed(() => {
 }
 .stat-comparison-grid .stat-value.worse {
     color: #f44336; /* Red for worse */
+}
+
+.delta {
+    font-size: 0.7em;
+    color: var(--color-text-muted);
+    font-weight: normal;
+    margin-left: 0.3em;
 }
 
 /* Performance Over Time */
