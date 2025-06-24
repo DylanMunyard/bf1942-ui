@@ -623,7 +623,8 @@ onUnmounted(() => {
                 <router-link :to="`/players/${encodeURIComponent(ranking.playerName)}`" class="player-link">
                   <PlayerName 
                     :name="ranking.playerName" 
-                    :source="serverContext?.serverGuid"
+                    source="server-rankings"
+                    :server-guid="serverContext?.serverGuid"
                     :clickable="true"
                     :showCompareIcon="true"
                   />

@@ -67,6 +67,19 @@ interface HeadToHeadEncounter {
   player2Deaths: number;
 }
 
+interface ServerDetails {
+  guid: string;
+  name: string;
+  ip: string;
+  port: number;
+  gameId: string;
+  country: string;
+  region: string;
+  city: string;
+  timezone: string;
+  org: string;
+}
+
 interface ComparisonData {
   player1: string;
   player2: string;
@@ -75,6 +88,7 @@ interface ComparisonData {
   averagePing: AveragePingData[];
   mapPerformance: MapPerformance[];
   headToHead: HeadToHeadEncounter[];
+  serverDetails?: ServerDetails;
 }
 
 const route = useRoute();
@@ -103,7 +117,7 @@ const timePeriodOptions = [
   { value: 'AllTime', label: 'All Time' },
 ] as const;
 
-const fetchComparisonData = async (player1: string, player2: string) => {
+const fetchComparisonData = async (player1: string, player2: string, includeServerGuid: boolean = true) => {
   if (!player1 || !player2) {
     comparisonData.value = null;
     return;
@@ -117,9 +131,9 @@ const fetchComparisonData = async (player1: string, player2: string) => {
   try {
     let url = `/stats/players/compare?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}`;
     
-    // Add serverGuid parameter if available in URL
+    // Add serverGuid parameter if available in URL and we want to include it
     const serverGuid = route.query.serverGuid as string;
-    if (serverGuid) {
+    if (serverGuid && includeServerGuid) {
       url += `&serverGuid=${encodeURIComponent(serverGuid)}`;
     }
     
@@ -146,7 +160,7 @@ const fetchComparisonData = async (player1: string, player2: string) => {
     
     // Update URL for sharing/bookmarking (but don't rely on it for functionality)
     const query: Record<string, string> = { player1, player2 };
-    if (serverGuid) {
+    if (serverGuid && includeServerGuid) {
       query.serverGuid = serverGuid;
     }
     router.replace({ query });
@@ -280,6 +294,14 @@ const hideDropdowns = () => {
   showPlayer2Dropdown.value = false;
 };
 
+// Clear server filter and requery
+const clearServerFilter = async () => {
+  // Refetch comparison data without server filter
+  if (player1Input.value && player2Input.value) {
+    await fetchComparisonData(player1Input.value, player2Input.value, false);
+  }
+};
+
 // Initialize from URL parameters on mount
 onMounted(() => {
   const urlPlayer1 = route.query.player1 as string;
@@ -402,6 +424,9 @@ const sortDirection = ref<'asc' | 'desc'>('asc');
 // Toggle state for extra columns
 const showExtraColumns = ref(false);
 
+// Toggle state for hiding maps with no scores
+const hideNoScores = ref(false);
+
 const sortMapPerformance = (column: string) => {
   if (sortColumn.value === column) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
@@ -412,11 +437,24 @@ const sortMapPerformance = (column: string) => {
 };
 
 const sortedMapPerformance = computed(() => {
-  if (!comparisonData.value?.mapPerformance || !sortColumn.value) {
-    return comparisonData.value?.mapPerformance || [];
+  if (!comparisonData.value?.mapPerformance) {
+    return [];
   }
 
-  return [...comparisonData.value.mapPerformance].sort((a, b) => {
+  let maps = comparisonData.value.mapPerformance;
+  
+  // Filter out maps with no scores if hideNoScores is enabled
+  if (hideNoScores.value) {
+    maps = maps.filter(map => 
+      map.player1Totals.score > 0 && map.player2Totals.score > 0
+    );
+  }
+
+  if (!sortColumn.value) {
+    return maps;
+  }
+
+  return [...maps].sort((a, b) => {
     let aValue: number | string;
     let bValue: number | string;
 
@@ -586,17 +624,50 @@ const sortedHeadToHead = computed(() => {
     </div>
 
     <div v-if="comparisonData" class="comparison-results">
+        <!-- Server Context Banner -->
+        <div v-if="comparisonData.serverDetails" class="server-context-banner">
+          <div class="server-context-content">
+            <div class="server-context-text">
+              <span class="context-label">Server comparison for:</span>
+              <router-link 
+                :to="`/servers/${encodeURIComponent(comparisonData.serverDetails.name)}/rankings`"
+                class="server-name-link"
+                :title="`View rankings for ${comparisonData.serverDetails.name}`"
+              >
+                {{ comparisonData.serverDetails.name }}
+              </router-link>
+            </div>
+            <button 
+              @click="clearServerFilter"
+              class="clear-server-btn"
+              title="Compare across all servers"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
         <!-- Summary Panel -->
         <div class="summary-panel">
             <div class="player-summary left" :class="{ 'winner': parseFloat(player1KDR) > parseFloat(player2KDR) }">
-                <h2>{{ comparisonData.player1 }}</h2>
+                <router-link 
+                  :to="`/players/${encodeURIComponent(comparisonData.player1)}`"
+                  class="player-summary-name"
+                >
+                  <h2>{{ comparisonData.player1 }}</h2>
+                </router-link>
                 <div class="kdr-summary">
                     <span>{{ player1KDR }}</span>
                     <label>Overall K/D</label>
                 </div>
             </div>
             <div class="player-summary right" :class="{ 'winner': parseFloat(player2KDR) > parseFloat(player1KDR) }">
-                <h2>{{ comparisonData.player2 }}</h2>
+                <router-link 
+                  :to="`/players/${encodeURIComponent(comparisonData.player2)}`"
+                  class="player-summary-name"
+                >
+                  <h2>{{ comparisonData.player2 }}</h2>
+                </router-link>
                 <div class="kdr-summary">
                     <span>{{ player2KDR }}</span>
                     <label>Overall K/D</label>
@@ -715,9 +786,18 @@ const sortedHeadToHead = computed(() => {
         <div class="comparison-section" v-if="combinedMapPerformance.length > 0">
             <div class="section-header">
                 <h3>Map Performance</h3>
-                <button class="toggle-columns-btn" @click="showExtraColumns = !showExtraColumns">
-                    {{ showExtraColumns ? 'Hide' : 'Show' }} Kills/Deaths
-                </button>
+                <div class="section-controls">
+                    <button 
+                        class="toggle-filter-btn" 
+                        @click="hideNoScores = !hideNoScores"
+                        :title="hideNoScores ? 'Show all maps including those with no scores' : 'Hide maps where either player has no scores'"
+                    >
+                        {{ hideNoScores ? '👁️' : '👁️‍🗨️' }}
+                    </button>
+                    <button class="toggle-columns-btn" @click="showExtraColumns = !showExtraColumns">
+                        {{ showExtraColumns ? 'Hide' : 'Show' }} Kills/Deaths
+                    </button>
+                </div>
             </div>
             <div class="map-performance-table">
                 <div class="table-header" :class="{ 'expanded': showExtraColumns }">
@@ -948,6 +1028,34 @@ const sortedHeadToHead = computed(() => {
   font-weight: bold;
   font-size: 1rem;
   color: var(--color-text);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.player-name:hover {
+  color: var(--color-primary);
+}
+
+.player-summary-name {
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.player-summary-name:hover {
+  transform: translateY(-2px);
+  background-color: transparent !important;
+}
+
+.player-summary-name h2 {
+  margin: 0;
+  transition: color 0.2s ease;
+  text-overflow: initial;
+  overflow: visible;
+}
+
+.player-summary-name:hover h2 {
+  color: var(--color-primary);
 }
 
 .player-details {
@@ -1074,6 +1182,32 @@ const sortedHeadToHead = computed(() => {
     margin-bottom: 0;
     border-bottom: none;
     padding-bottom: 0;
+}
+
+.section-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.toggle-filter-btn {
+    padding: 8px 12px;
+    font-size: 1.2rem;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-filter-btn:hover {
+    background-color: var(--color-background-soft);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-columns-btn {
@@ -1399,10 +1533,115 @@ const sortedHeadToHead = computed(() => {
     color: rgba(255, 255, 255, 0.9);
 }
 
+/* Server Context Banner */
+.server-context-banner {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.server-context-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.server-context-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.context-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.server-name-link {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 4px 12px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.server-name-link:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+    color: white;
+}
+
+.clear-server-btn {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.clear-server-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 
 @media (max-width: 768px) {
     .player-comparison-container {
         padding: 10px;
+    }
+    
+    .server-context-banner {
+        padding: 12px 16px;
+        margin-bottom: 20px;
+    }
+    
+    .server-context-content {
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .server-context-text {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+    }
+    
+    .context-label {
+        font-size: 0.9rem;
+    }
+    
+    .server-name-link {
+        font-size: 1rem;
+        padding: 6px 12px;
+    }
+    
+    .clear-server-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
     }
     .input-form {
         flex-direction: column;
@@ -1435,8 +1674,12 @@ const sortedHeadToHead = computed(() => {
         gap: 10px;
     }
     
-    .toggle-columns-btn {
+    .section-controls {
         align-self: center;
+        justify-content: center;
+    }
+    
+    .toggle-columns-btn {
         width: fit-content;
     }
 }

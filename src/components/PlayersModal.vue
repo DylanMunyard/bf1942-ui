@@ -81,7 +81,7 @@
                       </div>
                       <div class="player-name">
                         <router-link :to="`/players/${encodeURIComponent(player.name)}`" class="player-link">
-                          <PlayerName :name="player.name" source="players-modal" />
+                          <PlayerName :name="player.name" source="players-modal" :server-guid="server?.guid" />
                         </router-link>
                       </div>
                       <div class="player-score">{{ player.score.toLocaleString() }}</div>
@@ -165,7 +165,7 @@
                     </div>
                     <div class="player-name">
                       <router-link :to="`/players/${encodeURIComponent(player.name)}`" class="player-link">
-                        <PlayerName :name="player.name" source="players-modal" />
+                        <PlayerName :name="player.name" source="players-modal" :server-guid="server?.guid" />
                       </router-link>
                     </div>
                     <div class="player-score">{{ player.score.toLocaleString() }}</div>

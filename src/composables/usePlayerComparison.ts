@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 interface SelectedPlayer {
   name: string;
   source?: string; // Where the player was selected from (e.g., 'server-table', 'round-report')
+  serverGuid?: string; // The actual server GUID for the comparison
   timestamp: number;
 }
 
@@ -17,7 +18,7 @@ export function usePlayerComparison() {
   const canCompare = computed(() => selectedPlayers.value.length === 2);
   const hasSelections = computed(() => selectedPlayers.value.length > 0);
 
-  const addPlayer = (playerName: string, source?: string) => {
+  const addPlayer = (playerName: string, source?: string, serverGuid?: string) => {
     if (!playerName || !canAddPlayer.value) return;
     
     // Check if player is already selected
@@ -26,6 +27,7 @@ export function usePlayerComparison() {
     selectedPlayers.value.push({
       name: playerName,
       source,
+      serverGuid,
       timestamp: Date.now()
     });
     
@@ -59,8 +61,8 @@ export function usePlayerComparison() {
       player2: player2.name
     };
     
-    // Add serverGuid if available from either player's source
-    const serverGuid = player1.source || player2.source;
+    // Add serverGuid if available from either player
+    const serverGuid = player1.serverGuid || player2.serverGuid;
     if (serverGuid) {
       query.serverGuid = serverGuid;
     }

@@ -736,7 +736,7 @@ const goBack = () => {
               <h3>📌 Pinned Players Performance</h3>
               <div class="pinned-players-badges">
                 <div v-for="playerName in Array.from(pinnedPlayers)" :key="playerName" class="pinned-player-badge">
-                  <PlayerName :name="playerName" source="round-report-pinned" />
+                  <PlayerName :name="playerName" source="round-report-pinned" :server-guid="props.serverGuid" />
                 </div>
                 <button v-if="pinnedPlayers.size > 1" class="clear-all-button" @click="clearAllPinnedPlayers" title="Clear all pinned players">
                   Clear All
@@ -883,7 +883,7 @@ const goBack = () => {
                       </div>
                       <div class="player-name">
                         <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
-                          <PlayerName :name="player.playerName" source="round-report" />
+                          <PlayerName :name="player.playerName" source="round-report" :server-guid="props.serverGuid" />
                         </router-link>
                         <button
                           class="pin-player-btn"
@@ -977,7 +977,7 @@ const goBack = () => {
                     </div>
                     <div class="player-name">
                       <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
-                        <PlayerName :name="player.playerName" source="round-report" />
+                        <PlayerName :name="player.playerName" source="round-report" :server-guid="props.serverGuid" />
                       </router-link>
                       <button
                         class="pin-player-btn"

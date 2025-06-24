@@ -5,6 +5,7 @@ import { usePlayerComparison } from '@/composables/usePlayerComparison';
 interface Props {
   name: string;
   source?: string;
+  serverGuid?: string;
   clickable?: boolean;
   showCompareIcon?: boolean;
   class?: string;
@@ -13,7 +14,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   clickable: true,
   showCompareIcon: true,
-  class: ''
+  class: '',
+  serverGuid: undefined
 });
 
 const { selectedPlayers, canAddPlayer, addPlayer } = usePlayerComparison();
@@ -34,7 +36,7 @@ const handleClick = (event: MouseEvent) => {
   event.stopPropagation();
   
   if (canSelect.value) {
-    addPlayer(props.name, props.source);
+    addPlayer(props.name, props.source, props.serverGuid);
   }
 };
 
@@ -46,7 +48,7 @@ const handleCompareClick = (event: MouseEvent) => {
   event.stopPropagation();
   
   if (canSelect.value) {
-    addPlayer(props.name, props.source);
+    addPlayer(props.name, props.source, props.serverGuid);
   }
 };
 
