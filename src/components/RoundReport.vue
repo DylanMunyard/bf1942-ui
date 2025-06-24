@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { fetchRoundReport, fetchLiveServerData, RoundReport, LeaderboardSnapshot } from '../services/serverDetailsService';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import PlayerName from './PlayerName.vue';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -735,7 +736,7 @@ const goBack = () => {
               <h3>📌 Pinned Players Performance</h3>
               <div class="pinned-players-badges">
                 <div v-for="playerName in Array.from(pinnedPlayers)" :key="playerName" class="pinned-player-badge">
-                  {{ playerName }}
+                  <PlayerName :name="playerName" source="round-report-pinned" />
                 </div>
                 <button v-if="pinnedPlayers.size > 1" class="clear-all-button" @click="clearAllPinnedPlayers" title="Clear all pinned players">
                   Clear All
@@ -882,7 +883,7 @@ const goBack = () => {
                       </div>
                       <div class="player-name">
                         <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
-                          {{ player.playerName }}
+                          <PlayerName :name="player.playerName" source="round-report" />
                         </router-link>
                         <button
                           class="pin-player-btn"
@@ -976,7 +977,7 @@ const goBack = () => {
                     </div>
                     <div class="player-name">
                       <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
-                        {{ player.playerName }}
+                        <PlayerName :name="player.playerName" source="round-report" />
                       </router-link>
                       <button
                         class="pin-player-btn"

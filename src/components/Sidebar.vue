@@ -22,6 +22,13 @@
           <div class="tooltip-text">See who is online, search for a player</div>
         </div>
       </router-link>
+      <router-link to="/players/compare" active-class="active" class="nav-item" data-tooltip="true">
+        <i class="icon-player-comparison"></i>
+        <div class="tooltip">
+          <div class="tooltip-icon icon-player-comparison"></div>
+          <div class="tooltip-text">Compare two players' performance statistics side-by-side</div>
+        </div>
+      </router-link>
       <router-link to="/tk-livewire" active-class="active" class="nav-item" data-tooltip="true">
         <i class="icon-tk-livewire"></i>
         <div class="tooltip">
@@ -101,7 +108,7 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 }
 
 .icon-bf1942 {
-  background-image: url('../assets/bf1942.png');
+  background-image: url('../assets/bf1942.jpg');
   display: inline-block;
   width: 36px;
   height: 36px;
@@ -111,7 +118,7 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 }
 
 .icon-fh2 {
-  background-image: url('../assets/fh2.png');
+  background-image: url('../assets/fh2.jpg');
   display: inline-block;
   width: 36px;
   height: 36px;
@@ -121,7 +128,7 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 }
 
 .icon-players {
-  background-image: url('../assets/players.png');
+  background-image: url('../assets/players.jpg');
   display: inline-block;
   width: 36px;
   height: 36px;
@@ -131,7 +138,7 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 }
 
 .icon-tk-livewire {
-  background-image: url('../assets/team_killers.png');
+  background-image: url('../assets/team_killers.jpg');
   display: inline-block;
   width: 36px;
   height: 36px;
@@ -142,10 +149,21 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
   overflow: hidden;
 }
 
+.icon-player-comparison {
+  background-image: url('../assets/player_comparison.jpg');
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 /* Round icons */
 .icon-players,
 .icon-bf1942,
-.icon-fh2 {
+.icon-fh2,
+.icon-player-comparison {
   border-radius: 50%;
   overflow: hidden;
 }

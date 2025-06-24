@@ -4,11 +4,13 @@
       <router-view />
     </main>
     <Sidebar />
+    <PlayerComparisonWidget />
   </div>
 </template>
 
 <script setup lang="ts">
 import Sidebar from '../components/Sidebar.vue';
+import PlayerComparisonWidget from '../components/PlayerComparisonWidget.vue';
 </script>
 
 <style scoped>

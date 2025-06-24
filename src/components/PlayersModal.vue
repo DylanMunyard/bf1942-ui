@@ -81,7 +81,7 @@
                       </div>
                       <div class="player-name">
                         <router-link :to="`/players/${encodeURIComponent(player.name)}`" class="player-link">
-                          {{ player.name }}
+                          <PlayerName :name="player.name" source="players-modal" />
                         </router-link>
                       </div>
                       <div class="player-score">{{ player.score.toLocaleString() }}</div>
@@ -165,7 +165,7 @@
                     </div>
                     <div class="player-name">
                       <router-link :to="`/players/${encodeURIComponent(player.name)}`" class="player-link">
-                        {{ player.name }}
+                        <PlayerName :name="player.name" source="players-modal" />
                       </router-link>
                     </div>
                     <div class="player-score">{{ player.score.toLocaleString() }}</div>
@@ -201,6 +201,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { ServerInfo } from '../types/server';
+import PlayerName from './PlayerName.vue';
 
 interface Props {
   show: boolean;
