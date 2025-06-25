@@ -466,7 +466,7 @@ const daysBetween = (start: string, end: string): number => {
           <h2 class="player-name-heading">{{ playerName }}</h2>
           <div class="player-header-meta">
             <span class="player-playtime">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
-            <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed) }}</span>
+            <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
           </div>
         </div>
       </div>
@@ -503,25 +503,23 @@ const daysBetween = (start: string, end: string): number => {
         <div class="stats-section">
           <h3>Combat Statistics</h3>
           <div class="stats-grid">
-            <div class="stat-item combat-stats-panel">
-              <div class="stat-value">
-                <div class="combat-stats-large">
-                  <span class="stat-badge-large">
-                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon-large" />
-                    <span class="combat-value-large">{{ playerStats.totalKills }}</span>
-                    <span class="combat-label-large">Kills</span>
-                  </span>
-                  <span class="stat-badge-large">
-                    <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon-large" />
-                    <span class="combat-value-large">{{ playerStats.totalDeaths }}</span>
-                    <span class="combat-label-large">Deaths</span>
-                  </span>
-                  <span class="stat-badge-large">
-                    <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon-large" />
-                    <span class="combat-value-large">{{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
-                    <span class="combat-label-large">K/D</span>
-                  </span>
-                </div>
+            <div class="combat-stats-container">
+              <div class="combat-stats-large">
+                <span class="stat-badge-large">
+                  <img src="@/assets/kills.png" alt="Kills" class="kills-icon-large" />
+                  <span class="combat-value-large">{{ playerStats.totalKills }}</span>
+                  <span class="combat-label-large">Kills</span>
+                </span>
+                <span class="stat-badge-large">
+                  <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon-large" />
+                  <span class="combat-value-large">{{ playerStats.totalDeaths }}</span>
+                  <span class="combat-label-large">Deaths</span>
+                </span>
+                <span class="stat-badge-large">
+                  <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon-large" />
+                  <span class="combat-value-large">{{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
+                  <span class="combat-label-large">K/D</span>
+                </span>
               </div>
             </div>
             <div class="stat-item best-session-container" v-if="playerStats.bestSession">
@@ -3222,13 +3220,18 @@ tbody tr:hover {
 }
 
 /* Enhanced styles for large combat stats - make more prominent and visually appealing */
+.combat-stats-container {
+  grid-column: 1 / -1; /* Span all columns in the grid */
+  margin-bottom: 16px;
+}
+
 .combat-stats-large {
   display: flex;
   flex-direction: row;
   gap: 24px;
   justify-content: center;
   align-items: center;
-  margin: 20px 0;
+  margin: 0;
   padding: 24px;
   background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background) 100%);
   border-radius: 16px;
@@ -3432,49 +3435,45 @@ tbody tr:hover {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Add padding to the combat stats panel */
-.combat-stats-panel {
-  padding: 24px;
-  background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background) 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
+
 
 /* Mobile-responsive enhancements for combat stats */
 @media (max-width: 768px) {
+  .combat-stats-container {
+    margin-bottom: 12px;
+  }
+
   .combat-stats-large {
-    flex-direction: column;
-    gap: 16px;
-    margin: 16px 0;
-    padding: 20px 16px;
+    flex-direction: row; /* Keep horizontal layout */
+    gap: 8px; /* Reduced gap */
+    margin: 0;
+    padding: 16px 8px;
     border-radius: 12px;
+    justify-content: space-between; /* Distribute evenly */
   }
 
   .stat-badge-large {
-    padding: 16px 12px;
+    padding: 12px 6px;
     border-radius: 10px;
-    min-width: 120px;
+    min-width: 0; /* Remove min-width constraint */
+    flex: 1; /* Equal width for all badges */
+    max-width: calc(33.333% - 6px); /* Ensure they fit */
   }
 
   .kills-icon-large, .deaths-icon-large, .kdr-icon-large {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 8px;
+    width: 32px; /* Smaller icons */
+    height: 32px;
+    margin-bottom: 6px;
   }
 
   .combat-value-large {
-    font-size: 2rem;
+    font-size: 1.4rem; /* Smaller values */
     margin-bottom: 2px;
   }
 
   .combat-label-large {
-    font-size: 0.95rem;
+    font-size: 0.8rem; /* Smaller labels */
     margin-top: 2px;
-  }
-
-  .combat-stats-panel {
-    padding: 16px;
-    border-radius: 12px;
   }
 
   .best-session-card {
@@ -3523,27 +3522,28 @@ tbody tr:hover {
 /* Extra small screens */
 @media (max-width: 480px) {
   .combat-stats-large {
-    padding: 16px 12px;
-    gap: 12px;
+    padding: 12px 6px;
+    gap: 6px;
   }
 
   .stat-badge-large {
-    padding: 12px 8px;
-    min-width: 100px;
+    padding: 10px 4px;
+    min-width: 0;
+    max-width: calc(33.333% - 4px); /* Tighter fit */
   }
 
   .kills-icon-large, .deaths-icon-large, .kdr-icon-large {
-    width: 40px;
-    height: 40px;
-    margin-bottom: 6px;
+    width: 28px; /* Even smaller icons */
+    height: 28px;
+    margin-bottom: 4px;
   }
 
   .combat-value-large {
-    font-size: 1.8rem;
+    font-size: 1.2rem; /* More compact */
   }
 
   .combat-label-large {
-    font-size: 0.9rem;
+    font-size: 0.75rem; /* Smaller labels */
   }
 
   .best-session-card {
