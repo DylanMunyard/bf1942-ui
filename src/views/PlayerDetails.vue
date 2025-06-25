@@ -466,7 +466,7 @@ const daysBetween = (start: string, end: string): number => {
           <h2 class="player-name-heading">{{ playerName }}</h2>
           <div class="player-header-meta">
             <span class="player-playtime">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
-            <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed) }}</span>
+            <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
           </div>
         </div>
       </div>
@@ -503,25 +503,23 @@ const daysBetween = (start: string, end: string): number => {
         <div class="stats-section">
           <h3>Combat Statistics</h3>
           <div class="stats-grid">
-            <div class="stat-item combat-stats-panel">
-              <div class="stat-value">
-                <div class="combat-stats-large">
-                  <span class="stat-badge-large">
-                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon-large" />
-                    <span class="combat-value-large">{{ playerStats.totalKills }}</span>
-                    <span class="combat-label-large">Kills</span>
-                  </span>
-                  <span class="stat-badge-large">
-                    <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon-large" />
-                    <span class="combat-value-large">{{ playerStats.totalDeaths }}</span>
-                    <span class="combat-label-large">Deaths</span>
-                  </span>
-                  <span class="stat-badge-large">
-                    <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon-large" />
-                    <span class="combat-value-large">{{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
-                    <span class="combat-label-large">K/D</span>
-                  </span>
-                </div>
+            <div class="combat-stats-container">
+              <div class="combat-stats-large">
+                <span class="stat-badge-large">
+                  <img src="@/assets/kills.png" alt="Kills" class="kills-icon-large" />
+                  <span class="combat-value-large">{{ playerStats.totalKills }}</span>
+                  <span class="combat-label-large">Kills</span>
+                </span>
+                <span class="stat-badge-large">
+                  <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon-large" />
+                  <span class="combat-value-large">{{ playerStats.totalDeaths }}</span>
+                  <span class="combat-label-large">Deaths</span>
+                </span>
+                <span class="stat-badge-large">
+                  <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon-large" />
+                  <span class="combat-value-large">{{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
+                  <span class="combat-label-large">K/D</span>
+                </span>
               </div>
             </div>
             <div class="stat-item best-session-container" v-if="playerStats.bestSession">
@@ -3221,62 +3219,348 @@ tbody tr:hover {
   align-items: center;
 }
 
-/* Add new styles for large combat stats */
+/* Enhanced styles for large combat stats - make more prominent and visually appealing */
+.combat-stats-container {
+  grid-column: 1 / -1; /* Span all columns in the grid */
+  margin-bottom: 16px;
+}
+
 .combat-stats-large {
   display: flex;
   flex-direction: row;
-  gap: 32px;
+  gap: 24px;
   justify-content: center;
-  align-items: flex-end;
-  margin-top: 10px;
+  align-items: center;
+  margin: 0;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background) 100%);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .stat-badge-large {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: none;
-  padding: 0 12px;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 20px 16px;
+  border-radius: 12px;
   font-size: 1rem;
   font-weight: bold;
   color: var(--color-text);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-badge-large::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-badge-large:hover::before {
+  opacity: 1;
+}
+
+.stat-badge-large:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .kills-icon-large, .deaths-icon-large, .kdr-icon-large {
-  width: 60px;
-  height: 60px;
-  margin-bottom: 6px;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s ease;
+}
+
+.stat-badge-large:hover .kills-icon-large,
+.stat-badge-large:hover .deaths-icon-large,
+.stat-badge-large:hover .kdr-icon-large {
+  transform: scale(1.1);
 }
 
 .combat-value-large {
-  font-size: 2rem;
-  font-weight: bold;
+  font-size: 2.5rem;
+  font-weight: 800;
   color: var(--color-heading);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  line-height: 1;
 }
 
 .combat-label-large {
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: var(--color-text-muted);
-  font-weight: 500;
-  margin-top: 2px;
+  font-weight: 600;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Add a style for the best badge */
+/* Enhanced best session styling - make it pop more */
+.best-session-card {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, var(--color-background) 50%, rgba(255, 215, 0, 0.08) 100%);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 48px rgba(255, 215, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
+  display: block;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.best-session-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, transparent 50%, rgba(255, 215, 0, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.best-session-card:hover::before {
+  opacity: 1;
+}
+
+.best-session-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(255, 215, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
+.best-session-flex {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.best-session-icon-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 100%;
+  gap: 8px;
+}
+
+.trophy-icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.4));
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% {
+    filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.4));
+  }
+  100% {
+    filter: drop-shadow(0 6px 12px rgba(255, 215, 0, 0.6));
+  }
+}
+
 .best-badge {
-  background: gold;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
   color: #333;
-  font-size: 0.8rem;
-  font-weight: bold;
-  border-radius: 8px;
-  padding: 2px 8px;
-  margin-left: 8px;
-  vertical-align: middle;
+  font-size: 0.9rem;
+  font-weight: 800;
+  border-radius: 12px;
+  padding: 6px 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Add padding to the combat stats panel */
-.combat-stats-panel {
-  padding: 16px 0 16px 16px;
+.best-session-details-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.session-line-1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 600;
+}
+
+.session-line-2 {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.map-name {
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.session-line-3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.session-score {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* Mobile-responsive enhancements for combat stats */
+@media (max-width: 768px) {
+  .combat-stats-container {
+    margin-bottom: 12px;
+  }
+
+  .combat-stats-large {
+    flex-direction: row; /* Keep horizontal layout */
+    gap: 8px; /* Reduced gap */
+    margin: 0;
+    padding: 16px 8px;
+    border-radius: 12px;
+    justify-content: space-between; /* Distribute evenly */
+  }
+
+  .stat-badge-large {
+    padding: 12px 6px;
+    border-radius: 10px;
+    min-width: 0; /* Remove min-width constraint */
+    flex: 1; /* Equal width for all badges */
+    max-width: calc(33.333% - 6px); /* Ensure they fit */
+  }
+
+  .kills-icon-large, .deaths-icon-large, .kdr-icon-large {
+    width: 32px; /* Smaller icons */
+    height: 32px;
+    margin-bottom: 6px;
+  }
+
+  .combat-value-large {
+    font-size: 1.4rem; /* Smaller values */
+    margin-bottom: 2px;
+  }
+
+  .combat-label-large {
+    font-size: 0.8rem; /* Smaller labels */
+    margin-top: 2px;
+  }
+
+  .best-session-card {
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 12px;
+  }
+
+  .best-session-flex {
+    gap: 16px;
+  }
+
+  .best-session-icon-col {
+    min-width: 48px;
+    gap: 6px;
+  }
+
+  .trophy-icon {
+    font-size: 2rem;
+  }
+
+  .best-badge {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+
+  .session-score {
+    font-size: 1.2rem;
+  }
+
+  .session-line-2 {
+    font-size: 1rem;
+  }
+
+  /* Improve hover effects for mobile/touch devices */
+  .stat-badge-large:hover {
+    transform: translateY(-2px);
+  }
+
+  .best-session-card:hover {
+    transform: translateY(-3px) scale(1.01);
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .combat-stats-large {
+    padding: 12px 6px;
+    gap: 6px;
+  }
+
+  .stat-badge-large {
+    padding: 10px 4px;
+    min-width: 0;
+    max-width: calc(33.333% - 4px); /* Tighter fit */
+  }
+
+  .kills-icon-large, .deaths-icon-large, .kdr-icon-large {
+    width: 28px; /* Even smaller icons */
+    height: 28px;
+    margin-bottom: 4px;
+  }
+
+  .combat-value-large {
+    font-size: 1.2rem; /* More compact */
+  }
+
+  .combat-label-large {
+    font-size: 0.75rem; /* Smaller labels */
+  }
+
+  .best-session-card {
+    padding: 12px;
+  }
+
+  .best-session-flex {
+    gap: 12px;
+  }
+
+  .trophy-icon {
+    font-size: 1.8rem;
+  }
+
+  .best-badge {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+  }
 }
 </style>
