@@ -297,40 +297,10 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
   text-decoration-style: solid;
 }
 
-/* Mobile tooltip adjustments */
+/* Hide tooltips completely on mobile to prevent sticky hover behavior */
 @media (max-width: 768px) {
-  .tooltip {
-    right: 50%;
-    top: 100%;
-    transform: translateX(50%);
-    margin-right: 0;
-    margin-top: 15px;
-    padding: 16px;
-  }
-
-  .nav-menu > :first-child .tooltip {
-    transform: translateX(50%);
-    top: 100%;
-  }
-
-  .tooltip::after {
-    right: 50%;
-    top: -10px;
-    transform: translateX(50%);
-    border-width: 0 10px 10px 10px;
-    border-color: transparent transparent var(--sidebar-bg) transparent;
-  }
-
-  /* Reset arrow position for first item on mobile */
-  .nav-menu > :first-child .tooltip::after {
-    top: -10px;
-    right: 50%;
-    transform: translateX(50%);
-  }
-
-  .tooltip-icon {
-    width: 96px !important;
-    height: 96px !important;
+  .nav-item[data-tooltip="true"]:hover .tooltip {
+    display: none !important;
   }
 }
 </style> 
