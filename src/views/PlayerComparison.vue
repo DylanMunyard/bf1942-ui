@@ -89,6 +89,7 @@ interface ComparisonData {
   mapPerformance: MapPerformance[];
   headToHead: HeadToHeadEncounter[];
   serverDetails?: ServerDetails;
+  commonServers?: ServerDetails[];
 }
 
 const route = useRoute();
@@ -117,7 +118,7 @@ const timePeriodOptions = [
   { value: 'AllTime', label: 'All Time' },
 ] as const;
 
-const fetchComparisonData = async (player1: string, player2: string, includeServerGuid: boolean = true) => {
+const fetchComparisonData = async (player1: string, player2: string, includeServerGuid: boolean = true, specificServerGuid?: string) => {
   if (!player1 || !player2) {
     comparisonData.value = null;
     return;
@@ -131,8 +132,8 @@ const fetchComparisonData = async (player1: string, player2: string, includeServ
   try {
     let url = `/stats/players/compare?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}`;
     
-    // Add serverGuid parameter if available in URL and we want to include it
-    const serverGuid = route.query.serverGuid as string;
+    // Use specific serverGuid if provided, otherwise fall back to route query
+    const serverGuid = specificServerGuid || (route.query.serverGuid as string);
     if (serverGuid && includeServerGuid) {
       url += `&serverGuid=${encodeURIComponent(serverGuid)}`;
     }
@@ -299,6 +300,14 @@ const clearServerFilter = async () => {
   // Refetch comparison data without server filter
   if (player1Input.value && player2Input.value) {
     await fetchComparisonData(player1Input.value, player2Input.value, false);
+  }
+};
+
+// Select a specific server for comparison
+const selectServer = async (serverGuid: string) => {
+  if (player1Input.value && player2Input.value) {
+    // Refetch comparison data with the selected server (this will also update the URL)
+    await fetchComparisonData(player1Input.value, player2Input.value, true, serverGuid);
   }
 };
 
@@ -643,6 +652,29 @@ const sortedHeadToHead = computed(() => {
               title="Compare across all servers"
             >
               ✕
+            </button>
+          </div>
+        </div>
+
+        <!-- Common Servers Selector -->
+        <div v-if="comparisonData.commonServers && comparisonData.commonServers.length > 0" class="common-servers-section">
+          <div class="common-servers-header">
+            <span class="help-text">Compare performance on:</span>
+          </div>
+          <div class="common-servers-list">
+            <button 
+              v-for="server in comparisonData.commonServers" 
+              :key="server.guid"
+              @click="selectServer(server.guid)"
+              class="server-option-btn"
+              :class="{ 'active': comparisonData.serverDetails?.guid === server.guid }"
+              :title="`Compare performance on ${server.name}`"
+            >
+              <div class="server-option-name">{{ server.name }}</div>
+              <div class="server-option-details">
+                <span class="server-game">{{ server.gameId }}</span>
+                <span v-if="server.country" class="server-location">{{ server.country }}</span>
+              </div>
             </button>
           </div>
         </div>
@@ -1542,6 +1574,100 @@ const sortedHeadToHead = computed(() => {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Common Servers Section */
+.common-servers-section {
+    background-color: var(--color-background-soft);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid var(--color-border);
+}
+
+.common-servers-header {
+    margin-bottom: 12px;
+}
+
+.help-text {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.common-servers-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.server-option-btn {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    min-width: 200px;
+    flex: 1;
+}
+
+.server-option-btn:hover {
+    background-color: var(--color-background-mute);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.server-option-btn.active {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.server-option-btn.active .server-option-name {
+    color: white;
+}
+
+.server-option-btn.active .server-option-details {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.server-option-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text);
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+.server-option-details {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.server-game {
+    background-color: var(--color-background-soft);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.server-option-btn.active .server-game {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.server-location {
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
 .server-context-content {
     display: flex;
     align-items: center;
@@ -1681,6 +1807,35 @@ const sortedHeadToHead = computed(() => {
     
     .toggle-columns-btn {
         width: fit-content;
+    }
+    
+    .common-servers-section {
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    
+    
+    .help-text {
+        font-size: 0.9rem;
+    }
+    
+    .common-servers-list {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .server-option-btn {
+        min-width: unset;
+        width: 100%;
+        padding: 10px 12px;
+    }
+    
+    .server-option-name {
+        font-size: 0.95rem;
+    }
+    
+    .server-option-details {
+        font-size: 0.8rem;
     }
 }
 

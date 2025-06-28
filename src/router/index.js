@@ -6,7 +6,7 @@ import ServerDetails from '../views/ServerDetails.vue'
 import ServerRankingsPage from '../components/ServerRankingsPage.vue'
 import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
 import RoundReportPage from '../components/RoundReportPage.vue'
-import TKLivewirePage from '../components/TKLivewirePage.vue'
+import WorkInProgressPlaceholder from '../components/WorkInProgressPlaceholder.vue'
 import PlayerComparison from '../views/PlayerComparison.vue'
 
 const router = createRouter({
@@ -85,7 +85,7 @@ const router = createRouter({
     {
       path: '/tk-livewire',
       name: 'tk-livewire',
-      component: TKLivewirePage
+      component: WorkInProgressPlaceholder
     }
   ]
 })
