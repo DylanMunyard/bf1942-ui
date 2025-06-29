@@ -815,6 +815,12 @@ const closePlayersModal = () => {
           <div v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0" class="leaderboard-section recent-rounds-section">
             <div class="leaderboard-header">
               <h3>🎮 Recent Rounds</h3>
+              <router-link 
+                :to="{ path: '/rounds', query: { server: serverName } }" 
+                class="view-all-link"
+              >
+                View all
+              </router-link>
             </div>
             <div class="leaderboard-content">
               <div class="rounds-header">
@@ -1311,6 +1317,9 @@ const closePlayersModal = () => {
 }
 
 .leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 8px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--color-border);
@@ -1322,6 +1331,22 @@ const closePlayersModal = () => {
   font-size: 1.2rem;
   font-weight: 700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.view-all-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.view-all-link:hover {
+  color: var(--color-primary-hover, var(--color-primary));
+  background-color: var(--color-background-soft);
+  text-decoration: underline;
 }
 
 .leaderboard-content {
