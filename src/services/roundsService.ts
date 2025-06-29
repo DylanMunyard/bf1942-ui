@@ -26,9 +26,6 @@ export interface RoundListItem {
   participantCount: number;
   totalSessions: number;
   isActive: boolean;
-  totalScore: number;
-  totalKills: number;
-  totalDeaths: number;
 }
 
 /**

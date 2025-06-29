@@ -90,11 +90,7 @@ const formatRelativeTime = (dateString: string): string => {
   }
 };
 
-// Calculate K/D ratio
-const calculateKDR = (kills: number, deaths: number): string => {
-  if (deaths === 0) return kills.toString();
-  return (kills / deaths).toFixed(2);
-};
+
 
 // Update unique values for filters
 const updateUniqueValues = () => {
@@ -318,25 +314,6 @@ onMounted(() => {
 });
 
 // Timeline helper functions
-const getPerformanceClass = (round: RoundListItem): string => {
-  const kdr = round.totalDeaths === 0 ? round.totalKills : round.totalKills / round.totalDeaths;
-  
-  if (kdr >= 2.0) return 'performance-excellent';
-  if (kdr >= 1.5) return 'performance-good';
-  if (kdr >= 1.0) return 'performance-average';
-  if (kdr >= 0.5) return 'performance-poor';
-  return 'performance-bad';
-};
-
-const getPerformanceLabel = (round: RoundListItem): string => {
-  const kdr = round.totalDeaths === 0 ? round.totalKills : round.totalKills / round.totalDeaths;
-  
-  if (kdr >= 2.0) return 'High action round';
-  if (kdr >= 1.5) return 'Active round';
-  if (kdr >= 1.0) return 'Balanced round';
-  if (kdr >= 0.5) return 'Defensive round';
-  return 'Quiet round';
-};
 
 const getTimeGap = (currentRound: RoundListItem, nextRound: RoundListItem): string => {
   const current = new Date(currentRound.startTime.endsWith('Z') ? currentRound.startTime : currentRound.startTime + 'Z');
@@ -479,9 +456,7 @@ onUnmounted(() => {
             <!-- Timeline node -->
             <div class="timeline-node-container">
               <div 
-                class="timeline-node" 
-                :class="getPerformanceClass(round)"
-                :title="getPerformanceLabel(round)"
+                class="timeline-node"
               ></div>
             </div>
             
@@ -510,10 +485,6 @@ onUnmounted(() => {
               
               <div class="session-line-3">
                 <span class="session-score">{{ round.participantCount }} players</span>
-                <span class="stat-separator">•</span>
-                <span class="stat-item">
-                  {{ calculateKDR(round.totalKills, round.totalDeaths) }} KDR (<span class="kills-count">{{ round.totalKills }}</span> / <span class="deaths-count">{{ round.totalDeaths }}</span>)
-                </span>
                 <span class="stat-separator">•</span>
                 <span class="duration-text">{{ formatPlayTime(round.durationMinutes) }}</span>
               </div>
