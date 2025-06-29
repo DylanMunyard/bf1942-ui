@@ -148,14 +148,20 @@ onUnmounted(() => {
           class="tab"
           active-class="active"
         >
-          BF1942
+          <div class="tab-content">
+            <i class="tab-icon icon-bf1942"></i>
+            <span>BF1942</span>
+          </div>
         </router-link>
         <router-link
           to="/servers/fh2"
           class="tab"
           active-class="active"
         >
-          FH2
+          <div class="tab-content">
+            <i class="tab-icon icon-fh2"></i>
+            <span>FH2</span>
+          </div>
         </router-link>
       </div>
       <div class="header-right">
@@ -333,6 +339,38 @@ onUnmounted(() => {
   border-bottom: 2px solid var(--color-primary);
   position: relative;
   z-index: 1;
+}
+
+.tab-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.icon-bf1942 {
+  background-image: url('../assets/bf1942.jpg');
+}
+
+.icon-fh2 {
+  background-image: url('../assets/fh2.jpg');
+}
+
+@media (max-width: 768px) {
+  .tab-icon {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .header-right {

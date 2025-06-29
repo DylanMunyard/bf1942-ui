@@ -262,6 +262,7 @@ const updateQueryParams = () => {
 const handlePageSizeChange = () => {
   currentPage.value = 1; // Reset to first page when changing page size
   updateQueryParams();
+  fetchRankings();
 };
 
 // Generic debounced filter function

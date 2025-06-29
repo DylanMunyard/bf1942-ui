@@ -1,18 +1,11 @@
 <template>
   <div class="sidebar">
     <div class="nav-menu">
-      <router-link to="/servers/bf1942" active-class="active" class="nav-item" data-tooltip="true">
-        <i class="icon-bf1942"></i>
+      <router-link to="/servers" active-class="active" class="nav-item" data-tooltip="true">
+        <i class="icon-servers"></i>
         <div class="tooltip">
-          <div class="tooltip-icon icon-bf1942"></div>
-          <div class="tooltip-text">Find a BF1942 server. Thanks to <a href="https://github.com/cetteup" target="_blank" rel="noopener">@cetteup</a> for providing these APIs</div>
-        </div>
-      </router-link>
-      <router-link to="/servers/fh2" active-class="active" class="nav-item" data-tooltip="true">
-        <i class="icon-fh2"></i>
-        <div class="tooltip">
-          <div class="tooltip-icon icon-fh2"></div>
-          <div class="tooltip-text">Find a FH2 server. Thanks to <a href="https://github.com/cetteup" target="_blank" rel="noopener">@cetteup</a> for providing these APIs</div>
+          <div class="tooltip-icon icon-servers"></div>
+          <div class="tooltip-text">Find BF1942 and FH2 servers. Thanks to <a href="https://github.com/cetteup" target="_blank" rel="noopener">@cetteup</a> for providing these APIs</div>
         </div>
       </router-link>
       <router-link to="/players" active-class="active" class="nav-item" data-tooltip="true">
@@ -27,13 +20,6 @@
         <div class="tooltip">
           <div class="tooltip-icon icon-player-comparison"></div>
           <div class="tooltip-text">Compare two players' performance statistics side-by-side</div>
-        </div>
-      </router-link>
-      <router-link to="/tk-livewire" active-class="active" class="nav-item" data-tooltip="true">
-        <i class="icon-tk-livewire"></i>
-        <div class="tooltip">
-          <div class="tooltip-icon icon-tk-livewire"></div>
-          <div class="tooltip-text">Real time monitoring of players whose score is decreasing</div>
         </div>
       </router-link>
       <div class="nav-item theme-toggle-item" @click="toggleDarkMode" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
@@ -107,18 +93,8 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
   box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
 }
 
-.icon-bf1942 {
-  background-image: url('../assets/bf1942.jpg');
-  display: inline-block;
-  width: 36px;
-  height: 36px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.icon-fh2 {
-  background-image: url('../assets/fh2.jpg');
+.icon-servers {
+  background-image: url('../assets/servers.jpg');
   display: inline-block;
   width: 36px;
   height: 36px;
@@ -161,8 +137,7 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 
 /* Round icons */
 .icon-players,
-.icon-bf1942,
-.icon-fh2,
+.icon-servers,
 .icon-player-comparison {
   border-radius: 50%;
   overflow: hidden;
