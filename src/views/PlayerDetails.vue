@@ -378,6 +378,17 @@ const sortedMapStats = computed(() => {
   });
 });
 
+// Computed property to get the current expanded server's name
+const expandedServerName = computed(() => {
+  if (!expandedServerId.value || !playerStats.value?.insights?.serverRankings) return null;
+  
+  const server = playerStats.value.insights.serverRankings.find(
+    ranking => ranking.serverGuid === expandedServerId.value
+  );
+  
+  return server?.serverName || null;
+});
+
 // Handle back button navigation
 const goBack = () => {
   // Check if there's history to go back to
@@ -726,7 +737,20 @@ const daysBetween = (start: string, end: string): number => {
                     
                     <!-- Data rows -->
                     <template v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex">
-                      <div class="data-cell">{{ map.mapName }}</div>
+                      <div class="data-cell">
+                        <router-link 
+                          :to="{
+                            path: `/players/${encodeURIComponent(playerName)}/sessions`,
+                            query: { 
+                              map: map.mapName,
+                              ...(expandedServerName && { server: expandedServerName })
+                            }
+                          }"
+                          class="map-link"
+                        >
+                          {{ map.mapName }}
+                        </router-link>
+                      </div>
                       <div class="data-cell">{{ map.totalScore }}</div>
                       <div class="data-cell">{{ calculateKDR(map.totalKills, map.totalDeaths) }}</div>
                       <div class="data-cell">{{ map.totalKills }}</div>
@@ -755,7 +779,20 @@ const daysBetween = (start: string, end: string): number => {
                     </div>
                     <div v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex" class="map-stat-card">
                       <div class="map-stat-header">
-                        <h5 class="map-name">{{ map.mapName }}</h5>
+                        <h5 class="map-name">
+                          <router-link 
+                            :to="{
+                              path: `/players/${encodeURIComponent(playerName)}/sessions`,
+                              query: { 
+                                map: map.mapName,
+                                ...(expandedServerName && { server: expandedServerName })
+                              }
+                            }"
+                            class="map-link"
+                          >
+                            {{ map.mapName }}
+                          </router-link>
+                        </h5>
                         <div class="map-score">{{ map.totalScore }}</div>
                       </div>
                       <div class="map-stat-details">
@@ -2398,6 +2435,18 @@ tbody tr:hover {
   text-align: center;
   padding: 24px;
   color: var(--color-text-muted);
+}
+
+.map-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.map-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
 }
 
 
