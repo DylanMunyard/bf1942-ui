@@ -1348,7 +1348,7 @@ body.dragging * {
   display: grid;
   grid-template-columns: 40px 1fr 80px 60px 60px;
   gap: 10px;
-  padding: 12px 15px;
+  padding: 8px 12px;
   background: var(--color-background-mute);
   font-size: 0.8rem;
   font-weight: 600;
@@ -1362,7 +1362,7 @@ body.dragging * {
   display: grid;
   grid-template-columns: 40px 1fr 80px 60px 60px;
   gap: 10px;
-  padding: 12px 15px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -1448,6 +1448,11 @@ html[data-theme="dark"] .player-link,
 
 .player-ping {
   text-align: center;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 4px 6px;
+  border-radius: 4px;
 }
 
 .ping-good {
@@ -1869,10 +1874,12 @@ html[data-theme="dark"] .ping-bad,
 
   /* Preserve ping styling in mobile layout */
   .player-row .player-ping {
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-weight: 500;
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-weight: 600;
     text-align: center;
+    font-family: monospace;
+    font-size: 0.8rem;
   }
 
   .player-row .player-ping.ping-good {
