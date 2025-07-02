@@ -145,6 +145,23 @@ export interface TeamKillerMetric {
   lastActivity: string; // ISO date string
 }
 
+export interface SimilarPlayer {
+  playerName: string;
+  totalKills: number;
+  totalDeaths: number;
+  totalPlayTimeMinutes: number;
+  killDeathRatio: number;
+  favoriteServerGuid?: string;
+  similarityScore: number;
+  similarityReasons: string[];
+}
+
+export interface SimilarPlayersResponse {
+  targetPlayer: string;
+  targetPlayerStats: Partial<PlayerTimeStatistics> & { playerName: string };
+  similarPlayers: SimilarPlayer[];
+}
+
 /**
  * Fetches player statistics from the API
  * @param playerName The name of the player to fetch statistics for
@@ -324,6 +341,24 @@ export async function fetchTeamKillerMetrics(): Promise<TeamKillerMetric[]> {
   } catch (err) {
     console.error('Error fetching team killer metrics:', err);
     throw new Error('Failed to get team killer metrics');
+  }
+}
+
+/**
+ * Fetch players with similar statistics to the specified player.
+ * The backend computes a similarity score and provides reasons for the match.
+ * @param playerName The player to find neighbours for
+ * @returns An array of players ordered by similarity.
+ */
+export async function fetchSimilarPlayers(playerName: string): Promise<SimilarPlayer[]> {
+  try {
+    const response = await axios.get<SimilarPlayersResponse>(
+      `/stats/players/${encodeURIComponent(playerName)}/similar`
+    );
+    return response.data.similarPlayers;
+  } catch (err) {
+    console.error('Error fetching similar players:', err);
+    throw new Error('Failed to get similar players');
   }
 }
 

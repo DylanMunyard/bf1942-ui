@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { PlayerTimeStatistics, fetchPlayerStats } from '../services/playerStatsService';
+import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayer } from '../services/playerStatsService';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 
@@ -31,6 +31,33 @@ const timeRangeOptions = [
 // New state for map stats sorting
 const mapStatsSortField = ref('totalScore');
 const mapStatsSortDirection = ref('desc');
+
+// --- Similar Players state & functions ---
+const similarPlayers = ref<SimilarPlayer[]>([]);
+const loadingSimilarPlayers = ref(false);
+const similarPlayersError = ref<string | null>(null);
+const similarSectionExpanded = ref(false);
+
+const loadSimilarPlayers = async () => {
+  loadingSimilarPlayers.value = true;
+  similarPlayersError.value = null;
+  try {
+    similarPlayers.value = await fetchSimilarPlayers(playerName.value);
+  } catch (err: any) {
+    console.error('Error loading similar players:', err);
+    similarPlayersError.value = err.message || 'Failed to load similar players.';
+  } finally {
+    loadingSimilarPlayers.value = false;
+  }
+};
+
+const toggleSimilarPlayersSection = async () => {
+  similarSectionExpanded.value = !similarSectionExpanded.value;
+  if (similarSectionExpanded.value && similarPlayers.value.length === 0 && !loadingSimilarPlayers.value) {
+    await loadSimilarPlayers();
+  }
+};
+// --- End Similar Players ---
 
 // Function to fetch map stats for a server
 const fetchMapStats = async (serverGuid: string) => {
@@ -463,6 +490,13 @@ const daysBetween = (start: string, end: string): number => {
   return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 };
 
+// Color helper for similarity score
+const similarityColor = (score: number): string => {
+  if (score >= 0.8) return '#4CAF50'; // green
+  if (score >= 0.6) return '#FFC107'; // amber
+  return '#F44336'; // red
+};
+
 </script>
 
 <template>
@@ -828,6 +862,58 @@ const daysBetween = (start: string, end: string): number => {
             </div>
           </div>
 
+        </div>
+
+        <!-- Similar Players section -->
+        <div v-if="playerStats" class="stats-section">
+          <h3 @click="toggleSimilarPlayersSection" class="collapsible-header">
+            Similar Players
+            <span class="toggle-icon">{{ similarSectionExpanded ? '▲' : '▼' }}</span>
+            <span v-if="!similarSectionExpanded" class="expand-hint">Click to find players like {{ playerName }}</span>
+          </h3>
+          <div v-if="similarSectionExpanded">
+            <div v-if="loadingSimilarPlayers" class="loading-container">
+              <div class="loading-spinner"></div>
+              <p>Loading similar players...</p>
+            </div>
+            <div v-else-if="similarPlayersError" class="error-container">
+              <p class="error-message">{{ similarPlayersError }}</p>
+            </div>
+            <div v-else-if="similarPlayers.length > 0" class="similar-players-table-wrapper">
+              <table class="similar-players-table">
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>Similarity</th>
+                    <th class="reasons-col">Why</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(sim, idx) in similarPlayers" :key="idx">
+                    <td>
+                      <router-link
+                        :to="{ name: 'player-comparison', query: { player1: playerName, player2: sim.playerName } }"
+                        class="similar-player-name"
+                      >
+                        {{ sim.playerName }}
+                      </router-link>
+                    </td>
+                    <td :style="{ color: similarityColor(sim.similarityScore) }">
+                      {{ (sim.similarityScore * 100).toFixed(0) }}%
+                    </td>
+                    <td>
+                      <ul class="similarity-reasons">
+                        <li v-for="(reason, rIdx) in sim.similarityReasons" :key="rIdx">{{ reason }}</li>
+                      </ul>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-else class="no-data-container">
+              <p>No similar players found.</p>
+            </div>
+          </div>
         </div>
 
         <!-- Recent rounds section -->
@@ -3611,5 +3697,99 @@ tbody tr:hover {
     font-size: 0.75rem;
     padding: 3px 6px;
   }
+}
+
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 0;
+}
+
+.toggle-icon {
+  font-size: 1.2rem;
+  transition: transform 0.2s;
+}
+
+.similar-players-list {
+  margin-top: 10px;
+}
+
+.similar-player-card {
+  background-color: var(--color-background);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.similar-player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.similar-player-name {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.similarity-score {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.similarity-reasons {
+  list-style: none;
+  padding-left: 20px;
+}
+
+.no-data-container {
+  text-align: center;
+  padding: 20px;
+  color: var(--color-text-muted);
+}
+
+.expand-hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-left: 10px;
+}
+
+.similar-players-table-wrapper {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.similar-players-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 400px;
+}
+
+.similar-players-table th, .similar-players-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.similar-players-table th {
+  background-color: var(--color-background-mute);
+  font-weight: bold;
+  color: var(--color-heading);
+}
+
+.similar-players-table tbody tr:hover {
+  background-color: var(--color-background);
+}
+
+.reasons-col {
+  width: 60%;
+}
+
+.similarity-score {
+  font-weight: 600;
 }
 </style>
