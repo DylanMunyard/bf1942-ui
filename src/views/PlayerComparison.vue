@@ -121,6 +121,7 @@ const error = ref<string | null>(null);
 const activityHoursData = ref<ActivityHoursData | null>(null);
 const activityHoursLoading = ref(false);
 const activityHoursError = ref<string | null>(null);
+const showRawActivityData = ref(false);
 
 // Theme detection state
 const isDarkMode = ref(false);
@@ -677,36 +678,82 @@ const combinedActivityChartData = computed(() => {
     player2Data[hourData.localHour] = hourData.minutesActive;
   });
 
+  // Show raw data or combined overlap view
+  if (showRawActivityData.value) {
+    return {
+      labels,
+      datasets: [
+        {
+          label: comparisonData.value?.player1 || 'Player 1',
+          backgroundColor: 'rgba(156, 39, 176, 0.1)',
+          borderColor: 'rgba(156, 39, 176, 1)',
+          borderWidth: 3,
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          data: player1Data
+        },
+        {
+          label: comparisonData.value?.player2 || 'Player 2',
+          backgroundColor: 'rgba(33, 150, 243, 0.1)',
+          borderColor: 'rgba(33, 150, 243, 1)',
+          borderWidth: 3,
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointBackgroundColor: 'rgba(33, 150, 243, 1)',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          data: player2Data
+        }
+      ]
+    };
+  }
+
+  // Calculate combined activity potential (normalized to 0-1 scale for each player, then combined)
+  const maxPlayer1 = Math.max(...player1Data);
+  const maxPlayer2 = Math.max(...player2Data);
+  
+  const combinedActivityData = player1Data.map((p1Activity, index) => {
+    const p2Activity = player2Data[index];
+    
+    // Normalize each player's activity to 0-1 scale
+    const p1Normalized = maxPlayer1 > 0 ? p1Activity / maxPlayer1 : 0;
+    const p2Normalized = maxPlayer2 > 0 ? p2Activity / maxPlayer2 : 0;
+    
+    // Combined likelihood: geometric mean gives better representation of overlap
+    // Scale back up to meaningful values (0-100 for percentage-like display)
+    return Math.sqrt(p1Normalized * p2Normalized) * 100;
+  });
+
   return {
     labels,
     datasets: [
       {
-        label: comparisonData.value?.player1 || 'Player 1',
-        backgroundColor: 'rgba(156, 39, 176, 0.1)',
-        borderColor: 'rgba(156, 39, 176, 1)',
-        borderWidth: 3,
-        fill: false,
+        label: 'Overlap Potential',
+        backgroundColor: (ctx) => {
+          const canvas = ctx.chart.ctx;
+          const gradient = canvas.createLinearGradient(0, 0, 0, 200);
+          gradient.addColorStop(0, 'rgba(156, 39, 176, 0.4)');
+          gradient.addColorStop(0.5, 'rgba(103, 58, 183, 0.3)');
+          gradient.addColorStop(1, 'rgba(156, 39, 176, 0.1)');
+          return gradient;
+        },
+        borderColor: 'rgba(156, 39, 176, 0.8)',
+        borderWidth: 2,
+        fill: true,
         tension: 0.4,
         pointRadius: 0,
-        pointHoverRadius: 4,
-        pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+        pointHoverRadius: 6,
+        pointBackgroundColor: 'rgba(156, 39, 176, 0.9)',
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
-        data: player1Data
-      },
-      {
-        label: comparisonData.value?.player2 || 'Player 2',
-        backgroundColor: 'rgba(33, 150, 243, 0.1)',
-        borderColor: 'rgba(33, 150, 243, 1)',
-        borderWidth: 3,
-        fill: false,
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointBackgroundColor: 'rgba(33, 150, 243, 1)',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        data: player2Data
+        data: combinedActivityData
       }
     ]
   };
@@ -798,7 +845,10 @@ const combinedActivityChartOptions = computed(() => {
             return `${context[0].label}`;
           },
           label: function(context: any) {
-            return `${context.dataset.label}: ${context.parsed.y} minutes active`;
+            if (showRawActivityData.value) {
+              return `${context.dataset.label}: ${context.parsed.y} minutes active`;
+            }
+            return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
           }
         }
       }
@@ -1023,7 +1073,16 @@ const combinedActivityChartOptions = computed(() => {
 
         <!-- Typical Online Hours -->
         <div v-if="activityHoursData?.player1ActivityHours && activityHoursData?.player2ActivityHours" class="comparison-section">
-            <h3>Typical Online Hours</h3>
+            <div class="section-header">
+                <h3>Typical Online Hours</h3>
+                <button 
+                    class="toggle-view-btn" 
+                    @click="showRawActivityData = !showRawActivityData"
+                    :title="showRawActivityData ? 'Show overlap potential' : 'Show individual activity'"
+                >
+                    {{ showRawActivityData ? '🔀 Show Overlap' : '📊 Show Individual' }}
+                </button>
+            </div>
             <div v-if="activityHoursLoading" class="loading-container">
                 <div class="loading-spinner"></div>
                 <p>Loading activity data...</p>
@@ -1581,6 +1640,27 @@ const combinedActivityChartOptions = computed(() => {
 .toggle-columns-btn:hover {
     background-color: var(--color-accent);
     transform: translateY(-1px);
+}
+
+.toggle-view-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.toggle-view-btn:hover {
+    background-color: var(--color-background-soft);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Summary Panel */
