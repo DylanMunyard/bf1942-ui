@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { Line } from 'vue-chartjs';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+
+// Register Chart.js components
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 // Define the structure for player search results
 interface PlayerSearchResult {
@@ -80,6 +85,17 @@ interface ServerDetails {
   org: string;
 }
 
+interface ActivityByHour {
+  formattedHour: string;
+  hour: number;
+  minutesActive: number;
+}
+
+interface ActivityHoursData {
+  player1ActivityHours: ActivityByHour[];
+  player2ActivityHours: ActivityByHour[];
+}
+
 interface ComparisonData {
   player1: string;
   player2: string;
@@ -101,6 +117,38 @@ const comparisonData = ref<ComparisonData | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 
+// Activity hours state
+const activityHoursData = ref<ActivityHoursData | null>(null);
+const activityHoursLoading = ref(false);
+const activityHoursError = ref<string | null>(null);
+
+// Theme detection state
+const isDarkMode = ref(false);
+const chartKey = ref(0);
+
+// Function to detect theme by checking computed CSS values
+const detectTheme = () => {
+  // Get the actual computed color values from CSS custom properties
+  const computedStyle = getComputedStyle(document.documentElement);
+  const backgroundColor = computedStyle.getPropertyValue('--color-background').trim();
+  const textColor = computedStyle.getPropertyValue('--color-text').trim();
+  
+  // If background is dark purple (dark mode) vs white (light mode)
+  const newIsDarkMode = backgroundColor.includes('26, 16, 37') || backgroundColor === '#1a1025';
+  
+  console.log('Theme detection from CSS:', {
+    backgroundColor,
+    textColor,
+    newIsDarkMode,
+    documentClasses: document.documentElement.className
+  });
+  
+  if (newIsDarkMode !== isDarkMode.value) {
+    isDarkMode.value = newIsDarkMode;
+    chartKey.value++; // Force chart re-render
+  }
+};
+
 // Search-related state
 const player1SearchResults = ref<PlayerSearchResult[]>([]);
 const player2SearchResults = ref<PlayerSearchResult[]>([]);
@@ -117,6 +165,39 @@ const timePeriodOptions = [
   { value: 'LastYear', label: 'Last Year' },
   { value: 'AllTime', label: 'All Time' },
 ] as const;
+
+// Function to fetch activity hours for both players
+const fetchActivityHours = async (player1: string, player2: string) => {
+  if (!player1 || !player2) {
+    activityHoursData.value = null;
+    return;
+  }
+  
+  activityHoursLoading.value = true;
+  activityHoursError.value = null;
+  
+  try {
+    const url = `/stats/players/compare/activity-hours?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}`;
+    console.log(`Fetching activity hours from: ${url}`);
+    
+    const response = await fetch(url);
+    console.log(`Activity hours response status: ${response.status}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch activity hours data');
+    }
+    
+    const data = await response.json();
+    console.log('Activity hours data:', data);
+    
+    activityHoursData.value = data;
+  } catch (err: any) {
+    console.error('Error fetching activity hours:', err);
+    activityHoursError.value = err.message;
+  } finally {
+    activityHoursLoading.value = false;
+  }
+};
 
 const fetchComparisonData = async (player1: string, player2: string, includeServerGuid: boolean = true, specificServerGuid?: string) => {
   if (!player1 || !player2) {
@@ -158,6 +239,9 @@ const fetchComparisonData = async (player1: string, player2: string, includeServ
     }
     
     comparisonData.value = data;
+    
+    // Fetch activity hours data asynchronously (don't block the main comparison)
+    fetchActivityHours(player1, player2);
     
     // Update URL for sharing/bookmarking (but don't rely on it for functionality)
     const query: Record<string, string> = { player1, player2 };
@@ -313,6 +397,25 @@ const selectServer = async (serverGuid: string) => {
 
 // Initialize from URL parameters on mount
 onMounted(() => {
+  // Detect initial theme
+  detectTheme();
+  
+  // Watch for theme changes
+  const observer = new MutationObserver(() => {
+    detectTheme();
+  });
+  
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
+  
+  // Watch for system theme changes
+  if (window.matchMedia) {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', detectTheme);
+  }
+  
   const urlPlayer1 = route.query.player1 as string;
   const urlPlayer2 = route.query.player2 as string;
   
@@ -528,6 +631,187 @@ const sortedHeadToHead = computed(() => {
   });
 });
 
+// Function to convert UTC hour to local hour
+const convertToLocalHour = (utcHour: number): number => {
+  const now = new Date();
+  const localDate = new Date(now.setUTCHours(utcHour, 0, 0, 0));
+  return localDate.getHours();
+};
+
+// Helper to sort activity hours by local time
+const getSortedActivityHours = (activityHours: ActivityByHour[]) => {
+  if (!activityHours) return [];
+  
+  // Create a new array with local hour information
+  const hoursWithLocalTime = activityHours.map(hourData => ({
+    ...hourData,
+    localHour: convertToLocalHour(hourData.hour)
+  }));
+
+  // Sort by local hour (0-23)
+  return [...hoursWithLocalTime].sort((a, b) => a.localHour - b.localHour);
+};
+
+// Combined activity chart data for both players
+const combinedActivityChartData = computed(() => {
+  if (!activityHoursData.value?.player1ActivityHours || !activityHoursData.value?.player2ActivityHours) {
+    return { labels: [], datasets: [] };
+  }
+
+  const player1Sorted = getSortedActivityHours(activityHoursData.value.player1ActivityHours);
+  const player2Sorted = getSortedActivityHours(activityHoursData.value.player2ActivityHours);
+  
+  // Create labels for all 24 hours
+  const labels = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+  
+  // Create data arrays with zeros for missing hours
+  const player1Data = new Array(24).fill(0);
+  const player2Data = new Array(24).fill(0);
+  
+  // Fill in actual data
+  player1Sorted.forEach(hourData => {
+    player1Data[hourData.localHour] = hourData.minutesActive;
+  });
+  
+  player2Sorted.forEach(hourData => {
+    player2Data[hourData.localHour] = hourData.minutesActive;
+  });
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: comparisonData.value?.player1 || 'Player 1',
+        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+        borderColor: 'rgba(156, 39, 176, 1)',
+        borderWidth: 3,
+        fill: false,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        data: player1Data
+      },
+      {
+        label: comparisonData.value?.player2 || 'Player 2',
+        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+        borderColor: 'rgba(33, 150, 243, 1)',
+        borderWidth: 3,
+        fill: false,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointBackgroundColor: 'rgba(33, 150, 243, 1)',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        data: player2Data
+      }
+    ]
+  };
+});
+
+// Chart options for the combined activity chart
+const combinedActivityChartOptions = computed(() => {
+  // Get colors directly from CSS custom properties
+  const computedStyle = getComputedStyle(document.documentElement);
+  const cssTextColor = computedStyle.getPropertyValue('--color-text').trim();
+  const cssHeadingColor = computedStyle.getPropertyValue('--color-heading').trim();
+  
+  // Use the actual CSS colors, fallback to manual detection
+  const textColor = cssHeadingColor || (isDarkMode.value ? '#ffffff' : '#2c3e50');
+  const gridColor = isDarkMode.value ? 'rgba(235, 235, 235, 0.15)' : 'rgba(60, 60, 60, 0.12)';
+  
+  console.log('Chart options:', {
+    isDarkMode: isDarkMode.value,
+    cssTextColor,
+    cssHeadingColor,
+    finalTextColor: textColor
+  });
+  
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      intersect: false,
+      mode: 'index' as const
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        display: false,
+        grid: {
+          display: false
+        }
+      },
+      x: {
+        display: true,
+        grid: {
+          display: true,
+          color: gridColor
+        },
+        ticks: {
+          color: textColor,
+          font: {
+            size: 10
+          },
+          maxTicksLimit: 6
+        },
+        title: {
+          display: false
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top' as const,
+        labels: {
+          color: textColor,
+          usePointStyle: false,
+          padding: 20,
+          font: {
+            size: 14,
+            weight: 'bold' as const
+          }
+        }
+      },
+      tooltip: {
+        enabled: true,
+        backgroundColor: isDarkMode.value ? 'rgba(35, 21, 53, 0.95)' : 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        borderColor: isDarkMode.value ? '#7e57c2' : '#2196F3',
+        borderWidth: 1,
+        cornerRadius: 6,
+        displayColors: true,
+        titleFont: {
+          size: 12,
+          weight: 'bold' as const
+        },
+        bodyFont: {
+          size: 11
+        },
+        callbacks: {
+          title: function(context: any) {
+            return `${context[0].label}`;
+          },
+          label: function(context: any) {
+            return `${context.dataset.label}: ${context.parsed.y} minutes active`;
+          }
+        }
+      }
+    },
+    elements: {
+      point: {
+        radius: 0,
+        hoverRadius: 4
+      }
+    }
+  };
+});
+
 </script>
 
 <template>
@@ -736,6 +1020,47 @@ const sortedHeadToHead = computed(() => {
                 </div>
             </div>
         </div>
+
+        <!-- Typical Online Hours -->
+        <div v-if="activityHoursData?.player1ActivityHours && activityHoursData?.player2ActivityHours" class="comparison-section">
+            <h3>Typical Online Hours</h3>
+            <div v-if="activityHoursLoading" class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Loading activity data...</p>
+            </div>
+            <div v-else-if="activityHoursError" class="error-container">
+                <p>{{ activityHoursError }}</p>
+            </div>
+            <div v-else class="activity-section">
+                <div class="activity-chart-wrapper">
+                    <div class="activity-chart-container">
+                        <!-- Background zones for time periods -->
+                        <div class="time-period-zones">
+                            <div class="time-zone early-zone" title="Early (00:00 - 08:00)"></div>
+                            <div class="time-zone day-zone" title="Day (08:00 - 16:00)"></div>
+                            <div class="time-zone night-zone" title="Night (16:00 - 24:00)"></div>
+                        </div>
+                        <Line :key="chartKey" :data="combinedActivityChartData" :options="combinedActivityChartOptions" />
+                    </div>
+                    
+                    <!-- Time period section labels -->
+                    <div class="time-period-labels">
+                        <div class="period-label early-label">
+                            <span class="period-name">Early</span>
+                            <span class="period-hours">12AM-8AM</span>
+                        </div>
+                        <div class="period-label day-label">
+                            <span class="period-name">Day</span>
+                            <span class="period-hours">8AM-4PM</span>
+                        </div>
+                        <div class="period-label night-label">
+                            <span class="period-name">Night</span>
+                            <span class="period-hours">4PM-12AM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- Performance Over Time -->
         <div class="comparison-section" v-if="comparisonData.bucketTotals && comparisonData.bucketTotals.length > 0">
@@ -757,57 +1082,57 @@ const sortedHeadToHead = computed(() => {
 
                     <div class="grid-label">Score</div>
                     <div class="grid-value p1">
-                        {{ getPerformanceData(selectedTimePeriod).player1Totals.score }}
-                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.score, getPerformanceData(selectedTimePeriod).player2Totals.score) === 'p1'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.score, getPerformanceData(selectedTimePeriod).player2Totals.score) }})
+                        {{ getPerformanceData(selectedTimePeriod)?.player1Totals.score }}
+                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p1'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) }})
                         </span>
                     </div>
                     <div class="grid-value p2">
-                        {{ getPerformanceData(selectedTimePeriod).player2Totals.score }}
-                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.score, getPerformanceData(selectedTimePeriod).player2Totals.score) === 'p2'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.score, getPerformanceData(selectedTimePeriod).player2Totals.score) }})
+                        {{ getPerformanceData(selectedTimePeriod)?.player2Totals.score }}
+                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p2'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) }})
                         </span>
                     </div>
                     
                     <div class="grid-label">Kills</div>
                     <div class="grid-value p1">
-                        {{ getPerformanceData(selectedTimePeriod).player1Totals.kills }}
-                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.kills, getPerformanceData(selectedTimePeriod).player2Totals.kills) === 'p1'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.kills, getPerformanceData(selectedTimePeriod).player2Totals.kills) }})
+                        {{ getPerformanceData(selectedTimePeriod)?.player1Totals.kills }}
+                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p1'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) }})
                         </span>
                     </div>
                     <div class="grid-value p2">
-                        {{ getPerformanceData(selectedTimePeriod).player2Totals.kills }}
-                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.kills, getPerformanceData(selectedTimePeriod).player2Totals.kills) === 'p2'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.kills, getPerformanceData(selectedTimePeriod).player2Totals.kills) }})
+                        {{ getPerformanceData(selectedTimePeriod)?.player2Totals.kills }}
+                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p2'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) }})
                         </span>
                     </div>
 
                     <div class="grid-label">Deaths</div>
                     <div class="grid-value p1">
-                        {{ getPerformanceData(selectedTimePeriod).player1Totals.deaths }}
-                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.deaths, getPerformanceData(selectedTimePeriod).player2Totals.deaths) === 'p1'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.deaths, getPerformanceData(selectedTimePeriod).player2Totals.deaths) }})
+                        {{ getPerformanceData(selectedTimePeriod)?.player1Totals.deaths }}
+                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p1'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) }})
                         </span>
                     </div>
                     <div class="grid-value p2">
-                        {{ getPerformanceData(selectedTimePeriod).player2Totals.deaths }}
-                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.deaths, getPerformanceData(selectedTimePeriod).player2Totals.deaths) === 'p2'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod).player1Totals.deaths, getPerformanceData(selectedTimePeriod).player2Totals.deaths) }})
+                        {{ getPerformanceData(selectedTimePeriod)?.player2Totals.deaths }}
+                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p2'" class="delta">
+                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) }})
                         </span>
                     </div>
 
                     <div class="grid-label">Play Time</div>
                     <div class="grid-value p1">
-                        {{ formatPlayTime(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0) }}
-                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) === 'p1'" class="delta">
-                            ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) }})
+                        {{ formatPlayTime(getPerformanceData(selectedTimePeriod)?.player1Totals.playTimeMinutes || 0) }}
+                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p1'" class="delta">
+                            ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) }})
                         </span>
                     </div>
                     <div class="grid-value p2">
-                        {{ formatPlayTime(getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) }}
-                        <span v-if="getHigherValue(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) === 'p2'" class="delta">
-                            ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod).player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod).player2Totals.playTimeMinutes || 0) }})
+                        {{ formatPlayTime(getPerformanceData(selectedTimePeriod)?.player2Totals.playTimeMinutes || 0) }}
+                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p2'" class="delta">
+                            ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) }})
                         </span>
                     </div>
                 </div>
@@ -1733,9 +2058,138 @@ const sortedHeadToHead = computed(() => {
 }
 
 
+/* Activity Chart Styles */
+.activity-section {
+  margin-top: 12px;
+}
+
+.activity-chart-wrapper {
+  margin: 10px 0;
+}
+
+.activity-chart-container {
+  height: 200px;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-background-soft) 100%);
+  border: 1px solid rgba(156, 39, 176, 0.1);
+  padding: 5px;
+}
+
+/* Time period background zones */
+.time-period-zones {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.time-zone {
+  flex: 1;
+  transition: opacity 0.2s ease;
+}
+
+.early-zone {
+  background: linear-gradient(135deg, rgba(103, 58, 183, 0.25) 0%, rgba(103, 58, 183, 0.15) 100%);
+  flex: 8; /* 8 hours: 00-08 */
+}
+
+.day-zone {
+  background: linear-gradient(135deg, rgba(156, 39, 176, 0.3) 0%, rgba(156, 39, 176, 0.2) 100%);
+  flex: 8; /* 8 hours: 08-16 */
+}
+
+.night-zone {
+  background: linear-gradient(135deg, rgba(74, 20, 140, 0.35) 0%, rgba(74, 20, 140, 0.25) 100%);
+  flex: 8; /* 8 hours: 16-24 */
+}
+
+/* Time period labels */
+.time-period-labels {
+  display: flex;
+  margin: 8px 0 5px 0;
+  padding: 0 5px;
+}
+
+.period-label {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.period-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.period-hours {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+
+.early-label .period-name {
+  color: rgba(103, 58, 183, 0.9);
+}
+
+.day-label .period-name {
+  color: rgba(156, 39, 176, 0.9);
+}
+
+.night-label .period-name {
+  color: rgba(74, 20, 140, 0.9);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .early-label .period-name {
+    color: rgba(159, 126, 219, 0.9); /* Lighter purple for dark mode */
+  }
+  
+  .night-label .period-name {
+    color: rgba(149, 117, 205, 0.9); /* Lighter purple for dark mode */
+  }
+}
+
+/* Also handle explicit dark mode class if used */
+.dark-mode .early-label .period-name,
+:root.dark-mode .early-label .period-name {
+  color: rgba(159, 126, 219, 0.9); /* Lighter purple for dark mode */
+}
+
+.dark-mode .night-label .period-name,
+:root.dark-mode .night-label .period-name {
+  color: rgba(149, 117, 205, 0.9); /* Lighter purple for dark mode */
+}
+
 @media (max-width: 768px) {
     .player-comparison-container {
         padding: 10px;
+    }
+    
+    .activity-chart-container {
+        height: 150px;
+        margin: 6px 0;
+    }
+    
+    .time-period-labels {
+        margin: 4px 0 2px 0;
+    }
+    
+    .period-name {
+        font-size: 0.75rem;
+    }
+    
+    .period-hours {
+        font-size: 0.65rem;
     }
     
     .server-context-banner {
