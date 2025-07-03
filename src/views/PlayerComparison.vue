@@ -848,7 +848,18 @@ const combinedActivityChartOptions = computed(() => {
             if (showRawActivityData.value) {
               return `${context.dataset.label}: ${context.parsed.y} minutes active`;
             }
-            return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+            
+            const value = context.parsed.y;
+            let likelihood;
+            if (value < 25) {
+              likelihood = 'Unlikely';
+            } else if (value < 70) {
+              likelihood = 'Possible';
+            } else {
+              likelihood = 'Most Likely';
+            }
+            
+            return `${context.dataset.label}: ${likelihood}`;
           }
         }
       }
