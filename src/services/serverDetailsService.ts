@@ -188,54 +188,32 @@ export async function fetchRoundReport(serverGuid: string, mapName: string, star
   }
 }
 
+// API response interface for servers endpoint
+interface ServersResponse {
+  servers: ServerInfo[];
+  lastUpdated: string;
+  cacheHit: boolean;
+}
+
 /**
- * Fetches all servers from BFList API with paging support for ServerTable component
+ * Fetches all servers from backend API with caching support for ServerTable component
  * @param game The game name used by the API
  * @returns All servers sorted by player count
  */
 export async function fetchAllServers(
   game: 'bf1942' | 'fh2'
 ): Promise<ServerInfo[]> {
-  let cursor: string | undefined;
-  let after: string | undefined;
-  let hasMore: boolean;
-  const servers: ServerInfo[] = [];
-  
-  do {
-    const url = new URL(
-      `/v2/${game}/servers`,
-      'https://api.bflist.io'
-    );
-    url.searchParams.set('perPage', '100');
-
-    // Set pagination parameters if present
-    if (cursor && after) {
-      url.searchParams.set('cursor', cursor);
-      url.searchParams.set('after', after);
-    }
-
-    const response = await axios.get<{
-      servers: ServerInfo[]
-      cursor: string
-      hasMore: boolean
-    }>(url.toString());
-
-    for (const server of response.data.servers) {
-      servers.push(server);
-      // Update `after` marker on the fly (avoids having to pop() later)
-      after = server.ip + ':' + server.port;
-    }
-
-    cursor = response.data.cursor;
-    hasMore = response.data.hasMore;
-  } while (hasMore);
-
-  // Sort by player count (descending)
-  return servers.sort((a, b) => b.numPlayers - a.numPlayers);
+  try {
+    const response = await axios.get<ServersResponse>(`/stats/liveservers/${game}/servers`);
+    return response.data.servers;
+  } catch (err) {
+    console.error('Error fetching all servers:', err);
+    throw new Error('Failed to get all servers');
+  }
 }
 
 /**
- * Fetches live server data from BFList API using direct endpoint
+ * Fetches live server data from backend API using cached endpoint
  * @param gameId The game ID ('fh2' for Forgotten Hope 2, 'bf1942' for BF1942)
  * @param serverIp The IP address of the server
  * @param serverPort The port of the server
@@ -250,9 +228,9 @@ export async function fetchLiveServerData(
     // Validate gameId and convert to the correct format for the new API
     const game = gameId === 'fh2' ? 'fh2' : 'bf1942';
     
-    // Use the direct server endpoint instead of fetching all servers
+    // Use the backend API endpoint with separate IP and port parameters
     const response = await axios.get<ServerInfo>(
-      `https://api.bflist.io/v2/${game}/servers/${serverIp}:${serverPort}`
+      `/stats/liveservers/${game}/${serverIp}/${serverPort}`
     );
     
     return response.data;
