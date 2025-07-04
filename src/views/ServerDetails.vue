@@ -31,6 +31,7 @@ const pingMetric = ref<'median' | 'p95'>('median');
 const isPingExplainerCollapsed = ref(true);
 const isServerInsightsCollapsed = ref(true);
 const showPlayersModal = ref(false);
+const selectedTimePeriod = ref<'week' | 'month'>('week');
 
 // Fetch live server data asynchronously (non-blocking)
 const fetchLiveServerDataAsync = async () => {
@@ -551,6 +552,26 @@ const openPlayersModal = () => {
 const closePlayersModal = () => {
   showPlayersModal.value = false;
 };
+
+// Toggle time period between week and month
+const toggleTimePeriod = (period: 'week' | 'month') => {
+  selectedTimePeriod.value = period;
+};
+
+// Computed properties for current data based on selected time period
+const currentMostActivePlayers = computed(() => {
+  if (!serverDetails.value) return [];
+  return selectedTimePeriod.value === 'week' 
+    ? serverDetails.value.mostActivePlayersByTimeWeek 
+    : serverDetails.value.mostActivePlayersByTimeMonth;
+});
+
+const currentTopScores = computed(() => {
+  if (!serverDetails.value) return [];
+  return selectedTimePeriod.value === 'week' 
+    ? serverDetails.value.topScoresWeek 
+    : serverDetails.value.topScoresMonth;
+});
 </script>
 
 <template>
@@ -581,10 +602,16 @@ const closePlayersModal = () => {
           @click="openPlayersModal"
           class="current-players-link"
         >
-          {{ liveServerInfo.numPlayers }} Online
+          <div class="players-info">
+            <span class="player-count">{{ liveServerInfo.numPlayers }} Online</span>
+            <span v-if="liveServerInfo.mapName" class="current-map">Currently playing {{ liveServerInfo.mapName }}</span>
+          </div>
         </button>
         <div v-else-if="liveServerInfo && liveServerInfo.players.length === 0" class="current-players-empty">
-          0 Online
+          <div class="players-info">
+            <span class="player-count">0 Online</span>
+            <span v-if="liveServerInfo.mapName" class="current-map">Currently playing {{ liveServerInfo.mapName }}</span>
+          </div>
         </div>
         <div v-else-if="isLiveServerLoading" class="current-players-loading">
           <div class="loading-spinner small"></div>
@@ -600,12 +627,6 @@ const closePlayersModal = () => {
           🎮 Join Server
         </button>
         
-        <router-link
-          :to="`/servers/${encodeURIComponent(serverName)}/rankings`"
-          class="rankings-button"
-        >
-          🏆 View Rankings
-        </router-link>
       </div>
     </div>
     <div class="server-details-body">
@@ -718,39 +739,89 @@ const closePlayersModal = () => {
            </div>
         </div>
 
-        <!-- Leaderboards Container -->
-        <div class="leaderboards-container">
+        <!-- Enhanced Leaderboards Container -->
+        <div class="enhanced-leaderboards-container">
           <!-- Most Active Players -->
-          <div class="leaderboard-section">
-            <div class="leaderboard-header">
-              <h3>🏃 Most Active Players</h3>
-            </div>
-            <div class="leaderboard-content">
-              <div class="players-header">
-                <div class="header-rank">#</div>
-                <div class="header-player-info">Player</div>
+          <div class="enhanced-leaderboard-section">
+            <div class="enhanced-section-header">
+              <div class="section-title">
+                <div class="section-icon">⚡</div>
+                <h3>Most Active Warriors</h3>
               </div>
-              <div class="players-list">
-                <div v-for="(player, index) in serverDetails.mostActivePlayersByTime" :key="index" class="player-row">
-                  <div class="player-rank">
-                    <span v-if="index === 0" class="rank-medal">🥇</span>
-                    <span v-else-if="index === 1" class="rank-medal">🥈</span>
-                    <span v-else-if="index === 2" class="rank-medal">🥉</span>
-                    <span v-else class="rank-number">{{ index + 1 }}</span>
+              <div class="section-time-controls">
+                <button 
+                  @click="toggleTimePeriod('week')"
+                  class="enhanced-time-tab"
+                  :class="{ 'active': selectedTimePeriod === 'week' }"
+                >
+                  7 Days
+                </button>
+                <button 
+                  @click="toggleTimePeriod('month')"
+                  class="enhanced-time-tab"
+                  :class="{ 'active': selectedTimePeriod === 'month' }"
+                >
+                  30 Days
+                </button>
+              </div>
+            </div>
+            
+            <!-- Top 3 Podium -->
+            <div class="podium-container" v-if="currentMostActivePlayers.length >= 3">
+              <div class="podium-player second-place">
+                <div class="podium-rank">🥈</div>
+                <div class="podium-info">
+                  <router-link :to="`/players/${encodeURIComponent(currentMostActivePlayers[1].playerName)}`" class="podium-name">
+                    {{ currentMostActivePlayers[1].playerName }}
+                  </router-link>
+                  <div class="podium-stats">
+                    <div class="stat-badge primary">{{ formatPlayTime(currentMostActivePlayers[1].minutesPlayed) }}</div>
+                    <div class="stat-badge secondary"><span class="kills">{{ currentMostActivePlayers[1].totalKills }}</span><span class="separator">/</span><span class="deaths">{{ currentMostActivePlayers[1].totalDeaths }}</span></div>
                   </div>
-                  <div class="player-info">
-                    <div class="player-name">
-                      <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
-                        {{ player.playerName }}
-                      </router-link>
-                    </div>
-                    <div class="player-details">
-                      <span class="detail-item">{{ formatPlayTime(player.minutesPlayed) }}</span>
-                      <span class="detail-separator">•</span>
-                      <span class="detail-item">
-                        <span class="kills">{{ player.totalKills }}</span>/<span class="deaths">{{ player.totalDeaths }}</span>
-                      </span>
-                    </div>
+                </div>
+              </div>
+              
+              <div class="podium-player first-place">
+                <div class="podium-rank">🏆</div>
+                <div class="podium-info">
+                  <router-link :to="`/players/${encodeURIComponent(currentMostActivePlayers[0].playerName)}`" class="podium-name">
+                    {{ currentMostActivePlayers[0].playerName }}
+                  </router-link>
+                  <div class="podium-stats">
+                    <div class="stat-badge primary">{{ formatPlayTime(currentMostActivePlayers[0].minutesPlayed) }}</div>
+                    <div class="stat-badge secondary"><span class="kills">{{ currentMostActivePlayers[0].totalKills }}</span><span class="separator">/</span><span class="deaths">{{ currentMostActivePlayers[0].totalDeaths }}</span></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="podium-player third-place">
+                <div class="podium-rank">🥉</div>
+                <div class="podium-info">
+                  <router-link :to="`/players/${encodeURIComponent(currentMostActivePlayers[2].playerName)}`" class="podium-name">
+                    {{ currentMostActivePlayers[2].playerName }}
+                  </router-link>
+                  <div class="podium-stats">
+                    <div class="stat-badge primary">{{ formatPlayTime(currentMostActivePlayers[2].minutesPlayed) }}</div>
+                    <div class="stat-badge secondary"><span class="kills">{{ currentMostActivePlayers[2].totalKills }}</span><span class="separator">/</span><span class="deaths">{{ currentMostActivePlayers[2].totalDeaths }}</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Remaining Players -->
+            <div class="remaining-players" v-if="currentMostActivePlayers.length > 3">
+              <div v-for="(player, index) in currentMostActivePlayers.slice(3)" :key="index + 3" class="player-card">
+                <div class="player-rank-small">{{ index + 4 }}</div>
+                <div class="player-card-content">
+                  <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-card-name">
+                    {{ player.playerName }}
+                  </router-link>
+                  <div class="player-card-stats">
+                    <span class="stat-item">{{ formatPlayTime(player.minutesPlayed) }}</span>
+                    <span class="stat-separator">•</span>
+                    <span class="stat-item">
+                      <span class="kills">{{ player.totalKills }}</span>/<span class="deaths">{{ player.totalDeaths }}</span>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -758,53 +829,112 @@ const closePlayersModal = () => {
           </div>
 
           <!-- Top Scores -->
-          <div class="leaderboard-section">
-            <div class="leaderboard-header">
-              <h3>🏆 Top Scores</h3>
-            </div>
-            <div class="leaderboard-content">
-              <div class="scores-header">
-                <div class="header-rank">#</div>
-                <div class="header-player-info">Player</div>
+          <div class="enhanced-leaderboard-section">
+            <div class="enhanced-section-header">
+              <div class="section-title">
+                <div class="section-icon">🎯</div>
+                <h3>Legendary Performances</h3>
               </div>
-              <div class="scores-list">
-                <div v-for="(score, index) in serverDetails.topScores" :key="index" class="score-row">
-                  <div class="score-rank">
-                    <span v-if="index === 0" class="rank-medal">🥇</span>
-                    <span v-else-if="index === 1" class="rank-medal">🥈</span>
-                    <span v-else-if="index === 2" class="rank-medal">🥉</span>
-                    <span v-else class="rank-number">{{ index + 1 }}</span>
+              <div class="section-controls">
+                <div class="section-time-controls">
+                  <button 
+                    @click="toggleTimePeriod('week')"
+                    class="enhanced-time-tab"
+                    :class="{ 'active': selectedTimePeriod === 'week' }"
+                  >
+                    7 Days
+                  </button>
+                  <button 
+                    @click="toggleTimePeriod('month')"
+                    class="enhanced-time-tab"
+                    :class="{ 'active': selectedTimePeriod === 'month' }"
+                  >
+                    30 Days
+                  </button>
+                </div>
+                <router-link 
+                  :to="`/servers/${encodeURIComponent(serverName)}/rankings`" 
+                  class="view-all-button"
+                >
+                  View Rankings
+                </router-link>
+              </div>
+            </div>
+            
+            <!-- Top 3 Podium -->
+            <div class="podium-container scores-podium" v-if="currentTopScores.length >= 3">
+              <div class="podium-player second-place">
+                <div class="podium-rank">🥈</div>
+                <div class="podium-info">
+                  <router-link :to="`/players/${encodeURIComponent(currentTopScores[1].playerName)}`" class="podium-name">
+                    {{ currentTopScores[1].playerName }}
+                  </router-link>
+                  <div class="podium-stats">
+                    <div class="stat-badge primary">{{ currentTopScores[1].score.toLocaleString() }}</div>
+                    <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[1].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[1].deaths }}</span></div>
+                    <div class="stat-badge tertiary">{{ currentTopScores[1].mapName }}</div>
                   </div>
-                  <div class="player-info">
-                    <div class="score-name">
-                      <router-link :to="`/players/${encodeURIComponent(score.playerName)}`" class="player-link">
-                        {{ score.playerName }}
-                      </router-link>
-                    </div>
-                    <div class="score-details">
-                      <span class="detail-item">
-                        <router-link
-                          :to="{
-                            path: '/servers/round-report',
-                            query: {
-                              serverGuid: serverDetails.serverGuid,
-                              mapName: score.mapName,
-                              startTime: score.timestamp,
-                              players: score.playerName // Include the player name to pin them
-                            }
-                          }"
-                          class="session-link"
-                        >
-                          {{ score.score.toLocaleString() }}
-                        </router-link>
-                      </span>
-                      <span class="detail-separator">•</span>
-                      <span class="detail-item">
-                        <span class="kills">{{ score.kills }}</span>/<span class="deaths">{{ score.deaths }}</span>
-                      </span>
-                      <span class="detail-separator">•</span>
-                      <span class="detail-item">{{ score.mapName }}</span>
-                    </div>
+                </div>
+              </div>
+              
+              <div class="podium-player first-place">
+                <div class="podium-rank">🏆</div>
+                <div class="podium-info">
+                  <router-link :to="`/players/${encodeURIComponent(currentTopScores[0].playerName)}`" class="podium-name">
+                    {{ currentTopScores[0].playerName }}
+                  </router-link>
+                  <div class="podium-stats">
+                    <div class="stat-badge primary">{{ currentTopScores[0].score.toLocaleString() }}</div>
+                    <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[0].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[0].deaths }}</span></div>
+                    <div class="stat-badge tertiary">{{ currentTopScores[0].mapName }}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="podium-player third-place">
+                <div class="podium-rank">🥉</div>
+                <div class="podium-info">
+                  <router-link :to="`/players/${encodeURIComponent(currentTopScores[2].playerName)}`" class="podium-name">
+                    {{ currentTopScores[2].playerName }}
+                  </router-link>
+                  <div class="podium-stats">
+                    <div class="stat-badge primary">{{ currentTopScores[2].score.toLocaleString() }}</div>
+                    <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[2].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[2].deaths }}</span></div>
+                    <div class="stat-badge tertiary">{{ currentTopScores[2].mapName }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Remaining Scores -->
+            <div class="remaining-players" v-if="currentTopScores.length > 3">
+              <div v-for="(score, index) in currentTopScores.slice(3)" :key="index + 3" class="player-card">
+                <div class="player-rank-small">{{ index + 4 }}</div>
+                <div class="player-card-content">
+                  <router-link :to="`/players/${encodeURIComponent(score.playerName)}`" class="player-card-name">
+                    {{ score.playerName }}
+                  </router-link>
+                  <div class="player-card-stats">
+                    <router-link
+                      :to="{
+                        path: '/servers/round-report',
+                        query: {
+                          serverGuid: serverDetails.serverGuid,
+                          mapName: score.mapName,
+                          startTime: score.timestamp,
+                          players: score.playerName
+                        }
+                      }"
+                      class="stat-item score-link"
+                    >
+                      {{ score.score.toLocaleString() }}
+                    </router-link>
+                    <span class="stat-separator">•</span>
+                    <span class="stat-item">
+                      <span class="kills">{{ score.kills }}</span>/<span class="deaths">{{ score.deaths }}</span>
+                    </span>
+                    <span class="stat-separator">•</span>
+                    <span class="stat-item">{{ score.mapName }}</span>
                   </div>
                 </div>
               </div>
@@ -812,50 +942,40 @@ const closePlayersModal = () => {
           </div>
 
           <!-- Recent Rounds -->
-          <div v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0" class="leaderboard-section recent-rounds-section">
-            <div class="leaderboard-header">
-              <h3>🎮 Recent Rounds</h3>
+          <div v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0" class="enhanced-leaderboard-section recent-rounds-section">
+            <div class="enhanced-section-header">
+              <div class="section-title">
+                <div class="section-icon">🎮</div>
+                <h3>Recent Battles</h3>
+              </div>
               <router-link 
                 :to="{ path: '/rounds', query: { server: serverName } }" 
-                class="view-all-link"
+                class="view-all-button"
               >
                 View all
               </router-link>
             </div>
-            <div class="leaderboard-content">
-              <div class="rounds-header">
-                <div class="header-round-info">Round</div>
-              </div>
-              <div class="rounds-list">
-                <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-row">
-                  <div class="round-info">
-                    <div class="round-map">
-                      {{ round.mapName }}
-                    </div>
-                    <div class="round-details">
-                      <span class="detail-item">
-                        <span v-if="round.isActive && index === 0" class="badge-active">Live</span>
-                        <span v-else>{{ formatDate(round.endTime) }}</span>
-                      </span>
-                      <span class="detail-separator">•</span>
-                      <span class="detail-item">
-                        <router-link
-                          :to="{
-                            path: '/servers/round-report',
-                            query: {
-                              serverGuid: serverDetails.serverGuid,
-                              mapName: round.mapName,
-                              startTime: round.startTime
-                            }
-                          }"
-                          class="report-link-inline"
-                        >
-                          View Report
-                        </router-link>
-                      </span>
-                    </div>
-                  </div>
+            
+            <div class="rounds-grid">
+              <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-card">
+                <div class="round-status">
+                  <span v-if="round.isActive && index === 0" class="badge-live">🔴 LIVE</span>
+                  <span v-else class="round-date">{{ formatDate(round.endTime) }}</span>
                 </div>
+                <div class="round-map-name">{{ round.mapName }}</div>
+                <router-link
+                  :to="{
+                    path: '/servers/round-report',
+                    query: {
+                      serverGuid: serverDetails.serverGuid,
+                      mapName: round.mapName,
+                      startTime: round.startTime
+                    }
+                  }"
+                  class="round-report-button"
+                >
+                  Battle Report
+                </router-link>
               </div>
             </div>
           </div>
@@ -930,21 +1050,6 @@ const closePlayersModal = () => {
   flex-wrap: wrap;
 }
 
-.rankings-button {
-  padding: 8px 16px;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.rankings-button:hover {
-  background-color: var(--color-primary-hover);
-}
 
 .current-players-link {
   padding: 8px 16px;
@@ -971,6 +1076,25 @@ const closePlayersModal = () => {
   font-size: 14px;
   font-weight: 500;
   border: 1px solid var(--color-border);
+}
+
+.players-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.player-count {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.current-map {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.9;
+  text-align: center;
 }
 
 .current-players-loading {
@@ -1300,244 +1424,461 @@ const closePlayersModal = () => {
   background: var(--color-background);
 }
 
-
-
-/* Leaderboards Container */
-.leaderboards-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 12px;
+/* Enhanced Leaderboards Container */
+.enhanced-leaderboards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Leaderboard Section */
-.leaderboard-section {
-  padding: 8px 0;
+/* Enhanced Leaderboard Section */
+.enhanced-leaderboard-section {
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background) 100%);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }
 
-.leaderboard-header {
+.enhanced-leaderboard-section:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.enhanced-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--color-border);
 }
 
-.leaderboard-header h3 {
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-icon {
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #9c27b0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.section-title h3 {
   margin: 0;
   color: var(--color-heading);
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.view-all-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.view-all-link:hover {
-  color: var(--color-primary-hover, var(--color-primary));
-  background-color: var(--color-background-soft);
-  text-decoration: underline;
-}
-
-.leaderboard-content {
-  overflow: hidden;
-}
-
-/* Header cell alignment */
-.header-rank, .header-score {
-  text-align: center;
-}
-
-.header-playtime, .header-kd, .header-map {
-  text-align: center;
-}
-
-.header-map, .header-player-info, .header-round-info {
-  text-align: left;
-}
-
-.header-end-time, .header-report {
-  text-align: center;
-}
-
-.players-header {
-  grid-template-columns: 50px 1fr;
-  gap: 10px;
-}
-
-.scores-header {
-  grid-template-columns: 50px 1fr;
-  gap: 10px;
-}
-
-.rounds-header {
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-
-
-
-/* Players List */
-.players-list, .scores-list, .rounds-list {
-  max-height: none;
-  overflow-y: auto;
-}
-
-.player-row, .score-row, .round-row {
-  display: grid;
-  gap: 10px;
-  padding: 12px 15px;
-  border-bottom: 1px solid var(--color-border);
-  transition: all 0.2s ease;
-  align-items: center;
-}
-
-.player-row {
-  grid-template-columns: 50px 1fr;
-}
-
-.score-row {
-  grid-template-columns: 50px 1fr;
-}
-
-.round-row {
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-
-.player-row:hover, .score-row:hover, .round-row:hover {
-  background: var(--color-background-soft);
-}
-
-.player-row:last-child, .score-row:last-child, .round-row:last-child {
-  border-bottom: none;
-}
-
-/* Player Info Container */
-.player-info, .round-info {
-  min-width: 0;
-  overflow: hidden;
-}
-
-.player-name, .score-name, .round-map {
-  font-weight: 500;
-  color: var(--color-text);
-  margin-bottom: 2px;
-}
-
-/* Mobile condensed details */
-.player-details, .score-details, .round-details {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
+.section-controls {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  gap: 12px;
+}
+
+.section-time-controls {
+  display: flex;
   gap: 4px;
-  margin-top: 4px;
+  padding: 4px;
+  background: var(--color-background-mute);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
 }
 
-.detail-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.detail-separator {
+.enhanced-time-tab {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--color-text-muted);
-  font-weight: normal;
-  opacity: 0.6;
+  transition: all 0.2s ease;
+  text-align: center;
 }
 
-.report-link-inline {
+.enhanced-time-tab:hover {
+  background: var(--color-background-soft);
+  color: var(--color-text);
+}
+
+.enhanced-time-tab.active {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #9c27b0 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
+}
+
+.view-all-button {
   color: var(--color-primary);
   text-decoration: none;
-  font-weight: 500;
-  font-size: 0.85rem;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--color-background-mute);
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
 }
 
-.report-link-inline:hover {
-  text-decoration: underline;
+.view-all-button:hover {
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
 }
 
-/* Rank Styling */
-.player-rank, .score-rank {
+/* Podium Container */
+.podium-container {
   display: flex;
   justify-content: center;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 0%, rgba(156, 39, 176, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.1);
+}
+
+.podium-player {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  font-weight: 700;
+  padding: 16px;
+  background: var(--color-background);
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  position: relative;
+  overflow: hidden;
 }
 
-.rank-medal {
-  font-size: 1.2rem;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+.podium-player::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);
+  pointer-events: none;
 }
 
-.rank-number {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  background: var(--color-background-mute);
-  width: 28px;
-  height: 28px;
+.podium-player:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.first-place {
+  order: 2;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #333;
+  border-color: #ffd700;
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+}
+
+.first-place .podium-name {
+  color: #333 !important;
+}
+
+.first-place .podium-avatar {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+.second-place {
+  order: 1;
+  background: linear-gradient(135deg, #c0c0c0 0%, #e6e6e6 100%);
+  color: #333;
+  border-color: #c0c0c0;
+  box-shadow: 0 6px 18px rgba(192, 192, 192, 0.3);
+}
+
+.second-place .podium-name {
+  color: #333 !important;
+}
+
+.second-place .podium-avatar {
+  background: linear-gradient(135deg, #607d8b 0%, #78909c 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(96, 125, 139, 0.4);
+}
+
+.third-place {
+  order: 3;
+  background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
+  color: #333;
+  border-color: #cd7f32;
+  box-shadow: 0 6px 18px rgba(205, 127, 50, 0.3);
+}
+
+.third-place .podium-name {
+  color: #333 !important;
+}
+
+.third-place .podium-avatar {
+  background: linear-gradient(135deg, #8d6e63 0%, #a1887f 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(141, 110, 99, 0.4);
+}
+
+.podium-rank {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.podium-avatar {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #9c27b0 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
+}
+
+.podium-avatar.champion {
+  width: 56px;
+  height: 56px;
+  font-size: 1.4rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.podium-info {
+  text-align: center;
+  width: 100%;
+}
+
+.podium-name {
+  font-size: 0.9rem;
   font-weight: 600;
-}
-
-/* Link styles */
-.player-link, .report-link {
-  color: var(--color-primary);
+  color: var(--color-text);
   text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  margin-bottom: 8px;
+  display: block;
+  word-break: break-word;
 }
 
-.player-link:hover, .report-link:hover {
+.podium-name:hover {
+  color: var(--color-primary);
   text-decoration: underline;
-  color: var(--color-primary-hover, var(--color-primary));
 }
 
-.report-link {
-  display: inline-block;
+.podium-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.stat-badge {
   padding: 4px 8px;
   border-radius: 6px;
-  background-color: var(--color-background-mute);
+  font-size: 0.75rem;
   font-weight: 600;
-  transition: all 0.2s ease;
-  font-size: 0.85rem;
-}
-
-.report-link:hover {
-  background-color: var(--color-primary);
-  color: white;
-  text-decoration: none;
-  transform: translateY(-1px);
+  text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.badge-active {
-  display: inline-block;
-  margin-left: 4px;
-  padding: 2px 6px;
-  border-radius: 8px;
-  background-color: #4caf50;
+.stat-badge.primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #9c27b0 100%);
   color: white;
-  font-size: 0.65rem;
-  font-weight: 600;
-  vertical-align: middle;
-  line-height: 1;
 }
+
+.stat-badge.secondary {
+  background: var(--color-background-mute);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.stat-badge.tertiary {
+  background: var(--color-background-soft);
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+}
+
+/* Remaining Players */
+.remaining-players {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--color-background);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+}
+
+.player-card:hover {
+  background: var(--color-background-soft);
+  border-color: var(--color-primary);
+  transform: translateX(4px);
+}
+
+.player-rank-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: var(--color-background-mute);
+  color: var(--color-text-muted);
+  border: 2px solid var(--color-border);
+}
+
+.player-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-card-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+  text-decoration: none;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.player-card-name:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.player-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  flex-wrap: wrap;
+}
+
+.score-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.score-link:hover {
+  text-decoration: underline;
+}
+
+/* Recent Rounds */
+.recent-rounds-section {
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(76, 175, 80, 0.05) 100%);
+  border-color: rgba(76, 175, 80, 0.2);
+}
+
+.rounds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.round-card {
+  background: var(--color-background);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.round-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary) 0%, #9c27b0 100%);
+}
+
+.round-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  border-color: var(--color-primary);
+}
+
+.round-status {
+  margin-bottom: 8px;
+}
+
+.badge-live {
+  background: linear-gradient(135deg, #ff4444 0%, #ff6b6b 100%);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+.round-date {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.round-map-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.round-report-button {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #9c27b0 100%);
+  color: white;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.round-report-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
+}
+
 
 /* Base mobile improvements */
 .server-details-container {
@@ -1548,15 +1889,38 @@ const closePlayersModal = () => {
   overflow-x: hidden;
 }
 
+/* Enhanced Mobile Responsive Design */
+
 /* Tablet styles */
 @media (max-width: 1024px) {
-  .leaderboards-container {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 10px;
+  .enhanced-leaderboards-container {
+    gap: 16px;
+  }
+  
+  .enhanced-leaderboard-section {
+    padding: 16px;
   }
   
   .server-details-container {
     padding: 8px;
+  }
+  
+  .podium-container {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .podium-player {
+    min-width: 120px;
+    padding: 12px;
+  }
+  
+  .section-title h3 {
+    font-size: 1.3rem;
+  }
+  
+  .rounds-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
@@ -1565,6 +1929,70 @@ const closePlayersModal = () => {
   .server-details-container {
     padding: 4px;
   }
+  
+  .enhanced-leaderboard-section {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  
+  .enhanced-section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .section-controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .podium-container {
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .podium-player {
+    order: unset !important;
+    min-width: 100%;
+    max-width: 280px;
+    flex-direction: row;
+    text-align: left;
+    padding: 12px;
+  }
+  
+  .podium-info {
+    text-align: left;
+    flex: 1;
+    margin-left: 12px;
+  }
+  
+  .podium-stats {
+    flex-direction: row;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .stat-badge {
+    flex: 1;
+    min-width: fit-content;
+  }
+  
+  .rounds-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-time-controls {
+    flex: 1;
+  }
+  
+  .enhanced-time-tab {
+    flex: 1;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 }
 
 /* Small mobile styles */
@@ -1572,12 +2000,77 @@ const closePlayersModal = () => {
   .server-details-container {
     padding: 4px;
   }
+  
+  .enhanced-leaderboards-container {
+    gap: 12px;
+  }
+  
+  .enhanced-leaderboard-section {
+    padding: 8px;
+  }
+  
+  .section-title h3 {
+    font-size: 1.1rem;
+  }
+  
+  .section-icon {
+    font-size: 1.2rem;
+  }
+  
+  .podium-container {
+    padding: 8px;
+  }
+  
+  .podium-player {
+    padding: 8px;
+  }
+  
+  .podium-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .podium-avatar.champion {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+  }
+  
+  .podium-rank {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+  
+  .stat-badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+  
+  .player-card {
+    padding: 8px;
+  }
+  
+  .player-rank-small {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  
+  .round-card {
+    padding: 12px;
+  }
+  
+  .view-all-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 }
 
 /* Extra small screens */
 @media (max-width: 360px) {
   .server-details-container {
-    padding: 4px;
+    padding: 2px;
   }
 
   .server-details-header {
@@ -1595,7 +2088,7 @@ const closePlayersModal = () => {
   }
 
   .server-name-container h2 {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     word-wrap: break-word;
     overflow-wrap: break-word;
     margin: 0;
@@ -1619,8 +2112,15 @@ const closePlayersModal = () => {
     justify-content: center;
   }
 
-  .join-server-button,
-  .rankings-button {
+  .players-info {
+    width: 100%;
+  }
+
+  .current-map {
+    font-size: 10px;
+  }
+
+  .join-server-button {
     width: 100%;
     text-align: center;
     padding: 10px 16px;
@@ -1631,41 +2131,217 @@ const closePlayersModal = () => {
     padding: 8px 12px;
   }
 
-  .leaderboards-container {
-    grid-template-columns: 1fr;
+  .enhanced-leaderboards-container {
     gap: 8px;
   }
 
-  .leaderboard-section {
-    padding: 8px 0;
+  .enhanced-leaderboard-section {
+    padding: 6px;
+  }
+
+  .section-title h3 {
+    font-size: 1rem;
+  }
+
+  .section-icon {
+    font-size: 1rem;
+  }
+
+  .chart-container {
+    height: 60px;
     margin: 0;
   }
 
-  .leaderboard-header {
-    margin-bottom: 8px;
-    padding: 0 0 8px 0;
+  .chart-container.chart-expanded {
+    height: 280px;
   }
 
-  .leaderboard-content {
-    overflow: hidden;
+  .ping-chart-container.chart-expanded {
+    height: 280px;
   }
 
-
-
-  .players-header, .scores-header, .rounds-header {
-    padding: 8px 10px;
-    font-size: 0.75rem;
+  .expand-chart-button {
+    padding: 6px 10px;
+    font-size: 1rem;
   }
 
+  .metric-toggle-button {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    min-width: 60px;
+  }
 
+  .insights-controls {
+    gap: 6px;
+  }
 
-  .player-row, .score-row, .round-row {
-    padding: 12px 10px;
+  .chart-stats {
+    gap: 15px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+  }
+
+  .stat-label, .stat-value {
+    font-size: 0.85rem;
+  }
+
+  .period-info {
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 6px;
+    margin: 0 0 8px 0;
+    background: var(--color-background-soft);
+    border-radius: 6px;
+  }
+
+  .ping-explainer {
+    margin-bottom: 10px;
+  }
+
+  .ping-explainer-header {
+    padding: 8px;
+  }
+
+  .ping-explainer-title {
     font-size: 0.9rem;
   }
 
+  .collapse-toggle {
+    font-size: 0.75rem;
+    min-width: 18px;
+  }
 
+  .ping-explainer-content {
+    padding: 0 8px 8px 8px;
+  }
 
+  .ping-explainer-content p {
+    font-size: 0.85rem;
+    line-height: 1.3;
+  }
+
+  .stats-container {
+    gap: 8px;
+  }
+
+  .stats-section {
+    padding: 8px 0;
+    margin: 0;
+  }
+}
+
+/* Enhanced Design Utility Styles */
+.kills {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.deaths {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.stat-separator {
+  color: var(--color-text-muted);
+  font-weight: normal;
+  opacity: 0.6;
+}
+
+.stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.badge-active {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background-color: #4caf50;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.server-region-badge {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 14px;
+  margin-bottom: 0;
+  padding: 0;
+  width: auto;
+}
+
+.server-region-badge > span {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(90deg, #7b2ff2 0%, #f357a8 100%);
+  color: #fff;
+  border-radius: 7px;
+  padding: 3px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(123,47,242,0.10);
+  letter-spacing: 0.01em;
+  min-height: 22px;
+  min-width: 50px;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+
+.server-region-badge .dot {
+  font-size: 1.2em;
+  margin: 0 8px;
+  color: #fff;
+  opacity: 0.7;
+}
+
+@media (max-width: 600px) {
+  .server-region-badge {
+    margin-top: 10px;
+    margin-bottom: 0;
+    justify-content: flex-start;
+  }
+  .server-region-badge > span {
+    font-size: 0.8rem;
+    padding: 2px 7px;
+    min-height: 18px;
+    min-width: 36px;
+  }
+}
+
+.insights-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.insights-header:hover {
+  background: rgba(156, 39, 176, 0.05);
+}
+
+.insights-header h3 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1.2rem;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.insights-content {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 600px) {
   .rank-number {
     width: 28px;
     height: 28px;
@@ -1763,6 +2439,16 @@ const closePlayersModal = () => {
     margin: 0;
   }
 
+  .time-period-tabs {
+    margin-bottom: 15px;
+    padding: 3px;
+  }
+
+  .time-period-tab {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
   /* Mobile specific details styling */
   .player-details, .score-details, .round-details {
     font-size: 0.8rem;
@@ -1803,10 +2489,6 @@ const closePlayersModal = () => {
     font-size: 0.9rem;
   }
 
-  .rankings-button {
-    padding: 8px 12px;
-    font-size: 0.9rem;
-  }
 
   .leaderboard-section {
     padding: 6px 0;
@@ -1932,6 +2614,16 @@ const closePlayersModal = () => {
 
   .stats-section {
     padding: 6px 0;
+  }
+
+  .time-period-tabs {
+    margin-bottom: 12px;
+    padding: 2px;
+  }
+
+  .time-period-tab {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 
   .badge-active {
@@ -2174,5 +2866,20 @@ const closePlayersModal = () => {
 
 .insights-content {
   transition: all 0.3s ease;
+}
+
+/* Kill/Death styling */
+.kills {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.separator {
+  color: var(--color-text-muted);
+}
+
+.deaths {
+  color: #f44336;
+  font-weight: 600;
 }
 </style>

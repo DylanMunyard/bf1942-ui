@@ -105,13 +105,15 @@ export interface RoundReport {
 
 export interface ServerDetails {
   endPeriod: string; // ISO date string
-  mostActivePlayersByTime: MostActivePlayer[];
+  mostActivePlayersByTimeWeek: MostActivePlayer[]; // Last 7 days
+  mostActivePlayersByTimeMonth: MostActivePlayer[]; // Last 30 days
   playerCountMetrics: PlayerCountMetric[];
   popularMaps: PopularMap[];
   serverGuid: string;
   serverName: string;
   startPeriod: string; // ISO date string
-  topScores: TopScore[];
+  topScoresWeek: TopScore[]; // Last 7 days
+  topScoresMonth: TopScore[]; // Last 30 days
   lastRounds: RecentRoundInfo[];
   averagePlayerCountChangePercent?: number; // Change in player counts from last 7 days vs 7 days before that
   region?: string;
