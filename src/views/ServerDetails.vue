@@ -873,6 +873,7 @@ const currentTopScores = computed(() => {
                     <div class="stat-badge primary">{{ currentTopScores[1].score.toLocaleString() }}</div>
                     <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[1].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[1].deaths }}</span></div>
                     <div class="stat-badge tertiary">{{ currentTopScores[1].mapName }}</div>
+                    <div class="stat-badge quaternary">{{ formatDate(currentTopScores[1].timestamp) }}</div>
                   </div>
                 </div>
               </div>
@@ -887,6 +888,7 @@ const currentTopScores = computed(() => {
                     <div class="stat-badge primary">{{ currentTopScores[0].score.toLocaleString() }}</div>
                     <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[0].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[0].deaths }}</span></div>
                     <div class="stat-badge tertiary">{{ currentTopScores[0].mapName }}</div>
+                    <div class="stat-badge quaternary">{{ formatDate(currentTopScores[0].timestamp) }}</div>
                   </div>
                 </div>
               </div>
@@ -901,6 +903,7 @@ const currentTopScores = computed(() => {
                     <div class="stat-badge primary">{{ currentTopScores[2].score.toLocaleString() }}</div>
                     <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[2].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[2].deaths }}</span></div>
                     <div class="stat-badge tertiary">{{ currentTopScores[2].mapName }}</div>
+                    <div class="stat-badge quaternary">{{ formatDate(currentTopScores[2].timestamp) }}</div>
                   </div>
                 </div>
               </div>
@@ -935,6 +938,8 @@ const currentTopScores = computed(() => {
                     </span>
                     <span class="stat-separator">•</span>
                     <span class="stat-item">{{ score.mapName }}</span>
+                    <span class="stat-separator">•</span>
+                    <span class="stat-item">{{ formatDate(score.timestamp) }}</span>
                   </div>
                 </div>
               </div>
