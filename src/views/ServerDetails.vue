@@ -132,8 +132,22 @@ const formatPlayTime = (minutes: number): string => {
 const formatDate = (dateString: string): string => {
   // Ensure the date is treated as UTC by appending 'Z' if it doesn't have timezone info
   const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
 
-  // Format date
+  // Reset time parts to compare just the dates
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+
+  if (dateOnly.getTime() === todayOnly.getTime()) {
+    return `Today ${date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+  } else if (dateOnly.getTime() === yesterdayOnly.getTime()) {
+    return `Yesterday ${date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  // Format date for other days
   return date.toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
@@ -870,7 +884,20 @@ const currentTopScores = computed(() => {
                     {{ currentTopScores[1].playerName }}
                   </router-link>
                   <div class="podium-stats">
-                    <div class="stat-badge primary">{{ currentTopScores[1].score.toLocaleString() }}</div>
+                    <router-link
+                      :to="{
+                        path: '/servers/round-report',
+                        query: {
+                          serverGuid: serverDetails.serverGuid,
+                          mapName: currentTopScores[1].mapName,
+                          startTime: currentTopScores[1].timestamp,
+                          players: currentTopScores[1].playerName
+                        }
+                      }"
+                      class="stat-badge primary"
+                    >
+                      {{ currentTopScores[1].score.toLocaleString() }}
+                    </router-link>
                     <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[1].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[1].deaths }}</span></div>
                     <div class="stat-badge tertiary">{{ currentTopScores[1].mapName }}</div>
                     <div class="stat-badge quaternary">{{ formatDate(currentTopScores[1].timestamp) }}</div>
@@ -885,7 +912,20 @@ const currentTopScores = computed(() => {
                     {{ currentTopScores[0].playerName }}
                   </router-link>
                   <div class="podium-stats">
-                    <div class="stat-badge primary">{{ currentTopScores[0].score.toLocaleString() }}</div>
+                    <router-link
+                      :to="{
+                        path: '/servers/round-report',
+                        query: {
+                          serverGuid: serverDetails.serverGuid,
+                          mapName: currentTopScores[0].mapName,
+                          startTime: currentTopScores[0].timestamp,
+                          players: currentTopScores[0].playerName
+                        }
+                      }"
+                      class="stat-badge primary"
+                    >
+                      {{ currentTopScores[0].score.toLocaleString() }}
+                    </router-link>
                     <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[0].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[0].deaths }}</span></div>
                     <div class="stat-badge tertiary">{{ currentTopScores[0].mapName }}</div>
                     <div class="stat-badge quaternary">{{ formatDate(currentTopScores[0].timestamp) }}</div>
@@ -900,7 +940,20 @@ const currentTopScores = computed(() => {
                     {{ currentTopScores[2].playerName }}
                   </router-link>
                   <div class="podium-stats">
-                    <div class="stat-badge primary">{{ currentTopScores[2].score.toLocaleString() }}</div>
+                    <router-link
+                      :to="{
+                        path: '/servers/round-report',
+                        query: {
+                          serverGuid: serverDetails.serverGuid,
+                          mapName: currentTopScores[2].mapName,
+                          startTime: currentTopScores[2].timestamp,
+                          players: currentTopScores[2].playerName
+                        }
+                      }"
+                      class="stat-badge primary"
+                    >
+                      {{ currentTopScores[2].score.toLocaleString() }}
+                    </router-link>
                     <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[2].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[2].deaths }}</span></div>
                     <div class="stat-badge tertiary">{{ currentTopScores[2].mapName }}</div>
                     <div class="stat-badge quaternary">{{ formatDate(currentTopScores[2].timestamp) }}</div>
