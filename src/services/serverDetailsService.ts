@@ -58,6 +58,8 @@ export interface ServerInsights {
   startPeriod: string; // ISO date string
   endPeriod: string; // ISO date string
   pingByHour: PingByHour;
+  playerCountMetrics: PlayerCountMetric[];
+  averagePlayerCountChangePercent?: number; // Change in player counts from last 7 days vs 7 days before that
 }
 
 export interface LeaderboardEntry {
@@ -107,7 +109,6 @@ export interface ServerDetails {
   endPeriod: string; // ISO date string
   mostActivePlayersByTimeWeek: MostActivePlayer[]; // Last 7 days
   mostActivePlayersByTimeMonth: MostActivePlayer[]; // Last 30 days
-  playerCountMetrics: PlayerCountMetric[];
   popularMaps: PopularMap[];
   serverGuid: string;
   serverName: string;
@@ -115,7 +116,6 @@ export interface ServerDetails {
   topScoresWeek: TopScore[]; // Last 7 days
   topScoresMonth: TopScore[]; // Last 30 days
   lastRounds: RecentRoundInfo[];
-  averagePlayerCountChangePercent?: number; // Change in player counts from last 7 days vs 7 days before that
   region?: string;
   country?: string;
   countryCode?: string;

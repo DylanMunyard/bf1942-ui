@@ -165,17 +165,17 @@ const calculateKDR = (kills: number, deaths: number): string => {
 
 // Chart data for player count
 const chartData = computed(() => {
-  if (!serverDetails.value?.playerCountMetrics) return { labels: [], datasets: [] };
+  if (!serverInsights.value?.playerCountMetrics) return { labels: [], datasets: [] };
 
   // Convert timestamps to readable dates
-  const labels = serverDetails.value.playerCountMetrics.map(metric => {
+  const labels = serverInsights.value.playerCountMetrics.map(metric => {
     const date = new Date(metric.timestamp * 1000);
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + 
            ' ' + date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   });
 
   // Get player count values
-  const data = serverDetails.value.playerCountMetrics.map(metric => metric.value);
+  const data = serverInsights.value.playerCountMetrics.map(metric => metric.value);
 
   return {
     labels,
@@ -200,11 +200,11 @@ const chartData = computed(() => {
 
 // Calculate max and median values for player count
 const playerCountStats = computed(() => {
-  if (!serverDetails.value?.playerCountMetrics || serverDetails.value.playerCountMetrics.length === 0) {
+  if (!serverInsights.value?.playerCountMetrics || serverInsights.value.playerCountMetrics.length === 0) {
     return { max: 0, median: 0 };
   }
 
-  const values = serverDetails.value.playerCountMetrics.map(metric => metric.value);
+  const values = serverInsights.value.playerCountMetrics.map(metric => metric.value);
   const max = Math.max(...values);
   
   // Calculate median
@@ -714,7 +714,7 @@ const currentTopScores = computed(() => {
         </div>
 
         <!-- Player Count Chart -->
-        <div v-if="serverDetails.playerCountMetrics && serverDetails.playerCountMetrics.length > 0" class="stats-section">
+        <div v-if="serverInsights?.playerCountMetrics && serverInsights.playerCountMetrics.length > 0" class="stats-section">
           <div class="chart-header">
             <h3>Player Activity</h3>
             <button
@@ -734,13 +734,13 @@ const currentTopScores = computed(() => {
               <span class="stat-label">Median:</span>
               <span class="stat-value stat-median">{{ playerCountStats.median }} players</span>
             </div>
-            <div v-if="serverDetails.averagePlayerCountChangePercent && serverDetails.averagePlayerCountChangePercent !== 0" class="stat-item">
+            <div v-if="serverInsights?.averagePlayerCountChangePercent && serverInsights.averagePlayerCountChangePercent !== 0" class="stat-item">
               <span class="stat-label">7-day change:</span>
               <span class="stat-value" :class="{ 
-                'stat-positive': serverDetails.averagePlayerCountChangePercent > 0, 
-                'stat-negative': serverDetails.averagePlayerCountChangePercent < 0 
+                'stat-positive': serverInsights.averagePlayerCountChangePercent > 0, 
+                'stat-negative': serverInsights.averagePlayerCountChangePercent < 0 
               }">
-                {{ serverDetails.averagePlayerCountChangePercent > 0 ? '+' : '' }}{{ serverDetails.averagePlayerCountChangePercent }}%
+                {{ serverInsights.averagePlayerCountChangePercent > 0 ? '+' : '' }}{{ serverInsights.averagePlayerCountChangePercent }}%
               </span>
             </div>
           </div>
