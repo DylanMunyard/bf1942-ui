@@ -26,7 +26,6 @@ const error = ref<string | null>(null);
 const insightsError = ref<string | null>(null);
 const liveServerError = ref<string | null>(null);
 const isChartExpanded = ref(false);
-const isPingChartExpanded = ref(false);
 const pingMetric = ref<'median' | 'p95'>('median');
 const isPingExplainerCollapsed = ref(true);
 const isServerInsightsCollapsed = ref(true);
@@ -163,7 +162,7 @@ const calculateKDR = (kills: number, deaths: number): string => {
   return (kills / deaths).toFixed(2);
 };
 
-// Chart data for player count
+// Chart data for player count with ping overlay
 const chartData = computed(() => {
   if (!serverInsights.value?.playerCountMetrics) return { labels: [], datasets: [] };
 
@@ -175,26 +174,84 @@ const chartData = computed(() => {
   });
 
   // Get player count values
-  const data = serverInsights.value.playerCountMetrics.map(metric => metric.value);
+  const playerData = serverInsights.value.playerCountMetrics.map(metric => metric.value);
+
+  const datasets = [
+    {
+      label: 'Player Count',
+      backgroundColor: 'rgba(33, 150, 243, 0.1)',
+      borderColor: 'rgba(33, 150, 243, 0.8)',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      pointBackgroundColor: 'rgba(33, 150, 243, 1)',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2,
+      data: playerData,
+      yAxisID: 'y'
+    }
+  ];
+
+  // Add ping data if available
+  if (serverInsights.value?.pingByHour?.data) {
+    // Create ping data that matches the timeline by mapping each timestamp to its hour's ping
+    const pingData = serverInsights.value.playerCountMetrics.map(metric => {
+      const date = new Date(metric.timestamp * 1000);
+      const hour = date.getHours();
+      
+      // Convert UTC ping data to local hours and find matching ping for this hour
+      const utcData = serverInsights.value.pingByHour.data;
+      const localPingMap = new Map<number, { medianValues: number[]; p95Values: number[] }>();
+      
+      utcData.forEach(item => {
+        const utcDate = new Date();
+        utcDate.setUTCHours(item.hour, 0, 0, 0);
+        const localHour = utcDate.getHours();
+        
+        if (!localPingMap.has(localHour)) {
+          localPingMap.set(localHour, { medianValues: [], p95Values: [] });
+        }
+        
+        const bucket = localPingMap.get(localHour)!;
+        bucket.medianValues.push(item.medianPing);
+        bucket.p95Values.push(item.p95Ping);
+      });
+      
+      const bucket = localPingMap.get(hour);
+      if (!bucket || bucket.medianValues.length === 0) {
+        return null; // No ping data for this hour
+      }
+      
+      if (pingMetric.value === 'median') {
+        return bucket.medianValues.reduce((sum, val) => sum + val, 0) / bucket.medianValues.length;
+      } else {
+        return bucket.p95Values.reduce((sum, val) => sum + val, 0) / bucket.p95Values.length;
+      }
+    });
+
+    datasets.push({
+      label: `${pingMetric.value === 'median' ? 'Median' : 'P95'} Ping (ms)`,
+      backgroundColor: 'rgba(156, 39, 176, 0.0)',
+      borderColor: 'rgba(156, 39, 176, 0.8)',
+      borderWidth: 2,
+      fill: false,
+      tension: 0.4,
+      pointRadius: 2,
+      pointHoverRadius: 6,
+      pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 1,
+      data: pingData,
+      yAxisID: 'y1',
+      spanGaps: true // This will connect across null values
+    });
+  }
 
   return {
     labels,
-    datasets: [
-      {
-        label: 'Player Count',
-        backgroundColor: 'rgba(33, 150, 243, 0.1)',
-        borderColor: 'rgba(33, 150, 243, 0.8)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointBackgroundColor: 'rgba(33, 150, 243, 1)',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        data
-      }
-    ]
+    datasets
   };
 });
 
@@ -238,8 +295,10 @@ const chartOptions = computed(() => {
     },
     scales: {
       y: {
-        beginAtZero: true,
+        type: 'linear',
         display: isChartExpanded.value,
+        position: 'left',
+        beginAtZero: true,
         suggestedMax: Math.max(playerCountStats.value.max * 1.1, playerCountStats.value.max + 5),
         grid: {
           display: isChartExpanded.value,
@@ -272,6 +331,24 @@ const chartOptions = computed(() => {
             
             return '';
           }
+        }
+      },
+      y1: {
+        type: 'linear',
+        display: isChartExpanded.value && serverInsights.value?.pingByHour?.data,
+        position: 'right',
+        beginAtZero: true,
+        grid: {
+          drawOnChartArea: false
+        },
+        title: {
+          display: isChartExpanded.value,
+          text: `${pingMetric.value === 'median' ? 'Median' : 'P95'} Ping (ms)`,
+          color: 'rgba(156, 39, 176, 0.8)'
+        },
+        ticks: {
+          display: isChartExpanded.value,
+          color: 'rgba(156, 39, 176, 0.8)'
         }
       },
               x: {
@@ -351,10 +428,6 @@ const toggleChartExpansion = () => {
   isChartExpanded.value = !isChartExpanded.value;
 };
 
-// Toggle ping chart expansion
-const togglePingChartExpansion = () => {
-  isPingChartExpanded.value = !isPingChartExpanded.value;
-};
 
 // Toggle ping metric between median and p95
 const togglePingMetric = () => {
@@ -742,14 +815,24 @@ const currentTopScores = computed(() => {
         <!-- Player Activity Section -->
         <div v-if="serverInsights?.playerCountMetrics && serverInsights.playerCountMetrics.length > 0" class="stats-section">
           <div class="chart-header">
-            <h3>Player Activity</h3>
-            <button
-              class="expand-chart-button"
-              @click="toggleChartExpansion"
-              :title="isChartExpanded ? 'Collapse chart' : 'Expand chart'"
-            >
-              {{ isChartExpanded ? '📉' : '📊' }}
-            </button>
+            <h3>Player Activity {{ serverInsights?.pingByHour?.data?.length > 0 ? '& Connection Quality' : '' }}</h3>
+            <div class="chart-controls">
+              <button
+                v-if="serverInsights?.pingByHour?.data?.length > 0"
+                class="metric-toggle-button"
+                @click="togglePingMetric"
+                :title="`Switch to ${pingMetric === 'median' ? 'P95' : 'Median'} ping`"
+              >
+                {{ pingMetric === 'median' ? 'Median' : 'P95' }} Ping
+              </button>
+              <button
+                class="expand-chart-button"
+                @click="toggleChartExpansion"
+                :title="isChartExpanded ? 'Collapse chart' : 'Expand chart'"
+              >
+                {{ isChartExpanded ? '📉' : '📊' }}
+              </button>
+            </div>
           </div>
           <div class="chart-stats">
             <div class="stat-item">
@@ -778,45 +861,17 @@ const currentTopScores = computed(() => {
             <Line :data="chartData" :options="chartOptions" />
           </div>
           
-          <!-- Ping Data Section -->
-          <div v-if="serverInsights?.pingByHour?.data && serverInsights.pingByHour.data.length > 0" class="ping-section">
-            <div class="ping-header">
-              <h4>Connection Quality by Hour</h4>
-              <div class="ping-controls">
-                <button
-                  class="metric-toggle-button"
-                  @click="togglePingMetric"
-                  :title="`Switch to ${pingMetric === 'median' ? 'P95' : 'Median'} ping`"
-                >
-                  {{ pingMetric === 'median' ? 'Median' : 'P95' }}
-                </button>
-                <button
-                  class="expand-chart-button"
-                  @click="togglePingChartExpansion"
-                  :title="isPingChartExpanded ? 'Collapse chart' : 'Expand chart'"
-                >
-                  {{ isPingChartExpanded ? '📉' : '📊' }}
-                </button>
-              </div>
+          <!-- Ping Data Explanation -->
+          <div v-if="serverInsights?.pingByHour?.data && serverInsights.pingByHour.data.length > 0" class="ping-explainer" :class="{ 'collapsed': isPingExplainerCollapsed }">
+            <div class="ping-explainer-header" @click="togglePingExplainer">
+              <span class="ping-explainer-title">💡 How to interpret ping data</span>
+              <button class="collapse-toggle" :title="isPingExplainerCollapsed ? 'Show explanation' : 'Hide explanation'">
+                {{ isPingExplainerCollapsed ? '▶' : '▼' }}
+              </button>
             </div>
-            <div class="ping-explainer" :class="{ 'collapsed': isPingExplainerCollapsed }">
-              <div class="ping-explainer-header" @click="togglePingExplainer">
-                <span class="ping-explainer-title">💡 How to interpret ping data</span>
-                <button class="collapse-toggle" :title="isPingExplainerCollapsed ? 'Show explanation' : 'Hide explanation'">
-                  {{ isPingExplainerCollapsed ? '▶' : '▼' }}
-                </button>
-              </div>
-              <div class="ping-explainer-content" v-show="!isPingExplainerCollapsed">
-                <p>Higher ping times typically indicate players connecting from outside the server's host country. Lower ping times suggest local players are online.</p>
-                <p>If you're playing from outside the host country, look for hours with higher ping averages to find when players with similar connections are online for more balanced gameplay.</p>
-              </div>
-            </div>
-            <div
-              class="chart-container ping-chart-container compact-ping-chart"
-              :class="{ 'chart-expanded': isPingChartExpanded }"
-              @click="!isPingChartExpanded && togglePingChartExpansion()"
-            >
-              <Bar :data="pingChartData" :options="compactPingChartOptions" />
+            <div class="ping-explainer-content" v-show="!isPingExplainerCollapsed">
+              <p>Higher ping times typically indicate players connecting from outside the server's host country. Lower ping times suggest local players are online.</p>
+              <p>If you're playing from outside the host country, look for hours with higher ping averages to find when players with similar connections are online for more balanced gameplay.</p>
             </div>
           </div>
         </div>
@@ -1351,6 +1406,12 @@ const currentTopScores = computed(() => {
 }
 
 .insights-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chart-controls {
   display: flex;
   gap: 8px;
   align-items: center;
