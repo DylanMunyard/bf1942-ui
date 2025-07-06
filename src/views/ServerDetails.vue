@@ -519,6 +519,88 @@ const pingChartOptions = computed(() => {
   };
 });
 
+// Compact chart options for ping chart (smaller version)
+const compactPingChartOptions = computed(() => {
+  const computedStyles = window.getComputedStyle(document.documentElement);
+  const textColor = computedStyles.getPropertyValue('--color-text').trim() || '#333333';
+  const textMutedColor = computedStyles.getPropertyValue('--color-text-muted').trim() || '#666666';
+  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') || 
+                    document.documentElement.classList.contains('dark-mode') ||
+                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  
+  const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      intersect: false,
+      mode: 'index'
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        display: isPingChartExpanded.value,
+        grid: {
+          display: isPingChartExpanded.value,
+          color: gridColor
+        },
+        title: {
+          display: isPingChartExpanded.value,
+          text: `${pingMetric.value === 'median' ? 'Median' : 'P95'} Ping (ms)`,
+          color: textColor
+        },
+        ticks: {
+          display: isPingChartExpanded.value,
+          color: textMutedColor
+        }
+      },
+      x: {
+        display: true,
+        grid: {
+          display: false
+        },
+        title: {
+          display: isPingChartExpanded.value,
+          text: 'Hour of Day',
+          color: textColor
+        },
+        ticks: {
+          display: true,
+          color: textMutedColor,
+          maxRotation: 90,
+          minRotation: 90,
+          font: {
+            size: 10
+          }
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        enabled: true,
+        backgroundColor: isDarkMode ? 'rgba(35, 21, 53, 0.95)' : 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        borderColor: isDarkMode ? '#9c27b0' : '#666666',
+        borderWidth: 1,
+        cornerRadius: 6,
+        callbacks: {
+          title: function(context: any) {
+            return `Hour: ${context[0].label}`;
+          },
+          label: function(context: any) {
+            return `${pingMetric.value === 'median' ? 'Median' : 'P95'} Ping: ${Math.round(context.parsed.y)}ms`;
+          }
+        }
+      },
+    }
+  };
+});
+
 // Helper to get current time and UTC offset for a timezone string
 function getTimezoneDisplay(timezone: string | undefined): string | null {
   if (!timezone) return null;
@@ -657,63 +739,7 @@ const currentTopScores = computed(() => {
           Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
         </div>
 
-        <!-- Server Insights Section -->
-        <div v-if="serverInsights?.pingByHour?.data && serverInsights.pingByHour.data.length > 0" class="stats-section">
-          <div class="insights-header" @click="toggleServerInsights">
-            <h3>📊 Server Insights</h3>
-            <button class="collapse-toggle" :title="isServerInsightsCollapsed ? 'Show insights' : 'Hide insights'">
-              {{ isServerInsightsCollapsed ? '▶' : '▼' }}
-            </button>
-          </div>
-          <div class="insights-content" v-show="!isServerInsightsCollapsed">
-            <div class="chart-header">
-              <div class="insights-controls">
-                <button
-                  class="metric-toggle-button"
-                  @click="togglePingMetric"
-                  :title="`Switch to ${pingMetric === 'median' ? 'P95' : 'Median'} ping`"
-                >
-                  {{ pingMetric === 'median' ? 'Median' : 'P95' }}
-                </button>
-                <button
-                  class="expand-chart-button"
-                  @click="togglePingChartExpansion"
-                  :title="isPingChartExpanded ? 'Collapse chart' : 'Expand chart'"
-                >
-                  {{ isPingChartExpanded ? '📉' : '📊' }}
-                </button>
-              </div>
-            </div>
-            <div class="ping-explainer" :class="{ 'collapsed': isPingExplainerCollapsed }">
-              <div class="ping-explainer-header" @click="togglePingExplainer">
-                <span class="ping-explainer-title">💡 How to interpret ping data</span>
-                <button class="collapse-toggle" :title="isPingExplainerCollapsed ? 'Show explanation' : 'Hide explanation'">
-                  {{ isPingExplainerCollapsed ? '▶' : '▼' }}
-                </button>
-              </div>
-              <div class="ping-explainer-content" v-show="!isPingExplainerCollapsed">
-                <p>Higher ping times typically indicate players connecting from outside the server's host country. Lower ping times suggest local players are online.</p>
-                <p>If you're playing from outside the host country, look for hours with higher ping averages to find when players with similar connections are online for more balanced gameplay.</p>
-              </div>
-            </div>
-            <div
-              class="chart-container ping-chart-container"
-              :class="{ 'chart-expanded': isPingChartExpanded }"
-              @click="!isPingChartExpanded && togglePingChartExpansion()"
-            >
-              <Bar :data="pingChartData" :options="pingChartOptions" />
-            </div>
-          </div>
-        </div>
-        <div v-else-if="isInsightsLoading" class="insights-loading">
-          <div class="loading-spinner small"></div>
-          <p>Loading insights...</p>
-        </div>
-        <div v-else-if="insightsError" class="insights-error">
-          <p class="error-message-small">{{ insightsError }}</p>
-        </div>
-
-        <!-- Player Count Chart -->
+        <!-- Player Activity Section -->
         <div v-if="serverInsights?.playerCountMetrics && serverInsights.playerCountMetrics.length > 0" class="stats-section">
           <div class="chart-header">
             <h3>Player Activity</h3>
@@ -744,13 +770,62 @@ const currentTopScores = computed(() => {
               </span>
             </div>
           </div>
-                       <div
-             class="chart-container"
-             :class="{ 'chart-expanded': isChartExpanded }"
-             @click="!isChartExpanded && toggleChartExpansion()"
-           >
-             <Line :data="chartData" :options="chartOptions" />
-           </div>
+          <div
+            class="chart-container"
+            :class="{ 'chart-expanded': isChartExpanded }"
+            @click="!isChartExpanded && toggleChartExpansion()"
+          >
+            <Line :data="chartData" :options="chartOptions" />
+          </div>
+          
+          <!-- Ping Data Section -->
+          <div v-if="serverInsights?.pingByHour?.data && serverInsights.pingByHour.data.length > 0" class="ping-section">
+            <div class="ping-header">
+              <h4>Connection Quality by Hour</h4>
+              <div class="ping-controls">
+                <button
+                  class="metric-toggle-button"
+                  @click="togglePingMetric"
+                  :title="`Switch to ${pingMetric === 'median' ? 'P95' : 'Median'} ping`"
+                >
+                  {{ pingMetric === 'median' ? 'Median' : 'P95' }}
+                </button>
+                <button
+                  class="expand-chart-button"
+                  @click="togglePingChartExpansion"
+                  :title="isPingChartExpanded ? 'Collapse chart' : 'Expand chart'"
+                >
+                  {{ isPingChartExpanded ? '📉' : '📊' }}
+                </button>
+              </div>
+            </div>
+            <div class="ping-explainer" :class="{ 'collapsed': isPingExplainerCollapsed }">
+              <div class="ping-explainer-header" @click="togglePingExplainer">
+                <span class="ping-explainer-title">💡 How to interpret ping data</span>
+                <button class="collapse-toggle" :title="isPingExplainerCollapsed ? 'Show explanation' : 'Hide explanation'">
+                  {{ isPingExplainerCollapsed ? '▶' : '▼' }}
+                </button>
+              </div>
+              <div class="ping-explainer-content" v-show="!isPingExplainerCollapsed">
+                <p>Higher ping times typically indicate players connecting from outside the server's host country. Lower ping times suggest local players are online.</p>
+                <p>If you're playing from outside the host country, look for hours with higher ping averages to find when players with similar connections are online for more balanced gameplay.</p>
+              </div>
+            </div>
+            <div
+              class="chart-container ping-chart-container compact-ping-chart"
+              :class="{ 'chart-expanded': isPingChartExpanded }"
+              @click="!isPingChartExpanded && togglePingChartExpansion()"
+            >
+              <Bar :data="pingChartData" :options="compactPingChartOptions" />
+            </div>
+          </div>
+        </div>
+        <div v-else-if="isInsightsLoading || isLoading" class="insights-loading">
+          <div class="loading-spinner small"></div>
+          <p>Loading insights...</p>
+        </div>
+        <div v-else-if="insightsError" class="insights-error">
+          <p class="error-message-small">{{ insightsError }}</p>
         </div>
 
         <!-- Enhanced Leaderboards Container -->
@@ -2939,5 +3014,80 @@ const currentTopScores = computed(() => {
 .deaths {
   color: #f44336;
   font-weight: 600;
+}
+
+/* Ping Section Styles */
+.ping-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.ping-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.ping-header h4 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.ping-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.compact-ping-chart {
+  height: 120px !important;
+  transition: height 0.3s ease;
+}
+
+.compact-ping-chart.chart-expanded {
+  height: 300px !important;
+}
+
+.ping-chart-container {
+  background: var(--color-card-background);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  transition: all 0.3s ease;
+}
+
+.ping-chart-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--color-primary);
+}
+
+.ping-chart-container.chart-expanded {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border-color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+  .ping-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .ping-controls {
+    align-self: stretch;
+    justify-content: flex-end;
+  }
+  
+  .compact-ping-chart {
+    height: 100px !important;
+  }
+  
+  .compact-ping-chart.chart-expanded {
+    height: 250px !important;
+  }
 }
 </style>
