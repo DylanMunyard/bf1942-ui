@@ -7,6 +7,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { countryCodeToName } from '../types/countryCodes';
 import { ServerInfo } from '../types/server';
 import PlayersModal from '../components/PlayersModal.vue';
+import PlayerListItem from '../components/PlayerListItem.vue';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
@@ -910,65 +911,22 @@ const currentTopScores = computed(() => {
               </div>
             </div>
             
-            <!-- Top 3 Podium -->
-            <div class="podium-container" v-if="currentMostActivePlayers.length >= 3">
-              <div class="podium-player second-place">
-                <div class="podium-rank">🥈</div>
-                <div class="podium-info">
-                  <router-link :to="`/players/${encodeURIComponent(currentMostActivePlayers[1].playerName)}`" class="podium-name">
-                    {{ currentMostActivePlayers[1].playerName }}
-                  </router-link>
-                  <div class="podium-stats">
-                    <div class="stat-badge primary">{{ formatPlayTime(currentMostActivePlayers[1].minutesPlayed) }}</div>
-                    <div class="stat-badge secondary"><span class="kills">{{ currentMostActivePlayers[1].totalKills }}</span><span class="separator">/</span><span class="deaths">{{ currentMostActivePlayers[1].totalDeaths }}</span></div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="podium-player first-place">
-                <div class="podium-rank">🏆</div>
-                <div class="podium-info">
-                  <router-link :to="`/players/${encodeURIComponent(currentMostActivePlayers[0].playerName)}`" class="podium-name">
-                    {{ currentMostActivePlayers[0].playerName }}
-                  </router-link>
-                  <div class="podium-stats">
-                    <div class="stat-badge primary">{{ formatPlayTime(currentMostActivePlayers[0].minutesPlayed) }}</div>
-                    <div class="stat-badge secondary"><span class="kills">{{ currentMostActivePlayers[0].totalKills }}</span><span class="separator">/</span><span class="deaths">{{ currentMostActivePlayers[0].totalDeaths }}</span></div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="podium-player third-place">
-                <div class="podium-rank">🥉</div>
-                <div class="podium-info">
-                  <router-link :to="`/players/${encodeURIComponent(currentMostActivePlayers[2].playerName)}`" class="podium-name">
-                    {{ currentMostActivePlayers[2].playerName }}
-                  </router-link>
-                  <div class="podium-stats">
-                    <div class="stat-badge primary">{{ formatPlayTime(currentMostActivePlayers[2].minutesPlayed) }}</div>
-                    <div class="stat-badge secondary"><span class="kills">{{ currentMostActivePlayers[2].totalKills }}</span><span class="separator">/</span><span class="deaths">{{ currentMostActivePlayers[2].totalDeaths }}</span></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Remaining Players -->
-            <div class="remaining-players" v-if="currentMostActivePlayers.length > 3">
-              <div v-for="(player, index) in currentMostActivePlayers.slice(3)" :key="index + 3" class="player-card">
-                <div class="player-rank-small">{{ index + 4 }}</div>
-                <div class="player-card-content">
-                  <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-card-name">
-                    {{ player.playerName }}
-                  </router-link>
-                  <div class="player-card-stats">
-                    <span class="stat-item">{{ formatPlayTime(player.minutesPlayed) }}</span>
-                    <span class="stat-separator">•</span>
-                    <span class="stat-item">
-                      <span class="kills">{{ player.totalKills }}</span>/<span class="deaths">{{ player.totalDeaths }}</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <!-- All Players -->
+            <div class="all-players" v-if="currentMostActivePlayers.length > 0">
+              <PlayerListItem
+                v-for="(player, index) in currentMostActivePlayers"
+                :key="index"
+                :rank="index + 1"
+                :player-name="player.playerName"
+              >
+                <template #stats>
+                  <span class="stat-item">{{ formatPlayTime(player.minutesPlayed) }}</span>
+                  <span class="stat-separator">•</span>
+                  <span class="stat-item">
+                    <span class="kills">{{ player.totalKills }}</span>/<span class="deaths">{{ player.totalDeaths }}</span>
+                  </span>
+                </template>
+              </PlayerListItem>
             </div>
           </div>
 
@@ -1005,166 +963,78 @@ const currentTopScores = computed(() => {
               </div>
             </div>
             
-            <!-- Top 3 Podium -->
-            <div class="podium-container scores-podium" v-if="currentTopScores.length >= 3">
-              <div class="podium-player second-place">
-                <div class="podium-rank">🥈</div>
-                <div class="podium-info">
-                  <router-link :to="`/players/${encodeURIComponent(currentTopScores[1].playerName)}`" class="podium-name">
-                    {{ currentTopScores[1].playerName }}
+            <!-- All Scores -->
+            <div class="all-players" v-if="currentTopScores.length > 0">
+              <PlayerListItem
+                v-for="(score, index) in currentTopScores"
+                :key="index"
+                :rank="index + 1"
+                :player-name="score.playerName"
+              >
+                <template #stats>
+                  <router-link
+                    :to="{
+                      path: '/servers/round-report',
+                      query: {
+                        serverGuid: serverDetails.serverGuid,
+                        mapName: score.mapName,
+                        startTime: score.timestamp,
+                        players: score.playerName
+                      }
+                    }"
+                    class="stat-item score-link"
+                  >
+                    {{ score.score.toLocaleString() }}
                   </router-link>
-                  <div class="podium-stats">
-                    <router-link
-                      :to="{
-                        path: '/servers/round-report',
-                        query: {
-                          serverGuid: serverDetails.serverGuid,
-                          mapName: currentTopScores[1].mapName,
-                          startTime: currentTopScores[1].timestamp,
-                          players: currentTopScores[1].playerName
-                        }
-                      }"
-                      class="stat-badge primary"
-                    >
-                      {{ currentTopScores[1].score.toLocaleString() }}
-                    </router-link>
-                    <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[1].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[1].deaths }}</span></div>
-                    <div class="stat-badge tertiary">{{ currentTopScores[1].mapName }}</div>
-                    <div class="stat-badge quaternary">{{ formatDate(currentTopScores[1].timestamp) }}</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="podium-player first-place">
-                <div class="podium-rank">🏆</div>
-                <div class="podium-info">
-                  <router-link :to="`/players/${encodeURIComponent(currentTopScores[0].playerName)}`" class="podium-name">
-                    {{ currentTopScores[0].playerName }}
-                  </router-link>
-                  <div class="podium-stats">
-                    <router-link
-                      :to="{
-                        path: '/servers/round-report',
-                        query: {
-                          serverGuid: serverDetails.serverGuid,
-                          mapName: currentTopScores[0].mapName,
-                          startTime: currentTopScores[0].timestamp,
-                          players: currentTopScores[0].playerName
-                        }
-                      }"
-                      class="stat-badge primary"
-                    >
-                      {{ currentTopScores[0].score.toLocaleString() }}
-                    </router-link>
-                    <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[0].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[0].deaths }}</span></div>
-                    <div class="stat-badge tertiary">{{ currentTopScores[0].mapName }}</div>
-                    <div class="stat-badge quaternary">{{ formatDate(currentTopScores[0].timestamp) }}</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="podium-player third-place">
-                <div class="podium-rank">🥉</div>
-                <div class="podium-info">
-                  <router-link :to="`/players/${encodeURIComponent(currentTopScores[2].playerName)}`" class="podium-name">
-                    {{ currentTopScores[2].playerName }}
-                  </router-link>
-                  <div class="podium-stats">
-                    <router-link
-                      :to="{
-                        path: '/servers/round-report',
-                        query: {
-                          serverGuid: serverDetails.serverGuid,
-                          mapName: currentTopScores[2].mapName,
-                          startTime: currentTopScores[2].timestamp,
-                          players: currentTopScores[2].playerName
-                        }
-                      }"
-                      class="stat-badge primary"
-                    >
-                      {{ currentTopScores[2].score.toLocaleString() }}
-                    </router-link>
-                    <div class="stat-badge secondary"><span class="kills">{{ currentTopScores[2].kills }}</span><span class="separator">/</span><span class="deaths">{{ currentTopScores[2].deaths }}</span></div>
-                    <div class="stat-badge tertiary">{{ currentTopScores[2].mapName }}</div>
-                    <div class="stat-badge quaternary">{{ formatDate(currentTopScores[2].timestamp) }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Remaining Scores -->
-            <div class="remaining-players" v-if="currentTopScores.length > 3">
-              <div v-for="(score, index) in currentTopScores.slice(3)" :key="index + 3" class="player-card">
-                <div class="player-rank-small">{{ index + 4 }}</div>
-                <div class="player-card-content">
-                  <router-link :to="`/players/${encodeURIComponent(score.playerName)}`" class="player-card-name">
-                    {{ score.playerName }}
-                  </router-link>
-                  <div class="player-card-stats">
-                    <router-link
-                      :to="{
-                        path: '/servers/round-report',
-                        query: {
-                          serverGuid: serverDetails.serverGuid,
-                          mapName: score.mapName,
-                          startTime: score.timestamp,
-                          players: score.playerName
-                        }
-                      }"
-                      class="stat-item score-link"
-                    >
-                      {{ score.score.toLocaleString() }}
-                    </router-link>
-                    <span class="stat-separator">•</span>
-                    <span class="stat-item">
-                      <span class="kills">{{ score.kills }}</span>/<span class="deaths">{{ score.deaths }}</span>
-                    </span>
-                    <span class="stat-separator">•</span>
-                    <span class="stat-item">{{ score.mapName }}</span>
-                    <span class="stat-separator">•</span>
-                    <span class="stat-item">{{ formatDate(score.timestamp) }}</span>
-                  </div>
-                </div>
-              </div>
+                  <span class="stat-separator">•</span>
+                  <span class="stat-item">
+                    <span class="kills">{{ score.kills }}</span>/<span class="deaths">{{ score.deaths }}</span>
+                  </span>
+                  <span class="stat-separator">•</span>
+                  <span class="stat-item">{{ score.mapName }}</span>
+                  <span class="stat-separator">•</span>
+                  <span class="stat-item">{{ formatDate(score.timestamp) }}</span>
+                </template>
+              </PlayerListItem>
             </div>
           </div>
+        </div>
 
-          <!-- Recent Rounds -->
-          <div v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0" class="enhanced-leaderboard-section recent-rounds-section">
-            <div class="enhanced-section-header">
-              <div class="section-title">
-                <div class="section-icon">🎮</div>
-                <h3>Recent Battles</h3>
-              </div>
-              <router-link 
-                :to="{ path: '/rounds', query: { server: serverName } }" 
-                class="view-all-button"
-              >
-                View all
-              </router-link>
+        <!-- Recent Rounds -->
+        <div v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0" class="enhanced-leaderboard-section recent-rounds-section">
+          <div class="enhanced-section-header">
+            <div class="section-title">
+              <div class="section-icon">🎮</div>
+              <h3>Recent Battles</h3>
             </div>
-            
-            <div class="rounds-grid">
-              <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-card">
-                <div class="round-status">
-                  <span v-if="round.isActive && index === 0" class="badge-live">🔴 LIVE</span>
-                  <span v-else class="round-date">{{ formatDate(round.endTime) }}</span>
-                </div>
-                <div class="round-map-name">{{ round.mapName }}</div>
-                <router-link
-                  :to="{
-                    path: '/servers/round-report',
-                    query: {
-                      serverGuid: serverDetails.serverGuid,
-                      mapName: round.mapName,
-                      startTime: round.startTime
-                    }
-                  }"
-                  class="round-report-button"
-                >
-                  Battle Report
-                </router-link>
+            <router-link 
+              :to="{ path: '/rounds', query: { server: serverName } }" 
+              class="view-all-button"
+            >
+              View all
+            </router-link>
+          </div>
+          
+          <div class="rounds-grid">
+            <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-card">
+              <div class="round-status">
+                <span v-if="round.isActive && index === 0" class="badge-live">🔴 LIVE</span>
+                <span v-else class="round-date">{{ formatDate(round.endTime) }}</span>
               </div>
+              <div class="round-map-name">{{ round.mapName }}</div>
+              <router-link
+                :to="{
+                  path: '/servers/round-report',
+                  query: {
+                    serverGuid: serverDetails.serverGuid,
+                    mapName: round.mapName,
+                    startTime: round.startTime
+                  }
+                }"
+                class="round-report-button"
+              >
+                Battle Report
+              </router-link>
             </div>
           </div>
         </div>
@@ -1621,7 +1491,7 @@ const currentTopScores = computed(() => {
 /* Enhanced Leaderboards Container */
 .enhanced-leaderboards-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 24px;
   width: 100%;
   box-sizing: border-box;
@@ -1629,6 +1499,8 @@ const currentTopScores = computed(() => {
 
 /* Enhanced Leaderboard Section */
 .enhanced-leaderboard-section {
+  flex: 1;
+  min-width: 0;
   background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background) 100%);
   border-radius: 16px;
   padding: 20px;
@@ -1916,86 +1788,19 @@ const currentTopScores = computed(() => {
   font-size: 0.7rem;
 }
 
-/* Remaining Players */
-.remaining-players {
+/* All Players */
+.all-players {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.player-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--color-background);
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-  transition: all 0.2s ease;
-}
-
-.player-card:hover {
-  background: var(--color-background-soft);
-  border-color: var(--color-primary);
-  transform: translateX(4px);
-}
-
-.player-rank-small {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  font-weight: 600;
-  background: var(--color-background-mute);
-  color: var(--color-text-muted);
-  border: 2px solid var(--color-border);
-}
-
-.player-card-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.player-card-name {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-text);
-  text-decoration: none;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.player-card-name:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
-}
-
-.player-card-stats {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-  flex-wrap: wrap;
-}
-
-.score-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.score-link:hover {
-  text-decoration: underline;
-}
 
 /* Recent Rounds */
 .recent-rounds-section {
   background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(76, 175, 80, 0.05) 100%);
   border-color: rgba(76, 175, 80, 0.2);
+  margin-top: 24px;
 }
 
 .rounds-grid {
@@ -2088,6 +1893,7 @@ const currentTopScores = computed(() => {
 /* Tablet styles */
 @media (max-width: 1024px) {
   .enhanced-leaderboards-container {
+    flex-direction: column;
     gap: 16px;
   }
   
@@ -2241,15 +2047,6 @@ const currentTopScores = computed(() => {
     padding: 3px 6px;
   }
   
-  .player-card {
-    padding: 8px;
-  }
-  
-  .player-rank-small {
-    width: 28px;
-    height: 28px;
-    font-size: 0.8rem;
-  }
   
   .round-card {
     padding: 12px;
@@ -2445,6 +2242,18 @@ const currentTopScores = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.score-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.score-link:hover {
+  text-decoration: underline;
 }
 
 .badge-active {
