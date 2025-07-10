@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ServerInfo } from '../types/server';
 import { fetchAllServers } from '../services/serverDetailsService';
@@ -44,6 +44,19 @@ const aiQuestion = ref('');
 const aiResponse = ref('');
 const aiLoading = ref(false);
 const lastQuestion = ref('');
+
+// Server filter state
+const serverFilter = ref('');
+
+// Computed property for filtered servers
+const filteredServers = computed(() => {
+  if (!serverFilter.value.trim()) {
+    return servers.value;
+  }
+  return servers.value.filter(server => 
+    server.name.toLowerCase().includes(serverFilter.value.toLowerCase())
+  );
+});
 
 watch(() => props.initialMode, (newMode) => {
   if (newMode) {
@@ -184,7 +197,26 @@ onUnmounted(() => {
           <table>
             <thead>
               <tr>
-                <th>Server Name</th>
+                <th class="server-name-header">
+                  <div class="server-name-header-content">
+                    <span>Server Name</span>
+                    <div class="filter-container">
+                      <input
+                        v-model="serverFilter"
+                        placeholder="Filter..."
+                        class="server-filter-input"
+                      />
+                      <button
+                        v-if="serverFilter"
+                        @click="serverFilter = ''"
+                        class="clear-filter-button"
+                        title="Clear filter"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                </th>
                 <th>Players</th>
                 <th>Map</th>
                 <th>Game Type</th>
@@ -192,7 +224,7 @@ onUnmounted(() => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="server in servers" :key="server.guid">
+              <tr v-for="server in filteredServers" :key="server.guid">
                 <td class="server-name-cell">
                   <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="server-name-link">
                     {{ server.name }}
@@ -385,6 +417,92 @@ onUnmounted(() => {
     gap: 8px;
   }
 }
+
+.server-name-header {
+  padding: 8px 12px !important;
+}
+
+.server-name-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 200px;
+}
+
+.server-filter-input {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-size: 12px;
+  width: 100%;
+  transition: border-color 0.2s ease;
+  padding-right: 24px; /* Make space for clear button */
+}
+
+.clear-filter-button {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.clear-filter-button:hover {
+  background-color: var(--color-background-soft);
+  color: var(--color-text);
+}
+
+.server-filter-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.server-filter-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+  .filter-container {
+    max-width: 150px;
+  }
+  
+  .server-filter-input {
+    font-size: 11px;
+    padding: 3px 6px;
+    padding-right: 20px;
+  }
+  
+  .clear-filter-button {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    right: 3px;
+  }
+}
+
 .ai-chat-button {
   padding: 8px 16px;
   background-color: var(--color-background);
