@@ -90,7 +90,7 @@ const chartData = computed(() => {
     });
 
     datasets.push({
-      label: `${pingMetric.value === 'median' ? 'Median' : 'P95'} Ping (ms)`,
+      label: 'Ping (ms)',
       backgroundColor: 'rgba(156, 39, 176, 0.0)',
       borderColor: 'rgba(156, 39, 176, 0.8)',
       borderWidth: 2,
