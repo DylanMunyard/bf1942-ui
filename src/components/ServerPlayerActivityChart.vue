@@ -142,6 +142,7 @@ const chartOptions = computed(() => {
   const baseOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false,
     interaction: {
       intersect: false,
       mode: 'index' as const
