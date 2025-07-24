@@ -243,7 +243,48 @@ const chartOptions = computed(() => {
     },
     plugins: {
       legend: {
-        display: false
+        display: isChartExpanded.value,
+        position: 'top' as const,
+        align: 'start' as const,
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'line',
+          boxWidth: 40,
+          boxHeight: 3,
+          padding: 15,
+          font: {
+            size: 12,
+            weight: '500' as const
+          },
+          generateLabels: (chart: any) => {
+            const original = ChartJS.defaults.plugins.legend.labels.generateLabels;
+            const labels = original.call(this, chart);
+            
+            // Use the dataset's border color for the legend text
+            labels.forEach((label: any, index: number) => {
+              if (chart.data.datasets[index]) {
+                label.fontColor = chart.data.datasets[index].borderColor;
+              }
+            });
+            
+            return labels;
+          }
+        },
+        onHover: (event: any, legendItem: any, legend: any) => {
+          event.native.target.style.cursor = 'pointer';
+        },
+        onLeave: (event: any, legendItem: any, legend: any) => {
+          event.native.target.style.cursor = 'default';
+        },
+        onClick: (event: any, legendItem: any, legend: any) => {
+          const chart = legend.chart;
+          const index = legendItem.datasetIndex;
+          const meta = chart.getDatasetMeta(index);
+          
+          // Toggle visibility
+          meta.hidden = meta.hidden === null ? !chart.data.datasets[index].hidden : null;
+          chart.update();
+        }
       },
       tooltip: {
         enabled: isChartExpanded.value,
