@@ -2,10 +2,6 @@ import axios from 'axios';
 import { ServerInfo } from '../types/server';
 
 // Define interfaces for the API response
-export interface PlayerCountMetric {
-  timestamp: number;
-  value: number;
-}
 
 export interface MostActivePlayer {
   kdRatio: number;
@@ -42,14 +38,29 @@ export interface RecentRoundInfo {
 
 // New interfaces for server insights
 export interface PingByHourData {
-  hour: number;
+  timePeriod: string; // ISO date string
   averagePing: number;
   medianPing: number;
   p95Ping: number;
+  hour: number;
 }
 
 export interface PingByHour {
   data: PingByHourData[];
+}
+
+export interface PlayerCountHistoryData {
+  timestamp: string; // ISO date string
+  playerCount: number;
+  uniquePlayersStarted: number;
+}
+
+export interface PlayerCountSummary {
+  averagePlayerCount: number;
+  peakPlayerCount: number;
+  peakTimestamp: string; // ISO date string
+  changePercentFromPreviousPeriod: number;
+  totalUniquePlayersInPeriod: number;
 }
 
 export interface ServerInsights {
@@ -58,8 +69,8 @@ export interface ServerInsights {
   startPeriod: string; // ISO date string
   endPeriod: string; // ISO date string
   pingByHour: PingByHour;
-  playerCountMetrics: PlayerCountMetric[];
-  averagePlayerCountChangePercent?: number; // Change in player counts from last 7 days vs 7 days before that
+  playerCountHistory: PlayerCountHistoryData[];
+  playerCountSummary: PlayerCountSummary;
 }
 
 export interface LeaderboardEntry {
@@ -147,14 +158,18 @@ export async function fetchServerDetails(
 /**
  * Fetches server insights from the API
  * @param serverName The name of the server to fetch insights for
+ * @param period The time period for insights (7d, 1m, 3m, 6m, 1y)
  * @returns Server insights including ping data
  */
 export async function fetchServerInsights(
-  serverName: string
+  serverName: string,
+  period: string = '7d'
 ): Promise<ServerInsights> {
   try {
     // Make the request to the API endpoint
-    const response = await axios.get<ServerInsights>(`/stats/servers/${encodeURIComponent(serverName)}/insights`);
+    const response = await axios.get<ServerInsights>(`/stats/servers/${encodeURIComponent(serverName)}/insights`, {
+      params: { period }
+    });
 
     // Return the response data
     return response.data;
