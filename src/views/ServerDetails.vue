@@ -32,6 +32,7 @@ const insightsError = ref<string | null>(null);
 const liveServerError = ref<string | null>(null);
 const isServerInsightsCollapsed = ref(true);
 const showPlayersModal = ref(false);
+const currentPeriod = ref('7d');
 
 // Fetch live server data asynchronously (non-blocking)
 const fetchLiveServerDataAsync = async () => {
@@ -71,7 +72,7 @@ const fetchData = async () => {
     // Fetch both server details and insights in parallel
     const [detailsResult, insightsResult] = await Promise.allSettled([
       fetchServerDetails(serverName.value),
-      fetchServerInsights(serverName.value)
+      fetchServerInsights(serverName.value, currentPeriod.value)
     ]);
 
     // Handle server details result
@@ -166,6 +167,24 @@ const openPlayersModal = () => {
 const closePlayersModal = () => {
   showPlayersModal.value = false;
 };
+
+// Handle period change from chart component
+const handlePeriodChange = async (period: string) => {
+  if (period === currentPeriod.value) return;
+  
+  currentPeriod.value = period;
+  isInsightsLoading.value = true;
+  insightsError.value = null;
+
+  try {
+    serverInsights.value = await fetchServerInsights(serverName.value, period);
+  } catch (err) {
+    console.error('Error fetching server insights for period:', period, err);
+    insightsError.value = 'Failed to load server insights for selected period.';
+  } finally {
+    isInsightsLoading.value = false;
+  }
+};
 </script>
 
 <template>
@@ -238,12 +257,8 @@ const closePlayersModal = () => {
         </div>
 
         <!-- Player Activity Section -->
-        <ServerPlayerActivityChart :server-insights="serverInsights" />
-        <div v-if="isInsightsLoading || isLoading" class="insights-loading">
-          <div class="loading-spinner small"></div>
-          <p>Loading insights...</p>
-        </div>
-        <div v-else-if="insightsError" class="insights-error">
+        <ServerPlayerActivityChart :server-insights="serverInsights" :is-loading="isInsightsLoading" @period-change="handlePeriodChange" />
+        <div v-if="insightsError" class="insights-error">
           <p class="error-message-small">{{ insightsError }}</p>
         </div>
 

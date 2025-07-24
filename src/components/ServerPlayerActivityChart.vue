@@ -9,26 +9,41 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 const props = defineProps<{
   serverInsights: ServerInsights | null;
+  isLoading?: boolean;
+}>();
+
+const emit = defineEmits<{
+  'period-change': [period: string];
 }>();
 
 const isChartExpanded = ref(false);
 const pingMetric = ref<'median' | 'p95'>('median');
 const isPingExplainerCollapsed = ref(true);
+const selectedPeriod = ref('7d');
+
+// Period options for the filter
+const periodOptions = [
+  { value: '7d', label: '7 Days' },
+  { value: '1m', label: '1 Month' },
+  { value: '3m', label: '3 Months' },
+  { value: '6m', label: '6 Months' },
+  { value: '1y', label: '1 Year' }
+];
 
 // Chart data for player count with ping overlay
 const chartData = computed(() => {
   const insights = props.serverInsights;
-  if (!insights?.playerCountMetrics) return { labels: [], datasets: [] };
+  if (!insights?.playerCountHistory) return { labels: [], datasets: [] };
 
   // Convert timestamps to readable dates
-  const labels = insights.playerCountMetrics.map(metric => {
-    const date = new Date(metric.timestamp * 1000);
+  const labels = insights.playerCountHistory.map(metric => {
+    const date = new Date(metric.timestamp);
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + 
            ' ' + date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   });
 
   // Get player count values
-  const playerData = insights.playerCountMetrics.map(metric => metric.value);
+  const playerData = insights.playerCountHistory.map(metric => metric.playerCount);
 
   const datasets: any[] = [
     {
@@ -50,38 +65,28 @@ const chartData = computed(() => {
 
   // Add ping data if available
   if (insights.pingByHour?.data) {
-    // Create ping data that matches the timeline by mapping each timestamp to its hour's ping
-    const pingData = insights.playerCountMetrics.map(metric => {
-      const date = new Date(metric.timestamp * 1000);
-      const hour = date.getHours();
-      
-      const utcData = insights.pingByHour.data;
-      const localPingMap = new Map<number, { medianValues: number[]; p95Values: number[] }>();
-      
-      utcData.forEach(item => {
-        const utcDate = new Date();
-        utcDate.setUTCHours(item.hour, 0, 0, 0);
-        const localHour = utcDate.getHours();
-        
-        if (!localPingMap.has(localHour)) {
-          localPingMap.set(localHour, { medianValues: [], p95Values: [] });
-        }
-        
-        const bucket = localPingMap.get(localHour)!;
-        bucket.medianValues.push(item.medianPing);
-        bucket.p95Values.push(item.p95Ping);
+    // Create a map of timestamps to ping data for efficient lookup
+    const pingDataMap = new Map<string, { medianPing: number; p95Ping: number }>();
+    
+    insights.pingByHour.data.forEach(pingItem => {
+      // Use the timePeriod as the key to match with playerCountHistory timestamps
+      const timestamp = new Date(pingItem.timePeriod).toISOString().substring(0, 13) + ':00:00.000Z';
+      pingDataMap.set(timestamp, {
+        medianPing: pingItem.medianPing,
+        p95Ping: pingItem.p95Ping
       });
+    });
+    
+    // Map ping data to match playerCountHistory timeline
+    const pingData = insights.playerCountHistory.map(metric => {
+      const timestamp = new Date(metric.timestamp).toISOString().substring(0, 13) + ':00:00.000Z';
+      const pingInfo = pingDataMap.get(timestamp);
       
-      const bucket = localPingMap.get(hour);
-      if (!bucket || bucket.medianValues.length === 0) {
-        return null; // No ping data for this hour
+      if (!pingInfo) {
+        return null; // No ping data for this timestamp
       }
       
-      if (pingMetric.value === 'median') {
-        return bucket.medianValues.reduce((sum, val) => sum + val, 0) / bucket.medianValues.length;
-      } else {
-        return bucket.p95Values.reduce((sum, val) => sum + val, 0) / bucket.p95Values.length;
-      }
+      return pingMetric.value === 'median' ? pingInfo.medianPing : pingInfo.p95Ping;
     });
 
     datasets.push({
@@ -91,7 +96,7 @@ const chartData = computed(() => {
       borderWidth: 2,
       fill: false,
       tension: 0.4,
-      pointRadius: 2,
+      pointRadius: 0,
       pointHoverRadius: 6,
       pointBackgroundColor: 'rgba(156, 39, 176, 1)',
       pointBorderColor: '#ffffff',
@@ -110,20 +115,15 @@ const chartData = computed(() => {
 
 // Calculate max and median values for player count
 const playerCountStats = computed(() => {
-  if (!props.serverInsights?.playerCountMetrics || props.serverInsights.playerCountMetrics.length === 0) {
+  if (!props.serverInsights?.playerCountSummary) {
     return { max: 0, median: 0 };
   }
 
-  const values = props.serverInsights.playerCountMetrics.map(metric => metric.value);
-  const max = Math.max(...values);
-  
-  // Calculate median
-  const sortedValues = [...values].sort((a, b) => a - b);
-  const median = sortedValues.length % 2 === 0
-    ? (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2
-    : sortedValues[Math.floor(sortedValues.length / 2)];
-
-  return { max, median: Math.round(median) };
+  const summary = props.serverInsights.playerCountSummary;
+  return { 
+    max: summary.peakPlayerCount, 
+    median: Math.round(summary.averagePlayerCount) 
+  };
 });
 
 // Chart options - computed to handle expanded vs compact view
@@ -291,13 +291,33 @@ const togglePingMetric = () => {
 const togglePingExplainer = () => {
   isPingExplainerCollapsed.value = !isPingExplainerCollapsed.value;
 };
+
+// Handle period change
+const handlePeriodChange = (period: string) => {
+  selectedPeriod.value = period;
+  emit('period-change', period);
+};
 </script>
 
 <template>
-  <div v-if="serverInsights?.playerCountMetrics && serverInsights.playerCountMetrics.length > 0" class="stats-section">
+  <div v-if="serverInsights?.playerCountHistory && serverInsights.playerCountHistory.length > 0" class="stats-section">
     <div class="chart-header">
       <h3>Player Activity {{ serverInsights?.pingByHour?.data?.length > 0 ? '& Connection Quality' : '' }}</h3>
       <div class="chart-controls">
+        <div class="period-filters">
+          <button
+            v-for="option in periodOptions"
+            :key="option.value"
+            class="period-filter-button"
+            :class="{ 'active': selectedPeriod === option.value, 'loading': selectedPeriod === option.value && props.isLoading }"
+            @click="handlePeriodChange(option.value)"
+            :title="`Show data for ${option.label.toLowerCase()}`"
+            :disabled="props.isLoading"
+          >
+            <div v-if="selectedPeriod === option.value && props.isLoading" class="button-spinner"></div>
+            <span :class="{ 'loading-text': selectedPeriod === option.value && props.isLoading }">{{ option.label }}</span>
+          </button>
+        </div>
         <button
           v-if="serverInsights?.pingByHour?.data?.length > 0"
           class="metric-toggle-button"
@@ -324,13 +344,13 @@ const togglePingExplainer = () => {
         <span class="stat-label">Median:</span>
         <span class="stat-value stat-median">{{ playerCountStats.median }} players</span>
       </div>
-      <div v-if="serverInsights?.averagePlayerCountChangePercent && serverInsights.averagePlayerCountChangePercent !== 0" class="stat-item">
-        <span class="stat-label">7-day change:</span>
+      <div v-if="serverInsights?.playerCountSummary?.changePercentFromPreviousPeriod && serverInsights.playerCountSummary.changePercentFromPreviousPeriod !== 0" class="stat-item">
+        <span class="stat-label">Period change:</span>
         <span class="stat-value" :class="{ 
-          'stat-positive': serverInsights.averagePlayerCountChangePercent > 0, 
-          'stat-negative': serverInsights.averagePlayerCountChangePercent < 0 
+          'stat-positive': serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0, 
+          'stat-negative': serverInsights.playerCountSummary.changePercentFromPreviousPeriod < 0 
         }">
-          {{ serverInsights.averagePlayerCountChangePercent > 0 ? '+' : '' }}{{ serverInsights.averagePlayerCountChangePercent }}%
+          {{ serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0 ? '+' : '' }}{{ serverInsights.playerCountSummary.changePercentFromPreviousPeriod }}%
         </span>
       </div>
     </div>
@@ -408,8 +428,79 @@ const togglePingExplainer = () => {
 
 .chart-controls {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.period-filters {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--color-background-mute);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.period-filter-button {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  color: var(--color-text-muted);
+  min-width: 50px;
+  white-space: nowrap;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.period-filter-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.period-filter-button:disabled:not(.active) {
+  opacity: 0.4;
+}
+
+.period-filter-button:hover {
+  background: var(--color-background-soft);
+  color: var(--color-text);
+}
+
+.period-filter-button.active {
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.period-filter-button.active:hover {
+  background: var(--color-primary-hover);
+}
+
+.button-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.loading-text {
+  opacity: 0.8;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .metric-toggle-button {
