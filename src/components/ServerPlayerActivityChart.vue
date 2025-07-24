@@ -142,7 +142,10 @@ const chartOptions = computed(() => {
   const baseOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: false,
+    animation: {
+      duration: 750,
+      easing: 'easeInOutQuart'
+    },
     interaction: {
       intersect: false,
       mode: 'index' as const
