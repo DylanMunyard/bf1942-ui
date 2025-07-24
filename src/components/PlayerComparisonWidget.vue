@@ -190,7 +190,7 @@ onUnmounted(() => {
               Click on player names throughout the site to select them for comparison.
             </p>
             <p v-else-if="selectedPlayers.length === 1">
-              Select one more player to compare.
+              Ready to compare! Click "Compare" to start, or select another player for head-to-head.
             </p>
             <p v-else>
               Ready to compare! Click "Compare" to view the detailed comparison.

@@ -15,7 +15,7 @@ export function usePlayerComparison() {
   const router = useRouter();
 
   const canAddPlayer = computed(() => selectedPlayers.value.length < 2);
-  const canCompare = computed(() => selectedPlayers.value.length === 2);
+  const canCompare = computed(() => selectedPlayers.value.length >= 1);
   const hasSelections = computed(() => selectedPlayers.value.length > 0);
 
   const addPlayer = (playerName: string, source?: string, serverGuid?: string) => {
@@ -57,12 +57,16 @@ export function usePlayerComparison() {
     
     const [player1, player2] = selectedPlayers.value;
     const query: Record<string, string> = {
-      player1: player1.name,
-      player2: player2.name
+      player1: player1.name
     };
     
+    // Add player2 if available
+    if (player2) {
+      query.player2 = player2.name;
+    }
+    
     // Add serverGuid if available from either player
-    const serverGuid = player1.serverGuid || player2.serverGuid;
+    const serverGuid = player1.serverGuid || (player2 && player2.serverGuid);
     if (serverGuid) {
       query.serverGuid = serverGuid;
     }
