@@ -30,7 +30,7 @@ const periodOptions = [
   { value: '1y', label: '1 Year' }
 ];
 
-// Chart data for player count with ping overlay
+// Chart data for player count with ping background zones
 const chartData = computed(() => {
   const insights = props.serverInsights;
   if (!insights?.playerCountHistory) return { labels: [], datasets: [] };
@@ -45,25 +45,8 @@ const chartData = computed(() => {
   // Get player count values
   const playerData = insights.playerCountHistory.map(metric => metric.playerCount);
 
-  const datasets: any[] = [
-    {
-      label: 'Player Count',
-      backgroundColor: 'rgba(33, 150, 243, 0.1)',
-      borderColor: 'rgba(33, 150, 243, 0.8)',
-      borderWidth: 2,
-      fill: true,
-      tension: 0.4,
-      pointRadius: 0,
-      pointHoverRadius: 6,
-      pointBackgroundColor: 'rgba(33, 150, 243, 1)',
-      pointBorderColor: '#ffffff',
-      pointBorderWidth: 2,
-      data: playerData,
-      yAxisID: 'y'
-    }
-  ];
-
-  // Add ping data if available
+  // Calculate ping data for background zones and tooltips
+  let pingData = null;
   if (insights.pingByHour?.data) {
     // Create a map of timestamps to ping data for efficient lookup
     const pingDataMap = new Map<string, { medianPing: number; p95Ping: number }>();
@@ -78,7 +61,7 @@ const chartData = computed(() => {
     });
     
     // Map ping data to match playerCountHistory timeline
-    const pingData = insights.playerCountHistory.map(metric => {
+    pingData = insights.playerCountHistory.map(metric => {
       const timestamp = new Date(metric.timestamp).toISOString().substring(0, 13) + ':00:00.000Z';
       const pingInfo = pingDataMap.get(timestamp);
       
@@ -88,24 +71,120 @@ const chartData = computed(() => {
       
       return pingMetric.value === 'median' ? pingInfo.medianPing : pingInfo.p95Ping;
     });
-
-    datasets.push({
-      label: 'Ping (ms)',
-      backgroundColor: 'rgba(156, 39, 176, 0.0)',
-      borderColor: 'rgba(156, 39, 176, 0.8)',
-      borderWidth: 2,
-      fill: false,
-      tension: 0.4,
-      pointRadius: 0,
-      pointHoverRadius: 6,
-      pointBackgroundColor: 'rgba(156, 39, 176, 1)',
-      pointBorderColor: '#ffffff',
-      pointBorderWidth: 1,
-      data: pingData,
-      yAxisID: 'y1',
-      spanGaps: true // This will connect across null values
-    });
   }
+
+  const datasets: any[] = [];
+
+  // Add ping background zones if ping data is available
+  if (pingData) {
+    // Calculate ping thresholds for color zones
+    const validPings = pingData.filter(p => p !== null) as number[];
+    if (validPings.length > 0) {
+      const minPing = Math.min(...validPings);
+      const maxPing = Math.max(...validPings);
+      const pingRange = maxPing - minPing;
+      
+      // Create thresholds: low (green), medium (yellow), high (red)
+      const lowThreshold = minPing + (pingRange * 0.33);
+      const highThreshold = minPing + (pingRange * 0.67);
+      
+      // Get the max player count for background zones
+      const maxPlayerCount = Math.max(...playerData);
+      const backgroundHeight = maxPlayerCount * 1.1;
+      
+      // Create background zones data
+      const backgroundZoneData = labels.map((_, index) => backgroundHeight);
+      const lowPingZoneData = labels.map((_, index) => {
+        const ping = pingData[index];
+        return ping !== null && ping <= lowThreshold ? backgroundHeight : null;
+      });
+      const mediumPingZoneData = labels.map((_, index) => {
+        const ping = pingData[index];
+        return ping !== null && ping > lowThreshold && ping <= highThreshold ? backgroundHeight : null;
+      });
+      const highPingZoneData = labels.map((_, index) => {
+        const ping = pingData[index];
+        return ping !== null && ping > highThreshold ? backgroundHeight : null;
+      });
+
+      // Only add background zone datasets that have actual data points
+      const hasLowPingData = lowPingZoneData.some(d => d !== null);
+      const hasMediumPingData = mediumPingZoneData.some(d => d !== null);
+      const hasHighPingData = highPingZoneData.some(d => d !== null);
+
+      // Add background zone datasets in a specific order to ensure correct legend mapping
+      // Add them in reverse order so they appear correctly in the legend
+      if (hasHighPingData) {
+        datasets.push({
+          label: 'High Ping Zone',
+          backgroundColor: 'rgba(244, 67, 54, 0.15)', // Red for high ping
+          borderColor: 'rgba(244, 67, 54, 0.8)', // Red border for legend
+          borderWidth: 0,
+          fill: true,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          data: highPingZoneData,
+          yAxisID: 'y',
+          order: 1,
+          spanGaps: false
+        });
+      }
+      
+      if (hasMediumPingData) {
+        datasets.push({
+          label: 'Medium Ping Zone',
+          backgroundColor: 'rgba(255, 152, 0, 0.15)', // Orange for medium ping
+          borderColor: 'rgba(255, 152, 0, 0.8)', // Orange border for legend
+          borderWidth: 0,
+          fill: true,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          data: mediumPingZoneData,
+          yAxisID: 'y',
+          order: 2,
+          spanGaps: false
+        });
+      }
+      
+      if (hasLowPingData) {
+        datasets.push({
+          label: 'Low Ping Zone',
+          backgroundColor: 'rgba(76, 175, 80, 0.15)', // Green for low ping
+          borderColor: 'rgba(76, 175, 80, 0.8)', // Green border for legend
+          borderWidth: 0,
+          fill: true,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          data: lowPingZoneData,
+          yAxisID: 'y',
+          order: 3,
+          spanGaps: false
+        });
+      }
+    }
+  }
+
+  // Add the main player count line (drawn on top)
+  datasets.push({
+    label: 'Player Count',
+    backgroundColor: 'rgba(33, 150, 243, 0.15)',
+    borderColor: 'rgba(33, 150, 243, 0.8)',
+    borderWidth: 2,
+    fill: true,
+    tension: 0.4,
+    pointRadius: 0,
+    pointHoverRadius: 6,
+    pointBackgroundColor: 'rgba(33, 150, 243, 1)',
+    pointBorderColor: '#ffffff',
+    pointBorderWidth: 2,
+    data: playerData,
+    yAxisID: 'y',
+    order: 0, // Highest priority - drawn on top
+    pingData: pingData // Store ping data for tooltips
+  });
 
   return {
     labels,
@@ -190,24 +269,6 @@ const chartOptions = computed(() => {
           }
         }
       },
-      y1: {
-        type: 'linear' as const,
-        display: isChartExpanded.value && !!props.serverInsights?.pingByHour?.data,
-        position: 'right' as const,
-        beginAtZero: true,
-        grid: {
-          drawOnChartArea: false
-        },
-        title: {
-          display: isChartExpanded.value,
-          text: `${pingMetric.value === 'median' ? 'Median' : 'P95'} Ping (ms)`,
-          color: 'rgba(156, 39, 176, 0.8)'
-        },
-        ticks: {
-          display: isChartExpanded.value,
-          color: 'rgba(156, 39, 176, 0.8)'
-        }
-      },
               x: {
           display: isChartExpanded.value,
           grid: {
@@ -247,48 +308,7 @@ const chartOptions = computed(() => {
     },
     plugins: {
       legend: {
-        display: isChartExpanded.value,
-        position: 'top' as const,
-        align: 'start' as const,
-        labels: {
-          usePointStyle: true,
-          pointStyle: 'line',
-          boxWidth: 40,
-          boxHeight: 3,
-          padding: 15,
-          font: {
-            size: 12,
-            weight: '500' as const
-          },
-          generateLabels: (chart: any) => {
-            const original = ChartJS.defaults.plugins.legend.labels.generateLabels;
-            const labels = original.call(this, chart);
-            
-            // Use the dataset's border color for the legend text
-            labels.forEach((label: any, index: number) => {
-              if (chart.data.datasets[index]) {
-                label.fontColor = chart.data.datasets[index].borderColor;
-              }
-            });
-            
-            return labels;
-          }
-        },
-        onHover: (event: any, legendItem: any, legend: any) => {
-          event.native.target.style.cursor = 'pointer';
-        },
-        onLeave: (event: any, legendItem: any, legend: any) => {
-          event.native.target.style.cursor = 'default';
-        },
-        onClick: (event: any, legendItem: any, legend: any) => {
-          const chart = legend.chart;
-          const index = legendItem.datasetIndex;
-          const meta = chart.getDatasetMeta(index);
-          
-          // Toggle visibility
-          meta.hidden = meta.hidden === null ? !chart.data.datasets[index].hidden : null;
-          chart.update();
-        }
+        display: false // Disabled - background zones make legend unnecessary
       },
       tooltip: {
         enabled: isChartExpanded.value,
@@ -305,6 +325,33 @@ const chartOptions = computed(() => {
         },
         bodyFont: {
           size: 13
+        },
+        callbacks: {
+          label: function(context: any) {
+            const datasetLabel = context.dataset.label || '';
+            
+            // Handle ping zone datasets differently
+            if (datasetLabel.includes('Ping Zone')) {
+              return datasetLabel; // Just return the zone name, no value
+            }
+            
+            // Handle player count dataset
+            if (datasetLabel === 'Player Count') {
+              let label = 'Player Count: ' + Math.round(context.parsed.y) + ' players';
+              
+              // Add ping info if available
+              if (context.dataset.pingData) {
+                const pingValue = context.dataset.pingData[context.dataIndex];
+                if (pingValue !== null && pingValue !== undefined) {
+                  label += ` (${pingMetric.value === 'median' ? 'Median' : 'P95'} Ping: ${Math.round(pingValue)}ms)`;
+                }
+              }
+              
+              return label;
+            }
+            
+            return datasetLabel;
+          }
         }
       }
     },
@@ -347,7 +394,7 @@ const handlePeriodChange = (period: string) => {
 <template>
   <div v-if="serverInsights?.playerCountHistory && serverInsights.playerCountHistory.length > 0" class="stats-section">
     <div class="chart-header">
-      <h3>Player Activity {{ serverInsights?.pingByHour?.data?.length > 0 ? '& Connection Quality' : '' }}</h3>
+      <h3>Player Activity{{ serverInsights?.pingByHour?.data?.length > 0 ? ' with Connection Quality Zones' : '' }}</h3>
       <div class="chart-controls">
         <div class="period-filters">
           <button
@@ -416,8 +463,8 @@ const handlePeriodChange = (period: string) => {
         </button>
       </div>
       <div class="ping-explainer-content" v-show="!isPingExplainerCollapsed">
-        <p>Higher ping times typically indicate players connecting from outside the server's host country. Lower ping times suggest local players are online.</p>
-        <p>If you're playing from outside the host country, look for hours with higher ping averages to find when players with similar connections are online for more balanced gameplay.</p>
+        <p><strong>Background color guide:</strong> The chart background is tinted to show connection quality periods. <strong>Green zones</strong> indicate low ping (good connections), <strong>orange zones</strong> show medium ping, and <strong>red zones</strong> indicate high ping periods.</p>
+        <p>If you're playing from outside the host country, look for red/orange zones to find when players with similar connections are online for more balanced gameplay. Hover over the chart when expanded to see exact ping values.</p>
       </div>
     </div>
   </div>
