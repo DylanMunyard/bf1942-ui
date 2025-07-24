@@ -508,7 +508,20 @@ const similarityColor = (score: number): string => {
           Back to Players
         </button>
         <div class="player-header-info">
-          <h2 class="player-name-heading">{{ playerName }}</h2>
+          <div class="player-name-row">
+            <h2 class="player-name-heading">{{ playerName }}</h2>
+            <router-link 
+              :to="{ path: '/players/compare', query: { player1: playerName } }"
+              class="compare-player-btn"
+              title="Compare this player with another"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3h12l4 6-10 13L2 9l4-6z"/>
+                <path d="M11 3 8 9l4 13 4-13-3-6"/>
+              </svg>
+              Compare Player
+            </router-link>
+          </div>
           <div class="player-header-meta">
             <span class="player-playtime">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
             <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
@@ -3291,6 +3304,38 @@ tbody tr:hover {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
+}
+
+.player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.compare-player-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--color-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-primary);
+}
+
+.compare-player-btn:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.compare-player-btn svg {
+  flex-shrink: 0;
 }
 
 .player-playtime {

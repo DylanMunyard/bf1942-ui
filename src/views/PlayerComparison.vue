@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
@@ -113,6 +113,7 @@ const router = useRouter();
 
 const player1Input = ref('');
 const player2Input = ref('');
+const player2InputRef = ref<HTMLInputElement | null>(null);
 const comparisonData = ref<ComparisonData | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
@@ -420,10 +421,21 @@ onMounted(() => {
   const urlPlayer1 = route.query.player1 as string;
   const urlPlayer2 = route.query.player2 as string;
   
-  if (urlPlayer1 && urlPlayer2) {
+  if (urlPlayer1) {
     player1Input.value = urlPlayer1;
-    player2Input.value = urlPlayer2;
-    fetchComparisonData(urlPlayer1, urlPlayer2);
+    
+    if (urlPlayer2) {
+      player2Input.value = urlPlayer2;
+      fetchComparisonData(urlPlayer1, urlPlayer2);
+    } else {
+      // If only player1 is provided, focus the player2 input field
+      // Use nextTick to ensure the DOM is updated before focusing
+      nextTick(() => {
+        if (player2InputRef.value) {
+          player2InputRef.value.focus();
+        }
+      });
+    }
   }
 });
 
@@ -923,6 +935,7 @@ const combinedActivityChartOptions = computed(() => {
         <!-- Player 2 Input with Search -->
         <div class="player-input-container" @click.stop>
           <input 
+            ref="player2InputRef"
             type="text" 
             v-model="player2Input" 
             placeholder="Player 2 Name" 
