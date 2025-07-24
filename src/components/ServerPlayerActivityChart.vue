@@ -756,4 +756,95 @@ const handlePeriodChange = (period: string) => {
   box-shadow: 0 8px 25px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
   background: var(--color-background);
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .chart-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .chart-header h3 {
+    text-align: center;
+    font-size: 1.1rem;
+    line-height: 1.3;
+    word-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .chart-controls {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .period-filters {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
+    width: 100%;
+  }
+
+  .period-filter-button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-width: 60px;
+    flex: 1;
+    max-width: calc(50% - 3px);
+  }
+
+  .metric-toggle-button {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    min-width: 80px;
+  }
+
+  .expand-chart-button {
+    padding: 8px 16px;
+    font-size: 1rem;
+  }
+
+  .chart-stats {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .chart-stats .stat-item {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-section {
+    padding: 8px;
+  }
+
+  .chart-header h3 {
+    font-size: 1rem;
+  }
+
+  .period-filter-button {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    min-width: 50px;
+  }
+
+  .period-filters {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .chart-controls {
+    gap: 6px;
+  }
+
+  .metric-toggle-button,
+  .expand-chart-button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
 </style> 
