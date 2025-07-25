@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a BF1942 Servers Dashboard - a web application for monitoring Battlefield 1942 game servers with real-time player statistics and AI-powered analytics. The system consists of three main components:
+This is a BF1942 Servers Dashboard - a web application for monitoring Battlefield 1942, Forgotten Hope 2, and Battlefield Vietnam game servers with real-time player statistics and AI-powered analytics. The system consists of three main components:
 
 1. **Frontend**: Vue.js 3 + TypeScript application with Chart.js visualizations
 2. **AI Backend**: C# .NET 9 service using Microsoft Semantic Kernel for player activity analytics
@@ -46,7 +46,7 @@ dotnet build
 ### Frontend Architecture (Vue.js)
 - **Entry Point**: `src/main.ts` bootstraps the Vue application
 - **Routing**: Vue Router configuration in `src/router/index.js` with routes for:
-  - Servers (BF1942/FH2 modes)
+  - Servers (BF1942/FH2/BF Vietnam modes)
   - Server details and rankings
   - Players and player details
   - Round reports

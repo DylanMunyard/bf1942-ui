@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ServerInfo } from '../types/server';
+import { ServerSummary } from '../types/server';
 import { fetchAllServers } from '../services/serverDetailsService';
 import TimeDisplay from './TimeDisplay.vue';
 import { queryAI } from '../services/aiService';
@@ -13,14 +13,14 @@ const route = useRoute();
 
 // Props from router
 interface Props {
-  initialMode?: 'FH2' | '42';
+  initialMode?: 'FH2' | '42' | 'BFV';
 }
 
 const props = defineProps<Props>();
 
 // Define emits
 const emit = defineEmits<{
-  'show-players': [server: ServerInfo]
+  'show-players': [server: ServerSummary]
 }>();
 
 // Function to format seconds to mm:ss
@@ -30,13 +30,13 @@ const formatTime = (seconds: number): string => {
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
-const servers = ref<ServerInfo[]>([]);
+const servers = ref<ServerSummary[]>([]);
 const loading = ref(true);
 const updating = ref(false);
 const tabSwitchLoading = ref(false);
 const error = ref<string | null>(null);
 const refreshTimer = ref<number | null>(null);
-const serverMode = ref<'42' | 'FH2'>(props.initialMode || '42');
+const serverMode = ref<'42' | 'FH2' | 'BFV'>(props.initialMode || '42');
 
 // AI Chat state
 const showAIChatModal = ref(false);
@@ -80,7 +80,7 @@ const fetchServerData = async (isManualRefresh: boolean = false) => {
   }
 
   try {
-    const game = serverMode.value === '42' ? 'bf1942' : 'fh2';
+    const game = serverMode.value === '42' ? 'bf1942' : serverMode.value === 'FH2' ? 'fh2' : 'bfvietnam';
     servers.value = await fetchAllServers(game);
   } catch (err) {
     error.value = 'Failed to fetch server data. Please try again.';
@@ -92,7 +92,7 @@ const fetchServerData = async (isManualRefresh: boolean = false) => {
   }
 };
 
-const joinServer = (server: ServerInfo) => {
+const joinServer = (server: ServerSummary) => {
   const newWindow = window.open(server.joinLink, '_blank', 'noopener,noreferrer');
   if (newWindow) {
     newWindow.blur();
@@ -100,7 +100,7 @@ const joinServer = (server: ServerInfo) => {
   }
 };
 
-const showPlayers = (server: ServerInfo) => {
+const showPlayers = (server: ServerSummary) => {
   emit('show-players', server);
 };
 
@@ -174,6 +174,16 @@ onUnmounted(() => {
           <div class="tab-content">
             <i class="tab-icon icon-fh2"></i>
             <span>FH2</span>
+          </div>
+        </router-link>
+        <router-link
+          to="/servers/bfv"
+          class="tab"
+          active-class="active"
+        >
+          <div class="tab-content">
+            <i class="tab-icon icon-bfv"></i>
+            <span>BFV</span>
           </div>
         </router-link>
       </div>
@@ -396,6 +406,9 @@ onUnmounted(() => {
 
 .icon-fh2 {
   background-image: url('../assets/fh2.jpg');
+}
+.icon-bfv {
+  background-image: url('../assets/bfv.jpg');
 }
 
 @media (max-width: 768px) {

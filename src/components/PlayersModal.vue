@@ -200,12 +200,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ServerInfo } from '../types/server';
+import { ServerSummary } from '../types/server';
 import PlayerName from './PlayerName.vue';
 
 interface Props {
   show: boolean;
-  server: ServerInfo | null;
+  server: ServerSummary | null;
 }
 
 const props = defineProps<Props>();

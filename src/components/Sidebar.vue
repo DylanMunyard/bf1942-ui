@@ -5,7 +5,7 @@
         <i class="icon-servers"></i>
         <div class="tooltip">
           <div class="tooltip-icon icon-servers"></div>
-          <div class="tooltip-text">Find BF1942 and FH2 servers. Thanks to <a href="https://github.com/cetteup" target="_blank" rel="noopener">@cetteup</a> for providing these APIs</div>
+          <div class="tooltip-text">Find BF1942, FH2, and BF Vietnam servers. Thanks to <a href="https://github.com/cetteup" target="_blank" rel="noopener">@cetteup</a> for providing these APIs</div>
         </div>
       </router-link>
       <router-link to="/players" active-class="active" class="nav-item" data-tooltip="true">

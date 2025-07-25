@@ -19,7 +19,7 @@ import { ServerInfo } from '../types/server';
 
 // Props from router
 interface Props {
-  initialMode?: 'FH2' | '42';
+  initialMode?: 'FH2' | '42' | 'BFV';
 }
 
 const props = defineProps<Props>();

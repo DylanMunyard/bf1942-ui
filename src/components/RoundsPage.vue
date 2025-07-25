@@ -332,6 +332,24 @@ const getTimeGap = (currentRound: RoundListItem, nextRound: RoundListItem): stri
   return ''; // Don't show gap for sessions close together
 };
 
+// Helper to get the correct servers route based on gameId
+const getServersRoute = (gameId?: string): string => {
+  if (!gameId) return '/servers';
+  
+  const normalizedGameId = gameId.toLowerCase();
+  switch (normalizedGameId) {
+    case 'fh2':
+      return '/servers/fh2';
+    case 'bfv':
+    case 'bfvietnam':
+      return '/servers/bfv';
+    case 'bf1942':
+    case '42':
+    default:
+      return '/servers/bf1942';
+  }
+};
+
 // Cleanup when component is unmounted
 onUnmounted(() => {
   // Clear any pending search timeout
@@ -354,7 +372,7 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="header-right">
-        <router-link to="/servers" class="back-button">
+        <router-link :to="getServersRoute(rounds[0]?.gameType)" class="back-button">
           Back to Servers
         </router-link>
         <button @click="fetchData" class="refresh-button">

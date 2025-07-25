@@ -36,6 +36,12 @@ const router = createRouter({
       props: { initialMode: 'FH2' }
     },
     {
+      path: '/servers/bfv',
+      name: 'servers-bfv',
+      component: Servers,
+      props: { initialMode: 'BFV' }
+    },
+    {
       path: '/servers/:serverName',
       name: 'server-details',
       component: ServerDetails,

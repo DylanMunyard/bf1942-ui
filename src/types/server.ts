@@ -51,3 +51,37 @@ export interface PlayerWithKdr extends ServerPlayer {
   previousScore?: number;
   scoreChanged?: 'up' | 'down' | 'none';
 }
+
+// ServerSummary interfaces matching C# backend
+export interface PlayerInfo {
+  name: string;
+  score: number;
+  kills: number;
+  deaths: number;
+  ping: number;
+  team: number;
+  teamLabel: string;
+}
+
+export interface TeamInfo {
+  index: number;
+  label: string;
+  tickets: number;
+}
+
+export interface ServerSummary {
+  guid: string;
+  name: string;
+  ip: string;
+  port: number;
+  numPlayers: number;
+  maxPlayers: number;
+  mapName: string;
+  gameType: string;
+  joinLink: string;
+  roundTimeRemain: number;
+  tickets1: number;
+  tickets2: number;
+  players: PlayerInfo[];
+  teams: TeamInfo[];
+}

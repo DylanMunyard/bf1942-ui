@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ServerInfo } from '../types/server';
+import { ServerInfo, ServerSummary } from '../types/server';
 
 // Define interfaces for the API response
 
@@ -133,6 +133,7 @@ export interface ServerDetails {
   timezone?: string;
   serverIp?: string;
   serverPort?: number;
+  gameId?: string;
 }
 
 /**
@@ -207,7 +208,7 @@ export async function fetchRoundReport(serverGuid: string, mapName: string, star
 
 // API response interface for servers endpoint
 interface ServersResponse {
-  servers: ServerInfo[];
+  servers: ServerSummary[];
   lastUpdated: string;
   cacheHit: boolean;
 }
@@ -218,8 +219,8 @@ interface ServersResponse {
  * @returns All servers sorted by player count
  */
 export async function fetchAllServers(
-  game: 'bf1942' | 'fh2'
-): Promise<ServerInfo[]> {
+  game: 'bf1942' | 'fh2' | 'bfvietnam'
+): Promise<ServerSummary[]> {
   try {
     const response = await axios.get<ServersResponse>(`/stats/liveservers/${game}/servers`);
     return response.data.servers;
@@ -231,7 +232,7 @@ export async function fetchAllServers(
 
 /**
  * Fetches live server data from backend API using cached endpoint
- * @param gameId The game ID ('fh2' for Forgotten Hope 2, 'bf1942' for BF1942)
+ * @param gameId The game ID ('fh2' for Forgotten Hope 2, 'bf1942' for BF1942, 'bfvietnam' for Battlefield Vietnam)
  * @param serverIp The IP address of the server
  * @param serverPort The port of the server
  * @returns Live server information including current leaderboard
@@ -240,13 +241,27 @@ export async function fetchLiveServerData(
   gameId: string, 
   serverIp: string, 
   serverPort: number
-): Promise<ServerInfo> {
+): Promise<ServerSummary> {
   try {
-    // Validate gameId and convert to the correct format for the new API
-    const game = gameId === 'fh2' ? 'fh2' : 'bf1942';
+    // Map gameId to the correct format for the API endpoint
+    let game: string;
+    switch (gameId.toLowerCase()) {
+      case 'fh2':
+        game = 'fh2';
+        break;
+      case 'bfvietnam':
+      case 'bfv':
+        game = 'bfvietnam';
+        break;
+      case 'bf1942':
+      case '42':
+      default:
+        game = 'bf1942';
+        break;
+    }
     
     // Use the backend API endpoint with separate IP and port parameters
-    const response = await axios.get<ServerInfo>(
+    const response = await axios.get<ServerSummary>(
       `/stats/liveservers/${game}/${serverIp}/${serverPort}`
     );
     

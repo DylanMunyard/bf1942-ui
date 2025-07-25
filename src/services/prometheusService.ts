@@ -26,7 +26,7 @@ function processPrometheusResponse(response: any): PrometheusDataPoint[] {
 /**
  * Fetches player count data from Prometheus for a specific server
  * @param serverName The name of the server to fetch data for
- * @param game The game type ('bf1942' or 'fh2')
+ * @param game The game type ('bf1942', 'fh2', or 'bfvietnam')
  * @returns Array of data points with timestamp and value for the last 7 days
  */
 export async function fetchServerPlayerData(

@@ -5,7 +5,7 @@ import { ServerDetails, RecentRoundInfo, ServerInsights, fetchServerDetails, fet
 import { Line, Bar } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { countryCodeToName } from '../types/countryCodes';
-import { ServerInfo } from '../types/server';
+import { ServerSummary } from '../types/server';
 import PlayersModal from '../components/PlayersModal.vue';
 import PlayerListItem from '../components/PlayerListItem.vue';
 import ServerPlayerActivityChart from '../components/ServerPlayerActivityChart.vue';
@@ -23,7 +23,7 @@ const router = useRouter();
 const serverName = ref(route.params.serverName as string);
 const serverDetails = ref<ServerDetails | null>(null);
 const serverInsights = ref<ServerInsights | null>(null);
-const liveServerInfo = ref<ServerInfo | null>(null);
+const liveServerInfo = ref<ServerSummary | null>(null);
 const isLoading = ref(true);
 const isInsightsLoading = ref(true);
 const isLiveServerLoading = ref(false);
@@ -42,9 +42,10 @@ const fetchLiveServerDataAsync = async () => {
   liveServerError.value = null;
 
   try {
-    // Determine game type from server name or use a default
-    // You might want to add gameType to ServerDetails interface if available
-    const gameId = serverName.value.toLowerCase().includes('fh2') ? 'fh2' : 'bf1942';
+    // Use gameId from server details API response, fallback to guessing from server name
+    const gameId = serverDetails.value.gameId || 
+      (serverName.value.toLowerCase().includes('fh2') ? 'fh2' : 
+       serverName.value.toLowerCase().includes('vietnam') || serverName.value.toLowerCase().includes('bfv') ? 'bfvietnam' : 'bf1942');
     
     liveServerInfo.value = await fetchLiveServerData(
       gameId,
@@ -147,6 +148,24 @@ function getCountryName(code: string | undefined, fallback: string | undefined):
   return name || fallback;
 }
 
+// Helper to get the correct servers route based on gameId
+const getServersRoute = (gameId?: string): string => {
+  if (!gameId) return '/servers';
+  
+  const normalizedGameId = gameId.toLowerCase();
+  switch (normalizedGameId) {
+    case 'fh2':
+      return '/servers/fh2';
+    case 'bfv':
+    case 'bfvietnam':
+      return '/servers/bfv';
+    case 'bf1942':
+    case '42':
+    default:
+      return '/servers/bf1942';
+  }
+};
+
 // Join server function
 const joinServer = () => {
   if (!liveServerInfo.value?.joinLink) return;
@@ -191,7 +210,7 @@ const handlePeriodChange = async (period: string) => {
   <div class="server-details-container">
     <div class="server-details-header">
       <div class="server-name-container" style="flex-direction: column; align-items: flex-start;">
-        <router-link to="/servers" class="back-button">
+        <router-link :to="getServersRoute(serverDetails?.gameId || liveServerInfo?.gameId)" class="back-button">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           Back to Servers
         </router-link>
