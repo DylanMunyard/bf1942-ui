@@ -586,6 +586,20 @@ const achievedMilestones = computed(() => {
   return playerStats.value?.killMilestones || [];
 });
 
+// Computed property for milestone progress colors based on theme
+const milestoneProgressColors = computed(() => {
+  // Detect dark mode using the same method as other components
+  const computedStyles = window.getComputedStyle(document.documentElement);
+  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') || 
+                    document.documentElement.classList.contains('dark-mode') ||
+                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  
+  return {
+    gold: '#FFD700', // Same for both modes
+    progress: isDarkMode ? '#26C6DA' : '#9c27b0' // Bright cyan for dark mode, purple for light mode
+  };
+});
+
 </script>
 
 <template>
@@ -623,7 +637,7 @@ const achievedMilestones = computed(() => {
                   <circle
                     class="milestone-progress-bar"
                     cx="30" cy="30" r="26" fill="none"
-                    :stroke="milestoneProgress(nextMilestone) > 0.95 ? '#FFD700' : '#9c27b0'"
+                    :stroke="milestoneProgress(nextMilestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress"
                     stroke-width="6"
                     :stroke-dasharray="2 * Math.PI * 26"
                     :stroke-dashoffset="(1 - milestoneProgress(nextMilestone)) * 2 * Math.PI * 26"
@@ -714,7 +728,7 @@ const achievedMilestones = computed(() => {
                       cy="36"
                       r="35"
                       fill="none"
-                      :stroke="milestoneProgress(milestone) > 0.95 ? '#FFD700' : '#9c27b0'"
+                      :stroke="milestoneProgress(milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress"
                       stroke-width="2"
                       stroke-linecap="round"
                       :stroke-dasharray="2 * Math.PI * 35"
@@ -4807,7 +4821,6 @@ tbody tr:hover {
   align-items: center;
   position: relative;
   opacity: 0.45;
-  filter: grayscale(1) brightness(0.8);
   transition: opacity 0.2s, filter 0.2s;
   cursor: pointer;
   perspective: 600px;
@@ -4818,10 +4831,19 @@ tbody tr:hover {
 }
 .milestone-badge-image-wrapper.next {
   opacity: 0.45;
+  transition: opacity 0.2s, filter 0.2s;
+}
+.milestone-badge-image-wrapper.next .milestone-badge-image {
   filter: grayscale(1) brightness(0.8);
+}
+.milestone-badge-image-wrapper.next .milestone-progress-border {
+  opacity: 1;
+  filter: none;
 }
 .milestone-badge-image-wrapper.future {
   opacity: 0.45;
+}
+.milestone-badge-image-wrapper.future .milestone-badge-image {
   filter: grayscale(1) brightness(0.8);
 }
 .milestone-badge-flip {
