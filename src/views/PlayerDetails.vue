@@ -4915,16 +4915,5 @@ tbody tr:hover {
     top: -4px;
     left: -4px;
   }
-  .milestone-progress-border circle {
-    cx: 31;
-    cy: 31;
-    r: 30;
   }
-  .milestone-progress-border .progress-bar {
-    stroke-dasharray: calc(2 * 3.14159 * 30);
-    stroke-dashoffset: calc((1 - var(--progress)) * 2 * 3.14159 * 30);
-    transform: rotate(-90deg);
-    transform-origin: 31px 31px;
-  }
-}
 </style>
