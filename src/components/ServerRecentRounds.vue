@@ -1,11 +1,69 @@
 <script setup lang="ts">
-import type { ServerDetails } from '@/services/serverDetailsService';
-import { formatDate } from '../utils/date';
+import { useRouter } from 'vue-router';
+import type { ServerDetails, RecentRoundInfo } from '@/services/serverDetailsService';
 
-defineProps<{
+const props = defineProps<{
   serverDetails: ServerDetails;
   serverName: string;
 }>();
+
+const router = useRouter();
+
+const formatPlayTime = (minutes: number): string => {
+  if (minutes < 1) {
+    return 'less than a minute';
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = Math.round(minutes % 60);
+
+  if (hours === 0) {
+    return `${remainingMinutes} minutes`;
+  } else if (hours === 1) {
+    return `${hours} hour ${remainingMinutes} minutes`;
+  } else {
+    return `${hours} hours ${remainingMinutes} minutes`;
+  }
+};
+
+const formatRelativeTime = (dateString: string): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffMonths / 12);
+
+  if (diffYears > 0) return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
+  if (diffMonths > 0) return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
+  if (diffDays > 0) return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+  if (diffHours > 0) return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+  if (diffMinutes > 0) return diffMinutes === 1 ? '1 minute ago' : `${diffMinutes} minutes ago`;
+  return 'Just now';
+};
+
+const getDurationMinutes = (startTime: string, endTime: string): number => {
+  if (!endTime || !startTime) return 0;
+  const start = new Date(startTime.endsWith('Z') ? startTime : startTime + 'Z');
+  const end = new Date(endTime.endsWith('Z') ? endTime : endTime + 'Z');
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+  const diffMs = end.getTime() - start.getTime();
+  return Math.max(0, Math.floor(diffMs / 60000));
+};
+
+const navigateToRoundReport = (round: RecentRoundInfo) => {
+  router.push({
+    path: '/servers/round-report',
+    query: {
+      serverGuid: props.serverDetails.serverGuid,
+      mapName: round.mapName,
+      startTime: round.startTime,
+    },
+  });
+};
 </script>
 
 <template>
@@ -23,27 +81,28 @@ defineProps<{
       </router-link>
     </div>
     
-    <div class="rounds-grid">
-      <div v-for="(round, index) in serverDetails.lastRounds" :key="index" class="round-card">
-        <div class="round-status">
-          <span v-if="round.isActive && index === 0" class="badge-live">🔴 LIVE</span>
-          <span v-else class="round-date">{{ formatDate(round.endTime) }}</span>
+    <div class="timeline-container">
+      <template v-for="(round, index) in serverDetails.lastRounds" :key="index">
+        <div class="timeline-item" @click="navigateToRoundReport(round)">
+          <div class="timeline-node-container">
+            <div class="timeline-node"></div>
+          </div>
+          <div class="session-card">
+            <div class="session-line-1">
+              <span class="time-link">{{ formatRelativeTime(round.startTime) }}</span>
+              <span v-if="round.isActive && index === 0" class="badge-active">Live</span>
+            </div>
+            <div class="session-line-2">
+              <span class="map-name">{{ round.mapName }}</span>
+            </div>
+            <div class="session-line-3">
+              <span class="duration-text">
+                {{ formatPlayTime(getDurationMinutes(round.startTime, round.endTime)) }}
+              </span>
+            </div>
+          </div>
         </div>
-        <div class="round-map-name">{{ round.mapName }}</div>
-        <router-link
-          :to="{
-            path: '/servers/round-report',
-            query: {
-              serverGuid: serverDetails.serverGuid,
-              mapName: round.mapName,
-              startTime: round.startTime
-            }
-          }"
-          class="round-report-button"
-        >
-          Battle Report
-        </router-link>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -56,87 +115,7 @@ defineProps<{
   margin-top: 24px;
 }
 
-.rounds-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
-}
-
-.round-card {
-  background: var(--color-background);
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid var(--color-border);
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.round-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-primary) 0%, #9c27b0 100%);
-}
-
-.round-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-  border-color: var(--color-primary);
-}
-
-.round-status {
-  margin-bottom: 8px;
-}
-
-.badge-live {
-  background: linear-gradient(135deg, #ff4444 0%, #ff6b6b 100%);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-.round-date {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-}
-
-.round-map-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 12px;
-}
-
-.round-report-button {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #9c27b0 100%);
-  color: white;
-  text-decoration: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  display: inline-block;
-}
-
-.round-report-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
-}
-
+/* Enhanced section styling from parent component */
 .enhanced-leaderboard-section {
   flex: 1;
   min-width: 0;
@@ -204,6 +183,141 @@ defineProps<{
   box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
 }
 
+
+/* Timeline Styles */
+.timeline-container {
+  position: relative;
+  padding: 0;
+  margin: 12px 0 0;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.timeline-item:hover {
+  background-color: var(--color-background-soft);
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 1.8em;
+  bottom: -1.8em;
+  width: 2px;
+  background: var(--color-border);
+  z-index: 1;
+}
+
+.timeline-item:last-child::before {
+  display: none;
+}
+
+.timeline-node-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
+  min-width: 16px;
+  z-index: 2;
+  align-self: flex-start;
+  margin-top: 1.2em;
+}
+
+.timeline-node {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  border: 2px solid var(--color-background);
+  position: relative;
+  z-index: 3;
+  transition: all 0.2s ease;
+}
+
+.timeline-item:hover .timeline-node {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+}
+
+.session-card {
+  flex: 1;
+  background-color: transparent;
+  line-height: 1.4;
+  border-radius: 4px;
+}
+
+.session-line-1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+
+.time-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.time-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.session-line-2 {
+  margin-bottom: 3px;
+}
+
+.map-name {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.session-line-3 {
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.duration-text {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.badge-active {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: white;
+  background-color: #4CAF50;
+  animation: pulse-live 2s infinite;
+}
+
+@keyframes pulse-live {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
 @media (max-width: 1024px) {
   .enhanced-leaderboard-section {
     padding: 16px;
@@ -211,10 +325,6 @@ defineProps<{
   
   .section-title h3 {
     font-size: 1.3rem;
-  }
-  
-  .rounds-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
@@ -231,8 +341,16 @@ defineProps<{
     margin-bottom: 16px;
   }
 
-  .rounds-grid {
-    grid-template-columns: 1fr;
+  .timeline-item::before {
+    left: 8px;
+  }
+
+  .timeline-node-container {
+    margin-top: 1.1em;
+  }
+
+  .map-name {
+    font-size: 0.95rem;
   }
 }
 
@@ -248,28 +366,10 @@ defineProps<{
   .section-icon {
     font-size: 1.2rem;
   }
-
-  .round-card {
-    padding: 12px;
-  }
   
   .view-all-button {
     padding: 6px 12px;
     font-size: 12px;
-  }
-}
-
-@media (max-width: 360px) {
-  .enhanced-leaderboard-section {
-    padding: 6px;
-  }
-
-  .section-title h3 {
-    font-size: 1rem;
-  }
-
-  .section-icon {
-    font-size: 1rem;
   }
 }
 </style> 
