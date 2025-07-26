@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import PlayerListItem from './PlayerListItem.vue';
 import type { ServerDetails } from '../services/serverDetailsService';
 import { formatDate } from '../utils/date';
+import PlayerName from './PlayerName.vue';
 
 const props = defineProps<{
   serverDetails: ServerDetails | null;
@@ -71,21 +71,25 @@ const currentTopScores = computed(() => {
       </div>
       
       <!-- All Players -->
-      <div class="all-players" v-if="currentMostActivePlayers.length > 0">
-        <PlayerListItem
-          v-for="(player, index) in currentMostActivePlayers"
-          :key="index"
-          :rank="index + 1"
-          :player-name="player.playerName"
-        >
-          <template #stats>
-            <span class="stat-item">{{ formatPlayTime(player.minutesPlayed) }}</span>
-            <span class="stat-separator">•</span>
-            <span class="stat-item">
-              <span class="kills">{{ player.totalKills }}</span>/<span class="deaths">{{ player.totalDeaths }}</span>
-            </span>
-          </template>
-        </PlayerListItem>
+      <div class="leaderboard-table-container" v-if="currentMostActivePlayers.length > 0">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Time Played</th>
+              <th>Player</th>
+              <th>Kills</th>
+              <th>Deaths</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="player in currentMostActivePlayers" :key="player.playerName">
+              <td>{{ formatPlayTime(player.minutesPlayed) }}</td>
+              <td><PlayerName :name="player.playerName" /></td>
+              <td class="kills">{{ player.totalKills.toLocaleString() }}</td>
+              <td class="deaths">{{ player.totalDeaths.toLocaleString() }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -123,38 +127,43 @@ const currentTopScores = computed(() => {
       </div>
       
       <!-- All Scores -->
-      <div class="all-players" v-if="currentTopScores.length > 0">
-        <PlayerListItem
-          v-for="(score, index) in currentTopScores"
-          :key="index"
-          :rank="index + 1"
-          :player-name="score.playerName"
-        >
-          <template #stats>
-            <router-link
-              :to="{
-                path: '/servers/round-report',
-                query: {
-                  serverGuid: serverDetails.serverGuid,
-                  mapName: score.mapName,
-                  startTime: score.timestamp,
-                  players: score.playerName
-                }
-              }"
-              class="stat-item score-link"
-            >
-              {{ score.score.toLocaleString() }}
-            </router-link>
-            <span class="stat-separator">•</span>
-            <span class="stat-item">
-              <span class="kills">{{ score.kills }}</span>/<span class="deaths">{{ score.deaths }}</span>
-            </span>
-            <span class="stat-separator">•</span>
-            <span class="stat-item">{{ score.mapName }}</span>
-            <span class="stat-separator">•</span>
-            <span class="stat-item">{{ formatDate(score.timestamp) }}</span>
-          </template>
-        </PlayerListItem>
+      <div class="leaderboard-table-container" v-if="currentTopScores.length > 0">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Score</th>
+              <th>Player</th>
+              <th>K/D</th>
+              <th>Map</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="score in currentTopScores" :key="score.timestamp + score.playerName">
+              <td class="score-link">
+                <router-link
+                  :to="{
+                    path: '/servers/round-report',
+                    query: {
+                      serverGuid: serverDetails.serverGuid,
+                      mapName: score.mapName,
+                      startTime: score.timestamp,
+                      players: score.playerName
+                    }
+                  }"
+                >
+                  {{ score.score.toLocaleString() }}
+                </router-link>
+              </td>
+              <td><PlayerName :name="score.playerName" /></td>
+              <td>
+                <span class="kills">{{ score.kills }}</span>/<span class="deaths">{{ score.deaths }}</span>
+              </td>
+              <td>{{ score.mapName }}</td>
+              <td>{{ formatDate(score.timestamp) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -277,11 +286,41 @@ const currentTopScores = computed(() => {
   box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
 }
 
-/* All Players */
-.all-players {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* Leaderboard Table */
+.leaderboard-table-container {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.leaderboard-table th {
+  background-color: var(--color-background-soft);
+  font-weight: 600;
+  color: var(--color-heading);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.leaderboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.leaderboard-table tbody tr:hover {
+  background-color: var(--color-background-mute);
 }
 
 .kills {
@@ -294,27 +333,13 @@ const currentTopScores = computed(() => {
   font-weight: 600;
 }
 
-.stat-separator {
-  color: var(--color-text-muted);
-  font-weight: normal;
-  opacity: 0.6;
-}
-
-.stat-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.score-link {
+.score-link a {
   color: var(--color-primary);
   text-decoration: none;
   font-weight: 600;
 }
 
-.score-link:hover {
+.score-link a:hover {
   text-decoration: underline;
 }
 

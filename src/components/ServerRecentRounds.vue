@@ -71,7 +71,7 @@ const navigateToRoundReport = (round: RecentRoundInfo) => {
     <div class="enhanced-section-header">
       <div class="section-title">
         <div class="section-icon">🎮</div>
-        <h3>Recent Battles</h3>
+        <h3>Recent Rounds</h3>
       </div>
       <router-link 
         :to="{ path: '/rounds', query: { server: serverName } }" 
