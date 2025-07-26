@@ -580,43 +580,38 @@ const similarityColor = (score: number): string => {
                 </span>
               </div>
             </div>
-            <div class="stat-item best-session-container" v-if="playerStats.bestSession">
-              <div 
-                class="session-card best-session-card concise-best-session best-session-flex" 
-                @click="openSessionDetailsModal(playerStats.bestSession.serverGuid, playerStats.bestSession.mapName, playerStats.bestSession.startTime)"
+            <!-- Replace bestSession with bestScores array -->
+            <div class="stat-item best-session-container" v-if="playerStats.bestScores && playerStats.bestScores.length">
+              <div v-for="(score, idx) in playerStats.bestScores" :key="score.sessionId || idx"
+                class="session-card best-session-card concise-best-session best-session-flex"
+                @click="openSessionDetailsModal(score.serverGuid, score.mapName, score.bestScoreDate)"
                 title="Click to view round report"
+                style="gap: 12px; min-height: unset; padding: 12px 16px; align-items: flex-start;"
               >
-                <div class="best-session-icon-col">
-                  <span class="trophy-icon" style="font-size: 2rem;">🏆</span>
-                  <span class="best-badge">Best</span>
+                <div class="best-session-icon-col" style="min-width: unset; align-items: flex-start; gap: 0;">
+                  <span class="best-badge" style="margin-bottom: 0; font-size: 1.05rem; background: var(--color-primary); color: #fff; font-weight: 700; letter-spacing: 0.5px;">
+                    {{ score.bestScore }} pts
+                  </span>
                 </div>
-                <div class="best-session-details-col">
-                  <div class="session-line-1">
+                <div class="best-session-details-col" style="gap: 2px;">
+                  <div class="session-line-1" style="gap: 8px; font-weight: 600;">
                     <router-link 
-                      :to="getRoundReportRoute(playerStats.bestSession)" 
-                      class="time-link"
-                    >
-                      {{ formatRelativeTime(playerStats.bestSession.startTime) }}
-                    </router-link>
-                    <span class="session-separator">-</span>
-                    <router-link 
-                      :to="`/servers/${encodeURIComponent(playerStats.bestSession.serverName)}`" 
+                      :to="`/servers/${encodeURIComponent(score.serverName)}`" 
                       class="server-link"
+                      style="font-weight: bold; color: var(--color-primary);"
                     >
-                      {{ playerStats.bestSession.serverName }}
+                      {{ score.serverName }}
                     </router-link>
-                    <span v-if="playerStats.bestSession.isActive" class="active-session-badge">Active</span>
+                    <span class="session-separator">/</span>
+                    <span class="map-name" style="font-weight: normal;">{{ score.mapName }}</span>
                   </div>
-                  <div class="session-line-2">
-                    <span class="map-name">{{ playerStats.bestSession.mapName }}</span>
-                    <span class="game-type">({{ playerStats.bestSession.gameType }})</span>
-                  </div>
-                  <div class="session-line-3">
-                    <span class="session-score">{{ playerStats.bestSession.totalScore }} pts</span>
+                  <div class="session-line-3" style="margin-top: 2px; gap: 10px;">
                     <span class="stat-separator">•</span>
                     <span class="stat-item">
-                      {{ calculateKDR(playerStats.bestSession.totalKills, playerStats.bestSession.totalDeaths) }} KDR (<span class="kills-count">{{ playerStats.bestSession.totalKills }}</span> / <span class="deaths-count">{{ playerStats.bestSession.totalDeaths }}</span>)
+                      {{ calculateKDR(score.totalKills, score.totalDeaths) }} KDR (<span class="kills-count">{{ score.totalKills }}</span> / <span class="deaths-count">{{ score.totalDeaths }}</span>)
                     </span>
+                    <span class="stat-separator">•</span>
+                    <span class="stat-item">{{ formatPlayTime(score.playTimeMinutes) }}</span>
                   </div>
                 </div>
               </div>
