@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics, PlayerServerStats, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayer } from '../services/playerStatsService';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import MilestoneModal from '../components/MilestoneModal.vue';
 
 import bf1942Icon from '@/assets/bf1942.jpg';
 import fh2Icon from '@/assets/fh2.jpg';
@@ -562,6 +563,10 @@ const getMilestoneImage = (milestone: number) => {
 const flippedBadge = ref<number|null>(null);
 const isMobile = ref(false);
 
+// Modal state for mobile milestone details
+const showMilestoneModal = ref(false);
+const selectedMilestone = ref<number | null>(null);
+
 onMounted(() => {
   // Simple mobile detection
   isMobile.value = window.innerWidth <= 768;
@@ -572,7 +577,15 @@ onMounted(() => {
 
 const handleBadgeClick = (milestone: number) => {
   if (!isMobile.value) return;
-  flippedBadge.value = flippedBadge.value === milestone ? null : milestone;
+  
+  // Use modal for mobile instead of flip animation
+  selectedMilestone.value = milestone;
+  showMilestoneModal.value = true;
+};
+
+const closeMilestoneModal = () => {
+  showMilestoneModal.value = false;
+  selectedMilestone.value = null;
 };
 
 const hasReachedFirstMilestone = computed(() => {
@@ -729,6 +742,19 @@ const milestoneProgressColors = computed(() => {
             </div>
           </div>
         </div>
+        
+        <!-- Milestone Modal for Mobile -->
+        <MilestoneModal
+          :is-visible="showMilestoneModal"
+          :milestone="selectedMilestone"
+          :milestone-image="selectedMilestone ? getMilestoneImage(selectedMilestone) : ''"
+          :is-achieved="selectedMilestone ? achievedMilestoneNumbers.includes(selectedMilestone) : false"
+          :is-next="selectedMilestone ? nextMilestoneIndex === MILESTONES.findIndex(m => m === selectedMilestone) : false"
+          :achievement-data="selectedMilestone && achievedMilestoneDetails[selectedMilestone] ? achievedMilestoneDetails[selectedMilestone] : null"
+          :current-kills="totalKills"
+          @close="closeMilestoneModal"
+        />
+        
         <div v-if="playerStats.isActive && playerStats.currentServer" class="current-server-banner">
           <div class="server-info-line">
             <router-link
@@ -4849,13 +4875,14 @@ tbody tr:hover {
   justify-content: center;
 }
 .milestone-badge-back {
-  background: transparent !important;
-  color: #7c4dff;
+  background: var(--color-background-soft) !important;
+  color: var(--color-text);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(156, 39, 176, 0.08);
   transform: rotateX(180deg);
   padding: 10px 0;
   font-size: 0.95rem;
+  border: 1px solid var(--color-border);
 }
 .milestone-badge-back-content {
   display: flex;
@@ -4865,13 +4892,16 @@ tbody tr:hover {
 }
 .milestone-badge-back-label {
   font-weight: bold;
-  color: #ff9800;
+  color: #4CAF50;
+  font-size: 0.8rem;
 }
 .milestone-badge-back-date,
 .milestone-badge-back-kills,
 .milestone-badge-back-days {
-  font-size: 0.95rem;
-  color: #7c4dff;
+  font-size: 0.75rem;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.2;
 }
 .milestone-badge-image-container {
   position: relative;

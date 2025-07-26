@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import MilestoneModal from '../components/MilestoneModal.vue';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -1016,15 +1017,32 @@ const milestoneProgressColors = computed(() => {
 // mobile support for badge flip
 const flippedBadge = ref<number | null>(null);
 const isMobile = ref(false);
+
+// Modal state for mobile milestone details
+const showMilestoneModal = ref(false);
+const selectedMilestone = ref<number | null>(null);
+const selectedPlayer = ref<1 | 2 | null>(null);
+
 onMounted(() => {
   isMobile.value = window.innerWidth <= 768;
   window.addEventListener('resize', () => {
     isMobile.value = window.innerWidth <= 768;
   });
 });
-const handleBadgeClick = (milestone: number) => {
+
+const handleBadgeClick = (milestone: number, playerNumber: 1 | 2) => {
   if (!isMobile.value) return;
-  flippedBadge.value = flippedBadge.value === milestone ? null : milestone;
+  
+  // Use modal for mobile instead of flip animation
+  selectedMilestone.value = milestone;
+  selectedPlayer.value = playerNumber;
+  showMilestoneModal.value = true;
+};
+
+const closeMilestoneModal = () => {
+  showMilestoneModal.value = false;
+  selectedMilestone.value = null;
+  selectedPlayer.value = null;
 };
 
 </script>
@@ -1536,7 +1554,7 @@ const handleBadgeClick = (milestone: number) => {
                   'has-comparison': getMilestoneComparison(milestone, 1)?.hasBothAchieved
                 }"
                 :title="formatMilestoneTooltip(milestone, 1)"
-                @click="handleBadgeClick(milestone)"
+                @click="handleBadgeClick(milestone, 1)"
               >
                 <div class="milestone-badge-flip">
                   <div class="milestone-badge-front">
@@ -1575,7 +1593,7 @@ const handleBadgeClick = (milestone: number) => {
                   'has-comparison': getMilestoneComparison(milestone, 2)?.hasBothAchieved
                 }"
                 :title="formatMilestoneTooltip(milestone, 2)"
-                @click="handleBadgeClick(milestone)"
+                @click="handleBadgeClick(milestone, 2)"
               >
                 <div class="milestone-badge-flip">
                   <div class="milestone-badge-front">
@@ -1599,6 +1617,27 @@ const handleBadgeClick = (milestone: number) => {
         </div>
     </div>
   </div>
+  
+  <!-- Milestone Modal for Mobile -->
+  <MilestoneModal
+    :is-visible="showMilestoneModal"
+    :milestone="selectedMilestone"
+    :milestone-image="selectedMilestone ? getMilestoneImage(selectedMilestone) : ''"
+    :is-achieved="selectedMilestone && selectedPlayer ? 
+      (selectedPlayer === 1 ? achievedMilestoneNumbersP1.includes(selectedMilestone) : achievedMilestoneNumbersP2.includes(selectedMilestone)) 
+      : false"
+    :is-next="selectedMilestone && selectedPlayer ? 
+      (selectedPlayer === 1 ? nextMilestoneIndexP1 === MILESTONES.findIndex(m => m === selectedMilestone) : nextMilestoneIndexP2 === MILESTONES.findIndex(m => m === selectedMilestone)) 
+      : false"
+    :achievement-data="selectedMilestone && selectedPlayer && comparisonData ? 
+      (selectedPlayer === 1 ? 
+        comparisonData.player1KillMilestones?.find(m => m.milestone === selectedMilestone) :
+        comparisonData.player2KillMilestones?.find(m => m.milestone === selectedMilestone)
+      ) : null"
+    :comparison-data="selectedMilestone ? getMilestoneComparison(selectedMilestone, selectedPlayer || 1) : null"
+    :current-kills="selectedPlayer === 1 ? totalKillsP1 : totalKillsP2"
+    @close="closeMilestoneModal"
+  />
 </template>
 
 <style scoped>
