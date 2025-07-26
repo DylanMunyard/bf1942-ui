@@ -347,7 +347,7 @@ const onPlayerInput = (query: string, playerNumber: 1 | 2) => {
 
   searchDebounceTimeout.value = setTimeout(() => {
     searchPlayers(query, playerNumber);
-  }, 300);
+  }, 300) as unknown as number;
 };
 
 const selectPlayer = (player: PlayerSearchResult, playerNumber: 1 | 2) => {
@@ -757,7 +757,7 @@ const combinedActivityChartData = computed(() => {
     datasets: [
       {
         label: 'Overlap Potential',
-        backgroundColor: (ctx) => {
+        backgroundColor: (ctx: any) => {
           const canvas = ctx.chart.ctx;
           const gradient = canvas.createLinearGradient(0, 0, 0, 200);
           gradient.addColorStop(0, 'rgba(156, 39, 176, 0.4)');
@@ -905,8 +905,8 @@ const allKillMilestones = computed(() => {
 const milestoneComparison = computed(() => {
   if (!comparisonData.value) return [];
   return allKillMilestones.value.map(milestone => {
-    const p1Data = comparisonData.value.player1KillMilestones?.find(km => km.milestone === milestone);
-    const p2Data = comparisonData.value.player2KillMilestones?.find(km => km.milestone === milestone);
+    const p1Data = comparisonData.value!.player1KillMilestones?.find(km => km.milestone === milestone);
+    const p2Data = comparisonData.value!.player2KillMilestones?.find(km => km.milestone === milestone);
     let faster: 'p1' | 'p2' | 'tie' | null = null;
     if (p1Data && p2Data) {
       faster = p1Data.daysToAchieve < p2Data.daysToAchieve ? 'p1' : p2Data.daysToAchieve < p1Data.daysToAchieve ? 'p2' : 'tie';
@@ -915,10 +915,56 @@ const milestoneComparison = computed(() => {
       milestone,
       p1Days: p1Data?.daysToAchieve ?? null,
       p2Days: p2Data?.daysToAchieve ?? null,
+      p1Date: p1Data?.achievedDate ?? null,
+      p2Date: p2Data?.achievedDate ?? null,
       faster
     };
   });
 });
+
+// Helper function to get comparison info for a specific milestone and player
+const getMilestoneComparison = (milestone: number, playerNumber: 1 | 2) => {
+  const comparison = milestoneComparison.value.find(m => m.milestone === milestone);
+  if (!comparison) return null;
+  
+  const isP1 = playerNumber === 1;
+  const playerData = isP1 ? comparison.p1Days : comparison.p2Days;
+  const playerDate = isP1 ? comparison.p1Date : comparison.p2Date;
+  const otherData = isP1 ? comparison.p2Days : comparison.p1Days;
+  const isFaster = comparison.faster === (isP1 ? 'p1' : 'p2');
+  const isSlower = comparison.faster === (isP1 ? 'p2' : 'p1');
+  
+  return {
+    hasAchieved: playerData !== null,
+    daysToAchieve: playerData,
+    achievedDate: playerDate,
+    isFaster,
+    isSlower,
+    hasBothAchieved: playerData !== null && otherData !== null
+  };
+};
+
+// Helper function to format milestone tooltip
+const formatMilestoneTooltip = (milestone: number, playerNumber: 1 | 2) => {
+  const comparison = getMilestoneComparison(milestone, playerNumber);
+  if (!comparison || !comparison.hasAchieved) return `${milestone.toLocaleString()} Kills - Not achieved`;
+  
+  const achievedDate = new Date(comparison.achievedDate!).toLocaleDateString();
+  const days = comparison.daysToAchieve!;
+  
+  let statusText = '';
+  if (comparison.hasBothAchieved) {
+    if (comparison.isFaster) {
+      statusText = ' (Faster!)';
+    } else if (comparison.isSlower) {
+      statusText = ' (Slower)';
+    } else {
+      statusText = ' (Same time)';
+    }
+  }
+  
+  return `${milestone.toLocaleString()} Kills\nAchieved: ${achievedDate}\nTime: ${days} days${statusText}`;
+};
 
 // === Badge style milestone data (similar to PlayerDetails.vue) ===
 const MILESTONES = [5000, 10000, 20000, 40000, 50000, 100000];
@@ -1495,8 +1541,12 @@ const handleBadgeClick = (milestone: number) => {
                   achieved: achievedMilestoneNumbersP1.includes(milestone),
                   next: nextMilestoneIndexP1 === idx,
                   future: nextMilestoneIndexP1 < idx,
-                  flipped: isMobile && flippedBadge === milestone
+                  flipped: isMobile && flippedBadge === milestone,
+                  faster: getMilestoneComparison(milestone, 1)?.isFaster,
+                  slower: getMilestoneComparison(milestone, 1)?.isSlower,
+                  'has-comparison': getMilestoneComparison(milestone, 1)?.hasBothAchieved
                 }"
+                :title="formatMilestoneTooltip(milestone, 1)"
                 @click="handleBadgeClick(milestone)"
               >
                 <div class="milestone-badge-flip">
@@ -1507,6 +1557,12 @@ const handleBadgeClick = (milestone: number) => {
                         <circle cx="36" cy="36" r="35" fill="none" stroke="#ddd" stroke-width="2" class="progress-bg" />
                         <circle cx="36" cy="36" r="35" fill="none" :stroke="milestoneProgress(totalKillsP1, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress" stroke-width="2" stroke-linecap="round" :stroke-dasharray="2 * Math.PI * 35" :stroke-dashoffset="(1 - milestoneProgress(totalKillsP1, milestone)) * 2 * Math.PI * 35" class="progress-bar" transform="rotate(-90 36 36)" />
                       </svg>
+                      <!-- Comparison indicator -->
+                      <div v-if="getMilestoneComparison(milestone, 1)?.hasBothAchieved" class="comparison-indicator">
+                        <div v-if="getMilestoneComparison(milestone, 1)?.isFaster" class="faster-indicator">⚡</div>
+                        <div v-else-if="getMilestoneComparison(milestone, 1)?.isSlower" class="slower-indicator">🐌</div>
+                        <div v-else class="tie-indicator">🤝</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1525,8 +1581,12 @@ const handleBadgeClick = (milestone: number) => {
                   achieved: achievedMilestoneNumbersP2.includes(milestone),
                   next: nextMilestoneIndexP2 === idx,
                   future: nextMilestoneIndexP2 < idx,
-                  flipped: isMobile && flippedBadge === milestone
+                  flipped: isMobile && flippedBadge === milestone,
+                  faster: getMilestoneComparison(milestone, 2)?.isFaster,
+                  slower: getMilestoneComparison(milestone, 2)?.isSlower,
+                  'has-comparison': getMilestoneComparison(milestone, 2)?.hasBothAchieved
                 }"
+                :title="formatMilestoneTooltip(milestone, 2)"
                 @click="handleBadgeClick(milestone)"
               >
                 <div class="milestone-badge-flip">
@@ -1537,6 +1597,12 @@ const handleBadgeClick = (milestone: number) => {
                         <circle cx="36" cy="36" r="35" fill="none" stroke="#ddd" stroke-width="2" class="progress-bg" />
                         <circle cx="36" cy="36" r="35" fill="none" :stroke="milestoneProgress(totalKillsP2, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress" stroke-width="2" stroke-linecap="round" :stroke-dasharray="2 * Math.PI * 35" :stroke-dashoffset="(1 - milestoneProgress(totalKillsP2, milestone)) * 2 * Math.PI * 35" class="progress-bar" transform="rotate(-90 36 36)" />
                       </svg>
+                      <!-- Comparison indicator -->
+                      <div v-if="getMilestoneComparison(milestone, 2)?.hasBothAchieved" class="comparison-indicator">
+                        <div v-if="getMilestoneComparison(milestone, 2)?.isFaster" class="faster-indicator">⚡</div>
+                        <div v-else-if="getMilestoneComparison(milestone, 2)?.isSlower" class="slower-indicator">🐌</div>
+                        <div v-else class="tie-indicator">🤝</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2615,6 +2681,92 @@ const handleBadgeClick = (milestone: number) => {
 .milestone-progress-border { position: absolute; top: -4px; left: -4px; z-index: 2; pointer-events: none; }
 .milestone-progress-bg { opacity: 0.3; }
 .progress-bar { transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
+.player-milestones-row { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px; }
+.milestone-player-name { font-size: 1.1rem; font-weight: 600; color: var(--color-heading); margin: 0; }
+
+/* Milestone comparison styles */
+.milestone-badge-image-wrapper.faster {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 8px #4CAF50);
+  z-index: 10;
+}
+
+.milestone-badge-image-wrapper.slower {
+  filter: brightness(0.7) saturate(0.6);
+}
+
+.milestone-badge-image-wrapper.faster .milestone-badge-image {
+  border: 3px solid #4CAF50;
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
+}
+
+.milestone-badge-image-wrapper.slower .milestone-badge-image {
+  border: 2px solid #ff9800;
+}
+
+.comparison-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 15;
+  background: var(--color-background);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border: 2px solid;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.faster-indicator {
+  border-color: #4CAF50;
+  background: #4CAF50;
+  color: white;
+  animation: pulse-fast 2s infinite;
+}
+
+.slower-indicator {
+  border-color: #ff9800;
+  background: #ff9800;
+  color: white;
+}
+
+.tie-indicator {
+  border-color: #9C27B0;
+  background: #9C27B0;
+  color: white;
+}
+
+@keyframes pulse-fast {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+  }
+}
+
+/* Enhanced hover effects for comparison tooltips */
+.milestone-badge-image-wrapper:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+.milestone-badge-image-wrapper.faster:hover {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 16px #4CAF50);
+}
+
+.milestone-badge-image-wrapper.slower:hover {
+  transform: scale(1.05);
+  filter: brightness(0.8) saturate(0.7) drop-shadow(0 0 8px #ff9800);
+}
 
 .player-milestones-row { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px; }
 .milestone-player-name { font-size: 1.1rem; font-weight: 600; color: var(--color-heading); margin: 0; }
