@@ -630,28 +630,7 @@ const milestoneProgressColors = computed(() => {
             <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
           </div>
           <div v-if="playerStats" class="player-header-stats">
-            <div class="header-stat milestone-progress-container" v-if="!hasReachedFirstMilestone && nextMilestone">
-              <div class="milestone-progress-wrapper" :title="`Progress to ${nextMilestone} Kills!`">
-                <svg class="milestone-progress-ring" width="60" height="60">
-                  <circle class="milestone-progress-bg" cx="30" cy="30" r="26" fill="none" stroke="#eee" stroke-width="6" />
-                  <circle
-                    class="milestone-progress-bar"
-                    cx="30" cy="30" r="26" fill="none"
-                    :stroke="milestoneProgress(nextMilestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress"
-                    stroke-width="6"
-                    :stroke-dasharray="2 * Math.PI * 26"
-                    :stroke-dashoffset="(1 - milestoneProgress(nextMilestone)) * 2 * Math.PI * 26"
-                    stroke-linecap="round"
-                  />
-                </svg>
-                <span class="header-stat-value header-stat-kills milestone-progress-text">{{ playerStats.totalKills }}</span>
-              </div>
-              <span class="header-stat-label milestone-progress-label">
-                <span v-if="nextMilestone && milestoneProgress(nextMilestone) < 1">{{ Math.floor(milestoneProgress(nextMilestone) * 100) }}% to {{ nextMilestone }} Kills!</span>
-                <span v-else>Milestone Achieved!</span>
-              </span>
-            </div>
-            <div class="header-stat" v-else>
+            <div class="header-stat">
               <span class="header-stat-value header-stat-kills">{{ playerStats.totalKills }}</span>
               <span class="header-stat-label">Kills</span>
             </div>
@@ -4820,7 +4799,7 @@ tbody tr:hover {
   flex-direction: column;
   align-items: center;
   position: relative;
-  opacity: 0.45;
+  opacity: 1;
   transition: opacity 0.2s, filter 0.2s;
   cursor: pointer;
   perspective: 600px;
@@ -4867,7 +4846,7 @@ tbody tr:hover {
   justify-content: center;
 }
 .milestone-badge-back {
-  background: #fffbe6;
+  background: transparent !important;
   color: #7c4dff;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(156, 39, 176, 0.08);
@@ -4904,7 +4883,7 @@ tbody tr:hover {
   height: 64px;
   border-radius: 50%;
   box-shadow: 0 2px 8px rgba(156, 39, 176, 0.08);
-  background: #fff;
+  background: transparent !important;
 }
 .milestone-progress-border {
   position: absolute;
@@ -4938,4 +4917,29 @@ tbody tr:hover {
     left: -4px;
   }
   }
+
+/* --- Milestone badge opacity fix and progress icon --- */
+.milestone-badge-image-wrapper {
+  opacity: 1;
+}
+.milestone-badge-image-wrapper.future,
+.milestone-badge-image-wrapper.next {
+  opacity: 0.45;
+}
+.milestone-progress-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  z-index: 1;
+}
+.milestone-progress-ring {
+  z-index: 2;
+}
+.milestone-progress-text {
+  z-index: 3;
+}
 </style>
