@@ -138,13 +138,32 @@ const getKDRatio = (kills: number = 0, deaths: number = 0): string => {
 const fetchOnlinePlayersApiData = async (resetPage = false) => {
   if (resetPage) {
     currentPage.value = 1;
+    // Clear existing results when applying new filters to avoid showing stale data
+    playersResponse.value = null;
   }
   
   if (!loading.value) loading.value = true;
   error.value = null;
 
   try {
-    const filters = resetPage ? { ...currentFilters.value, page: 1 } : currentFilters.value;
+    // Build filters manually to ensure fresh values, especially when resetPage is true
+    const filters: OnlinePlayersFilters = {
+      page: resetPage ? 1 : currentPage.value,
+      pageSize: pageSize.value
+    };
+
+    if (gameFilter.value !== 'all') {
+      filters.gameId = gameFilter.value;
+    }
+    
+    if (nameFilter.value.trim()) {
+      filters.playerName = nameFilter.value.trim();
+    }
+    
+    if (serverFilter.value.trim()) {
+      filters.serverName = serverFilter.value.trim();
+    }
+
     const result = await fetchOnlinePlayersList(filters);
     playersResponse.value = result;
   } catch (err) {
@@ -342,6 +361,34 @@ onUnmounted(() => {
 
     <!-- Players List -->
     <div v-else-if="playersResponse && playersResponse.items.length > 0">
+      <!-- Top Pagination -->
+      <div class="pagination pagination-top" v-if="playersResponse.totalPages > 1">
+        <button 
+          @click="previousPage" 
+          :disabled="currentPage <= 1"
+          class="pagination-button"
+        >
+          ← Previous
+        </button>
+        
+        <div class="pagination-info">
+          <span class="page-info">
+            Page {{ currentPage }} of {{ playersResponse.totalPages }}
+          </span>
+          <span class="results-info">
+            ({{ Math.min((currentPage - 1) * pageSize + 1, playersResponse.totalItems) }}-{{ Math.min(currentPage * pageSize, playersResponse.totalItems) }} of {{ playersResponse.totalItems }})
+          </span>
+        </div>
+        
+        <button 
+          @click="nextPage" 
+          :disabled="currentPage >= playersResponse.totalPages"
+          class="pagination-button"
+        >
+          Next →
+        </button>
+      </div>
+
       <!-- Players Grid -->
       <div class="players-grid">
         <div
@@ -393,8 +440,8 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Pagination -->
-      <div class="pagination" v-if="playersResponse.totalPages > 1">
+      <!-- Bottom Pagination -->
+      <div class="pagination pagination-bottom" v-if="playersResponse.totalPages > 1">
         <button 
           @click="previousPage" 
           :disabled="currentPage <= 1"
@@ -852,6 +899,14 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 0;
+}
+
+.pagination-top {
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pagination-bottom {
   margin-top: 20px;
   border-top: 1px solid var(--color-border);
 }
