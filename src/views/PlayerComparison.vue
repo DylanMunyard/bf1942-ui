@@ -1482,7 +1482,7 @@ const handleBadgeClick = (milestone: number) => {
 
         <!-- Milestone Badge Rows -->
         <div class="comparison-section milestone-section" v-if="comparisonData">
-          <h3>Kill Milestones</h3>
+          <h3>Badges</h3>
           <!-- Player 1 Row -->
           <div class="player-milestones-row">
             <h4 class="milestone-player-name">{{ comparisonData.player1 }}</h4>
