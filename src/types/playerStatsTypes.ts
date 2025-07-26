@@ -140,9 +140,26 @@ export interface PlayerTimeStatistics {
   isActive: boolean;
   currentServer: ServerInfo | null;
   bestSession: Session | null;
-  bestScores: BestScore[]; // <-- Add this line
+  servers: PlayerServerStats[];
   recentSessions: Session[];
   insights?: PlayerInsights;
+}
+
+// New interface for server stats in PlayerTimeStatistics
+export interface PlayerServerStats {
+  serverGuid: string;
+  serverName: string;
+  gameId: string;
+  totalMinutes: number;
+  totalKills: number;
+  totalDeaths: number;
+  highestScore: number;
+  killsPerMinute: number;
+  totalRounds: number;
+  kdRatio: number;
+  // Optional: for navigation to best score round report
+  bestScoreDate?: string;
+  mapName?: string;
 }
 
 export interface TeamKillerMetric {

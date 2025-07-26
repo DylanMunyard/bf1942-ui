@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayer } from '../services/playerStatsService';
+import { PlayerTimeStatistics, PlayerServerStats, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayer } from '../services/playerStatsService';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 
@@ -497,6 +497,14 @@ const similarityColor = (score: number): string => {
   return '#F44336'; // red
 };
 
+// --- Server Cards Computed ---
+const hasServers = computed(() => !!playerStats.value?.servers && playerStats.value.servers.length > 0);
+const sortedServers = computed(() => {
+  if (!playerStats.value?.servers) return [];
+  // Sort by totalMinutes descending
+  return [...playerStats.value.servers].sort((a, b) => b.totalMinutes - a.totalMinutes);
+});
+// ... existing code ...
 </script>
 
 <template>
@@ -580,42 +588,66 @@ const similarityColor = (score: number): string => {
                 </span>
               </div>
             </div>
-            <!-- Replace bestSession with bestScores array -->
-            <div class="stat-item best-session-container" v-if="playerStats.bestScores && playerStats.bestScores.length">
-              <div v-for="(score, idx) in playerStats.bestScores" :key="score.sessionId || idx"
-                class="session-card best-session-card concise-best-session best-session-flex"
-                @click="openSessionDetailsModal(score.serverGuid, score.mapName, score.bestScoreDate)"
-                title="Click to view round report"
-                style="gap: 12px; min-height: unset; padding: 12px 16px; align-items: flex-start;"
-              >
-                <div class="best-session-icon-col" style="min-width: unset; align-items: flex-start; gap: 0;">
-                  <span class="best-badge" style="margin-bottom: 0; font-size: 1.05rem; background: var(--color-primary); color: #fff; font-weight: 700; letter-spacing: 0.5px;">
-                    {{ score.bestScore }} pts
-                  </span>
-                </div>
-                <div class="best-session-details-col" style="gap: 2px;">
-                  <div class="session-line-1" style="gap: 8px; font-weight: 600;">
-                    <router-link 
-                      :to="`/servers/${encodeURIComponent(score.serverName)}`" 
-                      class="server-link"
-                      style="font-weight: bold; color: var(--color-primary);"
-                    >
-                      {{ score.serverName }}
-                    </router-link>
-                    <span class="session-separator">/</span>
-                    <span class="map-name" style="font-weight: normal;">{{ score.mapName }}</span>
-                  </div>
-                  <div class="session-line-3" style="margin-top: 2px; gap: 10px;">
-                    <span class="stat-separator">•</span>
-                    <span class="stat-item">
-                      {{ calculateKDR(score.totalKills, score.totalDeaths) }} KDR (<span class="kills-count">{{ score.totalKills }}</span> / <span class="deaths-count">{{ score.totalDeaths }}</span>)
+            <!-- Server Cards Section -->
+            <div class="server-cards-section" v-if="hasServers">
+              <h4 style="margin-bottom: 12px;">Top Servers</h4>
+              <div class="server-cards-grid">
+                <div v-for="(server, idx) in sortedServers" :key="server.serverGuid" class="server-card-gamified">
+                  <div class="server-card-header">
+                    <span class="server-card-title">
+                      <img src="@/assets/servers.jpg" alt="Server" style="width: 24px; height: 24px; margin-right: 8px; border-radius: 6px; vertical-align: middle;" />
+                      {{ server.serverName }}
                     </span>
-                    <span class="stat-separator">•</span>
-                    <span class="stat-item">{{ formatPlayTime(score.playTimeMinutes) }}</span>
+                    <span class="server-game-id">{{ server.gameId.toUpperCase() }}</span>
+                  </div>
+                  <div class="server-card-stats-compact">
+                    <div class="server-stat-block">
+                      <span class="server-stat-label">Best Score</span>
+                      <span
+                        class="server-stat-value highlight-badge best-score-link"
+                        v-if="server.bestScoreDate && server.mapName"
+                        :title="'View round report for best score'"
+                        @click="openSessionDetailsModal(server.serverGuid, server.mapName, server.bestScoreDate)"
+                        style="cursor:pointer; text-decoration:underline;"
+                      >
+                        {{ server.highestScore }}
+                      </span>
+                      <span
+                        class="server-stat-value highlight-badge"
+                        v-else
+                      >
+                        {{ server.highestScore }}
+                      </span>
+                    </div>
+                    <div class="server-stat-block">
+                      <span class="server-stat-label">KPM</span>
+                      <span class="server-stat-value">{{ server.killsPerMinute.toFixed(2) }}</span>
+                    </div>
+                    <div class="server-stat-block">
+                      <span class="server-stat-label">Rounds</span>
+                      <span class="server-stat-value">{{ server.totalRounds }}</span>
+                    </div>
+                    <div class="server-stat-block">
+                      <span class="server-stat-label">K/D</span>
+                      <span class="server-stat-value">{{ server.kdRatio.toFixed(2) }}</span>
+                    </div>
+                    <div class="server-stat-block">
+                      <span class="server-stat-label">Kills</span>
+                      <span class="server-stat-value kills-count">{{ server.totalKills }}</span>
+                    </div>
+                    <div class="server-stat-block">
+                      <span class="server-stat-label">Deaths</span>
+                      <span class="server-stat-value deaths-count">{{ server.totalDeaths }}</span>
+                    </div>
+                    <div class="server-stat-block playtime-block">
+                      <span class="server-stat-label">Play Time</span>
+                      <span class="server-stat-value">{{ formatPlayTime(Math.round(server.totalMinutes)) }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+            <!-- End Server Cards Section -->
           </div>
         </div>
 
@@ -3816,5 +3848,151 @@ tbody tr:hover {
 
 .similarity-score {
   font-weight: 600;
+}
+
+/* Server Cards Gamified Styles */
+.server-cards-section {
+  margin-top: 24px;
+}
+.server-cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 8px;
+}
+.server-card-gamified {
+  background: linear-gradient(135deg, rgba(156,39,176,0.08) 0%, var(--color-background) 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(156,39,176,0.08), 0 1.5px 6px rgba(0,0,0,0.07);
+  border: 2px solid var(--color-primary);
+  padding: 14px 16px;
+  min-width: 320px;
+  max-width: 380px;
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.server-card-gamified:hover {
+  box-shadow: 0 8px 32px rgba(156,39,176,0.18), 0 3px 12px rgba(0,0,0,0.12);
+  transform: translateY(-4px) scale(1.01);
+  border-color: var(--color-accent);
+}
+.server-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.server-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.server-game-id {
+  background: var(--color-background-mute);
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 3px 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.server-card-stats-compact {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 12px;
+  align-items: center;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+.server-stat-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+.server-stat-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-bottom: 1px;
+}
+.server-stat-value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+.highlight-badge {
+  background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+  color: #333;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 1.05rem;
+  box-shadow: 0 2px 8px rgba(255,215,0,0.12);
+}
+@media (max-width: 768px) {
+  .server-cards-grid {
+    gap: 12px;
+  }
+  .server-card-gamified {
+    min-width: 0;
+    max-width: 100%;
+    padding: 10px 6px;
+  }
+  .server-card-title {
+    font-size: 1rem;
+  }
+  .server-game-id {
+    font-size: 0.8rem;
+    padding: 2px 7px;
+  }
+  .server-stat-badge {
+    font-size: 0.9rem;
+    padding: 5px 8px;
+  }
+  .highlight-badge {
+    font-size: 0.9rem;
+    padding: 2px 7px;
+  }
+}
+.kills-count {
+  color: #4CAF50;
+  font-weight: 500;
+}
+.deaths-count {
+  color: #F44336;
+  font-weight: 500;
+}
+.playtime-block {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+.server-card-stats-compact {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 12px;
+  align-items: center;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+@media (max-width: 768px) {
+  .server-card-stats-compact {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 8px;
+  }
+  .playtime-block {
+    grid-column: 1 / -1;
+  }
 }
 </style>
