@@ -12,7 +12,14 @@
         <i class="icon-players"></i>
         <div class="tooltip">
           <div class="tooltip-icon icon-players"></div>
-          <div class="tooltip-text">See who is online, search for a player</div>
+          <div class="tooltip-text">Search for players and view player statistics</div>
+        </div>
+      </router-link>
+      <router-link to="/players/online" active-class="active" class="nav-item" data-tooltip="true">
+        <i class="icon-online-players"></i>
+        <div class="tooltip">
+          <div class="tooltip-icon icon-online-players"></div>
+          <div class="tooltip-text">See who is currently online and playing</div>
         </div>
       </router-link>
       <router-link to="/players/compare" active-class="active" class="nav-item" data-tooltip="true">
@@ -135,10 +142,34 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
   background-position: center;
 }
 
+.icon-online-players {
+  background-image: url('../assets/players.jpg');
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;
+}
+
+.icon-online-players::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background-color: #4CAF50;
+  border-radius: 50%;
+  border: 2px solid var(--sidebar-bg);
+}
+
 /* Round icons */
 .icon-players,
 .icon-servers,
-.icon-player-comparison {
+.icon-player-comparison,
+.icon-online-players {
   border-radius: 50%;
   overflow: hidden;
 }

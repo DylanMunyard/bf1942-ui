@@ -9,6 +9,7 @@ import RoundsPage from '../components/RoundsPage.vue'
 import RoundReportPage from '../components/RoundReportPage.vue'
 import WorkInProgressPlaceholder from '../components/WorkInProgressPlaceholder.vue'
 import PlayerComparison from '../views/PlayerComparison.vue'
+import OnlinePlayersPage from '../components/OnlinePlayersPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -57,6 +58,11 @@ const router = createRouter({
       path: '/players',
       name: 'players',
       component: Players
+    },
+    {
+      path: '/players/online',
+      name: 'online-players',
+      component: OnlinePlayersPage
     },
     {
       path: '/players/compare',
