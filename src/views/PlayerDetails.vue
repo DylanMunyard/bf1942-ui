@@ -690,28 +690,28 @@ const milestoneProgressColors = computed(() => {
                   <svg
                     v-if="nextMilestoneIndex === idx && milestoneProgress(milestone) < 1"
                     class="milestone-progress-border"
-                    width="72"
-                    height="72"
+                    :width="isMobile ? '54' : '72'"
+                    :height="isMobile ? '54' : '72'"
                   >
                     <circle
-                      cx="36"
-                      cy="36"
-                      r="35"
+                      :cx="isMobile ? '27' : '36'"
+                      :cy="isMobile ? '27' : '36'"
+                      :r="isMobile ? '26' : '35'"
                       fill="none"
                       stroke="#ddd"
                       stroke-width="2"
                       class="progress-bg"
                     />
                     <circle
-                      cx="36"
-                      cy="36"
-                      r="35"
+                      :cx="isMobile ? '27' : '36'"
+                      :cy="isMobile ? '27' : '36'"
+                      :r="isMobile ? '26' : '35'"
                       fill="none"
                       :stroke="milestoneProgress(milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress"
                       stroke-width="2"
                       stroke-linecap="round"
-                      :stroke-dasharray="2 * Math.PI * 35"
-                      :stroke-dashoffset="(1 - milestoneProgress(milestone)) * 2 * Math.PI * 35"
+                      :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)"
+                      :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(milestone)) * 2 * Math.PI * 35)"
                       class="progress-bar"
                       transform="rotate(-90 36 36)"
                     />
@@ -4789,10 +4789,13 @@ tbody tr:hover {
 
 .milestone-badges-row {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
   margin: 18px 0 10px 0;
   justify-content: center;
   align-items: flex-end;
+  padding: 0 10px;
+  max-width: 100%;
 }
 .milestone-badge-image-wrapper {
   display: flex;
@@ -4900,7 +4903,9 @@ tbody tr:hover {
 }
 @media (max-width: 768px) {
   .milestone-badges-row {
-    gap: 10px;
+    gap: 8px;
+    padding: 0 5px;
+    margin: 12px 0 8px 0;
   }
   .milestone-badge-flip {
     width: 54px;
@@ -4911,12 +4916,12 @@ tbody tr:hover {
     height: 54px;
   }
   .milestone-progress-border {
-    width: 62px;
-    height: 62px;
-    top: -4px;
-    left: -4px;
+    width: 54px;
+    height: 54px;
+    top: 0;
+    left: 0;
   }
-  }
+}
 
 /* --- Milestone badge opacity fix and progress icon --- */
 .milestone-badge-image-wrapper {

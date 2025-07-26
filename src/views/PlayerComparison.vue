@@ -2637,15 +2637,20 @@ const handleBadgeClick = (milestone: number) => {
 
 .milestone-section {
     order: -1; /* Make milestones the first section */
+    overflow: visible;
+    padding: 20px 15px;
 }
 
 /* --- Styles for Milestone Badges (copied from PlayerDetails.vue) --- */
 .milestone-badges-row {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
   margin: 18px 0 10px 0;
   justify-content: center;
   align-items: flex-end;
+  padding: 0 10px;
+  max-width: 100%;
 }
 .milestone-badge-image-wrapper {
   display: flex;
@@ -2759,4 +2764,46 @@ const handleBadgeClick = (milestone: number) => {
 
 .player-milestones-row { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px; }
 .milestone-player-name { font-size: 1.1rem; font-weight: 600; color: var(--color-heading); margin: 0; }
+
+/* Mobile responsive styles for milestone badges */
+@media (max-width: 768px) {
+  .milestone-badges-row {
+    gap: 8px;
+    padding: 0 5px;
+    margin: 12px 0 8px 0;
+  }
+  
+  .milestone-badge-flip {
+    width: 54px;
+    height: 54px;
+  }
+  
+  .milestone-badge-image-container, .milestone-badge-image {
+    width: 54px;
+    height: 54px;
+  }
+  
+  .milestone-progress-border {
+    width: 54px;
+    height: 54px;
+    top: 0;
+    left: 0;
+  }
+  
+  .comparison-indicator {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    top: -6px;
+    right: -6px;
+  }
+  
+  .player-milestones-row {
+    margin-bottom: 16px;
+  }
+  
+  .milestone-player-name {
+    font-size: 1rem;
+  }
+}
 </style> 
