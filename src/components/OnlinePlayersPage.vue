@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { fetchOnlinePlayersList, OnlinePlayerItem } from '../services/onlinePlayersService';
+import { fetchOnlinePlayersList, OnlinePlayerItem, OnlinePlayersResponse } from '../services/onlinePlayersService';
 
 // Router
 const router = useRouter();
@@ -23,23 +23,43 @@ const autoRefreshInterval = ref<number | null>(null);
 const refreshIntervalSeconds = 30;
 const isAutoRefresh = ref(true);
 
-// Game type options
+// Game type options - using consistent game IDs with the rest of the app
 const gameTypes = [
   { value: 'all', label: 'All Games', icon: '' }, 
-  { value: '42', label: 'BF1942', icon: 'bf1942' },
-  { value: 'FH2', label: 'Forgotten Hope 2', icon: 'fh2' },
-  { value: 'BFV', label: 'BF Vietnam', icon: 'bfv' }
+  { value: 'bf1942', label: 'BF1942', icon: 'bf1942' },
+  { value: 'fh2', label: 'Forgotten Hope 2', icon: 'fh2' },
+  { value: 'bfv', label: 'BF Vietnam', icon: 'bfv' }
 ];
+
+// Helper function to normalize game IDs for consistent filtering
+const normalizeGameId = (gameId: string): string => {
+  if (!gameId) return '';
+  const normalized = gameId.toLowerCase();
+  
+  switch (normalized) {
+    case 'bf1942':
+    case '42':
+      return 'bf1942';
+    case 'fh2':
+      return 'fh2';
+    case 'bfv':
+    case 'bfvietnam':
+      return 'bfv';
+    default:
+      return normalized;
+  }
+};
 
 // Computed filtered and sorted players
 const filteredPlayers = computed(() => {
-  let filtered = players.value;
+  let filtered = Array.isArray(players.value) ? players.value : [];
 
   // Filter by game type
   if (gameFilter.value !== 'all') {
-    filtered = filtered.filter(player => 
-      player.currentServer?.gameId === gameFilter.value
-    );
+    filtered = filtered.filter(player => {
+      const playerGameId = normalizeGameId(player.currentServer?.gameId || '');
+      return playerGameId === gameFilter.value;
+    });
   }
 
   // Filter by player name
@@ -98,15 +118,16 @@ const filteredPlayers = computed(() => {
 
 // Player count by game type
 const playerCounts = computed(() => {
+  const playersArray = Array.isArray(players.value) ? players.value : [];
   const counts = {
-    all: players.value.length,
-    '42': 0,
-    'FH2': 0,
-    'BFV': 0
+    all: playersArray.length,
+    bf1942: 0,
+    fh2: 0,
+    bfv: 0
   };
 
-  players.value.forEach(player => {
-    const gameId = player.currentServer?.gameId;
+  playersArray.forEach(player => {
+    const gameId = normalizeGameId(player.currentServer?.gameId || '');
     if (gameId && counts.hasOwnProperty(gameId)) {
       counts[gameId as keyof typeof counts]++;
     }
@@ -127,10 +148,11 @@ const formatSessionTime = (minutes: number): string => {
 
 // Get game icon class
 const getGameIcon = (gameId: string): string => {
-  switch (gameId) {
-    case '42': return 'game-icon bf1942';
-    case 'FH2': return 'game-icon fh2';
-    case 'BFV': return 'game-icon bfv';
+  const normalized = normalizeGameId(gameId);
+  switch (normalized) {
+    case 'bf1942': return 'game-icon bf1942';
+    case 'fh2': return 'game-icon fh2';
+    case 'bfv': return 'game-icon bfv';
     default: return 'game-icon default';
   }
 };
@@ -142,13 +164,13 @@ const getKDRatio = (kills: number = 0, deaths: number = 0): string => {
 };
 
 // Fetch online players data
-const fetchOnlinePlayersData = async () => {
+const fetchOnlinePlayersApiData = async () => {
   if (!loading.value) loading.value = true;
   error.value = null;
 
   try {
     const result = await fetchOnlinePlayersList();
-    players.value = result;
+    players.value = result.players; // Extract the players array from the response
   } catch (err) {
     console.error('Error fetching online players data:', err);
     error.value = 'Failed to fetch online players data. Please try again.';
@@ -172,6 +194,22 @@ const goToPlayerDetails = (playerName: string) => {
   router.push(`/players/${encodeURIComponent(playerName)}`);
 };
 
+// Helper to get the correct servers route based on gameId
+const getServersRoute = (gameId?: string): string => {
+  if (!gameId) return '/servers';
+  
+  const normalized = normalizeGameId(gameId);
+  switch (normalized) {
+    case 'fh2':
+      return '/servers/fh2';
+    case 'bfv':
+      return '/servers/bfv';
+    case 'bf1942':
+    default:
+      return '/servers/bf1942';
+  }
+};
+
 // Navigate to server details
 const goToServerDetails = (serverName: string) => {
   router.push(`/servers/${encodeURIComponent(serverName)}`);
@@ -185,7 +223,7 @@ const startAutoRefresh = () => {
   
   autoRefreshInterval.value = window.setInterval(() => {
     if (isAutoRefresh.value) {
-      fetchOnlinePlayersData();
+      fetchOnlinePlayersApiData();
     }
   }, refreshIntervalSeconds * 1000);
 };
@@ -215,7 +253,7 @@ const clearFilters = () => {
 
 // Lifecycle
 onMounted(() => {
-  fetchOnlinePlayersData();
+  fetchOnlinePlayersApiData();
   if (isAutoRefresh.value) {
     startAutoRefresh();
   }
@@ -246,7 +284,7 @@ onUnmounted(() => {
             <span class="refresh-icon">🔄</span>
             {{ isAutoRefresh ? 'Auto' : 'Manual' }}
           </button>
-          <button @click="fetchOnlinePlayersData" class="refresh-button" :disabled="loading">
+          <button @click="fetchOnlinePlayersApiData" class="refresh-button" :disabled="loading">
             <span v-if="!loading">⟳ Refresh</span>
             <span v-else class="spinner">⟳</span>
           </button>
@@ -302,7 +340,7 @@ onUnmounted(() => {
     
     <div v-else-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button @click="fetchOnlinePlayersData" class="retry-button">Try Again</button>
+      <button @click="fetchOnlinePlayersApiData" class="retry-button">Try Again</button>
     </div>
 
     <!-- Players List -->

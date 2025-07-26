@@ -10,12 +10,9 @@ Returns a list of currently online players with their session information.
 
 #### Query Parameters (All Optional)
 
-- `gameId` (string): Filter by specific game type
-  - Possible values: `"42"` (BF1942), `"FH2"` (Forgotten Hope 2), `"BFV"` (BF Vietnam)
+- `gameId` (string): Filter by specific game server type
 - `playerName` (string): Filter by player name (partial match, case-insensitive)
 - `serverName` (string): Filter by server name (partial match, case-insensitive)
-- `minSessionTime` (number): Minimum session duration in minutes
-- `maxSessionTime` (number): Maximum session duration in minutes
 
 #### Response Format
 
