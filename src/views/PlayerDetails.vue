@@ -3408,43 +3408,28 @@ tbody tr:hover {
   align-items: center;
   margin: 0;
   padding: 24px;
-  background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background) 100%);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  /* Remove background, border, border-radius, and box-shadow for flat look */
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .stat-badge-large {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 20px 16px;
-  border-radius: 12px;
+  /* Remove background, border, and border-radius for flat look */
+  background: none;
+  border: none;
+  border-radius: 0;
   font-size: 1rem;
   font-weight: bold;
   color: var(--color-text);
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-badge-large::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.stat-badge-large:hover::before {
-  opacity: 1;
+  /* Remove backdrop-filter and position/overflow */
+  /* Remove hover effect */
+  padding: 20px 16px;
 }
 
 .stat-badge-large:hover {
