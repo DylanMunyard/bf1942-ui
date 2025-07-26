@@ -538,6 +538,8 @@ const achievedMilestoneDetails = computed(() => {
   return details;
 });
 
+const totalKills = computed(() => playerStats.value?.totalKills || 0);
+
 const nextMilestoneIndex = computed(() => {
   const totalKills = playerStats.value?.totalKills || 0;
   for (let i = 0; i < MILESTONES.length; i++) {
