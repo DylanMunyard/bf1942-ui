@@ -10,7 +10,7 @@ export interface OnlinePlayerItem {
 export interface OnlineServerInfo {
   serverGuid: string;
   serverName: string;
-  gameId: string; // '42', 'FH2', 'BFV'
+  gameId: string; // '42', 'FH2', 'BFV', or custom mod IDs
   mapName?: string;
   sessionKills?: number;
   sessionDeaths?: number;
@@ -21,21 +21,21 @@ export interface OnlineServerInfo {
 
 // API request/response interfaces
 export interface OnlinePlayersResponse {
-  players: OnlinePlayerItem[];
-  totalOnline: number;
-  lastUpdated: string; // ISO date string
-  gameBreakdown: {
-    bf1942: number;
-    fh2: number;
-    bfv: number;
-  };
+  items: OnlinePlayerItem[]; // Changed from 'players' to 'items'
+  page: number; // Changed from 'currentPage' to 'page'
+  pageSize: number;
+  totalItems: number; // Changed from 'totalOnline' to 'totalItems'
+  totalPages: number;
+  playerInfo: any; // Added missing property from API response
 }
 
 // Filter interface for API requests
 export interface OnlinePlayersFilters {
-  gameId?: string; // Filter by specific game ('42', 'FH2', 'BFV')
+  gameId?: string; // Filter by specific game ('42', 'FH2', 'BFV', or custom mod IDs)
   serverName?: string; // Filter by server name (partial match)
   playerName?: string; // Filter by player name (partial match)
   minSessionTime?: number; // Minimum session duration in minutes
   maxSessionTime?: number; // Maximum session duration in minutes
+  page?: number; // Page number (1-based)
+  pageSize?: number; // Number of items per page
 }

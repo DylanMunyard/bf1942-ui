@@ -1,35 +1,31 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { fetchOnlinePlayersList, OnlinePlayerItem, OnlinePlayersResponse } from '../services/onlinePlayersService';
+import { fetchOnlinePlayersList, OnlinePlayerItem, OnlinePlayersResponse, OnlinePlayersFilters } from '../services/onlinePlayersService';
 
 // Router
 const router = useRouter();
 
 // State variables
-const players = ref<OnlinePlayerItem[]>([]);
+const playersResponse = ref<OnlinePlayersResponse | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
-// Filter variables
+// Filter variables (server-side)
 const gameFilter = ref('all');
 const nameFilter = ref('');
 const serverFilter = ref('');
-const sortBy = ref<'playerName' | 'serverName' | 'sessionTime' | 'kills' | 'deaths'>('playerName');
-const sortOrder = ref<'asc' | 'desc'>('asc');
+const currentPage = ref(1);
+const pageSize = ref(100);
+
+// Debouncing
+const searchDebounceTimeout = ref<number | null>(null);
+const debounceMs = 500;
 
 // Auto-refresh functionality
 const autoRefreshInterval = ref<number | null>(null);
 const refreshIntervalSeconds = 30;
 const isAutoRefresh = ref(true);
-
-// Game type options - using consistent game IDs with the rest of the app
-const gameTypes = [
-  { value: 'all', label: 'All Games', icon: '' }, 
-  { value: 'bf1942', label: 'BF1942', icon: 'bf1942' },
-  { value: 'fh2', label: 'Forgotten Hope 2', icon: 'fh2' },
-  { value: 'bfv', label: 'BF Vietnam', icon: 'bfv' }
-];
 
 // Helper function to normalize game IDs for consistent filtering
 const normalizeGameId = (gameId: string): string => {
@@ -50,90 +46,65 @@ const normalizeGameId = (gameId: string): string => {
   }
 };
 
-// Computed filtered and sorted players
-const filteredPlayers = computed(() => {
-  let filtered = Array.isArray(players.value) ? players.value : [];
+// Get display name for game ID
+const getGameDisplayName = (gameId: string): string => {
+  const normalized = normalizeGameId(gameId);
+  switch (normalized) {
+    case 'bf1942': return 'BF1942';
+    case 'fh2': return 'Forgotten Hope 2';
+    case 'bfv': return 'BF Vietnam';
+    default: return gameId.toUpperCase(); // Show original gameId for mods
+  }
+};
 
-  // Filter by game type
-  if (gameFilter.value !== 'all') {
-    filtered = filtered.filter(player => {
-      const playerGameId = normalizeGameId(player.currentServer?.gameId || '');
-      return playerGameId === gameFilter.value;
+// Computed game types based on API response
+const gameTypes = computed(() => {
+  const games = [{ value: 'all', label: 'All Games', icon: '', count: playersResponse.value?.totalItems || 0 }];
+  
+  if (playersResponse.value?.items) {
+    // Compute game breakdown from the items since it's not provided by the API
+    const gameBreakdown: Record<string, number> = {};
+    playersResponse.value.items.forEach(player => {
+      if (player.currentServer?.gameId) {
+        const gameId = player.currentServer.gameId;
+        gameBreakdown[gameId] = (gameBreakdown[gameId] || 0) + 1;
+      }
+    });
+    
+    Object.entries(gameBreakdown).forEach(([gameId, count]) => {
+      const normalized = normalizeGameId(gameId);
+      games.push({
+        value: normalized,
+        label: getGameDisplayName(gameId),
+        icon: normalized,
+        count
+      });
     });
   }
-
-  // Filter by player name
-  if (nameFilter.value) {
-    const searchTerm = nameFilter.value.toLowerCase();
-    filtered = filtered.filter(player =>
-      player.playerName.toLowerCase().includes(searchTerm)
-    );
-  }
-
-  // Filter by server name
-  if (serverFilter.value) {
-    const searchTerm = serverFilter.value.toLowerCase();
-    filtered = filtered.filter(player =>
-      player.currentServer?.serverName.toLowerCase().includes(searchTerm)
-    );
-  }
-
-  // Sort players
-  filtered.sort((a, b) => {
-    let aVal: any, bVal: any;
-    
-    switch (sortBy.value) {
-      case 'playerName':
-        aVal = a.playerName.toLowerCase();
-        bVal = b.playerName.toLowerCase();
-        break;
-      case 'serverName':
-        aVal = a.currentServer?.serverName?.toLowerCase() || '';
-        bVal = b.currentServer?.serverName?.toLowerCase() || '';
-        break;
-      case 'sessionTime':
-        aVal = a.sessionDurationMinutes || 0;
-        bVal = b.sessionDurationMinutes || 0;
-        break;
-      case 'kills':
-        aVal = a.currentServer?.sessionKills || 0;
-        bVal = b.currentServer?.sessionKills || 0;
-        break;
-      case 'deaths':
-        aVal = a.currentServer?.sessionDeaths || 0;
-        bVal = b.currentServer?.sessionDeaths || 0;
-        break;
-      default:
-        aVal = a.playerName.toLowerCase();
-        bVal = b.playerName.toLowerCase();
-    }
-
-    if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1;
-    if (aVal > bVal) return sortOrder.value === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  return filtered;
+  
+  return games;
 });
 
-// Player count by game type
-const playerCounts = computed(() => {
-  const playersArray = Array.isArray(players.value) ? players.value : [];
-  const counts = {
-    all: playersArray.length,
-    bf1942: 0,
-    fh2: 0,
-    bfv: 0
+// Current filters object
+const currentFilters = computed((): OnlinePlayersFilters => {
+  const filters: OnlinePlayersFilters = {
+    page: currentPage.value,
+    pageSize: pageSize.value
   };
 
-  playersArray.forEach(player => {
-    const gameId = normalizeGameId(player.currentServer?.gameId || '');
-    if (gameId && counts.hasOwnProperty(gameId)) {
-      counts[gameId as keyof typeof counts]++;
-    }
-  });
-
-  return counts;
+  if (gameFilter.value !== 'all') {
+    filters.gameId = gameFilter.value;
+  }
+  
+  if (nameFilter.value.trim()) {
+    filters.playerName = nameFilter.value.trim();
+  }
+  
+  if (serverFilter.value.trim()) {
+    filters.serverName = serverFilter.value.trim();
+  }
+  
+  return filters;
 });
 
 // Format session duration
@@ -163,14 +134,19 @@ const getKDRatio = (kills: number = 0, deaths: number = 0): string => {
   return (kills / deaths).toFixed(2);
 };
 
-// Fetch online players data
-const fetchOnlinePlayersApiData = async () => {
+// Fetch online players data with filters
+const fetchOnlinePlayersApiData = async (resetPage = false) => {
+  if (resetPage) {
+    currentPage.value = 1;
+  }
+  
   if (!loading.value) loading.value = true;
   error.value = null;
 
   try {
-    const result = await fetchOnlinePlayersList();
-    players.value = result.players; // Extract the players array from the response
+    const filters = resetPage ? { ...currentFilters.value, page: 1 } : currentFilters.value;
+    const result = await fetchOnlinePlayersList(filters);
+    playersResponse.value = result;
   } catch (err) {
     console.error('Error fetching online players data:', err);
     error.value = 'Failed to fetch online players data. Please try again.';
@@ -179,14 +155,15 @@ const fetchOnlinePlayersApiData = async () => {
   }
 };
 
-// Handle sort
-const handleSort = (column: typeof sortBy.value) => {
-  if (sortBy.value === column) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortBy.value = column;
-    sortOrder.value = 'desc';
+// Debounced search function
+const debouncedSearch = () => {
+  if (searchDebounceTimeout.value) {
+    clearTimeout(searchDebounceTimeout.value);
   }
+  
+  searchDebounceTimeout.value = window.setTimeout(() => {
+    fetchOnlinePlayersApiData(true); // Reset to page 1 on new search
+  }, debounceMs);
 };
 
 // Navigate to player details
@@ -194,25 +171,29 @@ const goToPlayerDetails = (playerName: string) => {
   router.push(`/players/${encodeURIComponent(playerName)}`);
 };
 
-// Helper to get the correct servers route based on gameId
-const getServersRoute = (gameId?: string): string => {
-  if (!gameId) return '/servers';
-  
-  const normalized = normalizeGameId(gameId);
-  switch (normalized) {
-    case 'fh2':
-      return '/servers/fh2';
-    case 'bfv':
-      return '/servers/bfv';
-    case 'bf1942':
-    default:
-      return '/servers/bf1942';
-  }
-};
-
 // Navigate to server details
 const goToServerDetails = (serverName: string) => {
   router.push(`/servers/${encodeURIComponent(serverName)}`);
+};
+
+// Pagination functions
+const goToPage = (page: number) => {
+  if (page >= 1 && playersResponse.value && page <= playersResponse.value.totalPages) {
+    currentPage.value = page;
+    fetchOnlinePlayersApiData();
+  }
+};
+
+const previousPage = () => {
+  if (currentPage.value > 1) {
+    goToPage(currentPage.value - 1);
+  }
+};
+
+const nextPage = () => {
+  if (playersResponse.value && currentPage.value < playersResponse.value.totalPages) {
+    goToPage(currentPage.value + 1);
+  }
 };
 
 // Auto-refresh functionality
@@ -249,7 +230,18 @@ const clearFilters = () => {
   gameFilter.value = 'all';
   nameFilter.value = '';
   serverFilter.value = '';
+  currentPage.value = 1;
+  fetchOnlinePlayersApiData();
 };
+
+// Watch for filter changes
+watch([gameFilter], () => {
+  fetchOnlinePlayersApiData(true); // Reset to page 1 when changing game filter
+});
+
+watch([nameFilter, serverFilter], () => {
+  debouncedSearch();
+});
 
 // Lifecycle
 onMounted(() => {
@@ -261,6 +253,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopAutoRefresh();
+  if (searchDebounceTimeout.value) {
+    clearTimeout(searchDebounceTimeout.value);
+  }
 });
 </script>
 
@@ -272,7 +267,9 @@ onUnmounted(() => {
         <h1>
           <span class="online-indicator"></span>
           Online Players
-          <span class="player-count">({{ filteredPlayers.length }})</span>
+          <span class="player-count" v-if="playersResponse">
+            ({{ playersResponse.totalItems }})
+          </span>
         </h1>
         <div class="header-controls">
           <button 
@@ -284,7 +281,7 @@ onUnmounted(() => {
             <span class="refresh-icon">🔄</span>
             {{ isAutoRefresh ? 'Auto' : 'Manual' }}
           </button>
-          <button @click="fetchOnlinePlayersApiData" class="refresh-button" :disabled="loading">
+          <button @click="() => fetchOnlinePlayersApiData()" class="refresh-button" :disabled="loading">
             <span v-if="!loading">⟳ Refresh</span>
             <span v-else class="spinner">⟳</span>
           </button>
@@ -293,7 +290,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Game Type Filter Tabs -->
-    <div class="game-filter-tabs">
+    <div class="game-filter-tabs" v-if="gameTypes.length > 1">
       <button
         v-for="gameType in gameTypes"
         :key="gameType.value"
@@ -301,9 +298,9 @@ onUnmounted(() => {
         class="game-tab"
         :class="{ active: gameFilter === gameType.value }"
       >
-        <div v-if="gameType.icon" :class="getGameIcon(gameType.value)" class="tab-icon"></div>
+        <div v-if="gameType.icon && gameType.value !== 'all'" :class="getGameIcon(gameType.value)" class="tab-icon"></div>
         <span class="tab-label">{{ gameType.label }}</span>
-        <span class="tab-count">{{ playerCounts[gameType.value as keyof typeof playerCounts] }}</span>
+        <span class="tab-count">{{ gameType.count }}</span>
       </button>
     </div>
 
@@ -333,64 +330,95 @@ onUnmounted(() => {
     </div>
 
     <!-- Loading/Error States -->
-    <div v-if="loading && players.length === 0" class="loading-state">
+    <div v-if="loading && !playersResponse" class="loading-state">
       <div class="loading-spinner"></div>
       <p>Loading online players...</p>
     </div>
     
     <div v-else-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button @click="fetchOnlinePlayersApiData" class="retry-button">Try Again</button>
+      <button @click="() => fetchOnlinePlayersApiData()" class="retry-button">Try Again</button>
     </div>
 
     <!-- Players List -->
-    <div v-else-if="filteredPlayers.length > 0" class="players-grid">
-      <div
-        v-for="player in filteredPlayers"
-        :key="player.playerName"
-        class="player-card"
-        @click="goToPlayerDetails(player.playerName)"
-      >
-        <!-- Player Info -->
-        <div class="player-info">
-          <div class="player-avatar">
-            {{ player.playerName.charAt(0).toUpperCase() }}
+    <div v-else-if="playersResponse && playersResponse.items.length > 0">
+      <!-- Players Grid -->
+      <div class="players-grid">
+        <div
+          v-for="player in playersResponse.items"
+          :key="player.playerName"
+          class="player-card"
+          @click="goToPlayerDetails(player.playerName)"
+        >
+          <!-- Player Info -->
+          <div class="player-info">
+            <div class="player-avatar">
+              {{ player.playerName.charAt(0).toUpperCase() }}
+            </div>
+            <div class="player-details">
+              <div class="player-name">{{ player.playerName }}</div>
+              <div class="player-status">
+                <span class="status-dot online"></span>
+                Playing for {{ formatSessionTime(player.sessionDurationMinutes || 0) }}
+              </div>
+            </div>
           </div>
-          <div class="player-details">
-            <div class="player-name">{{ player.playerName }}</div>
-            <div class="player-status">
-              <span class="status-dot online"></span>
-              Playing for {{ formatSessionTime(player.sessionDurationMinutes || 0) }}
+
+          <!-- Game/Server Info -->
+          <div v-if="player.currentServer" class="game-info" @click.stop="goToServerDetails(player.currentServer.serverName)">
+            <div class="game-header">
+              <div :class="getGameIcon(player.currentServer.gameId || '')" class="game-icon-small"></div>
+              <div class="server-name">{{ player.currentServer.serverName }}</div>
+            </div>
+            <div class="map-info" v-if="player.currentServer.mapName">
+              <span class="map-name">{{ player.currentServer.mapName }}</span>
+            </div>
+          </div>
+
+          <!-- Session Stats -->
+          <div v-if="player.currentServer" class="session-stats">
+            <div class="stat-item">
+              <span class="stat-label">K</span>
+              <span class="stat-value">{{ player.currentServer.sessionKills || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">D</span>
+              <span class="stat-value">{{ player.currentServer.sessionDeaths || 0 }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">KDR</span>
+              <span class="stat-value">{{ getKDRatio(player.currentServer.sessionKills, player.currentServer.sessionDeaths) }}</span>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Game/Server Info -->
-        <div v-if="player.currentServer" class="game-info" @click.stop="goToServerDetails(player.currentServer.serverName)">
-          <div class="game-header">
-            <div :class="getGameIcon(player.currentServer.gameId || '')" class="game-icon-small"></div>
-            <div class="server-name">{{ player.currentServer.serverName }}</div>
-          </div>
-          <div class="map-info" v-if="player.currentServer.mapName">
-            <span class="map-name">{{ player.currentServer.mapName }}</span>
-          </div>
+      <!-- Pagination -->
+      <div class="pagination" v-if="playersResponse.totalPages > 1">
+        <button 
+          @click="previousPage" 
+          :disabled="currentPage <= 1"
+          class="pagination-button"
+        >
+          ← Previous
+        </button>
+        
+        <div class="pagination-info">
+          <span class="page-info">
+            Page {{ currentPage }} of {{ playersResponse.totalPages }}
+          </span>
+          <span class="results-info">
+            ({{ Math.min((currentPage - 1) * pageSize + 1, playersResponse.totalItems) }}-{{ Math.min(currentPage * pageSize, playersResponse.totalItems) }} of {{ playersResponse.totalItems }})
+          </span>
         </div>
-
-        <!-- Session Stats -->
-        <div v-if="player.currentServer" class="session-stats">
-          <div class="stat-item">
-            <span class="stat-label">K</span>
-            <span class="stat-value">{{ player.currentServer.sessionKills || 0 }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">D</span>
-            <span class="stat-value">{{ player.currentServer.sessionDeaths || 0 }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">KDR</span>
-            <span class="stat-value">{{ getKDRatio(player.currentServer.sessionKills, player.currentServer.sessionDeaths) }}</span>
-          </div>
-        </div>
+        
+        <button 
+          @click="nextPage" 
+          :disabled="currentPage >= playersResponse.totalPages"
+          class="pagination-button"
+        >
+          Next →
+        </button>
       </div>
     </div>
 
@@ -671,6 +699,7 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 16px;
+  margin-bottom: 20px;
 }
 
 .player-card {
@@ -817,6 +846,54 @@ onUnmounted(() => {
   color: var(--color-text);
 }
 
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.pagination-button {
+  padding: 10px 16px;
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+}
+
+.pagination-button:disabled {
+  background-color: var(--color-background-mute);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.page-info {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.results-info {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
 /* Game Icons */
 .game-icon.bf1942, .tab-icon.bf1942, .game-icon-small.bf1942 {
   background-image: url('../assets/bf1942.jpg');
@@ -871,6 +948,15 @@ onUnmounted(() => {
 
   .player-card {
     padding: 12px;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .pagination-info {
+    order: -1;
   }
 }
 
