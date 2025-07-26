@@ -613,18 +613,26 @@ const sortedServers = computed(() => {
                   <div class="server-card-stats-compact">
                     <div class="server-stat-block">
                       <span class="server-stat-label">Best Score</span>
-                      <span
+                      <router-link
+                        v-if="(server.serverGuid && server.highestScoreMapName && server.highestScoreStartTime) || (server.serverGuid && server.mapName && server.bestScoreDate)"
                         class="server-stat-value highlight-badge best-score-link"
-                        v-if="server.bestScoreDate && server.mapName"
-                        :title="'View round report for best score'"
-                        @click="openSessionDetailsModal(server.serverGuid, server.mapName, server.bestScoreDate)"
+                        :to="{
+                          path: '/servers/round-report',
+                          query: {
+                            serverGuid: server.serverGuid,
+                            mapName: server.highestScoreMapName || server.mapName,
+                            startTime: server.highestScoreStartTime || server.bestScoreDate,
+                            players: playerName
+                          }
+                        }"
+                        :title="`View round report for best score on ${server.highestScoreMapName || server.mapName} (${formatRelativeTime((server.highestScoreStartTime || server.bestScoreDate) ?? '')})`"
                         style="cursor:pointer; text-decoration:underline;"
                       >
                         {{ server.highestScore }}
-                      </span>
+                      </router-link>
                       <span
-                        class="server-stat-value highlight-badge"
                         v-else
+                        class="server-stat-value highlight-badge"
                       >
                         {{ server.highestScore }}
                       </span>

@@ -160,6 +160,10 @@ export interface PlayerServerStats {
   // Optional: for navigation to best score round report
   bestScoreDate?: string;
   mapName?: string;
+  // New fields for best score round report navigation
+  highestScoreSessionId?: string;
+  highestScoreMapName?: string;
+  highestScoreStartTime?: string;
 }
 
 export interface TeamKillerMetric {
