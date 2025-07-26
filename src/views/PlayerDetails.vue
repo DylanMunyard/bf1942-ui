@@ -5,6 +5,11 @@ import { PlayerTimeStatistics, PlayerServerStats, fetchPlayerStats, fetchSimilar
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 
+import bf1942Icon from '@/assets/bf1942.jpg';
+import fh2Icon from '@/assets/fh2.jpg';
+import bfvIcon from '@/assets/bfv.jpg';
+import defaultIcon from '@/assets/servers.jpg';
+
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
@@ -497,6 +502,17 @@ const similarityColor = (score: number): string => {
   return '#F44336'; // red
 };
 
+const gameIcons: { [key: string]: string } = {
+  bf1942: bf1942Icon,
+  fh2: fh2Icon,
+  bfv: bfvIcon,
+};
+
+const getGameIcon = (gameId: string): string => {
+  if (!gameId) return defaultIcon;
+  return gameIcons[gameId.toLowerCase()] || defaultIcon;
+};
+
 // --- Server Cards Computed ---
 const hasServers = computed(() => !!playerStats.value?.servers && playerStats.value.servers.length > 0);
 const sortedServers = computed(() => {
@@ -534,6 +550,20 @@ const sortedServers = computed(() => {
             <span class="player-playtime">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
             <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
           </div>
+          <div v-if="playerStats" class="player-header-stats">
+            <div class="header-stat">
+              <span class="header-stat-value header-stat-kills">{{ playerStats.totalKills }}</span>
+              <span class="header-stat-label">Kills</span>
+            </div>
+            <div class="header-stat">
+              <span class="header-stat-value header-stat-deaths">{{ playerStats.totalDeaths }}</span>
+              <span class="header-stat-label">Deaths</span>
+            </div>
+            <div class="header-stat">
+              <span class="header-stat-value">{{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
+              <span class="header-stat-label">K/D</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -567,35 +597,15 @@ const sortedServers = computed(() => {
 
         <!-- General statistics section -->
         <div class="stats-section">
-          <h3>Combat Statistics</h3>
+          <h3>Top Servers</h3>
           <div class="stats-grid">
-            <div class="combat-stats-container">
-              <div class="combat-stats-large">
-                <span class="stat-badge-large">
-                  <img src="@/assets/kills.png" alt="Kills" class="kills-icon-large" />
-                  <span class="combat-value-large">{{ playerStats.totalKills }}</span>
-                  <span class="combat-label-large">Kills</span>
-                </span>
-                <span class="stat-badge-large">
-                  <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon-large" />
-                  <span class="combat-value-large">{{ playerStats.totalDeaths }}</span>
-                  <span class="combat-label-large">Deaths</span>
-                </span>
-                <span class="stat-badge-large">
-                  <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon-large" />
-                  <span class="combat-value-large">{{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
-                  <span class="combat-label-large">K/D</span>
-                </span>
-              </div>
-            </div>
             <!-- Server Cards Section -->
             <div class="server-cards-section" v-if="hasServers">
-              <h4 style="margin-bottom: 12px;">Top Servers</h4>
               <div class="server-cards-grid">
                 <div v-for="(server, idx) in sortedServers" :key="server.serverGuid" class="server-card-gamified">
                   <div class="server-card-header">
                     <span class="server-card-title">
-                      <img src="@/assets/servers.jpg" alt="Server" style="width: 24px; height: 24px; margin-right: 8px; border-radius: 6px; vertical-align: middle;" />
+                      <img :src="getGameIcon(server.gameId)" alt="Server" style="width: 24px; height: 24px; margin-right: 8px; border-radius: 6px; vertical-align: middle;" />
                       {{ server.serverName }}
                     </span>
                     <span class="server-game-id">{{ server.gameId.toUpperCase() }}</span>
@@ -3753,6 +3763,1068 @@ tbody tr:hover {
   .best-badge {
     font-size: 0.75rem;
     padding: 3px 6px;
+  }
+}
+
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 0;
+}
+
+.toggle-icon {
+  font-size: 1.2rem;
+  transition: transform 0.2s;
+}
+
+.similar-players-list {
+  margin-top: 10px;
+}
+
+.similar-player-card {
+  background-color: var(--color-background);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.similar-player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.similar-player-name {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.similarity-score {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.similarity-reasons {
+  list-style: none;
+  padding-left: 20px;
+}
+
+.no-data-container {
+  text-align: center;
+  padding: 20px;
+  color: var(--color-text-muted);
+}
+
+.expand-hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-left: 10px;
+}
+
+.similar-players-table-wrapper {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.similar-players-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 400px;
+}
+
+.similar-players-table th, .similar-players-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.similar-players-table th {
+  background-color: var(--color-background-mute);
+  font-weight: bold;
+  color: var(--color-heading);
+}
+
+.similar-players-table tbody tr:hover {
+  background-color: var(--color-background);
+}
+
+.reasons-col {
+  width: 60%;
+}
+
+.similarity-score {
+  font-weight: 600;
+}
+
+/* Server Cards Gamified Styles */
+.server-cards-section {
+  margin-top: 24px;
+}
+.server-cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 8px;
+}
+.server-card-gamified {
+  background: linear-gradient(135deg, rgba(156,39,176,0.08) 0%, var(--color-background) 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(156,39,176,0.08), 0 1.5px 6px rgba(0,0,0,0.07);
+  border: 2px solid var(--color-primary);
+  padding: 14px 16px;
+  min-width: 320px;
+  max-width: 380px;
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.server-card-gamified:hover {
+  box-shadow: 0 8px 32px rgba(156,39,176,0.18), 0 3px 12px rgba(0,0,0,0.12);
+  transform: translateY(-4px) scale(1.01);
+  border-color: var(--color-accent);
+}
+.server-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.server-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.server-game-id {
+  background: var(--color-background-mute);
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 3px 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.server-card-stats-compact {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 12px;
+  align-items: center;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+.server-stat-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+.server-stat-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-bottom: 1px;
+}
+.server-stat-value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+.highlight-badge {
+  background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+  color: #333;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 1.05rem;
+  box-shadow: 0 2px 8px rgba(255,215,0,0.12);
+}
+@media (max-width: 768px) {
+  .server-cards-grid {
+    gap: 12px;
+  }
+  .server-card-gamified {
+    min-width: 0;
+    max-width: 100%;
+    padding: 10px 6px;
+  }
+  .server-card-title {
+    font-size: 1rem;
+  }
+  .server-game-id {
+    font-size: 0.8rem;
+    padding: 2px 7px;
+  }
+  .server-stat-badge {
+    font-size: 0.9rem;
+    padding: 5px 8px;
+  }
+  .highlight-badge {
+    font-size: 0.9rem;
+    padding: 2px 7px;
+  }
+}
+.kills-count {
+  color: #4CAF50;
+  font-weight: 500;
+}
+.deaths-count {
+  color: #F44336;
+  font-weight: 500;
+}
+.playtime-block {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+.server-card-stats-compact {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 12px;
+  align-items: center;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+@media (max-width: 768px) {
+  .server-card-stats-compact {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 8px;
+  }
+  .playtime-block {
+    grid-column: 1 / -1;
+  }
+}
+
+.player-header-stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+.header-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.header-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-heading);
+}
+
+.header-stat-kills {
+  color: #4CAF50;
+}
+
+.header-stat-deaths {
+  color: #F44336;
+}
+
+.header-stat-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.compare-player-btn:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.compare-player-btn svg {
+  flex-shrink: 0;
+}
+
+.player-playtime {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin-top: -4px;
+  margin-bottom: 2px;
+  font-weight: 400;
+}
+
+/* Add styles for .player-header-meta and .player-last-seen */
+.player-header-meta {
+  display: flex;
+  gap: 18px;
+  align-items: center; /* Ensure vertical alignment */
+  margin-top: -4px;
+  margin-bottom: 2px;
+}
+
+.player-playtime,
+.player-last-seen {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0; /* Remove any margin that could cause misalignment */
+  vertical-align: middle;
+  display: flex;
+  align-items: center;
+}
+
+/* Enhanced best session styling - make it pop more */
+.best-session-card {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, var(--color-background) 50%, rgba(255, 215, 0, 0.08) 100%);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 48px rgba(255, 215, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
+  display: block;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.best-session-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, transparent 50%, rgba(255, 215, 0, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.best-session-card:hover::before {
+  opacity: 1;
+}
+
+.best-session-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(255, 215, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
+.best-session-flex {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.best-session-icon-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 100%;
+  gap: 8px;
+}
+
+.trophy-icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.4));
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% {
+    filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.4));
+  }
+  100% {
+    filter: drop-shadow(0 6px 12px rgba(255, 215, 0, 0.6));
+  }
+}
+
+.best-badge {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 800;
+  border-radius: 12px;
+  padding: 6px 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.best-session-details-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.session-line-1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 600;
+}
+
+.session-line-2 {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.map-name {
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.session-line-3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.session-score {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* Mobile-responsive enhancements for combat stats */
+@media (max-width: 768px) {
+  .best-session-card {
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 12px;
+  }
+
+  .best-session-flex {
+    gap: 16px;
+  }
+
+  .best-session-icon-col {
+    min-width: 48px;
+    gap: 6px;
+  }
+
+  .trophy-icon {
+    font-size: 2rem;
+  }
+
+  .best-badge {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+
+  .session-score {
+    font-size: 1.2rem;
+  }
+
+  .session-line-2 {
+    font-size: 1rem;
+  }
+
+  .player-header-stats {
+    gap: 20px;
+    margin-top: 10px;
+  }
+
+  .header-stat-value {
+    font-size: 1.3rem;
+  }
+
+  .header-stat-label {
+    font-size: 0.75rem;
+  }
+
+  /* Improve hover effects for mobile/touch devices */
+  .best-session-card:hover {
+    transform: translateY(-3px) scale(1.01);
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .best-session-card {
+    padding: 12px;
+  }
+
+  .best-session-flex {
+    gap: 12px;
+  }
+
+  .trophy-icon {
+    font-size: 1.8rem;
+  }
+
+  .best-badge {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+  }
+
+  .player-header-stats {
+    gap: 16px;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .header-stat-value {
+    font-size: 1.2rem;
+  }
+}
+
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 0;
+}
+
+.toggle-icon {
+  font-size: 1.2rem;
+  transition: transform 0.2s;
+}
+
+.similar-players-list {
+  margin-top: 10px;
+}
+
+.similar-player-card {
+  background-color: var(--color-background);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.similar-player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.similar-player-name {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.similarity-score {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.similarity-reasons {
+  list-style: none;
+  padding-left: 20px;
+}
+
+.no-data-container {
+  text-align: center;
+  padding: 20px;
+  color: var(--color-text-muted);
+}
+
+.expand-hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-left: 10px;
+}
+
+.similar-players-table-wrapper {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.similar-players-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 400px;
+}
+
+.similar-players-table th, .similar-players-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.similar-players-table th {
+  background-color: var(--color-background-mute);
+  font-weight: bold;
+  color: var(--color-heading);
+}
+
+.similar-players-table tbody tr:hover {
+  background-color: var(--color-background);
+}
+
+.reasons-col {
+  width: 60%;
+}
+
+.similarity-score {
+  font-weight: 600;
+}
+
+/* Server Cards Gamified Styles */
+.server-cards-section {
+  margin-top: 24px;
+}
+.server-cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 8px;
+}
+.server-card-gamified {
+  background: linear-gradient(135deg, rgba(156,39,176,0.08) 0%, var(--color-background) 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(156,39,176,0.08), 0 1.5px 6px rgba(0,0,0,0.07);
+  border: 2px solid var(--color-primary);
+  padding: 14px 16px;
+  min-width: 320px;
+  max-width: 380px;
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.server-card-gamified:hover {
+  box-shadow: 0 8px 32px rgba(156,39,176,0.18), 0 3px 12px rgba(0,0,0,0.12);
+  transform: translateY(-4px) scale(1.01);
+  border-color: var(--color-accent);
+}
+.server-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.server-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.server-game-id {
+  background: var(--color-background-mute);
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 3px 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.server-card-stats-compact {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 12px;
+  align-items: center;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+.server-stat-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+.server-stat-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-bottom: 1px;
+}
+.server-stat-value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+.highlight-badge {
+  background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+  color: #333;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 1.05rem;
+  box-shadow: 0 2px 8px rgba(255,215,0,0.12);
+}
+@media (max-width: 768px) {
+  .server-cards-grid {
+    gap: 12px;
+  }
+  .server-card-gamified {
+    min-width: 0;
+    max-width: 100%;
+    padding: 10px 6px;
+  }
+  .server-card-title {
+    font-size: 1rem;
+  }
+  .server-game-id {
+    font-size: 0.8rem;
+    padding: 2px 7px;
+  }
+  .server-stat-badge {
+    font-size: 0.9rem;
+    padding: 5px 8px;
+  }
+  .highlight-badge {
+    font-size: 0.9rem;
+    padding: 2px 7px;
+  }
+}
+.kills-count {
+  color: #4CAF50;
+  font-weight: 500;
+}
+.deaths-count {
+  color: #F44336;
+  font-weight: 500;
+}
+.playtime-block {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+.server-card-stats-compact {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 12px;
+  align-items: center;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+@media (max-width: 768px) {
+  .server-card-stats-compact {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 8px;
+  }
+  .playtime-block {
+    grid-column: 1 / -1;
+  }
+}
+
+.player-header-stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+.header-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.header-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-heading);
+}
+
+.header-stat-kills {
+  color: #4CAF50;
+}
+
+.header-stat-deaths {
+  color: #F44336;
+}
+
+.header-stat-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.compare-player-btn:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.compare-player-btn svg {
+  flex-shrink: 0;
+}
+
+.player-playtime {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin-top: -4px;
+  margin-bottom: 2px;
+  font-weight: 400;
+}
+
+/* Add styles for .player-header-meta and .player-last-seen */
+.player-header-meta {
+  display: flex;
+  gap: 18px;
+  align-items: center; /* Ensure vertical alignment */
+  margin-top: -4px;
+  margin-bottom: 2px;
+}
+
+.player-playtime,
+.player-last-seen {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0; /* Remove any margin that could cause misalignment */
+  vertical-align: middle;
+  display: flex;
+  align-items: center;
+}
+
+/* Enhanced best session styling - make it pop more */
+.best-session-card {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, var(--color-background) 50%, rgba(255, 215, 0, 0.08) 100%);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 48px rgba(255, 215, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
+  display: block;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.best-session-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, transparent 50%, rgba(255, 215, 0, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.best-session-card:hover::before {
+  opacity: 1;
+}
+
+.best-session-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(255, 215, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
+.best-session-flex {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.best-session-icon-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 100%;
+  gap: 8px;
+}
+
+.trophy-icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.4));
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% {
+    filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.4));
+  }
+  100% {
+    filter: drop-shadow(0 6px 12px rgba(255, 215, 0, 0.6));
+  }
+}
+
+.best-badge {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 800;
+  border-radius: 12px;
+  padding: 6px 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.best-session-details-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.session-line-1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 600;
+}
+
+.session-line-2 {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.map-name {
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.session-line-3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.session-score {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* Mobile-responsive enhancements for combat stats */
+@media (max-width: 768px) {
+  .best-session-card {
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 12px;
+  }
+
+  .best-session-flex {
+    gap: 16px;
+  }
+
+  .best-session-icon-col {
+    min-width: 48px;
+    gap: 6px;
+  }
+
+  .trophy-icon {
+    font-size: 2rem;
+  }
+
+  .best-badge {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+
+  .session-score {
+    font-size: 1.2rem;
+  }
+
+  .session-line-2 {
+    font-size: 1rem;
+  }
+
+  .player-header-stats {
+    gap: 20px;
+    margin-top: 10px;
+  }
+
+  .header-stat-value {
+    font-size: 1.3rem;
+  }
+
+  .header-stat-label {
+    font-size: 0.75rem;
+  }
+
+  /* Improve hover effects for mobile/touch devices */
+  .best-session-card:hover {
+    transform: translateY(-3px) scale(1.01);
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .best-session-card {
+    padding: 12px;
+  }
+
+  .best-session-flex {
+    gap: 12px;
+  }
+
+  .trophy-icon {
+    font-size: 1.8rem;
+  }
+
+  .best-badge {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+  }
+
+  .player-header-stats {
+    gap: 16px;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .header-stat-value {
+    font-size: 1.2rem;
   }
 }
 
