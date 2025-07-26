@@ -981,17 +981,6 @@ const totalKillsP2 = computed(() => {
 const achievedMilestoneNumbersP1 = computed(() => (comparisonData.value?.player1KillMilestones || []).map(m => m.milestone));
 const achievedMilestoneNumbersP2 = computed(() => (comparisonData.value?.player2KillMilestones || []).map(m => m.milestone));
 
-const achievedMilestoneDetailsP1 = computed(() => {
-  const d: Record<number, KillMilestone> = {};
-  (comparisonData.value?.player1KillMilestones || []).forEach(m => (d[m.milestone] = m));
-  return d;
-});
-const achievedMilestoneDetailsP2 = computed(() => {
-  const d: Record<number, KillMilestone> = {};
-  (comparisonData.value?.player2KillMilestones || []).forEach(m => (d[m.milestone] = m));
-  return d;
-});
-
 const nextMilestoneIndexP1 = computed(() => {
   for (let i = 0; i < MILESTONES.length; i++) {
     if (totalKillsP1.value < MILESTONES[i]) return i;
