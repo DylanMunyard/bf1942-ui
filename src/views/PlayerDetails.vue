@@ -523,7 +523,7 @@ const sortedServers = computed(() => {
 // ... existing code ...
 
 // --- Milestone Progress & Display ---
-const MILESTONES = [5000, 10000, 20000, 40000, 50000, 100000];
+const MILESTONES = [5000, 10000, 20000, 40000, 50000, 75000, 100000];
 
 const achievedMilestoneNumbers = computed(() =>
   (playerStats.value?.killMilestones || []).map(m => m.milestone)

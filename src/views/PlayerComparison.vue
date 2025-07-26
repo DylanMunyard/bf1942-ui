@@ -967,7 +967,7 @@ const formatMilestoneTooltip = (milestone: number, playerNumber: 1 | 2) => {
 };
 
 // === Badge style milestone data (similar to PlayerDetails.vue) ===
-const MILESTONES = [5000, 10000, 20000, 40000, 50000, 100000];
+const MILESTONES = [5000, 10000, 20000, 40000, 50000, 75000, 100000];
 
 const totalKillsP1 = computed(() => {
   const allTime = comparisonData.value?.bucketTotals?.find(b => b.bucket === 'AllTime');
