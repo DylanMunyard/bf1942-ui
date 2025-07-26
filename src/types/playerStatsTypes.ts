@@ -116,6 +116,19 @@ export interface PlayerInsights {
   startPeriod: string; // ISO date string
 }
 
+// Add BestScore interface
+export interface BestScore {
+  serverGuid: string;
+  serverName: string;
+  bestScore: number;
+  totalKills: number;
+  totalDeaths: number;
+  playTimeMinutes: number;
+  bestScoreDate: string; // ISO date string
+  mapName: string;
+  sessionId: number;
+}
+
 export interface PlayerTimeStatistics {
   totalPlayTimeMinutes: number;
   totalSessions: number;
@@ -127,6 +140,7 @@ export interface PlayerTimeStatistics {
   isActive: boolean;
   currentServer: ServerInfo | null;
   bestSession: Session | null;
+  bestScores: BestScore[]; // <-- Add this line
   recentSessions: Session[];
   insights?: PlayerInsights;
 }
