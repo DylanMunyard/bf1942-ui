@@ -84,7 +84,11 @@ const currentTopScores = computed(() => {
           <tbody>
             <tr v-for="player in currentMostActivePlayers" :key="player.playerName">
               <td>{{ formatPlayTime(player.minutesPlayed) }}</td>
-              <td><PlayerName :name="player.playerName" /></td>
+              <td>
+                <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
+                  <PlayerName :name="player.playerName" />
+                </router-link>
+              </td>
               <td class="kills">{{ player.totalKills.toLocaleString() }}</td>
               <td class="deaths">{{ player.totalDeaths.toLocaleString() }}</td>
             </tr>
@@ -155,7 +159,11 @@ const currentTopScores = computed(() => {
                   {{ score.score.toLocaleString() }}
                 </router-link>
               </td>
-              <td><PlayerName :name="score.playerName" /></td>
+              <td>
+                <router-link :to="`/players/${encodeURIComponent(score.playerName)}`" class="player-link">
+                  <PlayerName :name="score.playerName" />
+                </router-link>
+              </td>
               <td>
                 <span class="kills">{{ score.kills }}</span>/<span class="deaths">{{ score.deaths }}</span>
               </td>
@@ -341,6 +349,26 @@ const currentTopScores = computed(() => {
 
 .score-link a:hover {
   text-decoration: underline;
+}
+
+.player-link {
+  text-decoration: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.player-link .player-name-text {
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s, text-decoration 0.2s;
+}
+
+.player-link:hover .player-name-text,
+.player-link:focus .player-name-text {
+  text-decoration: underline;
+  color: var(--color-primary);
 }
 
 @media (max-width: 1024px) {
