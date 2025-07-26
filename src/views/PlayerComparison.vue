@@ -1542,9 +1542,8 @@ const handleBadgeClick = (milestone: number) => {
                   <div class="milestone-badge-front">
                     <div class="milestone-badge-image-container">
                       <img :src="getMilestoneImage(milestone)" class="milestone-badge-image" :alt="`${milestone.toLocaleString()} Kills Badge`" />
-                      <svg v-if="nextMilestoneIndexP1 === idx && milestoneProgress(totalKillsP1, milestone) < 1" class="milestone-progress-border" width="72" height="72">
-                        <circle cx="36" cy="36" r="35" fill="none" stroke="#ddd" stroke-width="2" class="progress-bg" />
-                        <circle cx="36" cy="36" r="35" fill="none" :stroke="milestoneProgress(totalKillsP1, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress" stroke-width="2" stroke-linecap="round" :stroke-dasharray="2 * Math.PI * 35" :stroke-dashoffset="(1 - milestoneProgress(totalKillsP1, milestone)) * 2 * Math.PI * 35" class="progress-bar" transform="rotate(-90 36 36)" />
+                      <svg v-if="nextMilestoneIndexP1 === idx && milestoneProgress(totalKillsP1, milestone) < 1" class="milestone-progress-border" :width="isMobile ? '54' : '72'" :height="isMobile ? '54' : '72'">
+                        <circle :cx="isMobile ? '27' : '36'" :cy="isMobile ? '27' : '36'" :r="isMobile ? '26' : '35'" fill="none" :stroke="milestoneProgress(totalKillsP1, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress" stroke-width="2" stroke-linecap="round" :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)" :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(totalKillsP1, milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(totalKillsP1, milestone)) * 2 * Math.PI * 35)" class="progress-bar" :transform="isMobile ? 'rotate(-90 27 27)' : 'rotate(-90 36 36)'" />
                       </svg>
                       <!-- Comparison indicator -->
                       <div v-if="getMilestoneComparison(milestone, 1)?.hasBothAchieved" class="comparison-indicator">
@@ -1582,9 +1581,8 @@ const handleBadgeClick = (milestone: number) => {
                   <div class="milestone-badge-front">
                     <div class="milestone-badge-image-container">
                       <img :src="getMilestoneImage(milestone)" class="milestone-badge-image" :alt="`${milestone.toLocaleString()} Kills Badge`" />
-                      <svg v-if="nextMilestoneIndexP2 === idx && milestoneProgress(totalKillsP2, milestone) < 1" class="milestone-progress-border" width="72" height="72">
-                        <circle cx="36" cy="36" r="35" fill="none" stroke="#ddd" stroke-width="2" class="progress-bg" />
-                        <circle cx="36" cy="36" r="35" fill="none" :stroke="milestoneProgress(totalKillsP2, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress" stroke-width="2" stroke-linecap="round" :stroke-dasharray="2 * Math.PI * 35" :stroke-dashoffset="(1 - milestoneProgress(totalKillsP2, milestone)) * 2 * Math.PI * 35" class="progress-bar" transform="rotate(-90 36 36)" />
+                      <svg v-if="nextMilestoneIndexP2 === idx && milestoneProgress(totalKillsP2, milestone) < 1" class="milestone-progress-border" :width="isMobile ? '54' : '72'" :height="isMobile ? '54' : '72'">
+                        <circle :cx="isMobile ? '27' : '36'" :cy="isMobile ? '27' : '36'" :r="isMobile ? '26' : '35'" fill="none" :stroke="milestoneProgress(totalKillsP2, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress" stroke-width="2" stroke-linecap="round" :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)" :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(totalKillsP2, milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(totalKillsP2, milestone)) * 2 * Math.PI * 35)" class="progress-bar" :transform="isMobile ? 'rotate(-90 27 27)' : 'rotate(-90 36 36)'" />
                       </svg>
                       <!-- Comparison indicator -->
                       <div v-if="getMilestoneComparison(milestone, 2)?.hasBothAchieved" class="comparison-indicator">
@@ -1610,6 +1608,8 @@ const handleBadgeClick = (milestone: number) => {
   color: var(--color-text);
   max-width: 1200px;
   margin: 0 auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .comparison-header {

@@ -713,7 +713,7 @@ const milestoneProgressColors = computed(() => {
                       :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)"
                       :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(milestone)) * 2 * Math.PI * 35)"
                       class="progress-bar"
-                      transform="rotate(-90 36 36)"
+                      :transform="isMobile ? 'rotate(-90 27 27)' : 'rotate(-90 36 36)'"
                     />
                   </svg>
                 </div>
