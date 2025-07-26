@@ -521,6 +521,70 @@ const sortedServers = computed(() => {
   return [...playerStats.value.servers].sort((a, b) => b.totalMinutes - a.totalMinutes);
 });
 // ... existing code ...
+
+// --- Milestone Progress & Display ---
+const MILESTONES = [5000, 10000, 20000, 40000, 50000, 100000];
+
+const achievedMilestoneNumbers = computed(() =>
+  (playerStats.value?.killMilestones || []).map(m => m.milestone)
+);
+
+const achievedMilestoneDetails = computed(() => {
+  const details: Record<number, any> = {};
+  (playerStats.value?.killMilestones || []).forEach(m => {
+    details[m.milestone] = m;
+  });
+  return details;
+});
+
+const nextMilestoneIndex = computed(() => {
+  const totalKills = playerStats.value?.totalKills || 0;
+  for (let i = 0; i < MILESTONES.length; i++) {
+    if (totalKills < MILESTONES[i]) return i;
+  }
+  return MILESTONES.length; // all achieved
+});
+
+const milestoneProgress = (milestone: number) => {
+  const totalKills = playerStats.value?.totalKills || 0;
+  if (totalKills >= milestone) return 1;
+  // Use reverse() and find() instead of findLast() for compatibility
+  const prev = [...MILESTONES].reverse().find((m: number) => m < milestone) || 0;
+  return (totalKills - prev) / (milestone - prev);
+};
+
+const getMilestoneImage = (milestone: number) => {
+  return new URL(`../assets/milestone-${milestone/1000}k.png`, import.meta.url).href;
+};
+
+// For mobile badge flip
+const flippedBadge = ref<number|null>(null);
+const isMobile = ref(false);
+
+onMounted(() => {
+  // Simple mobile detection
+  isMobile.value = window.innerWidth <= 768;
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth <= 768;
+  });
+});
+
+const handleBadgeClick = (milestone: number) => {
+  if (!isMobile.value) return;
+  flippedBadge.value = flippedBadge.value === milestone ? null : milestone;
+};
+
+const hasReachedFirstMilestone = computed(() => {
+  return (playerStats.value?.killMilestones?.length ?? 0) > 0;
+});
+const nextMilestone = computed(() => {
+  if (hasReachedFirstMilestone.value) return null;
+  return MILESTONES[nextMilestoneIndex.value];
+});
+const achievedMilestones = computed(() => {
+  return playerStats.value?.killMilestones || [];
+});
+
 </script>
 
 <template>
@@ -551,7 +615,28 @@ const sortedServers = computed(() => {
             <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
           </div>
           <div v-if="playerStats" class="player-header-stats">
-            <div class="header-stat">
+            <div class="header-stat milestone-progress-container" v-if="!hasReachedFirstMilestone">
+              <div class="milestone-progress-wrapper" :title="`Progress to ${nextMilestone} Kills!`">
+                <svg class="milestone-progress-ring" width="60" height="60">
+                  <circle class="milestone-progress-bg" cx="30" cy="30" r="26" fill="none" stroke="#eee" stroke-width="6" />
+                  <circle
+                    class="milestone-progress-bar"
+                    cx="30" cy="30" r="26" fill="none"
+                    :stroke="milestoneProgress(nextMilestone) > 0.95 ? '#FFD700' : '#9c27b0'"
+                    stroke-width="6"
+                    :stroke-dasharray="2 * Math.PI * 26"
+                    :stroke-dashoffset="(1 - milestoneProgress(nextMilestone)) * 2 * Math.PI * 26"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <span class="header-stat-value header-stat-kills milestone-progress-text">{{ playerStats.totalKills }}</span>
+              </div>
+              <span class="header-stat-label milestone-progress-label">
+                <span v-if="milestoneProgress(nextMilestone) < 1">{{ Math.floor(milestoneProgress(nextMilestone) * 100) }}% to {{ nextMilestone }} Kills!</span>
+                <span v-else>Milestone Achieved!</span>
+              </span>
+            </div>
+            <div class="header-stat" v-else>
               <span class="header-stat-value header-stat-kills">{{ playerStats.totalKills }}</span>
               <span class="header-stat-label">Kills</span>
             </div>
@@ -576,6 +661,59 @@ const sortedServers = computed(() => {
         <p class="error-message">{{ error }}</p>
       </div>
       <div v-else-if="playerStats" class="stats-container">
+        <!-- Milestone badges row: full width, above Top Servers -->
+        <div class="milestone-badges-row">
+          <div
+            v-for="(milestone, idx) in MILESTONES"
+            :key="milestone"
+            class="milestone-badge-image-wrapper"
+            :class="{
+              achieved: achievedMilestoneNumbers.includes(milestone),
+              next: nextMilestoneIndex === idx,
+              future: nextMilestoneIndex < idx,
+              flipped: isMobile && flippedBadge === milestone
+            }"
+            :title="!isMobile && achievedMilestoneNumbers.includes(milestone) && achievedMilestoneDetails[milestone] ?
+              `Achieved: ${formatRelativeTime(achievedMilestoneDetails[milestone].achievedDate)} | ${achievedMilestoneDetails[milestone].totalKillsAtMilestone} kills | ${achievedMilestoneDetails[milestone].daysToAchieve} days`
+              :
+              achievedMilestoneNumbers.includes(milestone)
+                ? `Achieved ${milestone.toLocaleString()} Kills!`
+                : nextMilestoneIndex === idx
+                  ? `Next milestone: ${milestone.toLocaleString()} Kills (${Math.floor(milestoneProgress(milestone)*100)}%)`
+                  : `Locked: ${milestone.toLocaleString()} Kills`
+            "
+            @click="handleBadgeClick(milestone)"
+          >
+            <div class="milestone-badge-flip">
+              <div class="milestone-badge-front">
+                <div class="milestone-badge-image-container">
+                  <img
+                    :src="getMilestoneImage(milestone)"
+                    :alt="`${milestone.toLocaleString()} Kills Badge`"
+                    class="milestone-badge-image"
+                  />
+                  <div
+                    v-if="nextMilestoneIndex === idx && milestoneProgress(milestone) < 1"
+                    class="milestone-badge-progress-overlay"
+                    :style="{ height: `${100 - milestoneProgress(milestone) * 100}%` }"
+                  ></div>
+                  <div v-if="nextMilestoneIndex === idx && milestoneProgress(milestone) < 1" class="milestone-badge-progress-label">
+                    {{ Math.floor(milestoneProgress(milestone) * 100) }}%
+                  </div>
+                </div>
+                <div class="milestone-badge-caption">{{ milestone.toLocaleString() }} Kills</div>
+              </div>
+              <div class="milestone-badge-back" v-if="isMobile && achievedMilestoneNumbers.includes(milestone) && achievedMilestoneDetails[milestone]">
+                <div class="milestone-badge-back-content">
+                  <div class="milestone-badge-back-label">Achieved</div>
+                  <div class="milestone-badge-back-date">{{ formatRelativeTime(achievedMilestoneDetails[milestone].achievedDate) }}</div>
+                  <div class="milestone-badge-back-kills">{{ achievedMilestoneDetails[milestone].totalKillsAtMilestone }} kills</div>
+                  <div class="milestone-badge-back-days">in {{ achievedMilestoneDetails[milestone].daysToAchieve }} days</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div v-if="playerStats.isActive && playerStats.currentServer" class="current-server-banner">
           <div class="server-info-line">
             <router-link
@@ -4552,534 +4690,218 @@ tbody tr:hover {
   }
 }
 
-.player-header-stats {
-  display: flex;
-  gap: 24px;
-  margin-top: 12px;
-}
-
-.header-stat {
+.milestone-progress-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-}
-
-.header-stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--color-heading);
-}
-
-.header-stat-kills {
-  color: #4CAF50;
-}
-
-.header-stat-deaths {
-  color: #F44336;
-}
-
-.header-stat-label {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.player-name-row {
-  display: flex;
   align-items: center;
-  gap: 12px;
+  margin-right: 16px;
 }
-
-.compare-player-btn:hover {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.compare-player-btn svg {
-  flex-shrink: 0;
-}
-
-.player-playtime {
-  font-size: 1rem;
-  color: var(--color-text-muted);
-  margin-top: -4px;
-  margin-bottom: 2px;
-  font-weight: 400;
-}
-
-/* Add styles for .player-header-meta and .player-last-seen */
-.player-header-meta {
-  display: flex;
-  gap: 18px;
-  align-items: center; /* Ensure vertical alignment */
-  margin-top: -4px;
-  margin-bottom: 2px;
-}
-
-.player-playtime,
-.player-last-seen {
-  font-size: 1rem;
-  color: var(--color-text-muted);
-  font-weight: 400;
-  line-height: 1.2;
-  margin: 0; /* Remove any margin that could cause misalignment */
-  vertical-align: middle;
-  display: flex;
-  align-items: center;
-}
-
-/* Enhanced best session styling - make it pop more */
-.best-session-card {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, var(--color-background) 50%, rgba(255, 215, 0, 0.08) 100%);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 12px 48px rgba(255, 215, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
-  margin-top: 8px;
-  display: block;
-  border: 2px solid rgba(255, 215, 0, 0.3);
+.milestone-progress-wrapper {
   position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-
-.best-session-card::before {
-  content: '';
+.milestone-progress-ring {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, transparent 50%, rgba(255, 215, 0, 0.05) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.best-session-card:hover::before {
-  opacity: 1;
-}
-
-.best-session-card:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 20px 60px rgba(255, 215, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.15);
-  border-color: rgba(255, 215, 0, 0.5);
-}
-
-.best-session-flex {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 24px;
-  position: relative;
   z-index: 1;
 }
-
-.best-session-icon-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 56px;
-  height: 100%;
-  gap: 8px;
+.milestone-progress-bg {
+  stroke: #eee;
 }
-
-.trophy-icon {
-  font-size: 2.5rem;
-  filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.4));
-  animation: pulse-glow 2s ease-in-out infinite alternate;
+.milestone-progress-bar {
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-@keyframes pulse-glow {
-  0% {
-    filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.4));
-  }
-  100% {
-    filter: drop-shadow(0 6px 12px rgba(255, 215, 0, 0.6));
-  }
-}
-
-.best-badge {
-  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  color: #333;
-  font-size: 0.9rem;
-  font-weight: 800;
-  border-radius: 12px;
-  padding: 6px 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.best-session-details-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.session-line-1 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  font-weight: 600;
-}
-
-.session-line-2 {
-  font-size: 1.1rem;
-  color: var(--color-text);
-  font-weight: 500;
-}
-
-.map-name {
-  font-weight: 600;
-  color: var(--color-heading);
-}
-
-.session-line-3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
-
-.session-score {
+.milestone-progress-text {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--color-primary);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: bold;
+  color: #9c27b0;
+  z-index: 2;
 }
-
-
-
-/* Mobile-responsive enhancements for combat stats */
-@media (max-width: 768px) {
-  .best-session-card {
-    padding: 16px;
-    border-radius: 12px;
-    margin-top: 12px;
-  }
-
-  .best-session-flex {
-    gap: 16px;
-  }
-
-  .best-session-icon-col {
-    min-width: 48px;
-    gap: 6px;
-  }
-
-  .trophy-icon {
-    font-size: 2rem;
-  }
-
-  .best-badge {
-    font-size: 0.8rem;
-    padding: 4px 8px;
-    border-radius: 8px;
-  }
-
-  .session-score {
-    font-size: 1.2rem;
-  }
-
-  .session-line-2 {
-    font-size: 1rem;
-  }
-
-  .player-header-stats {
-    gap: 20px;
-    margin-top: 10px;
-  }
-
-  .header-stat-value {
-    font-size: 1.3rem;
-  }
-
-  .header-stat-label {
-    font-size: 0.75rem;
-  }
-
-  /* Improve hover effects for mobile/touch devices */
-  .best-session-card:hover {
-    transform: translateY(-3px) scale(1.01);
-  }
-}
-
-/* Extra small screens */
-@media (max-width: 480px) {
-  .best-session-card {
-    padding: 12px;
-  }
-
-  .best-session-flex {
-    gap: 12px;
-  }
-
-  .trophy-icon {
-    font-size: 1.8rem;
-  }
-
-  .best-badge {
-    font-size: 0.75rem;
-    padding: 3px 6px;
-  }
-
-  .player-header-stats {
-    gap: 16px;
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  .header-stat-value {
-    font-size: 1.2rem;
-  }
-}
-
-.collapsible-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  padding: 10px 0;
-}
-
-.toggle-icon {
-  font-size: 1.2rem;
-  transition: transform 0.2s;
-}
-
-.similar-players-list {
-  margin-top: 10px;
-}
-
-.similar-player-card {
-  background-color: var(--color-background);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.similar-player-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.similar-player-name {
-  color: var(--color-primary);
+.milestone-progress-label {
+  margin-top: 4px;
+  font-size: 0.95rem;
+  color: #9c27b0;
   font-weight: 500;
 }
-
-.similarity-score {
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-}
-
-.similarity-reasons {
-  list-style: none;
-  padding-left: 20px;
-}
-
-.no-data-container {
-  text-align: center;
-  padding: 20px;
-  color: var(--color-text-muted);
-}
-
-.expand-hint {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-  margin-left: 10px;
-}
-
-.similar-players-table-wrapper {
-  overflow-x: auto;
-  margin-top: 10px;
-}
-
-.similar-players-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 400px;
-}
-
-.similar-players-table th, .similar-players-table td {
-  padding: 10px;
-  border-bottom: 1px solid var(--color-border);
-  text-align: left;
-}
-
-.similar-players-table th {
-  background-color: var(--color-background-mute);
-  font-weight: bold;
-  color: var(--color-heading);
-}
-
-.similar-players-table tbody tr:hover {
-  background-color: var(--color-background);
-}
-
-.reasons-col {
-  width: 60%;
-}
-
-.similarity-score {
-  font-weight: 600;
-}
-
-/* Server Cards Gamified Styles */
-.server-cards-section {
-  margin-top: 24px;
-}
-.server-cards-grid {
+.milestone-badges-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: 10px;
 }
-.server-card-gamified {
-  background: linear-gradient(135deg, rgba(156,39,176,0.08) 0%, var(--color-background) 100%);
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(156,39,176,0.08), 0 1.5px 6px rgba(0,0,0,0.07);
-  border: 2px solid var(--color-primary);
-  padding: 14px 16px;
-  min-width: 320px;
-  max-width: 380px;
-  flex: 1 1 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  position: relative;
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-.server-card-gamified:hover {
-  box-shadow: 0 8px 32px rgba(156,39,176,0.18), 0 3px 12px rgba(0,0,0,0.12);
-  transform: translateY(-4px) scale(1.01);
-  border-color: var(--color-accent);
-}
-.server-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-.server-card-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--color-heading);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.server-game-id {
-  background: var(--color-background-mute);
-  color: var(--color-primary);
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 8px;
-  padding: 3px 10px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-.server-card-stats-compact {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px 12px;
-  align-items: center;
-  margin-top: 2px;
-  margin-bottom: 0;
-}
-.server-stat-block {
+.milestone-badge {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
-  min-width: 0;
-}
-.server-stat-label {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-  margin-bottom: 1px;
-}
-.server-stat-value {
-  font-size: 1.05rem;
+  background: linear-gradient(90deg, #fffbe6 0%, #ffe0f7 100%);
+  border: 2px solid #ffd700;
+  border-radius: 10px;
+  padding: 8px 14px;
+  box-shadow: 0 2px 8px rgba(156, 39, 176, 0.08);
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--color-text);
-  line-height: 1.2;
+  color: #7c4dff;
+  min-width: 160px;
+  position: relative;
+  transition: box-shadow 0.2s;
 }
-.highlight-badge {
-  background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
-  color: #333;
-  font-weight: 700;
-  border-radius: 8px;
-  padding: 2px 8px;
-  font-size: 1.05rem;
-  box-shadow: 0 2px 8px rgba(255,215,0,0.12);
+.milestone-badge-icon {
+  font-size: 1.5rem;
+  margin-bottom: 2px;
 }
-@media (max-width: 768px) {
-  .server-cards-grid {
-    gap: 12px;
-  }
-  .server-card-gamified {
-    min-width: 0;
-    max-width: 100%;
-    padding: 10px 6px;
-  }
-  .server-card-title {
-    font-size: 1rem;
-  }
-  .server-game-id {
-    font-size: 0.8rem;
-    padding: 2px 7px;
-  }
-  .server-stat-badge {
-    font-size: 0.9rem;
-    padding: 5px 8px;
-  }
-  .highlight-badge {
-    font-size: 0.9rem;
-    padding: 2px 7px;
-  }
+.milestone-badge-label {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #ff9800;
 }
-.kills-count {
-  color: #4CAF50;
-  font-weight: 500;
+.milestone-badge-date {
+  font-size: 0.95rem;
+  color: #757575;
 }
-.deaths-count {
-  color: #F44336;
-  font-weight: 500;
+.milestone-badge-details {
+  font-size: 0.9rem;
+  color: #ab47bc;
 }
-.playtime-block {
-  grid-column: 1 / -1;
-  margin-top: 2px;
+
+.milestone-badges-row {
+  display: flex;
+  gap: 18px;
+  margin: 18px 0 10px 0;
+  justify-content: center;
+  align-items: flex-end;
 }
-.server-card-stats-compact {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px 12px;
+.milestone-badge-image-wrapper {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  margin-top: 2px;
-  margin-bottom: 0;
+  position: relative;
+  opacity: 0.45;
+  filter: grayscale(1) brightness(0.8);
+  transition: opacity 0.2s, filter 0.2s;
+  cursor: pointer;
+  perspective: 600px;
+}
+.milestone-badge-image-wrapper.achieved {
+  opacity: 1;
+  filter: none;
+}
+.milestone-badge-image-wrapper.next {
+  opacity: 0.85;
+  filter: grayscale(0.3) brightness(1);
+}
+.milestone-badge-image-wrapper.future {
+  opacity: 0.45;
+  filter: grayscale(1) brightness(0.8);
+}
+.milestone-badge-flip {
+  width: 64px;
+  height: 90px;
+  position: relative;
+  transition: transform 0.5s;
+  transform-style: preserve-3d;
+}
+.milestone-badge-image-wrapper.flipped .milestone-badge-flip {
+  transform: rotateX(180deg);
+}
+.milestone-badge-front, .milestone-badge-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.milestone-badge-back {
+  background: #fffbe6;
+  color: #7c4dff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(156, 39, 176, 0.08);
+  transform: rotateX(180deg);
+  padding: 10px 0;
+  font-size: 0.95rem;
+}
+.milestone-badge-back-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.milestone-badge-back-label {
+  font-weight: bold;
+  color: #ff9800;
+}
+.milestone-badge-back-date,
+.milestone-badge-back-kills,
+.milestone-badge-back-days {
+  font-size: 0.95rem;
+  color: #7c4dff;
+}
+.milestone-badge-image-container {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.milestone-badge-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(156, 39, 176, 0.08);
+  background: #fff;
+}
+.milestone-badge-progress-overlay {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background: rgba(156,39,176,0.45);
+  border-radius: 0 0 50% 50%;
+  pointer-events: none;
+  z-index: 2;
+  transition: height 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.milestone-badge-progress-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1rem;
+  text-shadow: 0 1px 4px #000;
+  z-index: 3;
+}
+.milestone-badge-caption {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  color: #7c4dff;
+  font-weight: 600;
+  text-align: center;
 }
 @media (max-width: 768px) {
-  .server-card-stats-compact {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px 8px;
+  .milestone-badges-row {
+    gap: 10px;
   }
-  .playtime-block {
-    grid-column: 1 / -1;
+  .milestone-badge-flip {
+    width: 54px;
+    height: 76px;
+  }
+  .milestone-badge-image-container, .milestone-badge-image {
+    width: 54px;
+    height: 54px;
   }
 }
 </style>

@@ -116,6 +116,13 @@ export interface PlayerInsights {
   startPeriod: string; // ISO date string
 }
 
+export interface KillMilestone {
+  milestone: number;
+  achievedDate: string; // ISO date string
+  totalKillsAtMilestone: number;
+  daysToAchieve: number;
+}
+
 // Add BestScore interface
 export interface BestScore {
   serverGuid: string;
@@ -143,6 +150,7 @@ export interface PlayerTimeStatistics {
   servers: PlayerServerStats[];
   recentSessions: Session[];
   insights?: PlayerInsights;
+  killMilestones: KillMilestone[];
 }
 
 // New interface for server stats in PlayerTimeStatistics
