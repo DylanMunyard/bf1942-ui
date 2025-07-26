@@ -606,7 +606,14 @@ const sortedServers = computed(() => {
                   <div class="server-card-header">
                     <span class="server-card-title">
                       <img :src="getGameIcon(server.gameId)" alt="Server" style="width: 24px; height: 24px; margin-right: 8px; border-radius: 6px; vertical-align: middle;" />
-                      {{ server.serverName }}
+                      <router-link
+                        :to="`/servers/${encodeURIComponent(server.serverName)}`"
+                        class="server-link"
+                        :title="`View server details for ${server.serverName}`"
+                        style="font-weight: 700; color: inherit; text-decoration: underline;"
+                      >
+                        {{ server.serverName }}
+                      </router-link>
                     </span>
                     <span class="server-game-id">{{ server.gameId.toUpperCase() }}</span>
                   </div>
