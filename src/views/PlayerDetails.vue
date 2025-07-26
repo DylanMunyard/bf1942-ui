@@ -545,7 +545,8 @@ const nextMilestoneIndex = computed(() => {
   return MILESTONES.length; // all achieved
 });
 
-const milestoneProgress = (milestone: number) => {
+const milestoneProgress = (milestone: number | null): number => {
+  if (!milestone) return 1;
   const totalKills = playerStats.value?.totalKills || 0;
   if (totalKills >= milestone) return 1;
   // Use reverse() and find() instead of findLast() for compatibility
@@ -615,7 +616,7 @@ const achievedMilestones = computed(() => {
             <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
           </div>
           <div v-if="playerStats" class="player-header-stats">
-            <div class="header-stat milestone-progress-container" v-if="!hasReachedFirstMilestone">
+            <div class="header-stat milestone-progress-container" v-if="!hasReachedFirstMilestone && nextMilestone">
               <div class="milestone-progress-wrapper" :title="`Progress to ${nextMilestone} Kills!`">
                 <svg class="milestone-progress-ring" width="60" height="60">
                   <circle class="milestone-progress-bg" cx="30" cy="30" r="26" fill="none" stroke="#eee" stroke-width="6" />
@@ -632,7 +633,7 @@ const achievedMilestones = computed(() => {
                 <span class="header-stat-value header-stat-kills milestone-progress-text">{{ playerStats.totalKills }}</span>
               </div>
               <span class="header-stat-label milestone-progress-label">
-                <span v-if="milestoneProgress(nextMilestone) < 1">{{ Math.floor(milestoneProgress(nextMilestone) * 100) }}% to {{ nextMilestone }} Kills!</span>
+                <span v-if="nextMilestone && milestoneProgress(nextMilestone) < 1">{{ Math.floor(milestoneProgress(nextMilestone) * 100) }}% to {{ nextMilestone }} Kills!</span>
                 <span v-else>Milestone Achieved!</span>
               </span>
             </div>
@@ -692,16 +693,37 @@ const achievedMilestones = computed(() => {
                     :alt="`${milestone.toLocaleString()} Kills Badge`"
                     class="milestone-badge-image"
                   />
-                  <div
+                  <!-- Progress border for next milestone -->
+                  <svg
                     v-if="nextMilestoneIndex === idx && milestoneProgress(milestone) < 1"
-                    class="milestone-badge-progress-overlay"
-                    :style="{ height: `${100 - milestoneProgress(milestone) * 100}%` }"
-                  ></div>
-                  <div v-if="nextMilestoneIndex === idx && milestoneProgress(milestone) < 1" class="milestone-badge-progress-label">
-                    {{ Math.floor(milestoneProgress(milestone) * 100) }}%
-                  </div>
+                    class="milestone-progress-border"
+                    width="72"
+                    height="72"
+                  >
+                    <circle
+                      cx="36"
+                      cy="36"
+                      r="35"
+                      fill="none"
+                      stroke="#ddd"
+                      stroke-width="2"
+                      class="progress-bg"
+                    />
+                    <circle
+                      cx="36"
+                      cy="36"
+                      r="35"
+                      fill="none"
+                      :stroke="milestoneProgress(milestone) > 0.95 ? '#FFD700' : '#9c27b0'"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      :stroke-dasharray="2 * Math.PI * 35"
+                      :stroke-dashoffset="(1 - milestoneProgress(milestone)) * 2 * Math.PI * 35"
+                      class="progress-bar"
+                      transform="rotate(-90 36 36)"
+                    />
+                  </svg>
                 </div>
-                <div class="milestone-badge-caption">{{ milestone.toLocaleString() }} Kills</div>
               </div>
               <div class="milestone-badge-back" v-if="isMobile && achievedMilestoneNumbers.includes(milestone) && achievedMilestoneDetails[milestone]">
                 <div class="milestone-badge-back-content">
@@ -4795,8 +4817,8 @@ tbody tr:hover {
   filter: none;
 }
 .milestone-badge-image-wrapper.next {
-  opacity: 0.85;
-  filter: grayscale(0.3) brightness(1);
+  opacity: 0.45;
+  filter: grayscale(1) brightness(0.8);
 }
 .milestone-badge-image-wrapper.future {
   opacity: 0.45;
@@ -4804,7 +4826,7 @@ tbody tr:hover {
 }
 .milestone-badge-flip {
   width: 64px;
-  height: 90px;
+  height: 64px;
   position: relative;
   transition: transform 0.5s;
   transform-style: preserve-3d;
@@ -4862,34 +4884,18 @@ tbody tr:hover {
   box-shadow: 0 2px 8px rgba(156, 39, 176, 0.08);
   background: #fff;
 }
-.milestone-badge-progress-overlay {
+.milestone-progress-border {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  background: rgba(156,39,176,0.45);
-  border-radius: 0 0 50% 50%;
-  pointer-events: none;
+  top: -4px;
+  left: -4px;
   z-index: 2;
-  transition: height 0.4s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: none;
 }
-.milestone-badge-progress-label {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  color: #fff;
-  font-weight: bold;
-  font-size: 1.1rem;
-  text-shadow: 0 1px 4px #000;
-  z-index: 3;
+.progress-bg {
+  opacity: 0.3;
 }
-.milestone-badge-caption {
-  margin-top: 6px;
-  font-size: 0.95rem;
-  color: #7c4dff;
-  font-weight: 600;
-  text-align: center;
+.progress-bar {
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @media (max-width: 768px) {
   .milestone-badges-row {
@@ -4897,11 +4903,28 @@ tbody tr:hover {
   }
   .milestone-badge-flip {
     width: 54px;
-    height: 76px;
+    height: 54px;
   }
   .milestone-badge-image-container, .milestone-badge-image {
     width: 54px;
     height: 54px;
+  }
+  .milestone-progress-border {
+    width: 62px;
+    height: 62px;
+    top: -4px;
+    left: -4px;
+  }
+  .milestone-progress-border circle {
+    cx: 31;
+    cy: 31;
+    r: 30;
+  }
+  .milestone-progress-border .progress-bar {
+    stroke-dasharray: calc(2 * 3.14159 * 30);
+    stroke-dashoffset: calc((1 - var(--progress)) * 2 * 3.14159 * 30);
+    transform: rotate(-90deg);
+    transform-origin: 31px 31px;
   }
 }
 </style>
