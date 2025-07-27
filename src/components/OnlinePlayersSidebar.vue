@@ -107,11 +107,11 @@ const getKDRatio = (kills: number = 0, deaths: number = 0): string => {
 
 // ===== Added for grouping players by server =====
 /** Collapsed state per server key */
-const collapsedServers = ref<Record<string, boolean>>({});
+// const collapsedServers = ref<Record<string, boolean>>({});
 /** Toggle collapse for given server */
-const toggleServer = (key: string) => {
-  collapsedServers.value[key] = !collapsedServers.value[key];
-};
+// const toggleServer = (key: string) => {
+//   collapsedServers.value[key] = !collapsedServers.value[key];
+// };
 /** Group online players by their current server */
 const groupedServers = computed(() => {
   if (!playersResponse.value?.items) return [];
@@ -174,7 +174,7 @@ const fetchOnlinePlayersApiData = async (resetPage = false, append = false) => {
     } else {
       playersResponse.value = result;
       // Reset collapsed state whenever we fetch a fresh set (initial load or filters changed)
-      collapsedServers.value = {};
+      // collapsedServers.value = {}; // Removed as per edit hint
     }
   } catch (err) {
     console.error('Error fetching online players data:', err);
@@ -340,37 +340,31 @@ onUnmounted(() => {
             :key="server.serverKey"
             class="server-group"
           >
-            <div class="server-header" @click="toggleServer(server.serverKey)">
+            <div class="server-header-link" @click="goToServerDetails(server.serverName)">
               <div class="server-header-info">
-                <span class="server">{{ server.serverName }}</span>
+                <span class="server server-link">{{ server.serverName }}</span>
                 <span class="player-count">({{ server.players.length }})</span>
                 <span v-if="server.mapName" class="separator">•</span>
                 <span v-if="server.mapName" class="map">{{ server.mapName }}</span>
               </div>
-              <div class="server-player-count">
-                <span v-if="collapsedServers[server.serverKey]">▼</span>
-                <span v-else>▲</span>
-              </div>
             </div>
-            <transition name="collapse">
-              <div v-if="!collapsedServers[server.serverKey]" class="server-players">
-                <div
-                  v-for="player in server.players"
-                  :key="player.playerName"
-                  class="player-row"
-                  @click="goToPlayerDetails(player.playerName)"
-                  :title="player.currentServer ? 'Kills: ' + (player.currentServer.sessionKills || 0) + ', Deaths: ' + (player.currentServer.sessionDeaths || 0) + ', KDR: ' + getKDRatio(player.currentServer.sessionKills, player.currentServer.sessionDeaths) : ''"
-                >
-                  <div class="name-row">
-                    <span class="online-dot"></span>
-                    <span class="player-name">{{ player.playerName }}</span>
-                  </div>
-                  <div class="stats-row">
-                    <span class="kills">{{ player.currentServer?.sessionKills || 0 }}</span>/<span class="deaths">{{ player.currentServer?.sessionDeaths || 0 }}</span>
-                  </div>
+            <div class="server-players">
+              <div
+                v-for="player in server.players"
+                :key="player.playerName"
+                class="player-row"
+                @click="goToPlayerDetails(player.playerName)"
+                :title="player.currentServer ? 'Kills: ' + (player.currentServer.sessionKills || 0) + ', Deaths: ' + (player.currentServer.sessionDeaths || 0) + ', KDR: ' + getKDRatio(player.currentServer.sessionKills, player.currentServer.sessionDeaths) : ''"
+              >
+                <div class="name-row">
+                  <span class="online-dot"></span>
+                  <span class="player-name">{{ player.playerName }}</span>
+                </div>
+                <div class="stats-row">
+                  <span class="kills">{{ player.currentServer?.sessionKills || 0 }}</span>/<span class="deaths">{{ player.currentServer?.sessionDeaths || 0 }}</span>
                 </div>
               </div>
-            </transition>
+            </div>
           </div>
         </div>
         <div v-if="playersResponse && currentPage < playersResponse.totalPages" class="load-more-container">
@@ -947,7 +941,7 @@ onUnmounted(() => {
 }
 
 /* ===== Added styles for server grouping ===== */
-.server-header {
+.server-header-link {
   padding: 12px 16px;
   background-color: var(--color-background-soft);
   border-bottom: 1px solid var(--color-border);
@@ -956,24 +950,15 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   font-weight: 600;
+  transition: background 0.2s;
 }
-
-.server-header:hover {
+.server-header-link:hover {
   background-color: var(--color-background-mute);
 }
-
-.server-players {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.collapse-enter-active, .collapse-leave-active {
-  transition: max-height 0.3s ease;
-}
-.collapse-enter-from, .collapse-leave-to {
-  max-height: 0;
-}
-.collapse-enter-to, .collapse-leave-from {
-  max-height: 500px;
+.server-link {
+  color: var(--color-accent);
+  text-decoration: underline;
+  cursor: pointer;
 }
 /* ===== End added styles ===== */
 
