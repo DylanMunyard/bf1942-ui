@@ -12,9 +12,8 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 
 // Filter variables (server-side)
-const gameFilter = ref('all');
+// Single search filter (matches player or server names)
 const nameFilter = ref('');
-const serverFilter = ref('');
 const currentPage = ref(1);
 const pageSize = ref(100);
 
@@ -62,33 +61,7 @@ const getGameDisplayName = (gameId: string): string => {
   }
 };
 
-// Computed game types based on API response
-const gameTypes = computed(() => {
-  const games = [{ value: 'all', label: 'All Games', icon: '', count: playersResponse.value?.totalItems || 0 }];
-  
-  if (playersResponse.value?.items) {
-    // Compute game breakdown from the items since it's not provided by the API
-    const gameBreakdown: Record<string, number> = {};
-    playersResponse.value.items.forEach(player => {
-      if (player.currentServer?.gameId) {
-        const gameId = player.currentServer.gameId;
-        gameBreakdown[gameId] = (gameBreakdown[gameId] || 0) + 1;
-      }
-    });
-    
-    Object.entries(gameBreakdown).forEach(([gameId, count]) => {
-      const normalized = normalizeGameId(gameId);
-      games.push({
-        value: normalized,
-        label: getGameDisplayName(gameId),
-        icon: normalized,
-        count
-      });
-    });
-  }
-  
-  return games;
-});
+// (Removed gameTypes computed – game-specific filtering is deprecated)
 
 // Current filters object
 const currentFilters = computed((): OnlinePlayersFilters => {
@@ -97,18 +70,11 @@ const currentFilters = computed((): OnlinePlayersFilters => {
     pageSize: pageSize.value
   };
 
-  if (gameFilter.value !== 'all') {
-    filters.gameId = gameFilter.value;
-  }
-  
   if (nameFilter.value.trim()) {
-    filters.playerName = nameFilter.value.trim();
+    // New unified search parameter handled by backend
+    (filters as any).search = nameFilter.value.trim();
   }
-  
-  if (serverFilter.value.trim()) {
-    filters.serverName = serverFilter.value.trim();
-  }
-  
+
   return filters;
 });
 
@@ -139,6 +105,40 @@ const getKDRatio = (kills: number = 0, deaths: number = 0): string => {
   return (kills / deaths).toFixed(2);
 };
 
+// ===== Added for grouping players by server =====
+/** Collapsed state per server key */
+const collapsedServers = ref<Record<string, boolean>>({});
+/** Toggle collapse for given server */
+const toggleServer = (key: string) => {
+  collapsedServers.value[key] = !collapsedServers.value[key];
+};
+/** Group online players by their current server */
+const groupedServers = computed(() => {
+  if (!playersResponse.value?.items) return [];
+  const groups: Record<string, { serverKey: string; serverName: string; gameId: string; mapName?: string; players: OnlinePlayerItem[] }> = {};
+
+  playersResponse.value.items.forEach((player: OnlinePlayerItem) => {
+    const serverName = player.currentServer?.serverName || 'Unknown';
+    const gameId = player.currentServer?.gameId || '';
+    const mapName = player.currentServer?.mapName || '';
+    const key = `${serverName}|${gameId}`;
+
+    if (!groups[key]) {
+      groups[key] = {
+        serverKey: key,
+        serverName,
+        gameId,
+        mapName,
+        players: []
+      };
+    }
+    groups[key].players.push(player);
+  });
+
+  return Object.values(groups);
+});
+// ===== End added block =====
+
 // Fetch online players data with filters
 const fetchOnlinePlayersApiData = async (resetPage = false) => {
   if (resetPage) {
@@ -157,20 +157,15 @@ const fetchOnlinePlayersApiData = async (resetPage = false) => {
       pageSize: pageSize.value
     };
 
-    if (gameFilter.value !== 'all') {
-      filters.gameId = gameFilter.value;
-    }
-    
+    // Apply unified search term (player OR server name)
     if (nameFilter.value.trim()) {
-      filters.playerName = nameFilter.value.trim();
-    }
-    
-    if (serverFilter.value.trim()) {
-      filters.serverName = serverFilter.value.trim();
+      (filters as any).search = nameFilter.value.trim();
     }
 
     const result = await fetchOnlinePlayersList(filters);
     playersResponse.value = result;
+    // Reset collapsed state whenever new data is fetched
+    collapsedServers.value = {};
   } catch (err) {
     console.error('Error fetching online players data:', err);
     error.value = 'Failed to fetch online players data. Please try again.';
@@ -251,19 +246,13 @@ const toggleAutoRefresh = () => {
 
 // Clear filters
 const clearFilters = () => {
-  gameFilter.value = 'all';
   nameFilter.value = '';
-  serverFilter.value = '';
   currentPage.value = 1;
   fetchOnlinePlayersApiData();
 };
 
 // Watch for filter changes
-watch([gameFilter], () => {
-  fetchOnlinePlayersApiData(true); // Reset to page 1 when changing game filter
-});
-
-watch([nameFilter, serverFilter], () => {
+watch(nameFilter, () => {
   debouncedSearch();
 });
 
@@ -310,21 +299,9 @@ onUnmounted(() => {
           v-model="nameFilter"
           type="text"
           class="player-search-input"
-          placeholder="Search player..."
+          placeholder="Search player or server..."
         />
-        <!-- Game filter badges -->
-        <div class="game-badge-container">
-          <span
-            v-for="game in gameTypes"
-            :key="game.value"
-            :class="['game-badge', { active: gameFilter === game.value }]"
-            @click="gameFilter = game.value"
-          >
-            <span :class="['badge-icon', game.icon]" />
-            <span class="badge-label">{{ game.label }}</span>
-            <span class="badge-count">{{ game.count }}</span>
-          </span>
-        </div>
+        <!-- (Removed game filter badges) -->
       </div>
 
       <!-- States -->
@@ -337,24 +314,41 @@ onUnmounted(() => {
       <div v-else-if="playersResponse && playersResponse.items.length">
         <div class="players-list">
           <div
-            v-for="player in playersResponse.items"
-            :key="player.playerName"
-            class="player-row"
-            @click="goToPlayerDetails(player.playerName)"
-            :title="player.currentServer ? 'Kills: ' + (player.currentServer.sessionKills || 0) + ', Deaths: ' + (player.currentServer.sessionDeaths || 0) + ', KDR: ' + getKDRatio(player.currentServer.sessionKills, player.currentServer.sessionDeaths) : ''"
+            v-for="server in groupedServers"
+            :key="server.serverKey"
+            class="server-group"
           >
-            <div class="name-row">
-              <span class="online-dot"></span>
-              <span class="player-name">{{ player.playerName }}</span>
+            <div class="server-header" @click="toggleServer(server.serverKey)">
+              <div class="server-header-info">
+                <span class="server">{{ server.serverName }}</span>
+                <span class="player-count">({{ server.players.length }})</span>
+                <span v-if="server.mapName" class="separator">•</span>
+                <span v-if="server.mapName" class="map">{{ server.mapName }}</span>
+              </div>
+              <div class="server-player-count">
+                <span v-if="collapsedServers[server.serverKey]">▼</span>
+                <span v-else>▲</span>
+              </div>
             </div>
-            <div v-if="player.currentServer" class="details-row" @click.stop="goToServerDetails(player.currentServer.serverName)">
-              <span class="game">{{ getGameDisplayName(player.currentServer.gameId) }}</span>
-              <span class="separator">•</span>
-              <span class="server">{{ player.currentServer.serverName }}</span>
-            </div>
-            <div v-else class="details-row">
-              <span class="game">Unknown</span>
-            </div>
+            <transition name="collapse">
+              <div v-if="!collapsedServers[server.serverKey]" class="server-players">
+                <div
+                  v-for="player in server.players"
+                  :key="player.playerName"
+                  class="player-row"
+                  @click="goToPlayerDetails(player.playerName)"
+                  :title="player.currentServer ? 'Kills: ' + (player.currentServer.sessionKills || 0) + ', Deaths: ' + (player.currentServer.sessionDeaths || 0) + ', KDR: ' + getKDRatio(player.currentServer.sessionKills, player.currentServer.sessionDeaths) : ''"
+                >
+                  <div class="name-row">
+                    <span class="online-dot"></span>
+                    <span class="player-name">{{ player.playerName }}</span>
+                  </div>
+                  <div class="stats-row">
+                    <span class="kills">{{ player.currentServer?.sessionKills || 0 }}</span>/<span class="deaths">{{ player.currentServer?.sessionDeaths || 0 }}</span>
+                  </div>
+                </div>
+              </div>
+            </transition>
           </div>
         </div>
       </div>
@@ -896,11 +890,67 @@ onUnmounted(() => {
   padding: 12px 16px;
   border-bottom: 1px solid var(--color-border);
   cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .player-row:hover {
   background-color: var(--color-background-soft);
 }
+
+/* Stats row & K/D colour coding */
+.stats-row {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  gap: 2px;
+}
+
+.kills {
+  color: #4CAF50; /* green */
+}
+
+.deaths {
+  color: #e74c3c; /* red */
+}
+
+/* Map name in server header */
+.map {
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+/* ===== Added styles for server grouping ===== */
+.server-header {
+  padding: 12px 16px;
+  background-color: var(--color-background-soft);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.server-header:hover {
+  background-color: var(--color-background-mute);
+}
+
+.server-players {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.collapse-enter-active, .collapse-leave-active {
+  transition: max-height 0.3s ease;
+}
+.collapse-enter-from, .collapse-leave-to {
+  max-height: 0;
+}
+.collapse-enter-to, .collapse-leave-from {
+  max-height: 500px;
+}
+/* ===== End added styles ===== */
 
 .name-row {
   display: flex;

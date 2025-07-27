@@ -31,6 +31,8 @@ export interface OnlinePlayersResponse {
 
 // Filter interface for API requests
 export interface OnlinePlayersFilters {
+  /** Unified search across player and server names */
+  search?: string;
   gameId?: string; // Filter by specific game ('42', 'FH2', 'BFV', or custom mod IDs)
   serverName?: string; // Filter by server name (partial match)
   playerName?: string; // Filter by player name (partial match)
