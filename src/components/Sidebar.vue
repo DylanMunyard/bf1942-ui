@@ -15,13 +15,6 @@
           <div class="tooltip-text">Search for players and view player statistics</div>
         </div>
       </router-link>
-      <router-link to="/players/online" active-class="active" class="nav-item" data-tooltip="true">
-        <i class="icon-online-players"></i>
-        <div class="tooltip">
-          <div class="tooltip-icon icon-online-players"></div>
-          <div class="tooltip-text">See who is currently online and playing</div>
-        </div>
-      </router-link>
       <router-link to="/players/compare" active-class="active" class="nav-item" data-tooltip="true">
         <i class="icon-player-comparison"></i>
         <div class="tooltip">

@@ -5,12 +5,14 @@
     </main>
     <Sidebar />
     <PlayerComparisonWidget />
+    <OnlinePlayersPage />
   </div>
 </template>
 
 <script setup lang="ts">
 import Sidebar from '../components/Sidebar.vue';
 import PlayerComparisonWidget from '../components/PlayerComparisonWidget.vue';
+import OnlinePlayersPage from '../components/OnlinePlayersPage.vue';
 </script>
 
 <style scoped>

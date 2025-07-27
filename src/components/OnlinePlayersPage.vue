@@ -26,6 +26,11 @@ const debounceMs = 500;
 const autoRefreshInterval = ref<number | null>(null);
 const refreshIntervalSeconds = 30;
 const isAutoRefresh = ref(true);
+// Add slide-out panel state management
+const isPanelOpen = ref(false);
+const togglePanel = () => {
+  isPanelOpen.value = !isPanelOpen.value;
+};
 
 // Helper function to normalize game IDs for consistent filtering
 const normalizeGameId = (gameId: string): string => {
@@ -262,6 +267,15 @@ watch([nameFilter, serverFilter], () => {
   debouncedSearch();
 });
 
+// Add body scroll lock when the slide-out panel is open
+watch(isPanelOpen, (open) => {
+  if (open) {
+    document.body.classList.add('no-scroll');
+  } else {
+    document.body.classList.remove('no-scroll');
+  }
+});
+
 // Lifecycle
 onMounted(() => {
   fetchOnlinePlayersApiData();
@@ -275,213 +289,79 @@ onUnmounted(() => {
   if (searchDebounceTimeout.value) {
     clearTimeout(searchDebounceTimeout.value);
   }
+  // Ensure body scrolling is re-enabled when component is destroyed
+  document.body.classList.remove('no-scroll');
 });
 </script>
 
 <template>
   <div class="online-players-container">
-    <!-- Header -->
-    <div class="header">
-      <div class="header-content">
-        <h1>
-          <span class="online-indicator"></span>
-          Online Players
-          <span class="player-count" v-if="playersResponse">
-            ({{ playersResponse.totalItems }})
-          </span>
-        </h1>
-        <div class="header-controls">
-          <button 
-            @click="toggleAutoRefresh" 
-            class="auto-refresh-button"
-            :class="{ active: isAutoRefresh }"
-            :title="isAutoRefresh ? 'Auto-refresh enabled' : 'Auto-refresh disabled'"
+    <!-- Toggle handle fixed to the right edge -->
+    <button class="online-toggle-btn" @click="togglePanel">
+      <span v-if="!isPanelOpen">👥 {{ playersResponse ? playersResponse.totalItems : 0 }}</span>
+      <span v-else>×</span>
+    </button>
+
+    <!-- Slide-out panel -->
+    <div class="online-panel" :class="{ open: isPanelOpen }">
+      <div class="panel-header">
+        <h3>Online Players ({{ playersResponse ? playersResponse.totalItems : 0 }})</h3>
+        <input
+          v-model="nameFilter"
+          type="text"
+          class="player-search-input"
+          placeholder="Search player..."
+        />
+        <!-- Game filter badges -->
+        <div class="game-badge-container">
+          <span
+            v-for="game in gameTypes"
+            :key="game.value"
+            :class="['game-badge', { active: gameFilter === game.value }]"
+            @click="gameFilter = game.value"
           >
-            <span class="refresh-icon">🔄</span>
-            {{ isAutoRefresh ? 'Auto' : 'Manual' }}
-          </button>
-          <button @click="() => fetchOnlinePlayersApiData()" class="refresh-button" :disabled="loading">
-            <span v-if="!loading">⟳ Refresh</span>
-            <span v-else class="spinner">⟳</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Game Type Filter Tabs -->
-    <div class="game-filter-tabs" v-if="gameTypes.length > 1">
-      <button
-        v-for="gameType in gameTypes"
-        :key="gameType.value"
-        @click="gameFilter = gameType.value"
-        class="game-tab"
-        :class="{ active: gameFilter === gameType.value }"
-      >
-        <div v-if="gameType.icon && gameType.value !== 'all'" :class="getGameIcon(gameType.value)" class="tab-icon"></div>
-        <span class="tab-label">{{ gameType.label }}</span>
-        <span class="tab-count">{{ gameType.count }}</span>
-      </button>
-    </div>
-
-    <!-- Search and Filter Controls -->
-    <div class="filter-section">
-      <div class="search-controls">
-        <div class="search-group">
-          <input
-            v-model="nameFilter"
-            type="text"
-            placeholder="Search players..."
-            class="search-input"
-          />
-        </div>
-        <div class="search-group">
-          <input
-            v-model="serverFilter"
-            type="text"
-            placeholder="Search servers..."
-            class="search-input"
-          />
-        </div>
-        <button @click="clearFilters" class="clear-filters-button" v-if="nameFilter || serverFilter || gameFilter !== 'all'">
-          Clear Filters
-        </button>
-      </div>
-    </div>
-
-    <!-- Loading/Error States -->
-    <div v-if="loading && !playersResponse" class="loading-state">
-      <div class="loading-spinner"></div>
-      <p>Loading online players...</p>
-    </div>
-    
-    <div v-else-if="error" class="error-state">
-      <p>{{ error }}</p>
-      <button @click="() => fetchOnlinePlayersApiData()" class="retry-button">Try Again</button>
-    </div>
-
-    <!-- Players List -->
-    <div v-else-if="playersResponse && playersResponse.items.length > 0">
-      <!-- Top Pagination -->
-      <div class="pagination pagination-top" v-if="playersResponse.totalPages > 1">
-        <button 
-          @click="previousPage" 
-          :disabled="currentPage <= 1"
-          class="pagination-button"
-        >
-          ← Previous
-        </button>
-        
-        <div class="pagination-info">
-          <span class="page-info">
-            Page {{ currentPage }} of {{ playersResponse.totalPages }}
-          </span>
-          <span class="results-info">
-            ({{ Math.min((currentPage - 1) * pageSize + 1, playersResponse.totalItems) }}-{{ Math.min(currentPage * pageSize, playersResponse.totalItems) }} of {{ playersResponse.totalItems }})
+            <span :class="['badge-icon', game.icon]" />
+            <span class="badge-label">{{ game.label }}</span>
+            <span class="badge-count">{{ game.count }}</span>
           </span>
         </div>
-        
-        <button 
-          @click="nextPage" 
-          :disabled="currentPage >= playersResponse.totalPages"
-          class="pagination-button"
-        >
-          Next →
-        </button>
       </div>
 
-      <!-- Players Grid -->
-      <div class="players-grid">
-        <div
-          v-for="player in playersResponse.items"
-          :key="player.playerName"
-          class="player-card"
-          @click="goToPlayerDetails(player.playerName)"
-        >
-          <!-- Player Info -->
-          <div class="player-info">
-            <div class="player-avatar">
-              {{ player.playerName.charAt(0).toUpperCase() }}
+      <!-- States -->
+      <div v-if="loading && !playersResponse" class="loading-state">
+        <div class="loading-spinner"></div>
+      </div>
+      <div v-else-if="error" class="error-state">
+        <p>{{ error }}</p>
+      </div>
+      <div v-else-if="playersResponse && playersResponse.items.length">
+        <div class="players-list">
+          <div
+            v-for="player in playersResponse.items"
+            :key="player.playerName"
+            class="player-row"
+            @click="goToPlayerDetails(player.playerName)"
+            :title="player.currentServer ? 'Kills: ' + (player.currentServer.sessionKills || 0) + ', Deaths: ' + (player.currentServer.sessionDeaths || 0) + ', KDR: ' + getKDRatio(player.currentServer.sessionKills, player.currentServer.sessionDeaths) : ''"
+          >
+            <div class="name-row">
+              <span class="online-dot"></span>
+              <span class="player-name">{{ player.playerName }}</span>
             </div>
-            <div class="player-details">
-              <div class="player-name">{{ player.playerName }}</div>
-              <div class="player-status">
-                <span class="status-dot online"></span>
-                Playing for {{ formatSessionTime(player.sessionDurationMinutes || 0) }}
-              </div>
+            <div v-if="player.currentServer" class="details-row" @click.stop="goToServerDetails(player.currentServer.serverName)">
+              <span class="game">{{ getGameDisplayName(player.currentServer.gameId) }}</span>
+              <span class="separator">•</span>
+              <span class="server">{{ player.currentServer.serverName }}</span>
             </div>
-          </div>
-
-          <!-- Game/Server Info -->
-          <div v-if="player.currentServer" class="game-info" @click.stop="goToServerDetails(player.currentServer.serverName)">
-            <div class="game-header">
-              <div :class="getGameIcon(player.currentServer.gameId || '')" class="game-icon-small"></div>
-              <div class="server-name">{{ player.currentServer.serverName }}</div>
-            </div>
-            <div class="map-info" v-if="player.currentServer.mapName">
-              <span class="map-name">{{ player.currentServer.mapName }}</span>
-            </div>
-          </div>
-
-          <!-- Session Stats -->
-          <div v-if="player.currentServer" class="session-stats">
-            <div class="stat-item">
-              <span class="stat-label">K</span>
-              <span class="stat-value">{{ player.currentServer.sessionKills || 0 }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">D</span>
-              <span class="stat-value">{{ player.currentServer.sessionDeaths || 0 }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">KDR</span>
-              <span class="stat-value">{{ getKDRatio(player.currentServer.sessionKills, player.currentServer.sessionDeaths) }}</span>
+            <div v-else class="details-row">
+              <span class="game">Unknown</span>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Bottom Pagination -->
-      <div class="pagination pagination-bottom" v-if="playersResponse.totalPages > 1">
-        <button 
-          @click="previousPage" 
-          :disabled="currentPage <= 1"
-          class="pagination-button"
-        >
-          ← Previous
-        </button>
-        
-        <div class="pagination-info">
-          <span class="page-info">
-            Page {{ currentPage }} of {{ playersResponse.totalPages }}
-          </span>
-          <span class="results-info">
-            ({{ Math.min((currentPage - 1) * pageSize + 1, playersResponse.totalItems) }}-{{ Math.min(currentPage * pageSize, playersResponse.totalItems) }} of {{ playersResponse.totalItems }})
-          </span>
-        </div>
-        
-        <button 
-          @click="nextPage" 
-          :disabled="currentPage >= playersResponse.totalPages"
-          class="pagination-button"
-        >
-          Next →
-        </button>
+      <div v-else class="no-players-state">
+        <div class="no-players-icon">👥</div>
+        <p>No online players</p>
       </div>
-    </div>
-
-    <!-- No Players State -->
-    <div v-else class="no-players-state">
-      <div class="no-players-icon">👥</div>
-      <h3>No online players found</h3>
-      <p v-if="gameFilter !== 'all' || nameFilter || serverFilter">
-        Try adjusting your filters or check back later.
-      </p>
-      <p v-else>
-        No players are currently online. Check back later!
-      </p>
-      <button @click="clearFilters" v-if="gameFilter !== 'all' || nameFilter || serverFilter" class="clear-filters-button">
-        Clear All Filters
-      </button>
     </div>
   </div>
 </template>
@@ -966,6 +846,165 @@ onUnmounted(() => {
   background-image: url('../assets/servers.jpg');
 }
 
+/* Sliding Online Panel */
+.online-toggle-btn {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  background-color: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px 0 0 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.online-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  max-width: 90vw;
+  height: 100vh;
+  background-color: var(--color-background);
+  box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow-y: auto; /* Allow internal scrolling */
+}
+
+.online-panel.open {
+  transform: translateX(0);
+}
+
+.panel-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.players-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.player-row {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.player-row:hover {
+  background-color: var(--color-background-soft);
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4CAF50;
+  animation: pulse 2s infinite;
+}
+
+.details-row {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.separator {
+  color: var(--color-text-muted);
+}
+
+.player-search-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: var(--color-background-soft);
+  color: var(--color-text);
+  margin-top: 8px;
+}
+
+.player-search-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.1);
+}
+
+.game-badge-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.game-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.game-badge:hover {
+  background-color: var(--color-background-mute);
+  border-color: var(--color-accent);
+}
+
+.game-badge.active {
+  background-color: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+.badge-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.badge-count {
+  background-color: var(--color-background-mute);
+  color: var(--color-text);
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.game-badge.active .badge-count {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .online-players-container {
@@ -1033,5 +1072,11 @@ onUnmounted(() => {
   .session-stats {
     gap: 8px;
   }
+}
+</style>
+
+<style>
+body.no-scroll {
+  overflow: hidden;
 }
 </style>
