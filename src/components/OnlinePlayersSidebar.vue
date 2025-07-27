@@ -140,7 +140,7 @@ const groupedServers = computed(() => {
 // ===== End added block =====
 
 // Fetch online players data with filters
-const fetchOnlinePlayersApiData = async (resetPage = false) => {
+const fetchOnlinePlayersApiData = async (resetPage = false, append = false) => {
   if (resetPage) {
     currentPage.value = 1;
     // Clear existing results when applying new filters to avoid showing stale data
@@ -163,9 +163,19 @@ const fetchOnlinePlayersApiData = async (resetPage = false) => {
     }
 
     const result = await fetchOnlinePlayersList(filters);
-    playersResponse.value = result;
-    // Reset collapsed state whenever new data is fetched
-    collapsedServers.value = {};
+
+    if (append && playersResponse.value) {
+      // Append new items to existing list for infinite / manual pagination
+      playersResponse.value.items = [...playersResponse.value.items, ...result.items];
+      playersResponse.value.page = result.page;
+      playersResponse.value.pageSize = result.pageSize;
+      playersResponse.value.totalItems = result.totalItems;
+      playersResponse.value.totalPages = result.totalPages;
+    } else {
+      playersResponse.value = result;
+      // Reset collapsed state whenever we fetch a fresh set (initial load or filters changed)
+      collapsedServers.value = {};
+    }
   } catch (err) {
     console.error('Error fetching online players data:', err);
     error.value = 'Failed to fetch online players data. Please try again.';
@@ -249,6 +259,18 @@ const clearFilters = () => {
   nameFilter.value = '';
   currentPage.value = 1;
   fetchOnlinePlayersApiData();
+};
+
+// Manual "Load More" pagination – increments the current page and fetches the next batch
+const loadMore = () => {
+  if (
+    playersResponse.value &&
+    currentPage.value < playersResponse.value.totalPages &&
+    !loading.value
+  ) {
+    currentPage.value += 1;
+    fetchOnlinePlayersApiData(false, true);
+  }
 };
 
 // Watch for filter changes
@@ -350,6 +372,9 @@ onUnmounted(() => {
               </div>
             </transition>
           </div>
+        </div>
+        <div v-if="playersResponse && currentPage < playersResponse.totalPages" class="load-more-container">
+          <button class="load-more-button" @click="loadMore" :disabled="loading">Load More</button>
         </div>
       </div>
       <div v-else class="no-players-state">
@@ -1128,5 +1153,28 @@ onUnmounted(() => {
 <style>
 body.no-scroll {
   overflow: hidden;
+}
+</style>
+
+<style scoped>
+.load-more-container {
+  padding: 12px;
+  text-align: center;
+  border-top: 1px solid var(--color-border);
+}
+
+.load-more-button {
+  padding: 8px 16px;
+  background-color: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.load-more-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
