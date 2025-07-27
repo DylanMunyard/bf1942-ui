@@ -615,6 +615,17 @@ const milestoneProgressColors = computed(() => {
   };
 });
 
+// Add watcher for route changes to update playerName and refetch data
+watch(
+  () => route.params.playerName,
+  (newName, oldName) => {
+    if (newName !== oldName) {
+      playerName.value = newName as string;
+      fetchData();
+    }
+  }
+);
+
 </script>
 
 <template>
