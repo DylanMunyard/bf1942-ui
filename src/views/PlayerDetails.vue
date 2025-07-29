@@ -578,9 +578,7 @@ onMounted(() => {
 });
 
 const handleBadgeClick = (milestone: number) => {
-  if (!isMobile.value) return;
-  
-  // Use modal for mobile instead of flip animation
+  // Show modal for both mobile and desktop
   selectedMilestone.value = milestone;
   showMilestoneModal.value = true;
 };
@@ -4070,10 +4068,11 @@ tbody tr:hover {
 /* Server Cards Gamified Styles */
 .server-cards-section {
   margin-top: 24px;
+  grid-column: 1 / -1; /* Span all columns in the stats-grid */
 }
 .server-cards-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 18px;
   margin-top: 8px;
 }
@@ -4084,8 +4083,7 @@ tbody tr:hover {
   border: 2px solid var(--color-primary);
   padding: 14px 16px;
   min-width: 320px;
-  max-width: 380px;
-  flex: 1 1 320px;
+  max-width: none;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -4601,10 +4599,11 @@ tbody tr:hover {
 /* Server Cards Gamified Styles */
 .server-cards-section {
   margin-top: 24px;
+  grid-column: 1 / -1; /* Span all columns in the stats-grid */
 }
 .server-cards-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 18px;
   margin-top: 8px;
 }
@@ -4615,8 +4614,7 @@ tbody tr:hover {
   border: 2px solid var(--color-primary);
   padding: 14px 16px;
   min-width: 320px;
-  max-width: 380px;
-  flex: 1 1 320px;
+  max-width: none;
   display: flex;
   flex-direction: column;
   gap: 8px;

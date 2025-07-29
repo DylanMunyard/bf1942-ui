@@ -31,6 +31,23 @@ const togglePanel = () => {
   isPanelOpen.value = !isPanelOpen.value;
 };
 
+// Close panel function
+const closePanel = () => {
+  isPanelOpen.value = false;
+};
+
+// Click outside handler
+const handleClickOutside = (event: Event) => {
+  const target = event.target as Element;
+  const panel = document.querySelector('.online-panel');
+  const toggleBtn = document.querySelector('.online-toggle-btn');
+  
+  if (isPanelOpen.value && panel && toggleBtn && 
+      !panel.contains(target) && !toggleBtn.contains(target)) {
+    closePanel();
+  }
+};
+
 // Helper function to normalize game IDs for consistent filtering
 const normalizeGameId = (gameId: string): string => {
   if (!gameId) return '';
@@ -198,11 +215,13 @@ const debouncedSearch = () => {
 // Navigate to player details
 const goToPlayerDetails = (playerName: string) => {
   router.push(`/players/${encodeURIComponent(playerName)}`);
+  closePanel();
 };
 
 // Navigate to server details
 const goToServerDetails = (serverName: string) => {
   router.push(`/servers/${encodeURIComponent(serverName)}`);
+  closePanel();
 };
 
 // Pagination functions
@@ -282,8 +301,10 @@ watch(nameFilter, () => {
 watch(isPanelOpen, (open) => {
   if (open) {
     document.body.classList.add('no-scroll');
+    document.addEventListener('click', handleClickOutside);
   } else {
     document.body.classList.remove('no-scroll');
+    document.removeEventListener('click', handleClickOutside);
   }
 });
 
@@ -302,6 +323,8 @@ onUnmounted(() => {
   }
   // Ensure body scrolling is re-enabled when component is destroyed
   document.body.classList.remove('no-scroll');
+  // Clean up click outside listener
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -309,7 +332,10 @@ onUnmounted(() => {
   <div class="online-players-container">
     <!-- Toggle handle fixed to the right edge -->
     <button class="online-toggle-btn" @click="togglePanel">
-      <span v-if="!isPanelOpen">👥 {{ playersResponse ? playersResponse.totalItems : 0 }}</span>
+      <span v-if="!isPanelOpen" class="button-content">
+        <span class="green-pulse-light"></span>
+        {{ playersResponse ? playersResponse.totalItems : 0 }}
+      </span>
       <span v-else>×</span>
     </button>
 
@@ -872,6 +898,45 @@ onUnmounted(() => {
   padding: 10px 12px;
   cursor: pointer;
   z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.green-pulse-light {
+  width: 12px;
+  height: 12px;
+  background-color: #4CAF50;
+  border-radius: 50%;
+  animation: green-pulse 2s infinite;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+}
+
+@keyframes green-pulse {
+  0% { 
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scale(1.1);
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+  }
 }
 
 .online-panel {

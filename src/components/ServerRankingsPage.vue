@@ -158,7 +158,7 @@ const fetchRankings = async (page: number = 1) => {
 const changePage = (page: number) => {
   currentPage.value = page;
   updateQueryParams();
-  fetchRankings();
+  fetchRankings(page);
 };
 
 // Initialize state from URL query parameters

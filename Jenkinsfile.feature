@@ -5,10 +5,6 @@ pipeline {
     }
   }
   
-  parameters {
-    booleanParam(name: 'CLEANUP_EXISTING', defaultValue: true, description: 'Clean up existing feature deployment before deploying')
-  }
-  
   environment {
     IMAGE_TAG = "feature"
     FULL_IMAGE_NAME = "container-registry-service.container-registry:5000/bf42-servers:${IMAGE_TAG}"
@@ -20,28 +16,6 @@ pipeline {
         script {
           echo "Deploying branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH}"
           echo "Image will be tagged as: ${IMAGE_TAG}"
-        }
-      }
-    }
-    
-    stage('Cleanup Existing Feature Deployment') {
-      when {
-        expression { params.CLEANUP_EXISTING }
-      }
-      steps {
-        container('kubectl') {
-          withKubeConfig([namespace: "bf42-servers"]) {
-            script {
-              // Clean up any existing feature branch deployment
-              sh '''
-                # Delete existing feature deployments (ignore errors if they don't exist)
-                kubectl delete deployment,service,ingressroute -l deployment-type=feature-branch --ignore-not-found=true
-                
-                # Wait for cleanup to complete
-                kubectl wait --for=delete deployment -l deployment-type=feature-branch --timeout=60s || true
-              '''
-            }
-          }
         }
       }
     }
@@ -65,12 +39,7 @@ pipeline {
               sh """
                 # Apply the deployment
                 kubectl apply -f deploy/app/feature-branch-deployment.yaml
-                
-                # Wait for the deployment to be ready
-                kubectl wait --for=condition=available --timeout=300s deployment/bf42-servers-feature
-                
-                # Show deployment status
-                kubectl get deployment,service,ingressroute -l branch=feature
+                kubectl rollout restart deployment/bf42-servers-feature
               """
             }
           }
