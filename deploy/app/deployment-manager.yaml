@@ -17,6 +17,9 @@ rules:
 - apiGroups: [""]
   resources: ["pods", "services", "configmaps", "secrets"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["traefik.containo.us"]
+  resources: ["ingressroutes"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
 ---
 # RoleBinding to link the service account from 'jenkins-ci' to the role in 'bf42-servers'
