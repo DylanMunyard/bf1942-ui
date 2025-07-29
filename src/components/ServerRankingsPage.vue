@@ -95,12 +95,56 @@ const formatPlayTime = (minutes: number): string => {
   const remainingMinutes = minutes % 60;
 
   if (hours === 0) {
-    return `${remainingMinutes} minutes`;
+    return `${remainingMinutes}m`;
   } else if (hours === 1) {
-    return `${hours} hour ${remainingMinutes} minutes`;
+    return `${hours}h ${remainingMinutes}m`;
   } else {
-    return `${hours} hours ${remainingMinutes} minutes`;
+    return `${hours}h ${remainingMinutes}m`;
   }
+};
+
+// Get rank tier for visual styling
+const getRankTier = (rank: number): string => {
+  if (rank === 1) return 'champion';
+  if (rank <= 3) return 'elite';
+  if (rank <= 10) return 'veteran';
+  if (rank <= 25) return 'skilled';
+  return 'rookie';
+};
+
+// Get rank tier color
+const getRankTierColor = (rank: number): string => {
+  if (rank === 1) return '#FFD700'; // Gold
+  if (rank <= 3) return '#C0C0C0'; // Silver
+  if (rank <= 10) return '#CD7F32'; // Bronze
+  if (rank <= 25) return '#4A90E2'; // Blue
+  return '#6C757D'; // Gray
+};
+
+// Calculate efficiency score (kills per minute of play time)
+const calculateEfficiency = (kills: number, playTimeMinutes: number): number => {
+  if (playTimeMinutes === 0) return 0;
+  return Number((kills / playTimeMinutes).toFixed(3));
+};
+
+// Get performance rating based on K/D ratio
+const getPerformanceRating = (kdRatio: number): string => {
+  if (kdRatio >= 3.0) return 'Legendary';
+  if (kdRatio >= 2.0) return 'Elite';
+  if (kdRatio >= 1.5) return 'Veteran';
+  if (kdRatio >= 1.0) return 'Skilled';
+  if (kdRatio >= 0.5) return 'Rookie';
+  return 'Training';
+};
+
+// Get performance color
+const getPerformanceColor = (kdRatio: number): string => {
+  if (kdRatio >= 3.0) return '#FFD700';
+  if (kdRatio >= 2.0) return '#FF6B6B';
+  if (kdRatio >= 1.5) return '#4ECDC4';
+  if (kdRatio >= 1.0) return '#45B7D1';
+  if (kdRatio >= 0.5) return '#96CEB4';
+  return '#FECA57';
 };
 
 // Format date to a readable format
@@ -594,33 +638,53 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Player</th>
-              <th class="desktop-only sortable" @click="handleSort('TotalScore')" :class="{ 'sorted': orderBy === 'TotalScore' }">
-                Score {{ getSortIcon('TotalScore') }}
-              </th>
-              <th class="desktop-only sortable" @click="handleSort('TotalKills')" :class="{ 'sorted': orderBy === 'TotalKills' }">
-                Kills {{ getSortIcon('TotalKills') }}
-              </th>
-              <th class="desktop-only sortable" @click="handleSort('TotalDeaths')" :class="{ 'sorted': orderBy === 'TotalDeaths' }">
-                Deaths {{ getSortIcon('TotalDeaths') }}
-              </th>
-              <th class="desktop-only sortable" @click="handleSort('KDRatio')" :class="{ 'sorted': orderBy === 'KDRatio' }">
-                K/D {{ getSortIcon('KDRatio') }}
-              </th>
-              <th class="desktop-only sortable" @click="handleSort('TotalPlayTimeMinutes')" :class="{ 'sorted': orderBy === 'TotalPlayTimeMinutes' }">
-                Play Time {{ getSortIcon('TotalPlayTimeMinutes') }}
-              </th>
-              <th class="mobile-only">Stats</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="ranking in rankings" :key="ranking.playerName" class="ranking-row">
-              <td class="rank-cell">#{{ ranking.rank }}</td>
-              <td class="player-cell">
+        <!-- Sorting Controls -->
+        <div class="sorting-controls">
+          <div class="sort-label">Sort by:</div>
+          <div class="sort-buttons">
+            <button 
+              class="sort-button" 
+              :class="{ active: orderBy === 'TotalScore' }"
+              @click="handleSort('TotalScore')"
+            >
+              Score {{ getSortIcon('TotalScore') }}
+            </button>
+            <button 
+              class="sort-button" 
+              :class="{ active: orderBy === 'TotalKills' }"
+              @click="handleSort('TotalKills')"
+            >
+              Kills {{ getSortIcon('TotalKills') }}
+            </button>
+            <button 
+              class="sort-button" 
+              :class="{ active: orderBy === 'KDRatio' }"
+              @click="handleSort('KDRatio')"
+            >
+              K/D {{ getSortIcon('KDRatio') }}
+            </button>
+            <button 
+              class="sort-button" 
+              :class="{ active: orderBy === 'TotalPlayTimeMinutes' }"
+              @click="handleSort('TotalPlayTimeMinutes')"
+            >
+              Play Time {{ getSortIcon('TotalPlayTimeMinutes') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Rankings Cards -->
+        <div class="rankings-grid">
+          <div v-for="ranking in rankings" :key="ranking.playerName" class="ranking-card" :class="getRankTier(ranking.rank)">
+            <!-- Rank Badge -->
+            <div class="rank-badge" :style="{ backgroundColor: getRankTierColor(ranking.rank) }">
+              <div class="rank-number">#{{ ranking.rank }}</div>
+              <div class="rank-tier">{{ getRankTier(ranking.rank).toUpperCase() }}</div>
+            </div>
+
+            <!-- Player Info Section -->
+            <div class="player-info">
+              <div class="player-name-section">
                 <router-link :to="`/players/${encodeURIComponent(ranking.playerName)}`" class="player-link">
                   <PlayerName 
                     :name="ranking.playerName" 
@@ -630,28 +694,83 @@ onUnmounted(() => {
                     :showCompareIcon="true"
                   />
                 </router-link>
-              </td>
-              <td class="desktop-only score-cell">🏆 {{ ranking.totalScore }}</td>
-              <td class="desktop-only kills-cell">
-                <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> {{ ranking.totalKills }}
-              </td>
-              <td class="desktop-only deaths-cell">
-                <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /> {{ ranking.totalDeaths }}
-              </td>
-              <td class="desktop-only kd-cell">📊 {{ ranking.kdRatio.toFixed(2) }}</td>
-              <td class="desktop-only playtime-cell">⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</td>
-              <td class="mobile-only stats-cell">
-                <div class="mobile-stats">
-                  <span class="stat-item" title="Score">🏆 {{ ranking.totalScore }}</span>
-                  <span class="stat-item combat-badge" title="Kills • Deaths • K/D Ratio">
-                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> {{ ranking.totalKills }} • <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /> {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
-                  </span>
-                  <span class="stat-item" title="Play Time">⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
+                <div class="performance-rating" :style="{ color: getPerformanceColor(ranking.kdRatio) }">
+                  {{ getPerformanceRating(ranking.kdRatio) }}
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+
+            <!-- Main Stats Grid -->
+            <div class="stats-grid">
+              <!-- Score Section -->
+              <div class="stat-section primary">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-content">
+                  <div class="stat-value">{{ ranking.totalScore.toLocaleString() }}</div>
+                  <div class="stat-label">Total Score</div>
+                </div>
+              </div>
+
+              <!-- Combat Stats -->
+              <div class="stat-section combat">
+                <div class="combat-stats">
+                  <div class="combat-stat">
+                    <img src="@/assets/kills.png" alt="Kills" class="stat-icon-img" />
+                    <span class="combat-value">{{ ranking.totalKills.toLocaleString() }}</span>
+                  </div>
+                  <div class="combat-divider">•</div>
+                  <div class="combat-stat">
+                    <img src="@/assets/deaths.png" alt="Deaths" class="stat-icon-img" />
+                    <span class="combat-value">{{ ranking.totalDeaths.toLocaleString() }}</span>
+                  </div>
+                </div>
+                <div class="stat-label">Kills • Deaths</div>
+              </div>
+
+              <!-- K/D Ratio -->
+              <div class="stat-section kd-section">
+                <div class="kd-display">
+                  <div class="kd-value" :style="{ color: getPerformanceColor(ranking.kdRatio) }">
+                    {{ ranking.kdRatio.toFixed(2) }}
+                  </div>
+                  <div class="kd-progress-bar">
+                    <div 
+                      class="kd-progress" 
+                      :style="{ 
+                        width: Math.min(ranking.kdRatio * 25, 100) + '%',
+                        backgroundColor: getPerformanceColor(ranking.kdRatio)
+                      }"
+                    ></div>
+                  </div>
+                </div>
+                <div class="stat-label">K/D Ratio</div>
+              </div>
+
+              <!-- Play Time & Efficiency -->
+              <div class="stat-section time-section">
+                <div class="time-display">
+                  <div class="time-value">{{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</div>
+                  <div class="efficiency-value">
+                    {{ calculateEfficiency(ranking.totalKills, ranking.totalPlayTimeMinutes) }} k/m
+                  </div>
+                </div>
+                <div class="stat-label">Play Time • Efficiency</div>
+              </div>
+            </div>
+
+            <!-- Additional Info Bar -->
+            <div class="info-bar">
+              <div class="info-item">
+                <span class="info-icon">⚔️</span>
+                <span class="info-text">{{ (ranking.totalKills + ranking.totalDeaths).toLocaleString() }} battles</span>
+              </div>
+              <div class="info-item">
+                <span class="info-icon">📈</span>
+                <span class="info-text">{{ (ranking.totalScore / Math.max(ranking.totalPlayTimeMinutes, 1)).toFixed(1) }} pts/min</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Pagination -->
         <div v-if="totalPages > 1" class="pagination-container">
@@ -745,42 +864,329 @@ onUnmounted(() => {
 }
 
 .rankings-table-container {
-  overflow-x: auto;
+  overflow: visible;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
+/* Sorting Controls */
+.sorting-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background-mute) 100%);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
 }
 
-th, td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
+.sort-label {
+  font-weight: 600;
+  color: var(--color-heading);
+  font-size: 0.95rem;
 }
 
-th {
+.sort-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sort-button {
+  padding: 8px 16px;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.sort-button:hover {
   background-color: var(--color-background-mute);
-  font-weight: bold;
-  color: var(--color-heading);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
 }
 
-/* Row hover highlight removed */
+.sort-button.active {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #4A90E2 100%);
+  border-color: var(--color-accent);
+  color: white;
+  box-shadow: 0 2px 8px rgba(var(--color-accent-rgb, 74, 144, 226), 0.3);
+}
 
-.rank-cell {
+/* Rankings Grid */
+.rankings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ranking-card {
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background) 100%);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ranking-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4A90E2, #45B7D1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ranking-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: var(--color-accent);
+}
+
+.ranking-card:hover::before {
+  opacity: 1;
+}
+
+/* Rank Tiers */
+.ranking-card.champion::before {
+  background: linear-gradient(90deg, #FFD700, #FFA500);
+}
+
+.ranking-card.elite::before {
+  background: linear-gradient(90deg, #C0C0C0, #A8A8A8);
+}
+
+.ranking-card.veteran::before {
+  background: linear-gradient(90deg, #CD7F32, #D2691E);
+}
+
+.ranking-card.skilled::before {
+  background: linear-gradient(90deg, #4A90E2, #45B7D1);
+}
+
+.ranking-card.rookie::before {
+  background: linear-gradient(90deg, #6C757D, #5A6268);
+}
+
+/* Rank Badge */
+.rank-badge {
+  position: absolute;
+  top: -1px;
+  right: 20px;
+  background: #FFD700;
+  color: #1a1a1a;
+  padding: 8px 12px;
+  border-radius: 0 0 12px 12px;
   font-weight: bold;
-  color: var(--color-heading);
+  text-align: center;
+  min-width: 60px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.rank-number {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.rank-tier {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
+}
+
+/* Player Info */
+.player-info {
+  margin-bottom: 20px;
+  margin-right: 80px;
+}
+
+.player-name-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .player-link {
   color: var(--color-primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 1.2rem;
+  transition: color 0.2s ease;
 }
 
 .player-link:hover {
-  text-decoration: underline;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.performance-rating {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-section {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.stat-section:hover {
+  background: var(--color-background-mute);
+  transform: translateY(-1px);
+}
+
+.stat-section.primary {
+  background: linear-gradient(135deg, #4A90E2 0%, #45B7D1 100%);
+  color: white;
+  border: none;
+}
+
+.stat-icon {
+  font-size: 1.4rem;
+  margin-bottom: 6px;
+}
+
+.stat-icon-img {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Combat Stats */
+.combat-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.combat-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.combat-value {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.combat-divider {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+/* K/D Section */
+.kd-display {
+  margin-bottom: 6px;
+}
+
+.kd-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.kd-progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: var(--color-background-mute);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.kd-progress {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Time Section */
+.time-display {
+  margin-bottom: 6px;
+}
+
+.time-value {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.efficiency-value {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* Info Bar */
+.info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  margin-top: 4px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.info-icon {
+  font-size: 0.9rem;
+}
+
+.info-text {
+  font-weight: 500;
 }
 
 .loading-container, .error-container, .no-data-container {
@@ -884,40 +1290,12 @@ th {
   color: var(--color-text);
 }
 
-/* Desktop column styling */
-.desktop-only {
-  display: table-cell;
-}
-
-.mobile-only {
-  display: none;
-}
-
-.score-cell {
-  font-weight: bold;
-  color: var(--color-heading);
-}
-
-.combat-badge {
-  background-color: var(--color-background);
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-weight: 500;
-  border: 1px solid var(--color-border);
-}
-
-/* Hide mobile stats on desktop */
-.mobile-stats {
-  display: none;
-}
 
 /* Mobile styles */
 @media (max-width: 768px) {
   .server-rankings-container {
     padding: 0 20px;
   }
-
-
 
   /* Hide filters by default on mobile */
   .filter-container {
@@ -956,103 +1334,110 @@ th {
     justify-content: space-between;
   }
 
-  /* Hide desktop columns on mobile */
-  .desktop-only {
-    display: none !important;
+  /* Mobile sorting controls */
+  .sorting-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px;
   }
 
-  .mobile-only {
-    display: table-cell;
+  .sort-buttons {
+    justify-content: center;
   }
 
-  /* Mobile table layout: Use grid to create a compact layout per ranking */
-  table {
-    border-collapse: collapse;
-    border-spacing: 0;
+  .sort-button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    min-width: 70px;
   }
 
-  thead th {
-    display: none;
+  /* Mobile card adjustments */
+  .ranking-card {
+    padding: 16px;
+    border-radius: 12px;
   }
 
-  .ranking-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "player rank"
-      "stats stats";
-    gap: 4px 10px;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    margin-bottom: 0;
-    padding: 12px 0;
-    box-shadow: none;
-    border-bottom: 1px solid var(--color-border);
+  .rank-badge {
+    right: 16px;
+    padding: 6px 10px;
   }
 
-  /* Mobile row hover highlight removed */
-
-  .ranking-row td {
-    display: block;
-    width: 100%;
-    border: none;
-    padding: 0;
-    background: transparent;
+  .rank-number {
+    font-size: 1rem;
   }
 
-  /* Explicitly hide desktop column cells on mobile */
-  .ranking-row .desktop-only {
-    display: none !important;
+  .rank-tier {
+    font-size: 0.65rem;
   }
 
-  /* Grid cell placement and styling */
-  .rank-cell {
-    grid-area: rank;
-    align-self: center;
-    text-align: right;
-    font-weight: bold;
-    color: var(--color-heading);
-    font-size: 1.1rem;
-  }
-
-  .player-cell {
-    grid-area: player;
-    align-self: center;
-    text-align: left;
-    word-break: break-word;
-    min-width: 0;
+  .player-info {
+    margin-bottom: 16px;
+    margin-right: 70px;
   }
 
   .player-link {
     font-size: 1.1rem;
-    font-weight: 600;
   }
 
-  /* Hide desktop stats on mobile */
-  .desktop-stats {
-    display: none;
+  .performance-rating {
+    font-size: 0.8rem;
   }
 
-  /* Show mobile stats cell */
-  .stats-cell {
-    grid-area: stats;
-  }
-
-  .mobile-stats {
-    display: flex;
-    flex-wrap: wrap;
+  /* Mobile stats grid - stack in 2x2 */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
-    margin-top: 8px;
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
+    margin-bottom: 12px;
   }
 
-  .mobile-stats .stat-item {
-    background-color: var(--color-background);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
+  .stat-section {
+    padding: 12px 8px;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+  }
+
+  .kd-value {
+    font-size: 1.2rem;
+  }
+
+  .time-value {
+    font-size: 0.9rem;
+  }
+
+  .efficiency-value {
+    font-size: 0.75rem;
+  }
+
+  .combat-value {
+    font-size: 0.9rem;
+  }
+
+  .stat-icon {
+    font-size: 1.2rem;
+  }
+
+  .stat-icon-img {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Mobile info bar */
+  .info-bar {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .info-item {
+    justify-content: center;
   }
 
   .pagination-container {
@@ -1071,19 +1456,6 @@ th {
   }
 }
 
-.kills-icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 4px;
-}
-
-.deaths-icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 4px;
-}
 
 /* Filter section styles - matching PlayersPage.vue */
 .filter-section {
@@ -1237,19 +1609,46 @@ th {
   background-color: #5a6268;
 }
 
-/* Sortable column styles */
-.sortable {
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.2s ease;
-}
+/* Additional responsiveness for very small screens */
+@media (max-width: 480px) {
+  .server-rankings-container {
+    padding: 0 16px;
+  }
 
-.sortable:hover {
-  background-color: var(--color-background-mute);
-}
+  .ranking-card {
+    padding: 14px;
+  }
 
-.sortable.sorted {
-  background-color: var(--color-accent);
-  color: white;
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .stat-section {
+    padding: 10px;
+  }
+
+  .player-link {
+    font-size: 1rem;
+  }
+
+  .rank-badge {
+    right: 12px;
+    padding: 4px 8px;
+    min-width: 50px;
+  }
+
+  .player-info {
+    margin-right: 60px;
+  }
+
+  .sort-buttons {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sort-button {
+    width: 100%;
+  }
 }
 </style> 
