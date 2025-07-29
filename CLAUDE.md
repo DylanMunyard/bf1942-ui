@@ -4,11 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a BF1942 Servers Dashboard - a web application for monitoring Battlefield 1942, Forgotten Hope 2, and Battlefield Vietnam game servers with real-time player statistics and AI-powered analytics. The system consists of three main components:
+This is a BF1942 Servers Dashboard - a web application for monitoring Battlefield 1942, Forgotten Hope 2, and Battlefield Vietnam game servers with real-time player statistics and AI-powered analytics. The system consists of multiple components:
 
 1. **Frontend**: Vue.js 3 + TypeScript application with Chart.js visualizations
-2. **AI Backend**: C# .NET 9 service using Microsoft Semantic Kernel for player activity analytics
-3. **Infrastructure**: Kubernetes deployment with Prometheus for metrics collection
+2. **Backend API**: Express.js service that proxies requests to Prometheus (port 3000)
+3. **AI Backend**: C# .NET service using Microsoft Semantic Kernel for player activity analytics (port 5126) 
+4. **Player Stats Service**: Dedicated service for player statistics (port 9222)
+5. **Infrastructure**: Kubernetes deployment with Prometheus for metrics collection
 
 ## Development Commands
 
@@ -27,18 +29,10 @@ npm run build
 npm run preview
 ```
 
-### AI Backend Development
+### TypeScript Type Checking
 ```bash
-# Navigate to AI backend
-cd ai-backend/junie-des-semantic-kernel
-
-# Run the AI service
-dotnet run
-
-# Build the service
-dotnet build
-
-# The service runs on port 5126 by default
+# Type check the project
+npx vue-tsc --noEmit
 ```
 
 ## Architecture Overview
@@ -57,21 +51,14 @@ dotnet build
 
 ### Services Architecture
 The frontend communicates with multiple backend services through Vite's dev proxy:
-- `/api` → Backend API (port 3000)
-- `/ai` → AI Backend (port 5126) 
-- `/stats` → Player Stats service (port 9222)
+- `/api` → Backend API (port 3000) - Express.js service for Prometheus data
+- `/ai` → AI Backend (port 5126) - C# service for AI-powered analytics
+- `/stats` → Player Stats service (port 9222) - Dedicated player statistics service
 
-### AI Backend Architecture (C# .NET)
-- **Framework**: ASP.NET Core Web API with Microsoft Semantic Kernel
-- **AI Integration**: OpenAI GPT-4o-mini integration for natural language queries
-- **Analytics Functions**: Specialized Kernel Functions for player activity analysis:
-  - `get_busiest_hour_of_day` - Peak activity hours
-  - `get_busiest_hours_by_day_of_week` - Day-specific patterns
-  - `get_weekend_activity_profile` - Weekend vs weekday comparison
-  - `get_day_over_day_pattern` - Weekly activity trends
-  - `get_current_player_count` - Real-time player data
-- **Data Source**: Prometheus metrics via `IMetricsService` with caching
-- **Timezone Support**: Configurable timezone offset (default AEST UTC+10)
+### Backend Services
+- **Express Backend**: Proxies requests to Prometheus to keep it secure within Kubernetes cluster
+- **AI Backend**: C# .NET service with Microsoft Semantic Kernel for natural language queries about player activity
+- **Player Stats Service**: Handles player-specific data and statistics
 
 ### Key Components
 - **ServerTable.vue**: Main server listing with real-time data
@@ -90,19 +77,30 @@ The frontend communicates with multiple backend services through Vite's dev prox
 
 ### Data Flow
 ```
-Frontend (Vue.js) → AI Backend (C#) → Prometheus → Game Servers
-                  ↘ Backend API (Express) ↗
+Frontend (Vue.js) → Backend API (Express) → Prometheus → Game Servers
+                  → AI Backend (C#) ↗
+                  → Player Stats Service
 ```
 
-### TypeScript Structure
-- **Types**: Defined in `src/types/` (server types, country codes)
+### TypeScript Configuration
+- **Strict Mode**: Enabled with `noUnusedLocals` and `noUnusedParameters` for code quality
+- **Types**: Organized in `src/types/` directory
+- **Path Aliases**: `@/*` maps to `./src/*` for clean imports
 - **Services**: API clients in `src/services/` for different backend endpoints
-- **Strict TypeScript**: Enabled with unused locals/parameters checking
+
+### Coding Standards
+- **JSON Properties**: Use camelCase for JSON properties (e.g., `isActive` not `IsActive`) as per `.cursor/rules/json-property-naming.mdc`
+- **Components**: Vue 3 Composition API with TypeScript
+- **Styling**: CSS custom properties for theming support
 
 ### Development Proxy Setup
 Vite development server proxies requests to avoid CORS issues:
-- AI queries go to the C# Semantic Kernel service
-- API requests go to the Express backend
-- Stats requests go to the dedicated stats service
+- `/api/*` → Express backend (localhost:3000)
+- `/ai/*` → AI backend (localhost:5126) 
+- `/stats/*` → Player stats service (localhost:9222)
 
 This architecture ensures secure access to Prometheus within the Kubernetes cluster while providing rich AI-powered analytics and real-time monitoring capabilities.
+
+## Code Quality Guidelines
+
+- Always ensure changes to the UI components render cleanly on mobile and desktop

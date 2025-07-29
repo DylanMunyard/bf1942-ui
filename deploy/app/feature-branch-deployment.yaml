@@ -1,0 +1,69 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bf42-servers-feature
+  namespace: bf42-servers
+  labels:
+    app: bf42-servers-feature
+    branch: feature
+    deployment-type: feature-branch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bf42-servers-feature
+  template:
+    metadata:
+      labels:
+        app: bf42-servers-feature
+        branch: feature
+        deployment-type: feature-branch
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      containers:
+        - name: stats
+          image: localhost:30500/bf42-servers:feature
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: BRANCH_NAME
+              value: feature
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bf42-servers-feature-service
+  namespace: bf42-servers
+  labels:
+    app: bf42-servers-feature
+    branch: feature
+    deployment-type: feature-branch
+spec:
+  selector: 
+    app: bf42-servers-feature
+  type: ClusterIP  
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: bf42-servers-staging
+  namespace: bf42-servers
+  labels:
+    app: bf42-servers-feature
+    branch: feature
+    deployment-type: feature-branch
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`staging.1942.home.net`)
+    kind: Rule
+    services:
+    - name: bf42-servers-feature-service
+      port: 80
