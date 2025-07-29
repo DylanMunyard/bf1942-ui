@@ -898,12 +898,18 @@ onUnmounted(() => {
   padding: 10px 12px;
   cursor: pointer;
   z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .button-content {
   display: flex;
   align-items: center;
   gap: 8px;
+  pointer-events: none;
 }
 
 .green-pulse-light {
