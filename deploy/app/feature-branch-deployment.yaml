@@ -24,7 +24,7 @@ spec:
         kubernetes.io/arch: arm64
       containers:
         - name: stats
-          image: container-registry-service.container-registry:5000/bf42-servers:feature
+          image: localhost:30500/bf42-servers:feature
           imagePullPolicy: Always
           ports:
             - containerPort: 80
