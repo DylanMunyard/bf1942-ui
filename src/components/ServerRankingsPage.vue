@@ -594,6 +594,53 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- Top Pagination -->
+        <div v-if="totalPages > 1" class="pagination-container top-pagination">
+          <div class="pagination-controls">
+            <button 
+              @click="changePage(1)" 
+              class="pagination-button" 
+              :disabled="currentPage === 1"
+              title="First Page"
+            >
+              &laquo;
+            </button>
+            <button 
+              @click="changePage(currentPage - 1)" 
+              class="pagination-button" 
+              :disabled="currentPage === 1"
+              title="Previous Page"
+            >
+              &lsaquo;
+            </button>
+            <button 
+              v-for="page in paginationRange" 
+              :key="page" 
+              @click="changePage(page)" 
+              class="pagination-button" 
+              :class="{ active: page === currentPage }"
+            >
+              {{ page }}
+            </button>
+            <button 
+              @click="changePage(currentPage + 1)" 
+              class="pagination-button" 
+              :disabled="currentPage === totalPages"
+              title="Next Page"
+            >
+              &rsaquo;
+            </button>
+            <button 
+              @click="changePage(totalPages)" 
+              class="pagination-button" 
+              :disabled="currentPage === totalPages"
+              title="Last Page"
+            >
+              &raquo;
+            </button>
+          </div>
+        </div>
+
         <table>
           <thead>
             <tr>
@@ -815,6 +862,12 @@ th {
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
+}
+
+.top-pagination {
+  justify-content: center;
+  margin-top: 15px;
+  margin-bottom: 15px;
 }
 
 .pagination-info {
