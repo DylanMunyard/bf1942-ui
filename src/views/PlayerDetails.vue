@@ -4074,7 +4074,7 @@ tbody tr:hover {
 .server-cards-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
+  gap: 14px;
   margin-top: 8px;
 }
 .server-card-gamified {
@@ -4083,9 +4083,9 @@ tbody tr:hover {
   box-shadow: 0 4px 24px rgba(156,39,176,0.08), 0 1.5px 6px rgba(0,0,0,0.07);
   border: 2px solid var(--color-primary);
   padding: 14px 16px;
-  min-width: 320px;
-  max-width: 380px;
-  flex: 1 1 320px;
+  min-width: 240px;
+  max-width: 280px;
+  flex: 1 1 240px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -4605,7 +4605,7 @@ tbody tr:hover {
 .server-cards-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
+  gap: 14px;
   margin-top: 8px;
 }
 .server-card-gamified {
@@ -4614,9 +4614,9 @@ tbody tr:hover {
   box-shadow: 0 4px 24px rgba(156,39,176,0.08), 0 1.5px 6px rgba(0,0,0,0.07);
   border: 2px solid var(--color-primary);
   padding: 14px 16px;
-  min-width: 320px;
-  max-width: 380px;
-  flex: 1 1 320px;
+  min-width: 240px;
+  max-width: 280px;
+  flex: 1 1 240px;
   display: flex;
   flex-direction: column;
   gap: 8px;
