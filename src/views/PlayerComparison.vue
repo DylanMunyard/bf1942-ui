@@ -1031,9 +1031,7 @@ onMounted(() => {
 });
 
 const handleBadgeClick = (milestone: number, playerNumber: 1 | 2) => {
-  if (!isMobile.value) return;
-  
-  // Use modal for mobile instead of flip animation
+  // Show modal for both mobile and desktop
   selectedMilestone.value = milestone;
   selectedPlayer.value = playerNumber;
   showMilestoneModal.value = true;

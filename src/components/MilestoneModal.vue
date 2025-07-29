@@ -3,32 +3,32 @@
     <div class="milestone-modal" @click.stop>
       <div class="milestone-modal-header">
         <div class="milestone-modal-title">
-          <img :src="milestoneImage" :alt="`${milestone?.toLocaleString()} Kills Badge`" class="milestone-modal-badge" />
-          <h3>{{ milestone?.toLocaleString() }} Kills</h3>
+          <div class="milestone-modal-title-text">
+            <h3>{{ milestone?.toLocaleString() }} Kills</h3>
+            <div v-if="isAchieved && achievementData" class="milestone-achievement-subtitle">
+              {{ formatAchievementDate(achievementData?.achievedDate) }} • {{ achievementData?.daysToAchieve }} days to achieve
+            </div>
+            <div v-else-if="isNext" class="milestone-achievement-subtitle">
+              Next milestone • {{ Math.floor(progressPercentage) }}% complete
+            </div>
+            <div v-else class="milestone-achievement-subtitle">
+              Locked milestone
+            </div>
+          </div>
         </div>
         <button class="milestone-modal-close" @click="closeModal">×</button>
       </div>
       
       <div class="milestone-modal-content">
+        <!-- Badge prominently displayed at top -->
+        <div class="milestone-badge-display">
+          <img :src="milestoneImage" :alt="`${milestone?.toLocaleString()} Kills Badge`" class="milestone-modal-badge" />
+        </div>
+        
         <div v-if="isAchieved" class="milestone-achieved">
           <div class="achievement-status">
             <span class="achievement-icon">🏆</span>
-            <span class="achievement-text">Achieved!</span>
-          </div>
-          
-          <div class="achievement-details">
-            <div class="detail-item">
-              <span class="detail-label">Date:</span>
-              <span class="detail-value">{{ formatAchievementDate(achievementData?.achievedDate) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Total Kills:</span>
-              <span class="detail-value">{{ achievementData?.totalKillsAtMilestone?.toLocaleString() }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Time to Achieve:</span>
-              <span class="detail-value">{{ achievementData?.daysToAchieve }} days</span>
-            </div>
+            <span class="achievement-text">Achievement Unlocked!</span>
           </div>
           
           <!-- Comparison data for PlayerComparison.vue -->
@@ -188,21 +188,42 @@ const formatAchievementDate = (dateString?: string): string => {
 
 .milestone-modal-title {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 
-.milestone-modal-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+.milestone-modal-title-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .milestone-modal-title h3 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 600;
+}
+
+.milestone-achievement-subtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.milestone-badge-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.milestone-modal-badge {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid var(--color-primary);
+  box-shadow: 0 4px 16px rgba(156, 39, 176, 0.3);
 }
 
 .milestone-modal-close {
