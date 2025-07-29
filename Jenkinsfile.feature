@@ -6,7 +6,6 @@ pipeline {
   }
   
   parameters {
-    string(name: 'BRANCH_NAME', defaultValue: '', description: 'Feature branch name to deploy')
     booleanParam(name: 'CLEANUP_EXISTING', defaultValue: true, description: 'Clean up existing feature deployment before deploying')
   }
   
@@ -19,10 +18,7 @@ pipeline {
     stage('Validate Parameters') {
       steps {
         script {
-          if (!params.BRANCH_NAME) {
-            error("BRANCH_NAME parameter is required")
-          }
-          echo "Deploying branch: ${params.BRANCH_NAME}"
+          echo "Deploying branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH}"
           echo "Image will be tagged as: ${IMAGE_TAG}"
         }
       }
@@ -46,19 +42,6 @@ pipeline {
               '''
             }
           }
-        }
-      }
-    }
-    
-    stage('Checkout Feature Branch') {
-      steps {
-        script {
-          // Checkout the specific feature branch
-          checkout([
-            $class: 'GitSCM',
-            branches: [[name: "origin/${params.BRANCH_NAME}"]],
-            userRemoteConfigs: scm.userRemoteConfigs
-          ])
         }
       }
     }
@@ -102,7 +85,7 @@ pipeline {
           ============================================
           Feature Branch Deployment Summary
           ============================================
-          Branch: ${params.BRANCH_NAME}
+          Branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH}
           Image: ${FULL_IMAGE_NAME}
           
           Access your feature branch at:
