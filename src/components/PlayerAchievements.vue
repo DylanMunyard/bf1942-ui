@@ -259,8 +259,13 @@ const flattenedAchievements = computed(() => {
     ...gamificationData.value.recentAchievements
   ];
   
+  // Filter out kill streaks from Achievement Timeline - only show milestones
+  const filteredAchievements = allAchievements.filter(achievement => 
+    !achievement.achievementId.includes('kill_streak')
+  );
+  
   // Sort all achievements by date (newest first)
-  return allAchievements.sort((a, b) => 
+  return filteredAchievements.sort((a, b) => 
     new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime()
   );
 });
@@ -424,46 +429,18 @@ onMounted(async () => {
             v-if="nextMilestone"
             class="achievement-compact-card next-milestone"
             :class="[`tier-legendary`]"
-            :style="{ boxShadow: getTierGlow('legendary') }"
+            :style="{ 
+              boxShadow: getTierGlow('legendary'),
+              '--progress-percentage': nextMilestone.progress * 100 + '%'
+            }"
             @click="openNextMilestoneModal"
           >
             <div class="achievement-compact-icon-container">
-              <div class="milestone-progress-wrapper">
-                <img 
-                  :src="getMilestoneImage(nextMilestone.milestone)" 
-                  :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
-                  class="achievement-compact-icon milestone-icon"
-                />
-                <!-- Progress border for next milestone -->
-                <svg
-                  class="milestone-progress-border"
-                  width="72"
-                  height="72"
-                >
-                  <circle
-                    cx="36"
-                    cy="36"
-                    r="35"
-                    fill="none"
-                    stroke="#ddd"
-                    stroke-width="2"
-                    class="progress-bg"
-                  />
-                  <circle
-                    cx="36"
-                    cy="36"
-                    r="35"
-                    fill="none"
-                    :stroke="nextMilestone.progress > 0.95 ? '#FFD700' : '#26C6DA'"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    :stroke-dasharray="2 * Math.PI * 35"
-                    :stroke-dashoffset="(1 - nextMilestone.progress) * 2 * Math.PI * 35"
-                    class="progress-bar"
-                    transform="rotate(-90 36 36)"
-                  />
-                </svg>
-              </div>
+              <img 
+                :src="getMilestoneImage(nextMilestone.milestone)" 
+                :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
+                class="achievement-compact-icon milestone-icon"
+              />
             </div>
             
             <div class="achievement-compact-info next-milestone-info">
@@ -600,7 +577,11 @@ onMounted(async () => {
 
     <!-- Next Milestone Modal -->
     <div v-if="showNextMilestoneModal && nextMilestone" class="modal-overlay" @click="closeNextMilestoneModal">
-      <div class="modal-content" @click.stop>
+      <div 
+        class="modal-content milestone-modal" 
+        :style="{ '--progress-percentage': nextMilestone.progress * 100 + '%' }"
+        @click.stop
+      >
         <div class="modal-header">
           <div class="achievement-title-info">
             <h3 class="modal-achievement-name">Next Milestone: {{ nextMilestone.milestone.toLocaleString() }} Kills</h3>
@@ -614,42 +595,11 @@ onMounted(async () => {
         
         <div class="modal-body">
           <div class="modal-achievement-image-container">
-            <div class="milestone-progress-wrapper-large">
-              <img 
-                :src="getMilestoneImage(nextMilestone.milestone)" 
-                :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
-                class="modal-achievement-image milestone-icon-large"
-              />
-              <!-- Progress border for next milestone -->
-              <svg
-                class="milestone-progress-border-large"
-                width="200"
-                height="200"
-              >
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="95"
-                  fill="none"
-                  stroke="#ddd"
-                  stroke-width="4"
-                  class="progress-bg"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="95"
-                  fill="none"
-                  :stroke="nextMilestone.progress > 0.95 ? '#FFD700' : '#26C6DA'"
-                  stroke-width="4"
-                  stroke-linecap="round"
-                  :stroke-dasharray="2 * Math.PI * 95"
-                  :stroke-dashoffset="(1 - nextMilestone.progress) * 2 * Math.PI * 95"
-                  class="progress-bar"
-                  transform="rotate(-90 100 100)"
-                />
-              </svg>
-            </div>
+            <img 
+              :src="getMilestoneImage(nextMilestone.milestone)" 
+              :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
+              class="modal-achievement-image milestone-icon-large"
+            />
           </div>
           
           <div class="achievement-details-grid">
@@ -998,31 +948,20 @@ onMounted(async () => {
   z-index: 10;
 }
 
-.milestone-progress-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.next-milestone::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  width: var(--progress-percentage);
+  background: linear-gradient(90deg, #26C6DA, #FFD700);
+  border-radius: 0 0 6px 6px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .milestone-icon {
   filter: grayscale(0.3) brightness(1.1);
-}
-
-.milestone-progress-border {
-  position: absolute;
-  top: -4px;
-  left: -4px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.progress-bg {
-  opacity: 0.3;
-}
-
-.progress-bar {
-  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .next-milestone-info {
@@ -1362,23 +1301,21 @@ onMounted(async () => {
 }
 
 /* Next Milestone Modal Styles */
-.milestone-progress-wrapper-large {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.milestone-modal::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 6px;
+  width: var(--progress-percentage);
+  background: linear-gradient(90deg, #26C6DA, #FFD700);
+  border-radius: 0 0 14px 14px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
 }
 
 .milestone-icon-large {
   filter: grayscale(0.3) brightness(1.1);
-}
-
-.milestone-progress-border-large {
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  z-index: 2;
-  pointer-events: none;
 }
 
 .detail-item.full-width {

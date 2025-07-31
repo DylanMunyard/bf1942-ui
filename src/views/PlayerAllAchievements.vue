@@ -47,6 +47,8 @@ const isLoading = ref(true);
 const error = ref<string | null>(null);
 const selectedAchievement = ref<Achievement | null>(null);
 const showModal = ref(false);
+const selectedAchievementGroup = ref<{ achievement: Achievement, count: number, allAchievements: Achievement[] } | null>(null);
+const showGroupModal = ref(false);
 
 // Filter states
 const selectedMapName = ref<string>('');
@@ -164,7 +166,7 @@ const getTierGlow = (tier: string): string => {
 };
 
 const groupedAchievements = computed(() => {
-  const grouped: { [key: string]: Achievement[] } = {};
+  const grouped: { [key: string]: Array<{ achievement: Achievement, count: number, allAchievements: Achievement[] }> } = {};
   
   achievements.value.forEach(achievement => {
     const date = new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z');
@@ -173,13 +175,32 @@ const groupedAchievements = computed(() => {
     if (!grouped[dateKey]) {
       grouped[dateKey] = [];
     }
-    grouped[dateKey].push(achievement);
+    
+    // Check if this achievement type already exists on this day
+    const existingGroup = grouped[dateKey].find(group => 
+      group.achievement.achievementId === achievement.achievementId
+    );
+    
+    if (existingGroup) {
+      existingGroup.count++;
+      existingGroup.allAchievements.push(achievement);
+      // Keep the most recent achievement as the display one
+      if (new Date(achievement.achievedAt).getTime() > new Date(existingGroup.achievement.achievedAt).getTime()) {
+        existingGroup.achievement = achievement;
+      }
+    } else {
+      grouped[dateKey].push({
+        achievement,
+        count: 1,
+        allAchievements: [achievement]
+      });
+    }
   });
   
-  // Sort each day's achievements by time (newest first)
+  // Sort each day's achievement groups by time (newest first)
   Object.keys(grouped).forEach(dateKey => {
     grouped[dateKey].sort((a, b) => 
-      new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime()
+      new Date(b.achievement.achievedAt).getTime() - new Date(a.achievement.achievedAt).getTime()
     );
   });
   
@@ -220,6 +241,16 @@ const openAchievementModal = (achievement: Achievement) => {
 const closeModal = () => {
   showModal.value = false;
   selectedAchievement.value = null;
+};
+
+const openGroupModal = (group: { achievement: Achievement, count: number, allAchievements: Achievement[] }) => {
+  selectedAchievementGroup.value = group;
+  showGroupModal.value = true;
+};
+
+const closeGroupModal = () => {
+  showGroupModal.value = false;
+  selectedAchievementGroup.value = null;
 };
 
 const goToPage = (page: number) => {
@@ -432,54 +463,64 @@ watch(
           <div v-for="dateKey in sortedDateKeys" :key="dateKey" class="timeline-day">
             <div class="date-header">
               <h2>{{ formatDateHeader(dateKey) }}</h2>
-              <div class="achievement-count">{{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}</div>
+              <div class="achievement-count">{{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }} group{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}</div>
             </div>
             
-            <div class="achievements-grid">
+            <div class="timeline-achievements">
+              <div class="timeline-line"></div>
               <div 
-                v-for="(achievement, index) in groupedAchievements[dateKey]" 
+                v-for="(group, index) in groupedAchievements[dateKey]" 
                 :key="index"
-                class="achievement-card"
-                :class="[`tier-${achievement.tier.toLowerCase()}`, achievement.achievementType]"
-                :style="{ boxShadow: getTierGlow(achievement.tier) }"
-                @click="openAchievementModal(achievement)"
+                class="timeline-achievement-item"
+                @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
               >
-                <div class="achievement-image-container">
-                  <img 
-                    :src="getAchievementImage(achievement.achievementId)" 
-                    :alt="achievement.achievementName"
-                    class="achievement-image"
-                    @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                  />
-                </div>
-                
-                <div class="achievement-info">
-                  <h3 class="achievement-name">{{ achievement.achievementName }}</h3>
-                  <div class="achievement-meta">
-                    <span class="achievement-type">{{ achievement.achievementType }}</span>
-                    <span v-if="achievement.value" class="achievement-value">{{ achievement.value.toLocaleString() }}</span>
+                <div class="timeline-dot"></div>
+                <div 
+                  class="achievement-card timeline-card"
+                  :class="[`tier-${group.achievement.tier.toLowerCase()}`, group.achievement.achievementType]"
+                  :style="{ boxShadow: getTierGlow(group.achievement.tier) }"
+                >
+                  <div class="achievement-image-container">
+                    <img 
+                      :src="getAchievementImage(group.achievement.achievementId)" 
+                      :alt="group.achievement.achievementName"
+                      class="achievement-image"
+                      @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                    />
+                    <div v-if="group.count > 1" class="achievement-count-badge">x{{ group.count }}</div>
                   </div>
-                  <div class="achievement-time">{{ formatRelativeTime(achievement.achievedAt) }}</div>
-                  <div v-if="achievement.mapName" class="achievement-location">
-                    <span v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt">
-                      on <router-link 
-                        :to="{
-                          path: '/servers/round-report',
-                          query: {
-                            serverGuid: achievement.serverGuid,
-                            mapName: achievement.mapName,
-                            startTime: achievement.achievedAt,
-                            players: playerName
-                          }
-                        }"
-                        class="map-link"
-                      >
-                        {{ achievement.mapName }}
-                      </router-link>
-                    </span>
-                    <span v-else>
-                      on {{ achievement.mapName }}
-                    </span>
+                  
+                  <div class="achievement-info">
+                    <h3 class="achievement-name">{{ group.achievement.achievementName }}</h3>
+                    <div class="achievement-meta">
+                      <span class="achievement-type">{{ group.achievement.achievementType }}</span>
+                      <span v-if="group.achievement.value" class="achievement-value">{{ group.achievement.value.toLocaleString() }}</span>
+                    </div>
+                    <div class="achievement-time">{{ formatRelativeTime(group.achievement.achievedAt) }}</div>
+                    <div v-if="group.achievement.mapName && group.count === 1" class="achievement-location">
+                      <span v-if="group.achievement.serverGuid && group.achievement.mapName && group.achievement.achievedAt">
+                        on <router-link 
+                          :to="{
+                            path: '/servers/round-report',
+                            query: {
+                              serverGuid: group.achievement.serverGuid,
+                              mapName: group.achievement.mapName,
+                              startTime: group.achievement.achievedAt,
+                              players: playerName
+                            }
+                          }"
+                          class="map-link"
+                        >
+                          {{ group.achievement.mapName }}
+                        </router-link>
+                      </span>
+                      <span v-else>
+                        on {{ group.achievement.mapName }}
+                      </span>
+                    </div>
+                    <div v-else-if="group.count > 1" class="achievement-location">
+                      Click to see all {{ group.count }} achievements
+                    </div>
                   </div>
                 </div>
               </div>
@@ -583,6 +624,64 @@ watch(
             <div v-if="selectedAchievement.roundId" class="detail-item">
               <span class="detail-label">Round ID:</span>
               <span class="detail-value">{{ selectedAchievement.roundId }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grouped Achievement Modal -->
+    <div v-if="showGroupModal && selectedAchievementGroup" class="modal-overlay" @click="closeGroupModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <div class="achievement-title-info">
+            <h3 class="modal-achievement-name">{{ selectedAchievementGroup.achievement.achievementName }}</h3>
+            <div class="modal-achievement-date">
+              <span class="date-label">Achieved {{ selectedAchievementGroup.count }} time{{ selectedAchievementGroup.count !== 1 ? 's' : '' }}</span>
+            </div>
+          </div>
+          <button class="close-button" @click="closeGroupModal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="modal-achievement-image-container">
+            <img 
+              :src="getAchievementImage(selectedAchievementGroup.achievement.achievementId)" 
+              :alt="selectedAchievementGroup.achievement.achievementName"
+              class="modal-achievement-image"
+            />
+          </div>
+          
+          <div class="achievement-instances-list">
+            <div 
+              v-for="(achievement, index) in selectedAchievementGroup.allAchievements.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())" 
+              :key="index" 
+              class="achievement-instance-item"
+            >
+              <div class="achievement-instance-header">
+                <span v-if="achievement.mapName" class="achievement-instance-map">{{ achievement.mapName }}</span>
+                <span class="achievement-instance-date">{{ formatRelativeTime(achievement.achievedAt) }}</span>
+              </div>
+              <div class="achievement-instance-time">
+                {{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleString() }}
+              </div>
+              <div v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt">
+                <router-link 
+                  :to="{
+                    path: '/servers/round-report',
+                    query: {
+                      serverGuid: achievement.serverGuid,
+                      mapName: achievement.mapName,
+                      startTime: achievement.achievedAt,
+                      players: playerName
+                    }
+                  }"
+                  class="round-report-btn"
+                  title="View round report"
+                >
+                  📊 View Round
+                </router-link>
+              </div>
             </div>
           </div>
         </div>
@@ -898,6 +997,67 @@ watch(
   background-color: var(--color-background);
   padding: 6px 12px;
   border-radius: 16px;
+}
+
+/* Timeline Styles */
+.timeline-achievements {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-left: 32px;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.timeline-achievement-item {
+  position: relative;
+  cursor: pointer;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -24px;
+  top: 24px;
+  width: 12px;
+  height: 12px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  border: 3px solid var(--color-background);
+  z-index: 2;
+  transition: all 0.2s ease;
+}
+
+.timeline-achievement-item:hover .timeline-dot {
+  background: var(--color-primary-dark, var(--color-primary));
+  transform: scale(1.2);
+}
+
+.timeline-card {
+  margin-left: 8px;
+}
+
+.achievement-count-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #FF6B35, #FF9F1C);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 12px;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--color-background);
 }
 
 .achievements-grid {
@@ -1257,6 +1417,19 @@ watch(
     justify-self: start;
   }
   
+  .timeline-achievements {
+    padding-left: 24px;
+    gap: 16px;
+  }
+  
+  .timeline-dot {
+    left: -18px;
+  }
+  
+  .timeline-card {
+    margin-left: 4px;
+  }
+  
   .achievements-grid {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -1317,6 +1490,70 @@ watch(
     grid-template-columns: 1fr;
     gap: 12px;
   }
+}
+
+/* Grouped Achievement Modal Styles */
+.achievement-instances-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.achievement-instance-item {
+  background-color: var(--color-background-soft);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.achievement-instance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.achievement-instance-map {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.95rem;
+}
+
+.achievement-instance-date {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.achievement-instance-time {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.round-report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.round-report-btn:hover {
+  background: var(--color-primary-dark, var(--color-primary));
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  color: white;
+  text-decoration: none;
 }
 
 @media (max-width: 480px) {
