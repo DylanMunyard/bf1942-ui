@@ -53,6 +53,8 @@ const isLoading = ref(true);
 const error = ref<string | null>(null);
 const selectedAchievement = ref<Achievement | null>(null);
 const showModal = ref(false);
+const selectedStreakGroup = ref<{ streak: Streak, count: number, allStreaks: Streak[] } | null>(null);
+const showStreakModal = ref(false);
 
 const fetchGamificationData = async () => {
   isLoading.value = true;
@@ -150,6 +152,32 @@ const groupedAchievements = computed(() => {
   return grouped;
 });
 
+const combinedStreaks = computed(() => {
+  if (!gamificationData.value?.bestStreaks.recentStreaks) return [];
+  
+  const streakMap = new Map<number, { streak: Streak, count: number, allStreaks: Streak[] }>();
+  
+  gamificationData.value.bestStreaks.recentStreaks.forEach(streak => {
+    const key = streak.streakCount;
+    
+    if (streakMap.has(key)) {
+      const existing = streakMap.get(key)!;
+      // Keep the most recent streak and add to allStreaks
+      if (new Date(streak.streakStart).getTime() > new Date(existing.streak.streakStart).getTime()) {
+        existing.streak = streak;
+      }
+      existing.count++;
+      existing.allStreaks.push(streak);
+    } else {
+      streakMap.set(key, { streak, count: 1, allStreaks: [streak] });
+    }
+  });
+  
+  return Array.from(streakMap.values())
+    .sort((a, b) => b.streak.streakCount - a.streak.streakCount)
+    .slice(0, 6);
+});
+
 const sortedDateKeys = computed(() => {
   return Object.keys(groupedAchievements.value).sort((a, b) => 
     new Date(b).getTime() - new Date(a).getTime()
@@ -186,6 +214,16 @@ const closeModal = () => {
   selectedAchievement.value = null;
 };
 
+const openStreakModal = (streakGroup: { streak: Streak, count: number, allStreaks: Streak[] }) => {
+  selectedStreakGroup.value = streakGroup;
+  showStreakModal.value = true;
+};
+
+const closeStreakModal = () => {
+  showStreakModal.value = false;
+  selectedStreakGroup.value = null;
+};
+
 onMounted(() => {
   fetchGamificationData();
 });
@@ -205,7 +243,14 @@ onMounted(() => {
     <div v-else-if="gamificationData" class="achievements-content">
       <!-- Best Streak Highlight -->
       <div v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0" class="best-streak-highlight">
-        <div class="streak-icon">🔥</div>
+        <div class="streak-icon">
+          <img 
+            :src="getAchievementImage('kill_streak_' + gamificationData.bestStreaks.bestSingleRoundStreak)" 
+            :alt="'Kill streak ' + gamificationData.bestStreaks.bestSingleRoundStreak"
+            class="streak-icon-image"
+            @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+          />
+        </div>
         <div class="streak-info">
           <h4>Best Kill Streak</h4>
           <div class="streak-value">{{ gamificationData.bestStreaks.bestSingleRoundStreak }} kills</div>
@@ -221,14 +266,18 @@ onMounted(() => {
         <h4>Recent Kill Streaks</h4>
         <div class="streaks-grid">
           <div 
-            v-for="(streak, index) in gamificationData.bestStreaks.recentStreaks.slice(0, 6)" 
+            v-for="(item, index) in combinedStreaks" 
             :key="index"
             class="streak-card"
           >
-            <div class="streak-count">{{ streak.streakCount }}</div>
-            <div class="streak-meta">
-              <div class="streak-map">{{ streak.mapName }}</div>
-              <div class="streak-time">{{ formatRelativeTime(streak.streakStart) }}</div>
+            <div class="streak-icon-container" @click="openStreakModal(item)">
+              <img 
+                :src="getAchievementImage('kill_streak_' + item.streak.streakCount)" 
+                :alt="'Kill streak ' + item.streak.streakCount"
+                class="streak-card-icon"
+                @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+              />
+              <div v-if="item.count > 1" class="streak-count-badge">x{{ item.count }}</div>
             </div>
           </div>
         </div>
@@ -284,6 +333,45 @@ onMounted(() => {
         <div class="no-achievements-icon">🏆</div>
         <h4>No Achievements Yet</h4>
         <p>Start playing to unlock achievements and build your legacy!</p>
+      </div>
+    </div>
+
+    <!-- Streak Details Modal -->
+    <div v-if="showStreakModal && selectedStreakGroup" class="modal-overlay" @click="closeStreakModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <div class="achievement-title-info">
+            <h3 class="modal-achievement-name">{{ selectedStreakGroup.streak.streakCount }} Kill Streak</h3>
+            <div class="modal-achievement-date">
+              <span class="date-label">Achieved {{ selectedStreakGroup.count }} time{{ selectedStreakGroup.count !== 1 ? 's' : '' }}</span>
+            </div>
+          </div>
+          <button class="close-button" @click="closeStreakModal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="modal-achievement-image-container">
+            <img 
+              :src="getAchievementImage('kill_streak_' + selectedStreakGroup.streak.streakCount)" 
+              :alt="selectedStreakGroup.streak.streakCount + ' Kill Streak'"
+              class="modal-achievement-image"
+            />
+          </div>
+          
+          <div class="streak-details-list">
+            <div v-for="(streak, index) in selectedStreakGroup.allStreaks.sort((a, b) => new Date(b.streakStart).getTime() - new Date(a.streakStart).getTime())" 
+                 :key="index" 
+                 class="streak-detail-item">
+              <div class="streak-detail-header">
+                <span class="streak-detail-map">{{ streak.mapName }}</span>
+                <span class="streak-detail-date">{{ formatRelativeTime(streak.streakStart) }}</span>
+              </div>
+              <div class="streak-detail-time">
+                {{ new Date(streak.streakStart).toLocaleString() }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -397,8 +485,17 @@ onMounted(() => {
 }
 
 .streak-icon {
-  font-size: 3rem;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.streak-icon-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: contain;
 }
 
 .streak-info {
@@ -443,6 +540,46 @@ onMounted(() => {
   text-align: center;
   border: 2px solid transparent;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.streak-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.streak-icon-container:hover {
+  transform: scale(1.05);
+}
+
+.streak-card-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.streak-count-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #FF6B35, #FF9F1C);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 12px;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--color-background);
 }
 
 .streak-card:hover {
@@ -887,5 +1024,44 @@ onMounted(() => {
     grid-template-columns: 1fr;
     gap: 12px;
   }
+}
+
+/* Streak Details Modal Styles */
+.streak-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.streak-detail-item {
+  background-color: var(--color-background-soft);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.streak-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.streak-detail-map {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.95rem;
+}
+
+.streak-detail-date {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.streak-detail-time {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
 }
 </style>
