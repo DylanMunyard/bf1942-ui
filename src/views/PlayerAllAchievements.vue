@@ -901,22 +901,25 @@ watch(
 }
 
 .achievements-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .achievement-card {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   background-color: var(--color-background-soft);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 8px;
+  padding: 12px;
   border: 2px solid transparent;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   cursor: pointer;
+  min-width: 280px;
+  max-width: 320px;
+  flex: 0 1 auto;
 }
 
 .achievement-card::before {
@@ -962,9 +965,9 @@ watch(
 }
 
 .achievement-image {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
   object-fit: cover;
 }
 
@@ -977,7 +980,7 @@ watch(
 
 .achievement-name {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--color-heading);
   line-height: 1.2;
@@ -985,9 +988,9 @@ watch(
 
 .achievement-meta {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .achievement-type {
@@ -1004,14 +1007,15 @@ watch(
 }
 
 .achievement-time {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
 .achievement-location {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--color-text-muted);
   font-style: italic;
+  opacity: 0.8;
 }
 
 .map-link {
@@ -1258,17 +1262,18 @@ watch(
   }
   
   .achievements-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 6px;
   }
   
   .achievement-card {
-    padding: 12px;
+    padding: 10px;
+    min-width: 100%;
+    max-width: 100%;
   }
   
   .achievement-image {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
   }
   
   .date-header {
