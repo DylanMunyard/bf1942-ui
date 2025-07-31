@@ -78,7 +78,7 @@ const fetchAchievements = async (page: number = 1) => {
     if (selectedMapName.value) params.append('mapName', selectedMapName.value);
     if (selectedAchievementId.value) params.append('achievementId', selectedAchievementId.value);
     
-    const response = await fetch(`/stats/gamification/player/${encodeURIComponent(props.playerName)}/achievements?${params}`);
+    const response = await fetch(`/stats/gamification/achievements?${params}`);
     if (!response.ok) throw new Error('Failed to fetch achievements');
     
     const data: PaginatedResponse = await response.json();

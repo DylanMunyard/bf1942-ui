@@ -414,6 +414,7 @@ onMounted(async () => {
             class="achievement-compact-card next-milestone"
             :class="[`tier-legendary`]"
             :style="{ boxShadow: getTierGlow('legendary') }"
+            @click="openNextMilestoneModal"
           >
             <div class="achievement-compact-icon-container">
               <div class="milestone-progress-wrapper">
@@ -585,6 +586,85 @@ onMounted(async () => {
             <div v-if="selectedAchievement.roundId" class="detail-item">
               <span class="detail-label">Round ID:</span>
               <span class="detail-value">{{ selectedAchievement.roundId }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Next Milestone Modal -->
+    <div v-if="showNextMilestoneModal && nextMilestone" class="modal-overlay" @click="closeNextMilestoneModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <div class="achievement-title-info">
+            <h3 class="modal-achievement-name">Next Milestone: {{ nextMilestone.milestone.toLocaleString() }} Kills</h3>
+            <div class="modal-achievement-date">
+              <span class="date-label">Current Progress:</span>
+              {{ nextMilestone.currentKills.toLocaleString() }} / {{ nextMilestone.milestone.toLocaleString() }} kills
+            </div>
+          </div>
+          <button class="close-button" @click="closeNextMilestoneModal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="modal-achievement-image-container">
+            <div class="milestone-progress-wrapper-large">
+              <img 
+                :src="getMilestoneImage(nextMilestone.milestone)" 
+                :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
+                class="modal-achievement-image milestone-icon-large"
+              />
+              <!-- Progress border for next milestone -->
+              <svg
+                class="milestone-progress-border-large"
+                width="200"
+                height="200"
+              >
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="95"
+                  fill="none"
+                  stroke="#ddd"
+                  stroke-width="4"
+                  class="progress-bg"
+                />
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="95"
+                  fill="none"
+                  :stroke="nextMilestone.progress > 0.95 ? '#FFD700' : '#26C6DA'"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  :stroke-dasharray="2 * Math.PI * 95"
+                  :stroke-dashoffset="(1 - nextMilestone.progress) * 2 * Math.PI * 95"
+                  class="progress-bar"
+                  transform="rotate(-90 100 100)"
+                />
+              </svg>
+            </div>
+          </div>
+          
+          <div class="achievement-details-grid">
+            <div class="detail-item full-width">
+              <span class="detail-label">Progress:</span>
+              <span class="detail-value">{{ Math.floor(nextMilestone.progress * 100) }}% complete</span>
+            </div>
+            
+            <div class="detail-item full-width">
+              <span class="detail-label">Kills Remaining:</span>
+              <span class="detail-value">{{ nextMilestone.killsRemaining.toLocaleString() }} kills to go</span>
+            </div>
+            
+            <div class="detail-item full-width">
+              <span class="detail-label">Current Total:</span>
+              <span class="detail-value">{{ nextMilestone.currentKills.toLocaleString() }} kills</span>
+            </div>
+            
+            <div class="detail-item full-width">
+              <span class="detail-label">Target:</span>
+              <span class="detail-value">{{ nextMilestone.milestone.toLocaleString() }} kills</span>
             </div>
           </div>
         </div>
@@ -1270,5 +1350,29 @@ onMounted(async () => {
   background: var(--color-primary-dark, var(--color-primary));
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Next Milestone Modal Styles */
+.milestone-progress-wrapper-large {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.milestone-icon-large {
+  filter: grayscale(0.3) brightness(1.1);
+}
+
+.milestone-progress-border-large {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.detail-item.full-width {
+  grid-column: 1 / -1;
 }
 </style>
