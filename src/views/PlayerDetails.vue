@@ -621,7 +621,7 @@ watch(
               View All
             </router-link>
           </div>
-          <PlayerAchievements :player-name="playerName" />
+          <PlayerAchievements :player-name="playerName" :player-stats="playerStats" />
         </div>
 
         <!-- General statistics section -->

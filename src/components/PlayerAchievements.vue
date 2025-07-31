@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import type { PlayerTimeStatistics } from '@/types/playerStatsTypes';
 
 interface Achievement {
   playerName: string;
@@ -52,24 +53,15 @@ interface GamificationData {
   lastCalculated: string;
 }
 
-interface PlayerStats {
-  totalKills: number;
-  killMilestones: Array<{
-    milestone: number;
-    achievedDate: string;
-    totalKillsAtMilestone: number;
-    daysToAchieve: number;
-  }>;
-}
-
 const props = defineProps<{
   playerName: string;
+  playerStats?: PlayerTimeStatistics;
 }>();
 
 const router = useRouter();
 
 const gamificationData = ref<GamificationData | null>(null);
-const playerStats = ref<PlayerStats | null>(null);
+const playerStats = ref<PlayerTimeStatistics | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const selectedAchievement = ref<Achievement | null>(null);
@@ -97,6 +89,12 @@ const fetchGamificationData = async () => {
 };
 
 const fetchPlayerStats = async () => {
+  // If player stats are passed as a prop, use them instead of fetching
+  if (props.playerStats) {
+    playerStats.value = props.playerStats;
+    return;
+  }
+  
   try {
     const response = await fetch(`/stats/players/${encodeURIComponent(props.playerName)}`);
     if (!response.ok) throw new Error('Failed to fetch player stats');
@@ -162,12 +160,9 @@ const nextMilestone = computed((): NextMilestone | null => {
   if (!playerStats.value) return null;
   
   const currentKills = playerStats.value.totalKills;
-  const achievedMilestones = (playerStats.value.killMilestones || []).map(m => m.milestone);
   
-  // Find the next milestone that is greater than current kills and hasn't been achieved
-  const nextMilestoneValue = MILESTONES.find(milestone => 
-    milestone > currentKills && !achievedMilestones.includes(milestone)
-  );
+  // Find the next milestone that is greater than current kills
+  const nextMilestoneValue = MILESTONES.find(milestone => milestone > currentKills);
   
   if (!nextMilestoneValue) return null; // All milestones achieved or no next milestone
   
