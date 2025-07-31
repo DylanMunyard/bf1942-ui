@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Servers from '../views/Servers.vue'
 import Players from '../views/Players.vue'
 import PlayerDetails from '../views/PlayerDetails.vue'
+import PlayerAllAchievements from '../views/PlayerAllAchievements.vue'
 import ServerDetails from '../views/ServerDetails.vue'
 import ServerRankingsPage from '../components/ServerRankingsPage.vue'
 import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
@@ -83,6 +84,12 @@ const router = createRouter({
       path: '/players/:playerName/sessions',
       name: 'player-sessions',
       component: PlayerSessionsPage,
+      props: true
+    },
+    {
+      path: '/players/:playerName/achievements',
+      name: 'player-achievements',
+      component: PlayerAllAchievements,
       props: true
     },
     {

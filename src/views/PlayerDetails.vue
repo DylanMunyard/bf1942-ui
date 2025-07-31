@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { PlayerTimeStatistics, PlayerServerStats, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayer } from '../services/playerStatsService';
+import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayer } from '../services/playerStatsService';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
-import MilestoneModal from '../components/MilestoneModal.vue';
 import PlayerAchievements from '../components/PlayerAchievements.vue';
 
 import bf1942Icon from '@/assets/bf1942.jpg';
@@ -524,95 +523,9 @@ const sortedServers = computed(() => {
 });
 // ... existing code ...
 
-// --- Milestone Progress & Display ---
-const MILESTONES = [5000, 10000, 20000, 40000, 50000, 75000, 100000];
 
-const achievedMilestoneNumbers = computed(() =>
-  (playerStats.value?.killMilestones || []).map(m => m.milestone)
-);
 
-const achievedMilestoneDetails = computed(() => {
-  const details: Record<number, any> = {};
-  (playerStats.value?.killMilestones || []).forEach(m => {
-    details[m.milestone] = m;
-  });
-  return details;
-});
 
-const totalKills = computed(() => playerStats.value?.totalKills || 0);
-
-const nextMilestoneIndex = computed(() => {
-  const totalKills = playerStats.value?.totalKills || 0;
-  for (let i = 0; i < MILESTONES.length; i++) {
-    if (totalKills < MILESTONES[i]) return i;
-  }
-  return MILESTONES.length; // all achieved
-});
-
-const milestoneProgress = (milestone: number | null): number => {
-  if (!milestone) return 1;
-  const totalKills = playerStats.value?.totalKills || 0;
-  if (totalKills >= milestone) return 1;
-  // Use reverse() and find() instead of findLast() for compatibility
-  const prev = [...MILESTONES].reverse().find((m: number) => m < milestone) || 0;
-  return (totalKills - prev) / (milestone - prev);
-};
-
-const getMilestoneImage = (milestone: number) => {
-  return new URL(`../assets/milestone-${milestone/1000}k.png`, import.meta.url).href;
-};
-
-// For mobile badge flip
-const flippedBadge = ref<number|null>(null);
-const isMobile = ref(false);
-
-// Modal state for mobile milestone details
-const showMilestoneModal = ref(false);
-const selectedMilestone = ref<number | null>(null);
-
-onMounted(() => {
-  // Simple mobile detection
-  isMobile.value = window.innerWidth <= 768;
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth <= 768;
-  });
-});
-
-const handleBadgeClick = (milestone: number) => {
-  // Show modal for both mobile and desktop
-  selectedMilestone.value = milestone;
-  showMilestoneModal.value = true;
-};
-
-const closeMilestoneModal = () => {
-  showMilestoneModal.value = false;
-  selectedMilestone.value = null;
-};
-
-const hasReachedFirstMilestone = computed(() => {
-  return (playerStats.value?.killMilestones?.length ?? 0) > 0;
-});
-const nextMilestone = computed(() => {
-  if (hasReachedFirstMilestone.value) return null;
-  return MILESTONES[nextMilestoneIndex.value];
-});
-const achievedMilestones = computed(() => {
-  return playerStats.value?.killMilestones || [];
-});
-
-// Computed property for milestone progress colors based on theme
-const milestoneProgressColors = computed(() => {
-  // Detect dark mode using the same method as other components
-  const computedStyles = window.getComputedStyle(document.documentElement);
-  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') || 
-                    document.documentElement.classList.contains('dark-mode') ||
-                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  
-  return {
-    gold: '#FFD700', // Same for both modes
-    progress: isDarkMode ? '#26C6DA' : '#9c27b0' // Bright cyan for dark mode, purple for light mode
-  };
-});
 
 // Add watcher for route changes to update playerName and refetch data
 watch(
@@ -680,92 +593,6 @@ watch(
         <p class="error-message">{{ error }}</p>
       </div>
       <div v-else-if="playerStats" class="stats-container">
-        <!-- Milestone badges row: full width, above Top Servers -->
-        <div class="milestone-badges-row">
-          <div
-            v-for="(milestone, idx) in MILESTONES"
-            :key="milestone"
-            class="milestone-badge-image-wrapper"
-            :class="{
-              achieved: achievedMilestoneNumbers.includes(milestone),
-              next: nextMilestoneIndex === idx,
-              future: nextMilestoneIndex < idx,
-              flipped: isMobile && flippedBadge === milestone
-            }"
-            :title="!isMobile && achievedMilestoneNumbers.includes(milestone) && achievedMilestoneDetails[milestone] ?
-              `Achieved: ${formatRelativeTime(achievedMilestoneDetails[milestone].achievedDate)} | ${achievedMilestoneDetails[milestone].totalKillsAtMilestone} kills | ${achievedMilestoneDetails[milestone].daysToAchieve} days`
-              :
-              achievedMilestoneNumbers.includes(milestone)
-                ? `Achieved ${milestone.toLocaleString()} Kills!`
-                : nextMilestoneIndex === idx
-                  ? `Next milestone: ${milestone.toLocaleString()} Kills (${Math.floor(milestoneProgress(milestone)*100)}%)`
-                  : `Locked: ${milestone.toLocaleString()} Kills`
-            "
-            @click="handleBadgeClick(milestone)"
-          >
-            <div class="milestone-badge-flip">
-              <div class="milestone-badge-front">
-                <div class="milestone-badge-image-container">
-                  <img
-                    :src="getMilestoneImage(milestone)"
-                    :alt="`${milestone.toLocaleString()} Kills Badge`"
-                    class="milestone-badge-image"
-                  />
-                  <!-- Progress border for next milestone -->
-                  <svg
-                    v-if="nextMilestoneIndex === idx && milestoneProgress(milestone) < 1"
-                    class="milestone-progress-border"
-                    :width="isMobile ? '54' : '72'"
-                    :height="isMobile ? '54' : '72'"
-                  >
-                    <circle
-                      :cx="isMobile ? '27' : '36'"
-                      :cy="isMobile ? '27' : '36'"
-                      :r="isMobile ? '26' : '35'"
-                      fill="none"
-                      stroke="#ddd"
-                      stroke-width="2"
-                      class="progress-bg"
-                    />
-                    <circle
-                      :cx="isMobile ? '27' : '36'"
-                      :cy="isMobile ? '27' : '36'"
-                      :r="isMobile ? '26' : '35'"
-                      fill="none"
-                      :stroke="milestoneProgress(milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)"
-                      :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(milestone)) * 2 * Math.PI * 35)"
-                      class="progress-bar"
-                      :transform="isMobile ? 'rotate(-90 27 27)' : 'rotate(-90 36 36)'"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <div class="milestone-badge-back" v-if="isMobile && achievedMilestoneNumbers.includes(milestone) && achievedMilestoneDetails[milestone]">
-                <div class="milestone-badge-back-content">
-                  <div class="milestone-badge-back-label">Achieved</div>
-                  <div class="milestone-badge-back-date">{{ formatRelativeTime(achievedMilestoneDetails[milestone].achievedDate) }}</div>
-                  <div class="milestone-badge-back-kills">{{ achievedMilestoneDetails[milestone].totalKillsAtMilestone }} kills</div>
-                  <div class="milestone-badge-back-days">in {{ achievedMilestoneDetails[milestone].daysToAchieve }} days</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Milestone Modal for Mobile -->
-        <MilestoneModal
-          :is-visible="showMilestoneModal"
-          :milestone="selectedMilestone"
-          :milestone-image="selectedMilestone ? getMilestoneImage(selectedMilestone) : ''"
-          :is-achieved="selectedMilestone ? achievedMilestoneNumbers.includes(selectedMilestone) : false"
-          :is-next="selectedMilestone ? nextMilestoneIndex === MILESTONES.findIndex(m => m === selectedMilestone) : false"
-          :achievement-data="selectedMilestone && achievedMilestoneDetails[selectedMilestone] ? achievedMilestoneDetails[selectedMilestone] : null"
-          :current-kills="totalKills"
-          @close="closeMilestoneModal"
-        />
         
         <div v-if="playerStats.isActive && playerStats.currentServer" class="current-server-banner">
           <div class="server-info-line">
@@ -788,7 +615,12 @@ watch(
 
         <!-- Player Achievements section -->
         <div class="stats-section">
-          <h3>🏆 Achievements & Streaks</h3>
+          <div class="section-header-with-action">
+            <h3>🏆 Achievements & Streaks</h3>
+            <router-link :to="`/players/${encodeURIComponent(playerName)}/achievements`" class="view-all-button">
+              View All
+            </router-link>
+          </div>
           <PlayerAchievements :player-name="playerName" />
         </div>
 

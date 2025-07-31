@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 
 interface Achievement {
   playerName: string;
@@ -35,6 +36,13 @@ interface BestStreaks {
   recentStreaks: Streak[];
 }
 
+interface NextMilestone {
+  milestone: number;
+  currentKills: number;
+  progress: number;
+  killsRemaining: number;
+}
+
 interface GamificationData {
   playerName: string;
   recentAchievements: Achievement[];
@@ -44,17 +52,33 @@ interface GamificationData {
   lastCalculated: string;
 }
 
+interface PlayerStats {
+  totalKills: number;
+  killMilestones: Array<{
+    milestone: number;
+    achievedDate: string;
+    totalKillsAtMilestone: number;
+    daysToAchieve: number;
+  }>;
+}
+
 const props = defineProps<{
   playerName: string;
 }>();
 
+const router = useRouter();
+
 const gamificationData = ref<GamificationData | null>(null);
+const playerStats = ref<PlayerStats | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const selectedAchievement = ref<Achievement | null>(null);
 const showModal = ref(false);
 const selectedStreakGroup = ref<{ streak: Streak, count: number, allStreaks: Streak[] } | null>(null);
 const showStreakModal = ref(false);
+
+// Milestone constants
+const MILESTONES = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000];
 
 const fetchGamificationData = async () => {
   isLoading.value = true;
@@ -68,6 +92,16 @@ const fetchGamificationData = async () => {
     error.value = err.message || 'Failed to load achievements.';
   } finally {
     isLoading.value = false;
+  }
+};
+
+const fetchPlayerStats = async () => {
+  try {
+    const response = await fetch(`/stats/players/${encodeURIComponent(props.playerName)}`);
+    if (!response.ok) throw new Error('Failed to fetch player stats');
+    playerStats.value = await response.json();
+  } catch (err: any) {
+    console.error('Error fetching player stats:', err);
   }
 };
 
@@ -120,6 +154,39 @@ const getTierColor = (tier: string): string => {
 const getTierGlow = (tier: string): string => {
   const color = getTierColor(tier);
   return `0 0 20px ${color}40, 0 0 40px ${color}20`;
+};
+
+// Calculate next milestone
+const nextMilestone = computed((): NextMilestone | null => {
+  if (!playerStats.value) return null;
+  
+  const currentKills = playerStats.value.totalKills;
+  const achievedMilestones = (playerStats.value.killMilestones || []).map(m => m.milestone);
+  
+  // Find the next milestone that hasn't been achieved
+  const nextMilestoneValue = MILESTONES.find(milestone => !achievedMilestones.includes(milestone));
+  
+  if (!nextMilestoneValue) return null; // All milestones achieved
+  
+  // Calculate progress
+  const prevMilestone = [...MILESTONES].reverse().find(m => m < nextMilestoneValue) || 0;
+  const progress = (currentKills - prevMilestone) / (nextMilestoneValue - prevMilestone);
+  const killsRemaining = nextMilestoneValue - currentKills;
+  
+  return {
+    milestone: nextMilestoneValue,
+    currentKills,
+    progress: Math.max(0, Math.min(1, progress)),
+    killsRemaining: Math.max(0, killsRemaining)
+  };
+});
+
+const getMilestoneImage = (milestone: number): string => {
+  try {
+    return new URL(`../assets/achievements/milestone_kills_${milestone}.png`, import.meta.url).href;
+  } catch {
+    return new URL('../assets/achievements/kill_streak_10.png', import.meta.url).href;
+  }
 };
 
 const groupedAchievements = computed(() => {
@@ -219,13 +286,51 @@ const openStreakModal = (streakGroup: { streak: Streak, count: number, allStreak
   showStreakModal.value = true;
 };
 
+const openBestStreakModal = () => {
+  if (!gamificationData.value?.bestStreaks) return;
+  
+  // Create a mock streak object for the best streak
+  const bestStreak: Streak = {
+    playerName: props.playerName,
+    streakCount: gamificationData.value.bestStreaks.bestSingleRoundStreak,
+    streakStart: gamificationData.value.bestStreaks.bestStreakDate,
+    streakEnd: gamificationData.value.bestStreaks.bestStreakDate,
+    serverGuid: gamificationData.value.bestStreaks.bestStreakServer || '',
+    mapName: gamificationData.value.bestStreaks.bestStreakMap,
+    roundId: '',
+    isActive: false
+  };
+  
+  selectedStreakGroup.value = {
+    streak: bestStreak,
+    count: 1,
+    allStreaks: [bestStreak]
+  };
+  showStreakModal.value = true;
+};
+
+const navigateToRoundReport = (streak: Streak) => {
+  router.push({
+    path: '/servers/round-report',
+    query: {
+      serverGuid: streak.serverGuid,
+      mapName: streak.mapName,
+      startTime: streak.streakStart,
+      player: props.playerName
+    }
+  });
+};
+
 const closeStreakModal = () => {
   showStreakModal.value = false;
   selectedStreakGroup.value = null;
 };
 
-onMounted(() => {
-  fetchGamificationData();
+onMounted(async () => {
+  await Promise.all([
+    fetchGamificationData(),
+    fetchPlayerStats()
+  ]);
 });
 </script>
 
@@ -241,34 +346,39 @@ onMounted(() => {
     </div>
     
     <div v-else-if="gamificationData" class="achievements-content">
-      <!-- Best Streak Highlight -->
-      <div v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0" class="best-streak-highlight">
-        <div class="streak-icon">
-          <img 
-            :src="getAchievementImage('kill_streak_' + gamificationData.bestStreaks.bestSingleRoundStreak)" 
-            :alt="'Kill streak ' + gamificationData.bestStreaks.bestSingleRoundStreak"
-            class="streak-icon-image"
-            @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-          />
-        </div>
-        <div class="streak-info">
-          <h4>Best Kill Streak</h4>
-          <div class="streak-value">{{ gamificationData.bestStreaks.bestSingleRoundStreak }} kills</div>
-          <div class="streak-details">
-            <span class="streak-map">{{ gamificationData.bestStreaks.bestStreakMap }}</span>
-            <span class="streak-date">{{ formatRelativeTime(gamificationData.bestStreaks.bestStreakDate) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Streaks -->
-      <div v-if="gamificationData.bestStreaks.recentStreaks.length > 0" class="recent-streaks">
-        <h4>Recent Kill Streaks</h4>
+      <!-- Kill Streaks -->
+      <div v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0 || gamificationData.bestStreaks.recentStreaks.length > 0" class="recent-streaks">
+        <h4>Kill Streaks</h4>
         <div class="streaks-grid">
+          <!-- Best Streak -->
+          <div v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0" class="streak-card best-streak">
+            <div class="streak-icon-container" @click="openBestStreakModal">
+              <img 
+                :src="getAchievementImage('kill_streak_' + gamificationData.bestStreaks.bestSingleRoundStreak)" 
+                :alt="'Kill streak ' + gamificationData.bestStreaks.bestSingleRoundStreak"
+                class="streak-card-icon"
+                @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+              />
+              <div class="best-streak-badge">Best</div>
+            </div>
+            <div class="streak-meta">
+              <div class="streak-map">{{ gamificationData.bestStreaks.bestStreakMap }}</div>
+              <div class="streak-date">{{ formatRelativeTime(gamificationData.bestStreaks.bestStreakDate) }}</div>
+            </div>
+          </div>
+          
+          <!-- Recent Separator -->
+          <div v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0 && gamificationData.bestStreaks.recentStreaks.length > 0" class="recent-separator">
+            <div class="separator-line"></div>
+            <span class="separator-text">Recent</span>
+            <div class="separator-line"></div>
+          </div>
+          
+          <!-- Recent Streaks -->
           <div 
             v-for="(item, index) in combinedStreaks" 
             :key="index"
-            class="streak-card"
+            class="streak-card recent-streak"
           >
             <div class="streak-icon-container" @click="openStreakModal(item)">
               <img 
@@ -284,43 +394,91 @@ onMounted(() => {
       </div>
 
       <!-- Achievement Timeline -->
-      <div v-if="sortedDateKeys.length > 0" class="achievements-timeline">
+      <div v-if="nextMilestone || sortedDateKeys.length > 0" class="achievements-timeline">
         <h4>Achievement Timeline</h4>
-        <div class="timeline">
-          <div v-for="dateKey in sortedDateKeys" :key="dateKey" class="timeline-day">
-            <div class="date-header">
-              <h5>{{ formatDateHeader(dateKey) }}</h5>
-              <div class="achievement-count">{{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}</div>
+        <div class="achievements-single-grid">
+          <!-- Next Milestone (if available) -->
+          <div 
+            v-if="nextMilestone"
+            class="achievement-compact-card next-milestone"
+            :class="[`tier-legendary`]"
+            :style="{ boxShadow: getTierGlow('legendary') }"
+          >
+            <div class="achievement-compact-icon-container">
+              <div class="milestone-progress-wrapper">
+                <img 
+                  :src="getMilestoneImage(nextMilestone.milestone)" 
+                  :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
+                  class="achievement-compact-icon milestone-icon"
+                />
+                <!-- Progress border for next milestone -->
+                <svg
+                  class="milestone-progress-border"
+                  width="72"
+                  height="72"
+                >
+                  <circle
+                    cx="36"
+                    cy="36"
+                    r="35"
+                    fill="none"
+                    stroke="#ddd"
+                    stroke-width="2"
+                    class="progress-bg"
+                  />
+                  <circle
+                    cx="36"
+                    cy="36"
+                    r="35"
+                    fill="none"
+                    :stroke="nextMilestone.progress > 0.95 ? '#FFD700' : '#26C6DA'"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    :stroke-dasharray="2 * Math.PI * 35"
+                    :stroke-dashoffset="(1 - nextMilestone.progress) * 2 * Math.PI * 35"
+                    class="progress-bar"
+                    transform="rotate(-90 36 36)"
+                  />
+                </svg>
+              </div>
             </div>
             
-            <div class="achievements-grid">
-              <div 
-                v-for="(achievement, index) in groupedAchievements[dateKey]" 
-                :key="index"
-                class="achievement-card"
-                :class="[`tier-${achievement.tier.toLowerCase()}`, achievement.achievementType]"
-                :style="{ boxShadow: getTierGlow(achievement.tier) }"
-                @click="openAchievementModal(achievement)"
-              >
-                <div class="achievement-image-container">
-                  <img 
-                    :src="getAchievementImage(achievement.achievementId)" 
-                    :alt="achievement.achievementName"
-                    class="achievement-image"
-                    @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                  />
-                </div>
-                
-                <div class="achievement-info">
-                  <h6 class="achievement-name">{{ achievement.achievementName }}</h6>
-                  <div class="achievement-meta">
-                    <span class="achievement-type">{{ achievement.achievementType }}</span>
-                    <span v-if="achievement.value" class="achievement-value">{{ achievement.value.toLocaleString() }}</span>
-                  </div>
-                  <div class="achievement-time">{{ formatRelativeTime(achievement.achievedAt) }}</div>
-                  <div v-if="achievement.mapName" class="achievement-location">
-                    on {{ achievement.mapName }}
-                  </div>
+            <div class="achievement-compact-info next-milestone-info">
+              <div class="achievement-compact-time next-milestone-label">
+                Next: {{ nextMilestone.milestone.toLocaleString() }} Kills
+              </div>
+              <div class="achievement-compact-location next-milestone-progress">
+                {{ Math.floor(nextMilestone.progress * 100) }}% ({{ nextMilestone.killsRemaining.toLocaleString() }} to go)
+              </div>
+            </div>
+          </div>
+          
+          <!-- Regular Achievements -->
+          <div 
+            v-for="dateKey in sortedDateKeys" 
+            :key="dateKey"
+          >
+            <div 
+              v-for="(achievement, index) in groupedAchievements[dateKey]" 
+              :key="`${dateKey}-${index}`"
+              class="achievement-compact-card"
+              :class="[`tier-${achievement.tier.toLowerCase()}`, achievement.achievementType]"
+              :style="{ boxShadow: getTierGlow(achievement.tier) }"
+              @click="openAchievementModal(achievement)"
+            >
+              <div class="achievement-compact-icon-container">
+                <img 
+                  :src="getAchievementImage(achievement.achievementId)" 
+                  :alt="achievement.achievementName"
+                  class="achievement-compact-icon"
+                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                />
+              </div>
+              
+              <div class="achievement-compact-info">
+                <div class="achievement-compact-time">{{ formatRelativeTime(achievement.achievedAt) }}</div>
+                <div v-if="achievement.mapName" class="achievement-compact-location">
+                  {{ achievement.mapName }}
                 </div>
               </div>
             </div>
@@ -329,7 +487,7 @@ onMounted(() => {
       </div>
 
       <!-- No Achievements State -->
-      <div v-if="sortedDateKeys.length === 0 && !gamificationData.bestStreaks.bestSingleRoundStreak" class="no-achievements">
+      <div v-if="sortedDateKeys.length === 0 && !gamificationData.bestStreaks.bestSingleRoundStreak && !nextMilestone" class="no-achievements">
         <div class="no-achievements-icon">🏆</div>
         <h4>No Achievements Yet</h4>
         <p>Start playing to unlock achievements and build your legacy!</p>
@@ -367,8 +525,11 @@ onMounted(() => {
                 <span class="streak-detail-date">{{ formatRelativeTime(streak.streakStart) }}</span>
               </div>
               <div class="streak-detail-time">
-                {{ new Date(streak.streakStart).toLocaleString() }}
+                {{ new Date(streak.streakStart.endsWith('Z') ? streak.streakStart : streak.streakStart + 'Z').toLocaleString() }}
               </div>
+              <button class="round-report-btn" @click="navigateToRoundReport(streak)" title="View round report">
+                📊 View Round
+              </button>
             </div>
           </div>
         </div>
@@ -383,7 +544,7 @@ onMounted(() => {
             <h3 class="modal-achievement-name">{{ selectedAchievement.achievementName }}</h3>
             <div class="modal-achievement-date">
               <span class="date-label">Achieved:</span>
-              {{ new Date(selectedAchievement.achievedAt).toLocaleString() }}
+              {{ new Date(selectedAchievement.achievedAt.endsWith('Z') ? selectedAchievement.achievedAt : selectedAchievement.achievedAt + 'Z').toLocaleString() }}
               <span class="relative-time">({{ formatRelativeTime(selectedAchievement.achievedAt) }})</span>
             </div>
           </div>
@@ -461,64 +622,61 @@ onMounted(() => {
   gap: 24px;
 }
 
-.best-streak-highlight {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: linear-gradient(135deg, #FF6B35, #FF9F1C);
-  border-radius: 12px;
-  padding: 20px;
-  color: white;
-  position: relative;
-  overflow: hidden;
-}
-
-.best-streak-highlight::before {
-  content: '';
+.best-streak-badge {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="fire" patternUnits="userSpaceOnUse" width="20" height="20"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23fire)"/></svg>');
-  opacity: 0.1;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #8B4513;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(255, 215, 0, 0.4);
+  border: 2px solid var(--color-background);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.streak-icon {
-  z-index: 1;
+.best-streak {
+  border: 2px solid #FFD700;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  background: linear-gradient(135deg, var(--color-background) 0%, rgba(255, 215, 0, 0.05) 100%);
+}
+
+.recent-streak {
+  background: transparent;
+  border: none;
+  padding: 8px;
+}
+
+.recent-streak:hover {
+  border: none;
+  box-shadow: none;
+}
+
+.recent-separator {
   display: flex;
   align-items: center;
-  justify-content: center;
+  width: 100%;
+  margin: 0 16px;
+  min-width: 120px;
 }
 
-.streak-icon-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
-  object-fit: contain;
+.separator-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
 }
 
-.streak-info {
-  z-index: 1;
-}
-
-.streak-info h4 {
-  margin: 0 0 8px 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.streak-value {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-
-.streak-details {
-  display: flex;
-  gap: 16px;
-  font-size: 0.9rem;
-  opacity: 0.9;
+.separator-text {
+  margin: 0 12px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .recent-streaks h4 {
@@ -528,8 +686,8 @@ onMounted(() => {
 }
 
 .streaks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -544,6 +702,8 @@ onMounted(() => {
   flex-direction: column;
   gap: 8px;
   align-items: center;
+  width: 120px;
+  flex-shrink: 0;
 }
 
 .streak-icon-container {
@@ -610,68 +770,30 @@ onMounted(() => {
   font-size: 1.1rem;
 }
 
-.timeline {
+.achievements-single-grid {
   display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.timeline-day {
-  position: relative;
-}
-
-.timeline-day:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -16px;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
-}
-
-.date-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--color-border);
-}
-
-.date-header h5 {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--color-heading);
-}
-
-.achievement-count {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  background-color: var(--color-background);
-  padding: 4px 8px;
-  border-radius: 12px;
-}
-
-.achievements-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.achievement-card {
-  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
+}
+
+.achievement-compact-card {
   background-color: var(--color-background);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
   border: 2px solid transparent;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  width: 120px;
+  flex-shrink: 0;
   position: relative;
   overflow: hidden;
 }
 
-.achievement-card::before {
+.achievement-compact-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -683,89 +805,140 @@ onMounted(() => {
   pointer-events: none;
 }
 
-.achievement-card.tier-legendary {
+.achievement-compact-card.tier-legendary {
   --tier-color: #FF6B35;
 }
 
-.achievement-card.tier-epic {
+.achievement-compact-card.tier-epic {
   --tier-color: #9D4EDD;
 }
 
-.achievement-card.tier-rare {
+.achievement-compact-card.tier-rare {
   --tier-color: #3A86FF;
 }
 
-.achievement-card.tier-uncommon {
+.achievement-compact-card.tier-uncommon {
   --tier-color: #06FFA5;
 }
 
-.achievement-card.tier-common {
+.achievement-compact-card.tier-common {
   --tier-color: #8D99AE;
 }
 
-.achievement-card:hover {
-  transform: translateY(-2px);
+.achievement-compact-card:hover {
   border-color: var(--tier-color);
   cursor: pointer;
+  transform: translateY(-2px);
 }
 
-.achievement-image-container {
+.achievement-compact-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
-  flex-shrink: 0;
+  transition: transform 0.2s ease;
 }
 
-.achievement-image {
+.achievement-compact-icon-container:hover {
+  transform: scale(1.05);
+}
+
+.achievement-compact-icon {
   width: 64px;
   height: 64px;
-  border-radius: 8px;
-  object-fit: cover;
+  border-radius: 4px;
+  object-fit: contain;
 }
 
-
-.achievement-info {
-  flex: 1;
+.achievement-compact-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
 }
 
-.achievement-name {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-heading);
-  line-height: 1.2;
-}
-
-.achievement-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 0.8rem;
-}
-
-.achievement-type {
-  color: var(--color-text-muted);
-  text-transform: capitalize;
-}
-
-.achievement-value {
-  background-color: var(--color-background-mute);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.achievement-time {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
-.achievement-location {
+.achievement-compact-time {
   font-size: 0.75rem;
   color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.achievement-compact-location {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
   font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Next Milestone Styles */
+.next-milestone {
+  border: 3px solid #FFD700;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, var(--color-background) 50%, rgba(255, 215, 0, 0.05) 100%);
+  position: relative;
+  overflow: visible;
+}
+
+.next-milestone::before {
+  content: '🎯';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: #FFD700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+  z-index: 10;
+}
+
+.milestone-progress-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.milestone-icon {
+  filter: grayscale(0.3) brightness(1.1);
+}
+
+.milestone-progress-border {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.progress-bg {
+  opacity: 0.3;
+}
+
+.progress-bar {
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.next-milestone-info {
+  text-align: center;
+}
+
+.next-milestone-label {
+  font-weight: 700;
+  color: #FFD700;
+  font-size: 0.8rem;
+}
+
+.next-milestone-progress {
+  font-size: 0.7rem;
+  color: var(--color-text);
+  font-weight: 500;
 }
 
 .no-achievements {
@@ -800,63 +973,63 @@ onMounted(() => {
     gap: 16px;
   }
   
-  .best-streak-highlight {
-    padding: 16px;
-    gap: 12px;
-  }
-  
-  .streak-icon {
-    font-size: 2rem;
-  }
-  
-  .streak-value {
-    font-size: 1.5rem;
-  }
-  
-  .streak-details {
-    flex-direction: column;
-    gap: 4px;
-  }
-  
   .streaks-grid {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 8px;
   }
   
-  .achievements-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+  .streak-card {
+    width: 100px;
   }
   
-  .achievement-card {
+  .achievements-single-grid {
+    gap: 8px;
+  }
+  
+  .achievement-compact-card {
+    width: 100px;
     padding: 12px;
-  }
-  
-  .achievement-image {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .timeline {
-    gap: 24px;
-  }
-  
-  .date-header {
-    flex-direction: column;
     gap: 8px;
-    align-items: flex-start;
+  }
+  
+  .achievement-compact-icon {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .achievement-compact-info {
+    display: none;
+  }
+  
+  .next-milestone .achievement-compact-info {
+    display: flex;
+  }
+  
+  .milestone-progress-border {
+    width: 58px;
+    height: 58px;
+    top: -2px;
+    left: -2px;
   }
 }
 
 @media (max-width: 480px) {
-  .achievement-card {
-    flex-direction: column;
-    text-align: center;
+  .achievement-compact-card {
+    width: 100px;
+    padding: 12px;
     gap: 8px;
   }
   
-  .achievement-image-container {
-    align-self: center;
+  .achievement-compact-icon {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .achievement-compact-info {
+    display: none;
+  }
+  
+  .next-milestone .achievement-compact-info {
+    display: flex;
   }
 }
 
@@ -1063,5 +1236,28 @@ onMounted(() => {
   color: var(--color-text-muted);
   font-size: 0.8rem;
   font-style: italic;
+}
+
+.round-report-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+}
+
+.round-report-btn:hover {
+  background: var(--color-primary-dark, var(--color-primary));
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 </style>
