@@ -463,7 +463,15 @@ watch(
                   <div v-if="achievement.mapName" class="achievement-location">
                     <span v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt">
                       on <router-link 
-                        :to="`/servers/round-report?serverGuid=${encodeURIComponent(achievement.serverGuid)}&mapName=${encodeURIComponent(achievement.mapName)}&startTime=${encodeURIComponent(achievement.achievedAt)}`"
+                        :to="{
+                          path: '/servers/round-report',
+                          query: {
+                            serverGuid: achievement.serverGuid,
+                            mapName: achievement.mapName,
+                            startTime: achievement.achievedAt,
+                            players: playerName
+                          }
+                        }"
                         class="map-link"
                       >
                         {{ achievement.mapName }}
@@ -550,7 +558,15 @@ watch(
               <span class="detail-value">
                 <router-link 
                   v-if="selectedAchievement.serverGuid && selectedAchievement.mapName && selectedAchievement.achievedAt"
-                  :to="`/servers/round-report?serverGuid=${encodeURIComponent(selectedAchievement.serverGuid)}&mapName=${encodeURIComponent(selectedAchievement.mapName)}&startTime=${encodeURIComponent(selectedAchievement.achievedAt)}`"
+                  :to="{
+                    path: '/servers/round-report',
+                    query: {
+                      serverGuid: selectedAchievement.serverGuid,
+                      mapName: selectedAchievement.mapName,
+                      startTime: selectedAchievement.achievedAt,
+                      players: playerName
+                    }
+                  }"
                   class="map-link"
                 >
                   {{ selectedAchievement.mapName }}

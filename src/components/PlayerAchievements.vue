@@ -197,7 +197,8 @@ const groupedAchievements = computed(() => {
   
   const allAchievements = [
     ...gamificationData.value.milestones,
-    ...gamificationData.value.allBadges
+    ...gamificationData.value.allBadges,
+    ...gamificationData.value.recentAchievements
   ];
   
   const grouped: { [key: string]: Achievement[] } = {};
@@ -259,7 +260,8 @@ const flattenedAchievements = computed(() => {
   
   const allAchievements = [
     ...gamificationData.value.milestones,
-    ...gamificationData.value.allBadges
+    ...gamificationData.value.allBadges,
+    ...gamificationData.value.recentAchievements
   ];
   
   // Sort all achievements by date (newest first)
@@ -341,7 +343,7 @@ const navigateToRoundReport = (streak: Streak) => {
       serverGuid: streak.serverGuid,
       mapName: streak.mapName,
       startTime: streak.streakStart,
-      player: props.playerName
+      players: props.playerName
     }
   });
 };
