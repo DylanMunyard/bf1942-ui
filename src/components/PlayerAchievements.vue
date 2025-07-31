@@ -76,6 +76,7 @@ const selectedAchievement = ref<Achievement | null>(null);
 const showModal = ref(false);
 const selectedStreakGroup = ref<{ streak: Streak, count: number, allStreaks: Streak[] } | null>(null);
 const showStreakModal = ref(false);
+const showNextMilestoneModal = ref(false);
 
 // Milestone constants
 const MILESTONES = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000];
@@ -163,10 +164,12 @@ const nextMilestone = computed((): NextMilestone | null => {
   const currentKills = playerStats.value.totalKills;
   const achievedMilestones = (playerStats.value.killMilestones || []).map(m => m.milestone);
   
-  // Find the next milestone that hasn't been achieved
-  const nextMilestoneValue = MILESTONES.find(milestone => !achievedMilestones.includes(milestone));
+  // Find the next milestone that is greater than current kills and hasn't been achieved
+  const nextMilestoneValue = MILESTONES.find(milestone => 
+    milestone > currentKills && !achievedMilestones.includes(milestone)
+  );
   
-  if (!nextMilestoneValue) return null; // All milestones achieved
+  if (!nextMilestoneValue) return null; // All milestones achieved or no next milestone
   
   // Calculate progress
   const prevMilestone = [...MILESTONES].reverse().find(m => m < nextMilestoneValue) || 0;
@@ -183,7 +186,7 @@ const nextMilestone = computed((): NextMilestone | null => {
 
 const getMilestoneImage = (milestone: number): string => {
   try {
-    return new URL(`../assets/achievements/milestone_kills_${milestone}.png`, import.meta.url).href;
+    return new URL(`../assets/achievements/total_kills_${milestone}.png`, import.meta.url).href;
   } catch {
     return new URL('../assets/achievements/kill_streak_10.png', import.meta.url).href;
   }
@@ -276,9 +279,17 @@ const openAchievementModal = (achievement: Achievement) => {
   showModal.value = true;
 };
 
+const openNextMilestoneModal = () => {
+  showNextMilestoneModal.value = true;
+};
+
 const closeModal = () => {
   showModal.value = false;
   selectedAchievement.value = null;
+};
+
+const closeNextMilestoneModal = () => {
+  showNextMilestoneModal.value = false;
 };
 
 const openStreakModal = (streakGroup: { streak: Streak, count: number, allStreaks: Streak[] }) => {

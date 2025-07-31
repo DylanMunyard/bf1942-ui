@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
 interface Achievement {
@@ -17,16 +17,22 @@ interface Achievement {
   metadata: string;
 }
 
+interface PlayerAchievementLabel {
+  achievementId: string;
+  achievementType: string;
+  tier: string;
+  category: string;
+  displayName: string;
+}
+
 interface PaginatedResponse {
-  data: Achievement[];
-  pagination: {
-    currentPage: number;
-    pageSize: number;
-    totalCount: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
+  items: Achievement[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  playerInfo: any;
+  playerAchievementLabels: PlayerAchievementLabel[];
 }
 
 const props = defineProps<{
@@ -42,6 +48,13 @@ const error = ref<string | null>(null);
 const selectedAchievement = ref<Achievement | null>(null);
 const showModal = ref(false);
 
+// Filter states
+const selectedMapName = ref<string>('');
+const selectedAchievementId = ref<string>('');
+const achievementLabels = ref<PlayerAchievementLabel[]>([]);
+const availableMaps = ref<string[]>([]);
+const achievementDropdownOpen = ref(false);
+
 // Pagination state
 const currentPage = ref(1);
 const pageSize = ref(50);
@@ -54,20 +67,43 @@ const fetchAchievements = async (page: number = 1) => {
   isLoading.value = true;
   error.value = null;
   try {
-    const response = await fetch(
-      `/stats/gamification/achievements?playerName=${encodeURIComponent(props.playerName)}&page=${page}&pageSize=${pageSize.value}&sortBy=AchievedAt&sortOrder=desc`
-    );
+    const params = new URLSearchParams({
+      playerName: props.playerName,
+      page: page.toString(),
+      pageSize: pageSize.value.toString(),
+      sortBy: 'AchievedAt',
+      sortOrder: 'desc'
+    });
+    
+    if (selectedMapName.value) params.append('mapName', selectedMapName.value);
+    if (selectedAchievementId.value) params.append('achievementId', selectedAchievementId.value);
+    
+    const response = await fetch(`/stats/gamification/player/${encodeURIComponent(props.playerName)}/achievements?${params}`);
     if (!response.ok) throw new Error('Failed to fetch achievements');
     
     const data: PaginatedResponse = await response.json();
-    achievements.value = data.data;
+    achievements.value = data.items;
     
     // Update pagination info
-    currentPage.value = data.pagination.currentPage;
-    totalCount.value = data.pagination.totalCount;
-    totalPages.value = data.pagination.totalPages;
-    hasNextPage.value = data.pagination.hasNextPage;
-    hasPreviousPage.value = data.pagination.hasPreviousPage;
+    currentPage.value = data.page;
+    totalCount.value = data.totalItems;
+    totalPages.value = data.totalPages;
+    hasNextPage.value = data.page < data.totalPages;
+    hasPreviousPage.value = data.page > 1;
+    
+    // Update filter options if not already set or if no filters applied
+    if (data.playerAchievementLabels) {
+      achievementLabels.value = data.playerAchievementLabels;
+    }
+    
+    // Extract unique map names from achievements if no filters applied
+    if (!selectedMapName.value && !selectedAchievementId.value) {
+      const maps = new Set<string>();
+      data.items.forEach(achievement => {
+        if (achievement.mapName) maps.add(achievement.mapName);
+      });
+      availableMaps.value = Array.from(maps).sort();
+    }
   } catch (err: any) {
     console.error('Error fetching achievements:', err);
     error.value = err.message || 'Failed to load achievements.';
@@ -196,6 +232,36 @@ const goBack = () => {
   router.push(`/players/${encodeURIComponent(props.playerName)}`);
 };
 
+// Filter functions
+const clearFilters = () => {
+  selectedMapName.value = '';
+  selectedAchievementId.value = '';
+  achievementDropdownOpen.value = false;
+};
+
+const selectAchievement = (achievementId: string) => {
+  selectedAchievementId.value = achievementId;
+  achievementDropdownOpen.value = false;
+};
+
+const getAchievementDisplayName = (achievementId: string): string => {
+  const label = achievementLabels.value.find(l => l.achievementId === achievementId);
+  return label?.displayName || achievementId;
+};
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event: Event) => {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.achievement-select-wrapper')) {
+    achievementDropdownOpen.value = false;
+  }
+};
+
+// Watch for filter changes
+watch([selectedMapName, selectedAchievementId], () => {
+  fetchAchievements(1); // Reset to first page when filters change
+});
+
 const getPaginationRange = () => {
   const delta = 2;
   const range = [];
@@ -225,7 +291,12 @@ const getPaginationRange = () => {
 };
 
 onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
   fetchAchievements(1);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 
 // Watch for route changes to update playerName and refetch data
@@ -252,6 +323,90 @@ watch(
       <div class="page-title">
         <h1>All Achievements</h1>
         <p class="page-subtitle">{{ playerName }}'s complete achievement history</p>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <h4>Filters</h4>
+      <div class="filters-grid">
+        <!-- Map Name Filter -->
+        <div class="filter-group">
+          <label for="map-filter" class="filter-label">Map:</label>
+          <select 
+            id="map-filter"
+            v-model="selectedMapName" 
+            class="filter-select"
+          >
+            <option value="">All Maps</option>
+            <option 
+              v-for="mapName in availableMaps" 
+              :key="mapName" 
+              :value="mapName"
+            >
+              {{ mapName }}
+            </option>
+          </select>
+        </div>
+        
+        <!-- Achievement ID Filter -->
+        <div class="filter-group">
+          <label for="achievement-filter" class="filter-label">Achievement:</label>
+          <div class="achievement-select-wrapper">
+            <div 
+              class="achievement-select-dropdown" 
+              :class="{ open: achievementDropdownOpen }"
+              @click="achievementDropdownOpen = !achievementDropdownOpen"
+            >
+              <div class="selected-achievement">
+                <img 
+                  v-if="selectedAchievementId"
+                  :src="getAchievementImage(selectedAchievementId)" 
+                  :alt="getAchievementDisplayName(selectedAchievementId)"
+                  class="achievement-select-icon"
+                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                />
+                <span>{{ selectedAchievementId ? getAchievementDisplayName(selectedAchievementId) : 'All Achievements' }}</span>
+                <span class="dropdown-arrow">▼</span>
+              </div>
+              <div v-if="achievementDropdownOpen" class="achievement-options">
+                <div 
+                  class="achievement-option" 
+                  :class="{ selected: selectedAchievementId === '' }"
+                  @click.stop="selectAchievement('')"
+                >
+                  <span>All Achievements</span>
+                </div>
+                <div 
+                  v-for="label in achievementLabels" 
+                  :key="label.achievementId"
+                  class="achievement-option"
+                  :class="{ selected: selectedAchievementId === label.achievementId }"
+                  @click.stop="selectAchievement(label.achievementId)"
+                >
+                  <img 
+                    :src="getAchievementImage(label.achievementId)" 
+                    :alt="label.displayName"
+                    class="achievement-option-icon"
+                    @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                  />
+                  <span>{{ label.displayName }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Clear Filters Button -->
+        <div class="filter-group">
+          <button 
+            @click="clearFilters" 
+            class="clear-filters-btn"
+            :disabled="!selectedMapName && !selectedAchievementId"
+          >
+            Clear Filters
+          </button>
+        </div>
       </div>
     </div>
 
@@ -306,7 +461,17 @@ watch(
                   </div>
                   <div class="achievement-time">{{ formatRelativeTime(achievement.achievedAt) }}</div>
                   <div v-if="achievement.mapName" class="achievement-location">
-                    on {{ achievement.mapName }}
+                    <span v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt">
+                      on <router-link 
+                        :to="`/servers/round-report?serverGuid=${encodeURIComponent(achievement.serverGuid)}&mapName=${encodeURIComponent(achievement.mapName)}&startTime=${encodeURIComponent(achievement.achievedAt)}`"
+                        class="map-link"
+                      >
+                        {{ achievement.mapName }}
+                      </router-link>
+                    </span>
+                    <span v-else>
+                      on {{ achievement.mapName }}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -382,7 +547,16 @@ watch(
           <div class="achievement-details-grid">
             <div v-if="selectedAchievement.mapName" class="detail-item">
               <span class="detail-label">Map:</span>
-              <span class="detail-value">{{ selectedAchievement.mapName }}</span>
+              <span class="detail-value">
+                <router-link 
+                  v-if="selectedAchievement.serverGuid && selectedAchievement.mapName && selectedAchievement.achievedAt"
+                  :to="`/servers/round-report?serverGuid=${encodeURIComponent(selectedAchievement.serverGuid)}&mapName=${encodeURIComponent(selectedAchievement.mapName)}&startTime=${encodeURIComponent(selectedAchievement.achievedAt)}`"
+                  class="map-link"
+                >
+                  {{ selectedAchievement.mapName }}
+                </router-link>
+                <span v-else>{{ selectedAchievement.mapName }}</span>
+              </span>
             </div>
             
             <div v-if="selectedAchievement.serverGuid" class="detail-item">
@@ -482,6 +656,178 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+/* Filters Section Styles */
+.filters-section {
+  background-color: var(--color-background-soft);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  margin-bottom: 24px;
+}
+
+.filters-section h4 {
+  margin: 0 0 16px 0;
+  color: var(--color-heading);
+  font-size: 1rem;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.clear-filters-btn {
+  padding: 8px 16px;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filters-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-dark, var(--color-primary));
+  transform: translateY(-1px);
+}
+
+.clear-filters-btn:disabled {
+  background-color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Custom Achievement Dropdown Styles */
+.achievement-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.achievement-select-dropdown {
+  position: relative;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.achievement-select-dropdown:hover {
+  border-color: var(--color-primary);
+}
+
+.achievement-select-dropdown.open {
+  border-color: var(--color-primary);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.selected-achievement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.selected-achievement span:nth-child(2) {
+  flex: 1;
+  color: var(--color-text);
+}
+
+.dropdown-arrow {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}
+
+.achievement-select-dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.achievement-select-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  object-fit: contain;
+}
+
+.achievement-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-primary);
+  border-top: none;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.achievement-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.achievement-option:hover {
+  background-color: var(--color-background-soft);
+}
+
+.achievement-option.selected {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.achievement-option-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .pagination-info {
@@ -650,6 +996,18 @@ watch(
   font-size: 0.75rem;
   color: var(--color-text-muted);
   font-style: italic;
+}
+
+.map-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.map-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
 }
 
 .pagination-controls {
@@ -872,6 +1230,15 @@ watch(
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
+  }
+  
+  .filters-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .filter-group:last-child {
+    justify-self: start;
   }
   
   .achievements-grid {
