@@ -5,6 +5,7 @@ import { PlayerTimeStatistics, PlayerServerStats, fetchPlayerStats, fetchSimilar
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import MilestoneModal from '../components/MilestoneModal.vue';
+import PlayerAchievements from '../components/PlayerAchievements.vue';
 
 import bf1942Icon from '@/assets/bf1942.jpg';
 import fh2Icon from '@/assets/fh2.jpg';
@@ -783,6 +784,12 @@ watch(
             Session: {{ playerStats.currentServer.sessionKills }} <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> / {{ playerStats.currentServer.sessionDeaths }} <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
             (<img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }})
           </div>
+        </div>
+
+        <!-- Player Achievements section -->
+        <div class="stats-section">
+          <h3>🏆 Achievements & Streaks</h3>
+          <PlayerAchievements :player-name="playerName" />
         </div>
 
         <!-- General statistics section -->
