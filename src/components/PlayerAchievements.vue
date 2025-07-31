@@ -254,6 +254,20 @@ const sortedDateKeys = computed(() => {
   );
 });
 
+const flattenedAchievements = computed(() => {
+  if (!gamificationData.value) return [];
+  
+  const allAchievements = [
+    ...gamificationData.value.milestones,
+    ...gamificationData.value.allBadges
+  ];
+  
+  // Sort all achievements by date (newest first)
+  return allAchievements.sort((a, b) => 
+    new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime()
+  );
+});
+
 const formatDateHeader = (dateString: string): string => {
   const date = new Date(dateString);
   const today = new Date();
@@ -405,7 +419,7 @@ onMounted(async () => {
       </div>
 
       <!-- Achievement Timeline -->
-      <div v-if="nextMilestone || sortedDateKeys.length > 0" class="achievements-timeline">
+      <div v-if="nextMilestone || flattenedAchievements.length > 0" class="achievements-timeline">
         <h4>Achievement Timeline</h4>
         <div class="achievements-single-grid">
           <!-- Next Milestone (if available) -->
@@ -467,31 +481,26 @@ onMounted(async () => {
           
           <!-- Regular Achievements -->
           <div 
-            v-for="dateKey in sortedDateKeys" 
-            :key="dateKey"
+            v-for="(achievement, index) in flattenedAchievements" 
+            :key="`achievement-${index}`"
+            class="achievement-compact-card"
+            :class="[`tier-${achievement.tier.toLowerCase()}`, achievement.achievementType]"
+            :style="{ boxShadow: getTierGlow(achievement.tier) }"
+            @click="openAchievementModal(achievement)"
           >
-            <div 
-              v-for="(achievement, index) in groupedAchievements[dateKey]" 
-              :key="`${dateKey}-${index}`"
-              class="achievement-compact-card"
-              :class="[`tier-${achievement.tier.toLowerCase()}`, achievement.achievementType]"
-              :style="{ boxShadow: getTierGlow(achievement.tier) }"
-              @click="openAchievementModal(achievement)"
-            >
-              <div class="achievement-compact-icon-container">
-                <img 
-                  :src="getAchievementImage(achievement.achievementId)" 
-                  :alt="achievement.achievementName"
-                  class="achievement-compact-icon"
-                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                />
-              </div>
-              
-              <div class="achievement-compact-info">
-                <div class="achievement-compact-time">{{ formatRelativeTime(achievement.achievedAt) }}</div>
-                <div v-if="achievement.mapName" class="achievement-compact-location">
-                  {{ achievement.mapName }}
-                </div>
+            <div class="achievement-compact-icon-container">
+              <img 
+                :src="getAchievementImage(achievement.achievementId)" 
+                :alt="achievement.achievementName"
+                class="achievement-compact-icon"
+                @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+              />
+            </div>
+            
+            <div class="achievement-compact-info">
+              <div class="achievement-compact-time">{{ formatRelativeTime(achievement.achievedAt) }}</div>
+              <div v-if="achievement.mapName" class="achievement-compact-location">
+                {{ achievement.mapName }}
               </div>
             </div>
           </div>
@@ -499,7 +508,7 @@ onMounted(async () => {
       </div>
 
       <!-- No Achievements State -->
-      <div v-if="sortedDateKeys.length === 0 && !gamificationData.bestStreaks.bestSingleRoundStreak && !nextMilestone" class="no-achievements">
+      <div v-if="flattenedAchievements.length === 0 && !gamificationData.bestStreaks.bestSingleRoundStreak && !nextMilestone" class="no-achievements">
         <div class="no-achievements-icon">🏆</div>
         <h4>No Achievements Yet</h4>
         <p>Start playing to unlock achievements and build your legacy!</p>
@@ -865,6 +874,8 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .achievement-compact-card {
@@ -879,6 +890,7 @@ onMounted(async () => {
   gap: 8px;
   align-items: center;
   width: 120px;
+  min-width: 120px;
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
