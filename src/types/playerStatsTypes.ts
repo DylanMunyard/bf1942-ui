@@ -253,8 +253,8 @@ export interface SessionDetails {
 }
 
 export interface BadgeDefinition {
-  achievementId: string;
-  achievementName: string;
+  id: string;
+  name: string;
   tier: string;
   category: string;
   description: string;
@@ -262,4 +262,7 @@ export interface BadgeDefinition {
 
 export interface InitialData {
   badgeDefinitions: BadgeDefinition[];
+  categories: string[];
+  tiers: string[];
+  generatedAt: string;
 }

@@ -31,7 +31,7 @@ export function getBadgeDescription(achievementId: string): string | null {
     return null;
   }
 
-  const badge = badgeDefinitions.find(b => b.achievementId === achievementId);
+  const badge = badgeDefinitions.find(b => b.id === achievementId);
   return badge?.description || null;
 }
 
@@ -46,7 +46,7 @@ export function getBadgeDefinition(achievementId: string): BadgeDefinition | nul
     return null;
   }
 
-  return badgeDefinitions.find(b => b.achievementId === achievementId) || null;
+  return badgeDefinitions.find(b => b.id === achievementId) || null;
 }
 
 /**
