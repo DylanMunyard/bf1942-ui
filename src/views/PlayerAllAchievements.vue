@@ -457,36 +457,87 @@ watch(
         <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
       </div>
 
-      <!-- Achievement Grid -->
-      <div class="achievements-grid-container">
-        <div v-for="dateKey in sortedDateKeys" :key="dateKey" class="day-section">
-          <div class="date-header">
-            <h2>{{ formatDateHeader(dateKey) }}</h2>
-            <div class="achievement-count">{{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}</div>
+      <!-- Achievement Timeline -->
+      <div class="timeline-container">
+        <template v-for="dateKey in sortedDateKeys" :key="dateKey">
+          <!-- Date Header Timeline Item -->
+          <div class="timeline-item date-header-item">
+            <div class="timeline-node-container">
+              <div class="timeline-node date-node"></div>
+            </div>
+            <div class="date-header-content">
+              <h2>{{ formatDateHeader(dateKey) }}</h2>
+              <div class="achievement-count">{{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}</div>
+            </div>
           </div>
           
-          <div class="achievements-grid">
-            <div 
-              v-for="(group, index) in groupedAchievements[dateKey]" 
-              :key="index"
-              class="achievement-square"
-              :class="[`tier-${group.achievement.tier.toLowerCase()}`, group.achievement.achievementType]"
-              :style="{ boxShadow: getTierGlow(group.achievement.tier) }"
-              @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
-              :title="`${group.achievement.achievementName} - ${formatRelativeTime(group.achievement.achievedAt)}`"
-            >
-              <div class="achievement-image-container">
-                <img 
-                  :src="getAchievementImage(group.achievement.achievementId)" 
-                  :alt="group.achievement.achievementName"
-                  class="achievement-image"
-                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                />
-                <div v-if="group.count > 1" class="achievement-count-badge">{{ group.count }}</div>
+          <!-- Achievement Items -->
+          <div 
+            v-for="(group, index) in groupedAchievements[dateKey]" 
+            :key="index"
+            class="timeline-item achievement-item"
+          >
+            <div class="timeline-node-container">
+              <div 
+                class="timeline-node achievement-node"
+                :class="`tier-${group.achievement.tier.toLowerCase()}`"
+                :style="{ backgroundColor: getTierColor(group.achievement.tier) }"
+              ></div>
+            </div>
+            
+            <div class="achievement-timeline-content">
+              <div 
+                class="achievement-square"
+                :class="[`tier-${group.achievement.tier.toLowerCase()}`, group.achievement.achievementType]"
+                :style="{ boxShadow: getTierGlow(group.achievement.tier) }"
+                @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
+                :title="`${group.achievement.achievementName} - ${formatRelativeTime(group.achievement.achievedAt)}`"
+              >
+                <div class="achievement-image-container">
+                  <img 
+                    :src="getAchievementImage(group.achievement.achievementId)" 
+                    :alt="group.achievement.achievementName"
+                    class="achievement-image"
+                    @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                  />
+                  <div v-if="group.count > 1" class="achievement-count-badge">{{ group.count }}</div>
+                </div>
+              </div>
+              
+              <div class="achievement-details">
+                <div class="achievement-name">{{ group.achievement.achievementName }}</div>
+                <div class="achievement-meta">
+                  <span class="achievement-time">{{ formatRelativeTime(group.achievement.achievedAt) }}</span>
+                  <span v-if="group.achievement.value" class="achievement-value">{{ group.achievement.value.toLocaleString() }}</span>
+                </div>
+                <div v-if="group.achievement.mapName && group.count === 1" class="achievement-location">
+                  <span v-if="group.achievement.serverGuid && group.achievement.mapName && group.achievement.achievedAt">
+                    on <router-link 
+                      :to="{
+                        path: '/servers/round-report',
+                        query: {
+                          serverGuid: group.achievement.serverGuid,
+                          mapName: group.achievement.mapName,
+                          startTime: group.achievement.achievedAt,
+                          players: playerName
+                        }
+                      }"
+                      class="map-link"
+                    >
+                      {{ group.achievement.mapName }}
+                    </router-link>
+                  </span>
+                  <span v-else>
+                    on {{ group.achievement.mapName }}
+                  </span>
+                </div>
+                <div v-else-if="group.count > 1" class="achievement-location">
+                  Click to see all {{ group.count }} achievements
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
       </div>
 
       <!-- Pagination Controls -->
@@ -916,36 +967,99 @@ watch(
   border-radius: 8px;
 }
 
-.achievements-grid-container {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.day-section {
+/* Timeline Styles */
+.timeline-container {
   position: relative;
+  padding: 0;
+  margin: 12px 0;
 }
 
-.day-section:not(:last-child)::after {
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-item::before {
   content: '';
   position: absolute;
-  left: 0;
-  bottom: -16px;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+  left: 6px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--color-border);
+  z-index: 1;
 }
 
-.date-header {
+.timeline-item:last-child::before {
+  height: 24px;
+}
+
+.timeline-node-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
+  min-width: 16px;
+  z-index: 2;
+  align-self: flex-start;
+  margin-top: 1.8em;
+}
+
+.timeline-node {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--color-background);
+  position: relative;
+  z-index: 3;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.timeline-node:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+}
+
+.date-node {
+  background-color: var(--color-primary);
+  width: 12px;
+  height: 12px;
+  border: 3px solid var(--color-background);
+}
+
+.achievement-node {
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--color-background);
+}
+
+/* Date Header Styles */
+.date-header-item {
+  margin-bottom: 24px;
+}
+
+.date-header-item .timeline-node-container {
+  margin-top: 0.5em;
+}
+
+.date-header-content {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  padding-bottom: 8px;
   border-bottom: 2px solid var(--color-border);
 }
 
-.date-header h2 {
+.date-header-content h2 {
   margin: 0;
   font-size: 1.5rem;
   color: var(--color-heading);
@@ -959,17 +1073,26 @@ watch(
   border-radius: 16px;
 }
 
-/* Achievement Grid Styles */
-.achievements-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+/* Achievement Timeline Content */
+.achievement-item {
+  margin-bottom: 12px;
+}
+
+.achievement-item .timeline-node-container {
+  margin-top: 1em;
+}
+
+.achievement-timeline-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
 }
 
 .achievement-square {
   position: relative;
-  aspect-ratio: 1;
+  width: 60px;
+  height: 60px;
   background-color: var(--color-background-soft);
   border-radius: 12px;
   padding: 8px;
@@ -980,6 +1103,7 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .achievement-square::before {
@@ -1000,17 +1124,24 @@ watch(
   z-index: 10;
 }
 
+.achievement-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .achievement-count-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: -2px;
+  right: -2px;
   background: linear-gradient(135deg, #FF6B35, #FF9F1C);
   color: white;
   font-size: 0.6rem;
   font-weight: bold;
   padding: 1px 4px;
   border-radius: 8px;
-  min-width: 16px;
+  min-width: 14px;
   text-align: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   border: 1px solid var(--color-background);
@@ -1080,8 +1211,8 @@ watch(
   height: 100%;
   border-radius: 8px;
   object-fit: contain;
-  max-width: 60px;
-  max-height: 60px;
+  max-width: 44px;
+  max-height: 44px;
 }
 
 .achievement-image {
@@ -1098,12 +1229,35 @@ watch(
   gap: 4px;
 }
 
+.achievement-details .achievement-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  line-height: 1.2;
+}
+
 .achievement-name {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
   color: var(--color-heading);
   line-height: 1.2;
+}
+
+.achievement-details .achievement-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.achievement-details .achievement-value {
+  background-color: var(--color-background-mute);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  color: var(--color-text);
 }
 
 .achievement-meta {
@@ -1126,9 +1280,20 @@ watch(
   color: var(--color-text);
 }
 
+.achievement-details .achievement-time {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
 .achievement-time {
   font-size: 0.8rem;
   color: var(--color-text-muted);
+}
+
+.achievement-details .achievement-location {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
 }
 
 .achievement-location {
@@ -1380,19 +1545,73 @@ watch(
     justify-self: start;
   }
   
-  .achievements-grid {
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-    gap: 8px;
+  .timeline-container {
+    margin: 8px 0;
+  }
+  
+  .timeline-item {
+    margin-bottom: 12px;
+  }
+  
+  .timeline-item::before {
+    left: 5px;
+  }
+  
+  .timeline-node-container {
+    margin-right: 10px;
+    min-width: 12px;
+    margin-top: 1.5em;
+  }
+  
+  .date-header-item .timeline-node-container {
+    margin-top: 0.3em;
+  }
+  
+  .achievement-item .timeline-node-container {
+    margin-top: 0.8em;
+  }
+  
+  .timeline-node {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .date-node {
+    width: 8px;
+    height: 8px;
+    border: 2px solid var(--color-background);
   }
   
   .achievement-square {
+    width: 48px;
+    height: 48px;
     padding: 6px;
     border-radius: 8px;
   }
   
   .achievement-square .achievement-image {
-    max-width: 48px;
-    max-height: 48px;
+    max-width: 36px;
+    max-height: 36px;
+  }
+  
+  .achievement-timeline-content {
+    gap: 8px;
+  }
+  
+  .date-header-content h2 {
+    font-size: 1.2rem;
+  }
+  
+  .achievement-details .achievement-name {
+    font-size: 0.9rem;
+  }
+  
+  .achievement-details .achievement-meta {
+    font-size: 0.75rem;
+  }
+  
+  .achievement-details .achievement-location {
+    font-size: 0.7rem;
   }
   
   .achievement-card {
@@ -1517,25 +1736,47 @@ watch(
 }
 
 @media (max-width: 480px) {
-  .achievements-grid {
-    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-    gap: 6px;
-  }
-  
   .achievement-square {
+    width: 40px;
+    height: 40px;
     padding: 4px;
     border-radius: 6px;
   }
   
   .achievement-square .achievement-image {
-    max-width: 40px;
-    max-height: 40px;
+    max-width: 32px;
+    max-height: 32px;
   }
   
   .achievement-count-badge {
     font-size: 0.5rem;
     padding: 1px 3px;
     min-width: 12px;
+    top: -1px;
+    right: -1px;
+  }
+  
+  .achievement-timeline-content {
+    gap: 6px;
+  }
+  
+  .date-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .achievement-details .achievement-name {
+    font-size: 0.85rem;
+  }
+  
+  .achievement-details .achievement-meta {
+    font-size: 0.7rem;
+    gap: 6px;
+  }
+  
+  .achievement-details .achievement-location {
+    font-size: 0.65rem;
   }
 }
 </style>
