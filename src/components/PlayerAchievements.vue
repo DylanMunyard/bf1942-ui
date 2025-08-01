@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { PlayerTimeStatistics } from '@/types/playerStatsTypes';
-import { getBadgeDescription } from '@/services/badgeService';
+import { getBadgeDescription, isBadgeServiceInitialized } from '@/services/badgeService';
 
 interface Achievement {
   playerName: string;
@@ -70,6 +70,7 @@ const showModal = ref(false);
 const selectedStreakGroup = ref<{ streak: Streak, count: number, allStreaks: Streak[] } | null>(null);
 const showStreakModal = ref(false);
 const showNextMilestoneModal = ref(false);
+const badgeServiceReady = ref(isBadgeServiceInitialized());
 
 // Milestone constants
 const MILESTONES = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000];
@@ -360,11 +361,31 @@ const getAchievementTooltip = (achievement: Achievement): string => {
   return description ? `${basicInfo}\n\n${description}` : basicInfo;
 };
 
+// Computed property to get the selected achievement's badge description reactively
+const selectedAchievementDescription = computed(() => {
+  if (!selectedAchievement.value || !badgeServiceReady.value) return null;
+  return getBadgeDescription(selectedAchievement.value.achievementId);
+});
+
 onMounted(async () => {
   await Promise.all([
     fetchGamificationData(),
     fetchPlayerStats()
   ]);
+  
+  // Check if badge service is ready, and poll until it is
+  const checkBadgeService = () => {
+    if (isBadgeServiceInitialized()) {
+      badgeServiceReady.value = true;
+    } else {
+      // Poll every 100ms until badge service is ready
+      setTimeout(checkBadgeService, 100);
+    }
+  };
+  
+  if (!badgeServiceReady.value) {
+    checkBadgeService();
+  }
 });
 </script>
 
@@ -564,9 +585,9 @@ onMounted(async () => {
           </div>
 
           <!-- Badge Description -->
-          <div v-if="getBadgeDescription(selectedAchievement.achievementId)" class="achievement-description">
+          <div v-if="selectedAchievementDescription" class="achievement-description">
             <h4>Description</h4>
-            <p>{{ getBadgeDescription(selectedAchievement.achievementId) }}</p>
+            <p>{{ selectedAchievementDescription }}</p>
           </div>
           
           <div class="achievement-details-grid">
