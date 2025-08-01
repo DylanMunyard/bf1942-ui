@@ -255,6 +255,8 @@ const closeGroupModal = () => {
 
 const goToPage = (page: number) => {
   if (page >= 1 && page <= totalPages.value && page !== currentPage.value) {
+    currentPage.value = page;
+    updateQueryParams();
     fetchAchievements(page);
   }
 };
@@ -268,6 +270,8 @@ const clearFilters = () => {
   selectedMapName.value = '';
   selectedAchievementId.value = '';
   achievementDropdownOpen.value = false;
+  currentPage.value = 1; // Reset to first page when clearing filters
+  updateQueryParams();
 };
 
 const selectAchievement = (achievementId: string) => {
@@ -288,8 +292,53 @@ const handleClickOutside = (event: Event) => {
   }
 };
 
+// Initialize state from URL query parameters
+const initializeFromQuery = () => {
+  const query = route.query;
+  
+  // Set filters from query params
+  if (query.map && typeof query.map === 'string') {
+    selectedMapName.value = query.map;
+  }
+  if (query.achievement && typeof query.achievement === 'string') {
+    selectedAchievementId.value = query.achievement;
+  }
+  
+  // Set pagination from query params
+  if (query.page && typeof query.page === 'string') {
+    const pageNum = parseInt(query.page);
+    if (!isNaN(pageNum) && pageNum > 0) {
+      currentPage.value = pageNum;
+    }
+  }
+  if (query.pageSize && typeof query.pageSize === 'string') {
+    const size = parseInt(query.pageSize);
+    if (!isNaN(size) && [25, 50, 100].includes(size)) {
+      pageSize.value = size;
+    }
+  }
+};
+
+// Update URL query parameters
+const updateQueryParams = () => {
+  const query: Record<string, string> = {};
+  
+  // Add filters to query
+  if (selectedMapName.value) query.map = selectedMapName.value;
+  if (selectedAchievementId.value) query.achievement = selectedAchievementId.value;
+  
+  // Add pagination to query
+  if (currentPage.value !== 1) query.page = currentPage.value.toString();
+  if (pageSize.value !== 50) query.pageSize = pageSize.value.toString();
+  
+  // Update URL without triggering navigation
+  router.replace({ query });
+};
+
 // Watch for filter changes
 watch([selectedMapName, selectedAchievementId], () => {
+  currentPage.value = 1; // Reset to first page when filters change
+  updateQueryParams();
   fetchAchievements(1); // Reset to first page when filters change
 });
 
@@ -323,7 +372,8 @@ const getPaginationRange = () => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
-  fetchAchievements(1);
+  initializeFromQuery();
+  fetchAchievements(currentPage.value);
 });
 
 onUnmounted(() => {
