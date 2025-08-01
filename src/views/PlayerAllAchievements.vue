@@ -457,72 +457,32 @@ watch(
         <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
       </div>
 
-      <!-- Achievement Timeline -->
-      <div class="achievements-timeline">
-        <div class="timeline">
-          <div v-for="dateKey in sortedDateKeys" :key="dateKey" class="timeline-day">
-            <div class="date-header">
-              <h2>{{ formatDateHeader(dateKey) }}</h2>
-              <div class="achievement-count">{{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }} group{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}</div>
-            </div>
-            
-            <div class="timeline-achievements">
-              <div class="timeline-line"></div>
-              <div 
-                v-for="(group, index) in groupedAchievements[dateKey]" 
-                :key="index"
-                class="timeline-achievement-item"
-                @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
-              >
-                <div class="timeline-dot"></div>
-                <div 
-                  class="achievement-card timeline-card"
-                  :class="[`tier-${group.achievement.tier.toLowerCase()}`, group.achievement.achievementType]"
-                  :style="{ boxShadow: getTierGlow(group.achievement.tier) }"
-                >
-                  <div class="achievement-image-container">
-                    <img 
-                      :src="getAchievementImage(group.achievement.achievementId)" 
-                      :alt="group.achievement.achievementName"
-                      class="achievement-image"
-                      @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                    />
-                    <div v-if="group.count > 1" class="achievement-count-badge">x{{ group.count }}</div>
-                  </div>
-                  
-                  <div class="achievement-info">
-                    <h3 class="achievement-name">{{ group.achievement.achievementName }}</h3>
-                    <div class="achievement-meta">
-                      <span class="achievement-type">{{ group.achievement.achievementType }}</span>
-                      <span v-if="group.achievement.value" class="achievement-value">{{ group.achievement.value.toLocaleString() }}</span>
-                    </div>
-                    <div class="achievement-time">{{ formatRelativeTime(group.achievement.achievedAt) }}</div>
-                    <div v-if="group.achievement.mapName && group.count === 1" class="achievement-location">
-                      <span v-if="group.achievement.serverGuid && group.achievement.mapName && group.achievement.achievedAt">
-                        on <router-link 
-                          :to="{
-                            path: '/servers/round-report',
-                            query: {
-                              serverGuid: group.achievement.serverGuid,
-                              mapName: group.achievement.mapName,
-                              startTime: group.achievement.achievedAt,
-                              players: playerName
-                            }
-                          }"
-                          class="map-link"
-                        >
-                          {{ group.achievement.mapName }}
-                        </router-link>
-                      </span>
-                      <span v-else>
-                        on {{ group.achievement.mapName }}
-                      </span>
-                    </div>
-                    <div v-else-if="group.count > 1" class="achievement-location">
-                      Click to see all {{ group.count }} achievements
-                    </div>
-                  </div>
-                </div>
+      <!-- Achievement Grid -->
+      <div class="achievements-grid-container">
+        <div v-for="dateKey in sortedDateKeys" :key="dateKey" class="day-section">
+          <div class="date-header">
+            <h2>{{ formatDateHeader(dateKey) }}</h2>
+            <div class="achievement-count">{{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}</div>
+          </div>
+          
+          <div class="achievements-grid">
+            <div 
+              v-for="(group, index) in groupedAchievements[dateKey]" 
+              :key="index"
+              class="achievement-square"
+              :class="[`tier-${group.achievement.tier.toLowerCase()}`, group.achievement.achievementType]"
+              :style="{ boxShadow: getTierGlow(group.achievement.tier) }"
+              @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
+              :title="`${group.achievement.achievementName} - ${formatRelativeTime(group.achievement.achievedAt)}`"
+            >
+              <div class="achievement-image-container">
+                <img 
+                  :src="getAchievementImage(group.achievement.achievementId)" 
+                  :alt="group.achievement.achievementName"
+                  class="achievement-image"
+                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                />
+                <div v-if="group.count > 1" class="achievement-count-badge">{{ group.count }}</div>
               </div>
             </div>
           </div>
@@ -956,17 +916,17 @@ watch(
   border-radius: 8px;
 }
 
-.timeline {
+.achievements-grid-container {
   display: flex;
   flex-direction: column;
   gap: 32px;
 }
 
-.timeline-day {
+.day-section {
   position: relative;
 }
 
-.timeline-day:not(:last-child)::after {
+.day-section:not(:last-child)::after {
   content: '';
   position: absolute;
   left: 0;
@@ -999,72 +959,66 @@ watch(
   border-radius: 16px;
 }
 
-/* Timeline Styles */
-.timeline-achievements {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding-left: 32px;
+/* Achievement Grid Styles */
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
-.timeline-line {
-  position: absolute;
-  left: 15px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--color-border);
-}
-
-.timeline-achievement-item {
+.achievement-square {
   position: relative;
+  aspect-ratio: 1;
+  background-color: var(--color-background-soft);
+  border-radius: 12px;
+  padding: 8px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
   cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.timeline-dot {
+.achievement-square::before {
+  content: '';
   position: absolute;
-  left: -24px;
-  top: 24px;
-  width: 12px;
-  height: 12px;
-  background: var(--color-primary);
-  border-radius: 50%;
-  border: 3px solid var(--color-background);
-  z-index: 2;
-  transition: all 0.2s ease;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, var(--tier-color, transparent) 100%);
+  opacity: 0.1;
+  pointer-events: none;
 }
 
-.timeline-achievement-item:hover .timeline-dot {
-  background: var(--color-primary-dark, var(--color-primary));
-  transform: scale(1.2);
-}
-
-.timeline-card {
-  margin-left: 8px;
+.achievement-square:hover {
+  transform: translateY(-2px) scale(1.05);
+  border-color: var(--tier-color);
+  z-index: 10;
 }
 
 .achievement-count-badge {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -4px;
+  right: -4px;
   background: linear-gradient(135deg, #FF6B35, #FF9F1C);
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 12px;
-  min-width: 20px;
+  padding: 1px 4px;
+  border-radius: 8px;
+  min-width: 16px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  border: 2px solid var(--color-background);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-background);
+  line-height: 1.2;
 }
 
-.achievements-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-}
+/* Remove old grid styles */
+/* Replaced by new .achievements-grid above */
 
 .achievement-card {
   display: flex;
@@ -1119,6 +1073,15 @@ watch(
 .achievement-image-container {
   position: relative;
   flex-shrink: 0;
+}
+
+.achievement-square .achievement-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  object-fit: contain;
+  max-width: 60px;
+  max-height: 60px;
 }
 
 .achievement-image {
@@ -1417,22 +1380,19 @@ watch(
     justify-self: start;
   }
   
-  .timeline-achievements {
-    padding-left: 24px;
-    gap: 16px;
-  }
-  
-  .timeline-dot {
-    left: -18px;
-  }
-  
-  .timeline-card {
-    margin-left: 4px;
-  }
-  
   .achievements-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 8px;
+  }
+  
+  .achievement-square {
+    padding: 6px;
+    border-radius: 8px;
+  }
+  
+  .achievement-square .achievement-image {
+    max-width: 48px;
+    max-height: 48px;
   }
   
   .achievement-card {
@@ -1557,14 +1517,25 @@ watch(
 }
 
 @media (max-width: 480px) {
-  .achievement-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 8px;
+  .achievements-grid {
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 6px;
   }
   
-  .achievement-image-container {
-    align-self: center;
+  .achievement-square {
+    padding: 4px;
+    border-radius: 6px;
+  }
+  
+  .achievement-square .achievement-image {
+    max-width: 40px;
+    max-height: 40px;
+  }
+  
+  .achievement-count-badge {
+    font-size: 0.5rem;
+    padding: 1px 3px;
+    min-width: 12px;
   }
 }
 </style>
