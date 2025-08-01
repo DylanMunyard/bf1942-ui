@@ -7,7 +7,8 @@ import {
   SessionListItem,
   TeamKillerMetric,
   SimilarPlayer,
-  SimilarPlayersResponse
+  SimilarPlayersResponse,
+  InitialData
 } from '../types/playerStatsTypes';
 
 /**
@@ -162,4 +163,44 @@ export async function fetchSimilarPlayers(playerName: string): Promise<SimilarPl
     console.error('Error fetching similar players:', err);
     throw new Error('Failed to get similar players');
   }
+}
+
+// Cache for initial data
+let initialDataCache: InitialData | null = null;
+let initialDataCacheTimestamp: number | null = null;
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+
+/**
+ * Fetches initial application data including badge definitions
+ * This data is cached client-side as it rarely changes
+ * @returns Initial application data containing badge definitions
+ */
+export async function fetchInitialData(): Promise<InitialData> {
+  try {
+    // Check if we have valid cached data
+    const now = Date.now();
+    if (initialDataCache && initialDataCacheTimestamp && (now - initialDataCacheTimestamp) < CACHE_DURATION) {
+      return initialDataCache;
+    }
+
+    // Fetch fresh data from API
+    const response = await axios.get<InitialData>('/stats/app/initialdata');
+    
+    // Update cache
+    initialDataCache = response.data;
+    initialDataCacheTimestamp = now;
+    
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching initial data:', err);
+    throw new Error('Failed to get initial data');
+  }
+}
+
+/**
+ * Clear the initial data cache (useful for testing or force refresh)
+ */
+export function clearInitialDataCache(): void {
+  initialDataCache = null;
+  initialDataCacheTimestamp = null;
 }

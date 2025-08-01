@@ -251,3 +251,15 @@ export interface SessionDetails {
   totalPlayTimeMinutes: number;
   totalScore: number;
 }
+
+export interface BadgeDefinition {
+  achievementId: string;
+  achievementName: string;
+  tier: string;
+  category: string;
+  description: string;
+}
+
+export interface InitialData {
+  badgeDefinitions: BadgeDefinition[];
+}

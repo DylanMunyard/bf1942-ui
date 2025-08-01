@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { PlayerTimeStatistics } from '@/types/playerStatsTypes';
+import { getBadgeDescription } from '@/services/badgeService';
 
 interface Achievement {
   playerName: string;
@@ -353,6 +354,12 @@ const closeStreakModal = () => {
   selectedStreakGroup.value = null;
 };
 
+const getAchievementTooltip = (achievement: Achievement): string => {
+  const description = getBadgeDescription(achievement.achievementId);
+  const basicInfo = `${achievement.achievementName} - ${formatRelativeTime(achievement.achievedAt)}`;
+  return description ? `${basicInfo}\n\n${description}` : basicInfo;
+};
+
 onMounted(async () => {
   await Promise.all([
     fetchGamificationData(),
@@ -460,6 +467,7 @@ onMounted(async () => {
             class="achievement-compact-card"
             :class="[`tier-${achievement.tier.toLowerCase()}`, achievement.achievementType]"
             :style="{ boxShadow: getTierGlow(achievement.tier) }"
+            :title="getAchievementTooltip(achievement)"
             @click="openAchievementModal(achievement)"
           >
             <div class="achievement-compact-icon-container">
@@ -553,6 +561,12 @@ onMounted(async () => {
               :alt="selectedAchievement.achievementName"
               class="modal-achievement-image"
             />
+          </div>
+
+          <!-- Badge Description -->
+          <div v-if="getBadgeDescription(selectedAchievement.achievementId)" class="achievement-description">
+            <h4>Description</h4>
+            <p>{{ getBadgeDescription(selectedAchievement.achievementId) }}</p>
           </div>
           
           <div class="achievement-details-grid">
@@ -1203,6 +1217,29 @@ onMounted(async () => {
   color: var(--color-text);
   font-weight: 400;
   word-break: break-word;
+}
+
+/* Achievement Description Styles */
+.achievement-description {
+  padding: 16px;
+  background-color: var(--color-background-soft);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border-left: 4px solid var(--color-primary);
+}
+
+.achievement-description h4 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.achievement-description p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  line-height: 1.5;
 }
 
 /* Modal responsive */
