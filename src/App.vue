@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, provide } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import DashboardLayout from './layouts/DashboardLayout.vue';
+import { initializeBadgeDefinitions } from './services/badgeService';
 
 const router = useRouter();
 const route = useRoute();
@@ -29,7 +30,10 @@ const updateTheme = () => {
 };
 
 // Initialize dark mode from localStorage or system preference
-onMounted(() => {
+onMounted(async () => {
+  // Initialize badge definitions on app startup
+  initializeBadgeDefinitions();
+
   // Check localStorage first
   const storedDarkMode = localStorage.getItem('darkMode');
   if (storedDarkMode !== null) {

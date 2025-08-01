@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { getBadgeDescription } from '@/services/badgeService';
 
 interface Achievement {
   playerName: string;
@@ -284,6 +285,12 @@ const getAchievementDisplayName = (achievementId: string): string => {
   return label?.displayName || achievementId;
 };
 
+const getAchievementTooltip = (achievement: Achievement): string => {
+  const description = getBadgeDescription(achievement.achievementId);
+  const basicInfo = `${achievement.achievementName} - ${formatRelativeTime(achievement.achievedAt)}`;
+  return description ? `${basicInfo}\n\n${description}` : basicInfo;
+};
+
 // Close dropdown when clicking outside
 const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement;
@@ -541,7 +548,7 @@ watch(
                 :class="[`tier-${group.achievement.tier.toLowerCase()}`, group.achievement.achievementType]"
                 :style="{ boxShadow: getTierGlow(group.achievement.tier) }"
                 @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
-                :title="`${group.achievement.achievementName} - ${formatRelativeTime(group.achievement.achievedAt)}`"
+                :title="getAchievementTooltip(group.achievement)"
               >
                 <div class="achievement-image-container">
                   <img 
@@ -653,6 +660,12 @@ watch(
               class="modal-achievement-image"
             />
           </div>
+
+          <!-- Badge Description -->
+          <div v-if="getBadgeDescription(selectedAchievement.achievementId)" class="achievement-description">
+            <h4>Description</h4>
+            <p>{{ getBadgeDescription(selectedAchievement.achievementId) }}</p>
+          </div>
           
           <div class="achievement-details-grid">
             <div v-if="selectedAchievement.mapName" class="detail-item">
@@ -711,6 +724,12 @@ watch(
               :alt="selectedAchievementGroup.achievement.achievementName"
               class="modal-achievement-image"
             />
+          </div>
+
+          <!-- Badge Description -->
+          <div v-if="getBadgeDescription(selectedAchievementGroup.achievement.achievementId)" class="achievement-description">
+            <h4>Description</h4>
+            <p>{{ getBadgeDescription(selectedAchievementGroup.achievement.achievementId) }}</p>
           </div>
           
           <div class="achievement-instances-list">
@@ -1572,6 +1591,29 @@ watch(
   color: var(--color-text);
   font-weight: 400;
   word-break: break-word;
+}
+
+/* Achievement Description Styles */
+.achievement-description {
+  padding: 16px;
+  background-color: var(--color-background-soft);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border-left: 4px solid var(--color-primary);
+}
+
+.achievement-description h4 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.achievement-description p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  line-height: 1.5;
 }
 
 /* Mobile Responsive */
