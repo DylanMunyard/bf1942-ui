@@ -255,19 +255,13 @@ const sortedDateKeys = computed(() => {
 const flattenedAchievements = computed(() => {
   if (!gamificationData.value) return [];
   
+  // Show both milestones and all badges in the Achievement Timeline
   const allAchievements = [
     ...gamificationData.value.milestones,
-    ...gamificationData.value.allBadges,
-    ...gamificationData.value.recentAchievements
+    ...gamificationData.value.allBadges
   ];
   
-  // Filter out kill streaks from Achievement Timeline - only show milestones
-  const filteredAchievements = allAchievements.filter(achievement => 
-    !achievement.achievementId.includes('kill_streak')
-  );
-  
-  // Sort all achievements by date (newest first)
-  return filteredAchievements.sort((a, b) => 
+  return allAchievements.sort((a, b) => 
     new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime()
   );
 });
