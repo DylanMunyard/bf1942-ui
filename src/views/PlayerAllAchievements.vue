@@ -291,6 +291,39 @@ const getAchievementTooltip = (achievement: Achievement): string => {
   return description ? `${basicInfo}\n\n${description}` : basicInfo;
 };
 
+// Timeline helper function
+const getTimeGap = (currentAchievement: Achievement, nextAchievement: Achievement): string => {
+  const current = new Date(currentAchievement.achievedAt.endsWith('Z') ? currentAchievement.achievedAt : currentAchievement.achievedAt + 'Z');
+  const next = new Date(nextAchievement.achievedAt.endsWith('Z') ? nextAchievement.achievedAt : nextAchievement.achievedAt + 'Z');
+  
+  const diffMs = current.getTime() - next.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffDays >= 1) {
+    return diffDays === 1 ? '1 day later' : `${diffDays} days later`;
+  } else if (diffHours >= 2) {
+    return `${diffHours} hours later`;
+  }
+  
+  return ''; // Don't show gap for achievements close together
+};
+
+// Function to navigate to round report
+const navigateToRoundReport = (achievement: Achievement) => {
+  if (achievement.serverGuid && achievement.mapName && achievement.achievedAt) {
+    router.push({
+      path: '/servers/round-report',
+      query: {
+        serverGuid: achievement.serverGuid,
+        mapName: achievement.mapName,
+        startTime: achievement.achievedAt,
+        players: props.playerName
+      }
+    });
+  }
+};
+
 // Close dropdown when clicking outside
 const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement;
@@ -722,37 +755,49 @@ watch(
             <p>{{ getBadgeDescription(selectedAchievementGroup.achievement.achievementId) }}</p>
           </div>
           
-          <div class="achievement-instances-list">
-            <div 
-              v-for="(achievement, index) in selectedAchievementGroup.allAchievements.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())" 
-              :key="index" 
-              class="achievement-instance-item"
-            >
-              <div class="achievement-instance-header">
-                <span v-if="achievement.mapName" class="achievement-instance-map">{{ achievement.mapName }}</span>
-                <span class="achievement-instance-date">{{ formatRelativeTime(achievement.achievedAt) }}</span>
-              </div>
-              <div class="achievement-instance-time">
-                {{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleString() }}
-              </div>
-              <div v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt">
-                <router-link 
-                  :to="{
-                    path: '/servers/round-report',
-                    query: {
-                      serverGuid: achievement.serverGuid,
-                      mapName: achievement.mapName,
-                      startTime: achievement.achievedAt,
-                      players: playerName
-                    }
-                  }"
-                  class="round-report-btn"
+          <div class="timeline-container">
+            <template v-for="(achievement, index) in selectedAchievementGroup.allAchievements.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())" :key="index">
+              <!-- Achievement timeline item -->
+              <div class="timeline-item">
+                <!-- Timeline node -->
+                <div class="timeline-node-container">
+                  <div class="timeline-node achievement-node"></div>
+                </div>
+                
+                <!-- Achievement card -->
+                <div 
+                  v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt"
+                  class="achievement-card" 
+                  @click="navigateToRoundReport(achievement)" 
                   title="View round report"
                 >
-                  📊 View Round
-                </router-link>
+                  <div class="achievement-line-1">
+                    <span class="achievement-time-text">{{ formatRelativeTime(achievement.achievedAt) }}</span>
+                    <span class="achievement-separator">-</span>
+                    <div v-if="achievement.mapName" class="achievement-map-container">
+                      <span class="achievement-map">{{ achievement.mapName }}</span>
+                      <span class="achievement-detail-time">
+                        {{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleString() }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+
+              <!-- Time gap as a separate timeline item -->
+              <div 
+                v-if="index < selectedAchievementGroup.allAchievements.length - 1 && getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1])" 
+                class="timeline-gap-item"
+              >
+                <div class="time-gap-separator">
+                  <div class="time-gap-line"></div>
+                  <div class="time-gap-badge">
+                    {{ getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1]) }}
+                  </div>
+                  <div class="time-gap-line"></div>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -1908,6 +1953,262 @@ watch(
   
   .achievement-details .achievement-location {
     font-size: 0.65rem;
+  }
+}
+
+/* Timeline Styles for Achievement Group Modal */
+.timeline-container {
+  position: relative;
+  padding: 0;
+  margin: 12px 0;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--color-border);
+  z-index: 1;
+}
+
+.timeline-node-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
+  min-width: 16px;
+  z-index: 2;
+  align-self: flex-start;
+  margin-top: 1.8em;
+}
+
+.timeline-node {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--color-background);
+  position: relative;
+  z-index: 3;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.timeline-node:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+}
+
+.achievement-node {
+  background-color: #9C27B0;
+  border-color: #7B1FA2;
+}
+
+.achievement-card {
+  flex: 1;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+  border-radius: 4px;
+  padding: 8px;
+  border: 1px solid transparent;
+}
+
+.achievement-card:hover {
+  background-color: var(--color-background-soft);
+  border-color: var(--color-border);
+}
+
+.timeline-item:hover::before {
+  background: var(--color-primary);
+}
+
+.achievement-line-1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+
+.achievement-time-text {
+  color: var(--color-text-muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.achievement-separator {
+  color: var(--color-text-muted);
+  font-weight: normal;
+  margin: 0 4px;
+}
+
+.achievement-map {
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: normal;
+  transition: color 0.2s;
+}
+
+.achievement-map:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.achievement-map-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.achievement-map {
+  font-weight: 500;
+  color: var(--color-text);
+  margin-right: 4px;
+  font-size: 0.9rem;
+}
+
+.achievement-detail-time {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.achievement-line-2 {
+  margin-bottom: 3px;
+}
+
+.achievement-line-3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.timeline-gap-item {
+  position: relative;
+  padding: 8px 0;
+  margin-left: 28px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.time-gap-separator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.time-gap-line {
+  flex: 1;
+  height: 2px;
+  min-width: 40px;
+  max-width: 100px;
+  background-image: repeating-linear-gradient(-45deg,
+    var(--color-border) 0px,
+    var(--color-border) 4px,
+    transparent 4px,
+    transparent 8px);
+  background-size: 8px 2px;
+}
+
+.time-gap-badge {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  background-color: var(--color-background);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  font-style: italic;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Mobile responsive styles for timeline */
+@media (max-width: 768px) {
+  .timeline-container {
+    margin: 8px 0;
+  }
+  
+  .timeline-item {
+    margin-bottom: 12px;
+  }
+  
+  .timeline-item::before {
+    left: 5px;
+  }
+  
+  .timeline-node-container {
+    margin-right: 10px;
+    min-width: 12px;
+    margin-top: 1.5em;
+  }
+  
+  .timeline-node {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .achievement-card {
+    padding: 4px 6px;
+  }
+  
+  .achievement-line-1 .achievement-time-link,
+  .achievement-line-1 .achievement-map {
+    font-size: 0.85rem;
+  }
+  
+  .achievement-detail-time {
+    font-size: 0.8rem;
+  }
+  
+  .achievement-line-3 {
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+  
+  .timeline-gap-item {
+    margin-left: 24px;
+    padding: 6px 0;
+    margin-bottom: 12px;
+  }
+  
+  .time-gap-separator {
+    min-width: 160px;
+    max-width: 300px;
+  }
+  
+  .time-gap-line {
+    min-width: 30px;
+    max-width: 80px;
+    height: 1px;
+  }
+  
+  .time-gap-badge {
+    font-size: 0.75rem;
+    padding: 1px 6px;
   }
 }
 </style>

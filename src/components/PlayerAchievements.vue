@@ -300,6 +300,24 @@ const closeModal = () => {
   selectedAchievement.value = null;
 };
 
+// Timeline helper function
+const getTimeGap = (currentStreak: Streak, nextStreak: Streak): string => {
+  const current = new Date(currentStreak.streakStart.endsWith('Z') ? currentStreak.streakStart : currentStreak.streakStart + 'Z');
+  const next = new Date(nextStreak.streakStart.endsWith('Z') ? nextStreak.streakStart : nextStreak.streakStart + 'Z');
+  
+  const diffMs = current.getTime() - next.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffDays >= 1) {
+    return diffDays === 1 ? '1 day later' : `${diffDays} days later`;
+  } else if (diffHours >= 2) {
+    return `${diffHours} hours later`;
+  }
+  
+  return ''; // Don't show gap for streaks close together
+};
+
 const closeNextMilestoneModal = () => {
   showNextMilestoneModal.value = false;
 };
@@ -534,21 +552,44 @@ onMounted(async () => {
             />
           </div>
           
-          <div class="streak-details-list">
-            <div v-for="(streak, index) in selectedStreakGroup.allStreaks.sort((a, b) => new Date(b.streakStart).getTime() - new Date(a.streakStart).getTime())" 
-                 :key="index" 
-                 class="streak-detail-item">
-              <div class="streak-detail-header">
-                <span class="streak-detail-map">{{ streak.mapName }}</span>
-                <span class="streak-detail-date">{{ formatRelativeTime(streak.streakStart) }}</span>
+          <div class="timeline-container">
+            <template v-for="(streak, index) in selectedStreakGroup.allStreaks.sort((a, b) => new Date(b.streakStart).getTime() - new Date(a.streakStart).getTime())" :key="index">
+              <!-- Streak timeline item -->
+              <div class="timeline-item">
+                <!-- Timeline node -->
+                <div class="timeline-node-container">
+                  <div class="timeline-node streak-node"></div>
+                </div>
+                
+                <!-- Streak card -->
+                <div class="streak-card" @click="navigateToRoundReport(streak)" title="View round report">
+                  <div class="streak-line-1">
+                    <span class="streak-time-text">{{ formatRelativeTime(streak.streakStart) }}</span>
+                    <span class="streak-separator">-</span>
+                    <div class="streak-map-container">
+                      <span class="streak-map">{{ streak.mapName }}</span>
+                      <span class="streak-detail-time">
+                        {{ new Date(streak.streakStart.endsWith('Z') ? streak.streakStart : streak.streakStart + 'Z').toLocaleString() }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="streak-detail-time">
-                {{ new Date(streak.streakStart.endsWith('Z') ? streak.streakStart : streak.streakStart + 'Z').toLocaleString() }}
+
+              <!-- Time gap as a separate timeline item -->
+              <div 
+                v-if="index < selectedStreakGroup.allStreaks.length - 1 && getTimeGap(streak, selectedStreakGroup.allStreaks[index + 1])" 
+                class="timeline-gap-item"
+              >
+                <div class="time-gap-separator">
+                  <div class="time-gap-line"></div>
+                  <div class="time-gap-badge">
+                    {{ getTimeGap(streak, selectedStreakGroup.allStreaks[index + 1]) }}
+                  </div>
+                  <div class="time-gap-line"></div>
+                </div>
               </div>
-              <button class="round-report-btn" @click="navigateToRoundReport(streak)" title="View round report">
-                📊 View Round
-              </button>
-            </div>
+            </template>
           </div>
         </div>
       </div>
@@ -1372,5 +1413,255 @@ onMounted(async () => {
 
 .detail-item.full-width {
   grid-column: 1 / -1;
+}
+
+/* Timeline Styles for Streak Modal - Only apply within modal context */
+.modal-content .timeline-container {
+  position: relative;
+  padding: 0;
+  margin: 12px 0;
+}
+
+.modal-content .timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.modal-content .timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.modal-content .timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--color-border);
+  z-index: 1;
+}
+
+.modal-content .timeline-node-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
+  min-width: 16px;
+  z-index: 2;
+  align-self: flex-start;
+  margin-top: 1.8em;
+}
+
+.modal-content .timeline-node {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--color-background);
+  position: relative;
+  z-index: 3;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.modal-content .timeline-node:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
+}
+
+.modal-content .streak-node {
+  background-color: #FF9800;
+  border-color: #E65100;
+}
+
+.modal-content .streak-card {
+  flex: 1;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+  border-radius: 4px;
+  padding: 8px;
+  border: 1px solid transparent;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.modal-content .streak-card:hover {
+  background-color: var(--color-background-soft);
+  border-color: var(--color-border);
+}
+
+.modal-content .timeline-item:hover::before {
+  background: var(--color-primary);
+}
+
+.modal-content .streak-line-1 {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.modal-content .streak-time-text {
+  color: var(--color-text-muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.modal-content .streak-separator {
+  color: var(--color-text-muted);
+  font-weight: normal;
+  margin: 0 4px;
+}
+
+.modal-content .streak-map-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.modal-content .streak-map {
+  font-weight: 500;
+  color: var(--color-text);
+  margin-right: 4px;
+  font-size: 0.9rem;
+}
+
+.modal-content .streak-detail-time {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.modal-content .streak-line-2 {
+  margin-bottom: 3px;
+}
+
+.modal-content .streak-line-3 {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  justify-content: flex-start;
+}
+
+.modal-content .timeline-gap-item {
+  position: relative;
+  padding: 8px 0;
+  margin-left: 28px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.modal-content .time-gap-separator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.modal-content .time-gap-line {
+  flex: 1;
+  height: 2px;
+  min-width: 40px;
+  max-width: 100px;
+  background-image: repeating-linear-gradient(-45deg,
+    var(--color-border) 0px,
+    var(--color-border) 4px,
+    transparent 4px,
+    transparent 8px);
+  background-size: 8px 2px;
+}
+
+.modal-content .time-gap-badge {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  background-color: var(--color-background);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  font-style: italic;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Mobile responsive styles for timeline - Only apply within modal context */
+@media (max-width: 768px) {
+  .modal-content .timeline-container {
+    margin: 8px 0;
+  }
+  
+  .modal-content .timeline-item {
+    margin-bottom: 12px;
+  }
+  
+  .modal-content .timeline-item::before {
+    left: 5px;
+  }
+  
+  .modal-content .timeline-node-container {
+    margin-right: 10px;
+    min-width: 12px;
+    margin-top: 1.5em;
+  }
+  
+  .modal-content .timeline-node {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .modal-content .streak-card {
+    padding: 4px 6px;
+  }
+  
+  .modal-content .streak-line-1 .streak-time-link,
+  .modal-content .streak-line-1 .streak-map {
+    font-size: 0.85rem;
+  }
+  
+  .modal-content .streak-detail-time {
+    font-size: 0.8rem;
+  }
+  
+  .modal-content .streak-line-3 {
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+  
+  .modal-content .timeline-gap-item {
+    margin-left: 24px;
+    padding: 6px 0;
+    margin-bottom: 12px;
+  }
+  
+  .modal-content .time-gap-separator {
+    min-width: 160px;
+    max-width: 300px;
+  }
+  
+  .modal-content .time-gap-line {
+    min-width: 30px;
+    max-width: 80px;
+    height: 1px;
+  }
+  
+  .modal-content .time-gap-badge {
+    font-size: 0.75rem;
+    padding: 1px 6px;
+  }
 }
 </style>
