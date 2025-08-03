@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { ServerDetails } from '../services/serverDetailsService';
-import { formatDate } from '../utils/date';
-import PlayerName from './PlayerName.vue';
+import PlayerLeaderboard from './PlayerLeaderboard.vue';
 
 const props = defineProps<{
   serverDetails: ServerDetails | null;
@@ -13,19 +12,6 @@ const selectedTimePeriod = ref<'week' | 'month'>('week');
 
 const toggleTimePeriod = (period: 'week' | 'month') => {
   selectedTimePeriod.value = period;
-};
-
-const formatPlayTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-
-  if (hours === 0) {
-    return `${remainingMinutes}m`;
-  } else if (remainingMinutes === 0) {
-    return `${hours}h`;
-  } else {
-    return `${hours}h ${remainingMinutes}m`;
-  }
 };
 
 const currentMostActivePlayers = computed(() => {
@@ -72,28 +58,18 @@ const currentTopScores = computed(() => {
       
       <!-- All Players -->
       <div class="leaderboard-table-container" v-if="currentMostActivePlayers.length > 0">
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>Time Played</th>
-              <th>Player</th>
-              <th>Kills</th>
-              <th>Deaths</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="player in currentMostActivePlayers" :key="player.playerName">
-              <td>{{ formatPlayTime(player.minutesPlayed) }}</td>
-              <td>
-                <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
-                  <PlayerName :name="player.playerName" />
-                </router-link>
-              </td>
-              <td class="kills">{{ player.totalKills.toLocaleString() }}</td>
-              <td class="deaths">{{ player.totalDeaths.toLocaleString() }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <PlayerLeaderboard 
+          :players="currentMostActivePlayers.map(player => ({
+            name: player.playerName,
+            score: player.minutesPlayed,
+            kills: player.totalKills,
+            deaths: player.totalDeaths,
+            ping: 0, // Not available in this data
+            team: 0, // Not available in this data
+            teamLabel: 'All Players'
+          }))"
+          source="server-leaderboards"
+        />
       </div>
     </div>
 
@@ -132,46 +108,18 @@ const currentTopScores = computed(() => {
       
       <!-- All Scores -->
       <div class="leaderboard-table-container" v-if="currentTopScores.length > 0">
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>Score</th>
-              <th>Player</th>
-              <th>K/D</th>
-              <th>Map</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="score in currentTopScores" :key="score.timestamp + score.playerName">
-              <td class="score-link">
-                <router-link
-                  :to="{
-                    path: '/servers/round-report',
-                    query: {
-                      serverGuid: serverDetails.serverGuid,
-                      mapName: score.mapName,
-                      startTime: score.timestamp,
-                      players: score.playerName
-                    }
-                  }"
-                >
-                  {{ score.score.toLocaleString() }}
-                </router-link>
-              </td>
-              <td>
-                <router-link :to="`/players/${encodeURIComponent(score.playerName)}`" class="player-link">
-                  <PlayerName :name="score.playerName" />
-                </router-link>
-              </td>
-              <td>
-                <span class="kills">{{ score.kills }}</span>/<span class="deaths">{{ score.deaths }}</span>
-              </td>
-              <td>{{ score.mapName }}</td>
-              <td>{{ formatDate(score.timestamp) }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <PlayerLeaderboard 
+          :players="currentTopScores.map(score => ({
+            name: score.playerName,
+            score: score.score,
+            kills: score.kills,
+            deaths: score.deaths,
+            ping: 0, // Not available in this data
+            team: 0, // Not available in this data
+            teamLabel: 'All Players'
+          }))"
+          source="server-leaderboards"
+        />
       </div>
     </div>
   </div>
