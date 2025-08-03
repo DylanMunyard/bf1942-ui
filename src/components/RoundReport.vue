@@ -5,6 +5,7 @@ import { fetchRoundReport, fetchLiveServerData, RoundReport, LeaderboardSnapshot
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import PlayerName from './PlayerName.vue';
+import PlayerLeaderboard from './PlayerLeaderboard.vue';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -814,199 +815,23 @@ const goBack = () => {
             </div>
           </div>
           
-          <!-- Mobile Team Tabs -->
-          <div class="mobile-team-tabs">
-            <div class="tab-buttons">
-              <button 
-                v-for="(team, index) in teamGroups" 
-                :key="team.teamName"
-                class="tab-button"
-                :class="{ 'active': selectedTeamTab === index }"
-                @click="selectedTeamTab = index"
-              >
-                <span class="team-icon">🛡️</span>
-                {{ team.teamName }}
-                <span class="team-score-badge">{{ team.totalScore.toLocaleString() }}</span>
-              </button>
-            </div>
-            <div class="tab-content">
-              <div 
-                v-for="(team, index) in teamGroups" 
-                :key="team.teamName"
-                v-show="selectedTeamTab === index"
-                class="team-column mobile-tab-panel"
-                :class="`team-${team.teamName.toLowerCase()}`"
-              >
-                <!-- Team Header -->
-                <div class="team-header">
-                  <div class="team-name">
-                    <span class="team-icon">🛡️</span>
-                    {{ team.teamName }}
-                  </div>
-                  <div class="team-stats">
-                    <div class="team-stat">
-                      <span class="stat-label">Score</span>
-                      <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
-                    </div>
-                    <div class="team-stat">
-                      <span class="stat-label"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></span>
-                      <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Team Players -->
-                <div class="team-players">
-                  <div class="players-header">
-                    <div class="header-rank">#</div>
-                    <div class="header-player">Player</div>
-                    <div class="header-score">Score</div>
-                    <div class="header-kd"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></div>
-                    <div class="header-ping">Ping</div>
-                  </div>
-                  
-                  <div class="players-list">
-                    <div
-                      v-for="player in team.players"
-                      :key="player.playerName"
-                      class="player-row"
-                      :class="{
-                        'top-player': player.rank === 1,
-                        'pinned-player-row': pinnedPlayers.has(player.playerName)
-                      }"
-                    >
-                      <div class="player-rank">
-                        <span v-if="player.rank === 1" class="rank-medal">🥇</span>
-                        <span v-else-if="player.rank === 2" class="rank-medal">🥈</span>
-                        <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
-                        <span v-else class="rank-number">{{ player.rank }}</span>
-                      </div>
-                      <div class="player-name">
-                        <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
-                          <PlayerName :name="player.playerName" source="round-report" :server-guid="props.serverGuid" />
-                        </router-link>
-                        <button
-                          class="pin-player-btn"
-                          :title="pinnedPlayers.has(player.playerName) ? 'Unpin & remove from chart' : 'Pin to top & show in chart'"
-                          @click.stop="togglePlayerPin(player.playerName)"
-                        >
-                          <span v-if="pinnedPlayers.has(player.playerName)">📌</span>
-                          <span v-else>📍</span>
-                        </button>
-                        <span v-if="pinnedPlayers.has(player.playerName)" class="pinned-badge">Pinned</span>
-                      </div>
-                      <div class="player-score">{{ player.score.toLocaleString() }}</div>
-                      <div class="player-kd">
-                        <div class="kd-section">
-                          <span class="kd-label"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></span>
-                          <span class="kd-values">
-                            <span class="kills">{{ player.kills }}</span>
-                            <span class="separator">/</span>
-                            <span class="deaths">{{ player.deaths }}</span>
-                          </span>
-                        </div>
-                        <div class="ping-section">
-                          <span class="ping-label">Ping:</span>
-                          <span class="player-ping" :class="{ 
-                            'ping-good': player.ping < 50, 
-                            'ping-ok': player.ping >= 50 && player.ping < 100,
-                            'ping-bad': player.ping >= 100
-                          }">
-                            {{ player.ping }}ms
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Desktop Teams Grid -->
-          <div class="teams-container">
-            <div 
-              v-for="team in teamGroups" 
-              :key="team.teamName"
-              class="team-column"
-              :class="`team-${team.teamName.toLowerCase()}`"
-            >
-              <!-- Team Header -->
-              <div class="team-header">
-                <div class="team-name">
-                  <span class="team-icon">🛡️</span>
-                  {{ team.teamName }}
-                </div>
-                <div class="team-stats">
-                  <div class="team-stat">
-                    <span class="stat-label">Score</span>
-                    <span class="stat-value">{{ team.totalScore.toLocaleString() }}</span>
-                  </div>
-                  <div class="team-stat">
-                    <span class="stat-label"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></span>
-                    <span class="stat-value">{{ calculateKDR(team.totalKills, team.totalDeaths) }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Team Players -->
-              <div class="team-players">
-                <div class="players-header">
-                  <div class="header-rank">#</div>
-                  <div class="header-player">Player</div>
-                  <div class="header-score">Score</div>
-                  <div class="header-kd"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /></div>
-                  <div class="header-ping">Ping</div>
-                </div>
-                
-                <div class="players-list">
-                  <div
-                    v-for="player in team.players"
-                    :key="player.playerName"
-                    class="player-row"
-                    :class="{
-                      'top-player': player.rank === 1,
-                      'pinned-player-row': pinnedPlayers.has(player.playerName)
-                    }"
-                  >
-                    <div class="player-rank">
-                      <span v-if="player.rank === 1" class="rank-medal">🥇</span>
-                      <span v-else-if="player.rank === 2" class="rank-medal">🥈</span>
-                      <span v-else-if="player.rank === 3" class="rank-medal">🥉</span>
-                      <span v-else class="rank-number">{{ player.rank }}</span>
-                    </div>
-                    <div class="player-name">
-                      <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
-                        <PlayerName :name="player.playerName" source="round-report" :server-guid="props.serverGuid" />
-                      </router-link>
-                      <button
-                        class="pin-player-btn"
-                        :title="pinnedPlayers.has(player.playerName) ? 'Unpin & remove from chart' : 'Pin to top & show in chart'"
-                        @click.stop="togglePlayerPin(player.playerName)"
-                      >
-                        <span v-if="pinnedPlayers.has(player.playerName)">📌</span>
-                        <span v-else>📍</span>
-                      </button>
-                      <span v-if="pinnedPlayers.has(player.playerName)" class="pinned-badge">Pinned</span>
-                    </div>
-                    <div class="player-score">{{ player.score.toLocaleString() }}</div>
-                    <div class="player-kd">
-                      <span class="kills">{{ player.kills }}</span>
-                      <span class="separator">/</span>
-                      <span class="deaths">{{ player.deaths }}</span>
-                    </div>
-                    <div class="player-ping" :class="{
-                      'ping-good': player.ping < 50,
-                      'ping-ok': player.ping >= 50 && player.ping < 100,
-                      'ping-bad': player.ping >= 100
-                    }">
-                      {{ player.ping }}ms
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Shared Player Leaderboard -->
+          <PlayerLeaderboard 
+            :players="currentSnapshot.entries.map(entry => ({
+              name: entry.playerName,
+              score: entry.score,
+              kills: entry.kills,
+              deaths: entry.deaths,
+              ping: entry.ping,
+              team: 0, // Default team value since LeaderboardEntry doesn't have team
+              teamLabel: entry.teamLabel
+            }))"
+            :pinned-players="pinnedPlayers"
+            source="round-report"
+            :server-guid="props.serverGuid"
+            :show-pin-buttons="true"
+            :on-pin-toggle="togglePlayerPin"
+          />
         </div>
       </div>
       <div v-else class="no-data-container">
