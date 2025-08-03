@@ -62,7 +62,7 @@ const props = defineProps<{
 const router = useRouter();
 
 const gamificationData = ref<GamificationData | null>(null);
-const playerStats = ref<PlayerTimeStatistics | null>(null);
+const playerStatsData = ref<PlayerTimeStatistics | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const selectedAchievement = ref<Achievement | null>(null);
@@ -93,14 +93,14 @@ const fetchGamificationData = async () => {
 const fetchPlayerStats = async () => {
   // If player stats are passed as a prop, use them instead of fetching
   if (props.playerStats) {
-    playerStats.value = props.playerStats;
+    playerStatsData.value = props.playerStats;
     return;
   }
   
   try {
     const response = await fetch(`/stats/players/${encodeURIComponent(props.playerName)}`);
     if (!response.ok) throw new Error('Failed to fetch player stats');
-    playerStats.value = await response.json();
+    playerStatsData.value = await response.json();
   } catch (err: any) {
     console.error('Error fetching player stats:', err);
   }
@@ -159,9 +159,9 @@ const getTierGlow = (tier: string): string => {
 
 // Calculate next milestone
 const nextMilestone = computed((): NextMilestone | null => {
-  if (!playerStats.value) return null;
+  if (!playerStatsData.value) return null;
   
-  const currentKills = playerStats.value.totalKills;
+  const currentKills = playerStatsData.value.totalKills;
   
   // Find the next milestone that is greater than current kills
   const nextMilestoneValue = MILESTONES.find(milestone => milestone > currentKills);
@@ -189,7 +189,7 @@ const getMilestoneImage = (milestone: number): string => {
   }
 };
 
-const groupedAchievements = computed(() => {
+const _groupedAchievements = computed(() => {
   if (!gamificationData.value) return {};
   
   const allAchievements = [
@@ -246,11 +246,6 @@ const combinedStreaks = computed(() => {
     .slice(0, 6);
 });
 
-const sortedDateKeys = computed(() => {
-  return Object.keys(groupedAchievements.value).sort((a, b) => 
-    new Date(b).getTime() - new Date(a).getTime()
-  );
-});
 
 const flattenedAchievements = computed(() => {
   if (!gamificationData.value) return [];
@@ -266,25 +261,6 @@ const flattenedAchievements = computed(() => {
   );
 });
 
-const formatDateHeader = (dateString: string): string => {
-  const date = new Date(dateString);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  
-  if (date.toDateString() === today.toDateString()) {
-    return 'Today';
-  } else if (date.toDateString() === yesterday.toDateString()) {
-    return 'Yesterday';
-  } else {
-    return date.toLocaleDateString(undefined, { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  }
-};
 
 const openAchievementModal = (achievement: Achievement) => {
   selectedAchievement.value = achievement;
@@ -411,42 +387,71 @@ onMounted(async () => {
 
 <template>
   <div class="player-achievements">
-    <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
+    <div
+      v-if="isLoading"
+      class="loading-container"
+    >
+      <div class="loading-spinner" />
       <p>Loading achievements...</p>
     </div>
     
-    <div v-else-if="error" class="error-container">
-      <p class="error-message">{{ error }}</p>
+    <div
+      v-else-if="error"
+      class="error-container"
+    >
+      <p class="error-message">
+        {{ error }}
+      </p>
     </div>
     
-    <div v-else-if="gamificationData" class="achievements-content">
+    <div
+      v-else-if="gamificationData"
+      class="achievements-content"
+    >
       <!-- Kill Streaks -->
-      <div v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0 || gamificationData.bestStreaks.recentStreaks.length > 0" class="recent-streaks">
+      <div
+        v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0 || gamificationData.bestStreaks.recentStreaks.length > 0"
+        class="recent-streaks"
+      >
         <h4>Kill Streaks</h4>
         <div class="streaks-grid">
           <!-- Best Streak -->
-          <div v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0" class="streak-card best-streak">
-            <div class="streak-icon-container" @click="openBestStreakModal">
+          <div
+            v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0"
+            class="streak-card best-streak"
+          >
+            <div
+              class="streak-icon-container"
+              @click="openBestStreakModal"
+            >
               <img 
                 :src="getAchievementImage('kill_streak_' + gamificationData.bestStreaks.bestSingleRoundStreak)" 
                 :alt="'Kill streak ' + gamificationData.bestStreaks.bestSingleRoundStreak"
                 class="streak-card-icon"
                 @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-              />
-              <div class="best-streak-badge">Best</div>
+              >
+              <div class="best-streak-badge">
+                Best
+              </div>
             </div>
             <div class="streak-meta">
-              <div class="streak-map">{{ gamificationData.bestStreaks.bestStreakMap }}</div>
-              <div class="streak-date">{{ formatRelativeTime(gamificationData.bestStreaks.bestStreakDate) }}</div>
+              <div class="streak-map">
+                {{ gamificationData.bestStreaks.bestStreakMap }}
+              </div>
+              <div class="streak-date">
+                {{ formatRelativeTime(gamificationData.bestStreaks.bestStreakDate) }}
+              </div>
             </div>
           </div>
           
           <!-- Recent Separator -->
-          <div v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0 && gamificationData.bestStreaks.recentStreaks.length > 0" class="recent-separator">
-            <div class="separator-line"></div>
+          <div
+            v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0 && gamificationData.bestStreaks.recentStreaks.length > 0"
+            class="recent-separator"
+          >
+            <div class="separator-line" />
             <span class="separator-text">Recent</span>
-            <div class="separator-line"></div>
+            <div class="separator-line" />
           </div>
           
           <!-- Recent Streaks -->
@@ -455,21 +460,32 @@ onMounted(async () => {
             :key="index"
             class="streak-card recent-streak"
           >
-            <div class="streak-icon-container" @click="openStreakModal(item)">
+            <div
+              class="streak-icon-container"
+              @click="openStreakModal(item)"
+            >
               <img 
                 :src="getAchievementImage('kill_streak_' + item.streak.streakCount)" 
                 :alt="'Kill streak ' + item.streak.streakCount"
                 class="streak-card-icon"
                 @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-              />
-              <div v-if="item.count > 1" class="streak-count-badge">x{{ item.count }}</div>
+              >
+              <div
+                v-if="item.count > 1"
+                class="streak-count-badge"
+              >
+                x{{ item.count }}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Achievement Timeline -->
-      <div v-if="nextMilestone || flattenedAchievements.length > 0" class="achievements-timeline">
+      <div
+        v-if="nextMilestone || flattenedAchievements.length > 0"
+        class="achievements-timeline"
+      >
         <h4>Achievement Timeline</h4>
         <div class="achievements-single-grid">
           <!-- Next Milestone (if available) -->
@@ -488,7 +504,7 @@ onMounted(async () => {
                 :src="getMilestoneImage(nextMilestone.milestone)" 
                 :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
                 class="achievement-compact-icon milestone-icon"
-              />
+              >
             </div>
             
             <div class="achievement-compact-info next-milestone-info">
@@ -517,12 +533,17 @@ onMounted(async () => {
                 :alt="achievement.achievementName"
                 class="achievement-compact-icon"
                 @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-              />
+              >
             </div>
             
             <div class="achievement-compact-info">
-              <div class="achievement-compact-time">{{ formatRelativeTime(achievement.achievedAt) }}</div>
-              <div v-if="achievement.mapName" class="achievement-compact-location">
+              <div class="achievement-compact-time">
+                {{ formatRelativeTime(achievement.achievedAt) }}
+              </div>
+              <div
+                v-if="achievement.mapName"
+                class="achievement-compact-location"
+              >
                 {{ achievement.mapName }}
               </div>
             </div>
@@ -531,24 +552,43 @@ onMounted(async () => {
       </div>
 
       <!-- No Achievements State -->
-      <div v-if="flattenedAchievements.length === 0 && !gamificationData.bestStreaks.bestSingleRoundStreak && !nextMilestone" class="no-achievements">
-        <div class="no-achievements-icon">🏆</div>
+      <div
+        v-if="flattenedAchievements.length === 0 && !gamificationData.bestStreaks.bestSingleRoundStreak && !nextMilestone"
+        class="no-achievements"
+      >
+        <div class="no-achievements-icon">
+          🏆
+        </div>
         <h4>No Achievements Yet</h4>
         <p>Start playing to unlock achievements and build your legacy!</p>
       </div>
     </div>
 
     <!-- Streak Details Modal -->
-    <div v-if="showStreakModal && selectedStreakGroup" class="modal-overlay" @click="closeStreakModal">
-      <div class="modal-content" @click.stop>
+    <div
+      v-if="showStreakModal && selectedStreakGroup"
+      class="modal-overlay"
+      @click="closeStreakModal"
+    >
+      <div
+        class="modal-content"
+        @click.stop
+      >
         <div class="modal-header">
           <div class="achievement-title-info">
-            <h3 class="modal-achievement-name">{{ selectedStreakGroup.streak.streakCount }} Kill Streak</h3>
+            <h3 class="modal-achievement-name">
+              {{ selectedStreakGroup.streak.streakCount }} Kill Streak
+            </h3>
             <div class="modal-achievement-date">
               <span class="date-label">Achieved {{ selectedStreakGroup.count }} time{{ selectedStreakGroup.count !== 1 ? 's' : '' }}</span>
             </div>
           </div>
-          <button class="close-button" @click="closeStreakModal">&times;</button>
+          <button
+            class="close-button"
+            @click="closeStreakModal"
+          >
+            &times;
+          </button>
         </div>
         
         <div class="modal-body">
@@ -557,26 +597,36 @@ onMounted(async () => {
               :src="getAchievementImage('kill_streak_' + selectedStreakGroup.streak.streakCount)" 
               :alt="selectedStreakGroup.streak.streakCount + ' Kill Streak'"
               class="modal-achievement-image"
-            />
+            >
           </div>
 
           <!-- Badge Description -->
-          <div v-if="selectedStreakDescription" class="achievement-description">
+          <div
+            v-if="selectedStreakDescription"
+            class="achievement-description"
+          >
             <h4>Description</h4>
             <p>{{ selectedStreakDescription }}</p>
           </div>
           
           <div class="timeline-container">
-            <template v-for="(streak, index) in selectedStreakGroup.allStreaks.sort((a, b) => new Date(b.streakStart).getTime() - new Date(a.streakStart).getTime())" :key="index">
+            <template
+              v-for="(streak, index) in selectedStreakGroup.allStreaks.sort((a, b) => new Date(b.streakStart).getTime() - new Date(a.streakStart).getTime())"
+              :key="index"
+            >
               <!-- Streak timeline item -->
               <div class="timeline-item">
                 <!-- Timeline node -->
                 <div class="timeline-node-container">
-                  <div class="timeline-node streak-node"></div>
+                  <div class="timeline-node streak-node" />
                 </div>
                 
                 <!-- Streak card -->
-                <div class="streak-card" @click="navigateToRoundReport(streak)" title="View round report">
+                <div
+                  class="streak-card"
+                  title="View round report"
+                  @click="navigateToRoundReport(streak)"
+                >
                   <div class="streak-line-1">
                     <span class="streak-time-text">{{ formatRelativeTime(streak.streakStart) }}</span>
                     <span class="streak-separator">-</span>
@@ -596,11 +646,11 @@ onMounted(async () => {
                 class="timeline-gap-item"
               >
                 <div class="time-gap-separator">
-                  <div class="time-gap-line"></div>
+                  <div class="time-gap-line" />
                   <div class="time-gap-badge">
                     {{ getTimeGap(streak, selectedStreakGroup.allStreaks[index + 1]) }}
                   </div>
-                  <div class="time-gap-line"></div>
+                  <div class="time-gap-line" />
                 </div>
               </div>
             </template>
@@ -610,18 +660,32 @@ onMounted(async () => {
     </div>
 
     <!-- Achievement Details Modal -->
-    <div v-if="showModal && selectedAchievement" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
+    <div
+      v-if="showModal && selectedAchievement"
+      class="modal-overlay"
+      @click="closeModal"
+    >
+      <div
+        class="modal-content"
+        @click.stop
+      >
         <div class="modal-header">
           <div class="achievement-title-info">
-            <h3 class="modal-achievement-name">{{ selectedAchievement.achievementName }}</h3>
+            <h3 class="modal-achievement-name">
+              {{ selectedAchievement.achievementName }}
+            </h3>
             <div class="modal-achievement-date">
               <span class="date-label">Achieved:</span>
               {{ new Date(selectedAchievement.achievedAt.endsWith('Z') ? selectedAchievement.achievedAt : selectedAchievement.achievedAt + 'Z').toLocaleString() }}
               <span class="relative-time">({{ formatRelativeTime(selectedAchievement.achievedAt) }})</span>
             </div>
           </div>
-          <button class="close-button" @click="closeModal">&times;</button>
+          <button
+            class="close-button"
+            @click="closeModal"
+          >
+            &times;
+          </button>
         </div>
         
         <div class="modal-body">
@@ -630,27 +694,39 @@ onMounted(async () => {
               :src="getAchievementImage(selectedAchievement.achievementId)" 
               :alt="selectedAchievement.achievementName"
               class="modal-achievement-image"
-            />
+            >
           </div>
 
           <!-- Badge Description -->
-          <div v-if="selectedAchievementDescription" class="achievement-description">
+          <div
+            v-if="selectedAchievementDescription"
+            class="achievement-description"
+          >
             <h4>Description</h4>
             <p>{{ selectedAchievementDescription }}</p>
           </div>
           
           <div class="achievement-details-grid">
-            <div v-if="selectedAchievement.mapName" class="detail-item">
+            <div
+              v-if="selectedAchievement.mapName"
+              class="detail-item"
+            >
               <span class="detail-label">Map:</span>
               <span class="detail-value">{{ selectedAchievement.mapName }}</span>
             </div>
             
-            <div v-if="selectedAchievement.serverGuid" class="detail-item">
+            <div
+              v-if="selectedAchievement.serverGuid"
+              class="detail-item"
+            >
               <span class="detail-label">Server ID:</span>
               <span class="detail-value">{{ selectedAchievement.serverGuid }}</span>
             </div>
             
-            <div v-if="selectedAchievement.roundId" class="detail-item">
+            <div
+              v-if="selectedAchievement.roundId"
+              class="detail-item"
+            >
               <span class="detail-label">Round ID:</span>
               <span class="detail-value">{{ selectedAchievement.roundId }}</span>
             </div>
@@ -660,7 +736,11 @@ onMounted(async () => {
     </div>
 
     <!-- Next Milestone Modal -->
-    <div v-if="showNextMilestoneModal && nextMilestone" class="modal-overlay" @click="closeNextMilestoneModal">
+    <div
+      v-if="showNextMilestoneModal && nextMilestone"
+      class="modal-overlay"
+      @click="closeNextMilestoneModal"
+    >
       <div 
         class="modal-content milestone-modal" 
         :style="{ '--progress-percentage': nextMilestone.progress * 100 + '%' }"
@@ -668,13 +748,20 @@ onMounted(async () => {
       >
         <div class="modal-header">
           <div class="achievement-title-info">
-            <h3 class="modal-achievement-name">Next Milestone: {{ nextMilestone.milestone.toLocaleString() }} Kills</h3>
+            <h3 class="modal-achievement-name">
+              Next Milestone: {{ nextMilestone.milestone.toLocaleString() }} Kills
+            </h3>
             <div class="modal-achievement-date">
               <span class="date-label">Current Progress:</span>
               {{ nextMilestone.currentKills.toLocaleString() }} / {{ nextMilestone.milestone.toLocaleString() }} kills
             </div>
           </div>
-          <button class="close-button" @click="closeNextMilestoneModal">&times;</button>
+          <button
+            class="close-button"
+            @click="closeNextMilestoneModal"
+          >
+            &times;
+          </button>
         </div>
         
         <div class="modal-body">
@@ -683,7 +770,7 @@ onMounted(async () => {
               :src="getMilestoneImage(nextMilestone.milestone)" 
               :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
               class="modal-achievement-image milestone-icon-large"
-            />
+            >
           </div>
           
           <div class="achievement-details-grid">

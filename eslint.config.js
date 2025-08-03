@@ -26,7 +26,17 @@ export default [
         MouseEvent: 'readonly',
         KeyboardEvent: 'readonly',
         Node: 'readonly',
-        HTMLElement: 'readonly'
+        HTMLElement: 'readonly',
+        Event: 'readonly',
+        Element: 'readonly',
+        fetch: 'readonly',
+        clearTimeout: 'readonly',
+        clearInterval: 'readonly',
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        URL: 'readonly',
+        HTMLSelectElement: 'readonly',
+        NodeJS: 'readonly'
       }
     },
     plugins: {
@@ -82,7 +92,17 @@ export default [
         MouseEvent: 'readonly',
         KeyboardEvent: 'readonly',
         Node: 'readonly',
-        HTMLElement: 'readonly'
+        HTMLElement: 'readonly',
+        Event: 'readonly',
+        Element: 'readonly',
+        fetch: 'readonly',
+        clearTimeout: 'readonly',
+        clearInterval: 'readonly',
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        URL: 'readonly',
+        HTMLSelectElement: 'readonly',
+        NodeJS: 'readonly'
       }
     },
     plugins: {

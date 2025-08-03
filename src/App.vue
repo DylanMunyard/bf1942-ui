@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, provide } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
 import DashboardLayout from './layouts/DashboardLayout.vue';
 import { initializeBadgeDefinitions } from './services/badgeService';
-
-const router = useRouter();
-const route = useRoute();
 
 // Dark mode state
 const isDarkMode = ref(false);

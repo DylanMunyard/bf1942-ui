@@ -48,73 +48,9 @@ const handleClickOutside = (event: Event) => {
   }
 };
 
-// Helper function to normalize game IDs for consistent filtering
-const normalizeGameId = (gameId: string): string => {
-  if (!gameId) return '';
-  const normalized = gameId.toLowerCase();
-  
-  switch (normalized) {
-    case 'bf1942':
-    case '42':
-      return 'bf1942';
-    case 'fh2':
-      return 'fh2';
-    case 'bfv':
-    case 'bfvietnam':
-      return 'bfv';
-    default:
-      return normalized;
-  }
-};
-
-// Get display name for game ID
-const getGameDisplayName = (gameId: string): string => {
-  const normalized = normalizeGameId(gameId);
-  switch (normalized) {
-    case 'bf1942': return 'BF1942';
-    case 'fh2': return 'Forgotten Hope 2';
-    case 'bfv': return 'BF Vietnam';
-    default: return gameId.toUpperCase(); // Show original gameId for mods
-  }
-};
 
 // (Removed gameTypes computed – game-specific filtering is deprecated)
 
-// Current filters object
-const currentFilters = computed((): OnlinePlayersFilters => {
-  const filters: OnlinePlayersFilters = {
-    page: currentPage.value,
-    pageSize: pageSize.value
-  };
-
-  if (nameFilter.value.trim()) {
-    // New unified search parameter handled by backend
-    (filters as any).search = nameFilter.value.trim();
-  }
-
-  return filters;
-});
-
-// Format session duration
-const formatSessionTime = (minutes: number): string => {
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hours}h ${mins}m`;
-};
-
-// Get game icon class
-const getGameIcon = (gameId: string): string => {
-  const normalized = normalizeGameId(gameId);
-  switch (normalized) {
-    case 'bf1942': return 'game-icon bf1942';
-    case 'fh2': return 'game-icon fh2';
-    case 'bfv': return 'game-icon bfv';
-    default: return 'game-icon default';
-  }
-};
 
 // Get KDR with fallback
 const getKDRatio = (kills: number = 0, deaths: number = 0): string => {
@@ -224,25 +160,6 @@ const goToServerDetails = (serverName: string) => {
   closePanel();
 };
 
-// Pagination functions
-const goToPage = (page: number) => {
-  if (page >= 1 && playersResponse.value && page <= playersResponse.value.totalPages) {
-    currentPage.value = page;
-    fetchOnlinePlayersApiData();
-  }
-};
-
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    goToPage(currentPage.value - 1);
-  }
-};
-
-const nextPage = () => {
-  if (playersResponse.value && currentPage.value < playersResponse.value.totalPages) {
-    goToPage(currentPage.value + 1);
-  }
-};
 
 // Auto-refresh functionality
 const startAutoRefresh = () => {
@@ -262,22 +179,6 @@ const stopAutoRefresh = () => {
     clearInterval(autoRefreshInterval.value);
     autoRefreshInterval.value = null;
   }
-};
-
-const toggleAutoRefresh = () => {
-  isAutoRefresh.value = !isAutoRefresh.value;
-  if (isAutoRefresh.value) {
-    startAutoRefresh();
-  } else {
-    stopAutoRefresh();
-  }
-};
-
-// Clear filters
-const clearFilters = () => {
-  nameFilter.value = '';
-  currentPage.value = 1;
-  fetchOnlinePlayersApiData();
 };
 
 // Manual "Load More" pagination – increments the current page and fetches the next batch
@@ -331,16 +232,25 @@ onUnmounted(() => {
 <template>
   <div class="online-players-container">
     <!-- Toggle handle fixed to the right edge -->
-    <button class="online-toggle-btn" @click="togglePanel">
-      <span v-if="!isPanelOpen" class="button-content">
-        <span class="green-pulse-light"></span>
+    <button
+      class="online-toggle-btn"
+      @click="togglePanel"
+    >
+      <span
+        v-if="!isPanelOpen"
+        class="button-content"
+      >
+        <span class="green-pulse-light" />
         {{ playersResponse ? playersResponse.totalItems : 0 }}
       </span>
       <span v-else>×</span>
     </button>
 
     <!-- Slide-out panel -->
-    <div class="online-panel" :class="{ open: isPanelOpen }">
+    <div
+      class="online-panel"
+      :class="{ open: isPanelOpen }"
+    >
       <div class="panel-header">
         <h3>Online Players ({{ playersResponse ? playersResponse.totalItems : 0 }})</h3>
         <input
@@ -348,15 +258,21 @@ onUnmounted(() => {
           type="text"
           class="player-search-input"
           placeholder="Search player or server..."
-        />
+        >
         <!-- (Removed game filter badges) -->
       </div>
 
       <!-- States -->
-      <div v-if="loading && !playersResponse" class="loading-state">
-        <div class="loading-spinner"></div>
+      <div
+        v-if="loading && !playersResponse"
+        class="loading-state"
+      >
+        <div class="loading-spinner" />
       </div>
-      <div v-else-if="error" class="error-state">
+      <div
+        v-else-if="error"
+        class="error-state"
+      >
         <p>{{ error }}</p>
       </div>
       <div v-else-if="playersResponse && playersResponse.items.length">
@@ -366,12 +282,21 @@ onUnmounted(() => {
             :key="server.serverKey"
             class="server-group"
           >
-            <div class="server-header-link" @click="goToServerDetails(server.serverName)">
+            <div
+              class="server-header-link"
+              @click="goToServerDetails(server.serverName)"
+            >
               <div class="server-header-info">
                 <span class="server server-link">{{ server.serverName }}</span>
                 <span class="player-count">({{ server.players.length }})</span>
-                <span v-if="server.mapName" class="separator">•</span>
-                <span v-if="server.mapName" class="map">{{ server.mapName }}</span>
+                <span
+                  v-if="server.mapName"
+                  class="separator"
+                >•</span>
+                <span
+                  v-if="server.mapName"
+                  class="map"
+                >{{ server.mapName }}</span>
               </div>
             </div>
             <div class="server-players">
@@ -379,11 +304,11 @@ onUnmounted(() => {
                 v-for="player in server.players"
                 :key="player.playerName"
                 class="player-row"
-                @click="goToPlayerDetails(player.playerName)"
                 :title="player.currentServer ? 'Kills: ' + (player.currentServer.sessionKills || 0) + ', Deaths: ' + (player.currentServer.sessionDeaths || 0) + ', KDR: ' + getKDRatio(player.currentServer.sessionKills, player.currentServer.sessionDeaths) : ''"
+                @click="goToPlayerDetails(player.playerName)"
               >
                 <div class="name-row">
-                  <span class="online-dot"></span>
+                  <span class="online-dot" />
                   <span class="player-name">{{ player.playerName }}</span>
                 </div>
                 <div class="stats-row">
@@ -393,12 +318,26 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
-        <div v-if="playersResponse && currentPage < playersResponse.totalPages" class="load-more-container">
-          <button class="load-more-button" @click="loadMore" :disabled="loading">Load More</button>
+        <div
+          v-if="playersResponse && currentPage < playersResponse.totalPages"
+          class="load-more-container"
+        >
+          <button
+            class="load-more-button"
+            :disabled="loading"
+            @click="loadMore"
+          >
+            Load More
+          </button>
         </div>
       </div>
-      <div v-else class="no-players-state">
-        <div class="no-players-icon">👥</div>
+      <div
+        v-else
+        class="no-players-state"
+      >
+        <div class="no-players-icon">
+          👥
+        </div>
         <p>No online players</p>
       </div>
     </div>

@@ -162,7 +162,7 @@ onUnmounted(() => {
           active-class="active"
         >
           <div class="tab-content">
-            <i class="tab-icon icon-bf1942"></i>
+            <i class="tab-icon icon-bf1942" />
             <span>BF1942</span>
           </div>
         </router-link>
@@ -172,7 +172,7 @@ onUnmounted(() => {
           active-class="active"
         >
           <div class="tab-content">
-            <i class="tab-icon icon-fh2"></i>
+            <i class="tab-icon icon-fh2" />
             <span>FH2</span>
           </div>
         </router-link>
@@ -182,26 +182,48 @@ onUnmounted(() => {
           active-class="active"
         >
           <div class="tab-content">
-            <i class="tab-icon icon-bfv"></i>
+            <i class="tab-icon icon-bfv" />
             <span>BFV</span>
           </div>
         </router-link>
       </div>
       <div class="header-right">
         <TimeDisplay />
-        <button @click="openAIChatModal" class="ai-chat-button">
+        <button
+          class="ai-chat-button"
+          @click="openAIChatModal"
+        >
           <span>Metrics Chat</span>
         </button>
-        <button @click="() => fetchServerData(true)" class="update-button">
+        <button
+          class="update-button"
+          @click="() => fetchServerData(true)"
+        >
           <span v-if="!updating">Update</span>
-          <span v-else class="spinner"></span>
+          <span
+            v-else
+            class="spinner"
+          />
         </button>
       </div>
     </div>
 
-    <div v-if="loading" class="loading">Loading server data...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="servers.length > 0" class="server-info">
+    <div
+      v-if="loading"
+      class="loading"
+    >
+      Loading server data...
+    </div>
+    <div
+      v-else-if="error"
+      class="error"
+    >
+      {{ error }}
+    </div>
+    <div
+      v-else-if="servers.length > 0"
+      class="server-info"
+    >
       <div class="table-container">
         <div class="table-scroll-wrapper">
           <table>
@@ -215,12 +237,12 @@ onUnmounted(() => {
                         v-model="serverFilter"
                         placeholder="Filter..."
                         class="server-filter-input"
-                      />
+                      >
                       <button
                         v-if="serverFilter"
-                        @click="serverFilter = ''"
                         class="clear-filter-button"
                         title="Clear filter"
+                        @click="serverFilter = ''"
                       >
                         ×
                       </button>
@@ -234,9 +256,15 @@ onUnmounted(() => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="server in filteredServers" :key="server.guid">
+              <tr
+                v-for="server in filteredServers"
+                :key="server.guid"
+              >
                 <td class="server-name-cell">
-                  <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="server-name-link">
+                  <router-link
+                    :to="`/servers/${encodeURIComponent(server.name)}`"
+                    class="server-name-link"
+                  >
                     {{ server.name }}
                   </router-link>
                   <div class="server-details">
@@ -244,66 +272,110 @@ onUnmounted(() => {
                   </div>
                   <!-- Mobile condensed map and player info -->
                   <div class="mobile-details mobile-only">
-                    <div class="mobile-detail"><strong>Map:</strong> {{ server.mapName }}</div>
-                    <div class="mobile-detail players-link" @click="showPlayers(server)"><strong>Players:</strong> {{ server.numPlayers }} / {{ server.maxPlayers }}</div>
+                    <div class="mobile-detail">
+                      <strong>Map:</strong> {{ server.mapName }}
+                    </div>
+                    <div
+                      class="mobile-detail players-link"
+                      @click="showPlayers(server)"
+                    >
+                      <strong>Players:</strong> {{ server.numPlayers }} / {{ server.maxPlayers }}
+                    </div>
                   </div>
                 </td>
-                <td class="players-column" @click="showPlayers(server)">
+                <td
+                  class="players-column"
+                  @click="showPlayers(server)"
+                >
                   {{ server.numPlayers }} / {{ server.maxPlayers }}
                 </td>
-                <td class="map-cell">{{ server.mapName }}</td>
-                <td class="gametype-cell">{{ server.gameType }}</td>
+                <td class="map-cell">
+                  {{ server.mapName }}
+                </td>
+                <td class="gametype-cell">
+                  {{ server.gameType }}
+                </td>
                 <td>
-                  <a href="#" @click.prevent="joinServer(server)" class="join-link">Join Server</a>
+                  <a
+                    href="#"
+                    class="join-link"
+                    @click.prevent="joinServer(server)"
+                  >Join Server</a>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div v-if="tabSwitchLoading" class="table-loading-overlay">
-          <div class="loading-spinner"></div>
-          <div class="loading-text">Loading data...</div>
+        <div
+          v-if="tabSwitchLoading"
+          class="table-loading-overlay"
+        >
+          <div class="loading-spinner" />
+          <div class="loading-text">
+            Loading data...
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Metrics Chat Modal -->
-    <div v-if="showAIChatModal" class="modal-overlay" @click="closeAIChatModal">
-      <div class="modal-content ai-chat-modal" @click.stop>
+    <div
+      v-if="showAIChatModal"
+      class="modal-overlay"
+      @click="closeAIChatModal"
+    >
+      <div
+        class="modal-content ai-chat-modal"
+        @click.stop
+      >
         <div class="modal-header">
           <h2>Metrics Chat</h2>
-          <button @click="closeAIChatModal" class="close-button">&times;</button>
+          <button
+            class="close-button"
+            @click="closeAIChatModal"
+          >
+            &times;
+          </button>
         </div>
         <div class="modal-body">
           <div class="ai-chat-container">
             <div class="ai-response-container">
-              <div v-if="aiResponse" class="ai-response">
+              <div
+                v-if="aiResponse"
+                class="ai-response"
+              >
                 <div class="ai-question">
                   <strong>Question:</strong> {{ lastQuestion }}
                 </div>
                 <div class="ai-answer">
-                  <strong>Answer:</strong> <span v-html="renderMarkdown(aiResponse)"></span>
+                  <strong>Answer:</strong> <span v-html="renderMarkdown(aiResponse)" />
                 </div>
               </div>
-              <div v-else class="ai-response-placeholder">
+              <div
+                v-else
+                class="ai-response-placeholder"
+              >
                 Ask me anything about server metrics!
               </div>
             </div>
             <div class="ai-input-container">
               <input
                 v-model="aiQuestion"
-                @keyup.enter="submitAIQuestion"
                 placeholder="Ask a question about metrics..."
                 class="ai-input"
                 :disabled="aiLoading"
-              />
+                @keyup.enter="submitAIQuestion"
+              >
               <button
-                @click="submitAIQuestion"
                 class="ai-submit-button"
                 :disabled="aiLoading || !aiQuestion.trim()"
+                @click="submitAIQuestion"
               >
                 <span v-if="!aiLoading">Ask</span>
-                <span v-else class="spinner"></span>
+                <span
+                  v-else
+                  class="spinner"
+                />
               </button>
             </div>
           </div>

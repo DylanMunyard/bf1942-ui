@@ -1,6 +1,9 @@
 <template>
   <div class="servers-container">
-    <ServerTable :initialMode="props.initialMode" @show-players="showPlayersModal" />
+    <ServerTable
+      :initial-mode="props.initialMode"
+      @show-players="showPlayersModal"
+    />
     
     <!-- Players Modal -->
     <PlayersModal 

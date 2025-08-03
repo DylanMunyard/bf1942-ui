@@ -1,8 +1,20 @@
 <template>
   <div class="tk-livewire-page">
-    <h1 class="edgy-title">TK Livewire: Teamkillers in Action!</h1>
-    <div v-if="loading && !metrics.length" class="loading">Loading teamkiller metrics...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+    <h1 class="edgy-title">
+      TK Livewire: Teamkillers in Action!
+    </h1>
+    <div
+      v-if="loading && !metrics.length"
+      class="loading"
+    >
+      Loading teamkiller metrics...
+    </div>
+    <div
+      v-else-if="error"
+      class="error"
+    >
+      {{ error }}
+    </div>
     <div v-else>
       <table class="tk-table">
         <thead>
@@ -21,9 +33,15 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="metric in metrics" :key="metric.serverName + metric.playerName + metric.lastActivity">
+          <tr
+            v-for="metric in metrics"
+            :key="metric.serverName + metric.playerName + metric.lastActivity"
+          >
             <td>
-              <router-link :to="'/servers/' + encodeURIComponent(metric.serverName)" class="server-link">
+              <router-link
+                :to="'/servers/' + encodeURIComponent(metric.serverName)"
+                class="server-link"
+              >
                 {{ metric.serverName }}
               </router-link>
             </td>
@@ -61,7 +79,12 @@
           </tr>
         </tbody>
       </table>
-      <div v-if="metrics.length === 0" class="no-data">No teamkillers detected right now. Stay sharp!</div>
+      <div
+        v-if="metrics.length === 0"
+        class="no-data"
+      >
+        No teamkillers detected right now. Stay sharp!
+      </div>
     </div>
   </div>
 </template>

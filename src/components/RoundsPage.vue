@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { fetchRoundsList, RoundPagedResult, RoundListItem, ServerContextInfo } from '../services/roundsService';
+import { fetchRoundsList, RoundListItem, ServerContextInfo } from '../services/roundsService';
 
 // Router
 const router = useRouter();
@@ -227,7 +227,7 @@ const paginationRange = computed(() => {
   const maxVisiblePages = 5;
 
   let startPage = Math.max(1, currentPage.value - Math.floor(maxVisiblePages / 2));
-  let endPage = Math.min(totalPages.value, startPage + maxVisiblePages - 1);
+  const endPage = Math.min(totalPages.value, startPage + maxVisiblePages - 1);
 
   // Adjust start page if end page is at max
   if (endPage === totalPages.value) {
@@ -364,7 +364,10 @@ onUnmounted(() => {
     <div class="header">
       <div class="header-left">
         <h1>Game Rounds</h1>
-        <div v-if="serverContext" class="player-info">
+        <div
+          v-if="serverContext"
+          class="player-info"
+        >
           <div class="info-item">
             <span class="info-label">Total Rounds:</span>
             <span class="info-value">{{ totalItems }}</span>
@@ -372,42 +375,89 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="header-right">
-        <router-link :to="getServersRoute(rounds[0]?.gameType)" class="back-button">
+        <router-link
+          :to="getServersRoute(rounds[0]?.gameType)"
+          class="back-button"
+        >
           Back to Servers
         </router-link>
-        <button @click="fetchData" class="refresh-button">
+        <button
+          class="refresh-button"
+          @click="fetchData"
+        >
           <span v-if="!loading">Refresh</span>
-          <span v-else class="spinner"></span>
+          <span
+            v-else
+            class="spinner"
+          />
         </button>
       </div>
     </div>
 
     <!-- Mobile filter toggle -->
     <div class="filter-toggle">
-      <button @click="showFilters = !showFilters" class="filter-toggle-button">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="filter-icon">
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+      <button
+        class="filter-toggle-button"
+        @click="showFilters = !showFilters"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="filter-icon"
+        >
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
         </svg>
         Filters
-        <span v-if="mapFilter || serverFilter || gameTypeFilter" class="active-filter-indicator">●</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon" :class="{ 'rotated': showFilters }">
-          <polyline points="6 9 12 15 18 9"></polyline>
+        <span
+          v-if="mapFilter || serverFilter || gameTypeFilter"
+          class="active-filter-indicator"
+        >●</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="chevron-icon"
+:class="{ 'rotated': showFilters }"
+        >
+          <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
     </div>
 
     <!-- Filter controls -->
-    <div class="filter-container" :class="{ 'filters-visible': showFilters }">
+    <div
+      class="filter-container"
+      :class="{ 'filters-visible': showFilters }"
+    >
       <div class="filter-group">
         <label for="mapFilter">Map:</label>
         <select 
           id="mapFilter" 
           v-model="mapFilter" 
-          @change="handleMapFilterChange"
           class="filter-select"
+          @change="handleMapFilterChange"
         >
-          <option value="">All Maps</option>
-          <option v-for="map in uniqueMaps" :key="map" :value="map">
+          <option value="">
+            All Maps
+          </option>
+          <option
+            v-for="map in uniqueMaps"
+            :key="map"
+            :value="map"
+          >
             {{ map }}
           </option>
         </select>
@@ -418,11 +468,17 @@ onUnmounted(() => {
         <select 
           id="serverFilter" 
           v-model="serverFilter" 
-          @change="handleServerFilterChange"
           class="filter-select"
+          @change="handleServerFilterChange"
         >
-          <option value="">All Servers</option>
-          <option v-for="server in uniqueServers" :key="server" :value="server">
+          <option value="">
+            All Servers
+          </option>
+          <option
+            v-for="server in uniqueServers"
+            :key="server"
+            :value="server"
+          >
             {{ server }}
           </option>
         </select>
@@ -433,24 +489,46 @@ onUnmounted(() => {
         <select 
           id="gameTypeFilter" 
           v-model="gameTypeFilter" 
-          @change="handleGameTypeFilterChange"
           class="filter-select"
+          @change="handleGameTypeFilterChange"
         >
-          <option value="">All Game Types</option>
-          <option v-for="gameType in uniqueGameTypes" :key="gameType" :value="gameType">
+          <option value="">
+            All Game Types
+          </option>
+          <option
+            v-for="gameType in uniqueGameTypes"
+            :key="gameType"
+            :value="gameType"
+          >
             {{ gameType }}
           </option>
         </select>
       </div>
 
-      <button @click="resetFilters" class="reset-filters-button">
+      <button
+        class="reset-filters-button"
+        @click="resetFilters"
+      >
         Reset Filters
       </button>
     </div>
 
-    <div v-if="loading && rounds.length === 0" class="loading">Loading rounds data...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="rounds.length > 0" class="sessions-table-container">
+    <div
+      v-if="loading && rounds.length === 0"
+      class="loading"
+    >
+      Loading rounds data...
+    </div>
+    <div
+      v-else-if="error"
+      class="error"
+    >
+      {{ error }}
+    </div>
+    <div
+      v-else-if="rounds.length > 0"
+      class="sessions-table-container"
+    >
       <!-- Rounds count and pagination info -->
       <div class="table-header">
         <div class="sessions-count">
@@ -458,24 +536,39 @@ onUnmounted(() => {
         </div>
         <div class="page-size-selector">
           <label for="pageSize">Rounds per page:</label>
-          <select id="pageSize" v-model="pageSize" @change="currentPage = 1; updateQueryParams(); fetchData()">
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
+          <select
+            id="pageSize"
+            v-model="pageSize"
+            @change="currentPage = 1; updateQueryParams(); fetchData()"
+          >
+            <option value="10">
+              10
+            </option>
+            <option value="20">
+              20
+            </option>
+            <option value="50">
+              50
+            </option>
+            <option value="100">
+              100
+            </option>
           </select>
         </div>
       </div>
 
       <div class="timeline-container">
-        <template v-for="(round, index) in rounds" :key="round.roundId">
+        <template
+          v-for="(round, index) in rounds"
+          :key="round.roundId"
+        >
           <!-- Round timeline item -->
           <div class="timeline-item">
             <!-- Timeline node -->
             <div class="timeline-node-container">
               <div 
                 class="timeline-node"
-              ></div>
+              />
             </div>
             
             <!-- Round card -->
@@ -498,7 +591,10 @@ onUnmounted(() => {
               <div class="session-line-2">
                 <span class="map-name">{{ round.mapName }}</span>
                 <span class="game-type">({{ round.gameType }})</span>
-                <span v-if="round.isActive" class="badge-active">Live</span>
+                <span
+                  v-if="round.isActive"
+                  class="badge-active"
+                >Live</span>
               </div>
               
               <div class="session-line-3">
@@ -515,76 +611,95 @@ onUnmounted(() => {
             class="timeline-gap-item"
           >
             <div class="time-gap-separator">
-              <div class="time-gap-line"></div>
+              <div class="time-gap-line" />
               <div class="time-gap-badge">
                 {{ getTimeGap(round, rounds[index + 1]) }}
               </div>
-              <div class="time-gap-line"></div>
+              <div class="time-gap-line" />
             </div>
           </div>
         </template>
       </div>
 
       <!-- Pagination controls -->
-      <div v-if="totalPages > 1" class="pagination-container">
+      <div
+        v-if="totalPages > 1"
+        class="pagination-container"
+      >
         <div class="pagination-info">
           Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} rounds
         </div>
         <div class="pagination-controls">
           <button 
-            @click="goToPage(1)" 
             class="pagination-button" 
-            :disabled="currentPage === 1"
+            :disabled="currentPage === 1" 
             title="First Page"
+            @click="goToPage(1)"
           >
             &laquo;
           </button>
           <button 
-            @click="goToPage(currentPage - 1)" 
             class="pagination-button" 
-            :disabled="currentPage === 1"
+            :disabled="currentPage === 1" 
             title="Previous Page"
+            @click="goToPage(currentPage - 1)"
           >
             &lsaquo;
           </button>
           <button 
             v-for="page in paginationRange" 
             :key="page" 
-            @click="goToPage(page)" 
             class="pagination-button" 
-            :class="{ active: page === currentPage }"
+            :class="{ active: page === currentPage }" 
+            @click="goToPage(page)"
           >
             {{ page }}
           </button>
           <button 
-            @click="goToPage(currentPage + 1)" 
             class="pagination-button" 
-            :disabled="currentPage === totalPages"
+            :disabled="currentPage === totalPages" 
             title="Next Page"
+            @click="goToPage(currentPage + 1)"
           >
             &rsaquo;
           </button>
           <button 
-            @click="goToPage(totalPages)" 
             class="pagination-button" 
-            :disabled="currentPage === totalPages"
+            :disabled="currentPage === totalPages" 
             title="Last Page"
+            @click="goToPage(totalPages)"
           >
             &raquo;
           </button>
         </div>
         <div class="page-size-selector">
           <label for="pageSize">Items per page:</label>
-          <select id="pageSize" v-model="pageSize">
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
+          <select
+            id="pageSize"
+            v-model="pageSize"
+          >
+            <option value="10">
+              10
+            </option>
+            <option value="25">
+              25
+            </option>
+            <option value="50">
+              50
+            </option>
+            <option value="100">
+              100
+            </option>
           </select>
         </div>
       </div>
     </div>
-    <div v-else class="no-data">No rounds found.</div>
+    <div
+      v-else
+      class="no-data"
+    >
+      No rounds found.
+    </div>
   </div>
 </template>
 

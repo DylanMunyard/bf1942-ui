@@ -63,12 +63,27 @@ watch(() => props.serverName, fetchTrendData);
 
 <template>
   <span class="trend-indicator">
-    <span v-if="loading" class="loading">...</span>
-    <span v-else-if="error" class="error">!</span>
+    <span
+      v-if="loading"
+      class="loading"
+    >...</span>
+    <span
+      v-else-if="error"
+      class="error"
+    >!</span>
     <span v-else>
-      <span v-if="trendData.trend === 'up'" class="trend-up">+{{ trendData.difference }}</span>
-      <span v-else-if="trendData.trend === 'down'" class="trend-down">-{{ trendData.difference }}</span>
-      <span v-else class="trend-stable">0</span>
+      <span
+        v-if="trendData.trend === 'up'"
+        class="trend-up"
+      >+{{ trendData.difference }}</span>
+      <span
+        v-else-if="trendData.trend === 'down'"
+        class="trend-down"
+      >-{{ trendData.difference }}</span>
+      <span
+        v-else
+        class="trend-stable"
+      >0</span>
     </span>
   </span>
 </template>

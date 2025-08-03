@@ -2,7 +2,6 @@
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchPlayersList, PlayerListItem } from '../services/playerStatsService';
-import axios from 'axios';
 
 // Router
 const router = useRouter();
@@ -261,7 +260,7 @@ const paginationRange = computed(() => {
   const maxVisiblePages = 5;
 
   let startPage = Math.max(1, currentPage.value - Math.floor(maxVisiblePages / 2));
-  let endPage = Math.min(totalPages.value, startPage + maxVisiblePages - 1);
+  const endPage = Math.min(totalPages.value, startPage + maxVisiblePages - 1);
 
   // Adjust start page if end page is at max
   if (endPage === totalPages.value) {
@@ -361,45 +360,86 @@ onUnmounted(() => {
   <div class="players-page-container">
     <div class="header">
       <h1>Players</h1>
-      <button @click="fetchPlayersData" class="refresh-button">
+      <button
+        class="refresh-button"
+        @click="fetchPlayersData"
+      >
         <span v-if="!loading">Refresh</span>
-        <span v-else class="spinner"></span>
+        <span
+          v-else
+          class="spinner"
+        />
       </button>
     </div>
 
     <!-- Filter controls -->
     <div class="filter-section">
       <div class="filter-toggle">
-        <button @click="showFilters = !showFilters" class="filter-toggle-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="filter-icon">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        <button
+          class="filter-toggle-button"
+          @click="showFilters = !showFilters"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="filter-icon"
+          >
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
           </svg>
           Filters
-          <span v-if="nameFilter || gameIdFilter || serverNameFilter" class="active-filter-indicator">●</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon" :class="{ 'rotated': showFilters }">
-            <polyline points="6 9 12 15 18 9"></polyline>
+          <span
+            v-if="nameFilter || gameIdFilter || serverNameFilter"
+            class="active-filter-indicator"
+          >●</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="chevron-icon"
+:class="{ 'rotated': showFilters }"
+          >
+            <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>
       </div>
       
-      <div class="filter-container" :class="{ 'filters-visible': showFilters }">
+      <div
+        class="filter-container"
+        :class="{ 'filters-visible': showFilters }"
+      >
         <div class="filter-group">
           <label for="nameFilter">Filter by Name:</label>
           <div class="input-with-clear">
             <input 
-              type="text" 
               id="nameFilter" 
-              v-model="nameInputValue"
-              @input="handleNameFilterChange(nameInputValue)" 
-              placeholder="Enter player name"
+              v-model="nameInputValue" 
+              type="text"
+              placeholder="Enter player name" 
               class="filter-input"
-            />
-            <span v-if="isSearching" class="search-indicator">🔍</span>
+              @input="handleNameFilterChange(nameInputValue)"
+            >
+            <span
+              v-if="isSearching"
+              class="search-indicator"
+            >🔍</span>
             <span 
               v-if="nameInputValue && !isSearching" 
               class="clear-input" 
-              @click="clearNameFilter"
               title="Clear filter"
+              @click="clearNameFilter"
             >×</span>
           </div>
         </div>
@@ -409,11 +449,17 @@ onUnmounted(() => {
           <select 
             id="gameIdFilter" 
             v-model="gameIdFilter" 
-            @change="handleGameIdFilterChange"
             class="filter-select"
+            @change="handleGameIdFilterChange"
           >
-            <option value="">All Games</option>
-            <option v-for="gameId in uniqueGameIds" :key="gameId" :value="gameId">
+            <option value="">
+              All Games
+            </option>
+            <option
+              v-for="gameId in uniqueGameIds"
+              :key="gameId"
+              :value="gameId"
+            >
               {{ gameId }}
             </option>
           </select>
@@ -424,25 +470,47 @@ onUnmounted(() => {
           <select 
             id="serverNameFilter" 
             v-model="serverNameFilter" 
-            @change="handleServerNameFilterChange"
             class="filter-select"
+            @change="handleServerNameFilterChange"
           >
-            <option value="">All Servers</option>
-            <option v-for="serverName in uniqueServerNames" :key="serverName" :value="serverName">
+            <option value="">
+              All Servers
+            </option>
+            <option
+              v-for="serverName in uniqueServerNames"
+              :key="serverName"
+              :value="serverName"
+            >
               {{ serverName }}
             </option>
           </select>
         </div>
 
-        <button @click="resetFilters" class="reset-filters-button">
+        <button
+          class="reset-filters-button"
+          @click="resetFilters"
+        >
           Reset Filters
         </button>
       </div>
     </div>
 
-    <div v-if="loading && players.length === 0" class="loading">Loading players data...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="players.length > 0" class="players-table-container">
+    <div
+      v-if="loading && players.length === 0"
+      class="loading"
+    >
+      Loading players data...
+    </div>
+    <div
+      v-else-if="error"
+      class="error"
+    >
+      {{ error }}
+    </div>
+    <div
+      v-else-if="players.length > 0"
+      class="players-table-container"
+    >
       <!-- Players count and pagination info -->
       <div class="table-header">
         <div class="players-count">
@@ -450,10 +518,20 @@ onUnmounted(() => {
         </div>
         <div class="page-size-selector">
           <label for="pageSize">Players per page:</label>
-          <select id="pageSize" :value="pageSize" @change="changePageSize(Number(($event.target as HTMLSelectElement).value))">
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
+          <select
+            id="pageSize"
+            :value="pageSize"
+            @change="changePageSize(Number(($event.target as HTMLSelectElement).value))"
+          >
+            <option value="25">
+              25
+            </option>
+            <option value="50">
+              50
+            </option>
+            <option value="100">
+              100
+            </option>
           </select>
         </div>
       </div>
@@ -461,64 +539,126 @@ onUnmounted(() => {
       <table>
         <thead>
           <tr>
-            <th @click="handleSort('playerName')" class="sortable">
+            <th
+              class="sortable"
+              @click="handleSort('playerName')"
+            >
               Player Name
-              <span v-if="sortBy === 'playerName'" class="sort-indicator">
+              <span
+                v-if="sortBy === 'playerName'"
+                class="sort-indicator"
+              >
                 {{ sortOrder === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
-            <th @click="handleSort('totalPlayTimeMinutes')" class="sortable">
+            <th
+              class="sortable"
+              @click="handleSort('totalPlayTimeMinutes')"
+            >
               Total Play Time
-              <span v-if="sortBy === 'totalPlayTimeMinutes'" class="sort-indicator">
+              <span
+                v-if="sortBy === 'totalPlayTimeMinutes'"
+                class="sort-indicator"
+              >
                 {{ sortOrder === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
-            <th @click="handleSort('lastSeen')" class="sortable">
+            <th
+              class="sortable"
+              @click="handleSort('lastSeen')"
+            >
               Last Seen
-              <span v-if="sortBy === 'lastSeen'" class="sort-indicator">
+              <span
+                v-if="sortBy === 'lastSeen'"
+                class="sort-indicator"
+              >
                 {{ sortOrder === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
-            <th @click="handleSort('isActive')" class="sortable">
+            <th
+              class="sortable"
+              @click="handleSort('isActive')"
+            >
               Status
-              <span v-if="sortBy === 'isActive'" class="sort-indicator">
+              <span
+                v-if="sortBy === 'isActive'"
+                class="sort-indicator"
+              >
                 {{ sortOrder === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="player in players" :key="player.playerName" class="player-row">
+          <tr
+            v-for="player in players"
+            :key="player.playerName"
+            class="player-row"
+          >
             <td class="player-name-cell">
-              <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-name-link">
+              <router-link
+                :to="`/players/${encodeURIComponent(player.playerName)}`"
+                class="player-name-link"
+              >
                 {{ player.playerName }}
               </router-link>
-              <div v-if="player.currentServer" class="current-server">
-                <router-link :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" class="server-name-link">
+              <div
+                v-if="player.currentServer"
+                class="current-server"
+              >
+                <router-link
+                  :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`"
+                  class="server-name-link"
+                >
                   {{ player.currentServer.serverName }}
                 </router-link>
               </div>
             </td>
-            <td class="play-time-cell">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</td>
-            <td class="last-seen-cell" :title="formatDate(player.lastSeen)">
-              <span v-if="formatRelativeTime(player.lastSeen) === 'Just now'" class="online-badge">Online</span>
+            <td class="play-time-cell">
+              {{ formatPlayTime(player.totalPlayTimeMinutes) }}
+            </td>
+            <td
+              class="last-seen-cell"
+              :title="formatDate(player.lastSeen)"
+            >
+              <span
+                v-if="formatRelativeTime(player.lastSeen) === 'Just now'"
+                class="online-badge"
+              >Online</span>
               <span v-else>{{ formatRelativeTime(player.lastSeen) }}</span>
             </td>
             <td class="status-cell">
-              <div v-if="player.isActive" class="active-status">
+              <div
+                v-if="player.isActive"
+                class="active-status"
+              >
                 <div class="server-info">
-                  <router-link v-if="player.currentServer" :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" class="server-name-link">
+                  <router-link
+                    v-if="player.currentServer"
+                    :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`"
+                    class="server-name-link"
+                  >
                     {{ player.currentServer.serverName }}
                   </router-link>
                   <span v-else>Online</span>
                 </div>
-                <div v-if="player.currentServer && (player.currentServer.sessionKills !== undefined || player.currentServer.sessionDeaths !== undefined)" class="player-stats">
+                <div
+                  v-if="player.currentServer && (player.currentServer.sessionKills !== undefined || player.currentServer.sessionDeaths !== undefined)"
+                  class="player-stats"
+                >
                   <span class="stat-item">K: {{ player.currentServer.sessionKills || 0 }}</span>
                   <span class="stat-item">D: {{ player.currentServer.sessionDeaths || 0 }}</span>
-                  <span class="stat-item"><img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ player.currentServer.sessionDeaths ? ((player.currentServer.sessionKills || 0) / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}</span>
+                  <span class="stat-item"><img
+                    src="@/assets/kdr.png"
+                    alt="KDR"
+                    class="kdr-icon"
+                  > {{ player.currentServer.sessionDeaths ? ((player.currentServer.sessionKills || 0) / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}</span>
                 </div>
               </div>
-              <div v-else class="inactive-status">
+              <div
+                v-else
+                class="inactive-status"
+              >
                 Offline
               </div>
             </td>
@@ -527,53 +667,61 @@ onUnmounted(() => {
       </table>
 
       <!-- Pagination controls -->
-      <div v-if="totalPages > 1" class="pagination-container">
+      <div
+        v-if="totalPages > 1"
+        class="pagination-container"
+      >
         <div class="pagination-controls">
           <button 
-            @click="goToPage(1)" 
             class="pagination-button" 
-            :disabled="currentPage === 1"
+            :disabled="currentPage === 1" 
             title="First Page"
+            @click="goToPage(1)"
           >
             &laquo;
           </button>
           <button 
-            @click="goToPage(currentPage - 1)" 
             class="pagination-button" 
-            :disabled="currentPage === 1"
+            :disabled="currentPage === 1" 
             title="Previous Page"
+            @click="goToPage(currentPage - 1)"
           >
             &lsaquo;
           </button>
           <button 
             v-for="page in paginationRange" 
             :key="page" 
-            @click="goToPage(page)" 
             class="pagination-button" 
-            :class="{ active: page === currentPage }"
+            :class="{ active: page === currentPage }" 
+            @click="goToPage(page)"
           >
             {{ page }}
           </button>
           <button 
-            @click="goToPage(currentPage + 1)" 
             class="pagination-button" 
-            :disabled="currentPage === totalPages"
+            :disabled="currentPage === totalPages" 
             title="Next Page"
+            @click="goToPage(currentPage + 1)"
           >
             &rsaquo;
           </button>
           <button 
-            @click="goToPage(totalPages)" 
             class="pagination-button" 
-            :disabled="currentPage === totalPages"
+            :disabled="currentPage === totalPages" 
             title="Last Page"
+            @click="goToPage(totalPages)"
           >
             &raquo;
           </button>
         </div>
       </div>
     </div>
-    <div v-else class="no-data">No players found.</div>
+    <div
+      v-else
+      class="no-data"
+    >
+      No players found.
+    </div>
   </div>
 </template>
 

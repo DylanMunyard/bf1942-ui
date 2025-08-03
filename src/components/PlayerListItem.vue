@@ -1,16 +1,24 @@
 <template>
   <div class="player-card">
-    <div class="player-rank-small" :class="{
-      'rank-first': rank === 1,
-      'rank-second': rank === 2,
-      'rank-third': rank === 3
-    }">{{ rank }}</div>
+    <div
+      class="player-rank-small"
+      :class="{
+        'rank-first': rank === 1,
+        'rank-second': rank === 2,
+        'rank-third': rank === 3
+      }"
+    >
+      {{ rank }}
+    </div>
     <div class="player-card-content">
-      <router-link :to="`/players/${encodeURIComponent(playerName)}`" class="player-card-name">
+      <router-link
+        :to="`/players/${encodeURIComponent(playerName)}`"
+        class="player-card-name"
+      >
         {{ playerName }}
       </router-link>
       <div class="player-card-stats">
-        <slot name="stats"></slot>
+        <slot name="stats" />
       </div>
     </div>
   </div>

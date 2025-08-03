@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
+import { ref, watch, computed, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import PlayerName from '@/components/PlayerName.vue';
@@ -75,7 +75,7 @@ const paginationRange = computed(() => {
   const maxVisiblePages = 5;
 
   let startPage = Math.max(1, currentPage.value - Math.floor(maxVisiblePages / 2));
-  let endPage = Math.min(totalPages.value, startPage + maxVisiblePages - 1);
+  const endPage = Math.min(totalPages.value, startPage + maxVisiblePages - 1);
 
   // Adjust start page if end page is at max
   if (endPage === totalPages.value) {
@@ -452,7 +452,10 @@ onUnmounted(() => {
 <template>
   <div class="server-rankings-container">
     <!-- Server Context Header -->
-    <div v-if="serverContext" class="server-context">
+    <div
+      v-if="serverContext"
+      class="server-context"
+    >
       <div class="server-context-header">
         <h1>{{ serverContext.serverName }}</h1>
       </div>
@@ -461,36 +464,71 @@ onUnmounted(() => {
     <!-- Filter controls -->
     <div class="filter-section">
       <div class="filter-toggle">
-        <button @click="showFilters = !showFilters" class="filter-toggle-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="filter-icon">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        <button
+          class="filter-toggle-button"
+          @click="showFilters = !showFilters"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="filter-icon"
+          >
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
           </svg>
           Filters
-          <span v-if="playerNameFilter || minScoreFilter !== '' || minKillsFilter !== '' || minDeathsFilter !== '' || minKdRatioFilter !== '' || minPlayTimeMinutesFilter !== ''" class="active-filter-indicator">●</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon" :class="{ 'rotated': showFilters }">
-            <polyline points="6 9 12 15 18 9"></polyline>
+          <span
+            v-if="playerNameFilter || minScoreFilter !== '' || minKillsFilter !== '' || minDeathsFilter !== '' || minKdRatioFilter !== '' || minPlayTimeMinutesFilter !== ''"
+            class="active-filter-indicator"
+          >●</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="chevron-icon"
+:class="{ 'rotated': showFilters }"
+          >
+            <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>
       </div>
       
-      <div class="filter-container" :class="{ 'filters-visible': showFilters }">
+      <div
+        class="filter-container"
+        :class="{ 'filters-visible': showFilters }"
+      >
         <div class="filter-group">
           <label for="playerNameFilter">Filter by Player Name:</label>
           <div class="input-with-clear">
             <input 
-              type="text" 
               id="playerNameFilter" 
-              v-model="playerNameInputValue"
-              @input="handlePlayerNameFilterChange(playerNameInputValue)" 
-              placeholder="Enter player name"
+              v-model="playerNameInputValue" 
+              type="text"
+              placeholder="Enter player name" 
               class="filter-input"
-            />
-            <span v-if="isSearching" class="search-indicator">🔍</span>
+              @input="handlePlayerNameFilterChange(playerNameInputValue)"
+            >
+            <span
+              v-if="isSearching"
+              class="search-indicator"
+            >🔍</span>
             <span 
               v-if="playerNameInputValue && !isSearching" 
               class="clear-input" 
-              @click="clearPlayerNameFilter"
               title="Clear filter"
+              @click="clearPlayerNameFilter"
             >×</span>
           </div>
         </div>
@@ -498,70 +536,73 @@ onUnmounted(() => {
         <div class="filter-group">
           <label for="minScoreFilter">Min Score:</label>
           <input 
-            type="number" 
             id="minScoreFilter" 
-            v-model="minScoreInputValue"
-            @input="handleMinScoreChange(minScoreInputValue)"
+            v-model="minScoreInputValue" 
+            type="number"
             placeholder="e.g. 1000"
             class="filter-input"
             min="0"
-          />
+            @input="handleMinScoreChange(minScoreInputValue)"
+          >
         </div>
 
         <div class="filter-group">
           <label for="minKillsFilter">Min Kills:</label>
           <input 
-            type="number" 
             id="minKillsFilter" 
-            v-model="minKillsInputValue"
-            @input="handleMinKillsChange(minKillsInputValue)"
+            v-model="minKillsInputValue" 
+            type="number"
             placeholder="e.g. 100"
             class="filter-input"
             min="0"
-          />
+            @input="handleMinKillsChange(minKillsInputValue)"
+          >
         </div>
 
         <div class="filter-group">
           <label for="minDeathsFilter">Min Deaths:</label>
           <input 
-            type="number" 
             id="minDeathsFilter" 
-            v-model="minDeathsInputValue"
-            @input="handleMinDeathsChange(minDeathsInputValue)"
+            v-model="minDeathsInputValue" 
+            type="number"
             placeholder="e.g. 50"
             class="filter-input"
             min="0"
-          />
+            @input="handleMinDeathsChange(minDeathsInputValue)"
+          >
         </div>
 
         <div class="filter-group">
           <label for="minKdRatioFilter">Min K/D Ratio:</label>
           <input 
-            type="number" 
             id="minKdRatioFilter" 
-            v-model="minKdRatioInputValue"
-            @input="handleMinKdRatioChange(minKdRatioInputValue)"
+            v-model="minKdRatioInputValue" 
+            type="number"
             placeholder="e.g. 1.5"
             class="filter-input"
             min="0"
             step="0.1"
-          />
+            @input="handleMinKdRatioChange(minKdRatioInputValue)"
+          >
         </div>
 
         <div class="filter-group">
           <label for="minPlayTimeFilter">Min Play Time (minutes):</label>
           <input 
-            type="number" 
             id="minPlayTimeFilter" 
-            v-model="minPlayTimeInputValue"
-            @input="handleMinPlayTimeChange(minPlayTimeInputValue)"
+            v-model="minPlayTimeInputValue" 
+            type="number"
             placeholder="e.g. 60"
             class="filter-input"
             min="0"
-          />
+            @input="handleMinPlayTimeChange(minPlayTimeInputValue)"
+          >
         </div>
 
-        <button @click="resetFilters" class="reset-filters-button">
+        <button
+          class="reset-filters-button"
+          @click="resetFilters"
+        >
           Reset Filters
         </button>
       </div>
@@ -570,14 +611,25 @@ onUnmounted(() => {
     <!-- Rankings Table -->
     <div class="rankings-section">
       <h2>Player Rankings</h2>
-      <div v-if="loading" class="loading-container">
-        <div class="loading-spinner"></div>
+      <div
+        v-if="loading"
+        class="loading-container"
+      >
+        <div class="loading-spinner" />
         <p>Loading rankings...</p>
       </div>
-      <div v-else-if="error" class="error-container">
-        <p class="error-message">{{ error }}</p>
+      <div
+        v-else-if="error"
+        class="error-container"
+      >
+        <p class="error-message">
+          {{ error }}
+        </p>
       </div>
-      <div v-else-if="rankings.length > 0" class="rankings-table-container">
+      <div
+        v-else-if="rankings.length > 0"
+        class="rankings-table-container"
+      >
         <!-- Table header info -->
         <div class="table-header">
           <div class="rankings-count">
@@ -585,11 +637,23 @@ onUnmounted(() => {
           </div>
           <div class="page-size-selector">
             <label for="pageSize">Items per page:</label>
-            <select id="pageSize" v-model="pageSize" @change="handlePageSizeChange">
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
+            <select
+              id="pageSize"
+              v-model="pageSize"
+              @change="handlePageSizeChange"
+            >
+              <option value="10">
+                10
+              </option>
+              <option value="20">
+                20
+              </option>
+              <option value="50">
+                50
+              </option>
+              <option value="100">
+                100
+              </option>
             </select>
           </div>
         </div>
@@ -599,54 +663,116 @@ onUnmounted(() => {
             <tr>
               <th>Rank</th>
               <th>Player</th>
-              <th class="desktop-only sortable" @click="handleSort('TotalScore')" :class="{ 'sorted': orderBy === 'TotalScore' }">
+              <th
+                class="desktop-only sortable"
+                :class="{ 'sorted': orderBy === 'TotalScore' }"
+                @click="handleSort('TotalScore')"
+              >
                 Score {{ getSortIcon('TotalScore') }}
               </th>
-              <th class="desktop-only sortable" @click="handleSort('TotalKills')" :class="{ 'sorted': orderBy === 'TotalKills' }">
+              <th
+                class="desktop-only sortable"
+                :class="{ 'sorted': orderBy === 'TotalKills' }"
+                @click="handleSort('TotalKills')"
+              >
                 Kills {{ getSortIcon('TotalKills') }}
               </th>
-              <th class="desktop-only sortable" @click="handleSort('TotalDeaths')" :class="{ 'sorted': orderBy === 'TotalDeaths' }">
+              <th
+                class="desktop-only sortable"
+                :class="{ 'sorted': orderBy === 'TotalDeaths' }"
+                @click="handleSort('TotalDeaths')"
+              >
                 Deaths {{ getSortIcon('TotalDeaths') }}
               </th>
-              <th class="desktop-only sortable" @click="handleSort('KDRatio')" :class="{ 'sorted': orderBy === 'KDRatio' }">
+              <th
+                class="desktop-only sortable"
+                :class="{ 'sorted': orderBy === 'KDRatio' }"
+                @click="handleSort('KDRatio')"
+              >
                 K/D {{ getSortIcon('KDRatio') }}
               </th>
-              <th class="desktop-only sortable" @click="handleSort('TotalPlayTimeMinutes')" :class="{ 'sorted': orderBy === 'TotalPlayTimeMinutes' }">
+              <th
+                class="desktop-only sortable"
+                :class="{ 'sorted': orderBy === 'TotalPlayTimeMinutes' }"
+                @click="handleSort('TotalPlayTimeMinutes')"
+              >
                 Play Time {{ getSortIcon('TotalPlayTimeMinutes') }}
               </th>
-              <th class="mobile-only">Stats</th>
+              <th class="mobile-only">
+                Stats
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="ranking in rankings" :key="ranking.playerName" class="ranking-row">
-              <td class="rank-cell">#{{ ranking.rank }}</td>
+            <tr
+              v-for="ranking in rankings"
+              :key="ranking.playerName"
+              class="ranking-row"
+            >
+              <td class="rank-cell">
+                #{{ ranking.rank }}
+              </td>
               <td class="player-cell">
-                <router-link :to="`/players/${encodeURIComponent(ranking.playerName)}`" class="player-link">
+                <router-link
+                  :to="`/players/${encodeURIComponent(ranking.playerName)}`"
+                  class="player-link"
+                >
                   <PlayerName 
                     :name="ranking.playerName" 
                     source="server-rankings"
                     :server-guid="serverContext?.serverGuid"
                     :clickable="true"
-                    :showCompareIcon="true"
+                    :show-compare-icon="true"
                   />
                 </router-link>
               </td>
-              <td class="desktop-only score-cell">🏆 {{ ranking.totalScore }}</td>
+              <td class="desktop-only score-cell">
+                🏆 {{ ranking.totalScore }}
+              </td>
               <td class="desktop-only kills-cell">
-                <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> {{ ranking.totalKills }}
+                <img
+                  src="@/assets/kills.png"
+                  alt="Kills"
+                  class="kills-icon"
+                > {{ ranking.totalKills }}
               </td>
               <td class="desktop-only deaths-cell">
-                <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /> {{ ranking.totalDeaths }}
+                <img
+                  src="@/assets/deaths.png"
+                  alt="Deaths"
+                  class="deaths-icon"
+                > {{ ranking.totalDeaths }}
               </td>
-              <td class="desktop-only kd-cell">📊 {{ ranking.kdRatio.toFixed(2) }}</td>
-              <td class="desktop-only playtime-cell">⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</td>
+              <td class="desktop-only kd-cell">
+                📊 {{ ranking.kdRatio.toFixed(2) }}
+              </td>
+              <td class="desktop-only playtime-cell">
+                ⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}
+              </td>
               <td class="mobile-only stats-cell">
                 <div class="mobile-stats">
-                  <span class="stat-item" title="Score">🏆 {{ ranking.totalScore }}</span>
-                  <span class="stat-item combat-badge" title="Kills • Deaths • K/D Ratio">
-                    <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> {{ ranking.totalKills }} • <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" /> {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
+                  <span
+                    class="stat-item"
+                    title="Score"
+                  >🏆 {{ ranking.totalScore }}</span>
+                  <span
+                    class="stat-item combat-badge"
+                    title="Kills • Deaths • K/D Ratio"
+                  >
+                    <img
+                      src="@/assets/kills.png"
+                      alt="Kills"
+                      class="kills-icon"
+                    > {{ ranking.totalKills }} • <img
+                      src="@/assets/deaths.png"
+                      alt="Deaths"
+                      class="deaths-icon"
+                    > {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
                   </span>
-                  <span class="stat-item" title="Play Time">⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
+                  <span
+                    class="stat-item"
+                    title="Play Time"
+                  >⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
                 </div>
               </td>
             </tr>
@@ -654,53 +780,59 @@ onUnmounted(() => {
         </table>
 
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="pagination-container">
+        <div
+          v-if="totalPages > 1"
+          class="pagination-container"
+        >
           <div class="pagination-controls">
             <button 
-              @click="changePage(1)" 
               class="pagination-button" 
-              :disabled="currentPage === 1"
+              :disabled="currentPage === 1" 
               title="First Page"
+              @click="changePage(1)"
             >
               &laquo;
             </button>
             <button 
-              @click="changePage(currentPage - 1)" 
               class="pagination-button" 
-              :disabled="currentPage === 1"
+              :disabled="currentPage === 1" 
               title="Previous Page"
+              @click="changePage(currentPage - 1)"
             >
               &lsaquo;
             </button>
             <button 
               v-for="page in paginationRange" 
               :key="page" 
-              @click="changePage(page)" 
               class="pagination-button" 
-              :class="{ active: page === currentPage }"
+              :class="{ active: page === currentPage }" 
+              @click="changePage(page)"
             >
               {{ page }}
             </button>
             <button 
-              @click="changePage(currentPage + 1)" 
               class="pagination-button" 
-              :disabled="currentPage === totalPages"
+              :disabled="currentPage === totalPages" 
               title="Next Page"
+              @click="changePage(currentPage + 1)"
             >
               &rsaquo;
             </button>
             <button 
-              @click="changePage(totalPages)" 
               class="pagination-button" 
-              :disabled="currentPage === totalPages"
+              :disabled="currentPage === totalPages" 
               title="Last Page"
+              @click="changePage(totalPages)"
             >
               &raquo;
             </button>
           </div>
         </div>
       </div>
-      <div v-else class="no-data-container">
+      <div
+        v-else
+        class="no-data-container"
+      >
         <p>No rankings available for this server.</p>
       </div>
     </div>

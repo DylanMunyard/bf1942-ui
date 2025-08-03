@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ServerInfo, ServerSummary } from '../types/server';
+import { ServerSummary } from '../types/server';
 
 // Define interfaces for the API response
 

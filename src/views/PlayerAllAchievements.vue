@@ -442,46 +442,104 @@ watch(
 <template>
   <div class="player-achievements-page">
     <div class="page-header">
-      <button @click="goBack" class="back-button">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
+      <button
+        class="back-button"
+        @click="goBack"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="feather feather-arrow-left"
+        >
+          <line
+            x1="19"
+            y1="12"
+            x2="5"
+            y2="12"
+          />
+          <polyline points="12 19 5 12 12 5" />
         </svg>
         Back to {{ playerName }}
       </button>
       <div class="page-title">
         <h1>All Achievements</h1>
-        <p class="page-subtitle">{{ playerName }}'s complete achievement history</p>
+        <p class="page-subtitle">
+          {{ playerName }}'s complete achievement history
+        </p>
       </div>
     </div>
 
     <!-- Mobile filter toggle -->
     <div class="filter-toggle">
-      <button @click="showFilters = !showFilters" class="filter-toggle-button">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="filter-icon">
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+      <button
+        class="filter-toggle-button"
+        @click="showFilters = !showFilters"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="filter-icon"
+        >
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
         </svg>
         Filters
-        <span v-if="hasActiveFilters" class="active-filter-indicator">●</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon" :class="{ 'rotated': showFilters }">
-          <polyline points="6 9 12 15 18 9"></polyline>
+        <span
+          v-if="hasActiveFilters"
+          class="active-filter-indicator"
+        >●</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="chevron-icon"
+:class="{ 'rotated': showFilters }"
+        >
+          <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
     </div>
 
     <!-- Filters Section -->
-    <div class="filters-section" :class="{ 'filters-visible': showFilters }">
+    <div
+      class="filters-section"
+      :class="{ 'filters-visible': showFilters }"
+    >
       <h4>Filters</h4>
       <div class="filters-grid">
         <!-- Map Name Filter -->
         <div class="filter-group">
-          <label for="map-filter" class="filter-label">Map:</label>
+          <label
+            for="map-filter"
+            class="filter-label"
+          >Map:</label>
           <select 
             id="map-filter"
             v-model="selectedMapName" 
             class="filter-select"
           >
-            <option value="">All Maps</option>
+            <option value="">
+              All Maps
+            </option>
             <option 
               v-for="mapName in availableMaps" 
               :key="mapName" 
@@ -494,7 +552,10 @@ watch(
         
         <!-- Achievement ID Filter -->
         <div class="filter-group">
-          <label for="achievement-filter" class="filter-label">Achievement:</label>
+          <label
+            for="achievement-filter"
+            class="filter-label"
+          >Achievement:</label>
           <div class="achievement-select-wrapper">
             <div 
               class="achievement-select-dropdown" 
@@ -508,11 +569,14 @@ watch(
                   :alt="getAchievementDisplayName(selectedAchievementId)"
                   class="achievement-select-icon"
                   @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                />
+                >
                 <span>{{ selectedAchievementId ? getAchievementDisplayName(selectedAchievementId) : 'All Achievements' }}</span>
                 <span class="dropdown-arrow">▼</span>
               </div>
-              <div v-if="achievementDropdownOpen" class="achievement-options">
+              <div
+                v-if="achievementDropdownOpen"
+                class="achievement-options"
+              >
                 <div 
                   class="achievement-option" 
                   :class="{ selected: selectedAchievementId === '' }"
@@ -532,7 +596,7 @@ watch(
                     :alt="label.displayName"
                     class="achievement-option-icon"
                     @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                  />
+                  >
                   <span>{{ label.displayName }}</span>
                 </div>
               </div>
@@ -543,9 +607,9 @@ watch(
         <!-- Clear Filters Button -->
         <div class="filter-group">
           <button 
-            @click="clearFilters" 
-            class="clear-filters-btn"
+            class="clear-filters-btn" 
             :disabled="!selectedMapName && !selectedAchievementId"
+            @click="clearFilters"
           >
             Clear Filters
           </button>
@@ -553,16 +617,27 @@ watch(
       </div>
     </div>
 
-    <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
+    <div
+      v-if="isLoading"
+      class="loading-container"
+    >
+      <div class="loading-spinner" />
       <p>Loading achievements...</p>
     </div>
     
-    <div v-else-if="error" class="error-container">
-      <p class="error-message">{{ error }}</p>
+    <div
+      v-else-if="error"
+      class="error-container"
+    >
+      <p class="error-message">
+        {{ error }}
+      </p>
     </div>
     
-    <div v-else-if="achievements.length > 0" class="achievements-content">
+    <div
+      v-else-if="achievements.length > 0"
+      class="achievements-content"
+    >
       <!-- Pagination info -->
       <div class="pagination-info">
         <span>Showing {{ achievements.length }} of {{ totalCount }} achievements</span>
@@ -571,11 +646,14 @@ watch(
 
       <!-- Achievement Timeline -->
       <div class="timeline-container">
-        <template v-for="dateKey in sortedDateKeys" :key="dateKey">
+        <template
+          v-for="dateKey in sortedDateKeys"
+          :key="dateKey"
+        >
           <!-- Date Header Timeline Item -->
           <div class="timeline-item date-header-item">
             <div class="timeline-node-container">
-              <div class="timeline-node date-node"></div>
+              <div class="timeline-node date-node" />
             </div>
             <div class="date-header-content">
               <div class="date-header-line-1">
@@ -593,8 +671,8 @@ watch(
               class="achievement-card"
               :class="[`tier-${group.achievement.tier.toLowerCase()}`, group.achievement.achievementType]"
               :style="{ boxShadow: getTierGlow(group.achievement.tier) }"
-              @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
               :title="getAchievementTooltip(group.achievement)"
+              @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
             >
               <div class="achievement-image-container">
                 <img 
@@ -602,17 +680,30 @@ watch(
                   :alt="group.achievement.achievementName"
                   class="achievement-image"
                   @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                />
-                <div v-if="group.count > 1" class="achievement-count-badge">{{ group.count }}</div>
+                >
+                <div
+                  v-if="group.count > 1"
+                  class="achievement-count-badge"
+                >
+                  {{ group.count }}
+                </div>
               </div>
               
               <div class="achievement-details">
-                <div class="achievement-name">{{ group.achievement.achievementName }}</div>
+                <div class="achievement-name">
+                  {{ group.achievement.achievementName }}
+                </div>
                 <div class="achievement-meta">
                   <span class="achievement-time">{{ formatRelativeTime(group.achievement.achievedAt) }}</span>
-                  <span v-if="group.achievement.value" class="achievement-value">{{ group.achievement.value.toLocaleString() }}</span>
+                  <span
+                    v-if="group.achievement.value"
+                    class="achievement-value"
+                  >{{ group.achievement.value.toLocaleString() }}</span>
                 </div>
-                <div v-if="group.achievement.mapName && group.count === 1" class="achievement-location">
+                <div
+                  v-if="group.achievement.mapName && group.count === 1"
+                  class="achievement-location"
+                >
                   <span v-if="group.achievement.serverGuid && group.achievement.mapName && group.achievement.achievedAt">
                     on <router-link 
                       :to="{
@@ -633,7 +724,10 @@ watch(
                     on {{ group.achievement.mapName }}
                   </span>
                 </div>
-                <div v-else-if="group.count > 1" class="achievement-location">
+                <div
+                  v-else-if="group.count > 1"
+                  class="achievement-location"
+                >
                   Click to see all {{ group.count }} achievements
                 </div>
               </div>
@@ -643,32 +737,41 @@ watch(
       </div>
 
       <!-- Pagination Controls -->
-      <div v-if="totalPages > 1" class="pagination-controls">
+      <div
+        v-if="totalPages > 1"
+        class="pagination-controls"
+      >
         <button 
-          @click="goToPage(currentPage - 1)" 
-          :disabled="!hasPreviousPage"
+          :disabled="!hasPreviousPage" 
           class="pagination-button"
+          @click="goToPage(currentPage - 1)"
         >
           Previous
         </button>
         
         <div class="pagination-numbers">
-          <template v-for="page in getPaginationRange()" :key="page">
+          <template
+            v-for="page in getPaginationRange()"
+            :key="page"
+          >
             <button 
               v-if="typeof page === 'number'"
-              @click="goToPage(page)"
               :class="['pagination-number', { active: page === currentPage }]"
+              @click="goToPage(page)"
             >
               {{ page }}
             </button>
-            <span v-else class="pagination-dots">{{ page }}</span>
+            <span
+              v-else
+              class="pagination-dots"
+            >{{ page }}</span>
           </template>
         </div>
         
         <button 
-          @click="goToPage(currentPage + 1)" 
-          :disabled="!hasNextPage"
+          :disabled="!hasNextPage" 
           class="pagination-button"
+          @click="goToPage(currentPage + 1)"
         >
           Next
         </button>
@@ -676,25 +779,44 @@ watch(
     </div>
 
     <!-- No Achievements State -->
-    <div v-else class="no-achievements">
-      <div class="no-achievements-icon">🏆</div>
+    <div
+      v-else
+      class="no-achievements"
+    >
+      <div class="no-achievements-icon">
+        🏆
+      </div>
       <h2>No Achievements Yet</h2>
       <p>Start playing to unlock achievements and build your legacy!</p>
     </div>
 
     <!-- Achievement Details Modal -->
-    <div v-if="showModal && selectedAchievement" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
+    <div
+      v-if="showModal && selectedAchievement"
+      class="modal-overlay"
+      @click="closeModal"
+    >
+      <div
+        class="modal-content"
+        @click.stop
+      >
         <div class="modal-header">
           <div class="achievement-title-info">
-            <h3 class="modal-achievement-name">{{ selectedAchievement.achievementName }}</h3>
+            <h3 class="modal-achievement-name">
+              {{ selectedAchievement.achievementName }}
+            </h3>
             <div class="modal-achievement-date">
               <span class="date-label">Achieved:</span>
               {{ new Date(selectedAchievement.achievedAt.endsWith('Z') ? selectedAchievement.achievedAt : selectedAchievement.achievedAt + 'Z').toLocaleString() }}
               <span class="relative-time">({{ formatRelativeTime(selectedAchievement.achievedAt) }})</span>
             </div>
           </div>
-          <button class="close-button" @click="closeModal">&times;</button>
+          <button
+            class="close-button"
+            @click="closeModal"
+          >
+            &times;
+          </button>
         </div>
         
         <div class="modal-body">
@@ -703,17 +825,23 @@ watch(
               :src="getAchievementImage(selectedAchievement.achievementId)" 
               :alt="selectedAchievement.achievementName"
               class="modal-achievement-image"
-            />
+            >
           </div>
 
           <!-- Badge Description -->
-          <div v-if="getBadgeDescription(selectedAchievement.achievementId)" class="achievement-description">
+          <div
+            v-if="getBadgeDescription(selectedAchievement.achievementId)"
+            class="achievement-description"
+          >
             <h4>Description</h4>
             <p>{{ getBadgeDescription(selectedAchievement.achievementId) }}</p>
           </div>
           
           <div class="achievement-details-grid">
-            <div v-if="selectedAchievement.mapName" class="detail-item">
+            <div
+              v-if="selectedAchievement.mapName"
+              class="detail-item"
+            >
               <span class="detail-label">Map:</span>
               <span class="detail-value">
                 <router-link 
@@ -735,12 +863,18 @@ watch(
               </span>
             </div>
             
-            <div v-if="selectedAchievement.serverGuid" class="detail-item">
+            <div
+              v-if="selectedAchievement.serverGuid"
+              class="detail-item"
+            >
               <span class="detail-label">Server ID:</span>
               <span class="detail-value">{{ selectedAchievement.serverGuid }}</span>
             </div>
             
-            <div v-if="selectedAchievement.roundId" class="detail-item">
+            <div
+              v-if="selectedAchievement.roundId"
+              class="detail-item"
+            >
               <span class="detail-label">Round ID:</span>
               <span class="detail-value">{{ selectedAchievement.roundId }}</span>
             </div>
@@ -750,16 +884,30 @@ watch(
     </div>
 
     <!-- Grouped Achievement Modal -->
-    <div v-if="showGroupModal && selectedAchievementGroup" class="modal-overlay" @click="closeGroupModal">
-      <div class="modal-content" @click.stop>
+    <div
+      v-if="showGroupModal && selectedAchievementGroup"
+      class="modal-overlay"
+      @click="closeGroupModal"
+    >
+      <div
+        class="modal-content"
+        @click.stop
+      >
         <div class="modal-header">
           <div class="achievement-title-info">
-            <h3 class="modal-achievement-name">{{ selectedAchievementGroup.achievement.achievementName }}</h3>
+            <h3 class="modal-achievement-name">
+              {{ selectedAchievementGroup.achievement.achievementName }}
+            </h3>
             <div class="modal-achievement-date">
               <span class="date-label">Achieved {{ selectedAchievementGroup.count }} time{{ selectedAchievementGroup.count !== 1 ? 's' : '' }}</span>
             </div>
           </div>
-          <button class="close-button" @click="closeGroupModal">&times;</button>
+          <button
+            class="close-button"
+            @click="closeGroupModal"
+          >
+            &times;
+          </button>
         </div>
         
         <div class="modal-body">
@@ -768,35 +916,44 @@ watch(
               :src="getAchievementImage(selectedAchievementGroup.achievement.achievementId)" 
               :alt="selectedAchievementGroup.achievement.achievementName"
               class="modal-achievement-image"
-            />
+            >
           </div>
 
           <!-- Badge Description -->
-          <div v-if="getBadgeDescription(selectedAchievementGroup.achievement.achievementId)" class="achievement-description">
+          <div
+            v-if="getBadgeDescription(selectedAchievementGroup.achievement.achievementId)"
+            class="achievement-description"
+          >
             <h4>Description</h4>
             <p>{{ getBadgeDescription(selectedAchievementGroup.achievement.achievementId) }}</p>
           </div>
           
           <div class="timeline-container">
-            <template v-for="(achievement, index) in selectedAchievementGroup.allAchievements.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())" :key="index">
+            <template
+              v-for="(achievement, index) in selectedAchievementGroup.allAchievements.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())"
+              :key="index"
+            >
               <!-- Achievement timeline item -->
               <div class="timeline-item">
                 <!-- Timeline node -->
                 <div class="timeline-node-container">
-                  <div class="timeline-node achievement-node"></div>
+                  <div class="timeline-node achievement-node" />
                 </div>
                 
                 <!-- Achievement card -->
                 <div 
                   v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt"
                   class="achievement-card" 
-                  @click="navigateToRoundReport(achievement)" 
-                  title="View round report"
+                  title="View round report" 
+                  @click="navigateToRoundReport(achievement)"
                 >
                   <div class="achievement-line-1">
                     <span class="achievement-time-text">{{ formatRelativeTime(achievement.achievedAt) }}</span>
                     <span class="achievement-separator">-</span>
-                    <div v-if="achievement.mapName" class="achievement-map-container">
+                    <div
+                      v-if="achievement.mapName"
+                      class="achievement-map-container"
+                    >
                       <span class="achievement-map">{{ achievement.mapName }}</span>
                       <span class="achievement-detail-time">
                         {{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleString() }}
@@ -812,11 +969,11 @@ watch(
                 class="timeline-gap-item"
               >
                 <div class="time-gap-separator">
-                  <div class="time-gap-line"></div>
+                  <div class="time-gap-line" />
                   <div class="time-gap-badge">
                     {{ getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1]) }}
                   </div>
-                  <div class="time-gap-line"></div>
+                  <div class="time-gap-line" />
                 </div>
               </div>
             </template>

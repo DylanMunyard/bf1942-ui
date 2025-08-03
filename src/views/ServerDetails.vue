@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { ServerDetails, RecentRoundInfo, ServerInsights, fetchServerDetails, fetchServerInsights, fetchLiveServerData } from '../services/serverDetailsService';
-import { Line, Bar } from 'vue-chartjs';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { ServerDetails, ServerInsights, fetchServerDetails, fetchServerInsights, fetchLiveServerData } from '../services/serverDetailsService';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { countryCodeToName } from '../types/countryCodes';
 import { ServerSummary } from '../types/server';
 import PlayersModal from '../components/PlayersModal.vue';
-import PlayerListItem from '../components/PlayerListItem.vue';
 import ServerPlayerActivityChart from '../components/ServerPlayerActivityChart.vue';
 import ServerLeaderboards from '../components/ServerLeaderboards.vue';
 import ServerRecentRounds from '../components/ServerRecentRounds.vue';
@@ -17,7 +15,6 @@ import { formatDate } from '../utils/date';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
 const route = useRoute();
-const router = useRouter();
 
 // State
 const serverName = ref(route.params.serverName as string);
@@ -209,13 +206,38 @@ const handlePeriodChange = async (period: string) => {
 <template>
   <div class="server-details-container">
     <div class="server-details-header">
-      <div class="server-name-container" style="flex-direction: column; align-items: flex-start;">
-        <router-link :to="getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string))" class="back-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <div
+        class="server-name-container"
+        style="flex-direction: column; align-items: flex-start;"
+      >
+        <router-link
+          :to="getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string))"
+          class="back-button"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="feather feather-arrow-left"
+          ><line
+            x1="19"
+            y1="12"
+            x2="5"
+            y2="12"
+          /><polyline points="12 19 5 12 12 5" /></svg>
           Back to Servers
         </router-link>
         <h2>Server Details: {{ serverName }}</h2>
-        <div v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone)" class="server-region-badge">
+        <div
+          v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone)"
+          class="server-region-badge"
+        >
           <span>
             <template v-if="serverDetails.region">{{ serverDetails.region }}</template>
             <template v-if="serverDetails.region && (serverDetails.country || serverDetails.countryCode)"> <span class="dot">•</span> </template>
@@ -231,63 +253,104 @@ const handlePeriodChange = async (period: string) => {
         <!-- Current Players Link -->
         <button
           v-if="liveServerInfo && liveServerInfo.players.length > 0"
-          @click="openPlayersModal"
           class="current-players-link"
+          @click="openPlayersModal"
         >
           <div class="players-info">
             <span class="player-count">{{ liveServerInfo.numPlayers }} Online</span>
-            <span v-if="liveServerInfo.mapName" class="current-map">Currently playing {{ liveServerInfo.mapName }}</span>
+            <span
+              v-if="liveServerInfo.mapName"
+              class="current-map"
+            >Currently playing {{ liveServerInfo.mapName }}</span>
           </div>
         </button>
-        <div v-else-if="liveServerInfo && liveServerInfo.players.length === 0" class="current-players-empty">
+        <div
+          v-else-if="liveServerInfo && liveServerInfo.players.length === 0"
+          class="current-players-empty"
+        >
           <div class="players-info">
             <span class="player-count">0 Online</span>
-            <span v-if="liveServerInfo.mapName" class="current-map">Currently playing {{ liveServerInfo.mapName }}</span>
+            <span
+              v-if="liveServerInfo.mapName"
+              class="current-map"
+            >Currently playing {{ liveServerInfo.mapName }}</span>
           </div>
         </div>
-        <div v-else-if="isLiveServerLoading" class="current-players-loading">
-          <div class="loading-spinner small"></div>
+        <div
+          v-else-if="isLiveServerLoading"
+          class="current-players-loading"
+        >
+          <div class="loading-spinner small" />
           <span>Loading...</span>
         </div>
         
         <!-- Join Server Button -->
         <button
           v-if="liveServerInfo?.joinLink"
-          @click="joinServer"
           class="join-server-button"
+          @click="joinServer"
         >
           🎮 Join Server
         </button>
-        
       </div>
     </div>
     <div class="server-details-body">
-      <div v-if="isLoading" class="loading-container">
-        <div class="loading-spinner"></div>
+      <div
+        v-if="isLoading"
+        class="loading-container"
+      >
+        <div class="loading-spinner" />
         <p>Loading server details...</p>
       </div>
-      <div v-else-if="error" class="error-container">
-        <p class="error-message">{{ error }}</p>
+      <div
+        v-else-if="error"
+        class="error-container"
+      >
+        <p class="error-message">
+          {{ error }}
+        </p>
       </div>
-      <div v-else-if="serverDetails" class="stats-container">
+      <div
+        v-else-if="serverDetails"
+        class="stats-container"
+      >
         <!-- Period information -->
         <div class="period-info">
           Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
         </div>
 
         <!-- Player Activity Section -->
-        <ServerPlayerActivityChart :server-insights="serverInsights" :is-loading="isInsightsLoading" @period-change="handlePeriodChange" />
-        <div v-if="insightsError" class="insights-error">
-          <p class="error-message-small">{{ insightsError }}</p>
+        <ServerPlayerActivityChart
+          :server-insights="serverInsights"
+          :is-loading="isInsightsLoading"
+          @period-change="handlePeriodChange"
+        />
+        <div
+          v-if="insightsError"
+          class="insights-error"
+        >
+          <p class="error-message-small">
+            {{ insightsError }}
+          </p>
         </div>
 
         <!-- Enhanced Leaderboards Container -->
-        <ServerLeaderboards :server-details="serverDetails" :server-name="serverName" />
+        <ServerLeaderboards
+          :server-details="serverDetails"
+          :server-name="serverName"
+        />
 
         <!-- Recent Rounds -->
-        <ServerRecentRounds v-if="serverDetails" :server-details="serverDetails" :server-name="serverName" />
+        <ServerRecentRounds
+          v-if="serverDetails"
+          :server-details="serverDetails"
+          :server-name="serverName"
+        />
       </div>
-      <div v-else class="no-data-container">
+      <div
+        v-else
+        class="no-data-container"
+      >
         <p>No server details available.</p>
       </div>
     </div>

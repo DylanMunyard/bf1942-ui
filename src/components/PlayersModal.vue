@@ -1,18 +1,38 @@
 <template>
-  <div v-if="show" class="modal-overlay" @click="$emit('close')">
-    <div class="modal-content players-modal" @click.stop>
+  <div
+    v-if="show"
+    class="modal-overlay"
+    @click="$emit('close')"
+  >
+    <div
+      class="modal-content players-modal"
+      @click.stop
+    >
       <div class="modal-header">
         <div class="header-left">
           <h2>🗺️ {{ server?.mapName || 'Unknown Map' }}</h2>
-          <div class="server-name-header">{{ server?.name || 'Unknown Server' }}</div>
-          <div v-if="server?.ip && server?.port" class="server-address-header">
+          <div class="server-name-header">
+            {{ server?.name || 'Unknown Server' }}
+          </div>
+          <div
+            v-if="server?.ip && server?.port"
+            class="server-address-header"
+          >
             🌐 {{ server.ip }}:{{ server.port }}
           </div>
         </div>
-        <button @click="$emit('close')" class="close-button">&times;</button>
+        <button
+          class="close-button"
+          @click="$emit('close')"
+        >
+          &times;
+        </button>
       </div>
       <div class="modal-body">
-        <div v-if="server && server.players.length > 0" class="leaderboard-section">
+        <div
+          v-if="server && server.players.length > 0"
+          class="leaderboard-section"
+        >
           <PlayerLeaderboard 
             :players="server.players.map(player => ({
               name: player.name,
@@ -28,10 +48,16 @@
             :server-guid="server.guid"
           />
         </div>
-        <div v-else-if="server && server.players.length === 0" class="no-players">
+        <div
+          v-else-if="server && server.players.length === 0"
+          class="no-players"
+        >
           No players currently on this server
         </div>
-        <div v-else class="no-data">
+        <div
+          v-else
+          class="no-data"
+        >
           No server data available
         </div>
       </div>

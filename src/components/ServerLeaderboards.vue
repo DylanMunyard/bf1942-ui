@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { ServerDetails } from '../services/serverDetailsService';
-import PlayerLeaderboard from './PlayerLeaderboard.vue';
+import ServerLeaderboard from './ServerLeaderboard.vue';
 
 const props = defineProps<{
   serverDetails: ServerDetails | null;
@@ -35,64 +35,73 @@ const currentTopScores = computed(() => {
     <div class="enhanced-leaderboard-section">
       <div class="enhanced-section-header">
         <div class="section-title">
-          <div class="section-icon">⚡</div>
+          <div class="section-icon">
+            ⚡
+          </div>
           <h3>Most Active Warriors</h3>
         </div>
         <div class="section-time-controls">
           <button 
-            @click="toggleTimePeriod('week')"
             class="enhanced-time-tab"
             :class="{ 'active': selectedTimePeriod === 'week' }"
+            @click="toggleTimePeriod('week')"
           >
             7 Days
           </button>
           <button 
-            @click="toggleTimePeriod('month')"
             class="enhanced-time-tab"
             :class="{ 'active': selectedTimePeriod === 'month' }"
+            @click="toggleTimePeriod('month')"
           >
             30 Days
           </button>
         </div>
       </div>
       
-      <!-- All Players -->
-      <div class="leaderboard-table-container" v-if="currentMostActivePlayers.length > 0">
-        <PlayerLeaderboard 
+      <!-- Most Active Players -->
+      <div
+        v-if="currentMostActivePlayers.length > 0"
+        class="leaderboard-table-container"
+      >
+        <ServerLeaderboard 
           :players="currentMostActivePlayers.map(player => ({
-            name: player.playerName,
+            playerName: player.playerName,
             score: player.minutesPlayed,
             kills: player.totalKills,
-            deaths: player.totalDeaths,
-            ping: 0, // Not available in this data
-            team: 0, // Not available in this data
-            teamLabel: 'All Players'
+            deaths: player.totalDeaths
           }))"
           source="server-leaderboards"
+          score-label="Minutes"
+          :time-period="selectedTimePeriod"
         />
       </div>
     </div>
 
     <!-- Top Scores -->
-    <div class="enhanced-leaderboard-section" v-if="serverDetails">
+    <div
+      v-if="serverDetails"
+      class="enhanced-leaderboard-section"
+    >
       <div class="enhanced-section-header">
         <div class="section-title">
-          <div class="section-icon">🎯</div>
+          <div class="section-icon">
+            🎯
+          </div>
           <h3>Legendary Performances</h3>
         </div>
         <div class="section-controls">
           <div class="section-time-controls">
             <button 
-              @click="toggleTimePeriod('week')"
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'week' }"
+              @click="toggleTimePeriod('week')"
             >
               7 Days
             </button>
             <button 
-              @click="toggleTimePeriod('month')"
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'month' }"
+              @click="toggleTimePeriod('month')"
             >
               30 Days
             </button>
@@ -106,19 +115,21 @@ const currentTopScores = computed(() => {
         </div>
       </div>
       
-      <!-- All Scores -->
-      <div class="leaderboard-table-container" v-if="currentTopScores.length > 0">
-        <PlayerLeaderboard 
+      <!-- Top Scores -->
+      <div
+        v-if="currentTopScores.length > 0"
+        class="leaderboard-table-container"
+      >
+        <ServerLeaderboard 
           :players="currentTopScores.map(score => ({
-            name: score.playerName,
+            playerName: score.playerName,
             score: score.score,
             kills: score.kills,
-            deaths: score.deaths,
-            ping: 0, // Not available in this data
-            team: 0, // Not available in this data
-            teamLabel: 'All Players'
+            deaths: score.deaths
           }))"
           source="server-leaderboards"
+          score-label="Score"
+          :time-period="selectedTimePeriod"
         />
       </div>
     </div>

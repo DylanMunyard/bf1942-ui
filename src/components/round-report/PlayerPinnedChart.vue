@@ -247,22 +247,44 @@ const getElapsedTime = (timestamp: string): string => {
 </script>
 
 <template>
-  <div v-if="pinnedPlayers.size > 0" class="performance-chart-section">
+  <div
+    v-if="pinnedPlayers.size > 0"
+    class="performance-chart-section"
+  >
     <div class="pinned-players-info">
       <h3>📌 Pinned Players Performance</h3>
       <div class="pinned-players-badges">
-        <div v-for="playerName in Array.from(pinnedPlayers)" :key="playerName" class="pinned-player-badge">
-          <PlayerName :name="playerName" source="round-report-pinned" :server-guid="serverGuid" />
+        <div
+          v-for="playerName in Array.from(pinnedPlayers)"
+          :key="playerName"
+          class="pinned-player-badge"
+        >
+          <PlayerName
+            :name="playerName"
+            source="round-report-pinned"
+            :server-guid="serverGuid"
+          />
         </div>
-        <button v-if="pinnedPlayers.size > 1" class="clear-all-button" @click="$emit('clear-all-pinned')" title="Clear all pinned players">
+        <button
+          v-if="pinnedPlayers.size > 1"
+          class="clear-all-button"
+          title="Clear all pinned players"
+          @click="$emit('clear-all-pinned')"
+        >
           Clear All
         </button>
       </div>
     </div>
     
-    <div v-if="pinnedPlayersChartData.datasets.length > 0" class="performance-chart-container">
+    <div
+      v-if="pinnedPlayersChartData.datasets.length > 0"
+      class="performance-chart-container"
+    >
       <div class="chart-wrapper">
-        <Line :data="pinnedPlayersChartData" :options="pinnedPlayersChartOptions" />
+        <Line
+          :data="pinnedPlayersChartData"
+          :options="pinnedPlayersChartOptions"
+        />
       </div>
     </div>
   </div>

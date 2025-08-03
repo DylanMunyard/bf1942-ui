@@ -55,12 +55,34 @@ watch(() => props.serverName, fetchPrometheusData);
 </script>
 
 <template>
-  <div v-if="!error" class="line-chart-container">
-    <div v-if="loading" class="chart-loading">Loading...</div>
-    <div v-else-if="chartData.length === 0" class="chart-no-data">No data</div>
-    <div v-else class="chart" @click="showDetailedChart = true">
+  <div
+    v-if="!error"
+    class="line-chart-container"
+  >
+    <div
+      v-if="loading"
+      class="chart-loading"
+    >
+      Loading...
+    </div>
+    <div
+      v-else-if="chartData.length === 0"
+      class="chart-no-data"
+    >
+      No data
+    </div>
+    <div
+      v-else
+      class="chart"
+      @click="showDetailedChart = true"
+    >
       <!-- SVG line chart with min/max labels -->
-      <svg width="100" height="30" viewBox="0 0 100 30" class="clickable-chart">
+      <svg
+        width="100"
+        height="30"
+        viewBox="0 0 100 30"
+        class="clickable-chart"
+      >
         <!-- Chart line -->
         <polyline
           :points="chartData
@@ -72,10 +94,32 @@ watch(() => props.serverName, fetchPrometheusData);
         />
 
         <!-- Min/Max labels with semi-transparent backgrounds -->
-        <rect x="0" y="20" width="15" height="12" fill="white" opacity="0.7" />
-        <rect x="0" y="1" width="15" height="12" fill="white" opacity="0.7" />
-        <text x="2" y="28" class="axis-label min-label">{{ Math.round(minValue) }}</text>
-        <text x="2" y="9" class="axis-label max-label">{{ Math.round(maxValue) }}</text>
+        <rect
+          x="0"
+          y="20"
+          width="15"
+          height="12"
+          fill="white"
+          opacity="0.7"
+        />
+        <rect
+          x="0"
+          y="1"
+          width="15"
+          height="12"
+          fill="white"
+          opacity="0.7"
+        />
+        <text
+          x="2"
+          y="28"
+          class="axis-label min-label"
+        >{{ Math.round(minValue) }}</text>
+        <text
+          x="2"
+          y="9"
+          class="axis-label max-label"
+        >{{ Math.round(maxValue) }}</text>
       </svg>
     </div>
 

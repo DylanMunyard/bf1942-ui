@@ -5,7 +5,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 const {
   selectedPlayers,
   isVisible,
-  canAddPlayer,
+  canAddPlayer: _canAddPlayer,
   canCompare,
   hasSelections,
   removePlayer,
@@ -88,14 +88,23 @@ onUnmounted(() => {
       :class="{ 'expanded': isExpanded }"
     >
       <!-- Mobile Compact View -->
-      <div class="mobile-compact" @click="toggleExpanded">
+      <div
+        class="mobile-compact"
+        @click="toggleExpanded"
+      >
         <div class="compact-content">
           <!-- Show player count when no players or show individual players with remove buttons -->
-          <div v-if="selectedPlayers.length === 0" class="player-count-indicator">
+          <div
+            v-if="selectedPlayers.length === 0"
+            class="player-count-indicator"
+          >
             <span class="count">0</span>
             <span class="label">players</span>
           </div>
-          <div v-else class="compact-players-list">
+          <div
+            v-else
+            class="compact-players-list"
+          >
             <div 
               v-for="player in selectedPlayers" 
               :key="player.name"
@@ -104,9 +113,9 @@ onUnmounted(() => {
             >
               <span class="compact-player-name">{{ player.name }}</span>
               <button 
-                @click="handleRemovePlayer(player.name)"
                 class="compact-remove-btn"
                 title="Remove player"
+                @click="handleRemovePlayer(player.name)"
               >
                 ×
               </button>
@@ -115,13 +124,20 @@ onUnmounted(() => {
           <div class="compact-actions">
             <button 
               v-if="canCompare" 
-              @click.stop="handleCompare"
               class="compact-compare-btn"
               title="Quick compare"
+              @click.stop="handleCompare"
             >
-              <img src="@/assets/player_comparison.jpg" alt="Compare" class="compare-icon" />
+              <img
+                src="@/assets/player_comparison.jpg"
+                alt="Compare"
+                class="compare-icon"
+              >
             </button>
-            <button class="expand-btn" :title="isExpanded ? 'Collapse' : 'Expand'">
+            <button
+              class="expand-btn"
+              :title="isExpanded ? 'Collapse' : 'Expand'"
+            >
               {{ isExpanded ? '▼' : '▲' }}
             </button>
           </div>
@@ -135,13 +151,19 @@ onUnmounted(() => {
           <div class="header-actions">
             <!-- Mobile collapse button -->
             <button 
-              @click="collapseWidget" 
               class="collapse-btn mobile-only" 
-              title="Collapse"
+              title="Collapse" 
+              @click="collapseWidget"
             >
               ▼
             </button>
-            <button @click="handleHide" class="close-btn" title="Hide widget">×</button>
+            <button
+              class="close-btn"
+              title="Hide widget"
+              @click="handleHide"
+            >
+              ×
+            </button>
           </div>
         </div>
         
@@ -157,9 +179,9 @@ onUnmounted(() => {
                 <span class="player-name">{{ getPlayerSlotText(index - 1) }}</span>
                 <button 
                   v-if="selectedPlayers[index - 1]" 
-                  @click="handleRemovePlayer(selectedPlayers[index - 1].name)"
                   class="remove-player-btn"
                   title="Remove player"
+                  @click="handleRemovePlayer(selectedPlayers[index - 1].name)"
                 >
                   ×
                 </button>
@@ -169,17 +191,17 @@ onUnmounted(() => {
           
           <div class="widget-actions">
             <button 
-              @click="handleCompare" 
-              :disabled="!canCompare"
+              :disabled="!canCompare" 
               class="compare-btn"
               :class="{ 'ready': canCompare }"
+              @click="handleCompare"
             >
               Compare
             </button>
             <button 
-              @click="handleClear" 
-              :disabled="!hasSelections"
+              :disabled="!hasSelections" 
               class="clear-btn"
+              @click="handleClear"
             >
               Clear All
             </button>

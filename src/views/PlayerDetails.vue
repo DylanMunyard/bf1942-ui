@@ -544,21 +544,52 @@ watch(
   <div class="player-details-container">
     <div class="player-stats-header">
       <div class="player-name-container">
-        <button @click="goBack" class="back-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <button
+          class="back-button"
+          @click="goBack"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="feather feather-arrow-left"
+          ><line
+            x1="19"
+            y1="12"
+            x2="5"
+            y2="12"
+          /><polyline points="12 19 5 12 12 5" /></svg>
           Back to Players
         </button>
         <div class="player-header-info">
           <div class="player-name-row">
-            <h2 class="player-name-heading">{{ playerName }}</h2>
+            <h2 class="player-name-heading">
+              {{ playerName }}
+            </h2>
             <router-link 
               :to="{ path: '/players/compare', query: { player1: playerName } }"
               class="compare-player-btn"
               title="Compare this player with another"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 3h12l4 6-10 13L2 9l4-6z"/>
-                <path d="M11 3 8 9l4 13 4-13-3-6"/>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M6 3h12l4 6-10 13L2 9l4-6z" />
+                <path d="M11 3 8 9l4 13 4-13-3-6" />
               </svg>
               Compare Player
             </router-link>
@@ -567,7 +598,10 @@ watch(
             <span class="player-playtime">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
             <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
           </div>
-          <div v-if="playerStats" class="player-header-stats">
+          <div
+            v-if="playerStats"
+            class="player-header-stats"
+          >
             <div class="header-stat">
               <span class="header-stat-value header-stat-kills">{{ playerStats.totalKills }}</span>
               <span class="header-stat-label">Kills</span>
@@ -585,16 +619,29 @@ watch(
       </div>
     </div>
     <div class="player-stats-body">
-      <div v-if="isLoading" class="loading-container">
-        <div class="loading-spinner"></div>
+      <div
+        v-if="isLoading"
+        class="loading-container"
+      >
+        <div class="loading-spinner" />
         <p>Loading player statistics...</p>
       </div>
-      <div v-else-if="error" class="error-container">
-        <p class="error-message">{{ error }}</p>
+      <div
+        v-else-if="error"
+        class="error-container"
+      >
+        <p class="error-message">
+          {{ error }}
+        </p>
       </div>
-      <div v-else-if="playerStats" class="stats-container">
-        
-        <div v-if="playerStats.isActive && playerStats.currentServer" class="current-server-banner">
+      <div
+        v-else-if="playerStats"
+        class="stats-container"
+      >
+        <div
+          v-if="playerStats.isActive && playerStats.currentServer"
+          class="current-server-banner"
+        >
           <div class="server-info-line">
             <router-link
               :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}`"
@@ -602,14 +649,35 @@ watch(
             >
               {{ playerStats.currentServer.serverName }}
             </router-link>
-            <span v-if="playerStats && playerStats.isActive" class="status-badge active">Active</span>
-            <span v-if="playerStats.currentServer.gameId" class="game-id">
+            <span
+              v-if="playerStats && playerStats.isActive"
+              class="status-badge active"
+            >Active</span>
+            <span
+              v-if="playerStats.currentServer.gameId"
+              class="game-id"
+            >
               Game: {{ playerStats.currentServer.gameId }}
             </span>
           </div>
-          <div v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined" class="session-stats">
-            Session: {{ playerStats.currentServer.sessionKills }} <img src="@/assets/kills.png" alt="Kills" class="kills-icon" /> / {{ playerStats.currentServer.sessionDeaths }} <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
-            (<img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" /> {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }})
+          <div
+            v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined"
+            class="session-stats"
+          >
+            Session: {{ playerStats.currentServer.sessionKills }} <img
+              src="@/assets/kills.png"
+              alt="Kills"
+              class="kills-icon"
+            > / {{ playerStats.currentServer.sessionDeaths }} <img
+              src="@/assets/deaths.png"
+              alt="Deaths"
+              class="deaths-icon"
+            >
+            (<img
+              src="@/assets/kdr.png"
+              alt="KDR"
+              class="kdr-icon"
+            > {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }})
           </div>
         </div>
 
@@ -617,11 +685,17 @@ watch(
         <div class="stats-section">
           <div class="section-header-with-action">
             <h3>🏆 Achievements & Streaks</h3>
-            <router-link :to="`/players/${encodeURIComponent(playerName)}/achievements`" class="view-all-button">
+            <router-link
+              :to="`/players/${encodeURIComponent(playerName)}/achievements`"
+              class="view-all-button"
+            >
               View All
             </router-link>
           </div>
-          <PlayerAchievements :player-name="playerName" :player-stats="playerStats" />
+          <PlayerAchievements
+            :player-name="playerName"
+            :player-stats="playerStats"
+          />
         </div>
 
         <!-- General statistics section -->
@@ -629,12 +703,23 @@ watch(
           <h3>Top Servers</h3>
           <div class="stats-grid">
             <!-- Server Cards Section -->
-            <div class="server-cards-section" v-if="hasServers">
+            <div
+              v-if="hasServers"
+              class="server-cards-section"
+            >
               <div class="server-cards-grid">
-                <div v-for="(server, idx) in sortedServers" :key="server.serverGuid" class="server-card-gamified">
+                <div
+                  v-for="(server, idx) in sortedServers"
+                  :key="server.serverGuid"
+                  class="server-card-gamified"
+                >
                   <div class="server-card-header">
                     <span class="server-card-title">
-                      <img :src="getGameIcon(server.gameId)" alt="Server" style="width: 24px; height: 24px; margin-right: 8px; border-radius: 6px; vertical-align: middle;" />
+                      <img
+                        :src="getGameIcon(server.gameId)"
+                        alt="Server"
+                        style="width: 24px; height: 24px; margin-right: 8px; border-radius: 6px; vertical-align: middle;"
+                      >
                       <router-link
                         :to="`/servers/${encodeURIComponent(server.serverName)}`"
                         class="server-link"
@@ -706,12 +791,18 @@ watch(
         </div>
 
         <!-- Insights section -->
-        <div v-if="playerStats.insights" class="stats-section">
+        <div
+          v-if="playerStats.insights"
+          class="stats-section"
+        >
           <h3>Player Insights</h3>
           <!-- Remove the .insights-period div -->
 
           <!-- Activity By Hour -->
-          <div v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0" class="insights-subsection">
+          <div
+            v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0"
+            class="insights-subsection"
+          >
             <h4>
               When they've been online in the last {{ daysBetween(playerStats.insights.startPeriod, playerStats.insights.endPeriod) }} days (your time)
             </h4>
@@ -719,11 +810,23 @@ watch(
               <div class="activity-chart-container">
                 <!-- Background zones for time periods -->
                 <div class="time-period-zones">
-                  <div class="time-zone early-zone" title="Early (00:00 - 08:00)"></div>
-                  <div class="time-zone day-zone" title="Day (08:00 - 16:00)"></div>
-                  <div class="time-zone night-zone" title="Night (16:00 - 24:00)"></div>
+                  <div
+                    class="time-zone early-zone"
+                    title="Early (00:00 - 08:00)"
+                  />
+                  <div
+                    class="time-zone day-zone"
+                    title="Day (08:00 - 16:00)"
+                  />
+                  <div
+                    class="time-zone night-zone"
+                    title="Night (16:00 - 24:00)"
+                  />
                 </div>
-                <Line :data="activityChartData" :options="activityChartOptions" />
+                <Line
+                  :data="activityChartData"
+                  :options="activityChartOptions"
+                />
               </div>
               
               <!-- Time period section labels -->
@@ -745,21 +848,36 @@ watch(
           </div>
 
           <!-- Server Rankings -->
-          <div v-if="playerStats.insights?.serverRankings && playerStats.insights.serverRankings.length > 0" class="insights-subsection">
+          <div
+            v-if="playerStats.insights?.serverRankings && playerStats.insights.serverRankings.length > 0"
+            class="insights-subsection"
+          >
             <h4>Server Rankings</h4>
             <div class="server-rankings-table">
               <table>
                 <thead>
                   <tr>
                     <th>Server Name</th>
-                    <th class="desktop-only">Rank</th>
-                    <th class="desktop-only">Score</th>
-                    <th class="desktop-only">Ping</th>
+                    <th class="desktop-only">
+                      Rank
+                    </th>
+                    <th class="desktop-only">
+                      Score
+                    </th>
+                    <th class="desktop-only">
+                      Ping
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <template v-for="(ranking, index) in playerStats.insights.serverRankings" :key="index">
-                    <tr class="server-row" @click="toggleServerExpansion(ranking.serverGuid)">
+                  <template
+                    v-for="(ranking, index) in playerStats.insights.serverRankings"
+                    :key="index"
+                  >
+                    <tr
+                      class="server-row"
+                      @click="toggleServerExpansion(ranking.serverGuid)"
+                    >
                       <td>
                         <div class="server-name-container">
                           <span class="expand-icon">{{ expandedServerId === ranking.serverGuid ? '▼' : '▶' }}</span>
@@ -771,24 +889,34 @@ watch(
                           <span class="detail-item">Score: {{ ranking.scoreDisplay }}</span>
                           <span class="detail-separator">•</span>
                           <span class="detail-item">
-                            <span class="player-ping" :class="{
-                              'ping-good': ranking.averagePing < 50,
-                              'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
-                              'ping-bad': ranking.averagePing >= 100
-                            }">
+                            <span
+                              class="player-ping"
+                              :class="{
+                                'ping-good': ranking.averagePing < 50,
+                                'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                                'ping-bad': ranking.averagePing >= 100
+                              }"
+                            >
                               {{ ranking.averagePing }}ms
                             </span>
                           </span>
                         </div>
                       </td>
-                      <td class="desktop-only">{{ ranking.rankDisplay }}</td>
-                      <td class="desktop-only">{{ ranking.scoreDisplay }}</td>
                       <td class="desktop-only">
-                        <span class="player-ping" :class="{
-                          'ping-good': ranking.averagePing < 50,
-                          'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
-                          'ping-bad': ranking.averagePing >= 100
-                        }">
+                        {{ ranking.rankDisplay }}
+                      </td>
+                      <td class="desktop-only">
+                        {{ ranking.scoreDisplay }}
+                      </td>
+                      <td class="desktop-only">
+                        <span
+                          class="player-ping"
+                          :class="{
+                            'ping-good': ranking.averagePing < 50,
+                            'ping-ok': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                            'ping-bad': ranking.averagePing >= 100
+                          }"
+                        >
                           {{ ranking.averagePing }}ms
                         </span>
                       </td>
@@ -798,7 +926,10 @@ watch(
               </table>
               
               <!-- Expanded map stats section - outside the table -->
-              <div v-if="expandedServerId" class="map-stats-expansion">
+              <div
+                v-if="expandedServerId"
+                class="map-stats-expansion"
+              >
                 <div class="time-range-filter">
                   <span class="time-range-label">Time Range:</span>
                   <div class="time-range-buttons">
@@ -812,59 +943,122 @@ watch(
                     </button>
                   </div>
                 </div>
-                <div v-if="mapStatsLoading" class="map-stats-loading">
-                  <div class="loading-spinner"></div>
+                <div
+                  v-if="mapStatsLoading"
+                  class="map-stats-loading"
+                >
+                  <div class="loading-spinner" />
                   <p>Loading map statistics...</p>
                 </div>
-                <div v-else-if="mapStats.length > 0" class="map-stats-content">
+                <div
+                  v-else-if="mapStats.length > 0"
+                  class="map-stats-content"
+                >
                   <!-- Desktop grid view -->
                   <div class="desktop-only map-stats-grid">
                     <!-- Headers -->
-                    <div class="header-cell" @click="changeMapStatsSort('mapName')">
+                    <div
+                      class="header-cell"
+                      @click="changeMapStatsSort('mapName')"
+                    >
                       Map Name
-                      <span v-if="mapStatsSortField === 'mapName'" class="sort-indicator">
+                      <span
+                        v-if="mapStatsSortField === 'mapName'"
+                        class="sort-indicator"
+                      >
                         {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </div>
-                    <div class="header-cell" @click="changeMapStatsSort('totalScore')">
+                    <div
+                      class="header-cell"
+                      @click="changeMapStatsSort('totalScore')"
+                    >
                       Score
-                      <span v-if="mapStatsSortField === 'totalScore'" class="sort-indicator">
+                      <span
+                        v-if="mapStatsSortField === 'totalScore'"
+                        class="sort-indicator"
+                      >
                         {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </div>
-                    <div class="header-cell" @click="changeMapStatsSort('kdRatio')">
-                      <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
-                      <span v-if="mapStatsSortField === 'kdRatio'" class="sort-indicator">
+                    <div
+                      class="header-cell"
+                      @click="changeMapStatsSort('kdRatio')"
+                    >
+                      <img
+                        src="@/assets/kdr.png"
+                        alt="KDR"
+                        class="kdr-icon"
+                      >
+                      <span
+                        v-if="mapStatsSortField === 'kdRatio'"
+                        class="sort-indicator"
+                      >
                         {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </div>
-                    <div class="header-cell" @click="changeMapStatsSort('totalKills')">
-                      <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
-                      <span v-if="mapStatsSortField === 'totalKills'" class="sort-indicator">
+                    <div
+                      class="header-cell"
+                      @click="changeMapStatsSort('totalKills')"
+                    >
+                      <img
+                        src="@/assets/kills.png"
+                        alt="Kills"
+                        class="kills-icon"
+                      >
+                      <span
+                        v-if="mapStatsSortField === 'totalKills'"
+                        class="sort-indicator"
+                      >
                         {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </div>
-                    <div class="header-cell" @click="changeMapStatsSort('totalDeaths')">
-                      <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
-                      <span v-if="mapStatsSortField === 'totalDeaths'" class="sort-indicator">
+                    <div
+                      class="header-cell"
+                      @click="changeMapStatsSort('totalDeaths')"
+                    >
+                      <img
+                        src="@/assets/deaths.png"
+                        alt="Deaths"
+                        class="deaths-icon"
+                      >
+                      <span
+                        v-if="mapStatsSortField === 'totalDeaths'"
+                        class="sort-indicator"
+                      >
                         {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </div>
-                    <div class="header-cell" @click="changeMapStatsSort('sessionsPlayed')">
+                    <div
+                      class="header-cell"
+                      @click="changeMapStatsSort('sessionsPlayed')"
+                    >
                       Sessions
-                      <span v-if="mapStatsSortField === 'sessionsPlayed'" class="sort-indicator">
+                      <span
+                        v-if="mapStatsSortField === 'sessionsPlayed'"
+                        class="sort-indicator"
+                      >
                         {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </div>
-                    <div class="header-cell" @click="changeMapStatsSort('totalPlayTimeMinutes')">
+                    <div
+                      class="header-cell"
+                      @click="changeMapStatsSort('totalPlayTimeMinutes')"
+                    >
                       Play Time
-                      <span v-if="mapStatsSortField === 'totalPlayTimeMinutes'" class="sort-indicator">
+                      <span
+                        v-if="mapStatsSortField === 'totalPlayTimeMinutes'"
+                        class="sort-indicator"
+                      >
                         {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
                       </span>
                     </div>
                     
                     <!-- Data rows -->
-                    <template v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex">
+                    <template
+                      v-for="(map, mapIndex) in sortedMapStats"
+                      :key="mapIndex"
+                    >
                       <div class="data-cell">
                         <router-link 
                           :to="{
@@ -879,12 +1073,24 @@ watch(
                           {{ map.mapName }}
                         </router-link>
                       </div>
-                      <div class="data-cell">{{ map.totalScore }}</div>
-                      <div class="data-cell">{{ calculateKDR(map.totalKills, map.totalDeaths) }}</div>
-                      <div class="data-cell">{{ map.totalKills }}</div>
-                      <div class="data-cell">{{ map.totalDeaths }}</div>
-                      <div class="data-cell">{{ map.sessionsPlayed }}</div>
-                      <div class="data-cell">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</div>
+                      <div class="data-cell">
+                        {{ map.totalScore }}
+                      </div>
+                      <div class="data-cell">
+                        {{ calculateKDR(map.totalKills, map.totalDeaths) }}
+                      </div>
+                      <div class="data-cell">
+                        {{ map.totalKills }}
+                      </div>
+                      <div class="data-cell">
+                        {{ map.totalDeaths }}
+                      </div>
+                      <div class="data-cell">
+                        {{ map.sessionsPlayed }}
+                      </div>
+                      <div class="data-cell">
+                        {{ formatPlayTime(map.totalPlayTimeMinutes) }}
+                      </div>
                     </template>
                   </div>
 
@@ -892,20 +1098,45 @@ watch(
                   <div class="mobile-only map-stats-cards">
                     <div class="mobile-sort-controls">
                       <label>Sort by:</label>
-                      <select v-model="mapStatsSortField" @change="changeMapStatsSort(mapStatsSortField)" class="mobile-sort-select">
-                        <option value="totalScore">Score</option>
-                        <option value="kdRatio">K/D Ratio</option>
-                        <option value="mapName">Map Name</option>
-                        <option value="totalKills">Kills</option>
-                        <option value="totalDeaths">Deaths</option>
-                        <option value="sessionsPlayed">Sessions</option>
-                        <option value="totalPlayTimeMinutes">Play Time</option>
+                      <select
+                        v-model="mapStatsSortField"
+                        class="mobile-sort-select"
+                        @change="changeMapStatsSort(mapStatsSortField)"
+                      >
+                        <option value="totalScore">
+                          Score
+                        </option>
+                        <option value="kdRatio">
+                          K/D Ratio
+                        </option>
+                        <option value="mapName">
+                          Map Name
+                        </option>
+                        <option value="totalKills">
+                          Kills
+                        </option>
+                        <option value="totalDeaths">
+                          Deaths
+                        </option>
+                        <option value="sessionsPlayed">
+                          Sessions
+                        </option>
+                        <option value="totalPlayTimeMinutes">
+                          Play Time
+                        </option>
                       </select>
-                      <button @click="mapStatsSortDirection = mapStatsSortDirection === 'asc' ? 'desc' : 'asc'" class="mobile-sort-direction">
+                      <button
+                        class="mobile-sort-direction"
+                        @click="mapStatsSortDirection = mapStatsSortDirection === 'asc' ? 'desc' : 'asc'"
+                      >
                         {{ mapStatsSortDirection === 'asc' ? '↑' : '↓' }}
                       </button>
                     </div>
-                    <div v-for="(map, mapIndex) in sortedMapStats" :key="mapIndex" class="map-stat-card">
+                    <div
+                      v-for="(map, mapIndex) in sortedMapStats"
+                      :key="mapIndex"
+                      class="map-stat-card"
+                    >
                       <div class="map-stat-header">
                         <h5 class="map-name">
                           <router-link 
@@ -921,22 +1152,36 @@ watch(
                             {{ map.mapName }}
                           </router-link>
                         </h5>
-                        <div class="map-score">{{ map.totalScore }}</div>
+                        <div class="map-score">
+                          {{ map.totalScore }}
+                        </div>
                       </div>
                       <div class="map-stat-details">
                         <div class="stat-row-condensed">
                           <span class="stat-item">
-                            <img src="@/assets/kdr.png" alt="KDR" class="kdr-icon" />
+                            <img
+                              src="@/assets/kdr.png"
+                              alt="KDR"
+                              class="kdr-icon"
+                            >
                             {{ calculateKDR(map.totalKills, map.totalDeaths) }}
                           </span>
                           <span class="stat-separator">•</span>
                           <span class="stat-item">
-                            <img src="@/assets/kills.png" alt="Kills" class="kills-icon" />
+                            <img
+                              src="@/assets/kills.png"
+                              alt="Kills"
+                              class="kills-icon"
+                            >
                             {{ map.totalKills }}
                           </span>
                           <span class="stat-separator">•</span>
                           <span class="stat-item">
-                            <img src="@/assets/deaths.png" alt="Deaths" class="deaths-icon" />
+                            <img
+                              src="@/assets/deaths.png"
+                              alt="Deaths"
+                              class="deaths-icon"
+                            >
                             {{ map.totalDeaths }}
                           </span>
                         </div>
@@ -949,41 +1194,68 @@ watch(
                     </div>
                   </div>
                 </div>
-                <div v-else class="no-map-stats">
+                <div
+                  v-else
+                  class="no-map-stats"
+                >
                   <p>No map statistics available for the selected time range.</p>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
 
         <!-- Similar Players section -->
-        <div v-if="playerStats" class="stats-section">
-          <h3 @click="toggleSimilarPlayersSection" class="collapsible-header">
+        <div
+          v-if="playerStats"
+          class="stats-section"
+        >
+          <h3
+            class="collapsible-header"
+            @click="toggleSimilarPlayersSection"
+          >
             Similar Players
             <span class="toggle-icon">{{ similarSectionExpanded ? '▲' : '▼' }}</span>
-            <span v-if="!similarSectionExpanded" class="expand-hint">Click to find players like {{ playerName }}</span>
+            <span
+              v-if="!similarSectionExpanded"
+              class="expand-hint"
+            >Click to find players like {{ playerName }}</span>
           </h3>
           <div v-if="similarSectionExpanded">
-            <div v-if="loadingSimilarPlayers" class="loading-container">
-              <div class="loading-spinner"></div>
+            <div
+              v-if="loadingSimilarPlayers"
+              class="loading-container"
+            >
+              <div class="loading-spinner" />
               <p>Loading similar players...</p>
             </div>
-            <div v-else-if="similarPlayersError" class="error-container">
-              <p class="error-message">{{ similarPlayersError }}</p>
+            <div
+              v-else-if="similarPlayersError"
+              class="error-container"
+            >
+              <p class="error-message">
+                {{ similarPlayersError }}
+              </p>
             </div>
-            <div v-else-if="similarPlayers.length > 0" class="similar-players-table-wrapper">
+            <div
+              v-else-if="similarPlayers.length > 0"
+              class="similar-players-table-wrapper"
+            >
               <table class="similar-players-table">
                 <thead>
                   <tr>
                     <th>Player</th>
                     <th>Similarity</th>
-                    <th class="reasons-col">Why</th>
+                    <th class="reasons-col">
+                      Why
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(sim, idx) in similarPlayers" :key="idx">
+                  <tr
+                    v-for="(sim, idx) in similarPlayers"
+                    :key="idx"
+                  >
                     <td>
                       <router-link
                         :to="{ name: 'player-comparison', query: { player1: playerName, player2: sim.playerName } }"
@@ -997,30 +1269,47 @@ watch(
                     </td>
                     <td>
                       <ul class="similarity-reasons">
-                        <li v-for="(reason, rIdx) in sim.similarityReasons" :key="rIdx">{{ reason }}</li>
+                        <li
+                          v-for="(reason, rIdx) in sim.similarityReasons"
+                          :key="rIdx"
+                        >
+                          {{ reason }}
+                        </li>
                       </ul>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <div v-else class="no-data-container">
+            <div
+              v-else
+              class="no-data-container"
+            >
               <p>No similar players found.</p>
             </div>
           </div>
         </div>
 
         <!-- Recent rounds section -->
-        <div v-if="playerStats.recentSessions.length > 0" class="stats-section">
+        <div
+          v-if="playerStats.recentSessions.length > 0"
+          class="stats-section"
+        >
           <div class="section-header-with-action">
             <h3>Recent Rounds</h3>
-            <router-link :to="`/players/${encodeURIComponent(playerName)}/sessions`" class="view-all-button">
+            <router-link
+              :to="`/players/${encodeURIComponent(playerName)}/sessions`"
+              class="view-all-button"
+            >
               View All
             </router-link>
           </div>
           <!-- Timeline container -->
           <div class="timeline-container">
-            <template v-for="(session, index) in playerStats.recentSessions" :key="index">
+            <template
+              v-for="(session, index) in playerStats.recentSessions"
+              :key="index"
+            >
               <!-- Session timeline item -->
               <div class="timeline-item">
                 <!-- Timeline node -->
@@ -1029,7 +1318,7 @@ watch(
                     class="timeline-node" 
                     :class="getPerformanceClass(session)"
                     :title="getPerformanceLabel(session)"
-                  ></div>
+                  />
                 </div>
                 
                 <!-- Session card -->
@@ -1051,7 +1340,10 @@ watch(
                     >
                       {{ session.serverName }}
                     </router-link>
-                    <span v-if="session.isActive" class="active-session-badge">Active</span>
+                    <span
+                      v-if="session.isActive"
+                      class="active-session-badge"
+                    >Active</span>
                   </div>
                   
                   <div class="session-line-2">
@@ -1075,19 +1367,21 @@ watch(
                 class="timeline-gap-item"
               >
                 <div class="time-gap-separator">
-                  <div class="time-gap-line"></div>
+                  <div class="time-gap-line" />
                   <div class="time-gap-badge">
                     {{ getTimeGap(session, playerStats.recentSessions[index + 1]) }}
                   </div>
-                  <div class="time-gap-line"></div>
+                  <div class="time-gap-line" />
                 </div>
               </div>
             </template>
           </div>
         </div>
-
       </div>
-      <div v-else class="no-data-container">
+      <div
+        v-else
+        class="no-data-container"
+      >
         <p>No player statistics available.</p>
       </div>
     </div>

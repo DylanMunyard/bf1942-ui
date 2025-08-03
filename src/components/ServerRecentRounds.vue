@@ -67,10 +67,15 @@ const navigateToRoundReport = (round: RecentRoundInfo) => {
 </script>
 
 <template>
-  <div v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0" class="enhanced-leaderboard-section recent-rounds-section">
+  <div
+    v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0"
+    class="enhanced-leaderboard-section recent-rounds-section"
+  >
     <div class="enhanced-section-header">
       <div class="section-title">
-        <div class="section-icon">🎮</div>
+        <div class="section-icon">
+          🎮
+        </div>
         <h3>Recent Rounds</h3>
       </div>
       <router-link 
@@ -82,15 +87,24 @@ const navigateToRoundReport = (round: RecentRoundInfo) => {
     </div>
     
     <div class="timeline-container">
-      <template v-for="(round, index) in serverDetails.lastRounds" :key="index">
-        <div class="timeline-item" @click="navigateToRoundReport(round)">
+      <template
+        v-for="(round, index) in serverDetails.lastRounds"
+        :key="index"
+      >
+        <div
+          class="timeline-item"
+          @click="navigateToRoundReport(round)"
+        >
           <div class="timeline-node-container">
-            <div class="timeline-node"></div>
+            <div class="timeline-node" />
           </div>
           <div class="session-card">
             <div class="session-line-1">
               <span class="time-link">{{ formatRelativeTime(round.startTime) }}</span>
-              <span v-if="round.isActive && index === 0" class="badge-active">Live</span>
+              <span
+                v-if="round.isActive && index === 0"
+                class="badge-active"
+              >Live</span>
             </div>
             <div class="session-line-2">
               <span class="map-name">{{ round.mapName }}</span>

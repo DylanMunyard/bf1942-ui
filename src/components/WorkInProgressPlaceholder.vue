@@ -1,10 +1,16 @@
 <template>
   <div class="wip-container">
     <div class="wip-content">
-      <div class="wip-icon">🚧</div>
-      <h1 class="wip-title">Work in Progress</h1>
-      <p class="wip-message">This feature is currently under development and will be available soon.</p>
-      <div class="wip-spinner"></div>
+      <div class="wip-icon">
+        🚧
+      </div>
+      <h1 class="wip-title">
+        Work in Progress
+      </h1>
+      <p class="wip-message">
+        This feature is currently under development and will be available soon.
+      </p>
+      <div class="wip-spinner" />
     </div>
   </div>
 </template>

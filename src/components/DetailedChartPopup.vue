@@ -21,28 +21,6 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['close']);
 
-// Define timezones for each region (same as in TimeDisplay.vue)
-const timezones = {
-  france: 'Europe/Paris',
-  usEast: 'America/New_York',
-  usWest: 'America/Los_Angeles'
-};
-
-// Format timestamp to readable date/time
-const formatTimestamp = (timestamp: number): string => {
-  const date = new Date(timestamp * 1000);
-  return date.toLocaleString();
-};
-
-// Format timestamp for a specific timezone
-const formatTimestampForTimezone = (timestamp: number, timezone: string, locale: string = 'en-US'): string => {
-  const date = new Date(timestamp * 1000);
-  return new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: timezone
-  }).format(date);
-};
 
 // Helper function to get day of week with date in format "Monday (dd/mm)"
 const getDayWithDate = (timestamp: number): string => {
@@ -236,7 +214,7 @@ const chartOptions = {
         label: (context) => {
           return `${context.dataset.label}: ${context.raw}`;
         },
-        afterLabel: (context) => {
+        afterLabel: () => {
           // No additional information needed as timezone info is now in the title
           return [];
         }
@@ -382,15 +360,26 @@ const getMinPlayers = () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="detailed-chart-popup-overlay">
+  <div
+    v-if="isOpen"
+    class="detailed-chart-popup-overlay"
+  >
     <div class="detailed-chart-popup-content">
       <div class="detailed-chart-header">
         <h2>Player Count History</h2>
-        <button class="close-button" @click="$emit('close')">&times;</button>
+        <button
+          class="close-button"
+          @click="$emit('close')"
+        >
+          &times;
+        </button>
       </div>
       <div class="detailed-chart-body">
         <div class="chart-container">
-          <Line :data="chartData" :options="chartOptions" />
+          <Line
+            :data="chartData"
+            :options="chartOptions"
+          />
           <div class="timezone-legend">
             <span><strong>Timezone Legend:</strong></span>
             <span>🏠 Local Time ({{ new Intl.DateTimeFormat().resolvedOptions().timeZone }})</span>
@@ -402,7 +391,9 @@ const getMinPlayers = () => {
         </div>
         <div class="chart-info">
           <p><strong>Server:</strong> {{ serverName }}</p>
-          <p v-if="serverIp"><strong>IP:</strong> {{ serverIp }}</p>
+          <p v-if="serverIp">
+            <strong>IP:</strong> {{ serverIp }}
+          </p>
           <p><strong>Time Range:</strong> Last 7 days</p>
           <p v-if="chartData.datasets.length > 0">
             <strong>Current Players:</strong> {{ getCurrentPlayers() }}

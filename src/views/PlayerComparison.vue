@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
@@ -1049,20 +1049,34 @@ const closeMilestoneModal = () => {
   <div class="player-comparison-container">
     <div class="comparison-header">
       <h1>Player Comparison</h1>
-      <div class="input-form" @click="hideDropdowns">
+      <div
+        class="input-form"
+        @click="hideDropdowns"
+      >
         <!-- Player 1 Input with Search -->
-        <div class="player-input-container" @click.stop>
+        <div
+          class="player-input-container"
+          @click.stop
+        >
           <input 
-            type="text" 
             v-model="player1Input" 
+            type="text" 
             placeholder="Player 1 Name" 
+            autocomplete="off"
             @keyup.enter="handleCompare"
             @input="onPlayerInput(player1Input, 1)"
             @focus="player1Input.length >= 2 && searchPlayers(player1Input, 1)"
-            autocomplete="off"
-          />
-          <div class="search-spinner" v-if="player1SearchLoading">🔄</div>
-          <div v-if="showPlayer1Dropdown" class="search-dropdown">
+          >
+          <div
+            v-if="player1SearchLoading"
+            class="search-spinner"
+          >
+            🔄
+          </div>
+          <div
+            v-if="showPlayer1Dropdown"
+            class="search-dropdown"
+          >
             <div 
               v-for="player in player1SearchResults" 
               :key="player.playerName"
@@ -1070,19 +1084,33 @@ const closeMilestoneModal = () => {
               @click="selectPlayer(player, 1)"
             >
               <div class="player-info">
-                <div class="player-name">{{ player.playerName }}</div>
+                <div class="player-name">
+                  {{ player.playerName }}
+                </div>
                 <div class="player-details">
                   <span class="play-time">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
                   <span class="last-seen">{{ formatLastSeen(player.lastSeen) }}</span>
-                  <span v-if="player.isActive" class="active-badge">🟢 Online</span>
-                  <span v-else class="inactive-badge">⚫ Offline</span>
+                  <span
+                    v-if="player.isActive"
+                    class="active-badge"
+                  >🟢 Online</span>
+                  <span
+                    v-else
+                    class="inactive-badge"
+                  >⚫ Offline</span>
                 </div>
-                <div v-if="player.currentServer && player.isActive" class="current-server">
+                <div
+                  v-if="player.currentServer && player.isActive"
+                  class="current-server"
+                >
                   {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
                 </div>
               </div>
             </div>
-            <div v-if="player1SearchResults.length === 0 && !player1SearchLoading" class="no-results">
+            <div
+              v-if="player1SearchResults.length === 0 && !player1SearchLoading"
+              class="no-results"
+            >
               No players found
             </div>
           </div>
@@ -1091,19 +1119,30 @@ const closeMilestoneModal = () => {
         <span class="vs-text">vs</span>
 
         <!-- Player 2 Input with Search -->
-        <div class="player-input-container" @click.stop>
+        <div
+          class="player-input-container"
+          @click.stop
+        >
           <input 
             ref="player2InputRef"
-            type="text" 
             v-model="player2Input" 
+            type="text" 
             placeholder="Player 2 Name" 
+            autocomplete="off"
             @keyup.enter="handleCompare"
             @input="onPlayerInput(player2Input, 2)"
             @focus="player2Input.length >= 2 && searchPlayers(player2Input, 2)"
-            autocomplete="off"
-          />
-          <div class="search-spinner" v-if="player2SearchLoading">🔄</div>
-          <div v-if="showPlayer2Dropdown" class="search-dropdown">
+          >
+          <div
+            v-if="player2SearchLoading"
+            class="search-spinner"
+          >
+            🔄
+          </div>
+          <div
+            v-if="showPlayer2Dropdown"
+            class="search-dropdown"
+          >
             <div 
               v-for="player in player2SearchResults" 
               :key="player.playerName"
@@ -1111,500 +1150,787 @@ const closeMilestoneModal = () => {
               @click="selectPlayer(player, 2)"
             >
               <div class="player-info">
-                <div class="player-name">{{ player.playerName }}</div>
+                <div class="player-name">
+                  {{ player.playerName }}
+                </div>
                 <div class="player-details">
                   <span class="play-time">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
                   <span class="last-seen">{{ formatLastSeen(player.lastSeen) }}</span>
-                  <span v-if="player.isActive" class="active-badge">🟢 Online</span>
-                  <span v-else class="inactive-badge">⚫ Offline</span>
+                  <span
+                    v-if="player.isActive"
+                    class="active-badge"
+                  >🟢 Online</span>
+                  <span
+                    v-else
+                    class="inactive-badge"
+                  >⚫ Offline</span>
                 </div>
-                <div v-if="player.currentServer && player.isActive" class="current-server">
+                <div
+                  v-if="player.currentServer && player.isActive"
+                  class="current-server"
+                >
                   {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
                 </div>
               </div>
             </div>
-            <div v-if="player2SearchResults.length === 0 && !player2SearchLoading" class="no-results">
+            <div
+              v-if="player2SearchResults.length === 0 && !player2SearchLoading"
+              class="no-results"
+            >
               No players found
             </div>
           </div>
         </div>
 
-        <button @click="handleCompare" :disabled="isLoading || !player1Input.trim() || !player2Input.trim()">
+        <button
+          :disabled="isLoading || !player1Input.trim() || !player2Input.trim()"
+          @click="handleCompare"
+        >
           {{ isLoading ? 'Comparing...' : 'Compare' }}
         </button>
       </div>
     </div>
 
-    <div v-if="isLoading" class="loading-container">
-        <div class="loading-spinner"></div>
-        <p>Fetching player comparison...</p>
+    <div
+      v-if="isLoading"
+      class="loading-container"
+    >
+      <div class="loading-spinner" />
+      <p>Fetching player comparison...</p>
     </div>
 
-    <div v-else-if="error" class="error-container">
+    <div
+      v-else-if="error"
+      class="error-container"
+    >
       <p>{{ error }}</p>
     </div>
 
-    <div v-else-if="!comparisonData" class="intro-container">
-        <p>Enter two player names above and click "Compare" to see their stats side-by-side.</p>
+    <div
+      v-else-if="!comparisonData"
+      class="intro-container"
+    >
+      <p>Enter two player names above and click "Compare" to see their stats side-by-side.</p>
     </div>
 
-    <div v-if="comparisonData" class="comparison-results">
-        <!-- Server Context Banner -->
-        <div v-if="comparisonData.serverDetails" class="server-context-banner">
-          <div class="server-context-content">
-            <div class="server-context-text">
-              <span class="context-label">Server comparison for:</span>
-              <router-link 
-                :to="`/servers/${encodeURIComponent(comparisonData.serverDetails.name)}/rankings`"
-                class="server-name-link"
-                :title="`View rankings for ${comparisonData.serverDetails.name}`"
-              >
-                {{ comparisonData.serverDetails.name }}
-              </router-link>
-            </div>
-            <button 
-              @click="clearServerFilter"
-              class="clear-server-btn"
-              title="Compare across all servers"
+    <div
+      v-if="comparisonData"
+      class="comparison-results"
+    >
+      <!-- Server Context Banner -->
+      <div
+        v-if="comparisonData.serverDetails"
+        class="server-context-banner"
+      >
+        <div class="server-context-content">
+          <div class="server-context-text">
+            <span class="context-label">Server comparison for:</span>
+            <router-link 
+              :to="`/servers/${encodeURIComponent(comparisonData.serverDetails.name)}/rankings`"
+              class="server-name-link"
+              :title="`View rankings for ${comparisonData.serverDetails.name}`"
             >
-              ✕
-            </button>
+              {{ comparisonData.serverDetails.name }}
+            </router-link>
+          </div>
+          <button 
+            class="clear-server-btn"
+            title="Compare across all servers"
+            @click="clearServerFilter"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Common Servers Selector -->
+      <div
+        v-if="comparisonData.commonServers && comparisonData.commonServers.length > 0"
+        class="common-servers-section"
+      >
+        <div class="common-servers-header">
+          <span class="help-text">Compare performance on:</span>
+        </div>
+        <div class="common-servers-list">
+          <button 
+            v-for="server in comparisonData.commonServers" 
+            :key="server.guid"
+            class="server-option-btn"
+            :class="{ 'active': comparisonData.serverDetails?.guid === server.guid }"
+            :title="`Compare performance on ${server.name}`"
+            @click="selectServer(server.guid)"
+          >
+            <div class="server-option-name">
+              {{ server.name }}
+            </div>
+            <div class="server-option-details">
+              <span class="server-game">{{ server.gameId }}</span>
+              <span
+                v-if="server.country"
+                class="server-location"
+              >{{ server.country }}</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary Panel -->
+      <div class="summary-panel">
+        <div
+          class="player-summary left"
+          :class="{ 'winner': parseFloat(player1KDR) > parseFloat(player2KDR) }"
+        >
+          <router-link 
+            :to="`/players/${encodeURIComponent(comparisonData.player1)}`"
+            class="player-summary-name"
+          >
+            <h2>{{ comparisonData.player1 }}</h2>
+          </router-link>
+          <div class="kdr-summary">
+            <span>{{ player1KDR }}</span>
+            <label>Overall K/D</label>
           </div>
         </div>
-
-        <!-- Common Servers Selector -->
-        <div v-if="comparisonData.commonServers && comparisonData.commonServers.length > 0" class="common-servers-section">
-          <div class="common-servers-header">
-            <span class="help-text">Compare performance on:</span>
+        <div
+          class="player-summary right"
+          :class="{ 'winner': parseFloat(player2KDR) > parseFloat(player1KDR) }"
+        >
+          <router-link 
+            :to="`/players/${encodeURIComponent(comparisonData.player2)}`"
+            class="player-summary-name"
+          >
+            <h2>{{ comparisonData.player2 }}</h2>
+          </router-link>
+          <div class="kdr-summary">
+            <span>{{ player2KDR }}</span>
+            <label>Overall K/D</label>
           </div>
-          <div class="common-servers-list">
-            <button 
-              v-for="server in comparisonData.commonServers" 
-              :key="server.guid"
-              @click="selectServer(server.guid)"
-              class="server-option-btn"
-              :class="{ 'active': comparisonData.serverDetails?.guid === server.guid }"
-              :title="`Compare performance on ${server.name}`"
+        </div>
+      </div>
+
+      <!-- Core Statistics -->
+      <div class="comparison-section">
+        <h3>Core Statistics</h3>
+        <div class="stat-comparison-grid">
+          <!-- Kill Rate -->
+          <div class="stat-label">
+            Kill Rate (per min)
+          </div>
+          <div
+            class="stat-value p1"
+            :class="{ 'better': player1KillRate > player2KillRate }"
+          >
+            {{ player1KillRate.toFixed(2) }}
+            <span
+              v-if="getHigherValue(player1KillRate, player2KillRate) === 'p1' && player1KillRate !== player2KillRate"
+              class="delta"
             >
-              <div class="server-option-name">{{ server.name }}</div>
-              <div class="server-option-details">
-                <span class="server-game">{{ server.gameId }}</span>
-                <span v-if="server.country" class="server-location">{{ server.country }}</span>
+              ({{ calculateDelta(player1KillRate, player2KillRate, 2) }})
+            </span>
+          </div>
+          <div
+            class="stat-value p2"
+            :class="{ 'better': player2KillRate > player1KillRate }"
+          >
+            {{ player2KillRate.toFixed(2) }}
+            <span
+              v-if="getHigherValue(player1KillRate, player2KillRate) === 'p2' && player1KillRate !== player2KillRate"
+              class="delta"
+            >
+              ({{ calculateDelta(player1KillRate, player2KillRate, 2) }})
+            </span>
+          </div>
+
+          <!-- Average Ping -->
+          <div class="stat-label">
+            Average Ping
+          </div>
+          <div
+            class="stat-value p1"
+            :class="{ 'better': player1AveragePing < player2AveragePing }"
+          >
+            {{ Math.round(player1AveragePing) }}ms
+          </div>
+          <div
+            class="stat-value p2"
+            :class="{ 'better': player2AveragePing < player1AveragePing }"
+          >
+            {{ Math.round(player2AveragePing) }}ms
+          </div>
+        </div>
+      </div>
+
+      <!-- Typical Online Hours -->
+      <div
+        v-if="activityHoursData?.player1ActivityHours && activityHoursData?.player2ActivityHours"
+        class="comparison-section"
+      >
+        <div class="section-header">
+          <h3>Typical Online Hours</h3>
+          <button 
+            class="toggle-view-btn" 
+            :title="showRawActivityData ? 'Show overlap potential' : 'Show individual activity'"
+            @click="showRawActivityData = !showRawActivityData"
+          >
+            {{ showRawActivityData ? '🔀 Show Overlap' : '📊 Show Individual' }}
+          </button>
+        </div>
+        <div
+          v-if="activityHoursLoading"
+          class="loading-container"
+        >
+          <div class="loading-spinner" />
+          <p>Loading activity data...</p>
+        </div>
+        <div
+          v-else-if="activityHoursError"
+          class="error-container"
+        >
+          <p>{{ activityHoursError }}</p>
+        </div>
+        <div
+          v-else
+          class="activity-section"
+        >
+          <div class="activity-chart-wrapper">
+            <div class="activity-chart-container">
+              <!-- Background zones for time periods -->
+              <div class="time-period-zones">
+                <div
+                  class="time-zone early-zone"
+                  title="Early (00:00 - 08:00)"
+                />
+                <div
+                  class="time-zone day-zone"
+                  title="Day (08:00 - 16:00)"
+                />
+                <div
+                  class="time-zone night-zone"
+                  title="Night (16:00 - 24:00)"
+                />
               </div>
+              <Line
+                :key="chartKey"
+                :data="combinedActivityChartData"
+                :options="combinedActivityChartOptions"
+              />
+            </div>
+                    
+            <!-- Time period section labels -->
+            <div class="time-period-labels">
+              <div class="period-label early-label">
+                <span class="period-name">Early</span>
+                <span class="period-hours">12AM-8AM</span>
+              </div>
+              <div class="period-label day-label">
+                <span class="period-name">Day</span>
+                <span class="period-hours">8AM-4PM</span>
+              </div>
+              <div class="period-label night-label">
+                <span class="period-name">Night</span>
+                <span class="period-hours">4PM-12AM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        
+      <!-- Performance Over Time -->
+      <div
+        v-if="comparisonData.bucketTotals && comparisonData.bucketTotals.length > 0"
+        class="comparison-section"
+      >
+        <h3>Performance Over Time</h3>
+        <div class="tabs">
+          <button 
+            v-for="period in timePeriodOptions" 
+            :key="period.value"
+            :class="{ 'active': selectedTimePeriod === period.value }"
+            @click="selectedTimePeriod = period.value"
+          >
+            {{ period.label }}
+          </button>
+        </div>
+        <div class="performance-details">
+          <div
+            v-if="getPerformanceData(selectedTimePeriod)"
+            class="performance-grid"
+          >
+            <div class="grid-header" />
+            <div class="grid-header p1-header">
+              {{ comparisonData.player1 }}
+            </div>
+            <div class="grid-header p2-header">
+              {{ comparisonData.player2 }}
+            </div>
+
+            <div class="grid-label">
+              Score
+            </div>
+            <div class="grid-value p1">
+              {{ getPerformanceData(selectedTimePeriod)?.player1Totals.score }}
+              <span
+                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p1'"
+                class="delta"
+              >
+                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) }})
+              </span>
+            </div>
+            <div class="grid-value p2">
+              {{ getPerformanceData(selectedTimePeriod)?.player2Totals.score }}
+              <span
+                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p2'"
+                class="delta"
+              >
+                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) }})
+              </span>
+            </div>
+                    
+            <div class="grid-label">
+              Kills
+            </div>
+            <div class="grid-value p1">
+              {{ getPerformanceData(selectedTimePeriod)?.player1Totals.kills }}
+              <span
+                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p1'"
+                class="delta"
+              >
+                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) }})
+              </span>
+            </div>
+            <div class="grid-value p2">
+              {{ getPerformanceData(selectedTimePeriod)?.player2Totals.kills }}
+              <span
+                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p2'"
+                class="delta"
+              >
+                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) }})
+              </span>
+            </div>
+
+            <div class="grid-label">
+              Deaths
+            </div>
+            <div class="grid-value p1">
+              {{ getPerformanceData(selectedTimePeriod)?.player1Totals.deaths }}
+              <span
+                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p1'"
+                class="delta"
+              >
+                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) }})
+              </span>
+            </div>
+            <div class="grid-value p2">
+              {{ getPerformanceData(selectedTimePeriod)?.player2Totals.deaths }}
+              <span
+                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p2'"
+                class="delta"
+              >
+                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) }})
+              </span>
+            </div>
+
+            <div class="grid-label">
+              Play Time
+            </div>
+            <div class="grid-value p1">
+              {{ formatPlayTime(getPerformanceData(selectedTimePeriod)?.player1Totals.playTimeMinutes || 0) }}
+              <span
+                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p1'"
+                class="delta"
+              >
+                ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) }})
+              </span>
+            </div>
+            <div class="grid-value p2">
+              {{ formatPlayTime(getPerformanceData(selectedTimePeriod)?.player2Totals.playTimeMinutes || 0) }}
+              <span
+                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p2'"
+                class="delta"
+              >
+                ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) }})
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map Performance -->
+      <div
+        v-if="combinedMapPerformance.length > 0"
+        class="comparison-section"
+      >
+        <div class="section-header">
+          <h3>Map Performance</h3>
+          <div class="section-controls">
+            <button 
+              class="toggle-filter-btn" 
+              :title="hideNoScores ? 'Show all maps including those with no scores' : 'Hide maps where either player has no scores'"
+              @click="hideNoScores = !hideNoScores"
+            >
+              {{ hideNoScores ? '👁️' : '👁️‍🗨️' }}
+            </button>
+            <button
+              class="toggle-columns-btn"
+              @click="showExtraColumns = !showExtraColumns"
+            >
+              {{ showExtraColumns ? 'Hide' : 'Show' }} Kills/Deaths
             </button>
           </div>
         </div>
-
-        <!-- Summary Panel -->
-        <div class="summary-panel">
-            <div class="player-summary left" :class="{ 'winner': parseFloat(player1KDR) > parseFloat(player2KDR) }">
-                <router-link 
-                  :to="`/players/${encodeURIComponent(comparisonData.player1)}`"
-                  class="player-summary-name"
-                >
-                  <h2>{{ comparisonData.player1 }}</h2>
-                </router-link>
-                <div class="kdr-summary">
-                    <span>{{ player1KDR }}</span>
-                    <label>Overall K/D</label>
-                </div>
+        <div class="map-performance-table">
+          <div
+            class="table-header"
+            :class="{ 'expanded': showExtraColumns }"
+          >
+            <div
+              class="map-name-header sortable"
+              :class="{ 'sort-active': sortColumn === 'map' }"
+              @click="sortMapPerformance('map')"
+            >
+              Map
+              <span
+                v-if="sortColumn === 'map'"
+                class="sort-indicator"
+              >
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
             </div>
-            <div class="player-summary right" :class="{ 'winner': parseFloat(player2KDR) > parseFloat(player1KDR) }">
-                <router-link 
-                  :to="`/players/${encodeURIComponent(comparisonData.player2)}`"
-                  class="player-summary-name"
-                >
-                  <h2>{{ comparisonData.player2 }}</h2>
-                </router-link>
-                <div class="kdr-summary">
-                    <span>{{ player2KDR }}</span>
-                    <label>Overall K/D</label>
-                </div>
+            <div
+              class="player-group"
+              :class="{ 'expanded': showExtraColumns }"
+            >
+              {{ comparisonData.player1 }}
             </div>
+            <div
+              class="player-group"
+              :class="{ 'expanded': showExtraColumns }"
+            >
+              {{ comparisonData.player2 }}
+            </div>
+          </div>
+          <div
+            class="table-subheader"
+            :class="{ 'expanded': showExtraColumns }"
+          >
+            <div />
+            <div
+              class="sortable"
+              :class="{ 'sort-active': sortColumn === 'p1-score' }"
+              @click="sortMapPerformance('p1-score')"
+            >
+              Score
+              <span
+                v-if="sortColumn === 'p1-score'"
+                class="sort-indicator"
+              >
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </div>
+            <div
+              v-show="showExtraColumns"
+              class="sortable extra-column"
+              :class="{ 'sort-active': sortColumn === 'p1-kills' }"
+              @click="sortMapPerformance('p1-kills')"
+            >
+              Kills
+              <span
+                v-if="sortColumn === 'p1-kills'"
+                class="sort-indicator"
+              >
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </div>
+            <div
+              v-show="showExtraColumns"
+              class="sortable extra-column"
+              :class="{ 'sort-active': sortColumn === 'p1-deaths' }"
+              @click="sortMapPerformance('p1-deaths')"
+            >
+              Deaths
+              <span
+                v-if="sortColumn === 'p1-deaths'"
+                class="sort-indicator"
+              >
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </div>
+            <div
+              class="sortable"
+              :class="{ 'sort-active': sortColumn === 'p1-kdr' }"
+              @click="sortMapPerformance('p1-kdr')"
+            >
+              K/D
+              <span
+                v-if="sortColumn === 'p1-kdr'"
+                class="sort-indicator"
+              >
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </div>
+            <div
+              class="sortable"
+              :class="{ 'sort-active': sortColumn === 'p2-score' }"
+              @click="sortMapPerformance('p2-score')"
+            >
+              Score
+              <span
+                v-if="sortColumn === 'p2-score'"
+                class="sort-indicator"
+              >
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </div>
+            <div
+              v-show="showExtraColumns"
+              class="sortable extra-column"
+              :class="{ 'sort-active': sortColumn === 'p2-kills' }"
+              @click="sortMapPerformance('p2-kills')"
+            >
+              Kills
+              <span
+                v-if="sortColumn === 'p2-kills'"
+                class="sort-indicator"
+              >
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </div>
+            <div
+              v-show="showExtraColumns"
+              class="sortable extra-column"
+              :class="{ 'sort-active': sortColumn === 'p2-deaths' }"
+              @click="sortMapPerformance('p2-deaths')"
+            >
+              Deaths
+              <span
+                v-if="sortColumn === 'p2-deaths'"
+                class="sort-indicator"
+              >
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </div>
+            <div
+              class="sortable"
+              :class="{ 'sort-active': sortColumn === 'p2-kdr' }"
+              @click="sortMapPerformance('p2-kdr')"
+            >
+              K/D
+              <span
+                v-if="sortColumn === 'p2-kdr'"
+                class="sort-indicator"
+              >
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </div>
+          </div>
+          <div class="table-body">
+            <div
+              v-for="map in sortedMapPerformance"
+              :key="map.mapName"
+              class="table-row"
+              :class="{ 'expanded': showExtraColumns }"
+            >
+              <div class="map-name">
+                {{ map.mapName }}
+              </div>
+              <div class="map-stat">
+                {{ map.player1Totals.score }}
+              </div>
+              <div
+                v-show="showExtraColumns"
+                class="map-stat extra-column"
+              >
+                {{ map.player1Totals.kills }}
+              </div>
+              <div
+                v-show="showExtraColumns"
+                class="map-stat extra-column"
+              >
+                {{ map.player1Totals.deaths }}
+              </div>
+              <div
+                class="map-kdr"
+                :class="{ 'winner': parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) > parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) }"
+              >
+                {{ calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) }}
+              </div>
+              <div class="map-stat">
+                {{ map.player2Totals.score }}
+              </div>
+              <div
+                v-show="showExtraColumns"
+                class="map-stat extra-column"
+              >
+                {{ map.player2Totals.kills }}
+              </div>
+              <div
+                v-show="showExtraColumns"
+                class="map-stat extra-column"
+              >
+                {{ map.player2Totals.deaths }}
+              </div>
+              <div
+                class="map-kdr"
+                :class="{ 'winner': parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) > parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) }"
+              >
+                {{ calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) }}
+              </div>
+            </div>
+          </div>
         </div>
-
-        <!-- Core Statistics -->
-        <div class="comparison-section">
-            <h3>Core Statistics</h3>
-            <div class="stat-comparison-grid">
-                <!-- Kill Rate -->
-                <div class="stat-label">Kill Rate (per min)</div>
-                <div class="stat-value p1" :class="{ 'better': player1KillRate > player2KillRate }">
-                    {{ player1KillRate.toFixed(2) }}
-                    <span v-if="getHigherValue(player1KillRate, player2KillRate) === 'p1' && player1KillRate !== player2KillRate" class="delta">
-                        ({{ calculateDelta(player1KillRate, player2KillRate, 2) }})
-                    </span>
-                </div>
-                <div class="stat-value p2" :class="{ 'better': player2KillRate > player1KillRate }">
-                    {{ player2KillRate.toFixed(2) }}
-                    <span v-if="getHigherValue(player1KillRate, player2KillRate) === 'p2' && player1KillRate !== player2KillRate" class="delta">
-                        ({{ calculateDelta(player1KillRate, player2KillRate, 2) }})
-                    </span>
-                </div>
-
-                <!-- Average Ping -->
-                <div class="stat-label">Average Ping</div>
-                 <div class="stat-value p1" :class="{ 'better': player1AveragePing < player2AveragePing }">
-                    {{ Math.round(player1AveragePing) }}ms
-                </div>
-                <div class="stat-value p2" :class="{ 'better': player2AveragePing < player1AveragePing }">
-                    {{ Math.round(player2AveragePing) }}ms
-                </div>
-            </div>
-        </div>
-
-        <!-- Typical Online Hours -->
-        <div v-if="activityHoursData?.player1ActivityHours && activityHoursData?.player2ActivityHours" class="comparison-section">
-            <div class="section-header">
-                <h3>Typical Online Hours</h3>
-                <button 
-                    class="toggle-view-btn" 
-                    @click="showRawActivityData = !showRawActivityData"
-                    :title="showRawActivityData ? 'Show overlap potential' : 'Show individual activity'"
-                >
-                    {{ showRawActivityData ? '🔀 Show Overlap' : '📊 Show Individual' }}
-                </button>
-            </div>
-            <div v-if="activityHoursLoading" class="loading-container">
-                <div class="loading-spinner"></div>
-                <p>Loading activity data...</p>
-            </div>
-            <div v-else-if="activityHoursError" class="error-container">
-                <p>{{ activityHoursError }}</p>
-            </div>
-            <div v-else class="activity-section">
-                <div class="activity-chart-wrapper">
-                    <div class="activity-chart-container">
-                        <!-- Background zones for time periods -->
-                        <div class="time-period-zones">
-                            <div class="time-zone early-zone" title="Early (00:00 - 08:00)"></div>
-                            <div class="time-zone day-zone" title="Day (08:00 - 16:00)"></div>
-                            <div class="time-zone night-zone" title="Night (16:00 - 24:00)"></div>
-                        </div>
-                        <Line :key="chartKey" :data="combinedActivityChartData" :options="combinedActivityChartOptions" />
-                    </div>
-                    
-                    <!-- Time period section labels -->
-                    <div class="time-period-labels">
-                        <div class="period-label early-label">
-                            <span class="period-name">Early</span>
-                            <span class="period-hours">12AM-8AM</span>
-                        </div>
-                        <div class="period-label day-label">
-                            <span class="period-name">Day</span>
-                            <span class="period-hours">8AM-4PM</span>
-                        </div>
-                        <div class="period-label night-label">
-                            <span class="period-name">Night</span>
-                            <span class="period-hours">4PM-12AM</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
         
-        <!-- Performance Over Time -->
-        <div class="comparison-section" v-if="comparisonData.bucketTotals && comparisonData.bucketTotals.length > 0">
-            <h3>Performance Over Time</h3>
-            <div class="tabs">
-                <button 
-                    v-for="period in timePeriodOptions" 
-                    :key="period.value"
-                    :class="{ 'active': selectedTimePeriod === period.value }"
-                    @click="selectedTimePeriod = period.value">
-                    {{ period.label }}
-                </button>
+      <!-- Head-to-Head Encounters -->
+      <div
+        v-if="comparisonData.headToHead && comparisonData.headToHead.length > 0"
+        class="comparison-section"
+      >
+        <h3>Head-to-Head Encounters</h3>
+        <div class="h2h-table">
+          <div class="h2h-table-header">
+            <div>Date</div>
+            <div>Map</div>
+            <div
+              class="h2h-player-header"
+              colspan="3"
+            >
+              {{ comparisonData.player1 }}
             </div>
-            <div class="performance-details">
-                <div class="performance-grid" v-if="getPerformanceData(selectedTimePeriod)">
-                    <div class="grid-header"></div>
-                    <div class="grid-header p1-header">{{ comparisonData.player1 }}</div>
-                    <div class="grid-header p2-header">{{ comparisonData.player2 }}</div>
-
-                    <div class="grid-label">Score</div>
-                    <div class="grid-value p1">
-                        {{ getPerformanceData(selectedTimePeriod)?.player1Totals.score }}
-                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p1'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) }})
-                        </span>
-                    </div>
-                    <div class="grid-value p2">
-                        {{ getPerformanceData(selectedTimePeriod)?.player2Totals.score }}
-                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p2'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) }})
-                        </span>
-                    </div>
-                    
-                    <div class="grid-label">Kills</div>
-                    <div class="grid-value p1">
-                        {{ getPerformanceData(selectedTimePeriod)?.player1Totals.kills }}
-                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p1'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) }})
-                        </span>
-                    </div>
-                    <div class="grid-value p2">
-                        {{ getPerformanceData(selectedTimePeriod)?.player2Totals.kills }}
-                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p2'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) }})
-                        </span>
-                    </div>
-
-                    <div class="grid-label">Deaths</div>
-                    <div class="grid-value p1">
-                        {{ getPerformanceData(selectedTimePeriod)?.player1Totals.deaths }}
-                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p1'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) }})
-                        </span>
-                    </div>
-                    <div class="grid-value p2">
-                        {{ getPerformanceData(selectedTimePeriod)?.player2Totals.deaths }}
-                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p2'" class="delta">
-                            ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) }})
-                        </span>
-                    </div>
-
-                    <div class="grid-label">Play Time</div>
-                    <div class="grid-value p1">
-                        {{ formatPlayTime(getPerformanceData(selectedTimePeriod)?.player1Totals.playTimeMinutes || 0) }}
-                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p1'" class="delta">
-                            ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) }})
-                        </span>
-                    </div>
-                    <div class="grid-value p2">
-                        {{ formatPlayTime(getPerformanceData(selectedTimePeriod)?.player2Totals.playTimeMinutes || 0) }}
-                        <span v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p2'" class="delta">
-                            ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) }})
-                        </span>
-                    </div>
-                </div>
+            <div
+              class="h2h-player-header"
+              colspan="3"
+            >
+              {{ comparisonData.player2 }}
             </div>
+          </div>
+          <div class="h2h-table-subheader">
+            <div />
+            <div />
+            <div>Score</div>
+            <div>Kills</div>
+            <div>Deaths</div>
+            <div>Score</div>
+            <div>Kills</div>
+            <div>Deaths</div>
+          </div>
+          <div class="h2h-table-body">
+            <div
+              v-for="(encounter, index) in sortedHeadToHead"
+              :key="index"
+              class="h2h-table-row"
+            >
+              <div class="h2h-date-cell">
+                <router-link 
+                  :to="{
+                    path: '/servers/round-report',
+                    query: {
+                      serverGuid: encounter.serverGuid,
+                      mapName: encounter.mapName,
+                      startTime: new Date(new Date(encounter.timestamp).getTime() + 2 * 60 * 1000).toISOString(),
+                      players: `${player1Input},${player2Input}`
+                    }
+                  }"
+                  class="h2h-date-link"
+                  :title="`View round report for ${encounter.mapName} on ${formatDate(encounter.timestamp)} with ${player1Input} and ${player2Input} highlighted`"
+                >
+                  <div class="h2h-date">
+                    {{ formatDate(encounter.timestamp) }}
+                  </div>
+                  <div class="h2h-time">
+                    {{ formatTime(encounter.timestamp) }}
+                  </div>
+                </router-link>
+              </div>
+              <div>{{ encounter.mapName }}</div>
+              <div>{{ encounter.player1Score }}</div>
+              <div>{{ encounter.player1Kills }}</div>
+              <div>{{ encounter.player1Deaths }}</div>
+              <div>{{ encounter.player2Score }}</div>
+              <div>{{ encounter.player2Kills }}</div>
+              <div>{{ encounter.player2Deaths }}</div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Map Performance -->
-        <div class="comparison-section" v-if="combinedMapPerformance.length > 0">
-            <div class="section-header">
-                <h3>Map Performance</h3>
-                <div class="section-controls">
-                    <button 
-                        class="toggle-filter-btn" 
-                        @click="hideNoScores = !hideNoScores"
-                        :title="hideNoScores ? 'Show all maps including those with no scores' : 'Hide maps where either player has no scores'"
+      <!-- Milestone Badge Rows -->
+      <div
+        v-if="comparisonData"
+        class="comparison-section milestone-section"
+      >
+        <h3>Badges</h3>
+        <!-- Player 1 Row -->
+        <div class="player-milestones-row">
+          <h4 class="milestone-player-name">
+            {{ comparisonData.player1 }}
+          </h4>
+          <div class="milestone-badges-row">
+            <div
+              v-for="(milestone, idx) in MILESTONES"
+              :key="'p1-' + milestone"
+              class="milestone-badge-image-wrapper"
+              :class="{
+                achieved: achievedMilestoneNumbersP1.includes(milestone),
+                next: nextMilestoneIndexP1 === idx,
+                future: nextMilestoneIndexP1 < idx,
+                flipped: isMobile && flippedBadge === milestone,
+                faster: getMilestoneComparison(milestone, 1)?.isFaster,
+                slower: getMilestoneComparison(milestone, 1)?.isSlower,
+                'has-comparison': getMilestoneComparison(milestone, 1)?.hasBothAchieved
+              }"
+              :title="formatMilestoneTooltip(milestone, 1)"
+              @click="handleBadgeClick(milestone, 1)"
+            >
+              <div class="milestone-badge-flip">
+                <div class="milestone-badge-front">
+                  <div class="milestone-badge-image-container">
+                    <img
+                      :src="getMilestoneImage(milestone)"
+                      class="milestone-badge-image"
+                      :alt="`${milestone.toLocaleString()} Kills Badge`"
                     >
-                        {{ hideNoScores ? '👁️' : '👁️‍🗨️' }}
-                    </button>
-                    <button class="toggle-columns-btn" @click="showExtraColumns = !showExtraColumns">
-                        {{ showExtraColumns ? 'Hide' : 'Show' }} Kills/Deaths
-                    </button>
-                </div>
-            </div>
-            <div class="map-performance-table">
-                <div class="table-header" :class="{ 'expanded': showExtraColumns }">
-                    <div class="map-name-header sortable" @click="sortMapPerformance('map')" :class="{ 'sort-active': sortColumn === 'map' }">
-                        Map
-                        <span class="sort-indicator" v-if="sortColumn === 'map'">
-                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                        </span>
-                    </div>
-                    <div class="player-group" :class="{ 'expanded': showExtraColumns }">{{ comparisonData.player1 }}</div>
-                    <div class="player-group" :class="{ 'expanded': showExtraColumns }">{{ comparisonData.player2 }}</div>
-                </div>
-                <div class="table-subheader" :class="{ 'expanded': showExtraColumns }">
-                    <div></div>
-                    <div class="sortable" @click="sortMapPerformance('p1-score')" :class="{ 'sort-active': sortColumn === 'p1-score' }">
-                        Score
-                        <span class="sort-indicator" v-if="sortColumn === 'p1-score'">
-                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                        </span>
-                    </div>
-                    <div class="sortable extra-column" v-show="showExtraColumns" @click="sortMapPerformance('p1-kills')" :class="{ 'sort-active': sortColumn === 'p1-kills' }">
-                        Kills
-                        <span class="sort-indicator" v-if="sortColumn === 'p1-kills'">
-                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                        </span>
-                    </div>
-                    <div class="sortable extra-column" v-show="showExtraColumns" @click="sortMapPerformance('p1-deaths')" :class="{ 'sort-active': sortColumn === 'p1-deaths' }">
-                        Deaths
-                        <span class="sort-indicator" v-if="sortColumn === 'p1-deaths'">
-                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                        </span>
-                    </div>
-                    <div class="sortable" @click="sortMapPerformance('p1-kdr')" :class="{ 'sort-active': sortColumn === 'p1-kdr' }">
-                        K/D
-                        <span class="sort-indicator" v-if="sortColumn === 'p1-kdr'">
-                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                        </span>
-                    </div>
-                    <div class="sortable" @click="sortMapPerformance('p2-score')" :class="{ 'sort-active': sortColumn === 'p2-score' }">
-                        Score
-                        <span class="sort-indicator" v-if="sortColumn === 'p2-score'">
-                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                        </span>
-                    </div>
-                    <div class="sortable extra-column" v-show="showExtraColumns" @click="sortMapPerformance('p2-kills')" :class="{ 'sort-active': sortColumn === 'p2-kills' }">
-                        Kills
-                        <span class="sort-indicator" v-if="sortColumn === 'p2-kills'">
-                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                        </span>
-                    </div>
-                    <div class="sortable extra-column" v-show="showExtraColumns" @click="sortMapPerformance('p2-deaths')" :class="{ 'sort-active': sortColumn === 'p2-deaths' }">
-                        Deaths
-                        <span class="sort-indicator" v-if="sortColumn === 'p2-deaths'">
-                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                        </span>
-                    </div>
-                    <div class="sortable" @click="sortMapPerformance('p2-kdr')" :class="{ 'sort-active': sortColumn === 'p2-kdr' }">
-                        K/D
-                        <span class="sort-indicator" v-if="sortColumn === 'p2-kdr'">
-                            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                        </span>
-                    </div>
-                </div>
-                <div class="table-body">
-                    <div v-for="map in sortedMapPerformance" :key="map.mapName" class="table-row" :class="{ 'expanded': showExtraColumns }">
-                        <div class="map-name">{{ map.mapName }}</div>
-                        <div class="map-stat">{{ map.player1Totals.score }}</div>
-                        <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player1Totals.kills }}</div>
-                        <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player1Totals.deaths }}</div>
-                        <div class="map-kdr" :class="{ 'winner': parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) > parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) }">
-                            {{ calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) }}
-                        </div>
-                        <div class="map-stat">{{ map.player2Totals.score }}</div>
-                        <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player2Totals.kills }}</div>
-                        <div class="map-stat extra-column" v-show="showExtraColumns">{{ map.player2Totals.deaths }}</div>
-                        <div class="map-kdr" :class="{ 'winner': parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) > parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) }">
-                            {{ calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Head-to-Head Encounters -->
-        <div class="comparison-section" v-if="comparisonData.headToHead && comparisonData.headToHead.length > 0">
-            <h3>Head-to-Head Encounters</h3>
-            <div class="h2h-table">
-                 <div class="h2h-table-header">
-                    <div>Date</div>
-                    <div>Map</div>
-                    <div class="h2h-player-header" colspan="3">{{ comparisonData.player1 }}</div>
-                    <div class="h2h-player-header" colspan="3">{{ comparisonData.player2 }}</div>
-                </div>
-                <div class="h2h-table-subheader">
-                    <div></div>
-                    <div></div>
-                    <div>Score</div>
-                    <div>Kills</div>
-                    <div>Deaths</div>
-                    <div>Score</div>
-                    <div>Kills</div>
-                    <div>Deaths</div>
-                </div>
-                <div class="h2h-table-body">
-                    <div v-for="(encounter, index) in sortedHeadToHead" :key="index" class="h2h-table-row">
-                        <div class="h2h-date-cell">
-                            <router-link 
-                                :to="{
-                                    path: '/servers/round-report',
-                                    query: {
-                                        serverGuid: encounter.serverGuid,
-                                        mapName: encounter.mapName,
-                                        startTime: new Date(new Date(encounter.timestamp).getTime() + 2 * 60 * 1000).toISOString(),
-                                        players: `${player1Input},${player2Input}`
-                                    }
-                                }"
-                                class="h2h-date-link"
-                                :title="`View round report for ${encounter.mapName} on ${formatDate(encounter.timestamp)} with ${player1Input} and ${player2Input} highlighted`"
-                            >
-                                <div class="h2h-date">{{ formatDate(encounter.timestamp) }}</div>
-                                <div class="h2h-time">{{ formatTime(encounter.timestamp) }}</div>
-                            </router-link>
-                        </div>
-                        <div>{{ encounter.mapName }}</div>
-                        <div>{{ encounter.player1Score }}</div>
-                        <div>{{ encounter.player1Kills }}</div>
-                        <div>{{ encounter.player1Deaths }}</div>
-                        <div>{{ encounter.player2Score }}</div>
-                        <div>{{ encounter.player2Kills }}</div>
-                        <div>{{ encounter.player2Deaths }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Milestone Badge Rows -->
-        <div class="comparison-section milestone-section" v-if="comparisonData">
-          <h3>Badges</h3>
-          <!-- Player 1 Row -->
-          <div class="player-milestones-row">
-            <h4 class="milestone-player-name">{{ comparisonData.player1 }}</h4>
-            <div class="milestone-badges-row">
-              <div
-                v-for="(milestone, idx) in MILESTONES"
-                :key="'p1-' + milestone"
-                class="milestone-badge-image-wrapper"
-                :class="{
-                  achieved: achievedMilestoneNumbersP1.includes(milestone),
-                  next: nextMilestoneIndexP1 === idx,
-                  future: nextMilestoneIndexP1 < idx,
-                  flipped: isMobile && flippedBadge === milestone,
-                  faster: getMilestoneComparison(milestone, 1)?.isFaster,
-                  slower: getMilestoneComparison(milestone, 1)?.isSlower,
-                  'has-comparison': getMilestoneComparison(milestone, 1)?.hasBothAchieved
-                }"
-                :title="formatMilestoneTooltip(milestone, 1)"
-                @click="handleBadgeClick(milestone, 1)"
-              >
-                <div class="milestone-badge-flip">
-                  <div class="milestone-badge-front">
-                    <div class="milestone-badge-image-container">
-                      <img :src="getMilestoneImage(milestone)" class="milestone-badge-image" :alt="`${milestone.toLocaleString()} Kills Badge`" />
-                      <svg v-if="nextMilestoneIndexP1 === idx && milestoneProgress(totalKillsP1, milestone) < 1" class="milestone-progress-border" :width="isMobile ? '54' : '72'" :height="isMobile ? '54' : '72'">
-                        <circle :cx="isMobile ? '27' : '36'" :cy="isMobile ? '27' : '36'" :r="isMobile ? '26' : '35'" fill="none" :stroke="milestoneProgress(totalKillsP1, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress" stroke-width="2" stroke-linecap="round" :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)" :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(totalKillsP1, milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(totalKillsP1, milestone)) * 2 * Math.PI * 35)" class="progress-bar" :transform="isMobile ? 'rotate(-90 27 27)' : 'rotate(-90 36 36)'" />
-                      </svg>
-                      <!-- Comparison indicator -->
-                      <div v-if="getMilestoneComparison(milestone, 1)?.hasBothAchieved" class="comparison-indicator">
-                        <div v-if="getMilestoneComparison(milestone, 1)?.isFaster" class="faster-indicator">⚡</div>
-                        <div v-else-if="getMilestoneComparison(milestone, 1)?.isSlower" class="slower-indicator">🐌</div>
-                        <div v-else class="tie-indicator">🤝</div>
+                    <svg
+                      v-if="nextMilestoneIndexP1 === idx && milestoneProgress(totalKillsP1, milestone) < 1"
+                      class="milestone-progress-border"
+                      :width="isMobile ? '54' : '72'"
+                      :height="isMobile ? '54' : '72'"
+                    >
+                      <circle
+                        :cx="isMobile ? '27' : '36'"
+                        :cy="isMobile ? '27' : '36'"
+                        :r="isMobile ? '26' : '35'"
+                        fill="none"
+                        :stroke="milestoneProgress(totalKillsP1, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)"
+                        :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(totalKillsP1, milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(totalKillsP1, milestone)) * 2 * Math.PI * 35)"
+                        class="progress-bar"
+:transform="isMobile ? 'rotate(-90 27 27)' : 'rotate(-90 36 36)'"
+                      />
+                    </svg>
+                    <!-- Comparison indicator -->
+                    <div
+                      v-if="getMilestoneComparison(milestone, 1)?.hasBothAchieved"
+                      class="comparison-indicator"
+                    >
+                      <div
+                        v-if="getMilestoneComparison(milestone, 1)?.isFaster"
+                        class="faster-indicator"
+                      >
+                        ⚡
                       </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Player 2 Row -->
-          <div class="player-milestones-row">
-            <h4 class="milestone-player-name">{{ comparisonData.player2 }}</h4>
-            <div class="milestone-badges-row">
-              <div
-                v-for="(milestone, idx) in MILESTONES"
-                :key="'p2-' + milestone"
-                class="milestone-badge-image-wrapper"
-                :class="{
-                  achieved: achievedMilestoneNumbersP2.includes(milestone),
-                  next: nextMilestoneIndexP2 === idx,
-                  future: nextMilestoneIndexP2 < idx,
-                  flipped: isMobile && flippedBadge === milestone,
-                  faster: getMilestoneComparison(milestone, 2)?.isFaster,
-                  slower: getMilestoneComparison(milestone, 2)?.isSlower,
-                  'has-comparison': getMilestoneComparison(milestone, 2)?.hasBothAchieved
-                }"
-                :title="formatMilestoneTooltip(milestone, 2)"
-                @click="handleBadgeClick(milestone, 2)"
-              >
-                <div class="milestone-badge-flip">
-                  <div class="milestone-badge-front">
-                    <div class="milestone-badge-image-container">
-                      <img :src="getMilestoneImage(milestone)" class="milestone-badge-image" :alt="`${milestone.toLocaleString()} Kills Badge`" />
-                      <svg v-if="nextMilestoneIndexP2 === idx && milestoneProgress(totalKillsP2, milestone) < 1" class="milestone-progress-border" :width="isMobile ? '54' : '72'" :height="isMobile ? '54' : '72'">
-                        <circle :cx="isMobile ? '27' : '36'" :cy="isMobile ? '27' : '36'" :r="isMobile ? '26' : '35'" fill="none" :stroke="milestoneProgress(totalKillsP2, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress" stroke-width="2" stroke-linecap="round" :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)" :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(totalKillsP2, milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(totalKillsP2, milestone)) * 2 * Math.PI * 35)" class="progress-bar" :transform="isMobile ? 'rotate(-90 27 27)' : 'rotate(-90 36 36)'" />
-                      </svg>
-                      <!-- Comparison indicator -->
-                      <div v-if="getMilestoneComparison(milestone, 2)?.hasBothAchieved" class="comparison-indicator">
-                        <div v-if="getMilestoneComparison(milestone, 2)?.isFaster" class="faster-indicator">⚡</div>
-                        <div v-else-if="getMilestoneComparison(milestone, 2)?.isSlower" class="slower-indicator">🐌</div>
-                        <div v-else class="tie-indicator">🤝</div>
+                      <div
+                        v-else-if="getMilestoneComparison(milestone, 1)?.isSlower"
+                        class="slower-indicator"
+                      >
+                        🐌
+                      </div>
+                      <div
+                        v-else
+                        class="tie-indicator"
+                      >
+                        🤝
                       </div>
                     </div>
                   </div>
@@ -1613,6 +1939,87 @@ const closeMilestoneModal = () => {
             </div>
           </div>
         </div>
+        <!-- Player 2 Row -->
+        <div class="player-milestones-row">
+          <h4 class="milestone-player-name">
+            {{ comparisonData.player2 }}
+          </h4>
+          <div class="milestone-badges-row">
+            <div
+              v-for="(milestone, idx) in MILESTONES"
+              :key="'p2-' + milestone"
+              class="milestone-badge-image-wrapper"
+              :class="{
+                achieved: achievedMilestoneNumbersP2.includes(milestone),
+                next: nextMilestoneIndexP2 === idx,
+                future: nextMilestoneIndexP2 < idx,
+                flipped: isMobile && flippedBadge === milestone,
+                faster: getMilestoneComparison(milestone, 2)?.isFaster,
+                slower: getMilestoneComparison(milestone, 2)?.isSlower,
+                'has-comparison': getMilestoneComparison(milestone, 2)?.hasBothAchieved
+              }"
+              :title="formatMilestoneTooltip(milestone, 2)"
+              @click="handleBadgeClick(milestone, 2)"
+            >
+              <div class="milestone-badge-flip">
+                <div class="milestone-badge-front">
+                  <div class="milestone-badge-image-container">
+                    <img
+                      :src="getMilestoneImage(milestone)"
+                      class="milestone-badge-image"
+                      :alt="`${milestone.toLocaleString()} Kills Badge`"
+                    >
+                    <svg
+                      v-if="nextMilestoneIndexP2 === idx && milestoneProgress(totalKillsP2, milestone) < 1"
+                      class="milestone-progress-border"
+                      :width="isMobile ? '54' : '72'"
+                      :height="isMobile ? '54' : '72'"
+                    >
+                      <circle
+                        :cx="isMobile ? '27' : '36'"
+                        :cy="isMobile ? '27' : '36'"
+                        :r="isMobile ? '26' : '35'"
+                        fill="none"
+                        :stroke="milestoneProgress(totalKillsP2, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)"
+                        :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(totalKillsP2, milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(totalKillsP2, milestone)) * 2 * Math.PI * 35)"
+                        class="progress-bar"
+:transform="isMobile ? 'rotate(-90 27 27)' : 'rotate(-90 36 36)'"
+                      />
+                    </svg>
+                    <!-- Comparison indicator -->
+                    <div
+                      v-if="getMilestoneComparison(milestone, 2)?.hasBothAchieved"
+                      class="comparison-indicator"
+                    >
+                      <div
+                        v-if="getMilestoneComparison(milestone, 2)?.isFaster"
+                        class="faster-indicator"
+                      >
+                        ⚡
+                      </div>
+                      <div
+                        v-else-if="getMilestoneComparison(milestone, 2)?.isSlower"
+                        class="slower-indicator"
+                      >
+                        🐌
+                      </div>
+                      <div
+                        v-else
+                        class="tie-indicator"
+                      >
+                        🤝
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   

@@ -1,28 +1,57 @@
 <template>
   <div class="sidebar">
     <div class="nav-menu">
-      <router-link to="/servers" active-class="active" class="nav-item" data-tooltip="true">
-        <i class="icon-servers"></i>
+      <router-link
+        to="/servers"
+        active-class="active"
+        class="nav-item"
+        data-tooltip="true"
+      >
+        <i class="icon-servers" />
         <div class="tooltip">
-          <div class="tooltip-icon icon-servers"></div>
-          <div class="tooltip-text">Find BF1942, FH2, and BF Vietnam servers. Thanks to <a href="https://github.com/cetteup" target="_blank" rel="noopener">@cetteup</a> for providing these APIs</div>
+          <div class="tooltip-icon icon-servers" />
+          <div class="tooltip-text">
+            Find BF1942, FH2, and BF Vietnam servers. Thanks to <a
+              href="https://github.com/cetteup"
+              target="_blank"
+              rel="noopener"
+            >@cetteup</a> for providing these APIs
+          </div>
         </div>
       </router-link>
-      <router-link to="/players" active-class="active" class="nav-item" data-tooltip="true">
-        <i class="icon-players"></i>
+      <router-link
+        to="/players"
+        active-class="active"
+        class="nav-item"
+        data-tooltip="true"
+      >
+        <i class="icon-players" />
         <div class="tooltip">
-          <div class="tooltip-icon icon-players"></div>
-          <div class="tooltip-text">Search for players and view player statistics</div>
+          <div class="tooltip-icon icon-players" />
+          <div class="tooltip-text">
+            Search for players and view player statistics
+          </div>
         </div>
       </router-link>
-      <router-link to="/players/compare" active-class="active" class="nav-item" data-tooltip="true">
-        <i class="icon-player-comparison"></i>
+      <router-link
+        to="/players/compare"
+        active-class="active"
+        class="nav-item"
+        data-tooltip="true"
+      >
+        <i class="icon-player-comparison" />
         <div class="tooltip">
-          <div class="tooltip-icon icon-player-comparison"></div>
-          <div class="tooltip-text">Compare two players' performance statistics side-by-side</div>
+          <div class="tooltip-icon icon-player-comparison" />
+          <div class="tooltip-text">
+            Compare two players' performance statistics side-by-side
+          </div>
         </div>
       </router-link>
-      <div class="nav-item theme-toggle-item" @click="toggleDarkMode" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+      <div
+        class="nav-item theme-toggle-item"
+        :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+        @click="toggleDarkMode"
+      >
         <span class="toggle-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
       </div>
     </div>

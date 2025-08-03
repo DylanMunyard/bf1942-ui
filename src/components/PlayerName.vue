@@ -84,11 +84,14 @@ const containerClass = computed(() => {
       v-if="showCompareIcon && clickable" 
       class="compare-icon"
       :class="{ 'visible': canSelect || isSelected }"
-      @click="handleCompareClick"
       :title="canSelect ? 'Click to add to player comparison' : (isSelected ? 'Already selected for comparison' : 'Maximum 2 players can be selected')"
+      @click="handleCompareClick"
     >
       <span v-if="isSelected">✓</span>
-      <span v-else class="fencer-pair">
+      <span
+        v-else
+        class="fencer-pair"
+      >
         <span class="fencer flipped">🤺</span>
         <span class="fencer">🤺</span>
       </span>

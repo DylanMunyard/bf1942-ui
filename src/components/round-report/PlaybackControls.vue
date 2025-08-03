@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 
 interface Props {
   isPlaying: boolean;
@@ -59,22 +59,56 @@ const handlePlaybackSpeedChange = (event: Event) => {
 </script>
 
 <template>
-  <div v-if="snapshotTimeline.length > 1" class="timeline-section">
+  <div
+    v-if="snapshotTimeline.length > 1"
+    class="timeline-section"
+  >
     <div class="timeline-header">
-      <div class="instructions-text">Click play to watch the match unfold, or drag through the timeline</div>
+      <div class="instructions-text">
+        Click play to watch the match unfold, or drag through the timeline
+      </div>
       <div class="timeline-controls-compact">
         <div class="compact-playback">
-          <button @click="$emit('reset-playback')" class="mini-button" title="Reset">⏮️</button>
-          <button @click="$emit('toggle-playback')" class="mini-button play-mini" :class="{ playing: isPlaying }" title="Play/Pause">
+          <button
+            class="mini-button"
+            title="Reset"
+            @click="$emit('reset-playback')"
+          >
+            ⏮️
+          </button>
+          <button
+            class="mini-button play-mini"
+            :class="{ playing: isPlaying }"
+            title="Play/Pause"
+            @click="$emit('toggle-playback')"
+          >
             {{ isPlaying ? '⏸️' : '▶️' }}
           </button>
-          <select :value="playbackSpeed" @change="handlePlaybackSpeedChange" class="mini-select">
-            <option :value="500">0.5x</option>
-            <option :value="250">1x</option>
-            <option :value="150" selected>2x</option>
-            <option :value="75">4x</option>
+          <select
+            :value="playbackSpeed"
+            class="mini-select"
+            @change="handlePlaybackSpeedChange"
+          >
+            <option :value="500">
+              0.5x
+            </option>
+            <option :value="250">
+              1x
+            </option>
+            <option
+              :value="150"
+              selected
+            >
+              2x
+            </option>
+            <option :value="75">
+              4x
+            </option>
           </select>
-          <span v-if="isPlaying" class="mini-indicator">🔴</span>
+          <span
+            v-if="isPlaying"
+            class="mini-indicator"
+          >🔴</span>
         </div>
         
         <div class="elapsed-badge">
@@ -91,7 +125,7 @@ const handlePlaybackSpeedChange = (event: Event) => {
         <div 
           class="mini-progress-fill"
           :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
-        ></div>
+        />
         <div class="scrubber-dots">
           <div 
             v-for="(dot, index) in sampledDots" 
@@ -100,7 +134,7 @@ const handlePlaybackSpeedChange = (event: Event) => {
             :class="{ 'active-dot': dot.index === selectedSnapshotIndex }"
             :title="`${getElapsedTime(dot.timestamp)} elapsed`"
             @click="$emit('handle-dot-click', dot.index)"
-          ></div>
+          />
         </div>
       </div>
     </div>

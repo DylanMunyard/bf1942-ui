@@ -392,7 +392,10 @@ const handlePeriodChange = (period: string) => {
 </script>
 
 <template>
-  <div v-if="serverInsights?.playerCountHistory && serverInsights.playerCountHistory.length > 0" class="stats-section">
+  <div
+    v-if="serverInsights?.playerCountHistory && serverInsights.playerCountHistory.length > 0"
+    class="stats-section"
+  >
     <div class="chart-header">
       <h3>Player Activity{{ serverInsights?.pingByHour?.data?.length > 0 ? ' with Connection Quality Zones' : '' }}</h3>
       <div class="chart-controls">
@@ -402,26 +405,29 @@ const handlePeriodChange = (period: string) => {
             :key="option.value"
             class="period-filter-button"
             :class="{ 'active': selectedPeriod === option.value, 'loading': selectedPeriod === option.value && props.isLoading }"
-            @click="handlePeriodChange(option.value)"
             :title="`Show data for ${option.label.toLowerCase()}`"
             :disabled="props.isLoading"
+            @click="handlePeriodChange(option.value)"
           >
-            <div v-if="selectedPeriod === option.value && props.isLoading" class="button-spinner"></div>
+            <div
+              v-if="selectedPeriod === option.value && props.isLoading"
+              class="button-spinner"
+            />
             <span :class="{ 'loading-text': selectedPeriod === option.value && props.isLoading }">{{ option.label }}</span>
           </button>
         </div>
         <button
           v-if="serverInsights?.pingByHour?.data?.length > 0"
           class="metric-toggle-button"
-          @click="togglePingMetric"
           :title="`Switch to ${pingMetric === 'median' ? 'P95' : 'Median'} ping`"
+          @click="togglePingMetric"
         >
           {{ pingMetric === 'median' ? 'Median' : 'P95' }} Ping
         </button>
         <button
           class="expand-chart-button"
-          @click="toggleChartExpansion"
           :title="isChartExpanded ? 'Collapse chart' : 'Expand chart'"
+          @click="toggleChartExpansion"
         >
           {{ isChartExpanded ? '📉' : '📊' }}
         </button>
@@ -436,12 +442,18 @@ const handlePeriodChange = (period: string) => {
         <span class="stat-label">Median:</span>
         <span class="stat-value stat-median">{{ playerCountStats.median }} players</span>
       </div>
-      <div v-if="serverInsights?.playerCountSummary?.changePercentFromPreviousPeriod && serverInsights.playerCountSummary.changePercentFromPreviousPeriod !== 0" class="stat-item">
+      <div
+        v-if="serverInsights?.playerCountSummary?.changePercentFromPreviousPeriod && serverInsights.playerCountSummary.changePercentFromPreviousPeriod !== 0"
+        class="stat-item"
+      >
         <span class="stat-label">Period change:</span>
-        <span class="stat-value" :class="{ 
-          'stat-positive': serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0, 
-          'stat-negative': serverInsights.playerCountSummary.changePercentFromPreviousPeriod < 0 
-        }">
+        <span
+          class="stat-value"
+          :class="{ 
+            'stat-positive': serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0, 
+            'stat-negative': serverInsights.playerCountSummary.changePercentFromPreviousPeriod < 0 
+          }"
+        >
           {{ serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0 ? '+' : '' }}{{ serverInsights.playerCountSummary.changePercentFromPreviousPeriod }}%
         </span>
       </div>
@@ -451,18 +463,34 @@ const handlePeriodChange = (period: string) => {
       :class="{ 'chart-expanded': isChartExpanded }"
       @click="!isChartExpanded && toggleChartExpansion()"
     >
-      <Line :data="chartData" :options="chartOptions" />
+      <Line
+        :data="chartData"
+        :options="chartOptions"
+      />
     </div>
     
     <!-- Ping Data Explanation -->
-    <div v-if="serverInsights?.pingByHour?.data && serverInsights.pingByHour.data.length > 0" class="ping-explainer" :class="{ 'collapsed': isPingExplainerCollapsed }">
-      <div class="ping-explainer-header" @click="togglePingExplainer">
+    <div
+      v-if="serverInsights?.pingByHour?.data && serverInsights.pingByHour.data.length > 0"
+      class="ping-explainer"
+      :class="{ 'collapsed': isPingExplainerCollapsed }"
+    >
+      <div
+        class="ping-explainer-header"
+        @click="togglePingExplainer"
+      >
         <span class="ping-explainer-title">💡 How to interpret ping data</span>
-        <button class="collapse-toggle" :title="isPingExplainerCollapsed ? 'Show explanation' : 'Hide explanation'">
+        <button
+          class="collapse-toggle"
+          :title="isPingExplainerCollapsed ? 'Show explanation' : 'Hide explanation'"
+        >
           {{ isPingExplainerCollapsed ? '▶' : '▼' }}
         </button>
       </div>
-      <div class="ping-explainer-content" v-show="!isPingExplainerCollapsed">
+      <div
+        v-show="!isPingExplainerCollapsed"
+        class="ping-explainer-content"
+      >
         <p><strong>Background color guide:</strong> The chart background is tinted to show connection quality periods. <strong>Green zones</strong> indicate low ping (good connections), <strong>orange zones</strong> show medium ping, and <strong>red zones</strong> indicate high ping periods.</p>
         <p>If you're playing from outside the host country, look for red/orange zones to find when players with similar connections are online for more balanced gameplay. Hover over the chart when expanded to see exact ping values.</p>
       </div>

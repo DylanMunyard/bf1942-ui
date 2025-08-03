@@ -1,49 +1,89 @@
 <template>
-  <div v-if="isVisible" class="milestone-modal-overlay" @click="closeModal">
-    <div class="milestone-modal" @click.stop>
+  <div
+    v-if="isVisible"
+    class="milestone-modal-overlay"
+    @click="closeModal"
+  >
+    <div
+      class="milestone-modal"
+      @click.stop
+    >
       <div class="milestone-modal-header">
         <div class="milestone-modal-title">
           <div class="milestone-modal-title-text">
             <h3>{{ milestone?.toLocaleString() }} Kills</h3>
-            <div v-if="isAchieved && achievementData" class="milestone-achievement-subtitle">
+            <div
+              v-if="isAchieved && achievementData"
+              class="milestone-achievement-subtitle"
+            >
               {{ formatAchievementDate(achievementData?.achievedDate) }} • {{ achievementData?.daysToAchieve }} days to achieve
             </div>
-            <div v-else-if="isNext" class="milestone-achievement-subtitle">
+            <div
+              v-else-if="isNext"
+              class="milestone-achievement-subtitle"
+            >
               Next milestone • {{ Math.floor(progressPercentage) }}% complete
             </div>
-            <div v-else class="milestone-achievement-subtitle">
+            <div
+              v-else
+              class="milestone-achievement-subtitle"
+            >
               Locked milestone
             </div>
           </div>
         </div>
-        <button class="milestone-modal-close" @click="closeModal">×</button>
+        <button
+          class="milestone-modal-close"
+          @click="closeModal"
+        >
+          ×
+        </button>
       </div>
       
       <div class="milestone-modal-content">
         <!-- Badge prominently displayed at top -->
         <div class="milestone-badge-display">
-          <img :src="milestoneImage" :alt="`${milestone?.toLocaleString()} Kills Badge`" class="milestone-modal-badge" />
+          <img
+            :src="milestoneImage"
+            :alt="`${milestone?.toLocaleString()} Kills Badge`"
+            class="milestone-modal-badge"
+          >
         </div>
         
-        <div v-if="isAchieved" class="milestone-achieved">
+        <div
+          v-if="isAchieved"
+          class="milestone-achieved"
+        >
           <div class="achievement-status">
             <span class="achievement-icon">🏆</span>
             <span class="achievement-text">Achievement Unlocked!</span>
           </div>
           
           <!-- Comparison data for PlayerComparison.vue -->
-          <div v-if="comparisonData" class="comparison-section">
+          <div
+            v-if="comparisonData"
+            class="comparison-section"
+          >
             <h4>Comparison</h4>
             <div class="comparison-details">
-              <div v-if="comparisonData.isFaster" class="comparison-result faster">
+              <div
+                v-if="comparisonData.isFaster"
+                class="comparison-result faster"
+              >
                 <span class="comparison-icon">⚡</span>
                 <span>Achieved faster than opponent!</span>
               </div>
-              <div v-else-if="comparisonData.isSlower" class="comparison-result slower">
+              <div
+                v-else-if="comparisonData.isSlower"
+                class="comparison-result slower"
+              >
                 <span class="comparison-icon">🐌</span>
                 <span>Achieved slower than opponent</span>
               </div>
-              <div v-else-if="comparisonData.hasBothAchieved" class="comparison-result tie">
+              <div
+                v-else-if="comparisonData.hasBothAchieved"
+                class="comparison-result tie"
+              >
                 <span class="comparison-icon">🤝</span>
                 <span>Same achievement time</span>
               </div>
@@ -51,7 +91,10 @@
           </div>
         </div>
         
-        <div v-else-if="isNext" class="milestone-next">
+        <div
+          v-else-if="isNext"
+          class="milestone-next"
+        >
           <div class="progress-status">
             <span class="progress-icon">🎯</span>
             <span class="progress-text">Next Target</span>
@@ -60,7 +103,10 @@
           <div class="progress-details">
             <div class="progress-bar-container">
               <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
+                <div
+                  class="progress-fill"
+                  :style="{ width: progressPercentage + '%' }"
+                />
               </div>
               <span class="progress-percentage">{{ Math.floor(progressPercentage) }}%</span>
             </div>
@@ -70,7 +116,10 @@
           </div>
         </div>
         
-        <div v-else class="milestone-locked">
+        <div
+          v-else
+          class="milestone-locked"
+        >
           <div class="locked-status">
             <span class="locked-icon">🔒</span>
             <span class="locked-text">Locked</span>

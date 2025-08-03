@@ -1,6 +1,5 @@
 import axios from 'axios';
 import {
-  OnlinePlayerItem,
   OnlinePlayersResponse,
   OnlinePlayersFilters
 } from '../types/onlinePlayersTypes';

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchRoundReport, fetchLiveServerData, RoundReport, LeaderboardSnapshot } from '../services/serverDetailsService';
 import { Line } from 'vue-chartjs';
@@ -702,11 +702,33 @@ const goBack = () => {
   <div class="round-report-container">
     <div class="round-report-header">
       <div class="header-left">
-        <button class="back-button" @click="goBack">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <button
+          class="back-button"
+          @click="goBack"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="feather feather-arrow-left"
+          ><line
+            x1="19"
+            y1="12"
+            x2="5"
+            y2="12"
+          /><polyline points="12 19 5 12 12 5" /></svg>
           Back
         </button>
-        <div class="header-titles" v-if="roundReport">
+        <div
+          v-if="roundReport"
+          class="header-titles"
+        >
           <h2>🗺️ {{ roundReport.round.mapName }}</h2>
           <router-link 
             :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
@@ -715,39 +737,78 @@ const goBack = () => {
             {{ roundReport.session.serverName }}
           </router-link>
         </div>
-        <h2 v-else>Round Report</h2>
+        <h2 v-else>
+          Round Report
+        </h2>
       </div>
     </div>
     <div class="round-report-body">
-      <div v-if="loading" class="loading-container">
-        <div class="loading-spinner"></div>
+      <div
+        v-if="loading"
+        class="loading-container"
+      >
+        <div class="loading-spinner" />
         <p>Loading round report...</p>
       </div>
-      <div v-else-if="error" class="error-container">
-        <p class="error-message">{{ error }}</p>
+      <div
+        v-else-if="error"
+        class="error-container"
+      >
+        <p class="error-message">
+          {{ error }}
+        </p>
       </div>
-      <div v-else-if="roundReport" class="details-container">
-
-        
+      <div
+        v-else-if="roundReport"
+        class="details-container"
+      >
         <!-- Consolidated Leaderboard Section with Session Details -->
-        <div v-if="currentSnapshot && teamGroups.length" class="leaderboard-section">
+        <div
+          v-if="currentSnapshot && teamGroups.length"
+          class="leaderboard-section"
+        >
           <!-- Performance Chart for Pinned Players -->
-          <div v-if="pinnedPlayers.size > 0" class="performance-chart-section">
+          <div
+            v-if="pinnedPlayers.size > 0"
+            class="performance-chart-section"
+          >
             <div class="pinned-players-info">
               <h3>📌 Pinned Players Performance</h3>
               <div class="pinned-players-badges">
-                <div v-for="playerName in Array.from(pinnedPlayers)" :key="playerName" class="pinned-player-badge">
-                  <PlayerName :name="playerName" source="round-report-pinned" :server-guid="props.serverGuid" />
+                <div
+                  v-for="playerName in Array.from(pinnedPlayers)"
+                  :key="playerName"
+                  class="pinned-player-badge"
+                >
+                  <PlayerName
+                    :name="playerName"
+                    source="round-report-pinned"
+                    :server-guid="props.serverGuid"
+                  />
                 </div>
-                <button v-if="pinnedPlayers.size > 1" class="clear-all-button" @click="clearAllPinnedPlayers" title="Clear all pinned players">
+                <button
+                  v-if="pinnedPlayers.size > 1"
+                  class="clear-all-button"
+                  title="Clear all pinned players"
+                  @click="clearAllPinnedPlayers"
+                >
                   Clear All
                 </button>
               </div>
             </div>
             
-            <div v-if="pinnedPlayersChartData.datasets.length > 0" class="performance-chart-container">
-              <div class="chart-wrapper" :class="{ 'playing': isPlaying }">
-                <Line :data="pinnedPlayersChartData" :options="pinnedPlayersChartOptions" />
+            <div
+              v-if="pinnedPlayersChartData.datasets.length > 0"
+              class="performance-chart-container"
+            >
+              <div
+                class="chart-wrapper"
+                :class="{ 'playing': isPlaying }"
+              >
+                <Line
+                  :data="pinnedPlayersChartData"
+                  :options="pinnedPlayersChartOptions"
+                />
               </div>
             </div>
           </div>
@@ -758,32 +819,72 @@ const goBack = () => {
                 <span class="game-id">#{{ roundReport.session.gameId }}</span>
                 <span class="separator">•</span>
                 <span class="match-time">{{ formatDate(roundReport.round.startTime) }}</span>
-                <span v-if="roundReport.round.isActive" class="status-badge active" :class="{ 'live-updating': isLiveUpdating }">
+                <span
+                  v-if="roundReport.round.isActive"
+                  class="status-badge active"
+                  :class="{ 'live-updating': isLiveUpdating }"
+                >
                   Live
-                  <span v-if="isLiveUpdating" class="live-dot"></span>
+                  <span
+                    v-if="isLiveUpdating"
+                    class="live-dot"
+                  />
                 </span>
               </div>
             </div>
-            <div class="header-controls">
-            </div>
+            <div class="header-controls" />
           </div>
           
-          <div v-if="snapshotTimeline.length > 1" class="timeline-section">
+          <div
+            v-if="snapshotTimeline.length > 1"
+            class="timeline-section"
+          >
             <div class="timeline-header">
-              <div class="instructions-text">Click play to watch the match unfold, or drag through the timeline</div>
+              <div class="instructions-text">
+                Click play to watch the match unfold, or drag through the timeline
+              </div>
               <div class="timeline-controls-compact">
                 <div class="compact-playback">
-                  <button @click="resetPlayback" class="mini-button" title="Reset">⏮️</button>
-                  <button @click="togglePlayback" class="mini-button play-mini" :class="{ playing: isPlaying }" title="Play/Pause">
+                  <button
+                    class="mini-button"
+                    title="Reset"
+                    @click="resetPlayback"
+                  >
+                    ⏮️
+                  </button>
+                  <button
+                    class="mini-button play-mini"
+                    :class="{ playing: isPlaying }"
+                    title="Play/Pause"
+                    @click="togglePlayback"
+                  >
                     {{ isPlaying ? '⏸️' : '▶️' }}
                   </button>
-                  <select v-model="playbackSpeed" @change="setPlaybackSpeed(playbackSpeed)" class="mini-select">
-                    <option :value="500">0.5x</option>
-                    <option :value="250">1x</option>
-                    <option :value="150" selected>2x</option>
-                    <option :value="75">4x</option>
+                  <select
+                    v-model="playbackSpeed"
+                    class="mini-select"
+                    @change="setPlaybackSpeed(playbackSpeed)"
+                  >
+                    <option :value="500">
+                      0.5x
+                    </option>
+                    <option :value="250">
+                      1x
+                    </option>
+                    <option
+                      :value="150"
+                      selected
+                    >
+                      2x
+                    </option>
+                    <option :value="75">
+                      4x
+                    </option>
                   </select>
-                  <span v-if="isPlaying" class="mini-indicator">🔴</span>
+                  <span
+                    v-if="isPlaying"
+                    class="mini-indicator"
+                  >🔴</span>
                 </div>
                 
                 <div class="elapsed-badge">
@@ -800,7 +901,7 @@ const goBack = () => {
                 <div 
                   class="mini-progress-fill"
                   :style="{ width: `${(selectedSnapshotIndex / Math.max(snapshotTimeline.length - 1, 1)) * 100}%` }"
-                ></div>
+                />
                 <div class="scrubber-dots">
                   <div 
                     v-for="(dot, index) in sampledDots" 
@@ -809,7 +910,7 @@ const goBack = () => {
                     :class="{ 'active-dot': index === selectedSnapshotIndex }"
                     :title="`${getElapsedTime(dot.timestamp)} elapsed`"
                     @click="handleDotClick(dot.index)"
-                  ></div>
+                  />
                 </div>
               </div>
             </div>
@@ -834,7 +935,10 @@ const goBack = () => {
           />
         </div>
       </div>
-      <div v-else class="no-data-container">
+      <div
+        v-else
+        class="no-data-container"
+      >
         <p>No round report available.</p>
       </div>
     </div>
