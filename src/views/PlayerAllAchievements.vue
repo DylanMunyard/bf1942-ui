@@ -523,42 +523,32 @@ watch(
               <div class="timeline-node date-node"></div>
             </div>
             <div class="date-header-content">
-              <h2>{{ formatDateHeader(dateKey) }}</h2>
-              <div class="achievement-count">{{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}</div>
+              <div class="date-header-line-1">
+                <span class="date-header-text">{{ formatDateHeader(dateKey) }}</span>
+                <span class="achievement-count-badge">{{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}</span>
+              </div>
             </div>
           </div>
           
           <!-- Achievement Items -->
-          <div 
-            v-for="(group, index) in groupedAchievements[dateKey]" 
-            :key="index"
-            class="timeline-item achievement-item"
-          >
-            <div class="timeline-node-container">
-              <div 
-                class="timeline-node achievement-node"
-                :class="`tier-${group.achievement.tier.toLowerCase()}`"
-                :style="{ backgroundColor: getTierColor(group.achievement.tier) }"
-              ></div>
-            </div>
-            
-            <div class="achievement-timeline-content">
-              <div 
-                class="achievement-square"
-                :class="[`tier-${group.achievement.tier.toLowerCase()}`, group.achievement.achievementType]"
-                :style="{ boxShadow: getTierGlow(group.achievement.tier) }"
-                @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
-                :title="getAchievementTooltip(group.achievement)"
-              >
-                <div class="achievement-image-container">
-                  <img 
-                    :src="getAchievementImage(group.achievement.achievementId)" 
-                    :alt="group.achievement.achievementName"
-                    class="achievement-image"
-                    @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                  />
-                  <div v-if="group.count > 1" class="achievement-count-badge">{{ group.count }}</div>
-                </div>
+          <div class="achievements-grid">
+            <div 
+              v-for="(group, index) in groupedAchievements[dateKey]" 
+              :key="index"
+              class="achievement-card"
+              :class="[`tier-${group.achievement.tier.toLowerCase()}`, group.achievement.achievementType]"
+              :style="{ boxShadow: getTierGlow(group.achievement.tier) }"
+              @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
+              :title="getAchievementTooltip(group.achievement)"
+            >
+              <div class="achievement-image-container">
+                <img 
+                  :src="getAchievementImage(group.achievement.achievementId)" 
+                  :alt="group.achievement.achievementName"
+                  class="achievement-image"
+                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                />
+                <div v-if="group.count > 1" class="achievement-count-badge">{{ group.count }}</div>
               </div>
               
               <div class="achievement-details">
@@ -1112,7 +1102,7 @@ watch(
 
 /* Date Header Styles */
 .date-header-item {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .date-header-item .timeline-node-container {
@@ -1123,39 +1113,76 @@ watch(
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--color-border);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.date-header-content h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: var(--color-heading);
-}
-
-.achievement-count {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  background-color: var(--color-background);
-  padding: 6px 12px;
-  border-radius: 16px;
-}
-
-/* Achievement Timeline Content */
-.achievement-item {
-  margin-bottom: 12px;
-}
-
-.achievement-item .timeline-node-container {
-  margin-top: 1em;
-}
-
-.achievement-timeline-content {
-  flex: 1;
+.date-header-line-1 {
   display: flex;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.date-header-text {
+  font-weight: 500;
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.achievement-count-badge {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  background-color: var(--color-background-mute);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+/* Achievement Grid Layout */
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 12px;
+  margin-top: 8px;
+  position: relative;
+  margin-left: 28px; /* Account for timeline node space */
+}
+
+.achievements-grid::before {
+  content: '';
+  position: absolute;
+  left: -22px; /* Position to align with timeline line */
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--color-border);
+  z-index: 1;
+}
+
+.achievement-card {
+  display: flex;
+  gap: 12px;
+  background-color: var(--color-background-soft);
+  border-radius: 12px;
+  padding: 16px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.achievement-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, var(--tier-color, transparent) 100%);
+  opacity: 0.05;
+  pointer-events: none;
 }
 
 .achievement-square {
@@ -1268,6 +1295,7 @@ watch(
 .achievement-card:hover {
   transform: translateY(-2px);
   border-color: var(--tier-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .achievement-image-container {
@@ -1659,39 +1687,33 @@ watch(
     margin-top: 0.3em;
   }
   
-  .achievement-item .timeline-node-container {
-    margin-top: 0.8em;
+  .achievements-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 8px;
+    margin-left: 24px; /* Slightly less margin on mobile */
   }
   
-  .timeline-node {
-    width: 6px;
-    height: 6px;
+  .achievements-grid::before {
+    left: -18px; /* Adjust for mobile */
   }
   
-  .date-node {
-    width: 8px;
-    height: 8px;
-    border: 2px solid var(--color-background);
-  }
-  
-  .achievement-square {
-    width: 48px;
-    height: 48px;
-    padding: 6px;
-    border-radius: 8px;
-  }
-  
-  .achievement-square .achievement-image {
-    max-width: 36px;
-    max-height: 36px;
-  }
-  
-  .achievement-timeline-content {
+  .achievement-card {
+    padding: 12px;
     gap: 8px;
   }
   
-  .date-header-content h2 {
-    font-size: 1.2rem;
+  .achievement-image {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .date-header-text {
+    font-size: 0.85rem;
+  }
+  
+  .achievement-count-badge {
+    font-size: 0.75rem;
+    padding: 1px 6px;
   }
   
   .achievement-details .achievement-name {
@@ -1828,16 +1850,24 @@ watch(
 }
 
 @media (max-width: 480px) {
-  .achievement-square {
-    width: 40px;
-    height: 40px;
-    padding: 4px;
-    border-radius: 6px;
+  .achievements-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-left: 20px; /* Even less margin on small mobile */
   }
   
-  .achievement-square .achievement-image {
-    max-width: 32px;
-    max-height: 32px;
+  .achievements-grid::before {
+    left: -14px; /* Adjust for small mobile */
+  }
+  
+  .achievement-card {
+    padding: 10px;
+    gap: 6px;
+  }
+  
+  .achievement-image {
+    width: 40px;
+    height: 40px;
   }
   
   .achievement-count-badge {
@@ -1848,14 +1878,23 @@ watch(
     right: -1px;
   }
   
-  .achievement-timeline-content {
-    gap: 6px;
-  }
-  
   .date-header-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+  }
+  
+  .date-header-line-1 {
+    gap: 6px;
+  }
+  
+  .date-header-text {
+    font-size: 0.8rem;
+  }
+  
+  .achievement-count-badge {
+    font-size: 0.7rem;
+    padding: 1px 4px;
   }
   
   .achievement-details .achievement-name {
