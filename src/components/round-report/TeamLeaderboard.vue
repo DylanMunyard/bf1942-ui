@@ -39,12 +39,96 @@ const calculateKDR = (kills: number, deaths: number): string => {
   if (deaths === 0) return kills.toString();
   return (kills / deaths).toFixed(2);
 };
+
+// Create unified player list for mobile single-column view
+const unifiedPlayerList = computed(() => {
+  const allPlayers: (LeaderboardEntry & { teamName: string })[] = [];
+  
+  props.teamGroups.forEach(team => {
+    team.players.forEach(player => {
+      allPlayers.push({
+        ...player,
+        teamName: team.teamName
+      });
+    });
+  });
+  
+  // Sort by score descending
+  return allPlayers.sort((a, b) => b.score - a.score);
+});
 </script>
 
 <template>
   <div v-if="teamGroups.length" class="team-leaderboard">
-    <!-- Mobile Team Tabs -->
-    <div class="mobile-team-tabs">
+    <!-- Mobile Single Column View -->
+    <div class="mobile-unified-view">
+      <div class="unified-players-list">
+        <div class="players-header-unified">
+          <div class="header-rank">#</div>
+          <div class="header-player">Player</div>
+          <div class="header-team">Team</div>
+          <div class="header-score">Score</div>
+        </div>
+        
+        <div class="players-list-unified">
+          <div
+            v-for="(player, index) in unifiedPlayerList"
+            :key="player.playerName"
+            class="player-row-unified"
+            :class="{
+              'top-player': index === 0,
+              'pinned-player-row': pinnedPlayers.has(player.playerName)
+            }"
+          >
+            <div class="player-rank">
+              <span v-if="index === 0" class="rank-medal">🥇</span>
+              <span v-else-if="index === 1" class="rank-medal">🥈</span>
+              <span v-else-if="index === 2" class="rank-medal">🥉</span>
+              <span v-else class="rank-number">{{ index + 1 }}</span>
+            </div>
+            <div class="player-name">
+              <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-link">
+                <PlayerName :name="player.playerName" source="round-report" :server-guid="serverGuid" />
+              </router-link>
+              <button
+                class="pin-player-btn"
+                :title="pinnedPlayers.has(player.playerName) ? 'Unpin & remove from chart' : 'Pin to top & show in chart'"
+                @click.stop="$emit('toggle-player-pin', player.playerName)"
+              >
+                <span v-if="pinnedPlayers.has(player.playerName)">📌</span>
+                <span v-else>📍</span>
+              </button>
+            </div>
+            <div class="player-team" :class="`team-${player.teamName.toLowerCase()}-indicator`">
+              {{ player.teamName }}
+            </div>
+            <div class="player-score">{{ player.score.toLocaleString() }}</div>
+            <!-- Expandable details on mobile -->
+            <div class="player-details-mobile">
+              <div class="detail-item">
+                <span class="detail-label">K/D:</span>
+                <span class="detail-value">
+                  <span class="kills">{{ player.kills }}</span>/<span class="deaths">{{ player.deaths }}</span>
+                </span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Ping:</span>
+                <span class="detail-value player-ping" :class="{ 
+                  'ping-good': player.ping < 50, 
+                  'ping-ok': player.ping >= 50 && player.ping < 100,
+                  'ping-bad': player.ping >= 100
+                }">
+                  {{ player.ping }}ms
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Team Tabs (Fallback - Hidden by default) -->
+    <div class="mobile-team-tabs" style="display: none;">
       <div class="tab-buttons">
         <button 
           v-for="(team, index) in teamGroups" 
@@ -242,6 +326,11 @@ const calculateKDR = (kills: number, deaths: number): string => {
 <style scoped>
 .team-leaderboard {
   width: 100%;
+}
+
+/* Mobile unified view - Hidden on desktop */
+.mobile-unified-view {
+  display: none;
 }
 
 /* Mobile Team Tabs - Hidden on desktop */
@@ -510,23 +599,136 @@ html[data-theme="dark"] .pinned-badge,
 
 /* Mobile responsive design */
 @media (max-width: 768px) {
-  .teams-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .players-header,
-  .player-row {
-    grid-template-columns: 30px 1fr 60px 50px 50px;
-    padding: 10px 12px;
-  }
-  
-  /* Show mobile tabs, hide desktop grid */
-  .mobile-team-tabs {
+  /* Show mobile unified view, hide desktop grid */
+  .mobile-unified-view {
     display: block;
   }
   
   .teams-container {
     display: none;
+  }
+  
+  .mobile-team-tabs {
+    display: none !important;
+  }
+  
+  /* Mobile unified player list styles */
+  .unified-players-list {
+    background: var(--color-background-soft);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid var(--color-border);
+  }
+  
+  .players-header-unified {
+    display: grid;
+    grid-template-columns: 35px 1fr 60px 70px;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--color-background-mute);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .players-list-unified {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  
+  .player-row-unified {
+    display: grid;
+    grid-template-columns: 35px 1fr 60px 70px;
+    gap: 8px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.85rem;
+    transition: background-color 0.2s;
+  }
+  
+  .player-row-unified:hover {
+    background: var(--color-background-mute);
+  }
+  
+  .player-row-unified:last-child {
+    border-bottom: none;
+  }
+  
+  .player-row-unified.top-player {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+  }
+  
+  .player-team {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  
+  .team-allies-indicator {
+    background: rgba(76, 175, 80, 0.1);
+    color: #2e7d32;
+    border-color: rgba(76, 175, 80, 0.3);
+  }
+  
+  .team-axis-indicator {
+    background: rgba(244, 67, 54, 0.1);
+    color: #c62828;
+    border-color: rgba(244, 67, 54, 0.3);
+  }
+  
+  /* Fallback for other team names */
+  .player-team:not(.team-allies-indicator):not(.team-axis-indicator) {
+    background: var(--color-background-mute);
+    color: var(--color-text);
+    border-color: var(--color-border);
+  }
+  
+  .player-details-mobile {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    background: var(--color-background-mute);
+    border-radius: 4px;
+    padding: 6px 8px;
+  }
+  
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .detail-label {
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+  
+  .detail-value {
+    font-weight: 600;
+  }
+  
+  .player-row-unified .rank-number {
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+  }
+  
+  .player-row-unified .rank-medal {
+    font-size: 1rem;
+  }
+  
+  .player-row-unified .pin-player-btn {
+    font-size: 0.8rem;
+    margin-left: 4px;
   }
   
   /* Mobile tab styles */
@@ -650,38 +852,42 @@ html[data-theme="dark"] .pinned-badge,
 }
 
 @media (max-width: 480px) {
-  .tab-button {
-    font-size: 0.75rem;
-    padding: 6px 4px;
-    min-width: 70px;
-  }
-  
-  .team-score-badge {
-    font-size: 0.65rem;
-  }
-  
-  .players-header {
-    grid-template-columns: 25px 1fr 60px;
+  .players-header-unified {
+    grid-template-columns: 30px 1fr 50px 60px;
     gap: 6px;
     padding: 6px 8px;
     font-size: 0.7rem;
   }
   
-  .player-row {
-    grid-template-columns: 25px 1fr 60px;
+  .player-row-unified {
+    grid-template-columns: 30px 1fr 50px 60px;
     gap: 6px;
-    padding: 8px;
-    font-size: 0.85rem;
-  }
-  
-  .rank-medal {
-    font-size: 1.1rem;
-  }
-  
-  .rank-number {
-    width: 22px;
-    height: 22px;
+    padding: 5px 8px;
     font-size: 0.8rem;
+  }
+  
+  .player-team {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+  }
+  
+  .player-details-mobile {
+    font-size: 0.7rem;
+    padding: 4px 6px;
+  }
+  
+  .player-row-unified .rank-number {
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+  }
+  
+  .player-row-unified .rank-medal {
+    font-size: 0.9rem;
+  }
+  
+  .player-row-unified .pin-player-btn {
+    font-size: 0.75rem;
   }
 }
 </style>
