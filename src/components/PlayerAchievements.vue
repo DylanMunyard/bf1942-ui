@@ -379,6 +379,14 @@ const selectedAchievementDescription = computed(() => {
   return getBadgeDescription(selectedAchievement.value.achievementId);
 });
 
+// Computed property to get the selected streak's badge description reactively
+const selectedStreakDescription = computed(() => {
+  if (!selectedStreakGroup.value || !badgeServiceReady.value) return null;
+  const streakCount = selectedStreakGroup.value.streak.streakCount;
+  const achievementId = `kill_streak_${streakCount}`;
+  return getBadgeDescription(achievementId);
+});
+
 onMounted(async () => {
   await Promise.all([
     fetchGamificationData(),
@@ -550,6 +558,12 @@ onMounted(async () => {
               :alt="selectedStreakGroup.streak.streakCount + ' Kill Streak'"
               class="modal-achievement-image"
             />
+          </div>
+
+          <!-- Badge Description -->
+          <div v-if="selectedStreakDescription" class="achievement-description">
+            <h4>Description</h4>
+            <p>{{ selectedStreakDescription }}</p>
           </div>
           
           <div class="timeline-container">

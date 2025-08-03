@@ -58,6 +58,9 @@ const achievementLabels = ref<PlayerAchievementLabel[]>([]);
 const availableMaps = ref<string[]>([]);
 const achievementDropdownOpen = ref(false);
 
+// Mobile filters state
+const showFilters = ref(false);
+
 // Pagination state
 const currentPage = ref(1);
 const pageSize = ref(50);
@@ -291,6 +294,11 @@ const getAchievementTooltip = (achievement: Achievement): string => {
   return description ? `${basicInfo}\n\n${description}` : basicInfo;
 };
 
+// Computed property to check if any filters are active
+const hasActiveFilters = computed(() => {
+  return !!(selectedMapName.value || selectedAchievementId.value);
+});
+
 // Timeline helper function
 const getTimeGap = (currentAchievement: Achievement, nextAchievement: Achievement): string => {
   const current = new Date(currentAchievement.achievedAt.endsWith('Z') ? currentAchievement.achievedAt : currentAchievement.achievedAt + 'Z');
@@ -447,8 +455,22 @@ watch(
       </div>
     </div>
 
+    <!-- Mobile filter toggle -->
+    <div class="filter-toggle">
+      <button @click="showFilters = !showFilters" class="filter-toggle-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="filter-icon">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        Filters
+        <span v-if="hasActiveFilters" class="active-filter-indicator">●</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon" :class="{ 'rotated': showFilters }">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+
     <!-- Filters Section -->
-    <div class="filters-section">
+    <div class="filters-section" :class="{ 'filters-visible': showFilters }">
       <h4>Filters</h4>
       <div class="filters-grid">
         <!-- Map Name Filter -->
@@ -886,6 +908,58 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+/* Mobile filter toggle styles */
+.filter-toggle {
+  display: none;
+  margin-bottom: 15px;
+}
+
+.filter-toggle-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.filter-toggle-button:hover {
+  background-color: var(--color-background-mute);
+  border-color: var(--color-primary);
+}
+
+.filter-toggle-button:active {
+  transform: translateY(1px);
+}
+
+.filter-icon {
+  color: var(--color-primary);
+}
+
+.active-filter-indicator {
+  color: var(--color-primary);
+  font-size: 12px;
+  margin-left: auto;
+  margin-right: -4px;
+}
+
+.chevron-icon {
+  transition: transform 0.2s ease;
+  margin-left: auto;
+}
+
+.chevron-icon.rotated {
+  transform: rotate(180deg);
 }
 
 /* Filters Section Styles */
@@ -1701,6 +1775,28 @@ watch(
     align-items: flex-start;
   }
   
+  .filter-toggle {
+    display: block;
+  }
+  
+  /* Hide filters by default on mobile */
+  .filters-section {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-bottom: 0;
+    padding: 0 16px;
+    transition: all 0.3s ease;
+  }
+  
+  /* Show filters when toggled */
+  .filters-section.filters-visible {
+    max-height: 500px;
+    opacity: 1;
+    margin-bottom: 24px;
+    padding: 16px;
+  }
+  
   .filters-grid {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -1708,6 +1804,11 @@ watch(
   
   .filter-group:last-child {
     justify-self: start;
+  }
+  
+  .clear-filters-btn {
+    width: 100%;
+    margin-top: 10px;
   }
   
   .timeline-container {
