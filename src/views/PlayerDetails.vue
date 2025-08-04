@@ -180,7 +180,7 @@ const openSessionDetailsModal = (serverGuid: string, mapName: string, startTime:
 // Format minutes to hours and minutes
 const formatPlayTime = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
+  const remainingMinutes = Math.floor(minutes % 60);
 
   if (hours === 0) {
     return `${remainingMinutes} minutes`;
