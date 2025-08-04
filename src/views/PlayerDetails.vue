@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayer } from '../services/playerStatsService';
+import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayersResponse, PlayerComparisonStats } from '../services/playerStatsService';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import PlayerAchievements from '../components/PlayerAchievements.vue';
@@ -39,17 +39,18 @@ const mapStatsSortField = ref('totalScore');
 const mapStatsSortDirection = ref('desc');
 
 // --- Similar Players state & functions ---
-const similarPlayers = ref<SimilarPlayer[]>([]);
+const similarPlayersData = ref<SimilarPlayersResponse | null>(null);
 const loadingSimilarPlayers = ref(false);
 const similarPlayersError = ref<string | null>(null);
 const similarSectionExpanded = ref(false);
 const detectionMode = ref<'default' | 'aliasdetection'>('default');
+const showOnlyComparable = ref(false);
 
 const loadSimilarPlayers = async () => {
   loadingSimilarPlayers.value = true;
   similarPlayersError.value = null;
   try {
-    similarPlayers.value = await fetchSimilarPlayers(playerName.value, detectionMode.value);
+    similarPlayersData.value = await fetchSimilarPlayers(playerName.value, detectionMode.value);
   } catch (err: any) {
     console.error('Error loading similar players:', err);
     similarPlayersError.value = err.message || 'Failed to load similar players.';
@@ -60,7 +61,7 @@ const loadSimilarPlayers = async () => {
 
 const toggleSimilarPlayersSection = async () => {
   similarSectionExpanded.value = !similarSectionExpanded.value;
-  if (similarSectionExpanded.value && similarPlayers.value.length === 0 && !loadingSimilarPlayers.value) {
+  if (similarSectionExpanded.value && !similarPlayersData.value && !loadingSimilarPlayers.value) {
     await loadSimilarPlayers();
   }
 };
@@ -71,6 +72,31 @@ const setDetectionMode = async (mode: 'default' | 'aliasdetection') => {
     await loadSimilarPlayers();
   }
 };
+// Helper functions for comparison data
+const getCommonServers = (player1: PlayerComparisonStats, player2: PlayerComparisonStats): string[] => {
+  const servers1 = Object.keys(player1.serverPings);
+  const servers2 = Object.keys(player2.serverPings);
+  return servers1.filter(server => servers2.includes(server));
+};
+
+const getCommonMaps = (player1: PlayerComparisonStats, player2: PlayerComparisonStats): string[] => {
+  const maps1 = Object.keys(player1.mapDominanceScores);
+  const maps2 = Object.keys(player2.mapDominanceScores);
+  return maps1.filter(map => maps2.includes(map));
+};
+
+const getCommonOnlineHours = (player1: PlayerComparisonStats, player2: PlayerComparisonStats): number[] => {
+  return player1.typicalOnlineHours.filter(hour => player2.typicalOnlineHours.includes(hour));
+};
+
+const formatOnlineHours = (hours: number[]): string => {
+  return hours.sort((a, b) => a - b).map(h => `${h.toString().padStart(2, '0')}:00`).join(', ');
+};
+
+// Computed properties for comparison data
+const targetPlayerStats = computed(() => similarPlayersData.value?.targetPlayerStats || null);
+const similarPlayers = computed(() => similarPlayersData.value?.similarPlayers || []);
+
 // --- End Similar Players ---
 
 // Function to fetch map stats for a server
@@ -1213,7 +1239,7 @@ watch(
           </div>
         </div>
 
-        <!-- Similar Players section -->
+        <!-- Player Comparison section -->
         <div
           v-if="playerStats"
           class="stats-section"
@@ -1222,7 +1248,7 @@ watch(
             class="collapsible-header"
             @click="toggleSimilarPlayersSection"
           >
-            Similar Players
+            Player Comparison & Analysis
             <span class="toggle-icon">{{ similarSectionExpanded ? '▲' : '▼' }}</span>
             <span
               v-if="!similarSectionExpanded"
@@ -1250,6 +1276,23 @@ watch(
               </div>
             </div>
             
+            <!-- Filter Controls -->
+            <div
+              v-if="similarPlayers.length > 0 && targetPlayerStats"
+              class="comparison-filters"
+            >
+              <div class="filter-toggle">
+                <label class="toggle-switch">
+                  <input
+                    v-model="showOnlyComparable"
+                    type="checkbox"
+                  >
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">Show only comparable data</span>
+                </label>
+              </div>
+            </div>
+            
             <div
               v-if="loadingSimilarPlayers"
               class="loading-container"
@@ -1266,48 +1309,207 @@ watch(
               </p>
             </div>
             <div
-              v-else-if="similarPlayers.length > 0"
-              class="similar-players-table-wrapper"
+              v-else-if="similarPlayers.length > 0 && targetPlayerStats"
+              class="comparison-cards-container"
             >
-              <table class="similar-players-table">
-                <thead>
-                  <tr>
-                    <th>Player</th>
-                    <th>Similarity</th>
-                    <th class="reasons-col">
-                      Why
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(sim, idx) in similarPlayers"
-                    :key="idx"
-                  >
-                    <td>
-                      <router-link
-                        :to="{ name: 'player-comparison', query: { player1: playerName, player2: sim.playerName } }"
-                        class="similar-player-name"
+              <!-- Comparison cards for each similar player -->
+              <div
+                v-for="(similarPlayer, idx) in similarPlayers"
+                :key="idx"
+                class="comparison-card"
+              >
+                <div class="comparison-card-header">
+                  <div class="player-comparison-summary">
+                    <div class="target-player-info">
+                      <h4 class="player-name">{{ targetPlayerStats.playerName }}</h4>
+                      <span class="player-label">Target Player</span>
+                    </div>
+                    <div class="vs-divider">
+                      <span class="vs-text">vs</span>
+                      <div 
+                        class="similarity-score"
+                        :style="{ backgroundColor: similarityColor(similarPlayer.similarityScore) }"
                       >
-                        {{ sim.playerName }}
+                        {{ (similarPlayer.similarityScore * 100).toFixed(0) }}%
+                      </div>
+                    </div>
+                    <div class="similar-player-info">
+                      <router-link
+                        :to="{ name: 'player-comparison', query: { player1: playerName, player2: similarPlayer.playerName } }"
+                        class="player-name similar-player-link"
+                      >
+                        {{ similarPlayer.playerName }}
                       </router-link>
-                    </td>
-                    <td :style="{ color: similarityColor(sim.similarityScore) }">
-                      {{ (sim.similarityScore * 100).toFixed(0) }}%
-                    </td>
-                    <td>
-                      <ul class="similarity-reasons">
-                        <li
-                          v-for="(reason, rIdx) in sim.similarityReasons"
-                          :key="rIdx"
+                      <span class="player-label">
+                        {{ detectionMode === 'aliasdetection' ? 'Potential Alias' : 'Similar Player' }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Key similarity reasons -->
+                  <div class="similarity-reasons-summary">
+                    <div class="reasons-grid">
+                      <div
+                        v-for="(reason, rIdx) in similarPlayer.similarityReasons.slice(0, 3)"
+                        :key="rIdx"
+                        class="reason-chip"
+                      >
+                        {{ reason }}
+                      </div>
+                      <div
+                        v-if="similarPlayer.similarityReasons.length > 3"
+                        class="reason-chip more-reasons"
+                      >
+                        +{{ similarPlayer.similarityReasons.length - 3 }} more
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Detailed comparison stats -->
+                <div class="comparison-stats-grid">
+                  <!-- Basic stats comparison -->
+                  <div class="stats-category">
+                    <h5 class="category-title">Performance Stats</h5>
+                    <div class="stat-comparison-row">
+                      <div class="stat-comparison-item">
+                        <span class="stat-label">K/D Ratio</span>
+                        <div class="stat-values">
+                          <span class="target-value">{{ targetPlayerStats.killDeathRatio.toFixed(2) }}</span>
+                          <span class="comparison-divider">vs</span>
+                          <span class="similar-value">{{ similarPlayer.killDeathRatio.toFixed(2) }}</span>
+                        </div>
+                      </div>
+                      <div class="stat-comparison-item">
+                        <span class="stat-label">Kills/Min</span>
+                        <div class="stat-values">
+                          <span class="target-value">{{ targetPlayerStats.killsPerMinute.toFixed(2) }}</span>
+                          <span class="comparison-divider">vs</span>
+                          <span class="similar-value">{{ similarPlayer.killsPerMinute.toFixed(2) }}</span>
+                        </div>
+                      </div>
+                      <div class="stat-comparison-item">
+                        <span class="stat-label">Play Time</span>
+                        <div class="stat-values">
+                          <span class="target-value">{{ formatPlayTime(targetPlayerStats.totalPlayTimeMinutes) }}</span>
+                          <span class="comparison-divider">vs</span>
+                          <span class="similar-value">{{ formatPlayTime(similarPlayer.totalPlayTimeMinutes) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Server preferences comparison -->
+                  <div 
+                    v-if="!showOnlyComparable || getCommonServers(targetPlayerStats, similarPlayer).length > 0"
+                    class="stats-category"
+                  >
+                    <h5 class="category-title">Server Preferences</h5>
+                    <div class="stat-comparison-row">
+                      <div class="stat-comparison-item full-width">
+                        <span class="stat-label">Favorite Server</span>
+                        <div class="stat-values vertical">
+                          <span class="target-value">{{ targetPlayerStats.favoriteServerName }}</span>
+                          <span class="similar-value">{{ similarPlayer.favoriteServerName }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      v-if="getCommonServers(targetPlayerStats, similarPlayer).length > 0"
+                      class="common-data-section"
+                    >
+                      <span class="common-label">Common Servers ({{ getCommonServers(targetPlayerStats, similarPlayer).length }}):</span>
+                      <div class="common-items">
+                        <span
+                          v-for="server in getCommonServers(targetPlayerStats, similarPlayer).slice(0, 3)"
+                          :key="server"
+                          class="common-item"
                         >
-                          {{ reason }}
-                        </li>
-                      </ul>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                          {{ server }}
+                        </span>
+                        <span
+                          v-if="getCommonServers(targetPlayerStats, similarPlayer).length > 3"
+                          class="common-item more"
+                        >
+                          +{{ getCommonServers(targetPlayerStats, similarPlayer).length - 3 }} more
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Map performance comparison -->
+                  <div 
+                    v-if="!showOnlyComparable || getCommonMaps(targetPlayerStats, similarPlayer).length > 0"
+                    class="stats-category"
+                  >
+                    <h5 class="category-title">Map Performance</h5>
+                    <div
+                      v-if="getCommonMaps(targetPlayerStats, similarPlayer).length > 0"
+                      class="common-data-section"
+                    >
+                      <span class="common-label">Common Maps ({{ getCommonMaps(targetPlayerStats, similarPlayer).length }}):</span>
+                      <div class="map-comparison-grid">
+                        <div
+                          v-for="map in getCommonMaps(targetPlayerStats, similarPlayer).slice(0, 4)"
+                          :key="map"
+                          class="map-comparison-item"
+                        >
+                          <span class="map-name">{{ map }}</span>
+                          <div class="map-scores">
+                            <span class="target-score">{{ targetPlayerStats.mapDominanceScores[map].toFixed(1) }}</span>
+                            <span class="vs">vs</span>
+                            <span class="similar-score">{{ similarPlayer.mapDominanceScores[map].toFixed(1) }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        v-if="getCommonMaps(targetPlayerStats, similarPlayer).length > 4"
+                        class="more-maps-indicator"
+                      >
+                        +{{ getCommonMaps(targetPlayerStats, similarPlayer).length - 4 }} more maps in common
+                      </div>
+                    </div>
+                    <div
+                      v-else-if="!showOnlyComparable"
+                      class="no-common-data"
+                    >
+                      <span class="no-common-label">No common maps found</span>
+                    </div>
+                  </div>
+
+                  <!-- Online hours comparison -->
+                  <div 
+                    v-if="!showOnlyComparable || getCommonOnlineHours(targetPlayerStats, similarPlayer).length > 0"
+                    class="stats-category"
+                  >
+                    <h5 class="category-title">Activity Patterns</h5>
+                    <div
+                      v-if="getCommonOnlineHours(targetPlayerStats, similarPlayer).length > 0"
+                      class="common-data-section"
+                    >
+                      <span class="common-label">Common Online Hours ({{ getCommonOnlineHours(targetPlayerStats, similarPlayer).length }}):</span>
+                      <div class="common-hours">
+                        {{ formatOnlineHours(getCommonOnlineHours(targetPlayerStats, similarPlayer)) }}
+                      </div>
+                    </div>
+                    <div class="temporal-overlap-info">
+                      <div class="overlap-stat">
+                        <span class="stat-label">Temporal Overlap:</span>
+                        <span class="stat-value">{{ formatPlayTime(similarPlayer.temporalOverlapMinutes) }}</span>
+                      </div>
+                      <div class="overlap-stat">
+                        <span class="stat-label">Non-overlap Score:</span>
+                        <span 
+                          class="stat-value"
+                          :class="{ 'high-score': similarPlayer.temporalNonOverlapScore > 0.8 }"
+                        >
+                          {{ (similarPlayer.temporalNonOverlapScore * 100).toFixed(0) }}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div
               v-else
@@ -5234,6 +5436,527 @@ tbody tr:hover {
   
   .segment-icon {
     font-size: 0.85rem;
+  }
+}
+
+/* Player Comparison Styles */
+.comparison-filters {
+  margin: 16px 0;
+  padding: 12px;
+  background-color: var(--color-background-soft);
+  border-radius: 8px;
+}
+
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  background-color: var(--color-border);
+  border-radius: 24px;
+  transition: background-color 0.3s ease;
+}
+
+.toggle-slider:before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--color-primary);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.toggle-label {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.comparison-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.comparison-card {
+  background: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.comparison-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.comparison-card-header {
+  margin-bottom: 20px;
+}
+
+.player-comparison-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.target-player-info,
+.similar-player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.player-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  margin: 0;
+  text-align: center;
+}
+
+.similar-player-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.similar-player-link:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.player-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.vs-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.vs-text {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.similarity-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+  height: 32px;
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-radius: 16px;
+  padding: 0 12px;
+}
+
+.similarity-reasons-summary {
+  margin-top: 12px;
+}
+
+.reasons-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reason-chip {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.reason-chip:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+
+.reason-chip.more-reasons {
+  background: var(--color-text-muted);
+  color: white;
+  border-color: var(--color-text-muted);
+}
+
+.comparison-stats-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+}
+
+.stats-category {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.category-title {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+.stat-comparison-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.stat-comparison-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-comparison-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-values {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stat-values.vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.target-value,
+.similar-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--color-background-soft);
+}
+
+.target-value {
+  border-left: 3px solid var(--color-primary);
+}
+
+.similar-value {
+  border-left: 3px solid var(--color-accent);
+}
+
+.comparison-divider {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.common-data-section {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--color-background-mute);
+  border-radius: 6px;
+}
+
+.common-label {
+  font-size: 0.85rem;
+  color: var(--color-text);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.common-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.common-item {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid var(--color-primary);
+}
+
+.common-item.more {
+  background: var(--color-text-muted);
+  color: white;
+  border-color: var(--color-text-muted);
+}
+
+.common-hours {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  font-weight: 500;
+  font-family: monospace;
+  background: var(--color-background);
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.map-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.map-comparison-item {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+}
+
+.map-name {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  margin-bottom: 4px;
+}
+
+.map-scores {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.target-score,
+.similar-score {
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.target-score {
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+
+.similar-score {
+  color: var(--color-accent);
+  background: var(--color-accent-bg);
+}
+
+.map-scores .vs {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.more-maps-indicator {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  padding: 8px;
+  font-style: italic;
+}
+
+.no-common-data {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--color-background-mute);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.no-common-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.temporal-overlap-info {
+  margin-top: 12px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.overlap-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.overlap-stat .stat-label {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.overlap-stat .stat-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  padding: 4px 8px;
+  background: var(--color-background-soft);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.overlap-stat .stat-value.high-score {
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .comparison-card {
+    padding: 16px;
+  }
+  
+  .player-comparison-summary {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .target-player-info,
+  .similar-player-info {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .vs-divider {
+    order: 2;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .stat-comparison-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .map-comparison-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  
+  .temporal-overlap-info {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .comparison-filters {
+    padding: 10px;
+    margin: 12px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .comparison-card {
+    padding: 12px;
+  }
+  
+  .category-title {
+    font-size: 0.9rem;
+  }
+  
+  .stat-comparison-item {
+    gap: 6px;
+  }
+  
+  .map-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .reasons-grid {
+    gap: 6px;
+  }
+  
+  .reason-chip {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+}
+
+/* Large desktop styles */
+@media (min-width: 1200px) {
+  .comparison-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stats-category:first-child {
+    grid-column: 1 / -1;
   }
 }
 </style>

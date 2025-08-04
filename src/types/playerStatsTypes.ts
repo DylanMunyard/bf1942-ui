@@ -189,20 +189,31 @@ export interface TeamKillerMetric {
   lastActivity: string; // ISO date string
 }
 
-export interface SimilarPlayer {
+export interface PlayerComparisonStats {
   playerName: string;
   totalKills: number;
   totalDeaths: number;
   totalPlayTimeMinutes: number;
   killDeathRatio: number;
-  favoriteServerGuid?: string;
+  killsPerMinute: number;
+  favoriteServerName: string;
+  favoriteServerPlayTimeMinutes: number;
+  gameIds: string[];
+  temporalOverlapMinutes: number;
+  typicalOnlineHours: number[];
+  serverPings: Record<string, number>;
+  mapDominanceScores: Record<string, number>;
+  temporalNonOverlapScore: number;
+}
+
+export interface SimilarPlayer extends PlayerComparisonStats {
   similarityScore: number;
   similarityReasons: string[];
 }
 
 export interface SimilarPlayersResponse {
   targetPlayer: string;
-  targetPlayerStats: Partial<PlayerTimeStatistics> & { playerName: string };
+  targetPlayerStats: PlayerComparisonStats;
   similarPlayers: SimilarPlayer[];
 }
 
