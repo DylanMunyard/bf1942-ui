@@ -1385,6 +1385,12 @@ watch(
                         {{ targetPlayerStats.favoriteServerName === similarPlayer.favoriteServerName ? '✓ Same' : '✗ Different' }}
                       </span>
                     </div>
+                    <div class="compact-stat">
+                      <span class="compact-label">Common Servers:</span>
+                      <span class="compact-values">
+                        {{ getCommonServers(targetPlayerStats, similarPlayer).length }}
+                      </span>
+                    </div>
                   </div>
                   
                   <!-- Key similarity reasons - always show top 2 -->
@@ -1469,20 +1475,34 @@ watch(
                       class="common-data-section"
                     >
                       <span class="common-label">Common Servers ({{ getCommonServers(targetPlayerStats, similarPlayer).length }}):</span>
-                      <div class="common-items">
-                        <span
-                          v-for="server in getCommonServers(targetPlayerStats, similarPlayer).slice(0, 3)"
+                      <div class="server-ping-comparison-grid">
+                        <div
+                          v-for="server in getCommonServers(targetPlayerStats, similarPlayer).slice(0, 4)"
                           :key="server"
-                          class="common-item"
+                          class="server-ping-item"
                         >
-                          {{ server }}
-                        </span>
-                        <span
-                          v-if="getCommonServers(targetPlayerStats, similarPlayer).length > 3"
-                          class="common-item more"
-                        >
-                          +{{ getCommonServers(targetPlayerStats, similarPlayer).length - 3 }} more
-                        </span>
+                          <span class="server-name">{{ server }}</span>
+                          <div class="ping-comparison">
+                            <span class="target-ping">{{ Math.round(targetPlayerStats.serverPings[server]) }}ms</span>
+                            <span class="vs">vs</span>
+                            <span class="similar-ping">{{ Math.round(similarPlayer.serverPings[server]) }}ms</span>
+                            <span 
+                              class="ping-diff"
+                              :class="{ 
+                                'similar-pings': Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]) <= 10,
+                                'different-pings': Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]) > 30
+                              }"
+                            >
+                              ({{ Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]).toFixed(0) }}ms diff)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        v-if="getCommonServers(targetPlayerStats, similarPlayer).length > 4"
+                        class="more-servers-indicator"
+                      >
+                        +{{ getCommonServers(targetPlayerStats, similarPlayer).length - 4 }} more servers in common
                       </div>
                     </div>
                   </div>
@@ -5942,6 +5962,83 @@ tbody tr:hover {
   color: var(--color-text-muted);
 }
 
+.server-ping-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.server-ping-item {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.server-ping-item .server-name {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  margin-bottom: 4px;
+}
+
+.ping-comparison {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.target-ping,
+.similar-ping {
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.target-ping {
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+
+.similar-ping {
+  color: var(--color-accent);
+  background: var(--color-accent-bg);
+}
+
+.ping-comparison .vs {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.ping-diff {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.ping-diff.similar-pings {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.ping-diff.different-pings {
+  color: var(--color-warning);
+  font-weight: 600;
+}
+
+.more-servers-indicator {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  padding: 8px;
+  font-style: italic;
+  margin-top: 8px;
+}
+
 .more-maps-indicator {
   grid-column: 1 / -1;
   text-align: center;
@@ -6049,6 +6146,19 @@ tbody tr:hover {
     gap: 8px;
   }
   
+  .server-ping-item .server-name {
+    font-size: 0.75rem;
+  }
+  
+  .ping-comparison {
+    font-size: 0.8rem;
+    gap: 3px;
+  }
+  
+  .ping-diff {
+    font-size: 0.7rem;
+  }
+  
   .temporal-overlap-info {
     flex-direction: column;
     gap: 8px;
@@ -6109,6 +6219,19 @@ tbody tr:hover {
   .reason-chip.compact {
     font-size: 0.75rem;
     padding: 3px 6px;
+  }
+  
+  .server-ping-item .server-name {
+    font-size: 0.7rem;
+  }
+  
+  .ping-comparison {
+    font-size: 0.75rem;
+    gap: 2px;
+  }
+  
+  .ping-diff {
+    font-size: 0.65rem;
   }
 }
 
