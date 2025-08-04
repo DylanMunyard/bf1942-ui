@@ -1328,7 +1328,7 @@ watch(
                     v-model="showOnlyComparable"
                     type="checkbox"
                   >
-                  <span class="toggle-slider"></span>
+                  <span class="toggle-slider" />
                   <span class="toggle-label">Show only comparable data</span>
                 </label>
               </div>
@@ -1366,7 +1366,9 @@ watch(
                 >
                   <div class="player-comparison-summary">
                     <div class="target-player-info">
-                      <h4 class="player-name">{{ targetPlayerStats.playerName }}</h4>
+                      <h4 class="player-name">
+                        {{ targetPlayerStats.playerName }}
+                      </h4>
                       <span class="player-label">Target Player</span>
                     </div>
                     <div class="vs-divider">
@@ -1453,7 +1455,9 @@ watch(
                 >
                   <!-- Basic stats comparison -->
                   <div class="stats-category">
-                    <h5 class="category-title">Performance Stats</h5>
+                    <h5 class="category-title">
+                      Performance Stats
+                    </h5>
                     <div class="stat-comparison-row">
                       <div class="stat-comparison-item">
                         <span class="stat-label">K/D Ratio</span>
@@ -1487,7 +1491,9 @@ watch(
                     v-if="!showOnlyComparable || getCommonServers(targetPlayerStats, similarPlayer).length > 0"
                     class="stats-category"
                   >
-                    <h5 class="category-title">Server Preferences</h5>
+                    <h5 class="category-title">
+                      Server Preferences
+                    </h5>
                     <div class="stat-comparison-row">
                       <div class="stat-comparison-item full-width">
                         <span class="stat-label">Favorite Server</span>
@@ -1539,7 +1545,9 @@ watch(
                     v-if="!showOnlyComparable || getCommonMaps(targetPlayerStats, similarPlayer).length > 0"
                     class="stats-category"
                   >
-                    <h5 class="category-title">Map Performance</h5>
+                    <h5 class="category-title">
+                      Map Performance
+                    </h5>
                     <div
                       v-if="getCommonMaps(targetPlayerStats, similarPlayer).length > 0"
                       class="common-data-section"
@@ -1579,7 +1587,9 @@ watch(
                     v-if="!showOnlyComparable || getCommonOnlineHours(targetPlayerStats, similarPlayer).length > 0"
                     class="stats-category"
                   >
-                    <h5 class="category-title">Activity Patterns</h5>
+                    <h5 class="category-title">
+                      Activity Patterns
+                    </h5>
                     <div
                       v-if="getCommonOnlineHours(targetPlayerStats, similarPlayer).length > 0"
                       class="common-data-section"

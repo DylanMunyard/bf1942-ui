@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { getBadgeDescription } from '@/services/badgeService';
+import AchievementModal from '../components/AchievementModal.vue';
 
 interface Achievement {
   playerName: string;
@@ -512,7 +513,7 @@ watch(
           stroke-linecap="round"
           stroke-linejoin="round"
           class="chevron-icon"
-:class="{ 'rotated': showFilters }"
+          :class="{ 'rotated': showFilters }"
         >
           <polyline points="6 9 12 15 18 9" />
         </svg>
@@ -790,98 +791,13 @@ watch(
       <p>Start playing to unlock achievements and build your legacy!</p>
     </div>
 
-    <!-- Achievement Details Modal -->
-    <div
-      v-if="showModal && selectedAchievement"
-      class="modal-overlay"
-      @click="closeModal"
-    >
-      <div
-        class="modal-content"
-        @click.stop
-      >
-        <div class="modal-header">
-          <div class="achievement-title-info">
-            <h3 class="modal-achievement-name">
-              {{ selectedAchievement.achievementName }}
-            </h3>
-            <div class="modal-achievement-date">
-              <span class="date-label">Achieved:</span>
-              {{ new Date(selectedAchievement.achievedAt.endsWith('Z') ? selectedAchievement.achievedAt : selectedAchievement.achievedAt + 'Z').toLocaleString() }}
-              <span class="relative-time">({{ formatRelativeTime(selectedAchievement.achievedAt) }})</span>
-            </div>
-          </div>
-          <button
-            class="close-button"
-            @click="closeModal"
-          >
-            &times;
-          </button>
-        </div>
-        
-        <div class="modal-body">
-          <div class="modal-achievement-image-container">
-            <img 
-              :src="getAchievementImage(selectedAchievement.achievementId)" 
-              :alt="selectedAchievement.achievementName"
-              class="modal-achievement-image"
-            >
-          </div>
-
-          <!-- Badge Description -->
-          <div
-            v-if="getBadgeDescription(selectedAchievement.achievementId)"
-            class="achievement-description"
-          >
-            <h4>Description</h4>
-            <p>{{ getBadgeDescription(selectedAchievement.achievementId) }}</p>
-          </div>
-          
-          <div class="achievement-details-grid">
-            <div
-              v-if="selectedAchievement.mapName"
-              class="detail-item"
-            >
-              <span class="detail-label">Map:</span>
-              <span class="detail-value">
-                <router-link 
-                  v-if="selectedAchievement.serverGuid && selectedAchievement.mapName && selectedAchievement.achievedAt"
-                  :to="{
-                    path: '/servers/round-report',
-                    query: {
-                      serverGuid: selectedAchievement.serverGuid,
-                      mapName: selectedAchievement.mapName,
-                      startTime: selectedAchievement.achievedAt,
-                      players: playerName
-                    }
-                  }"
-                  class="map-link"
-                >
-                  {{ selectedAchievement.mapName }}
-                </router-link>
-                <span v-else>{{ selectedAchievement.mapName }}</span>
-              </span>
-            </div>
-            
-            <div
-              v-if="selectedAchievement.serverGuid"
-              class="detail-item"
-            >
-              <span class="detail-label">Server ID:</span>
-              <span class="detail-value">{{ selectedAchievement.serverGuid }}</span>
-            </div>
-            
-            <div
-              v-if="selectedAchievement.roundId"
-              class="detail-item"
-            >
-              <span class="detail-label">Round ID:</span>
-              <span class="detail-value">{{ selectedAchievement.roundId }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Achievement Modal -->
+    <AchievementModal
+      :is-visible="showModal"
+      :achievement="selectedAchievement"
+      :player-name="playerName"
+      @close="closeModal"
+    />
 
     <!-- Grouped Achievement Modal -->
     <div
@@ -1872,53 +1788,7 @@ watch(
   overflow: visible;
 }
 
-.achievement-details-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
 
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.detail-label {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
-
-.detail-value {
-  font-size: 1rem;
-  color: var(--color-text);
-  font-weight: 400;
-  word-break: break-word;
-}
-
-/* Achievement Description Styles */
-.achievement-description {
-  padding: 16px;
-  background-color: var(--color-background-soft);
-  border-radius: 8px;
-  margin-bottom: 16px;
-  border-left: 4px solid var(--color-primary);
-}
-
-.achievement-description h4 {
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-heading);
-}
-
-.achievement-description p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--color-text);
-  line-height: 1.5;
-}
 
 /* Mobile Responsive */
 @media (max-width: 768px) {

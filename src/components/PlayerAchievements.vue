@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { PlayerTimeStatistics } from '@/types/playerStatsTypes';
 import { getBadgeDescription, isBadgeServiceInitialized } from '@/services/badgeService';
+import AchievementModal from './AchievementModal.vue';
 
 interface Achievement {
   playerName: string;
@@ -189,36 +190,7 @@ const getMilestoneImage = (milestone: number): string => {
   }
 };
 
-const _groupedAchievements = computed(() => {
-  if (!gamificationData.value) return {};
-  
-  const allAchievements = [
-    ...gamificationData.value.milestones,
-    ...gamificationData.value.allBadges,
-    ...gamificationData.value.recentAchievements
-  ];
-  
-  const grouped: { [key: string]: Achievement[] } = {};
-  
-  allAchievements.forEach(achievement => {
-    const date = new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z');
-    const dateKey = date.toDateString();
-    
-    if (!grouped[dateKey]) {
-      grouped[dateKey] = [];
-    }
-    grouped[dateKey].push(achievement);
-  });
-  
-  // Sort each day's achievements by time (newest first)
-  Object.keys(grouped).forEach(dateKey => {
-    grouped[dateKey].sort((a, b) => 
-      new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime()
-    );
-  });
-  
-  return grouped;
-});
+
 
 const combinedStreaks = computed(() => {
   if (!gamificationData.value?.bestStreaks.recentStreaks) return [];
@@ -349,11 +321,7 @@ const getAchievementTooltip = (achievement: Achievement): string => {
   return description ? `${basicInfo}\n\n${description}` : basicInfo;
 };
 
-// Computed property to get the selected achievement's badge description reactively
-const selectedAchievementDescription = computed(() => {
-  if (!selectedAchievement.value || !badgeServiceReady.value) return null;
-  return getBadgeDescription(selectedAchievement.value.achievementId);
-});
+
 
 // Computed property to get the selected streak's badge description reactively
 const selectedStreakDescription = computed(() => {
@@ -659,81 +627,13 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Achievement Details Modal -->
-    <div
-      v-if="showModal && selectedAchievement"
-      class="modal-overlay"
-      @click="closeModal"
-    >
-      <div
-        class="modal-content"
-        @click.stop
-      >
-        <div class="modal-header">
-          <div class="achievement-title-info">
-            <h3 class="modal-achievement-name">
-              {{ selectedAchievement.achievementName }}
-            </h3>
-            <div class="modal-achievement-date">
-              <span class="date-label">Achieved:</span>
-              {{ new Date(selectedAchievement.achievedAt.endsWith('Z') ? selectedAchievement.achievedAt : selectedAchievement.achievedAt + 'Z').toLocaleString() }}
-              <span class="relative-time">({{ formatRelativeTime(selectedAchievement.achievedAt) }})</span>
-            </div>
-          </div>
-          <button
-            class="close-button"
-            @click="closeModal"
-          >
-            &times;
-          </button>
-        </div>
-        
-        <div class="modal-body">
-          <div class="modal-achievement-image-container">
-            <img 
-              :src="getAchievementImage(selectedAchievement.achievementId)" 
-              :alt="selectedAchievement.achievementName"
-              class="modal-achievement-image"
-            >
-          </div>
-
-          <!-- Badge Description -->
-          <div
-            v-if="selectedAchievementDescription"
-            class="achievement-description"
-          >
-            <h4>Description</h4>
-            <p>{{ selectedAchievementDescription }}</p>
-          </div>
-          
-          <div class="achievement-details-grid">
-            <div
-              v-if="selectedAchievement.mapName"
-              class="detail-item"
-            >
-              <span class="detail-label">Map:</span>
-              <span class="detail-value">{{ selectedAchievement.mapName }}</span>
-            </div>
-            
-            <div
-              v-if="selectedAchievement.serverGuid"
-              class="detail-item"
-            >
-              <span class="detail-label">Server ID:</span>
-              <span class="detail-value">{{ selectedAchievement.serverGuid }}</span>
-            </div>
-            
-            <div
-              v-if="selectedAchievement.roundId"
-              class="detail-item"
-            >
-              <span class="detail-label">Round ID:</span>
-              <span class="detail-value">{{ selectedAchievement.roundId }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Achievement Modal -->
+    <AchievementModal
+      :is-visible="showModal"
+      :achievement="selectedAchievement"
+      :player-name="playerName"
+      @close="closeModal"
+    />
 
     <!-- Next Milestone Modal -->
     <div
@@ -1347,57 +1247,7 @@ onMounted(async () => {
   overflow: visible;
 }
 
-.achievement-details-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
 
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.detail-item.full-width {
-  grid-column: 1 / -1;
-}
-
-.detail-label {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
-
-.detail-value {
-  font-size: 1rem;
-  color: var(--color-text);
-  font-weight: 400;
-  word-break: break-word;
-}
-
-/* Achievement Description Styles */
-.achievement-description {
-  padding: 16px;
-  background-color: var(--color-background-soft);
-  border-radius: 8px;
-  margin-bottom: 16px;
-  border-left: 4px solid var(--color-primary);
-}
-
-.achievement-description h4 {
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-heading);
-}
-
-.achievement-description p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--color-text);
-  line-height: 1.5;
-}
 
 /* Modal responsive */
 @media (max-width: 768px) {

@@ -3,7 +3,8 @@ import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
-import MilestoneModal from '../components/MilestoneModal.vue';
+import AchievementModal from '../components/AchievementModal.vue';
+
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -107,15 +108,19 @@ interface ComparisonData {
   headToHead: HeadToHeadEncounter[];
   serverDetails?: ServerDetails;
   commonServers?: ServerDetails[];
-  player1KillMilestones?: KillMilestone[];
-  player2KillMilestones?: KillMilestone[];
+  player1MilestoneAchievements?: MilestoneAchievement[];
+  player2MilestoneAchievements?: MilestoneAchievement[];
 }
 
-interface KillMilestone {
-  milestone: number;
-  achievedDate: string;
-  totalKillsAtMilestone: number;
-  daysToAchieve: number;
+
+
+// Add interface for milestone achievements
+interface MilestoneAchievement {
+  achievementId: string;
+  achievementName: string;
+  tier: string;
+  value: number;
+  achievedAt: string;
 }
 
 const route = useRoute();
@@ -895,152 +900,78 @@ const combinedActivityChartOptions = computed(() => {
   };
 });
 
-// Kill milestones processing
-const allKillMilestones = computed(() => {
-  if (!comparisonData.value) return [];
-  const p1 = comparisonData.value.player1KillMilestones?.map(km => km.milestone) || [];
-  const p2 = comparisonData.value.player2KillMilestones?.map(km => km.milestone) || [];
-  return Array.from(new Set([...p1, ...p2])).sort((a, b) => a - b);
-});
 
-const milestoneComparison = computed(() => {
-  if (!comparisonData.value) return [];
-  return allKillMilestones.value.map(milestone => {
-    const p1Data = comparisonData.value!.player1KillMilestones?.find(km => km.milestone === milestone);
-    const p2Data = comparisonData.value!.player2KillMilestones?.find(km => km.milestone === milestone);
-    let faster: 'p1' | 'p2' | 'tie' | null = null;
-    if (p1Data && p2Data) {
-      faster = p1Data.daysToAchieve < p2Data.daysToAchieve ? 'p1' : p2Data.daysToAchieve < p1Data.daysToAchieve ? 'p2' : 'tie';
-    }
-    return {
-      milestone,
-      p1Days: p1Data?.daysToAchieve ?? null,
-      p2Days: p2Data?.daysToAchieve ?? null,
-      p1Date: p1Data?.achievedDate ?? null,
-      p2Date: p2Data?.achievedDate ?? null,
-      faster
-    };
-  });
-});
 
-// Helper function to get comparison info for a specific milestone and player
-const getMilestoneComparison = (milestone: number, playerNumber: 1 | 2) => {
-  const comparison = milestoneComparison.value.find(m => m.milestone === milestone);
-  if (!comparison) return null;
-  
-  const isP1 = playerNumber === 1;
-  const playerData = isP1 ? comparison.p1Days : comparison.p2Days;
-  const playerDate = isP1 ? comparison.p1Date : comparison.p2Date;
-  const otherData = isP1 ? comparison.p2Days : comparison.p1Days;
-  const isFaster = comparison.faster === (isP1 ? 'p1' : 'p2');
-  const isSlower = comparison.faster === (isP1 ? 'p2' : 'p1');
-  
-  return {
-    hasAchieved: playerData !== null,
-    daysToAchieve: playerData,
-    achievedDate: playerDate,
-    isFaster,
-    isSlower,
-    hasBothAchieved: playerData !== null && otherData !== null
-  };
+
+
+// Modal state for milestone achievements
+const showMilestoneAchievementsModal = ref(false);
+const selectedMilestoneAchievement = ref<MilestoneAchievement | null>(null);
+const selectedMilestonePlayer = ref<1 | 2 | null>(null);
+
+
+
+const handleMilestoneAchievementClick = (achievement: MilestoneAchievement, playerNumber: 1 | 2) => {
+  selectedMilestoneAchievement.value = achievement;
+  selectedMilestonePlayer.value = playerNumber;
+  showMilestoneAchievementsModal.value = true;
 };
 
-// Helper function to format milestone tooltip
-const formatMilestoneTooltip = (milestone: number, playerNumber: 1 | 2) => {
-  const comparison = getMilestoneComparison(milestone, playerNumber);
-  if (!comparison || !comparison.hasAchieved) return `${milestone.toLocaleString()} Kills - Not achieved`;
-  
-  const achievedDate = new Date(comparison.achievedDate!).toLocaleDateString();
-  const days = comparison.daysToAchieve!;
-  
-  let statusText = '';
-  if (comparison.hasBothAchieved) {
-    if (comparison.isFaster) {
-      statusText = ' (Faster!)';
-    } else if (comparison.isSlower) {
-      statusText = ' (Slower)';
-    } else {
-      statusText = ' (Same time)';
-    }
+const closeMilestoneAchievementsModal = () => {
+  showMilestoneAchievementsModal.value = false;
+  selectedMilestoneAchievement.value = null;
+  selectedMilestonePlayer.value = null;
+};
+
+const getAchievementImage = (achievementId: string): string => {
+  try {
+    return new URL(`../assets/achievements/${achievementId}.png`, import.meta.url).href;
+  } catch {
+    return new URL('../assets/achievements/kill_streak_10.png', import.meta.url).href;
   }
-  
-  return `${milestone.toLocaleString()} Kills\nAchieved: ${achievedDate}\nTime: ${days} days${statusText}`;
 };
 
-// === Badge style milestone data (similar to PlayerDetails.vue) ===
-const MILESTONES = [5000, 10000, 20000, 40000, 50000, 75000, 100000];
-
-const totalKillsP1 = computed(() => {
-  const allTime = comparisonData.value?.bucketTotals?.find(b => b.bucket === 'AllTime');
-  return allTime?.player1Totals.kills || 0;
-});
-const totalKillsP2 = computed(() => {
-  const allTime = comparisonData.value?.bucketTotals?.find(b => b.bucket === 'AllTime');
-  return allTime?.player2Totals.kills || 0;
-});
-
-const achievedMilestoneNumbersP1 = computed(() => (comparisonData.value?.player1KillMilestones || []).map(m => m.milestone));
-const achievedMilestoneNumbersP2 = computed(() => (comparisonData.value?.player2KillMilestones || []).map(m => m.milestone));
-
-const nextMilestoneIndexP1 = computed(() => {
-  for (let i = 0; i < MILESTONES.length; i++) {
-    if (totalKillsP1.value < MILESTONES[i]) return i;
+const getTierColor = (tier: string): string => {
+  switch (tier.toLowerCase()) {
+    case 'legendary': return '#FF6B35';
+    case 'epic': return '#9D4EDD';
+    case 'rare': return '#3A86FF';
+    case 'uncommon': return '#06FFA5';
+    case 'common': return '#8D99AE';
+    default: return '#8D99AE';
   }
-  return MILESTONES.length;
-});
-const nextMilestoneIndexP2 = computed(() => {
-  for (let i = 0; i < MILESTONES.length; i++) {
-    if (totalKillsP2.value < MILESTONES[i]) return i;
+};
+
+const getTierGlow = (tier: string): string => {
+  const color = getTierColor(tier);
+  return `0 0 20px ${color}40, 0 0 40px ${color}20`;
+};
+
+const formatRelativeTime = (dateString: string): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffMonths / 12);
+
+  if (diffYears > 0) {
+    return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
+  } else if (diffMonths > 0) {
+    return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
+  } else if (diffDays > 0) {
+    return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+  } else if (diffHours > 0) {
+    return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+  } else if (diffMinutes > 0) {
+    return diffMinutes === 1 ? '1 minute ago' : `${diffMinutes} minutes ago`;
+  } else {
+    return 'Just now';
   }
-  return MILESTONES.length;
-});
-
-const milestoneProgress = (totalKills: number, milestone: number): number => {
-  if (totalKills >= milestone) return 1;
-  const prev = [...MILESTONES].reverse().find(m => m < milestone) || 0;
-  return (totalKills - prev) / (milestone - prev);
-};
-
-const getMilestoneImage = (milestone: number) => {
-  return new URL(`../assets/milestone-${milestone / 1000}k.png`, import.meta.url).href;
-};
-
-const milestoneProgressColors = computed(() => {
-  const style = getComputedStyle(document.documentElement);
-  const isDark = style.getPropertyValue('--color-background').trim().includes('26, 16, 37');
-  return {
-    gold: '#FFD700',
-    progress: isDark ? '#26C6DA' : '#9c27b0'
-  };
-});
-
-// mobile support for badge flip
-const flippedBadge = ref<number | null>(null);
-const isMobile = ref(false);
-
-// Modal state for mobile milestone details
-const showMilestoneModal = ref(false);
-const selectedMilestone = ref<number | null>(null);
-const selectedPlayer = ref<1 | 2 | null>(null);
-
-onMounted(() => {
-  isMobile.value = window.innerWidth <= 768;
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth <= 768;
-  });
-});
-
-const handleBadgeClick = (milestone: number, playerNumber: 1 | 2) => {
-  // Show modal for both mobile and desktop
-  selectedMilestone.value = milestone;
-  selectedPlayer.value = playerNumber;
-  showMilestoneModal.value = true;
-};
-
-const closeMilestoneModal = () => {
-  showMilestoneModal.value = false;
-  selectedMilestone.value = null;
-  selectedPlayer.value = null;
 };
 
 </script>
@@ -1853,167 +1784,95 @@ const closeMilestoneModal = () => {
         </div>
       </div>
 
-      <!-- Milestone Badge Rows -->
+
+
+      <!-- Milestone Achievements Section -->
       <div
-        v-if="comparisonData"
-        class="comparison-section milestone-section"
+        v-if="comparisonData && (comparisonData.player1MilestoneAchievements?.length || comparisonData.player2MilestoneAchievements?.length)"
+        class="comparison-section milestone-achievements-section"
       >
-        <h3>Badges</h3>
-        <!-- Player 1 Row -->
-        <div class="player-milestones-row">
+        <h3>Milestones</h3>
+        
+        <!-- Player 1 Milestone Achievements -->
+        <div
+          v-if="comparisonData.player1MilestoneAchievements?.length"
+          class="player-milestone-achievements"
+        >
           <h4 class="milestone-player-name">
             {{ comparisonData.player1 }}
           </h4>
-          <div class="milestone-badges-row">
+          <div class="milestone-achievements-grid">
             <div
-              v-for="(milestone, idx) in MILESTONES"
-              :key="'p1-' + milestone"
-              class="milestone-badge-image-wrapper"
-              :class="{
-                achieved: achievedMilestoneNumbersP1.includes(milestone),
-                next: nextMilestoneIndexP1 === idx,
-                future: nextMilestoneIndexP1 < idx,
-                flipped: isMobile && flippedBadge === milestone,
-                faster: getMilestoneComparison(milestone, 1)?.isFaster,
-                slower: getMilestoneComparison(milestone, 1)?.isSlower,
-                'has-comparison': getMilestoneComparison(milestone, 1)?.hasBothAchieved
-              }"
-              :title="formatMilestoneTooltip(milestone, 1)"
-              @click="handleBadgeClick(milestone, 1)"
+              v-for="achievement in comparisonData.player1MilestoneAchievements"
+              :key="'p1-achievement-' + achievement.achievementId"
+              class="milestone-achievement-card"
+              :class="[`tier-${achievement.tier.toLowerCase()}`]"
+              :style="{ boxShadow: getTierGlow(achievement.tier) }"
+              @click="handleMilestoneAchievementClick(achievement, 1)"
             >
-              <div class="milestone-badge-flip">
-                <div class="milestone-badge-front">
-                  <div class="milestone-badge-image-container">
-                    <img
-                      :src="getMilestoneImage(milestone)"
-                      class="milestone-badge-image"
-                      :alt="`${milestone.toLocaleString()} Kills Badge`"
-                    >
-                    <svg
-                      v-if="nextMilestoneIndexP1 === idx && milestoneProgress(totalKillsP1, milestone) < 1"
-                      class="milestone-progress-border"
-                      :width="isMobile ? '54' : '72'"
-                      :height="isMobile ? '54' : '72'"
-                    >
-                      <circle
-                        :cx="isMobile ? '27' : '36'"
-                        :cy="isMobile ? '27' : '36'"
-                        :r="isMobile ? '26' : '35'"
-                        fill="none"
-                        :stroke="milestoneProgress(totalKillsP1, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)"
-                        :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(totalKillsP1, milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(totalKillsP1, milestone)) * 2 * Math.PI * 35)"
-                        class="progress-bar"
-:transform="isMobile ? 'rotate(-90 27 27)' : 'rotate(-90 36 36)'"
-                      />
-                    </svg>
-                    <!-- Comparison indicator -->
-                    <div
-                      v-if="getMilestoneComparison(milestone, 1)?.hasBothAchieved"
-                      class="comparison-indicator"
-                    >
-                      <div
-                        v-if="getMilestoneComparison(milestone, 1)?.isFaster"
-                        class="faster-indicator"
-                      >
-                        ⚡
-                      </div>
-                      <div
-                        v-else-if="getMilestoneComparison(milestone, 1)?.isSlower"
-                        class="slower-indicator"
-                      >
-                        🐌
-                      </div>
-                      <div
-                        v-else
-                        class="tie-indicator"
-                      >
-                        🤝
-                      </div>
-                    </div>
-                  </div>
+              <div class="milestone-achievement-icon-container">
+                <img
+                  :src="getAchievementImage(achievement.achievementId)"
+                  :alt="achievement.achievementName"
+                  class="milestone-achievement-icon"
+                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                >
+              </div>
+              <div class="milestone-achievement-info">
+                <div class="milestone-achievement-name">
+                  {{ achievement.achievementName }}
+                </div>
+                <div class="milestone-achievement-time">
+                  {{ formatRelativeTime(achievement.achievedAt) }}
+                </div>
+                <div
+                  v-if="achievement.value"
+                  class="milestone-achievement-value"
+                >
+                  {{ achievement.value.toLocaleString() }}
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <!-- Player 2 Row -->
-        <div class="player-milestones-row">
+
+        <!-- Player 2 Milestone Achievements -->
+        <div
+          v-if="comparisonData.player2MilestoneAchievements?.length"
+          class="player-milestone-achievements"
+        >
           <h4 class="milestone-player-name">
             {{ comparisonData.player2 }}
           </h4>
-          <div class="milestone-badges-row">
+          <div class="milestone-achievements-grid">
             <div
-              v-for="(milestone, idx) in MILESTONES"
-              :key="'p2-' + milestone"
-              class="milestone-badge-image-wrapper"
-              :class="{
-                achieved: achievedMilestoneNumbersP2.includes(milestone),
-                next: nextMilestoneIndexP2 === idx,
-                future: nextMilestoneIndexP2 < idx,
-                flipped: isMobile && flippedBadge === milestone,
-                faster: getMilestoneComparison(milestone, 2)?.isFaster,
-                slower: getMilestoneComparison(milestone, 2)?.isSlower,
-                'has-comparison': getMilestoneComparison(milestone, 2)?.hasBothAchieved
-              }"
-              :title="formatMilestoneTooltip(milestone, 2)"
-              @click="handleBadgeClick(milestone, 2)"
+              v-for="achievement in comparisonData.player2MilestoneAchievements"
+              :key="'p2-achievement-' + achievement.achievementId"
+              class="milestone-achievement-card"
+              :class="[`tier-${achievement.tier.toLowerCase()}`]"
+              :style="{ boxShadow: getTierGlow(achievement.tier) }"
+              @click="handleMilestoneAchievementClick(achievement, 2)"
             >
-              <div class="milestone-badge-flip">
-                <div class="milestone-badge-front">
-                  <div class="milestone-badge-image-container">
-                    <img
-                      :src="getMilestoneImage(milestone)"
-                      class="milestone-badge-image"
-                      :alt="`${milestone.toLocaleString()} Kills Badge`"
-                    >
-                    <svg
-                      v-if="nextMilestoneIndexP2 === idx && milestoneProgress(totalKillsP2, milestone) < 1"
-                      class="milestone-progress-border"
-                      :width="isMobile ? '54' : '72'"
-                      :height="isMobile ? '54' : '72'"
-                    >
-                      <circle
-                        :cx="isMobile ? '27' : '36'"
-                        :cy="isMobile ? '27' : '36'"
-                        :r="isMobile ? '26' : '35'"
-                        fill="none"
-                        :stroke="milestoneProgress(totalKillsP2, milestone) > 0.95 ? milestoneProgressColors.gold : milestoneProgressColors.progress"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        :stroke-dasharray="isMobile ? (2 * Math.PI * 26) : (2 * Math.PI * 35)"
-                        :stroke-dashoffset="isMobile ? ((1 - milestoneProgress(totalKillsP2, milestone)) * 2 * Math.PI * 26) : ((1 - milestoneProgress(totalKillsP2, milestone)) * 2 * Math.PI * 35)"
-                        class="progress-bar"
-:transform="isMobile ? 'rotate(-90 27 27)' : 'rotate(-90 36 36)'"
-                      />
-                    </svg>
-                    <!-- Comparison indicator -->
-                    <div
-                      v-if="getMilestoneComparison(milestone, 2)?.hasBothAchieved"
-                      class="comparison-indicator"
-                    >
-                      <div
-                        v-if="getMilestoneComparison(milestone, 2)?.isFaster"
-                        class="faster-indicator"
-                      >
-                        ⚡
-                      </div>
-                      <div
-                        v-else-if="getMilestoneComparison(milestone, 2)?.isSlower"
-                        class="slower-indicator"
-                      >
-                        🐌
-                      </div>
-                      <div
-                        v-else
-                        class="tie-indicator"
-                      >
-                        🤝
-                      </div>
-                    </div>
-                  </div>
+              <div class="milestone-achievement-icon-container">
+                <img
+                  :src="getAchievementImage(achievement.achievementId)"
+                  :alt="achievement.achievementName"
+                  class="milestone-achievement-icon"
+                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                >
+              </div>
+              <div class="milestone-achievement-info">
+                <div class="milestone-achievement-name">
+                  {{ achievement.achievementName }}
+                </div>
+                <div class="milestone-achievement-time">
+                  {{ formatRelativeTime(achievement.achievedAt) }}
+                </div>
+                <div
+                  v-if="achievement.value"
+                  class="milestone-achievement-value"
+                >
+                  {{ achievement.value.toLocaleString() }}
                 </div>
               </div>
             </div>
@@ -2023,25 +1882,14 @@ const closeMilestoneModal = () => {
     </div>
   </div>
   
-  <!-- Milestone Modal for Mobile -->
-  <MilestoneModal
-    :is-visible="showMilestoneModal"
-    :milestone="selectedMilestone"
-    :milestone-image="selectedMilestone ? getMilestoneImage(selectedMilestone) : ''"
-    :is-achieved="selectedMilestone && selectedPlayer ? 
-      (selectedPlayer === 1 ? achievedMilestoneNumbersP1.includes(selectedMilestone) : achievedMilestoneNumbersP2.includes(selectedMilestone)) 
-      : false"
-    :is-next="selectedMilestone && selectedPlayer ? 
-      (selectedPlayer === 1 ? nextMilestoneIndexP1 === MILESTONES.findIndex(m => m === selectedMilestone) : nextMilestoneIndexP2 === MILESTONES.findIndex(m => m === selectedMilestone)) 
-      : false"
-    :achievement-data="selectedMilestone && selectedPlayer && comparisonData ? 
-      (selectedPlayer === 1 ? 
-        comparisonData.player1KillMilestones?.find(m => m.milestone === selectedMilestone) :
-        comparisonData.player2KillMilestones?.find(m => m.milestone === selectedMilestone)
-      ) : null"
-    :comparison-data="selectedMilestone ? getMilestoneComparison(selectedMilestone, selectedPlayer || 1) : null"
-    :current-kills="selectedPlayer === 1 ? totalKillsP1 : totalKillsP2"
-    @close="closeMilestoneModal"
+
+
+  <!-- Achievement Modal -->
+  <AchievementModal
+    :is-visible="showMilestoneAchievementsModal"
+    :achievement="selectedMilestoneAchievement"
+    :player-name="selectedMilestonePlayer === 1 ? comparisonData?.player1 : selectedMilestonePlayer === 2 ? comparisonData?.player2 : undefined"
+    @close="closeMilestoneAchievementsModal"
   />
 </template>
 
@@ -3085,169 +2933,172 @@ const closeMilestoneModal = () => {
     padding: 20px 15px;
 }
 
-/* --- Styles for Milestone Badges (copied from PlayerDetails.vue) --- */
-.milestone-badges-row {
+
+
+/* Milestone Achievements Styles */
+.milestone-achievements-section {
+  order: -1; /* Make milestone achievements the first section */
+  overflow: visible;
+  padding: 20px 15px;
+}
+
+.player-milestone-achievements {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.milestone-achievements-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   margin: 18px 0 10px 0;
   justify-content: center;
-  align-items: flex-end;
+  align-items: flex-start;
   padding: 0 10px;
   max-width: 100%;
 }
-.milestone-badge-image-wrapper {
+
+.milestone-achievement-card {
+  background-color: var(--color-background-soft);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
+  gap: 8px;
   align-items: center;
+  width: 120px;
+  min-width: 120px;
+  flex-shrink: 0;
   position: relative;
-  opacity: 1;
-  transition: opacity 0.2s, filter 0.2s;
+  overflow: hidden;
   cursor: pointer;
-  perspective: 600px;
-}
-.milestone-badge-image-wrapper.achieved { opacity: 1; filter: none; }
-.milestone-badge-image-wrapper.next { opacity: 0.45; }
-.milestone-badge-image-wrapper.next .milestone-badge-image { filter: grayscale(1) brightness(0.8); }
-.milestone-badge-image-wrapper.future { opacity: 0.45; }
-.milestone-badge-image-wrapper.future .milestone-badge-image { filter: grayscale(1) brightness(0.8); }
-.milestone-badge-flip { width: 64px; height: 64px; position: relative; transition: transform 0.5s; transform-style: preserve-3d; }
-.milestone-badge-image-wrapper.flipped .milestone-badge-flip { transform: rotateX(180deg); }
-.milestone-badge-front, .milestone-badge-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.milestone-badge-image-container { position: relative; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; }
-.milestone-badge-image { width: 64px; height: 64px; border-radius: 50%; background: transparent !important; }
-.milestone-progress-border { position: absolute; top: -4px; left: -4px; z-index: 2; pointer-events: none; }
-.milestone-progress-bg { opacity: 0.3; }
-.progress-bar { transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-
-.player-milestones-row { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px; }
-.milestone-player-name { font-size: 1.1rem; font-weight: 600; color: var(--color-heading); margin: 0; }
-
-/* Milestone comparison styles */
-.milestone-badge-image-wrapper.faster {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 8px #4CAF50);
-  z-index: 10;
 }
 
-.milestone-badge-image-wrapper.slower {
-  filter: brightness(0.7) saturate(0.6);
-}
-
-.milestone-badge-image-wrapper.faster .milestone-badge-image {
-  border: 3px solid #4CAF50;
-  box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
-}
-
-.milestone-badge-image-wrapper.slower .milestone-badge-image {
-  border: 2px solid #ff9800;
-}
-
-.comparison-indicator {
+.milestone-achievement-card::before {
+  content: '';
   position: absolute;
-  top: -8px;
-  right: -8px;
-  z-index: 15;
-  background: var(--color-background);
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, var(--tier-color, transparent) 100%);
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.milestone-achievement-card.tier-legendary {
+  --tier-color: #FF6B35;
+}
+
+.milestone-achievement-card.tier-epic {
+  --tier-color: #9D4EDD;
+}
+
+.milestone-achievement-card.tier-rare {
+  --tier-color: #3A86FF;
+}
+
+.milestone-achievement-card.tier-uncommon {
+  --tier-color: #06FFA5;
+}
+
+.milestone-achievement-card.tier-common {
+  --tier-color: #8D99AE;
+}
+
+.milestone-achievement-card:hover {
+  border-color: var(--tier-color);
+  cursor: pointer;
+  transform: translateY(-2px);
+}
+
+.milestone-achievement-icon-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  border: 2px solid;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.faster-indicator {
-  border-color: #4CAF50;
-  background: #4CAF50;
-  color: white;
-  animation: pulse-fast 2s infinite;
-}
-
-.slower-indicator {
-  border-color: #ff9800;
-  background: #ff9800;
-  color: white;
-}
-
-.tie-indicator {
-  border-color: #9C27B0;
-  background: #9C27B0;
-  color: white;
-}
-
-@keyframes pulse-fast {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  }
-  50% {
-    transform: scale(1.15);
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
-  }
-}
-
-/* Enhanced hover effects for comparison tooltips */
-.milestone-badge-image-wrapper:hover {
-  transform: scale(1.05);
+  position: relative;
   transition: transform 0.2s ease;
 }
 
-.milestone-badge-image-wrapper.faster:hover {
-  transform: scale(1.2);
-  filter: drop-shadow(0 0 16px #4CAF50);
-}
-
-.milestone-badge-image-wrapper.slower:hover {
+.milestone-achievement-icon-container:hover {
   transform: scale(1.05);
-  filter: brightness(0.8) saturate(0.7) drop-shadow(0 0 8px #ff9800);
 }
 
-.player-milestones-row { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px; }
-.milestone-player-name { font-size: 1.1rem; font-weight: 600; color: var(--color-heading); margin: 0; }
+.milestone-achievement-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 4px;
+  object-fit: contain;
+}
 
-/* Mobile responsive styles for milestone badges */
+.milestone-achievement-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.milestone-achievement-name {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.milestone-achievement-time {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.milestone-achievement-value {
+  font-size: 0.7rem;
+  color: var(--color-text);
+  font-weight: 500;
+  background-color: var(--color-background-mute);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Mobile responsive styles for milestone achievements */
 @media (max-width: 768px) {
-  .milestone-badges-row {
+  .milestone-achievements-grid {
     gap: 8px;
     padding: 0 5px;
     margin: 12px 0 8px 0;
   }
   
-  .milestone-badge-flip {
-    width: 54px;
-    height: 54px;
+  .milestone-achievement-card {
+    width: 100px;
+    padding: 10px;
+    gap: 6px;
   }
   
-  .milestone-badge-image-container, .milestone-badge-image {
-    width: 54px;
-    height: 54px;
+  .milestone-achievement-icon {
+    width: 48px;
+    height: 48px;
   }
   
-  .milestone-progress-border {
-    width: 54px;
-    height: 54px;
-    top: 0;
-    left: 0;
+  .milestone-achievement-name {
+    font-size: 0.7rem;
   }
   
-  .comparison-indicator {
-    width: 20px;
-    height: 20px;
-    font-size: 10px;
-    top: -6px;
-    right: -6px;
+  .milestone-achievement-time {
+    font-size: 0.65rem;
   }
   
-  .player-milestones-row {
-    margin-bottom: 16px;
-  }
-  
-  .milestone-player-name {
-    font-size: 1rem;
+  .milestone-achievement-value {
+    font-size: 0.65rem;
   }
 }
 </style> 
