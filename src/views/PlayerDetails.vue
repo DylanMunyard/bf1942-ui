@@ -45,6 +45,7 @@ const similarPlayersError = ref<string | null>(null);
 const similarSectionExpanded = ref(false);
 const detectionMode = ref<'default' | 'aliasdetection'>('default');
 const showOnlyComparable = ref(false);
+const expandedPlayerCards = ref<Set<number>>(new Set());
 
 const loadSimilarPlayers = async () => {
   loadingSimilarPlayers.value = true;
@@ -91,6 +92,19 @@ const getCommonOnlineHours = (player1: PlayerComparisonStats, player2: PlayerCom
 
 const formatOnlineHours = (hours: number[]): string => {
   return hours.sort((a, b) => a - b).map(h => `${h.toString().padStart(2, '0')}:00`).join(', ');
+};
+
+// Toggle player card expansion
+const togglePlayerCard = (index: number) => {
+  if (expandedPlayerCards.value.has(index)) {
+    expandedPlayerCards.value.delete(index);
+  } else {
+    expandedPlayerCards.value.add(index);
+  }
+};
+
+const isPlayerCardExpanded = (index: number) => {
+  return expandedPlayerCards.value.has(index);
 };
 
 // Computed properties for comparison data
@@ -1317,8 +1331,12 @@ watch(
                 v-for="(similarPlayer, idx) in similarPlayers"
                 :key="idx"
                 class="comparison-card"
+                :class="{ expanded: isPlayerCardExpanded(idx) }"
               >
-                <div class="comparison-card-header">
+                <div 
+                  class="comparison-card-header"
+                  @click="togglePlayerCard(idx)"
+                >
                   <div class="player-comparison-summary">
                     <div class="target-player-info">
                       <h4 class="player-name">{{ targetPlayerStats.playerName }}</h4>
@@ -1337,6 +1355,7 @@ watch(
                       <router-link
                         :to="{ name: 'player-comparison', query: { player1: playerName, player2: similarPlayer.playerName } }"
                         class="player-name similar-player-link"
+                        @click.stop
                       >
                         {{ similarPlayer.playerName }}
                       </router-link>
@@ -1346,28 +1365,59 @@ watch(
                     </div>
                   </div>
                   
-                  <!-- Key similarity reasons -->
+                  <!-- Compact stats summary when collapsed -->
+                  <div class="compact-stats-summary">
+                    <div class="compact-stat">
+                      <span class="compact-label">K/D:</span>
+                      <span class="compact-values">
+                        {{ targetPlayerStats.killDeathRatio.toFixed(2) }} vs {{ similarPlayer.killDeathRatio.toFixed(2) }}
+                      </span>
+                    </div>
+                    <div class="compact-stat">
+                      <span class="compact-label">KPM:</span>
+                      <span class="compact-values">
+                        {{ targetPlayerStats.killsPerMinute.toFixed(2) }} vs {{ similarPlayer.killsPerMinute.toFixed(2) }}
+                      </span>
+                    </div>
+                    <div class="compact-stat">
+                      <span class="compact-label">Server:</span>
+                      <span class="compact-values">
+                        {{ targetPlayerStats.favoriteServerName === similarPlayer.favoriteServerName ? '✓ Same' : '✗ Different' }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Key similarity reasons - always show top 2 -->
                   <div class="similarity-reasons-summary">
-                    <div class="reasons-grid">
+                    <div class="reasons-grid compact">
                       <div
-                        v-for="(reason, rIdx) in similarPlayer.similarityReasons.slice(0, 3)"
+                        v-for="(reason, rIdx) in similarPlayer.similarityReasons.slice(0, 2)"
                         :key="rIdx"
-                        class="reason-chip"
+                        class="reason-chip compact"
                       >
                         {{ reason }}
                       </div>
                       <div
-                        v-if="similarPlayer.similarityReasons.length > 3"
-                        class="reason-chip more-reasons"
+                        v-if="similarPlayer.similarityReasons.length > 2"
+                        class="reason-chip more-reasons compact"
                       >
-                        +{{ similarPlayer.similarityReasons.length - 3 }} more
+                        +{{ similarPlayer.similarityReasons.length - 2 }} more
                       </div>
                     </div>
                   </div>
+
+                  <!-- Expand/collapse indicator -->
+                  <div class="expand-indicator">
+                    <span class="expand-text">{{ isPlayerCardExpanded(idx) ? 'Click to collapse' : 'Click for detailed comparison' }}</span>
+                    <span class="expand-icon">{{ isPlayerCardExpanded(idx) ? '▲' : '▼' }}</span>
+                  </div>
                 </div>
 
-                <!-- Detailed comparison stats -->
-                <div class="comparison-stats-grid">
+                <!-- Detailed comparison stats - only show when expanded -->
+                <div 
+                  v-if="isPlayerCardExpanded(idx)"
+                  class="comparison-stats-grid"
+                >
                   <!-- Basic stats comparison -->
                   <div class="stats-category">
                     <h5 class="category-title">Performance Stats</h5>
@@ -5515,8 +5565,8 @@ tbody tr:hover {
   background: var(--color-background-soft);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 20px;
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .comparison-card:hover {
@@ -5524,8 +5574,24 @@ tbody tr:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.comparison-card.expanded {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
 .comparison-card-header {
-  margin-bottom: 20px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.comparison-card-header:hover {
+  background: var(--color-background-mute);
+}
+
+.comparison-card.expanded .comparison-card-header {
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 0;
 }
 
 .player-comparison-summary {
@@ -5634,10 +5700,68 @@ tbody tr:hover {
   border-color: var(--color-text-muted);
 }
 
+.compact-stats-summary {
+  display: flex;
+  gap: 16px;
+  margin: 12px 0 8px 0;
+  flex-wrap: wrap;
+}
+
+.compact-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--color-background-mute);
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+.compact-label {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.compact-values {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.reasons-grid.compact {
+  gap: 6px;
+}
+
+.reason-chip.compact {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+}
+
+.expand-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.expand-text {
+  font-style: italic;
+}
+
+.expand-icon {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--color-primary);
+}
+
 .comparison-stats-grid {
   display: grid;
   gap: 20px;
   grid-template-columns: 1fr;
+  padding: 20px;
 }
 
 .stats-category {
@@ -5879,7 +6003,11 @@ tbody tr:hover {
 
 /* Mobile responsive styles */
 @media (max-width: 768px) {
-  .comparison-card {
+  .comparison-card-header {
+    padding: 12px 16px;
+  }
+  
+  .comparison-stats-grid {
     padding: 16px;
   }
   
@@ -5899,6 +6027,16 @@ tbody tr:hover {
     flex-direction: row;
     width: 100%;
     justify-content: center;
+  }
+  
+  .compact-stats-summary {
+    gap: 8px;
+    margin: 8px 0 6px 0;
+  }
+  
+  .compact-stat {
+    font-size: 0.8rem;
+    padding: 3px 6px;
   }
   
   .stat-comparison-row {
@@ -5923,8 +6061,28 @@ tbody tr:hover {
 }
 
 @media (max-width: 480px) {
-  .comparison-card {
+  .comparison-card-header {
+    padding: 10px 12px;
+  }
+  
+  .comparison-stats-grid {
     padding: 12px;
+  }
+  
+  .compact-stats-summary {
+    gap: 6px;
+    margin: 6px 0 4px 0;
+  }
+  
+  .compact-stat {
+    font-size: 0.75rem;
+    padding: 2px 4px;
+  }
+  
+  .expand-indicator {
+    margin-top: 8px;
+    padding-top: 6px;
+    font-size: 0.75rem;
   }
   
   .category-title {
@@ -5946,6 +6104,11 @@ tbody tr:hover {
   .reason-chip {
     font-size: 0.8rem;
     padding: 4px 8px;
+  }
+  
+  .reason-chip.compact {
+    font-size: 0.75rem;
+    padding: 3px 6px;
   }
 }
 
