@@ -87,11 +87,38 @@ const getCommonMaps = (player1: PlayerComparisonStats, player2: PlayerComparison
 };
 
 const getCommonOnlineHours = (player1: PlayerComparisonStats, player2: PlayerComparisonStats): number[] => {
-  return player1.typicalOnlineHours.filter(hour => player2.typicalOnlineHours.includes(hour));
+  // Convert both players' UTC hours to local hours for comparison
+  const convertUTCToLocal = (utcHours: number[]): number[] => {
+    const today = new Date();
+    return utcHours.map(utcHour => {
+      const utcDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), utcHour, 0, 0));
+      return utcDate.getHours();
+    });
+  };
+  
+  const player1LocalHours = convertUTCToLocal(player1.typicalOnlineHours);
+  const player2LocalHours = convertUTCToLocal(player2.typicalOnlineHours);
+  
+  // Find common local hours and remove duplicates
+  const commonHours = player1LocalHours.filter(hour => player2LocalHours.includes(hour));
+  return [...new Set(commonHours)];
 };
 
 const formatOnlineHours = (hours: number[]): string => {
-  return hours.sort((a, b) => a - b).map(h => `${h.toString().padStart(2, '0')}:00`).join(', ');
+  // Convert UTC hours to local hours
+  const localHours = hours.map(utcHour => {
+    // Create a UTC date with today's date and the UTC hour
+    const today = new Date();
+    const utcDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), utcHour, 0, 0));
+    
+    // Convert to local time and extract the local hour
+    return utcDate.getHours();
+  });
+  
+  // Remove duplicates and sort
+  const uniqueLocalHours = [...new Set(localHours)].sort((a, b) => a - b);
+  
+  return uniqueLocalHours.map(h => `${h.toString().padStart(2, '0')}:00`).join(', ');
 };
 
 // Toggle player card expansion
@@ -1557,7 +1584,7 @@ watch(
                       v-if="getCommonOnlineHours(targetPlayerStats, similarPlayer).length > 0"
                       class="common-data-section"
                     >
-                      <span class="common-label">Common Online Hours ({{ getCommonOnlineHours(targetPlayerStats, similarPlayer).length }}):</span>
+                      <span class="common-label">Common Online Hours - Your Time ({{ getCommonOnlineHours(targetPlayerStats, similarPlayer).length }}):</span>
                       <div class="common-hours">
                         {{ formatOnlineHours(getCommonOnlineHours(targetPlayerStats, similarPlayer)) }}
                       </div>
