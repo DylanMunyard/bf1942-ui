@@ -374,6 +374,33 @@ onUnmounted(() => {
 
     <!-- Filter controls -->
     <div class="filter-section">
+      <!-- Always visible name search on mobile -->
+      <div class="mobile-name-search">
+        <div class="filter-group">
+          <label for="mobileNameFilter">Search Players:</label>
+          <div class="input-with-clear">
+            <input 
+              id="mobileNameFilter" 
+              v-model="nameInputValue" 
+              type="text"
+              placeholder="Enter player name" 
+              class="filter-input"
+              @input="handleNameFilterChange(nameInputValue)"
+            >
+            <span
+              v-if="isSearching"
+              class="search-indicator"
+            >🔍</span>
+            <span 
+              v-if="nameInputValue && !isSearching" 
+              class="clear-input" 
+              title="Clear filter"
+              @click="clearNameFilter"
+            >×</span>
+          </div>
+        </div>
+      </div>
+
       <div class="filter-toggle">
         <button
           class="filter-toggle-button"
@@ -393,9 +420,9 @@ onUnmounted(() => {
           >
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
           </svg>
-          Filters
+          More Filters
           <span
-            v-if="nameFilter || gameIdFilter || serverNameFilter"
+            v-if="gameIdFilter || serverNameFilter"
             class="active-filter-indicator"
           >●</span>
           <svg
@@ -420,7 +447,7 @@ onUnmounted(() => {
         class="filter-container"
         :class="{ 'filters-visible': showFilters }"
       >
-        <div class="filter-group">
+        <div class="filter-group desktop-name-filter">
           <label for="nameFilter">Filter by Name:</label>
           <div class="input-with-clear">
             <input 
@@ -761,6 +788,11 @@ onUnmounted(() => {
 
 .filter-section {
   margin-bottom: 20px;
+}
+
+.mobile-name-search {
+  display: none;
+  margin-bottom: 15px;
 }
 
 .filter-toggle {
@@ -1159,6 +1191,16 @@ th {
     padding: 15px;
   }
 
+  /* Show mobile name search */
+  .mobile-name-search {
+    display: block;
+  }
+
+  /* Hide desktop name filter on mobile */
+  .desktop-name-filter {
+    display: none;
+  }
+
   /* Show filter toggle on mobile */
   .filter-toggle {
     display: block;
@@ -1323,6 +1365,11 @@ th {
 /* Hide mobile details on desktop */
 @media (min-width: 769px) {
   .mobile-details-cell {
+    display: none;
+  }
+
+  /* Hide mobile name search on desktop */
+  .mobile-name-search {
     display: none;
   }
 }
