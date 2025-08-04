@@ -151,12 +151,16 @@ export async function fetchTeamKillerMetrics(): Promise<TeamKillerMetric[]> {
  * Fetch players with similar statistics to the specified player.
  * The backend computes a similarity score and provides reasons for the match.
  * @param playerName The player to find neighbours for
+ * @param mode The detection mode: 'default' for similar players, 'aliasdetection' for aliases
  * @returns An array of players ordered by similarity.
  */
-export async function fetchSimilarPlayers(playerName: string): Promise<SimilarPlayer[]> {
+export async function fetchSimilarPlayers(playerName: string, mode: 'default' | 'aliasdetection' = 'default'): Promise<SimilarPlayer[]> {
   try {
     const response = await axios.get<SimilarPlayersResponse>(
-      `/stats/players/${encodeURIComponent(playerName)}/similar`
+      `/stats/players/${encodeURIComponent(playerName)}/similar`,
+      {
+        params: { mode }
+      }
     );
     return response.data.similarPlayers;
   } catch (err) {

@@ -43,12 +43,13 @@ const similarPlayers = ref<SimilarPlayer[]>([]);
 const loadingSimilarPlayers = ref(false);
 const similarPlayersError = ref<string | null>(null);
 const similarSectionExpanded = ref(false);
+const detectionMode = ref<'default' | 'aliasdetection'>('default');
 
 const loadSimilarPlayers = async () => {
   loadingSimilarPlayers.value = true;
   similarPlayersError.value = null;
   try {
-    similarPlayers.value = await fetchSimilarPlayers(playerName.value);
+    similarPlayers.value = await fetchSimilarPlayers(playerName.value, detectionMode.value);
   } catch (err: any) {
     console.error('Error loading similar players:', err);
     similarPlayersError.value = err.message || 'Failed to load similar players.';
@@ -60,6 +61,13 @@ const loadSimilarPlayers = async () => {
 const toggleSimilarPlayersSection = async () => {
   similarSectionExpanded.value = !similarSectionExpanded.value;
   if (similarSectionExpanded.value && similarPlayers.value.length === 0 && !loadingSimilarPlayers.value) {
+    await loadSimilarPlayers();
+  }
+};
+
+const setDetectionMode = async (mode: 'default' | 'aliasdetection') => {
+  detectionMode.value = mode;
+  if (similarSectionExpanded.value) {
     await loadSimilarPlayers();
   }
 };
@@ -1222,6 +1230,26 @@ watch(
             >Click to find players like {{ playerName }}</span>
           </h3>
           <div v-if="similarSectionExpanded">
+            <!-- Detection Mode Selector -->
+            <div class="detection-mode-selector">
+              <div class="segmented-control">
+                <button 
+                  :class="['segment', { active: detectionMode === 'default' }]"
+                  @click="setDetectionMode('default')"
+                >
+                  <span class="segment-icon">👥</span>
+                  Similar Players
+                </button>
+                <button 
+                  :class="['segment', { active: detectionMode === 'aliasdetection' }]"
+                  @click="setDetectionMode('aliasdetection')"
+                >
+                  <span class="segment-icon">🔍</span>
+                  Find Aliases
+                </button>
+              </div>
+            </div>
+            
             <div
               v-if="loadingSimilarPlayers"
               class="loading-container"
@@ -5120,5 +5148,92 @@ tbody tr:hover {
 }
 .milestone-progress-text {
   z-index: 3;
+}
+
+/* --- Detection Mode Selector Styles --- */
+.detection-mode-selector {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: var(--color-background-soft);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.segmented-control {
+  display: flex;
+  background-color: var(--color-background-mute);
+  border-radius: 6px;
+  padding: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.segment {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.segment:hover {
+  color: var(--color-text);
+}
+
+.segment.active {
+  background-color: var(--color-background);
+  color: var(--color-heading);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.segment-icon {
+  font-size: 1rem;
+  filter: grayscale(0.8);
+  transition: filter 0.2s ease;
+}
+
+.segment.active .segment-icon {
+  filter: grayscale(0);
+}
+
+@media (max-width: 768px) {
+  .detection-mode-selector {
+    margin-bottom: 12px;
+    padding: 10px;
+  }
+  
+  .segment {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+    gap: 4px;
+  }
+  
+  .segment-icon {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .segment {
+    padding: 6px 4px;
+    font-size: 0.8rem;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .segment-icon {
+    font-size: 0.85rem;
+  }
 }
 </style>
