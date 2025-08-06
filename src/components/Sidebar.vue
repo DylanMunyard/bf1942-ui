@@ -5,6 +5,7 @@
     </div>
     <div class="nav-menu">
       <router-link
+        v-if="isAuthenticated"
         to="/dashboard"
         active-class="active"
         class="nav-item"
@@ -79,10 +80,12 @@
 import { useRoute } from 'vue-router';
 import { inject, type Ref } from 'vue';
 import LoginButton from './LoginButton.vue';
+import { useAuth } from '@/composables/useAuth';
 
 const route = useRoute();
 const isDarkMode = inject<Ref<boolean>>('isDarkMode')!;
-const toggleDarkMode = inject<() => void>('toggleDarkMode')!
+const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
+const { isAuthenticated } = useAuth();
 </script>
 
 <style scoped>
@@ -148,7 +151,7 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!
 }
 
 .icon-dashboard {
-  background-image: url('../assets/servers_consent_page.jpg');
+  background-image: url('../assets/achievements/dashboard-sidemenu.png');
   display: inline-block;
   width: 36px;
   height: 36px;

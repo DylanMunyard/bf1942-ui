@@ -67,6 +67,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import ServerSearch from '../ServerSearch.vue';
+import { statsService } from '@/services/statsService';
 
 interface ServerSearchResult {
   serverGuid: string;
@@ -116,6 +117,8 @@ const handleAddServer = async () => {
   
   isSubmitting.value = true;
   try {
+    await statsService.addFavoriteServer(selectedServer.value.serverGuid);
+    
     // Convert server data to format expected by dashboard
     const serverForDashboard = {
       id: selectedServer.value.serverGuid,
@@ -127,9 +130,6 @@ const handleAddServer = async () => {
       isOnline: selectedServer.value.hasActivePlayers,
       ping: 0 // Not available in this API
     };
-    
-    // TODO: Call API to add server to user's favorites
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
     emit('added', serverForDashboard);
   } catch (err) {

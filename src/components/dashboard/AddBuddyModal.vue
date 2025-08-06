@@ -68,6 +68,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import PlayerSearch from '../PlayerSearch.vue';
+import { statsService } from '@/services/statsService';
 
 interface PlayerSearchResult {
   playerName: string;
@@ -109,8 +110,7 @@ const handleSubmit = async () => {
   
   isSubmitting.value = true;
   try {
-    // TODO: Call API to add player to user's buddy list
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await statsService.addBuddy(playerName.value.trim());
     
     emit('added', selectedPlayer.value!);
   } catch (err) {

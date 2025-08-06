@@ -27,15 +27,7 @@
     <div v-else class="user-dropdown" @click="toggleDropdown" ref="dropdownRef">
       <button class="user-avatar-btn">
         <div class="user-avatar-container">
-          <img 
-            v-if="user?.picture && !imageLoadError" 
-            :src="user.picture" 
-            :alt="user.name || 'User avatar'"
-            class="user-avatar-photo"
-            @error="onImageError"
-            @load="onImageLoad"
-          />
-          <div v-else class="user-avatar-placeholder">
+          <div class="user-avatar-placeholder">
             {{ getUserInitial() }}
           </div>
         </div>
@@ -65,17 +57,11 @@ const { isAuthenticated, user, login, logout } = useAuth();
 const isLoading = ref(false);
 const isDropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement>();
-const imageLoadError = ref(false);
 
-// Debug logging to see user data and reset image error on user change
+// Debug logging to see user data
 watchEffect(() => {
   console.log('LoginButton - isAuthenticated:', isAuthenticated.value);
   console.log('LoginButton - user:', user.value);
-  if (user.value?.picture) {
-    console.log('LoginButton - user picture URL:', user.value.picture);
-    // Reset image load error when user changes
-    imageLoadError.value = false;
-  }
 });
 
 const handleLogin = async () => {
@@ -117,15 +103,6 @@ const getUserInitial = (): string => {
   return 'U';
 };
 
-const onImageError = (event: Event) => {
-  console.error('Profile image failed to load:', event);
-  imageLoadError.value = true;
-};
-
-const onImageLoad = (event: Event) => {
-  console.log('Profile image loaded successfully:', event);
-  imageLoadError.value = false;
-};
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
@@ -231,12 +208,6 @@ onUnmounted(() => {
   position: relative;
 }
 
-.user-avatar-photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-}
 
 .user-avatar-placeholder {
   width: 100%;

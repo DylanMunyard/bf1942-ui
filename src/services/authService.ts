@@ -2,7 +2,6 @@
 export interface UserProfile {
   name: string;
   email: string;
-  picture?: string;
 }
 
 export interface AuthState {
@@ -78,7 +77,6 @@ class AuthService {
           const userProfile: UserProfile = {
             name: payload.name || payload.email,
             email: payload.email,
-            picture: payload.picture,
           };
           console.log('Extracted user profile:', userProfile);
 
@@ -210,6 +208,27 @@ class AuthService {
     window.dispatchEvent(new CustomEvent('auth-logout'));
   }
 
+  isTokenExpired(token: string): boolean {
+    try {
+      const payload = this.parseJwt(token);
+      const currentTime = Math.floor(Date.now() / 1000);
+      return payload.exp < currentTime;
+    } catch (error) {
+      console.error('Error parsing token for expiration check:', error);
+      return true;
+    }
+  }
+
+  getTokenExpirationTime(token: string): number | null {
+    try {
+      const payload = this.parseJwt(token);
+      return payload.exp * 1000; // Convert to milliseconds
+    } catch (error) {
+      console.error('Error parsing token for expiration time:', error);
+      return null;
+    }
+  }
+
   async refreshToken(): Promise<boolean> {
     try {
       const response = await fetch('/stats/auth/refresh', {
@@ -217,11 +236,76 @@ class AuthService {
         credentials: 'include', // Include cookies
       });
 
-      return response.ok;
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          // Update stored token
+          sessionStorage.setItem('authToken', data.token);
+          
+          // Update auth state
+          const userProfile = JSON.parse(sessionStorage.getItem('userProfile') || 'null');
+          const authState: AuthState = {
+            isAuthenticated: true,
+            token: data.token,
+            user: userProfile,
+          };
+          
+          window.dispatchEvent(new CustomEvent('google-auth-success', { detail: authState }));
+          return true;
+        }
+      }
+      
+      return false;
     } catch (error) {
       console.error('Token refresh error:', error);
       return false;
     }
+  }
+
+  async ensureValidToken(): Promise<boolean> {
+    const token = sessionStorage.getItem('authToken');
+    if (!token) {
+      return false;
+    }
+
+    if (this.isTokenExpired(token)) {
+      console.log('Token expired, attempting refresh...');
+      const refreshed = await this.refreshToken();
+      if (!refreshed) {
+        console.log('Token refresh failed, logging out...');
+        await this.logout();
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  setupAutoRefresh(): void {
+    const token = sessionStorage.getItem('authToken');
+    if (!token) return;
+
+    const expirationTime = this.getTokenExpirationTime(token);
+    if (!expirationTime) return;
+
+    const currentTime = Date.now();
+    const timeUntilExpiration = expirationTime - currentTime;
+    
+    // Refresh token 5 minutes before expiration
+    const refreshTime = Math.max(0, timeUntilExpiration - (5 * 60 * 1000));
+
+    console.log(`Setting up auto-refresh in ${refreshTime / 1000} seconds`);
+    
+    setTimeout(async () => {
+      console.log('Auto-refreshing token...');
+      const refreshed = await this.refreshToken();
+      if (refreshed) {
+        // Set up next auto-refresh
+        this.setupAutoRefresh();
+      } else {
+        console.log('Auto-refresh failed, user will need to login again');
+      }
+    }, refreshTime);
   }
 
 }
