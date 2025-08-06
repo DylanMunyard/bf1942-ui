@@ -5,6 +5,20 @@
     </div>
     <div class="nav-menu">
       <router-link
+        to="/dashboard"
+        active-class="active"
+        class="nav-item"
+        data-tooltip="true"
+      >
+        <i class="icon-dashboard" />
+        <div class="tooltip">
+          <div class="tooltip-icon icon-dashboard" />
+          <div class="tooltip-text">
+            Your personal battlefield command center. View player profiles, favorite servers, and squad status.
+          </div>
+        </div>
+      </router-link>
+      <router-link
         to="/servers"
         active-class="active"
         class="nav-item"
@@ -133,6 +147,16 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!
   box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
 }
 
+.icon-dashboard {
+  background-image: url('../assets/servers_consent_page.jpg');
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 .icon-servers {
   background-image: url('../assets/servers.jpg');
   display: inline-block;
@@ -199,6 +223,7 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!
 }
 
 /* Round icons */
+.icon-dashboard,
 .icon-players,
 .icon-servers,
 .icon-player-comparison,

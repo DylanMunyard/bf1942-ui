@@ -1,7 +1,14 @@
 
+export interface UserProfile {
+  name: string;
+  email: string;
+  picture?: string;
+}
+
 export interface AuthState {
   isAuthenticated: boolean;
   token: string | null;
+  user: UserProfile | null;
 }
 
 // Declare Google Identity Services types
@@ -66,13 +73,25 @@ class AuthService {
         });
 
         if (loginResponse.ok) {
+          // Extract user profile from Google JWT payload
+          console.log('JWT payload:', payload);
+          const userProfile: UserProfile = {
+            name: payload.name || payload.email,
+            email: payload.email,
+            picture: payload.picture,
+          };
+          console.log('Extracted user profile:', userProfile);
+
           const authState: AuthState = {
             isAuthenticated: true,
             token: idToken, // Use the Google ID token directly
+            user: userProfile,
           };
 
-          // Store the Google ID token in sessionStorage
+          // Store the Google ID token and user profile in sessionStorage
           sessionStorage.setItem('authToken', idToken);
+          sessionStorage.setItem('userProfile', JSON.stringify(userProfile));
+          console.log('Stored user profile in sessionStorage:', JSON.stringify(userProfile));
           
           // Trigger success event
           window.dispatchEvent(new CustomEvent('google-auth-success', { detail: authState }));
@@ -148,9 +167,21 @@ class AuthService {
 
   getStoredAuthState(): AuthState {
     const token = sessionStorage.getItem('authToken');
+    const userProfileJson = sessionStorage.getItem('userProfile');
+    let user: UserProfile | null = null;
+
+    if (userProfileJson) {
+      try {
+        user = JSON.parse(userProfileJson);
+      } catch (error) {
+        console.error('Failed to parse stored user profile:', error);
+      }
+    }
+
     return {
       isAuthenticated: !!token,
       token,
+      user,
     };
   }
 
@@ -168,8 +199,9 @@ class AuthService {
       // Continue with local cleanup even if backend fails
     }
     
-    // Clear stored token
+    // Clear stored token and user profile
     sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('userProfile');
     
     // Disable Google auto-select
     window.google?.accounts?.id?.disableAutoSelect?.();

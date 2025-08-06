@@ -4,11 +4,13 @@ import { authService, type AuthState } from '@/services/authService';
 const authState = ref<AuthState>({
   isAuthenticated: false,
   token: null,
+  user: null,
 });
 
 export function useAuth() {
   const isAuthenticated = computed(() => authState.value.isAuthenticated);
   const token = computed(() => authState.value.token);
+  const user = computed(() => authState.value.user);
 
   const handleAuthSuccess = (event: CustomEvent) => {
     authState.value = event.detail;
@@ -19,6 +21,7 @@ export function useAuth() {
     authState.value = {
       isAuthenticated: false,
       token: null,
+      user: null,
     };
   };
 
@@ -31,18 +34,21 @@ export function useAuth() {
     authState.value = {
       isAuthenticated: false,
       token: null,
+      user: null,
     };
   };
 
   const loadStoredAuth = (): void => {
     const stored = authService.getStoredAuthState();
+    console.log('useAuth - loadStoredAuth:', stored);
     authState.value = stored;
   };
 
+  // Initialize auth state immediately
+  loadStoredAuth();
+  
   // Initialize auth state on first use
   onMounted(() => {
-    loadStoredAuth();
-    
     // Listen for Google auth events
     window.addEventListener('google-auth-success', handleAuthSuccess as EventListener);
     window.addEventListener('google-auth-error', handleAuthError as EventListener);
@@ -56,6 +62,7 @@ export function useAuth() {
   return {
     isAuthenticated,
     token,
+    user,
     login,
     logout,
     loadStoredAuth,

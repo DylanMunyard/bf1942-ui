@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Servers from '../views/Servers.vue'
+import Dashboard from '../views/Dashboard.vue'
 import Players from '../views/Players.vue'
 import PlayerDetails from '../views/PlayerDetails.vue'
 import PlayerAllAchievements from '../views/PlayerAllAchievements.vue'
@@ -10,7 +11,8 @@ import RoundsPage from '../components/RoundsPage.vue'
 import RoundReportPage from '../components/RoundReportPage.vue'
 import WorkInProgressPlaceholder from '../components/WorkInProgressPlaceholder.vue'
 import PlayerComparison from '../views/PlayerComparison.vue'
-import OnlinePlayersSidebar from '../components/OnlinePlayersSidebar.vue';
+import OnlinePlayersSidebar from '../components/OnlinePlayersSidebar.vue'
+import { useAuth } from '../composables/useAuth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,7 +20,27 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      redirect: '/servers/bf1942'
+      beforeEnter: (to, from, next) => {
+        const { isAuthenticated } = useAuth()
+        if (isAuthenticated.value) {
+          next('/dashboard')
+        } else {
+          next('/servers/bf1942')
+        }
+      }
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: Dashboard,
+      beforeEnter: (to, from, next) => {
+        const { isAuthenticated } = useAuth()
+        if (!isAuthenticated.value) {
+          next('/servers/bf1942')
+        } else {
+          next()
+        }
+      }
     },
     {
       path: '/servers',

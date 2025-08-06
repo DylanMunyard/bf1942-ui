@@ -51,6 +51,12 @@
   --color-accent-hover: #45a049;
   --color-accent-rgb: 76, 175, 80;
 
+  /* Dashboard-specific variables */
+  --color-card-bg: var(--vt-c-white);
+  --color-card-bg-hover: var(--vt-c-white-soft);
+  --color-text-secondary: var(--vt-c-text-light-2);
+  --color-border-rgb: 60, 60, 60;
+
   --section-gap: 160px;
 }
 
@@ -74,6 +80,12 @@
   --color-accent: #7e57c2;
   --color-accent-hover: #9575cd;
   --color-accent-rgb: 126, 87, 194;
+
+  /* Dashboard-specific dark mode variables */
+  --color-card-bg: var(--vt-c-dark-purple-soft);
+  --color-card-bg-hover: var(--vt-c-dark-purple-mute);
+  --color-text-secondary: rgba(235, 235, 235, 0.64);
+  --color-border-rgb: 134, 114, 184;
 }
 
 /* System preference based dark mode */
@@ -97,6 +109,12 @@
     --color-accent: #7e57c2;
     --color-accent-hover: #9575cd;
     --color-accent-rgb: 126, 87, 194;
+
+    /* Dashboard-specific dark mode variables */
+    --color-card-bg: var(--vt-c-dark-purple-soft);
+    --color-card-bg-hover: var(--vt-c-dark-purple-mute);
+    --color-text-secondary: rgba(235, 235, 235, 0.64);
+    --color-border-rgb: 134, 114, 184;
   }
 }
 

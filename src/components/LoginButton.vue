@@ -26,8 +26,18 @@
     
     <div v-else class="user-dropdown" @click="toggleDropdown" ref="dropdownRef">
       <button class="user-avatar-btn">
-        <div class="user-avatar-placeholder">
-          U
+        <div class="user-avatar-container">
+          <img 
+            v-if="user?.picture && !imageLoadError" 
+            :src="user.picture" 
+            :alt="user.name || 'User avatar'"
+            class="user-avatar-photo"
+            @error="onImageError"
+            @load="onImageLoad"
+          />
+          <div v-else class="user-avatar-placeholder">
+            {{ getUserInitial() }}
+          </div>
         </div>
         <svg class="dropdown-arrow" :class="{ 'open': isDropdownOpen }" viewBox="0 0 24 24" width="16" height="16">
           <path fill="currentColor" d="M7 10l5 5 5-5z"/>
@@ -35,7 +45,9 @@
       </button>
       
       <div v-if="isDropdownOpen" class="dropdown-menu">
-        <div class="user-email">Authenticated</div>
+        <div class="user-info">
+          <div class="user-email">{{ user?.email || 'Authenticated' }}</div>
+        </div>
         <button @click="handleLogout" class="logout-btn">
           Sign Out
         </button>
@@ -45,13 +57,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watchEffect } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 
-const { isAuthenticated, login, logout } = useAuth();
+const { isAuthenticated, user, login, logout } = useAuth();
+
 const isLoading = ref(false);
 const isDropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement>();
+const imageLoadError = ref(false);
+
+// Debug logging to see user data and reset image error on user change
+watchEffect(() => {
+  console.log('LoginButton - isAuthenticated:', isAuthenticated.value);
+  console.log('LoginButton - user:', user.value);
+  if (user.value?.picture) {
+    console.log('LoginButton - user picture URL:', user.value.picture);
+    // Reset image load error when user changes
+    imageLoadError.value = false;
+  }
+});
 
 const handleLogin = async () => {
   if (isLoading.value) return;
@@ -80,6 +105,26 @@ const handleClickOutside = (event: MouseEvent) => {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
     isDropdownOpen.value = false;
   }
+};
+
+const getUserInitial = (): string => {
+  if (user.value?.name) {
+    return user.value.name.charAt(0).toUpperCase();
+  }
+  if (user.value?.email) {
+    return user.value.email.charAt(0).toUpperCase();
+  }
+  return 'U';
+};
+
+const onImageError = (event: Event) => {
+  console.error('Profile image failed to load:', event);
+  imageLoadError.value = true;
+};
+
+const onImageLoad = (event: Event) => {
+  console.log('Profile image loaded successfully:', event);
+  imageLoadError.value = false;
 };
 
 onMounted(() => {
@@ -177,9 +222,25 @@ onUnmounted(() => {
   border-color: var(--color-border-hover);
 }
 
-.user-avatar-placeholder {
+.user-avatar-container {
   width: 28px;
   height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.user-avatar-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.user-avatar-placeholder {
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   background: var(--color-primary);
   color: white;
@@ -188,7 +249,6 @@ onUnmounted(() => {
   justify-content: center;
   font-size: 12px;
   font-weight: 600;
-  flex-shrink: 0;
 }
 
 .dropdown-arrow {
@@ -214,11 +274,21 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.user-email {
+.user-info {
   padding: 12px 16px;
-  font-size: 14px;
-  color: var(--color-text);
   border-bottom: 1px solid var(--color-border);
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.user-email {
+  font-size: 12px;
+  color: var(--color-text-2);
   word-break: break-all;
 }
 
