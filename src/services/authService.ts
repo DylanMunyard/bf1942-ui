@@ -1,12 +1,6 @@
 
-export interface GoogleUser {
-  id: string;
-  email: string;
-}
-
 export interface AuthState {
   isAuthenticated: boolean;
-  user: GoogleUser | null;
   token: string | null;
 }
 
@@ -55,26 +49,40 @@ class AuthService {
 
   private async handleCredentialResponse(response: any): Promise<void> {
     try {
-      // Decode the JWT token to get user info
-      const token = response.credential;
-      const payload = this.parseJwt(token);
-      
-      const user: GoogleUser = {
-        id: payload.sub,
-        email: payload.email,
-      };
+      // Get the Google ID token
+      const idToken = response.credential;
+      const payload = this.parseJwt(idToken);
 
-      const authState: AuthState = {
-        isAuthenticated: true,
-        user,
-        token: token,
-      };
+      // Authenticate with backend using Google ID token
+      try {
+        const loginResponse = await fetch('/stats/auth/login', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email: payload.email })
+        });
 
-      // Store in localStorage
-      localStorage.setItem('authState', JSON.stringify(authState));
-      
-      // Trigger a custom event to notify components
-      window.dispatchEvent(new CustomEvent('google-auth-success', { detail: authState }));
+        if (loginResponse.ok) {
+          const authState: AuthState = {
+            isAuthenticated: true,
+            token: idToken, // Use the Google ID token directly
+          };
+
+          // Store the Google ID token in sessionStorage
+          sessionStorage.setItem('authToken', idToken);
+          
+          // Trigger success event
+          window.dispatchEvent(new CustomEvent('google-auth-success', { detail: authState }));
+        } else {
+          throw new Error('Backend authentication failed');
+        }
+      } catch (error) {
+        console.error('Failed to authenticate with stats service:', error);
+        throw error;
+      }
     } catch (error) {
       console.error('Authentication error:', error);
       window.dispatchEvent(new CustomEvent('google-auth-error', { detail: error }));
@@ -139,47 +147,51 @@ class AuthService {
   }
 
   getStoredAuthState(): AuthState {
-    try {
-      const stored = localStorage.getItem('authState');
-      if (stored) {
-        const authState = JSON.parse(stored);
-        // Validate JWT token expiry
-        if (authState.token && this.isTokenValid(authState.token)) {
-          return authState;
-        } else {
-          // Token expired, clear storage
-          this.logout();
-        }
-      }
-    } catch (error) {
-      console.error('Error loading auth state:', error);
-    }
-
+    const token = sessionStorage.getItem('authToken');
     return {
-      isAuthenticated: false,
-      user: null,
-      token: null,
+      isAuthenticated: !!token,
+      token,
     };
   }
 
-  private isTokenValid(token: string): boolean {
+
+
+  async logout(): Promise<void> {
     try {
-      const payload = this.parseJwt(token);
-      const currentTime = Math.floor(Date.now() / 1000);
-      return payload.exp > currentTime;
-    } catch {
+      // Call backend logout endpoint
+      await fetch('/stats/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Backend logout error:', error);
+      // Continue with local cleanup even if backend fails
+    }
+    
+    // Clear stored token
+    sessionStorage.removeItem('authToken');
+    
+    // Disable Google auto-select
+    window.google?.accounts?.id?.disableAutoSelect?.();
+    
+    // Trigger logout event
+    window.dispatchEvent(new CustomEvent('auth-logout'));
+  }
+
+  async refreshToken(): Promise<boolean> {
+    try {
+      const response = await fetch('/stats/auth/refresh', {
+        method: 'POST',
+        credentials: 'include', // Include cookies
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Token refresh error:', error);
       return false;
     }
   }
 
-  logout(): void {
-    localStorage.removeItem('authState');
-    window.google?.accounts?.id?.disableAutoSelect?.();
-  }
-
-  async validateToken(token: string): Promise<boolean> {
-    return this.isTokenValid(token);
-  }
 }
 
 export const authService = new AuthService();

@@ -27,7 +27,7 @@
     <div v-else class="user-dropdown" @click="toggleDropdown" ref="dropdownRef">
       <button class="user-avatar-btn">
         <div class="user-avatar-placeholder">
-          {{ user?.email?.charAt(0).toUpperCase() }}
+          U
         </div>
         <svg class="dropdown-arrow" :class="{ 'open': isDropdownOpen }" viewBox="0 0 24 24" width="16" height="16">
           <path fill="currentColor" d="M7 10l5 5 5-5z"/>
@@ -35,7 +35,7 @@
       </button>
       
       <div v-if="isDropdownOpen" class="dropdown-menu">
-        <div class="user-email">{{ user?.email }}</div>
+        <div class="user-email">Authenticated</div>
         <button @click="handleLogout" class="logout-btn">
           Sign Out
         </button>
@@ -48,7 +48,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 
-const { isAuthenticated, user, login, logout } = useAuth();
+const { isAuthenticated, login, logout } = useAuth();
 const isLoading = ref(false);
 const isDropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement>();

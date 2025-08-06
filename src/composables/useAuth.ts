@@ -3,13 +3,11 @@ import { authService, type AuthState } from '@/services/authService';
 
 const authState = ref<AuthState>({
   isAuthenticated: false,
-  user: null,
   token: null,
 });
 
 export function useAuth() {
   const isAuthenticated = computed(() => authState.value.isAuthenticated);
-  const user = computed(() => authState.value.user);
   const token = computed(() => authState.value.token);
 
   const handleAuthSuccess = (event: CustomEvent) => {
@@ -20,7 +18,6 @@ export function useAuth() {
     console.error('Google auth error:', event.detail);
     authState.value = {
       isAuthenticated: false,
-      user: null,
       token: null,
     };
   };
@@ -33,29 +30,13 @@ export function useAuth() {
     authService.logout();
     authState.value = {
       isAuthenticated: false,
-      user: null,
       token: null,
     };
   };
 
-  const loadStoredAuth = async (): Promise<void> => {
+  const loadStoredAuth = (): void => {
     const stored = authService.getStoredAuthState();
-    
-    if (stored.isAuthenticated && stored.token) {
-      // Validate token before using stored auth
-      const isValid = await authService.validateToken(stored.token);
-      if (isValid) {
-        authState.value = stored;
-      } else {
-        // Token is invalid, clear storage
-        authService.logout();
-        authState.value = {
-          isAuthenticated: false,
-          user: null,
-          token: null,
-        };
-      }
-    }
+    authState.value = stored;
   };
 
   // Initialize auth state on first use
@@ -74,7 +55,6 @@ export function useAuth() {
 
   return {
     isAuthenticated,
-    user,
     token,
     login,
     logout,
