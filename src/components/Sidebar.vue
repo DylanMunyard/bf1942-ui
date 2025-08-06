@@ -1,5 +1,8 @@
 <template>
   <div class="sidebar">
+    <div class="auth-section">
+      <LoginButton />
+    </div>
     <div class="nav-menu">
       <router-link
         to="/servers"
@@ -61,10 +64,11 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { inject, type Ref } from 'vue';
+import LoginButton from './LoginButton.vue';
 
 const route = useRoute();
 const isDarkMode = inject<Ref<boolean>>('isDarkMode')!;
-const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
+const toggleDarkMode = inject<() => void>('toggleDarkMode')!
 </script>
 
 <style scoped>
@@ -81,6 +85,13 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
   box-shadow: -2px 0 20px rgba(0, 0, 0, 0.4);
   border-left: 1px solid var(--sidebar-border);
   z-index: 100;
+}
+
+.auth-section {
+  padding: 15px 10px;
+  border-bottom: 1px solid var(--sidebar-border);
+  display: flex;
+  justify-content: center;
 }
 
 .nav-menu {
@@ -216,6 +227,15 @@ const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
     border-left: none;
     border-bottom: 1px solid var(--sidebar-border);
+    align-items: center;
+  }
+  
+  .auth-section {
+    padding: 8px;
+    border-bottom: none;
+    border-right: 1px solid var(--sidebar-border);
+    height: 100%;
+    display: flex;
     align-items: center;
   }
   
