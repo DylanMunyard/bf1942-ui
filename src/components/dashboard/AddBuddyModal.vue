@@ -1,6 +1,6 @@
 <template>
-  <div class="modal-overlay" @click="handleOverlayClick">
-    <div class="modal-content" @click.stop>
+  <div class="modal-overlay" @click="handleOverlayClick" @mousedown="handleOverlayMouseDown">
+    <div class="modal-content" @click.stop @mousedown="handleModalMouseDown">
       <div class="modal-header">
         <h3>Add Squad Member</h3>
         <button @click="$emit('close')" class="close-btn">✕</button>
@@ -234,8 +234,21 @@ const handleAddBuddy = async () => {
   }
 };
 
+const mouseDownInsideModal = ref(false);
+
 const handleOverlayClick = () => {
-  emit('close');
+  // Only close if the mousedown event also started on the overlay
+  if (!mouseDownInsideModal.value) {
+    emit('close');
+  }
+};
+
+const handleModalMouseDown = () => {
+  mouseDownInsideModal.value = true;
+};
+
+const handleOverlayMouseDown = () => {
+  mouseDownInsideModal.value = false;
 };
 
 const formatScore = (score: number): string => {

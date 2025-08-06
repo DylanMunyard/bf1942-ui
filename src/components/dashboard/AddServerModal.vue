@@ -1,96 +1,48 @@
 <template>
-  <div class="modal-overlay" @click="handleOverlayClick">
-    <div class="modal-content" @click.stop>
+  <div class="modal-overlay" @click="handleOverlayClick" @mousedown="handleOverlayMouseDown">
+    <div class="modal-content" @click.stop @mousedown="handleModalMouseDown">
       <div class="modal-header">
         <h3>Add Favorite Server</h3>
         <button @click="$emit('close')" class="close-btn">✕</button>
       </div>
       
       <div class="modal-body">
-        <div class="search-section">
-          <div class="form-group">
-            <label for="serverSearch">Search Servers</label>
-            <input
-              id="serverSearch"
-              v-model="searchQuery"
-              type="text"
-              placeholder="Enter server name to search..."
-              @input="handleSearch"
-            />
-          </div>
+        <div class="form-group">
+          <label for="serverSearch">Search Servers</label>
+          <ServerSearch
+            v-model="serverName"
+            placeholder="Search for server name..."
+            @select="onServerSelected"
+            @enter="handleSubmit"
+          />
+          <small class="help-text">
+            Start typing to search for a server name
+          </small>
+        </div>
 
-          <div v-if="isSearching" class="loading-message">
-            <span class="spinner"></span>
-            Searching servers...
-          </div>
-
-          <div v-if="searchResults.length > 0" class="search-results">
-            <h4>Available Servers</h4>
-            <div class="server-list">
-              <div
-                v-for="server in searchResults"
-                :key="server.id"
-                class="server-item"
-                :class="{ 'selected': selectedServer?.id === server.id }"
-                @click="selectServer(server)"
-              >
-                <div class="server-info">
-                  <h5 class="server-name">{{ server.name }}</h5>
-                  <div class="server-details">
-                    <span class="game-mode">{{ server.gameMode }}</span>
-                    <span class="map">{{ server.currentMap }}</span>
-                    <span class="players" :class="{ 'full': server.playerCount >= server.maxPlayers }">
-                      {{ server.playerCount }}/{{ server.maxPlayers }}
-                    </span>
-                  </div>
-                </div>
-                <div class="server-status">
-                  <span class="status-indicator" :class="{ 'online': server.isOnline }"></span>
-                  <span class="ping" :class="getPingClass(server.ping)">{{ server.ping }}ms</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-else-if="searchQuery && !isSearching" class="no-results">
-            <span class="icon">🔍</span>
-            <p>No servers found matching "{{ searchQuery }}"</p>
-            <small>Try searching for a different server name</small>
-          </div>
+        <div v-if="error" class="error-message">
+          {{ error }}
         </div>
 
         <div v-if="selectedServer" class="selected-server">
           <h4>Selected Server</h4>
           <div class="server-preview">
-            <div class="preview-header">
-              <h5>{{ selectedServer.name }}</h5>
-              <div class="status-badge" :class="{ 'online': selectedServer.isOnline }">
-                {{ selectedServer.isOnline ? 'Online' : 'Offline' }}
+            <div class="preview-content">
+              <h5 class="server-title">{{ selectedServer.serverName }}</h5>
+              <div class="server-meta">
+                <span class="game-badge">{{ selectedServer.gameId.toUpperCase() }}</span>
+                <span class="map-info">{{ selectedServer.currentMap }}</span>
+                <span v-if="!selectedServer.hasActivePlayers" class="offline-status">
+                  Offline {{ formatLastActivity(selectedServer.lastActivity) }}
+                </span>
+                <span v-else class="online-status">Online</span>
               </div>
-            </div>
-            <div class="preview-details">
-              <div class="detail-item">
-                <span class="label">Game Mode:</span>
-                <span class="value">{{ selectedServer.gameMode }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Current Map:</span>
-                <span class="value">{{ selectedServer.currentMap }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Players:</span>
-                <span class="value">{{ selectedServer.playerCount }}/{{ selectedServer.maxPlayers }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Ping:</span>
-                <span class="value">{{ selectedServer.ping }}ms</span>
+              <div class="server-details">
+                <span class="players">{{ selectedServer.totalActivePlayersLast24h }} active players (24h)</span>
+                <span class="location">{{ selectedServer.city }}, {{ selectedServer.country }}</span>
               </div>
             </div>
           </div>
-        </div>
-
-        <div v-if="error" class="error-message">
-          {{ error }}
         </div>
 
         <div class="form-actions">
@@ -113,107 +65,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
+import ServerSearch from '../ServerSearch.vue';
 
 interface ServerSearchResult {
-  id: string;
-  name: string;
-  gameMode: string;
+  serverGuid: string;
+  serverName: string;
+  gameId: string;
+  serverIp: string;
+  serverPort: number;
+  country: string;
+  region: string;
+  city: string;
+  timezone: string;
+  totalActivePlayersLast24h: number;
+  totalPlayersAllTime: number;
   currentMap: string;
-  playerCount: number;
-  maxPlayers: number;
-  isOnline: boolean;
-  ping: number;
+  hasActivePlayers: boolean;
+  lastActivity: string;
 }
 
 const emit = defineEmits<{
   close: [];
-  added: [server: ServerSearchResult];
+  added: [server: any];
 }>();
 
-const searchQuery = ref('');
-const searchResults = ref<ServerSearchResult[]>([]);
+const serverName = ref('');
 const selectedServer = ref<ServerSearchResult | null>(null);
-const isSearching = ref(false);
 const isSubmitting = ref(false);
 const error = ref('');
-let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+const mouseDownInsideModal = ref(false);
 
-watch(searchQuery, () => {
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
-  }
-  selectedServer.value = null;
-  error.value = '';
-});
-
-const handleSearch = () => {
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
-  }
-  
-  if (searchQuery.value.trim().length >= 2) {
-    searchTimeout = setTimeout(() => {
-      performSearch(searchQuery.value.trim());
-    }, 300);
-  } else {
-    searchResults.value = [];
-  }
-};
-
-const performSearch = async (query: string) => {
-  isSearching.value = true;
-  try {
-    // TODO: Call actual API to search servers
-    // Mock search for now
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Mock results - replace with actual API call
-    const mockServers: ServerSearchResult[] = [
-      {
-        id: '1',
-        name: `${query} Gaming Server #1`,
-        gameMode: 'BF1942',
-        currentMap: 'Stalingrad',
-        playerCount: 32,
-        maxPlayers: 64,
-        isOnline: true,
-        ping: 45
-      },
-      {
-        id: '2',
-        name: `${query} FH2 Hardcore`,
-        gameMode: 'FH2',
-        currentMap: 'El Alamein',
-        playerCount: 28,
-        maxPlayers: 32,
-        isOnline: true,
-        ping: 78
-      },
-      {
-        id: '3',
-        name: `${query} Vietnam Server`,
-        gameMode: 'BFV',
-        currentMap: 'Operation Flaming Dart',
-        playerCount: 16,
-        maxPlayers: 32,
-        isOnline: false,
-        ping: 120
-      }
-    ];
-    
-    searchResults.value = mockServers;
-  } catch (err) {
-    error.value = 'Failed to search servers. Please try again.';
-    console.error('Server search error:', err);
-  } finally {
-    isSearching.value = false;
-  }
-};
-
-const selectServer = (server: ServerSearchResult) => {
+const onServerSelected = (server: ServerSearchResult) => {
   selectedServer.value = server;
   error.value = '';
+  serverName.value = server.serverName;
+};
+
+const handleSubmit = async () => {
+  if (!serverName.value.trim()) {
+    error.value = 'Please select a server from the search results.';
+    return;
+  }
+  
+  await handleAddServer();
 };
 
 const handleAddServer = async () => {
@@ -221,10 +116,22 @@ const handleAddServer = async () => {
   
   isSubmitting.value = true;
   try {
+    // Convert server data to format expected by dashboard
+    const serverForDashboard = {
+      id: selectedServer.value.serverGuid,
+      name: selectedServer.value.serverName,
+      gameMode: selectedServer.value.gameId.toUpperCase(),
+      currentMap: selectedServer.value.currentMap,
+      playerCount: selectedServer.value.totalActivePlayersLast24h,
+      maxPlayers: selectedServer.value.totalPlayersAllTime,
+      isOnline: selectedServer.value.hasActivePlayers,
+      ping: 0 // Not available in this API
+    };
+    
     // TODO: Call API to add server to user's favorites
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    emit('added', selectedServer.value);
+    emit('added', serverForDashboard);
   } catch (err) {
     error.value = 'Failed to add server to favorites. Please try again.';
     console.error('Add server error:', err);
@@ -234,14 +141,38 @@ const handleAddServer = async () => {
 };
 
 const handleOverlayClick = () => {
-  emit('close');
+  // Only close if the mousedown event also started on the overlay
+  if (!mouseDownInsideModal.value) {
+    emit('close');
+  }
 };
 
-const getPingClass = (ping: number): string => {
-  if (ping <= 50) return 'excellent';
-  if (ping <= 100) return 'good';
-  if (ping <= 150) return 'fair';
-  return 'poor';
+const handleModalMouseDown = () => {
+  mouseDownInsideModal.value = true;
+};
+
+const handleOverlayMouseDown = () => {
+  mouseDownInsideModal.value = false;
+};
+
+const formatLastActivity = (lastActivity: string): string => {
+  // Parse the UTC timestamp and convert to local time
+  const utcDate = new Date(lastActivity + 'Z'); // Ensure it's treated as UTC
+  const now = new Date();
+  const diffInMs = now.getTime() - utcDate.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+  
+  if (diffInMinutes < 1) {
+    return 'Just now';
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+  } else {
+    return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+  }
 };
 </script>
 
@@ -266,9 +197,9 @@ const getPingClass = (ping: number): string => {
   border: 1px solid var(--color-border);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
   width: 90%;
-  max-width: 600px;
+  max-width: 500px;
   max-height: 90vh;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .modal-header {
@@ -309,7 +240,7 @@ const getPingClass = (ping: number): string => {
 
 .modal-body {
   padding: 24px;
-  overflow-y: auto;
+  overflow: visible;
   max-height: calc(90vh - 140px);
 }
 
@@ -341,131 +272,14 @@ const getPingClass = (ping: number): string => {
   box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.1);
 }
 
-.loading-message {
-  color: var(--color-accent);
+.help-text {
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.search-results {
-  margin-bottom: 20px;
-}
-
-.search-results h4 {
-  color: var(--color-text);
-  margin: 0 0 12px 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.server-list {
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-}
-
-.server-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.server-item:last-child {
-  border-bottom: none;
-}
-
-.server-item:hover {
-  background-color: rgba(var(--color-accent-rgb), 0.05);
-}
-
-.server-item.selected {
-  background-color: rgba(var(--color-accent-rgb), 0.1);
-  border-color: var(--color-accent);
-}
-
-.server-info {
-  flex: 1;
-}
-
-.server-name {
-  color: var(--color-text);
-  margin: 0 0 4px 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.server-details {
-  display: flex;
-  gap: 12px;
-  font-size: 0.75rem;
-}
-
-.game-mode {
-  color: var(--color-accent);
-  font-weight: 600;
-}
-
-.map {
-  color: var(--color-text-secondary);
-}
-
-.players {
-  color: var(--color-text-secondary);
-}
-
-.players.full {
-  color: #f59e0b;
-  font-weight: 600;
-}
-
-.server-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #ef4444;
-}
-
-.status-indicator.online {
-  background-color: #22c55e;
-}
-
-.ping.excellent { color: #22c55e; }
-.ping.good { color: #84cc16; }
-.ping.fair { color: #fbbf24; }
-.ping.poor { color: #ef4444; }
-
-.no-results {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--color-text-secondary);
-}
-
-.no-results .icon {
-  font-size: 2rem;
+  margin-top: 6px;
   display: block;
-  margin-bottom: 12px;
-  opacity: 0.7;
 }
 
-.no-results p {
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-  color: var(--color-text);
-}
+
 
 .selected-server {
   margin-bottom: 20px;
@@ -485,53 +299,58 @@ const getPingClass = (ping: number): string => {
   padding: 16px;
 }
 
-.preview-header {
+.preview-content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.preview-header h5 {
+.server-title {
   color: var(--color-text);
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
 }
 
-.status-badge {
-  padding: 4px 8px;
+.server-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.server-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.game-badge {
+  background-color: var(--color-accent);
+  color: white;
+  padding: 2px 8px;
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
 }
 
-.status-badge.online {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-}
-
-.preview-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-}
-
-.detail-item .label {
+.map-info {
   color: var(--color-text-secondary);
   font-size: 0.875rem;
+  font-weight: 500;
 }
 
-.detail-item .value {
-  color: var(--color-text);
+.online-status {
+  color: #22c55e;
+  font-size: 0.875rem;
   font-weight: 600;
+}
+
+.offline-status {
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
 }
 

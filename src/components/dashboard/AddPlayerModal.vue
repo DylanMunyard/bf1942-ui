@@ -1,6 +1,6 @@
 <template>
-  <div class="modal-overlay" @click="handleOverlayClick">
-    <div class="modal-content" @click.stop>
+  <div class="modal-overlay" @click="handleOverlayClick" @mousedown="handleOverlayMouseDown">
+    <div class="modal-content" @click.stop @mousedown="handleModalMouseDown">
       <div class="modal-header">
         <h3>Add Player Profile</h3>
         <button @click="$emit('close')" class="close-btn">✕</button>
@@ -27,7 +27,7 @@
 
           <div v-if="selectedPlayer" class="validation-result">
             <div class="player-preview">
-              <h4>Selected Player</h4>
+              <h4>{{ selectedPlayer.playerName }}</h4>
               <div class="preview-stats">
                 <div class="stat">
                   <span class="value">{{ Math.floor(selectedPlayer.totalPlayTimeMinutes / 60) }}h</span>
@@ -93,6 +93,7 @@ const playerName = ref('');
 const error = ref('');
 const isSubmitting = ref(false);
 const selectedPlayer = ref<PlayerSearchResult | null>(null);
+const mouseDownInsideModal = ref(false);
 
 const onPlayerSelected = (player: PlayerSearchResult) => {
   selectedPlayer.value = player;
@@ -121,7 +122,18 @@ const handleSubmit = async () => {
 };
 
 const handleOverlayClick = () => {
-  emit('close');
+  // Only close if the mousedown event also started on the overlay
+  if (!mouseDownInsideModal.value) {
+    emit('close');
+  }
+};
+
+const handleModalMouseDown = () => {
+  mouseDownInsideModal.value = true;
+};
+
+const handleOverlayMouseDown = () => {
+  mouseDownInsideModal.value = false;
 };
 
 const formatLastSeen = (dateString: string): string => {

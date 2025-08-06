@@ -68,9 +68,9 @@
             v-else
             :title="isAuthenticated ? 'No Favorite Servers' : 'Favorite Servers'"
             :description="isAuthenticated ? 'Mark servers as favorites to quickly see their status and join battles.' : 'Sign in to save your favorite servers for quick access and monitoring.'"
-            action-text="Browse Servers"
+            :action-text="isAuthenticated ? 'Add Server' : undefined"
             icon="🖥️"
-            @action="$router.push('/servers')"
+            @action="showAddServerModal = true"
           />
         </div>
       </section>
