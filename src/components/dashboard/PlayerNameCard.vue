@@ -15,6 +15,9 @@
             <span v-else-if="playerName.player?.isOnline" class="status online">
               🟢 Online
             </span>
+            <span v-else class="status offline">
+              Last seen {{ formatLastSeen(playerName.player.lastSeenIso) }}
+            </span>
             
             <!-- Current map info for online players -->
             <div v-if="playerName.player?.isOnline && playerName.player.currentMap" class="current-map">
@@ -81,32 +84,6 @@ defineEmits<{
   remove: [id: number];
 }>();
 
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffInDays < 1) {
-    return 'today';
-  }
-  if (diffInDays === 1) {
-    return 'yesterday';
-  }
-  if (diffInDays < 30) {
-    return `${diffInDays} days ago`;
-  }
-  return date.toLocaleDateString();
-};
-
-const formatPlayTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return `${hours}h`;
-  }
-  const days = Math.floor(hours / 24);
-  const remainingHours = hours % 24;
-  return `${days}d ${remainingHours}h`;
-};
 
 const formatScore = (score: number): string => {
   if (score >= 1000000) {
@@ -116,6 +93,20 @@ const formatScore = (score: number): string => {
     return `${(score / 1000).toFixed(1)}K`;
   }
   return score.toLocaleString();
+};
+
+const formatLastSeen = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}m ago`;
+  }
+  if (diffInMinutes < 1440) {
+    return `${Math.floor(diffInMinutes / 60)}h ago`;
+  }
+  return `${Math.floor(diffInMinutes / 1440)}d ago`;
 };
 
 const hasSessionStats = computed(() => {
@@ -205,6 +196,10 @@ const hasSessionStats = computed(() => {
 .server-link:hover {
   color: var(--color-accent);
   text-decoration: underline;
+}
+
+.status.offline {
+  color: var(--color-text-secondary);
 }
 
 .current-map {
