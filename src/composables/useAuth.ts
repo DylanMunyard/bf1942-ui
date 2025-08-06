@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { authService, type AuthState } from '@/services/authService';
 
 const authState = ref<AuthState>({
@@ -8,12 +9,17 @@ const authState = ref<AuthState>({
 });
 
 export function useAuth() {
+  const router = useRouter();
   const isAuthenticated = computed(() => authState.value.isAuthenticated);
   const token = computed(() => authState.value.token);
   const user = computed(() => authState.value.user);
 
   const handleAuthSuccess = (event: CustomEvent) => {
     authState.value = event.detail;
+    // Setup auto-refresh when authentication succeeds
+    authService.setupAutoRefresh();
+    // Redirect to dashboard after successful sign-in
+    router.push('/dashboard');
   };
 
   const handleAuthError = (event: CustomEvent) => {
@@ -30,18 +36,42 @@ export function useAuth() {
   };
 
   const logout = (): void => {
+    const currentRoute = router.currentRoute.value.path;
     authService.logout();
     authState.value = {
       isAuthenticated: false,
       token: null,
       user: null,
     };
+    // Redirect to home if currently on dashboard
+    if (currentRoute === '/dashboard') {
+      router.push('/');
+    }
   };
 
-  const loadStoredAuth = (): void => {
+  const loadStoredAuth = async (): Promise<void> => {
     const stored = authService.getStoredAuthState();
     console.log('useAuth - loadStoredAuth:', stored);
-    authState.value = stored;
+    
+    if (stored.isAuthenticated && stored.token) {
+      // Check if token is expired and try to refresh if needed
+      const isValid = await authService.ensureValidToken();
+      if (!isValid) {
+        // Token refresh failed, clear auth state
+        authState.value = {
+          isAuthenticated: false,
+          token: null,
+          user: null,
+        };
+        return;
+      }
+      // Reload auth state after potential refresh
+      authState.value = authService.getStoredAuthState();
+      // Setup auto-refresh for future expirations
+      authService.setupAutoRefresh();
+    } else {
+      authState.value = stored;
+    }
   };
 
   // Initialize auth state immediately
@@ -59,6 +89,10 @@ export function useAuth() {
     window.removeEventListener('google-auth-error', handleAuthError as EventListener);
   });
 
+  const ensureValidToken = async (): Promise<boolean> => {
+    return await authService.ensureValidToken();
+  };
+
   return {
     isAuthenticated,
     token,
@@ -66,5 +100,6 @@ export function useAuth() {
     login,
     logout,
     loadStoredAuth,
+    ensureValidToken,
   };
 }
