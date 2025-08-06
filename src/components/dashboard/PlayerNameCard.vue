@@ -1,28 +1,33 @@
 <template>
-  <div class="player-name-card" :class="{ 'online': buddy.player.isOnline }">
+  <div class="player-name-card" :class="{ 'online': playerName.player?.isOnline }">
     <div class="card-header">
       <div class="player-info">
         <div class="player-avatar">
-          <span class="avatar-letter">{{ buddy.buddyPlayerName[0].toUpperCase() }}</span>
-          <div v-if="buddy.player.isOnline" class="online-indicator"></div>
+          <span class="avatar-letter">{{ playerName.playerName[0].toUpperCase() }}</span>
+          <div v-if="playerName.player?.isOnline" class="online-indicator"></div>
         </div>
         <div class="player-details">
-          <h3 class="player-name">{{ buddy.buddyPlayerName }}</h3>
+          <h3 class="player-name">{{ playerName.playerName }}</h3>
           <div class="player-status">
-            <span v-if="buddy.player.isOnline && buddy.player.currentServer" class="status online">
-              🎮 <router-link :to="`/servers/${encodeURIComponent(buddy.player.currentServer)}`" class="server-link">{{ buddy.player.currentServer }}</router-link>
+            <span v-if="playerName.player?.isOnline && playerName.player.currentServer" class="status online">
+              🎮 <router-link :to="`/servers/${encodeURIComponent(playerName.player.currentServer)}`" class="server-link">{{ playerName.player.currentServer }}</router-link>
             </span>
-            <span v-else-if="buddy.player.isOnline" class="status online">
+            <span v-else-if="playerName.player?.isOnline" class="status online">
               🟢 Online
             </span>
             
+            <!-- Current map info for online players -->
+            <div v-if="playerName.player?.isOnline && playerName.player.currentMap" class="current-map">
+              🗺️ {{ playerName.player.currentMap }}
+            </div>
+            
             <!-- Current session stats inline -->
-            <div v-if="buddy.player.isOnline && hasSessionStats" class="session-stats">
-              <span class="stat-score" v-if="buddy.player.currentSessionScore !== undefined">
-                {{ formatScore(buddy.player.currentSessionScore) }}
+            <div v-if="playerName.player?.isOnline && hasSessionStats" class="session-stats">
+              <span class="stat-score" v-if="playerName.player.currentSessionScore !== undefined">
+                {{ formatScore(playerName.player.currentSessionScore) }}
               </span>
-              <span class="stat-kd" v-if="buddy.player.currentSessionKills !== undefined && buddy.player.currentSessionDeaths !== undefined">
-                (<span class="kills">{{ buddy.player.currentSessionKills }}</span> / <span class="deaths">{{ buddy.player.currentSessionDeaths }}</span>)
+              <span class="stat-kd" v-if="playerName.player.currentSessionKills !== undefined && playerName.player.currentSessionDeaths !== undefined">
+                (<span class="kills">{{ playerName.player.currentSessionKills }}</span> / <span class="deaths">{{ playerName.player.currentSessionDeaths }}</span>)
               </span>
             </div>
           </div>
@@ -30,12 +35,13 @@
       </div>
     </div>
 
+
     <div class="card-footer">
-      <button @click="$emit('viewProfile', buddy.buddyPlayerName)" class="view-details-btn">
+      <button @click="$emit('viewDetails', playerName.playerName)" class="view-details-btn">
         View Stats
         <span class="arrow">→</span>
       </button>
-      <button @click="$emit('remove', buddy.id)" class="remove-btn" title="Remove from squad">
+      <button @click="$emit('remove', playerName.id)" class="remove-btn" title="Remove player">
         ✕
       </button>
     </div>
@@ -44,7 +50,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-
 interface Player {
   name: string;
   firstSeen: string;
@@ -54,24 +59,25 @@ interface Player {
   isOnline: boolean;
   lastSeenIso: string;
   currentServer: string;
+  currentMap?: string;
   currentSessionScore?: number;
   currentSessionKills?: number;
   currentSessionDeaths?: number;
 }
 
-interface Buddy {
+interface PlayerName {
   id: number;
-  buddyPlayerName: string;
+  playerName: string;
   createdAt: string;
   player: Player;
 }
 
 const props = defineProps<{
-  buddy: Buddy;
+  playerName: PlayerName;
 }>();
 
-const emit = defineEmits<{
-  viewProfile: [playerName: string];
+defineEmits<{
+  viewDetails: [playerName: string];
   remove: [id: number];
 }>();
 
@@ -92,6 +98,16 @@ const formatDate = (dateString: string): string => {
   return date.toLocaleDateString();
 };
 
+const formatPlayTime = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours}h`;
+  }
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  return `${days}d ${remainingHours}h`;
+};
+
 const formatScore = (score: number): string => {
   if (score >= 1000000) {
     return `${(score / 1000000).toFixed(1)}M`;
@@ -103,9 +119,9 @@ const formatScore = (score: number): string => {
 };
 
 const hasSessionStats = computed(() => {
-  return props.buddy.player?.currentSessionScore !== undefined ||
-         props.buddy.player?.currentSessionKills !== undefined ||
-         props.buddy.player?.currentSessionDeaths !== undefined;
+  return props.playerName.player?.currentSessionScore !== undefined ||
+         props.playerName.player?.currentSessionKills !== undefined ||
+         props.playerName.player?.currentSessionDeaths !== undefined;
 });
 </script>
 
@@ -189,6 +205,13 @@ const hasSessionStats = computed(() => {
 .server-link:hover {
   color: var(--color-accent);
   text-decoration: underline;
+}
+
+.current-map {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 2px;
 }
 
 .online-indicator {

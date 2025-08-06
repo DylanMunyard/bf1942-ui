@@ -1,53 +1,32 @@
 <template>
-  <div class="favorite-server-card" :class="{ 'online': server.isOnline, 'full': isFull }">
-    <div class="server-header">
-      <div class="server-info">
-        <h3 class="server-name">{{ server.name }}</h3>
-        <div class="server-details">
-          <span class="game-mode">{{ server.gameMode }}</span>
-          <span class="map-name">{{ server.currentMap }}</span>
-        </div>
+  <div class="favorite-server-card" @click="$emit('join', server)">
+    <div class="server-status">
+      <div class="status-indicator" :class="{ 'active': server.activeSessions > 0 }">
+        <div class="status-pulse"></div>
+        <span class="player-count">{{ server.activeSessions }}</span>
       </div>
-      <div class="status-indicator" :class="{ 'online': server.isOnline, 'offline': !server.isOnline }">
-        <span class="status-dot"></span>
-        <span class="status-text">{{ server.isOnline ? 'Online' : 'Offline' }}</span>
+      <button @click.stop="$emit('remove', server.id)" class="remove-btn" title="Remove from favorites">
+        ❤️
+      </button>
+    </div>
+    
+    <div class="server-content">
+      <router-link :to="`/servers/${encodeURIComponent(server.serverName)}`" class="server-name-link" @click.stop>
+        <div class="server-name">{{ server.serverName }}</div>
+      </router-link>
+      <div v-if="server.currentMap" class="current-battle">
+        <span class="battle-icon">⚔️</span>
+        <span class="map-name">{{ server.currentMap }}</span>
+      </div>
+      <div v-else class="server-idle">
+        <span class="idle-icon">💤</span>
+        <span class="idle-text">Awaiting Orders</span>
       </div>
     </div>
-
-    <div class="server-stats">
-      <div class="player-count-section">
-        <div class="player-count">
-          <span class="count-current">{{ server.playerCount }}</span>
-          <span class="count-separator">/</span>
-          <span class="count-max">{{ server.maxPlayers }}</span>
-        </div>
-        <div class="player-bar">
-          <div class="player-bar-fill" :style="{ width: playerPercentage + '%' }"></div>
-        </div>
-        <span class="player-label">Players</span>
-      </div>
-
-      <div class="ping-section">
-        <div class="ping-value" :class="pingClass">
-          {{ server.ping }}ms
-        </div>
-        <span class="ping-label">Ping</span>
-      </div>
-    </div>
-
-    <div class="server-actions">
-      <button 
-        @click="$emit('join', server)" 
-        :disabled="!server.isOnline" 
-        class="join-btn"
-        :class="{ 'full': isFull }"
-      >
-        <span class="btn-icon">🎮</span>
-        {{ joinButtonText }}
-      </button>
-      <button @click="$emit('remove', server.id)" class="remove-btn" title="Remove from favorites">
-        <span class="btn-icon">❌</span>
-      </button>
+    
+    <div class="join-indicator">
+      <span class="join-text">{{ joinText }}</span>
+      <span class="join-arrow">→</span>
     </div>
   </div>
 </template>
@@ -56,14 +35,12 @@
 import { computed } from 'vue';
 
 interface FavoriteServer {
-  id: string;
-  name: string;
-  gameMode: string;
-  currentMap: string;
-  playerCount: number;
-  maxPlayers: number;
-  isOnline: boolean;
-  ping: number;
+  id: number;
+  serverGuid: string;
+  serverName: string;
+  createdAt: string;
+  activeSessions: number;
+  currentMap?: string;
 }
 
 const props = defineProps<{
@@ -72,297 +49,245 @@ const props = defineProps<{
 
 defineEmits<{
   join: [server: FavoriteServer];
-  remove: [serverId: string];
+  remove: [serverId: number];
 }>();
 
-const playerPercentage = computed(() => {
-  return Math.min((props.server.playerCount / props.server.maxPlayers) * 100, 100);
-});
-
-const isFull = computed(() => {
-  return props.server.playerCount >= props.server.maxPlayers;
-});
-
-const pingClass = computed(() => {
-  if (props.server.ping <= 50) return 'excellent';
-  if (props.server.ping <= 100) return 'good';
-  if (props.server.ping <= 150) return 'fair';
-  return 'poor';
-});
-
-const joinButtonText = computed(() => {
-  if (!props.server.isOnline) return 'Offline';
-  if (isFull.value) return 'Server Full';
-  return 'Join Battle';
+const joinText = computed(() => {
+  if (props.server.activeSessions === 0) return 'EMPTY';
+  if (props.server.activeSessions >= 64) return 'FULL';
+  if (props.server.activeSessions >= 48) return 'HOT';
+  return 'JOIN';
 });
 </script>
 
 <style scoped>
 .favorite-server-card {
-  background-color: var(--color-card-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 18px;
-  transition: all 0.3s ease;
+  background: linear-gradient(135deg, var(--color-card-bg) 0%, rgba(var(--color-accent-rgb), 0.03) 100%);
+  border: 2px solid var(--color-border);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  overflow: hidden;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.favorite-server-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #22c55e 0%, var(--color-accent) 50%, #f59e0b 100%);
+  opacity: 0.7;
 }
 
 .favorite-server-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  border-color: rgba(var(--color-accent-rgb), 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: rgba(var(--color-accent-rgb), 0.4);
 }
 
-.favorite-server-card.online {
-  border-left: 4px solid #22c55e;
+.favorite-server-card:hover::before {
+  opacity: 1;
+  height: 6px;
 }
 
-.favorite-server-card.full {
-  border-left: 4px solid #f59e0b;
-}
-
-.server-header {
+.server-status {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.server-info {
-  flex: 1;
-}
-
-.server-name {
-  color: var(--color-text);
-  margin: 0 0 6px 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.server-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.game-mode {
-  color: var(--color-accent);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.map-name {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .status-indicator {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: rgba(107, 114, 128, 0.1);
+  border-radius: 20px;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
-.status-indicator.online {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
+.status-indicator.active {
+  background-color: rgba(34, 197, 94, 0.15);
 }
 
-.status-indicator.offline {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
+.status-pulse {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background-color: currentColor;
+  background-color: #6b7280;
+  transition: all 0.3s ease;
 }
 
-.server-stats {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 12px;
-  background-color: rgba(var(--color-accent-rgb), 0.05);
-  border-radius: 8px;
+.status-indicator.active .status-pulse {
+  background-color: #22c55e;
+  animation: pulse 2s infinite;
 }
 
-.player-count-section {
-  flex: 1;
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .player-count {
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
-  margin-bottom: 4px;
-}
-
-.count-current {
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--color-text);
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.count-separator {
-  color: var(--color-text-secondary);
-  font-size: 1rem;
-}
-
-.count-max {
-  color: var(--color-text-secondary);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.player-bar {
-  width: 100%;
-  height: 4px;
-  background-color: rgba(var(--color-border-rgb), 0.3);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 4px;
-}
-
-.player-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #22c55e 0%, #fbbf24 70%, #ef4444 100%);
-  transition: width 0.3s ease;
-}
-
-.player-label,
-.ping-label {
-  color: var(--color-text-secondary);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.ping-section {
-  text-align: right;
-  margin-left: 16px;
-}
-
-.ping-value {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.ping-value.excellent {
-  color: #22c55e;
-}
-
-.ping-value.good {
-  color: #84cc16;
-}
-
-.ping-value.fair {
-  color: #fbbf24;
-}
-
-.ping-value.poor {
-  color: #ef4444;
-}
-
-.server-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.join-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: linear-gradient(135deg, var(--color-accent) 0%, rgba(var(--color-accent-rgb), 0.8) 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-.join-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.3);
-}
-
-.join-btn:disabled {
-  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.join-btn.full:not(:disabled) {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  min-width: 20px;
+  text-align: center;
 }
 
 .remove-btn {
-  width: 40px;
-  height: 40px;
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 8px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
   cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  color: var(--color-text-secondary);
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
 }
 
 .remove-btn:hover {
-  background-color: rgba(239, 68, 68, 0.2);
-  transform: translateY(-1px);
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  transform: scale(1.1);
 }
 
-.btn-icon {
+.server-content {
+  flex: 1;
+  margin-bottom: 8px;
+}
+
+.server-name-link {
+  text-decoration: none;
+  display: block;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  padding: 2px 0;
+}
+
+.server-name-link:hover {
+  background-color: rgba(var(--color-accent-rgb), 0.1);
+  padding: 2px 6px;
+}
+
+.server-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.server-name-link:hover .server-name {
+  color: var(--color-accent);
+}
+
+.current-battle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-radius: 8px;
+  border-left: 3px solid #22c55e;
+}
+
+.battle-icon {
   font-size: 1rem;
+}
+
+.map-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.server-idle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background-color: rgba(107, 114, 128, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid #6b7280;
+}
+
+.idle-icon {
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.idle-text {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.join-indicator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(var(--color-accent-rgb), 0.1) 0%, rgba(var(--color-accent-rgb), 0.05) 100%);
+  border-radius: 8px;
+  margin-top: auto;
+}
+
+.join-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-accent);
+}
+
+.join-arrow {
+  font-size: 1.2rem;
+  color: var(--color-accent);
+  transition: transform 0.2s ease;
+}
+
+.favorite-server-card:hover .join-arrow {
+  transform: translateX(4px);
 }
 
 /* Mobile responsiveness */
 @media (max-width: 480px) {
-  .server-header {
-    flex-direction: column;
-    gap: 8px;
+  .favorite-server-card {
+    padding: 16px;
+    min-height: 100px;
+  }
+  
+  .server-name {
+    font-size: 1rem;
   }
   
   .status-indicator {
-    align-self: flex-start;
+    padding: 4px 8px;
   }
   
-  .server-stats {
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-  }
-  
-  .ping-section {
-    margin-left: 0;
-    text-align: center;
-  }
-  
-  .server-actions {
-    flex-direction: column;
-  }
-  
-  .remove-btn {
-    width: 100%;
-    height: 40px;
+  .player-count {
+    font-size: 1rem;
   }
 }
 </style>

@@ -30,11 +30,12 @@
         </div>
         <div class="section-content">
           <div v-if="userProfiles.length > 0" class="profiles-grid">
-            <PlayerProfileCard
+            <PlayerNameCard
               v-for="profile in userProfiles"
-              :key="profile.playerName"
-              :profile="profile"
+              :key="profile.id"
+              :player-name="profile"
               @view-details="goToPlayerDetails"
+              @remove="removePlayerName"
             />
           </div>
           <EmptyStateCard
@@ -61,7 +62,7 @@
               :key="server.id"
               :server="server"
               @join="joinServer"
-              @remove="removeFavoriteServer"
+              @remove="() => removeFavoriteServer(server.id)"
             />
           </div>
           <EmptyStateCard
@@ -85,10 +86,10 @@
           <div v-if="buddies.length > 0" class="buddies-grid">
             <BuddyCard
               v-for="buddy in buddies"
-              :key="buddy.playerName"
+              :key="buddy.id"
               :buddy="buddy"
-              @view-profile="goToPlayerDetails"
-              @remove="removeBuddy"
+              @view-profile="() => goToPlayerDetails(buddy.buddyPlayerName)"
+              @remove="() => removeBuddy(buddy.id)"
             />
           </div>
           <EmptyStateCard
@@ -124,7 +125,8 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
-import PlayerProfileCard from '@/components/dashboard/PlayerProfileCard.vue';
+import { statsService } from '@/services/statsService';
+import PlayerNameCard from '@/components/dashboard/PlayerNameCard.vue';
 import FavoriteServerCard from '@/components/dashboard/FavoriteServerCard.vue';
 import BuddyCard from '@/components/dashboard/BuddyCard.vue';
 import EmptyStateCard from '@/components/dashboard/EmptyStateCard.vue';
@@ -133,37 +135,53 @@ import AddPlayerModal from '@/components/dashboard/AddPlayerModal.vue';
 import AddServerModal from '@/components/dashboard/AddServerModal.vue';
 import AddBuddyModal from '@/components/dashboard/AddBuddyModal.vue';
 
-interface UserProfile {
-  playerName: string;
-  totalPlayTime: number;
+interface Player {
+  name: string;
+  firstSeen: string;
   lastSeen: string;
-  rank: number;
-  score: number;
-  kills: number;
-  deaths: number;
-  favoriteServer: string;
+  totalPlayTimeMinutes: number;
+  aiBot: boolean;
   isOnline: boolean;
-  currentServer?: string;
+  lastSeenIso: string;
+  currentServer: string;
+  currentMap?: string;
+  currentSessionScore?: number;
+  currentSessionKills?: number;
+  currentSessionDeaths?: number;
+}
+
+interface UserProfile {
+  id: number;
+  playerName: string;
+  createdAt: string;
+  player: Player;
 }
 
 interface FavoriteServer {
-  id: string;
-  name: string;
-  gameMode: string;
-  currentMap: string;
-  playerCount: number;
-  maxPlayers: number;
-  isOnline: boolean;
-  ping: number;
+  id: number;
+  serverGuid: string;
+  serverName: string;
+  createdAt: string;
+  activeSessions: number;
+  currentMap?: string;
 }
 
 interface Buddy {
-  playerName: string;
-  isOnline: boolean;
-  lastSeen: string;
-  currentServer?: string;
-  score: number;
-  rank: number;
+  id: number;
+  buddyPlayerName: string;
+  createdAt: string;
+  player: Player;
+}
+
+interface DashboardProfile {
+  id: number;
+  email: string;
+  createdAt: string;
+  lastLoggedIn: string;
+  isActive: boolean;
+  playerNames: UserProfile[];
+  favoriteServers: FavoriteServer[];
+  buddies: Buddy[];
 }
 
 interface RecentActivity {
@@ -183,6 +201,7 @@ const favoriteServers = ref<FavoriteServer[]>([]);
 const buddies = ref<Buddy[]>([]);
 const recentActivities = ref<RecentActivity[]>([]);
 const loading = ref(true);
+const error = ref<string | null>(null);
 
 // Modal states
 const showAddPlayerModal = ref(false);
@@ -196,17 +215,37 @@ const goToPlayerDetails = (playerName: string) => {
 
 const joinServer = (server: FavoriteServer) => {
   // Implementation will depend on game client integration
-  console.log(`Joining server: ${server.name}`);
+  console.log(`Joining server: ${server.serverName}`);
 };
 
-const removeFavoriteServer = (serverId: string) => {
-  favoriteServers.value = favoriteServers.value.filter(s => s.id !== serverId);
-  // TODO: Call API to remove from favorites
+const removeFavoriteServer = async (serverId: number) => {
+  try {
+    await statsService.removeFavoriteServer(serverId);
+    favoriteServers.value = favoriteServers.value.filter(s => s.id !== serverId);
+  } catch (err) {
+    console.error('Error removing favorite server:', err);
+    error.value = 'Failed to remove favorite server';
+  }
 };
 
-const removeBuddy = (playerName: string) => {
-  buddies.value = buddies.value.filter(b => b.playerName !== playerName);
-  // TODO: Call API to remove buddy
+const removePlayerName = async (playerId: number) => {
+  try {
+    await statsService.removePlayerName(playerId);
+    userProfiles.value = userProfiles.value.filter(p => p.id !== playerId);
+  } catch (err) {
+    console.error('Error removing player name:', err);
+    error.value = 'Failed to remove player name';
+  }
+};
+
+const removeBuddy = async (buddyId: number) => {
+  try {
+    await statsService.removeBuddy(buddyId);
+    buddies.value = buddies.value.filter(b => b.id !== buddyId);
+  } catch (err) {
+    console.error('Error removing buddy:', err);
+    error.value = 'Failed to remove buddy';
+  }
 };
 
 const onPlayerAdded = (_playerName: string) => {
@@ -214,26 +253,27 @@ const onPlayerAdded = (_playerName: string) => {
   loadUserData(); // Refresh data
 };
 
-const onServerAdded = (server: FavoriteServer) => {
+const onServerAdded = () => {
   showAddServerModal.value = false;
-  favoriteServers.value.push(server);
+  loadUserData(); // Refresh data
 };
 
-const onBuddyAdded = (buddy: Buddy) => {
+const onBuddyAdded = () => {
   showAddBuddyModal.value = false;
-  buddies.value.push(buddy);
+  loadUserData(); // Refresh data
 };
 
 const loadUserData = async () => {
   loading.value = true;
+  error.value = null;
   try {
     if (isAuthenticated.value) {
-      // TODO: Replace with actual API calls
-      // These are mock data structures for now
-      await loadUserProfiles();
-      await loadFavoriteServers();
-      await loadBuddies();
-      await loadRecentActivity();
+      const profile = await statsService.getUserProfile();
+      userProfiles.value = profile.playerNames;
+      favoriteServers.value = profile.favoriteServers;
+      buddies.value = profile.buddies;
+      // TODO: Load recent activities from a separate endpoint if available
+      recentActivities.value = [];
     } else {
       // For unauthenticated users, clear data to show empty states
       userProfiles.value = [];
@@ -241,32 +281,17 @@ const loadUserData = async () => {
       buddies.value = [];
       recentActivities.value = [];
     }
-  } catch (error) {
-    console.error('Error loading dashboard data:', error);
+  } catch (err) {
+    console.error('Error loading dashboard data:', err);
+    error.value = 'Failed to load dashboard data';
+    // Clear data on error
+    userProfiles.value = [];
+    favoriteServers.value = [];
+    buddies.value = [];
+    recentActivities.value = [];
   } finally {
     loading.value = false;
   }
-};
-
-const loadUserProfiles = async () => {
-  // TODO: Call API to get user's player profiles
-  // Mock data for now - empty for testing empty states
-  userProfiles.value = [];
-};
-
-const loadFavoriteServers = async () => {
-  // TODO: Call API to get user's favorite servers
-  favoriteServers.value = [];
-};
-
-const loadBuddies = async () => {
-  // TODO: Call API to get user's buddies
-  buddies.value = [];
-};
-
-const loadRecentActivity = async () => {
-  // TODO: Call API to get recent activities
-  recentActivities.value = [];
 };
 
 onMounted(() => {
@@ -406,7 +431,7 @@ onMounted(() => {
 }
 
 .buddies-grid {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 /* Mobile responsiveness */
