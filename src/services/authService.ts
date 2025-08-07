@@ -231,33 +231,56 @@ class AuthService {
 
   async refreshToken(): Promise<boolean> {
     try {
-      const response = await fetch('/stats/auth/refresh', {
-        method: 'POST',
-        credentials: 'include', // Include cookies
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.token) {
-          // Update stored token
-          sessionStorage.setItem('authToken', data.token);
-          
-          // Update auth state
-          const userProfile = JSON.parse(sessionStorage.getItem('userProfile') || 'null');
-          const authState: AuthState = {
-            isAuthenticated: true,
-            token: data.token,
-            user: userProfile,
-          };
-          
-          window.dispatchEvent(new CustomEvent('google-auth-success', { detail: authState }));
-          return true;
-        }
+      console.log('Attempting silent token refresh...');
+      
+      // Check if Google Identity Services is available
+      if (!window.google?.accounts?.id) {
+        console.log('Google Identity Services not available for refresh');
+        return false;
       }
       
-      return false;
+      // Use Google Identity Services silent refresh
+      return new Promise((resolve) => {
+        // Set up a temporary callback for the refresh
+        const originalCallback = window.google.accounts.id.initialize;
+        
+        window.google.accounts.id.initialize({
+          client_id: this.clientId,
+          callback: (response: any) => {
+            if (response.credential) {
+              // Successfully got new token
+              this.handleCredentialResponse(response).then(() => {
+                console.log('Silent token refresh successful');
+                resolve(true);
+              }).catch(() => {
+                console.log('Silent token refresh failed during handling');
+                resolve(false);
+              });
+            } else {
+              console.log('Silent token refresh failed - no credential returned');
+              resolve(false);
+            }
+          },
+          auto_select: true, // Enable silent refresh
+          use_fedcm_for_prompt: false,
+        });
+        
+        // Trigger silent prompt
+        window.google.accounts.id.prompt((notification: any) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            console.log('Silent refresh not available, user needs to login again');
+            resolve(false);
+          }
+        });
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          console.log('Silent token refresh timeout');
+          resolve(false);
+        }, 5000);
+      });
     } catch (error) {
-      console.error('Token refresh error:', error);
+      console.error('Silent token refresh error:', error);
       return false;
     }
   }
@@ -270,9 +293,15 @@ class AuthService {
 
     if (this.isTokenExpired(token)) {
       console.log('Token expired, attempting refresh...');
-      const refreshed = await this.refreshToken();
-      if (!refreshed) {
-        console.log('Token refresh failed, logging out...');
+      try {
+        const refreshed = await this.refreshToken();
+        if (!refreshed) {
+          console.log('Token refresh failed, logging out...');
+          await this.logout();
+          return false;
+        }
+      } catch (error) {
+        console.error('Token refresh error:', error);
         await this.logout();
         return false;
       }
@@ -291,7 +320,7 @@ class AuthService {
     const currentTime = Date.now();
     const timeUntilExpiration = expirationTime - currentTime;
     
-    // Refresh token 5 minutes before expiration
+    // Try to refresh token 5 minutes before expiration
     const refreshTime = Math.max(0, timeUntilExpiration - (5 * 60 * 1000));
 
     console.log(`Setting up auto-refresh in ${refreshTime / 1000} seconds`);
@@ -300,10 +329,21 @@ class AuthService {
       console.log('Auto-refreshing token...');
       const refreshed = await this.refreshToken();
       if (refreshed) {
-        // Set up next auto-refresh
+        // Set up next auto-refresh with the new token
         this.setupAutoRefresh();
       } else {
         console.log('Auto-refresh failed, user will need to login again');
+        // Set a timer to logout 1 minute later if no manual intervention
+        setTimeout(async () => {
+          const currentToken = sessionStorage.getItem('authToken');
+          if (currentToken && this.isTokenExpired(currentToken)) {
+            console.log('Token still expired after failed refresh, logging out...');
+            await this.logout();
+            window.dispatchEvent(new CustomEvent('auth-expired', { 
+              detail: { message: 'Your session has expired. Please sign in again.' } 
+            }));
+          }
+        }, 60 * 1000); // Wait 1 minute then logout if token still expired
       }
     }, refreshTime);
   }

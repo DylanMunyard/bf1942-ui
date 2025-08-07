@@ -123,7 +123,6 @@
               v-for="buddy in buddies"
               :key="buddy.id"
               :buddy="buddy"
-              @view-profile="() => goToPlayerDetails(buddy.buddyPlayerName)"
               @remove="() => removeBuddy(buddy.id)"
             />
           </div>
@@ -200,6 +199,8 @@ interface FavoriteServer {
   createdAt: string;
   activeSessions: number;
   currentMap?: string;
+  maxPlayers: number;
+  joinLink?: string;
 }
 
 interface Buddy {
@@ -339,7 +340,14 @@ const loadUserData = async () => {
       const profile = await statsService.getUserProfile();
       userProfiles.value = profile.playerNames;
       favoriteServers.value = profile.favoriteServers;
-      buddies.value = profile.buddies;
+      // Sort buddies: online first, then by name
+      buddies.value = profile.buddies.sort((a, b) => {
+        // First sort by online status (online first)
+        if (a.player.isOnline && !b.player.isOnline) return -1;
+        if (!a.player.isOnline && b.player.isOnline) return 1;
+        // Then sort by name alphabetically
+        return a.buddyPlayerName.localeCompare(b.buddyPlayerName);
+      });
       // TODO: Load recent activities from a separate endpoint if available
       recentActivities.value = [];
     } else {
@@ -540,15 +548,18 @@ onMounted(() => {
 }
 
 .profiles-grid {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
 }
 
 .servers-grid {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
 }
 
 .buddies-grid {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
 }
 
 /* Mobile responsiveness */

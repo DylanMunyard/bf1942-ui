@@ -16,6 +16,7 @@
             <PlayerSearch
               v-model="playerName"
               placeholder="Search for a player to add to your squad..."
+              auto-focus
               @select="onPlayerSelected"
               @enter="handleSubmit"
             />

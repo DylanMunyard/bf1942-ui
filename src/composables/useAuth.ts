@@ -55,20 +55,30 @@ export function useAuth() {
     
     if (stored.isAuthenticated && stored.token) {
       // Check if token is expired and try to refresh if needed
-      const isValid = await authService.ensureValidToken();
-      if (!isValid) {
-        // Token refresh failed, clear auth state
+      try {
+        const isValid = await authService.ensureValidToken();
+        if (!isValid) {
+          // Token refresh failed, clear auth state
+          authState.value = {
+            isAuthenticated: false,
+            token: null,
+            user: null,
+          };
+          return;
+        }
+        // Reload auth state after potential refresh
+        authState.value = authService.getStoredAuthState();
+        // Setup auto-refresh for future expirations
+        authService.setupAutoRefresh();
+      } catch (error) {
+        console.error('Error ensuring valid token:', error);
+        // Clear auth state on error
         authState.value = {
           isAuthenticated: false,
           token: null,
           user: null,
         };
-        return;
       }
-      // Reload auth state after potential refresh
-      authState.value = authService.getStoredAuthState();
-      // Setup auto-refresh for future expirations
-      authService.setupAutoRefresh();
     } else {
       authState.value = stored;
     }

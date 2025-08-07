@@ -1,6 +1,7 @@
 <template>
   <div class="player-search-container" @click.stop>
     <input 
+      ref="inputRef"
       v-model="searchInput" 
       type="text" 
       :placeholder="placeholder"
@@ -44,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, nextTick } from 'vue';
 
 interface PlayerSearchResult {
   playerName: string;
@@ -72,6 +73,7 @@ interface PlayerSearchResponse {
 interface Props {
   modelValue?: string;
   placeholder?: string;
+  autoFocus?: boolean;
 }
 
 interface Emits {
@@ -81,11 +83,13 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: 'Search player name...'
+  placeholder: 'Search player name...',
+  autoFocus: false
 });
 
 const emit = defineEmits<Emits>();
 
+const inputRef = ref<HTMLInputElement>();
 const searchInput = ref(props.modelValue || '');
 const searchResults = ref<PlayerSearchResult[]>([]);
 const isLoading = ref(false);
@@ -101,6 +105,15 @@ watch(() => props.modelValue, (newValue) => {
 // Watch for input changes and emit to parent
 watch(searchInput, (newValue) => {
   emit('update:modelValue', newValue);
+});
+
+// Auto-focus on mount if requested
+onMounted(() => {
+  if (props.autoFocus) {
+    nextTick(() => {
+      inputRef.value?.focus();
+    });
+  }
 });
 
 const searchPlayers = async (query: string) => {

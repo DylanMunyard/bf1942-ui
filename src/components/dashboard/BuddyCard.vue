@@ -1,21 +1,26 @@
 <template>
   <div class="player-name-card" :class="{ 'online': buddy.player.isOnline }">
-    <div class="card-header">
+    <div class="player-row">
       <div class="player-info">
         <div class="player-avatar">
           <span class="avatar-letter">{{ buddy.buddyPlayerName[0].toUpperCase() }}</span>
           <div v-if="buddy.player.isOnline" class="online-indicator"></div>
         </div>
         <div class="player-details">
-          <h3 class="player-name">{{ buddy.buddyPlayerName }}</h3>
+          <div class="player-name">
+            <router-link :to="`/players/${buddy.buddyPlayerName}`" class="player-name-link">
+              {{ buddy.buddyPlayerName }}
+            </router-link>
+          </div>
           <div class="player-status">
-            <span v-if="buddy.player.isOnline && buddy.player.currentServer" class="status online">
+            <span v-if="buddy.player.isOnline && buddy.player.currentServer" class="status-info">
               🎮 <router-link :to="`/servers/${encodeURIComponent(buddy.player.currentServer)}`" class="server-link">{{ buddy.player.currentServer }}</router-link>
+              <span v-if="buddy.player.currentMap" class="map-info">• {{ buddy.player.currentMap }}</span>
             </span>
-            <span v-else-if="buddy.player.isOnline" class="status online">
+            <span v-else-if="buddy.player.isOnline" class="status-info online">
               🟢 Online
             </span>
-            <span v-else class="status offline">
+            <span v-else class="status-info offline">
               Last seen {{ formatLastSeen(buddy.player.lastSeenIso) }}
             </span>
             
@@ -25,19 +30,12 @@
                 {{ formatScore(buddy.player.currentSessionScore) }}
               </span>
               <span class="stat-kd" v-if="buddy.player.currentSessionKills !== undefined && buddy.player.currentSessionDeaths !== undefined">
-                (<span class="kills">{{ buddy.player.currentSessionKills }}</span> / <span class="deaths">{{ buddy.player.currentSessionDeaths }}</span>)
+                (<span class="kills">{{ buddy.player.currentSessionKills }}</span>/<span class="deaths">{{ buddy.player.currentSessionDeaths }}</span>)
               </span>
             </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="card-footer">
-      <button @click="$emit('viewProfile', buddy.buddyPlayerName)" class="view-details-btn">
-        View Stats
-        <span class="arrow">→</span>
-      </button>
       <button @click="$emit('remove', buddy.id)" class="remove-btn" title="Remove from squad">
         ✕
       </button>
@@ -57,6 +55,7 @@ interface Player {
   isOnline: boolean;
   lastSeenIso: string;
   currentServer: string;
+  currentMap?: string;
   currentSessionScore?: number;
   currentSessionKills?: number;
   currentSessionDeaths?: number;
@@ -112,72 +111,107 @@ const hasSessionStats = computed(() => {
 
 <style scoped>
 .player-name-card {
-  background: linear-gradient(135deg, var(--color-card-bg) 0%, rgba(var(--color-accent-rgb), 0.02) 100%);
+  background: var(--color-card-bg);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 16px;
-  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
 }
 
 .player-name-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  border-color: rgba(var(--color-accent-rgb), 0.3);
+  border-color: rgba(var(--color-accent-rgb), 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.card-header {
-  margin-bottom: 16px;
+.player-name-card.online {
+  border-left: 3px solid #22c55e;
+}
+
+.player-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .player-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
 }
 
 .player-avatar {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   background: linear-gradient(135deg, var(--color-accent) 0%, rgba(var(--color-accent-rgb), 0.8) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
   color: white;
+  flex-shrink: 0;
 }
 
 .avatar-letter {
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 700;
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  background-color: #22c55e;
+  border: 2px solid var(--color-card-bg);
+  border-radius: 50%;
 }
 
 .player-details {
   flex: 1;
+  min-width: 0;
 }
 
 .player-name {
+  margin: 0 0 2px 0;
+  font-size: 0.9rem;
+}
+
+.player-name-link {
   color: var(--color-text);
-  margin: 0 0 4px 0;
-  font-size: 1rem;
+  text-decoration: none;
   font-weight: 600;
+  transition: color 0.2s ease;
 }
 
-.added-date {
-  color: var(--color-text-secondary);
+.player-name-link:hover {
+  color: var(--color-accent);
+}
+
+.player-status {
   font-size: 0.75rem;
+  line-height: 1.3;
 }
 
-.status {
-  font-size: 0.75rem;
+.status-info {
+  display: block;
+  margin-bottom: 2px;
 }
 
-.status.online {
+.status-info.online {
   color: #22c55e;
   font-weight: 500;
+}
+
+.status-info.offline {
+  color: var(--color-text-secondary);
 }
 
 .server-link {
@@ -192,40 +226,24 @@ const hasSessionStats = computed(() => {
   text-decoration: underline;
 }
 
-.status.offline {
+.map-info {
   color: var(--color-text-secondary);
-}
-
-.online-indicator {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  background-color: #22c55e;
-  border: 2px solid var(--color-card-bg);
-  border-radius: 50%;
-}
-
-.player-name-card.online {
-  border-left: 4px solid #22c55e;
+  font-weight: 500;
 }
 
 .session-stats {
   display: flex;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 6px;
   flex-wrap: wrap;
+  font-size: 0.7rem;
 }
 
 .stat-score {
   color: var(--color-text);
-  font-size: 0.75rem;
   font-weight: 600;
 }
 
 .stat-kd {
-  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text);
 }
@@ -238,62 +256,56 @@ const hasSessionStats = computed(() => {
   color: #f44336;
 }
 
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.view-details-btn {
-  background: linear-gradient(135deg, var(--color-accent) 0%, rgba(var(--color-accent-rgb), 0.8) 100%);
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-  flex: 1;
-  justify-content: center;
-}
-
-.view-details-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.3);
-}
-
 .remove-btn {
-  background: transparent;
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-  padding: 6px 8px;
-  border-radius: 6px;
+  background: none;
+  border: none;
+  font-size: 0.9rem;
   cursor: pointer;
-  font-size: 0.75rem;
+  padding: 4px;
+  border-radius: 50%;
   transition: all 0.2s ease;
-  width: 32px;
-  height: 32px;
+  color: var(--color-text-secondary);
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .remove-btn:hover {
-  background-color: #ef4444;
-  color: white;
-  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  transform: scale(1.1);
 }
 
-.arrow {
-  transition: transform 0.2s ease;
-}
-
-.view-details-btn:hover .arrow {
-  transform: translateX(2px);
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  .player-name-card {
+    padding: 10px;
+  }
+  
+  .player-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .avatar-letter {
+    font-size: 0.8rem;
+  }
+  
+  .player-name {
+    font-size: 0.85rem;
+  }
+  
+  .player-status {
+    font-size: 0.7rem;
+  }
+  
+  .remove-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 0.8rem;
+  }
 }
 </style>
