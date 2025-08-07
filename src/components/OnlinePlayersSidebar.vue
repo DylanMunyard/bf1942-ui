@@ -1,31 +1,23 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { fetchOnlinePlayersList, OnlinePlayerItem, OnlinePlayersResponse, OnlinePlayersFilters } from '../services/onlinePlayersService';
+import { fetchDashboardData, DashboardResponse } from '../services/dashboardService';
+import { useAuth } from '@/composables/useAuth';
 
-// Router
+// Router and Auth
 const router = useRouter();
+const { isAuthenticated } = useAuth();
 
 // State variables
-const playersResponse = ref<OnlinePlayersResponse | null>(null);
+const dashboardData = ref<DashboardResponse | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
-
-// Filter variables (server-side)
-// Single search filter (matches player or server names)
-const nameFilter = ref('');
-const currentPage = ref(1);
-const pageSize = ref(100);
-
-// Debouncing
-const searchDebounceTimeout = ref<number | null>(null);
-const debounceMs = 500;
 
 // Auto-refresh functionality
 const autoRefreshInterval = ref<number | null>(null);
 const refreshIntervalSeconds = 30;
 const isAutoRefresh = ref(true);
-// Add slide-out panel state management
+// Panel state management
 const isPanelOpen = ref(false);
 const togglePanel = () => {
   isPanelOpen.value = !isPanelOpen.value;
@@ -39,8 +31,8 @@ const closePanel = () => {
 // Click outside handler
 const handleClickOutside = (event: Event) => {
   const target = event.target as Element;
-  const panel = document.querySelector('.online-panel');
-  const toggleBtn = document.querySelector('.online-toggle-btn');
+  const panel = document.querySelector('.social-panel');
+  const toggleBtn = document.querySelector('.social-toggle-btn');
   
   if (isPanelOpen.value && panel && toggleBtn && 
       !panel.contains(target) && !toggleBtn.contains(target)) {
@@ -48,118 +40,91 @@ const handleClickOutside = (event: Event) => {
   }
 };
 
+// Helper functions
 
-// (Removed gameTypes computed – game-specific filtering is deprecated)
-
-
-// Get KDR with fallback
-const getKDRatio = (kills: number = 0, deaths: number = 0): string => {
-  if (deaths === 0) return kills > 0 ? kills.toString() : '0.00';
-  return (kills / deaths).toFixed(2);
+// Format session duration
+const formatDuration = (minutes: number): string => {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}h ${mins}m`;
 };
 
-// ===== Added for grouping players by server =====
-/** Collapsed state per server key */
-// const collapsedServers = ref<Record<string, boolean>>({});
-/** Toggle collapse for given server */
-// const toggleServer = (key: string) => {
-//   collapsedServers.value[key] = !collapsedServers.value[key];
-// };
-/** Group online players by their current server */
-const groupedServers = computed(() => {
-  if (!playersResponse.value?.items) return [];
-  const groups: Record<string, { serverKey: string; serverName: string; gameId: string; mapName?: string; players: OnlinePlayerItem[] }> = {};
+// Format last seen time
+const formatLastSeen = (lastSeenAt: string): string => {
+  const now = new Date();
+  const lastSeen = new Date(lastSeenAt);
+  const diffMs = now.getTime() - lastSeen.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  if (diffMins < 60) {
+    return `${diffMins} minutes ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hours ago`;
+  } else {
+    return `${diffDays} days ago`;
+  }
+};
 
-  playersResponse.value.items.forEach((player: OnlinePlayerItem) => {
-    const serverName = player.currentServer?.serverName || 'Unknown';
-    const gameId = player.currentServer?.gameId || '';
-    const mapName = player.currentServer?.mapName || '';
-    const key = `${serverName}|${gameId}`;
+// Calculate server fill percentage
+const getServerFillPercentage = (current: number, max: number): number => {
+  return max > 0 ? Math.round((current / max) * 100) : 0;
+};
 
-    if (!groups[key]) {
-      groups[key] = {
-        serverKey: key,
-        serverName,
-        gameId,
-        mapName,
-        players: []
-      };
-    }
-    groups[key].players.push(player);
-  });
+// Get server status color
+const getServerStatusColor = (current: number, max: number): string => {
+  const percentage = getServerFillPercentage(current, max);
+  if (percentage >= 90) return '#e74c3c'; // Red - Full
+  if (percentage >= 70) return '#f39c12'; // Orange - High
+  if (percentage >= 30) return '#2ecc71'; // Green - Good
+  return '#95a5a6'; // Gray - Low
+};
 
-  return Object.values(groups);
-});
-// ===== End added block =====
+// Total counts for display
+const totalOnlineBuddies = computed(() => dashboardData.value?.onlineBuddies.length || 0);
+const totalOfflineBuddies = computed(() => (dashboardData.value as any)?.offlineBuddies?.length || 0);
+const totalFavoriteServers = computed(() => dashboardData.value?.favoriteServers.length || 0);
+const totalOnline = computed(() => totalOnlineBuddies.value + totalFavoriteServers.value);
 
-// Fetch online players data with filters
-const fetchOnlinePlayersApiData = async (resetPage = false, append = false) => {
-  if (resetPage) {
-    currentPage.value = 1;
-    // Clear existing results when applying new filters to avoid showing stale data
-    playersResponse.value = null;
+// Fetch dashboard data
+const fetchDashboardApiData = async () => {
+  // Only make API calls if authenticated
+  if (!isAuthenticated.value) {
+    loading.value = false;
+    return;
   }
   
   if (!loading.value) loading.value = true;
   error.value = null;
 
   try {
-    // Build filters manually to ensure fresh values, especially when resetPage is true
-    const filters: OnlinePlayersFilters = {
-      page: resetPage ? 1 : currentPage.value,
-      pageSize: pageSize.value
-    };
-
-    // Apply unified search term (player OR server name)
-    if (nameFilter.value.trim()) {
-      (filters as any).search = nameFilter.value.trim();
-    }
-
-    const result = await fetchOnlinePlayersList(filters);
-
-    if (append && playersResponse.value) {
-      // Append new items to existing list for infinite / manual pagination
-      playersResponse.value.items = [...playersResponse.value.items, ...result.items];
-      playersResponse.value.page = result.page;
-      playersResponse.value.pageSize = result.pageSize;
-      playersResponse.value.totalItems = result.totalItems;
-      playersResponse.value.totalPages = result.totalPages;
-    } else {
-      playersResponse.value = result;
-      // Reset collapsed state whenever we fetch a fresh set (initial load or filters changed)
-      // collapsedServers.value = {}; // Removed as per edit hint
-    }
+    const result = await fetchDashboardData();
+    dashboardData.value = result;
   } catch (err) {
-    console.error('Error fetching online players data:', err);
-    error.value = 'Failed to fetch online players data. Please try again.';
+    console.error('Error fetching dashboard data:', err);
+    error.value = 'Failed to fetch dashboard data. Please try again.';
   } finally {
     loading.value = false;
   }
 };
 
-// Debounced search function
-const debouncedSearch = () => {
-  if (searchDebounceTimeout.value) {
-    clearTimeout(searchDebounceTimeout.value);
-  }
-  
-  searchDebounceTimeout.value = window.setTimeout(() => {
-    fetchOnlinePlayersApiData(true); // Reset to page 1 on new search
-  }, debounceMs);
-};
-
-// Navigate to player details
+// Navigation functions
 const goToPlayerDetails = (playerName: string) => {
   router.push(`/players/${encodeURIComponent(playerName)}`);
   closePanel();
 };
 
-// Navigate to server details
 const goToServerDetails = (serverName: string) => {
   router.push(`/servers/${encodeURIComponent(serverName)}`);
   closePanel();
 };
 
+// Join server function
+const joinServer = (joinLink: string) => {
+  window.open(joinLink, '_blank');
+};
 
 // Auto-refresh functionality
 const startAutoRefresh = () => {
@@ -168,8 +133,8 @@ const startAutoRefresh = () => {
   }
   
   autoRefreshInterval.value = window.setInterval(() => {
-    if (isAutoRefresh.value) {
-      fetchOnlinePlayersApiData();
+    if (isAutoRefresh.value && isAuthenticated.value) {
+      fetchDashboardApiData();
     }
   }, refreshIntervalSeconds * 1000);
 };
@@ -181,24 +146,9 @@ const stopAutoRefresh = () => {
   }
 };
 
-// Manual "Load More" pagination – increments the current page and fetches the next batch
-const loadMore = () => {
-  if (
-    playersResponse.value &&
-    currentPage.value < playersResponse.value.totalPages &&
-    !loading.value
-  ) {
-    currentPage.value += 1;
-    fetchOnlinePlayersApiData(false, true);
-  }
-};
+// Auto-refresh functionality
 
-// Watch for filter changes
-watch(nameFilter, () => {
-  debouncedSearch();
-});
-
-// Add body scroll lock when the slide-out panel is open
+// Watch panel state changes
 watch(isPanelOpen, (open) => {
   if (open) {
     document.body.classList.add('no-scroll');
@@ -211,17 +161,17 @@ watch(isPanelOpen, (open) => {
 
 // Lifecycle
 onMounted(() => {
-  fetchOnlinePlayersApiData();
-  if (isAutoRefresh.value) {
-    startAutoRefresh();
+  // Only fetch data and start auto-refresh if authenticated
+  if (isAuthenticated.value) {
+    fetchDashboardApiData();
+    if (isAutoRefresh.value) {
+      startAutoRefresh();
+    }
   }
 });
 
 onUnmounted(() => {
   stopAutoRefresh();
-  if (searchDebounceTimeout.value) {
-    clearTimeout(searchDebounceTimeout.value);
-  }
   // Ensure body scrolling is re-enabled when component is destroyed
   document.body.classList.remove('no-scroll');
   // Clean up click outside listener
@@ -230,41 +180,37 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="online-players-container">
+  <div class="social-container">
     <!-- Toggle handle fixed to the right edge -->
     <button
-      class="online-toggle-btn"
+      class="social-toggle-btn"
       @click="togglePanel"
     >
       <span
         v-if="!isPanelOpen"
         class="button-content"
       >
-        <span class="green-pulse-light" />
-        {{ playersResponse ? playersResponse.totalItems : 0 }}
+        <span class="status-indicator" />
+        {{ totalOnline }}
       </span>
       <span v-else>×</span>
     </button>
 
     <!-- Slide-out panel -->
     <div
-      class="online-panel"
+      class="social-panel"
       :class="{ open: isPanelOpen }"
     >
       <div class="panel-header">
-        <h3>Online Players ({{ playersResponse ? playersResponse.totalItems : 0 }})</h3>
-        <input
-          v-model="nameFilter"
-          type="text"
-          class="player-search-input"
-          placeholder="Search player or server..."
-        >
-        <!-- (Removed game filter badges) -->
+        <h3 class="panel-title">
+          <span class="buddies-icon">👥</span>
+          Social
+        </h3>
       </div>
 
-      <!-- States -->
+      <!-- Loading/Error States -->
       <div
-        v-if="loading && !playersResponse"
+        v-if="loading && !dashboardData"
         class="loading-state"
       >
         <div class="loading-spinner" />
@@ -275,573 +221,168 @@ onUnmounted(() => {
       >
         <p>{{ error }}</p>
       </div>
-      <div v-else-if="playersResponse && playersResponse.items.length">
-        <div class="players-list">
-          <div
-            v-for="server in groupedServers"
-            :key="server.serverKey"
-            class="server-group"
-          >
+      <div v-else-if="dashboardData" class="social-content">
+        <!-- Online Buddies Section -->
+        <div v-if="dashboardData.onlineBuddies.length > 0" class="section">
+          <div class="section-header">
+            <span class="status-dot online" />
+            <h4>Online — {{ dashboardData.onlineBuddies.length }}</h4>
+          </div>
+          <div class="buddy-list">
             <div
-              class="server-header-link"
-              @click="goToServerDetails(server.serverName)"
+              v-for="buddy in dashboardData.onlineBuddies"
+              :key="buddy.playerName"
+              class="buddy-item"
+              @click="goToPlayerDetails(buddy.playerName)"
             >
-              <div class="server-header-info">
-                <span class="server server-link">{{ server.serverName }}</span>
-                <span class="player-count">({{ server.players.length }})</span>
-                <span
-                  v-if="server.mapName"
-                  class="separator"
-                >•</span>
-                <span
-                  v-if="server.mapName"
-                  class="map"
-                >{{ server.mapName }}</span>
+              <div class="buddy-avatar">
+                <span class="avatar-text">{{ buddy.playerName.charAt(0).toUpperCase() }}</span>
+                <span class="online-status" />
+              </div>
+              <div class="buddy-info">
+                <div class="buddy-name">{{ buddy.playerName }}</div>
+                <div class="buddy-activity">
+                  <span class="activity-text">{{ buddy.serverName }}</span>
+                  <span class="activity-map">{{ buddy.currentMap }}</span>
+                </div>
+                <div class="buddy-stats">
+                  <span class="stat">{{ buddy.currentKills }}K</span>
+                  <span class="stat">{{ buddy.currentDeaths }}D</span>
+                  <span class="stat">{{ formatDuration(buddy.sessionDurationMinutes) }}</span>
+                </div>
+              </div>
+              <div class="buddy-actions">
+                <button 
+                  class="join-btn"
+                  @click.stop="joinServer(buddy.joinLink)"
+                  title="Join Server"
+                >
+                  🎮
+                </button>
               </div>
             </div>
-            <div class="server-players">
-              <div
-                v-for="player in server.players"
-                :key="player.playerName"
-                class="player-row"
-                :title="player.currentServer ? 'Kills: ' + (player.currentServer.sessionKills || 0) + ', Deaths: ' + (player.currentServer.sessionDeaths || 0) + ', KDR: ' + getKDRatio(player.currentServer.sessionKills, player.currentServer.sessionDeaths) : ''"
-                @click="goToPlayerDetails(player.playerName)"
-              >
-                <div class="name-row">
-                  <span class="online-dot" />
-                  <span class="player-name">{{ player.playerName }}</span>
-                </div>
-                <div class="stats-row">
-                  <span class="kills">{{ player.currentServer?.sessionKills || 0 }}</span>/<span class="deaths">{{ player.currentServer?.sessionDeaths || 0 }}</span>
+          </div>
+        </div>
+
+        <!-- Offline Buddies Section -->
+        <div v-if="(dashboardData as any)?.offlineBuddies?.length > 0" class="section">
+          <div class="section-header">
+            <span class="status-dot offline" />
+            <h4>Offline — {{ totalOfflineBuddies }}</h4>
+          </div>
+          <div class="buddy-list">
+            <div
+              v-for="buddy in (dashboardData as any).offlineBuddies"
+              :key="buddy.playerName"
+              class="buddy-item offline"
+              @click="goToPlayerDetails(buddy.playerName)"
+            >
+              <div class="buddy-avatar">
+                <span class="avatar-text">{{ buddy.playerName.charAt(0).toUpperCase() }}</span>
+                <span class="offline-status" />
+              </div>
+              <div class="buddy-info">
+                <div class="buddy-name">{{ buddy.playerName }}</div>
+                <div class="buddy-activity">
+                  <span class="activity-text">{{ formatLastSeen(buddy.lastSeenAt) }}</span>
+                  <span v-if="buddy.lastSeenServer" class="activity-map">{{ buddy.lastSeenServer }}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div
-          v-if="playersResponse && currentPage < playersResponse.totalPages"
-          class="load-more-container"
-        >
-          <button
-            class="load-more-button"
-            :disabled="loading"
-            @click="loadMore"
-          >
-            Load More
-          </button>
+
+        <!-- Favorite Servers Section -->
+        <div v-if="dashboardData.favoriteServers.length > 0" class="section">
+          <div class="section-header">
+            <span class="server-icon">🖥️</span>
+            <h4>Favorite Servers — {{ dashboardData.favoriteServers.length }}</h4>
+          </div>
+          <div class="server-list">
+            <div
+              v-for="server in dashboardData.favoriteServers"
+              :key="server.id"
+              class="server-item"
+              @click="goToServerDetails(server.serverName)"
+            >
+              <div class="server-status">
+                <div 
+                  class="server-fill-bar"
+                  :style="{ backgroundColor: getServerStatusColor(server.currentPlayers, server.maxPlayers) }"
+                >
+                  <div 
+                    class="server-fill-progress"
+                    :style="{ width: getServerFillPercentage(server.currentPlayers, server.maxPlayers) + '%' }"
+                  />
+                </div>
+              </div>
+              <div class="server-info">
+                <div class="server-name">{{ server.serverName }}</div>
+                <div class="server-details">
+                  <span class="server-map">{{ server.currentMap }}</span>
+                  <span class="server-players">{{ server.currentPlayers }}/{{ server.maxPlayers }}</span>
+                </div>
+              </div>
+              <div class="server-actions">
+                <button 
+                  class="join-btn"
+                  @click.stop="joinServer(server.joinLink)"
+                  title="Join Server"
+                >
+                  🎮
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="dashboardData.onlineBuddies.length === 0 && dashboardData.favoriteServers.length === 0 && totalOfflineBuddies === 0" class="empty-state">
+          <div class="empty-icon">😴</div>
+          <p class="empty-text">No buddies online</p>
+          <p class="empty-subtext">Check back later or add some friends!</p>
         </div>
       </div>
-      <div
-        v-else
-        class="no-players-state"
-      >
-        <div class="no-players-icon">
-          👥
-        </div>
-        <p>No online players</p>
+      <div v-else class="empty-state">
+        <div class="empty-icon">👥</div>
+        <p class="empty-text">No social data</p>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.online-players-container {
-  background: var(--color-background);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* Header */
-.header {
-  margin-bottom: 20px;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header h1 {
-  margin: 0;
-  color: var(--color-heading);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.online-indicator {
-  width: 12px;
-  height: 12px;
-  background-color: #4CAF50;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
-
-.player-count {
-  font-size: 0.8em;
-  color: var(--color-text-muted);
-  font-weight: normal;
-}
-
-.header-controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.auto-refresh-button {
-  padding: 8px 12px;
-  background-color: var(--color-background-soft);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: all 0.2s ease;
-}
-
-.auto-refresh-button.active {
-  background-color: var(--color-accent);
-  color: white;
-  border-color: var(--color-accent);
-}
-
-.auto-refresh-button:hover {
-  background-color: var(--color-background-mute);
-}
-
-.auto-refresh-button.active:hover {
-  background-color: var(--color-accent-hover);
-}
-
-.refresh-button {
-  padding: 8px 16px;
-  background-color: var(--color-accent);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.refresh-button:hover {
-  background-color: var(--color-accent-hover);
-}
-
-.refresh-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.spinner {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Game Filter Tabs */
-.game-filter-tabs {
-  display: flex;
-  gap: 5px;
-  margin-bottom: 20px;
-  overflow-x: auto;
-  padding-bottom: 5px;
-}
-
-.game-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 15px;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.game-tab:hover {
-  background-color: var(--color-background-mute);
-  border-color: var(--color-accent);
-}
-
-.game-tab.active {
-  background-color: var(--color-accent);
-  color: white;
-  border-color: var(--color-accent);
-}
-
-.tab-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.tab-count {
-  background-color: var(--color-background-mute);
-  color: var(--color-text);
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.game-tab.active .tab-count {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-/* Search Controls */
-.filter-section {
-  margin-bottom: 20px;
-}
-
-.search-controls {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.search-group {
-  flex: 1;
-  min-width: 200px;
-}
-
-.search-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-size: 14px;
-  background-color: var(--color-background-soft);
-  color: var(--color-text);
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.1);
-}
-
-.clear-filters-button {
-  padding: 10px 16px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  white-space: nowrap;
-}
-
-.clear-filters-button:hover {
-  background-color: #5a6268;
-}
-
-/* Loading/Error States */
-.loading-state, .error-state, .no-players-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--color-text-muted);
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid var(--color-background-mute);
-  border-top: 4px solid var(--color-accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
-}
-
-.no-players-icon {
-  font-size: 48px;
-  margin-bottom: 20px;
-}
-
-.retry-button {
-  padding: 10px 20px;
-  background-color: var(--color-accent);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  margin-top: 10px;
-}
-
-.retry-button:hover {
-  background-color: var(--color-accent-hover);
-}
-
-/* Players Grid */
-.players-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.player-card {
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.social-container {
   position: relative;
 }
 
-.player-card:hover {
-  background-color: var(--color-background-mute);
-  border-color: var(--color-accent);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-/* Player Info */
-.player-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.player-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.player-details {
-  flex: 1;
-}
-
-.player-name {
-  font-weight: 600;
-  font-size: 16px;
-  color: var(--color-heading);
-}
-
-.player-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.status-dot.online {
-  background-color: #4CAF50;
-  animation: pulse 2s infinite;
-}
-
-/* Game Info */
-.game-info {
-  background-color: var(--color-background);
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.game-info:hover {
-  background-color: var(--color-background-mute);
-}
-
-.game-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.game-icon-small {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.server-name {
-  font-weight: 500;
-  font-size: 14px;
-  color: var(--color-text);
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.map-info {
-  margin-left: 24px;
-}
-
-.map-name {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-/* Session Stats */
-.session-stats {
-  display: flex;
-  gap: 12px;
-  justify-content: space-around;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.stat-label {
-  font-size: 10px;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 14px;
-  font-weight: bold;
-  color: var(--color-text);
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 0;
-}
-
-.pagination-top {
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.pagination-bottom {
-  margin-top: 20px;
-  border-top: 1px solid var(--color-border);
-}
-
-.pagination-button {
-  padding: 10px 16px;
-  background-color: var(--color-accent);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: var(--color-accent-hover);
-}
-
-.pagination-button:disabled {
-  background-color: var(--color-background-mute);
-  color: var(--color-text-muted);
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.page-info {
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.results-info {
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-/* Game Icons */
-.game-icon.bf1942, .tab-icon.bf1942, .game-icon-small.bf1942 {
-  background-image: url('../assets/bf1942.jpg');
-}
-
-.game-icon.fh2, .tab-icon.fh2, .game-icon-small.fh2 {
-  background-image: url('../assets/fh2.jpg');
-}
-
-.game-icon.bfv, .tab-icon.bfv, .game-icon-small.bfv {
-  background-image: url('../assets/bfv.jpg');
-}
-
-.game-icon.default, .tab-icon.default, .game-icon-small.default {
-  background-image: url('../assets/servers.jpg');
-}
-
-/* Sliding Online Panel */
-.online-toggle-btn {
+/* Toggle Button */
+.social-toggle-btn {
   position: fixed;
   top: 50%;
   right: 0;
   transform: translateY(-50%);
-  background-color: var(--color-accent);
+  background: linear-gradient(135deg, #5865F2, #7289DA);
   color: #fff;
   border: none;
-  border-radius: 6px 0 0 6px;
-  padding: 10px 12px;
+  border-radius: 12px 0 0 12px;
+  padding: 12px 16px;
   cursor: pointer;
   z-index: 1001;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 48px;
+  min-width: 48px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: -2px 0 12px rgba(88, 101, 242, 0.3);
+  transition: all 0.2s ease;
+}
+
+.social-toggle-btn:hover {
+  transform: translateY(-50%) translateX(-2px);
+  box-shadow: -4px 0 16px rgba(88, 101, 242, 0.4);
 }
 
 .button-content {
@@ -851,319 +392,410 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-.green-pulse-light {
-  width: 12px;
-  height: 12px;
-  background-color: #4CAF50;
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  background-color: #57F287;
   border-radius: 50%;
-  animation: green-pulse 2s infinite;
-  box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+  animation: discord-pulse 2s infinite;
 }
 
-@keyframes green-pulse {
+@keyframes discord-pulse {
   0% { 
     opacity: 1;
     transform: scale(1);
-    box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
   }
   50% { 
-    opacity: 0.6;
-    transform: scale(1.1);
-    box-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
+    opacity: 0.7;
+    transform: scale(1.2);
   }
   100% { 
     opacity: 1;
     transform: scale(1);
-    box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
   }
 }
 
-.online-panel {
+/* Social Panel */
+.social-panel {
   position: fixed;
   top: 0;
   right: 0;
-  width: 300px;
+  width: 320px;
   max-width: 90vw;
   height: 100vh;
-  background-color: var(--color-background);
-  box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+  background: #2F3136;
+  border-left: 1px solid #40444B;
   transform: translateX(100%);
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   z-index: 1000;
-  overflow-y: auto; /* Allow internal scrolling */
+  overflow: hidden;
 }
 
-.online-panel.open {
+.social-panel.open {
   transform: translateX(0);
 }
 
 .panel-header {
-  padding: 16px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 16px 20px;
+  border-bottom: 1px solid #40444B;
+  background: #36393F;
 }
 
-.players-list {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.player-row {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border);
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.player-row:hover {
-  background-color: var(--color-background-soft);
-}
-
-/* Stats row & K/D colour coding */
-.stats-row {
-  font-size: 12px;
+.panel-title {
+  color: #FFFFFF;
+  font-size: 16px;
   font-weight: 600;
-  display: flex;
-  gap: 2px;
-}
-
-.kills {
-  color: #4CAF50; /* green */
-}
-
-.deaths {
-  color: #e74c3c; /* red */
-}
-
-/* Map name in server header */
-.map {
-  font-style: italic;
-  color: var(--color-text-muted);
-}
-
-/* ===== Added styles for server grouping ===== */
-.server-header-link {
-  padding: 12px 16px;
-  background-color: var(--color-background-soft);
-  border-bottom: 1px solid var(--color-border);
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-.server-header-link:hover {
-  background-color: var(--color-background-mute);
-}
-.server-link {
-  color: var(--color-accent);
-  text-decoration: underline;
-  cursor: pointer;
-}
-/* ===== End added styles ===== */
-
-.name-row {
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
-  color: var(--color-heading);
 }
 
-.online-dot {
+.buddies-icon {
+  font-size: 18px;
+}
+
+/* Social Content */
+.social-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  padding: 16px 20px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-header h4 {
+  color: #B9BBBE;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #4CAF50;
-  animation: pulse 2s infinite;
+  margin-right: 4px;
 }
 
-.details-row {
+.status-dot.online {
+  background-color: #57F287;
+}
+
+.status-dot.offline {
+  background-color: #747F8D;
+}
+
+.server-icon {
   font-size: 12px;
-  color: var(--color-text-muted);
-  margin-top: 2px;
+}
+
+/* Buddy List */
+.buddy-list {
+  padding: 0 12px;
+}
+
+.buddy-item {
   display: flex;
-  gap: 4px;
   align-items: center;
+  padding: 8px 8px;
+  margin-bottom: 2px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.buddy-item:hover {
+  background-color: #34373C;
+}
+
+.buddy-item.offline {
+  opacity: 0.6;
+}
+
+.buddy-item.offline:hover {
+  opacity: 0.8;
+}
+
+.buddy-avatar {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5865F2, #7289DA);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.avatar-text {
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.online-status {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background-color: #57F287;
+  border: 3px solid #2F3136;
+  border-radius: 50%;
+}
+
+.offline-status {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background-color: #747F8D;
+  border: 3px solid #2F3136;
+  border-radius: 50%;
+}
+
+.buddy-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.buddy-name {
+  color: #DCDDDE;
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.separator {
-  color: var(--color-text-muted);
-}
-
-.player-search-input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-size: 14px;
-  background-color: var(--color-background-soft);
-  color: var(--color-text);
-  margin-top: 8px;
-}
-
-.player-search-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.1);
-}
-
-.game-badge-container {
+.buddy-activity {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
 }
 
-.game-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
+.activity-text {
+  color: #B9BBBE;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-map {
+  color: #72767D;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.buddy-stats {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.stat {
+  color: #B9BBBE;
+  background-color: #4F545C;
+  padding: 2px 6px;
   border-radius: 12px;
+  font-weight: 500;
+}
+
+.buddy-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.join-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background-color: #5865F2;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 12px;
-  transition: all 0.2s ease;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
 }
 
-.game-badge:hover {
-  background-color: var(--color-background-mute);
-  border-color: var(--color-accent);
+.join-btn:hover {
+  background-color: #4752C4;
+  transform: scale(1.1);
 }
 
-.game-badge.active {
-  background-color: var(--color-accent);
-  color: #fff;
-  border-color: var(--color-accent);
+/* Server List */
+.server-list {
+  padding: 0 12px;
 }
 
-.badge-icon {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.badge-count {
-  background-color: var(--color-background-mute);
-  color: var(--color-text);
-  padding: 0 6px;
+.server-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  margin-bottom: 2px;
   border-radius: 8px;
-  font-size: 10px;
-  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.game-badge.active .badge-count {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #fff;
+.server-item:hover {
+  background-color: #34373C;
 }
 
-/* Mobile responsiveness */
+.server-status {
+  width: 4px;
+  height: 32px;
+  border-radius: 2px;
+  margin-right: 12px;
+  background-color: #4F545C;
+  overflow: hidden;
+  position: relative;
+}
+
+.server-fill-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #72767D;
+  border-radius: 2px;
+}
+
+.server-fill-progress {
+  height: 100%;
+  background-color: inherit;
+  transition: height 0.3s ease;
+}
+
+.server-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.server-name {
+  color: #DCDDDE;
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.server-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.server-map {
+  color: #B9BBBE;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.server-players {
+  color: #72767D;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.server-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* Loading/Error States */
+.loading-state, .error-state, .empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #72767D;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #40444B;
+  border-top: 3px solid #5865F2;
+  border-radius: 50%;
+  animation: discord-spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes discord-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.empty-text {
+  color: #DCDDDE;
+  font-weight: 600;
+  font-size: 16px;
+  margin: 8px 0;
+}
+
+.empty-subtext {
+  color: #72767D;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Mobile Responsiveness */
 @media (max-width: 768px) {
-  .online-players-container {
-    padding: 15px;
+  .social-panel {
+    width: 100vw;
   }
-
-  .header-content {
-    flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
+  
+  .buddy-item, .server-item {
+    padding: 12px 8px;
   }
-
-  .header-controls {
-    width: 100%;
-    justify-content: space-between;
+  
+  .buddy-name, .server-name {
+    font-size: 16px;
   }
-
-  .game-filter-tabs {
-    flex-wrap: wrap;
-  }
-
-  .search-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-group {
-    min-width: auto;
-  }
-
-  .players-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .player-card {
-    padding: 12px;
-  }
-
-  .pagination {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .pagination-info {
-    order: -1;
-  }
-}
-
-@media (max-width: 480px) {
-  .online-players-container {
-    padding: 10px;
-  }
-
-  .player-info {
-    gap: 8px;
-  }
-
-  .player-avatar {
-    width: 32px;
-    height: 32px;
+  
+  .activity-text, .server-map {
     font-size: 14px;
   }
-
-  .session-stats {
-    gap: 8px;
-  }
 }
+
+/* End of styles */
 </style>
 
 <style>
 body.no-scroll {
   overflow: hidden;
-}
-</style>
-
-<style scoped>
-.load-more-container {
-  padding: 12px;
-  text-align: center;
-  border-top: 1px solid var(--color-border);
-}
-
-.load-more-button {
-  padding: 8px 16px;
-  background-color: var(--color-accent);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.load-more-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 </style>

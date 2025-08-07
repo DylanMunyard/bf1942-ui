@@ -5,7 +5,7 @@
     </main>
     <Sidebar />
     <PlayerComparisonWidget />
-    <OnlinePlayersSidebar />
+    <OnlinePlayersSidebar v-if="isAuthenticated" />
   </div>
 </template>
 
@@ -13,6 +13,9 @@
 import Sidebar from '../components/Sidebar.vue';
 import PlayerComparisonWidget from '../components/PlayerComparisonWidget.vue';
 import OnlinePlayersSidebar from '../components/OnlinePlayersSidebar.vue';
+import { useAuth } from '@/composables/useAuth';
+
+const { isAuthenticated } = useAuth();
 </script>
 
 <style scoped>

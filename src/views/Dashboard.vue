@@ -3,7 +3,7 @@
     <!-- Header Section -->
     <div class="dashboard-header">
       <div class="welcome-section">
-        <h1 v-if="isAuthenticated">Welcome back, Commander!</h1>
+        <h1 v-if="isAuthenticated">Welcome back!</h1>
         <h1 v-else>Welcome to Battlefield Command Center</h1>
         <p v-if="isAuthenticated" class="subtitle">Ready for battle? Here's your tactical overview.</p>
         <p v-else class="subtitle">Sign in to access your personal battlefield dashboard with player profiles, favorite servers, and squad management.</p>
