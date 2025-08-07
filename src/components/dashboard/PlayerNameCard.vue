@@ -82,6 +82,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { formatLastSeen } from '@/utils/timeUtils';
 interface Player {
   name: string;
   firstSeen: string;
@@ -124,19 +125,7 @@ const formatScore = (score: number): string => {
   return score.toLocaleString();
 };
 
-const formatLastSeen = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes}m ago`;
-  }
-  if (diffInMinutes < 1440) {
-    return `${Math.floor(diffInMinutes / 60)}h ago`;
-  }
-  return `${Math.floor(diffInMinutes / 1440)}d ago`;
-};
+// Note: formatLastSeen is now imported from @/utils/timeUtils
 
 const hasSessionStats = computed(() => {
   return props.playerName.player?.currentSessionScore !== undefined ||
