@@ -3,6 +3,7 @@ import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { fetchDashboardData, DashboardResponse } from '../services/dashboardService';
 import { useAuth } from '@/composables/useAuth';
+import { formatLastSeen } from '@/utils/timeUtils';
 
 // Router and Auth
 const router = useRouter();
@@ -50,23 +51,7 @@ const formatDuration = (minutes: number): string => {
   return `${hours}h ${mins}m`;
 };
 
-// Format last seen time
-const formatLastSeen = (lastSeenAt: string): string => {
-  const now = new Date();
-  const lastSeen = new Date(lastSeenAt);
-  const diffMs = now.getTime() - lastSeen.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  
-  if (diffMins < 60) {
-    return `${diffMins} minutes ago`;
-  } else if (diffHours < 24) {
-    return `${diffHours} hours ago`;
-  } else {
-    return `${diffDays} days ago`;
-  }
-};
+// Note: formatLastSeen is now imported from @/utils/timeUtils
 
 // Calculate server fill percentage
 const getServerFillPercentage = (current: number, max: number): number => {

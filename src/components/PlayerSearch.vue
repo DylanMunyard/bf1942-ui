@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, nextTick } from 'vue';
+import { formatLastSeen } from '@/utils/timeUtils';
 
 interface PlayerSearchResult {
   playerName: string;
@@ -207,19 +208,7 @@ const formatPlayTime = (minutes: number): string => {
   return `${days}d ${hours % 24}h`;
 };
 
-const formatLastSeen = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-  
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes}m ago`;
-  } else if (diffInMinutes < 1440) {
-    return `${Math.floor(diffInMinutes / 60)}h ago`;
-  } else {
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
-  }
-};
+// Note: formatLastSeen is now imported from @/utils/timeUtils
 </script>
 
 <style scoped>
