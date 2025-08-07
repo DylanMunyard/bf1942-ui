@@ -1,5 +1,8 @@
 <template>
-  <div class="server-search-container" @click.stop>
+  <div
+    class="server-search-container"
+    @click.stop
+  >
     <input 
       ref="inputRef"
       v-model="searchInput" 
@@ -12,10 +15,16 @@
       @focus="onFocus"
       @blur="onBlur"
     >
-    <div v-if="isLoading" class="search-spinner">
+    <div
+      v-if="isLoading"
+      class="search-spinner"
+    >
       🔄
     </div>
-    <div v-if="showDropdown && (searchResults.length > 0 || (!isLoading && searchInput.length >= 2))" class="search-dropdown">
+    <div
+      v-if="showDropdown && (searchResults.length > 0 || (!isLoading && searchInput.length >= 2))"
+      class="search-dropdown"
+    >
       <div 
         v-for="server in searchResults" 
         :key="server.serverGuid"
@@ -33,13 +42,25 @@
             <span class="location">{{ server.city }}, {{ server.country }}</span>
           </div>
           <div class="server-status">
-            <span class="status-indicator" :class="{ 'online': server.hasActivePlayers }"></span>
-            <span v-if="!server.hasActivePlayers" class="last-activity">{{ formatLastActivity(server.lastActivity) }}</span>
-            <span v-else class="online-status">Online</span>
+            <span
+              class="status-indicator"
+              :class="{ 'online': server.hasActivePlayers }"
+            />
+            <span
+              v-if="!server.hasActivePlayers"
+              class="last-activity"
+            >{{ formatLastActivity(server.lastActivity) }}</span>
+            <span
+              v-else
+              class="online-status"
+            >Online</span>
           </div>
         </div>
       </div>
-      <div v-if="searchResults.length === 0 && !isLoading && searchInput.length >= 2" class="no-results">
+      <div
+        v-if="searchResults.length === 0 && !isLoading && searchInput.length >= 2"
+        class="no-results"
+      >
         No servers found
       </div>
     </div>

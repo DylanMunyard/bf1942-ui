@@ -218,49 +218,6 @@ const formatPlayTime = (minutes: number): string => {
   }
 };
 
-// Format date to a readable format in the user's locale
-const formatDate = (dateString: string): string => {
-  // Ensure the date is treated as UTC by appending 'Z' if it doesn't have timezone info
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  const now = new Date();
-
-  // Format time without seconds
-  const timeFormat = date.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  }).toLowerCase();
-
-  // Calculate the difference in days
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffTime = today.getTime() - dateDay.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-  // Get day name
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const dayName = dayNames[date.getDay()];
-
-  // Format date based on how recent it is
-  if (diffDays === 0) {
-    // Today
-    return `Today at ${timeFormat}`;
-  } else if (diffDays === 1) {
-    // Yesterday
-    return `Yesterday at ${timeFormat}`;
-  } else if (diffDays < 7) {
-    // Within the last week
-    return `${dayName} at ${timeFormat}`;
-  } else {
-    // More than a week ago
-    const formattedDate = date.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-    return `${formattedDate} at ${timeFormat} (${diffDays} days ago)`;
-  }
-};
 
 // Format date to a human-readable relative time (e.g., "2 days ago")
 const formatRelativeTime = (dateString: string): string => {
@@ -315,11 +272,6 @@ const getRoundReportRoute = (session: any) => {
   return `/players/${encodeURIComponent(playerName.value)}`;
 };
 
-// Computed property to sort server play times by minutes played (descending)
-const sortedServerPlayTimes = computed(() => {
-  if (!playerStats.value?.insights?.serverPlayTimes) return [];
-  return [...playerStats.value.insights.serverPlayTimes].sort((a, b) => b.minutesPlayed - a.minutesPlayed);
-});
 
 // Computed property to sort activity hours chronologically by local hour (0-23)
 const sortedLocalActivityHours = computed(() => {
@@ -468,10 +420,11 @@ const sortedMapStats = computed(() => {
         return direction * a.mapName.localeCompare(b.mapName);
       case 'totalScore':
         return direction * (a.totalScore - b.totalScore);
-      case 'kdRatio':
+      case 'kdRatio': {
         const aKdr = a.totalDeaths === 0 ? a.totalKills : a.totalKills / a.totalDeaths;
         const bKdr = b.totalDeaths === 0 ? b.totalKills : b.totalKills / b.totalDeaths;
         return direction * (aKdr - bKdr);
+      }
       case 'totalKills':
         return direction * (a.totalKills - b.totalKills);
       case 'totalDeaths':
@@ -529,17 +482,6 @@ const getPerformanceLabel = (session: any): string => {
   return 'Tough round';
 };
 
-const getSessionDuration = (session: any): string => {
-  // If session has duration data, use it
-  if (session.duration) {
-    return `${session.duration}min`;
-  }
-  
-  // Otherwise estimate based on typical session length
-  // This is a placeholder - you might want to calculate this differently
-  const estimatedDuration = Math.max(15, Math.min(60, Math.floor(session.totalScore / 20)));
-  return `~${estimatedDuration}min`;
-};
 
 const getTimeGap = (currentSession: any, nextSession: any): string => {
   const current = new Date(currentSession.startTime.endsWith('Z') ? currentSession.startTime : currentSession.startTime + 'Z');
@@ -784,7 +726,7 @@ watch(
             >
               <div class="server-cards-grid">
                 <div
-                  v-for="(server, idx) in sortedServers"
+                  v-for="server in sortedServers"
                   :key="server.serverGuid"
                   class="server-card-gamified"
                 >

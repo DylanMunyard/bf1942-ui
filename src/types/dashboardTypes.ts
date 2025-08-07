@@ -23,14 +23,16 @@ export interface FavoriteServer {
   joinLink: string;
 }
 
+export interface OfflineBuddy {
+  playerName: string;
+  lastSeen: string; // ISO date string
+  lastSeenIso: string;
+  totalPlayTimeMinutes: number;
+  addedAt: string; // ISO date string
+}
+
 export interface DashboardResponse {
   onlineBuddies: OnlineBuddy[];
   favoriteServers: FavoriteServer[];
-}
-
-// Future offline buddy data (when available)
-export interface OfflineBuddy {
-  playerName: string;
-  lastSeenAt: string; // ISO date string
-  lastSeenServer?: string;
+  offlineBuddies: OfflineBuddy[];
 }

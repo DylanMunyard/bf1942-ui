@@ -1,42 +1,79 @@
 <template>
-  <div class="player-name-card" :class="{ 'online': playerName.player?.isOnline }">
+  <div
+    class="player-name-card"
+    :class="{ 'online': playerName.player?.isOnline }"
+  >
     <div class="player-row">
       <div class="player-info">
         <div class="player-avatar">
           <span class="avatar-letter">{{ playerName.playerName[0].toUpperCase() }}</span>
-          <div v-if="playerName.player?.isOnline" class="online-indicator"></div>
+          <div
+            v-if="playerName.player?.isOnline"
+            class="online-indicator"
+          />
         </div>
         <div class="player-details">
           <div class="player-name">
-            <router-link :to="`/players/${playerName.playerName}`" class="player-name-link">
+            <router-link
+              :to="`/players/${playerName.playerName}`"
+              class="player-name-link"
+            >
               {{ playerName.playerName }}
             </router-link>
           </div>
           <div class="player-status">
-            <span v-if="playerName.player?.isOnline && playerName.player.currentServer" class="status-info">
-              🎮 <router-link :to="`/servers/${encodeURIComponent(playerName.player.currentServer)}`" class="server-link">{{ playerName.player.currentServer }}</router-link>
-              <span v-if="playerName.player.currentMap" class="map-info">• {{ playerName.player.currentMap }}</span>
+            <span
+              v-if="playerName.player?.isOnline && playerName.player.currentServer"
+              class="status-info"
+            >
+              🎮 <router-link
+                :to="`/servers/${encodeURIComponent(playerName.player.currentServer)}`"
+                class="server-link"
+              >{{ playerName.player.currentServer }}</router-link>
+              <span
+                v-if="playerName.player.currentMap"
+                class="map-info"
+              >• {{ playerName.player.currentMap }}</span>
             </span>
-            <span v-else-if="playerName.player?.isOnline" class="status-info online">
+            <span
+              v-else-if="playerName.player?.isOnline"
+              class="status-info online"
+            >
               🟢 Online
             </span>
-            <span v-else class="status-info offline">
+            <span
+              v-else
+              class="status-info offline"
+            >
               Last seen {{ formatLastSeen(playerName.player.lastSeenIso) }}
             </span>
             
             <!-- Current session stats inline -->
-            <div v-if="playerName.player?.isOnline && hasSessionStats" class="session-stats">
-              <span class="stat-score" v-if="playerName.player.currentSessionScore !== undefined">
+            <div
+              v-if="playerName.player?.isOnline && hasSessionStats"
+              class="session-stats"
+            >
+              <span
+                v-if="playerName.player.currentSessionScore !== undefined"
+                class="stat-score"
+              >
                 {{ formatScore(playerName.player.currentSessionScore) }}
               </span>
-              <span class="stat-kd" v-if="playerName.player.currentSessionKills !== undefined && playerName.player.currentSessionDeaths !== undefined">
+              <span
+                v-if="playerName.player.currentSessionKills !== undefined && playerName.player.currentSessionDeaths !== undefined"
+                class="stat-kd"
+              >
                 (<span class="kills">{{ playerName.player.currentSessionKills }}</span>/<span class="deaths">{{ playerName.player.currentSessionDeaths }}</span>)
               </span>
             </div>
           </div>
         </div>
       </div>
-      <button @click="$emit('remove', playerName.id)" class="remove-btn" title="Remove player">
+      <button
+        class="remove-btn"
+        title="Remove player"
+        @click="$emit('remove', playerName.id)"
+      >
         ✕
       </button>
     </div>

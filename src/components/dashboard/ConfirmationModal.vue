@@ -1,14 +1,26 @@
 <template>
-  <div class="modal-overlay" @click="$emit('cancel')">
-    <div class="confirmation-modal" @click.stop>
+  <div
+    class="modal-overlay"
+    @click="$emit('cancel')"
+  >
+    <div
+      class="confirmation-modal"
+      @click.stop
+    >
       <div class="modal-body">
         <p>{{ message }}?</p>
       </div>
       <div class="modal-actions">
-        <button @click="$emit('cancel')" class="cancel-btn">
+        <button
+          class="cancel-btn"
+          @click="$emit('cancel')"
+        >
           Cancel
         </button>
-        <button @click="$emit('confirm')" class="confirm-btn">
+        <button
+          class="confirm-btn"
+          @click="$emit('confirm')"
+        >
           {{ confirmText }}
         </button>
       </div>

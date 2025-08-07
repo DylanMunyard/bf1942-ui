@@ -1,5 +1,8 @@
 <template>
-  <div class="player-search-container" @click.stop>
+  <div
+    class="player-search-container"
+    @click.stop
+  >
     <input 
       ref="inputRef"
       v-model="searchInput" 
@@ -12,10 +15,16 @@
       @focus="onFocus"
       @blur="onBlur"
     >
-    <div v-if="isLoading" class="search-spinner">
+    <div
+      v-if="isLoading"
+      class="search-spinner"
+    >
       🔄
     </div>
-    <div v-if="showDropdown && (searchResults.length > 0 || (!isLoading && searchInput.length >= 2))" class="search-dropdown">
+    <div
+      v-if="showDropdown && (searchResults.length > 0 || (!isLoading && searchInput.length >= 2))"
+      class="search-dropdown"
+    >
       <div 
         v-for="player in searchResults" 
         :key="player.playerName"
@@ -29,15 +38,27 @@
           <div class="player-details">
             <span class="play-time">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
             <span class="last-seen">{{ formatLastSeen(player.lastSeen) }}</span>
-            <span v-if="player.isActive" class="active-badge">🟢 Online</span>
-            <span v-else class="inactive-badge">⚫ Offline</span>
+            <span
+              v-if="player.isActive"
+              class="active-badge"
+            >🟢 Online</span>
+            <span
+              v-else
+              class="inactive-badge"
+            >⚫ Offline</span>
           </div>
-          <div v-if="player.currentServer && player.isActive" class="current-server">
+          <div
+            v-if="player.currentServer && player.isActive"
+            class="current-server"
+          >
             {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
           </div>
         </div>
       </div>
-      <div v-if="searchResults.length === 0 && !isLoading && searchInput.length >= 2" class="no-results">
+      <div
+        v-if="searchResults.length === 0 && !isLoading && searchInput.length >= 2"
+        class="no-results"
+      >
         No players found
       </div>
     </div>

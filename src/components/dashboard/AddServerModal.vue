@@ -1,12 +1,27 @@
 <template>
-  <div class="modal-overlay" @click="handleOverlayClick" @mousedown="handleOverlayMouseDown">
-    <div class="modal-content" @click.stop @mousedown="handleModalMouseDown">
+  <div
+    class="modal-overlay"
+    @click="handleOverlayClick"
+    @mousedown="handleOverlayMouseDown"
+  >
+    <div
+      class="modal-content"
+      @click.stop
+      @mousedown="handleModalMouseDown"
+    >
       <div class="modal-header">
         <div class="header-content">
           <h3>Add Favorite Server</h3>
-          <p class="subtitle">Save servers to quickly monitor status and join battles</p>
+          <p class="subtitle">
+            Save servers to quickly monitor status and join battles
+          </p>
         </div>
-        <button @click="$emit('close')" class="close-btn">✕</button>
+        <button
+          class="close-btn"
+          @click="$emit('close')"
+        >
+          ✕
+        </button>
       </div>
       
       <div class="modal-body">
@@ -24,22 +39,36 @@
           </small>
         </div>
 
-        <div v-if="error" class="error-message">
+        <div
+          v-if="error"
+          class="error-message"
+        >
           {{ error }}
         </div>
 
-        <div v-if="selectedServer" class="selected-server">
+        <div
+          v-if="selectedServer"
+          class="selected-server"
+        >
           <h4>Selected Server</h4>
           <div class="server-preview">
             <div class="preview-content">
-              <h5 class="server-title">{{ selectedServer.serverName }}</h5>
+              <h5 class="server-title">
+                {{ selectedServer.serverName }}
+              </h5>
               <div class="server-meta">
                 <span class="game-badge">{{ selectedServer.gameId.toUpperCase() }}</span>
                 <span class="map-info">{{ selectedServer.currentMap }}</span>
-                <span v-if="!selectedServer.hasActivePlayers" class="offline-status">
+                <span
+                  v-if="!selectedServer.hasActivePlayers"
+                  class="offline-status"
+                >
                   Offline {{ formatLastActivity(selectedServer.lastActivity) }}
                 </span>
-                <span v-else class="online-status">Online</span>
+                <span
+                  v-else
+                  class="online-status"
+                >Online</span>
               </div>
               <div class="server-details">
                 <span class="players">{{ selectedServer.totalActivePlayersLast24h }} active players (24h)</span>
@@ -50,16 +79,23 @@
         </div>
 
         <div class="form-actions">
-          <button type="button" @click="$emit('close')" class="cancel-btn">
+          <button
+            type="button"
+            class="cancel-btn"
+            @click="$emit('close')"
+          >
             Cancel
           </button>
           <button 
             type="button" 
-            @click="handleAddServer" 
             :disabled="!selectedServer || isSubmitting" 
-            class="submit-btn"
+            class="submit-btn" 
+            @click="handleAddServer"
           >
-            <span v-if="isSubmitting" class="spinner"></span>
+            <span
+              v-if="isSubmitting"
+              class="spinner"
+            />
             {{ isSubmitting ? 'Adding...' : 'Add to Favorites' }}
           </button>
         </div>

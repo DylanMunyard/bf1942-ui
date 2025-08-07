@@ -28,17 +28,6 @@ const canSelect = computed(() =>
   props.clickable && canAddPlayer.value && !isSelected.value
 );
 
-const handleClick = (event: MouseEvent) => {
-  if (!props.clickable) return;
-  
-  // Prevent default link behavior if this is inside a link
-  event.preventDefault();
-  event.stopPropagation();
-  
-  if (canSelect.value) {
-    addPlayer(props.name, props.source, props.serverGuid);
-  }
-};
 
 const handleCompareClick = (event: MouseEvent) => {
   if (!props.clickable) return;

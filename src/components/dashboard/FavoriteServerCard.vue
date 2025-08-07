@@ -1,18 +1,34 @@
 <template>
-  <div class="favorite-server-card" @click="$emit('join', server)">
+  <div
+    class="favorite-server-card"
+    @click="$emit('join', server)"
+  >
     <div class="server-row">
       <div class="server-info">
-        <router-link :to="`/servers/${encodeURIComponent(server.serverName)}`" class="server-name-link" @click.stop>
+        <router-link
+          :to="`/servers/${encodeURIComponent(server.serverName)}`"
+          class="server-name-link"
+          @click.stop
+        >
           <span class="server-name">{{ server.serverName }}</span>
         </router-link>
         <div class="server-details">
-          <span v-if="server.currentMap" class="current-map">{{ server.currentMap }}</span>
-          <div class="player-count-badge" :class="getStatusClass()">
+          <span
+            v-if="server.currentMap"
+            class="current-map"
+          >{{ server.currentMap }}</span>
+          <div
+            class="player-count-badge"
+            :class="getStatusClass()"
+          >
             <template v-if="server.currentMap">
               <span class="count">{{ server.activeSessions }}</span>
               <span class="max">/{{ server.maxPlayers }}</span>
             </template>
-            <span v-else class="offline-text">OFFLINE</span>
+            <span
+              v-else
+              class="offline-text"
+            >OFFLINE</span>
           </div>
         </div>
       </div>
@@ -20,13 +36,17 @@
         <a 
           v-if="server.joinLink" 
           :href="server.joinLink" 
-          @click.stop 
           class="join-btn" 
-          title="Join Server"
+          title="Join Server" 
+          @click.stop
         >
           🚀
         </a>
-        <button @click.stop="$emit('remove', server.id)" class="remove-btn" title="Remove from favorites">
+        <button
+          class="remove-btn"
+          title="Remove from favorites"
+          @click.stop="$emit('remove', server.id)"
+        >
           ❤️
         </button>
       </div>
@@ -35,7 +55,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 
 interface FavoriteServer {
   id: number;

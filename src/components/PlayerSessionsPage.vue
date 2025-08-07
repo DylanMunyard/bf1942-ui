@@ -56,18 +56,6 @@ const formatPlayTime = (minutes: number): string => {
   }
 };
 
-// Format date to a readable format in the user's locale
-const formatDate = (dateString: string): string => {
-  // Ensure the date is treated as UTC by appending 'Z' if it doesn't have timezone info
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  return date.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
 
 // Format date to a human-readable relative time (e.g., "2 days ago")
 const formatRelativeTime = (dateString: string): string => {
@@ -214,21 +202,6 @@ const resetFilters = () => {
 };
 
 // Handle sort column click
-const handleSort = (column: string) => {
-  // If clicking the same column, toggle order
-  if (sortBy.value === column) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    // If clicking a new column, set it as the sort column and default to descending
-    sortBy.value = column;
-    sortOrder.value = 'desc';
-  }
-
-  // Reset to first page and refetch data
-  currentPage.value = 1;
-  updateQueryParams();
-  fetchData();
-};
 
 // Function to handle pagination
 const goToPage = (page: number) => {

@@ -1,12 +1,27 @@
 <template>
-  <div class="modal-overlay" @click="handleOverlayClick" @mousedown="handleOverlayMouseDown">
-    <div class="modal-content" @click.stop @mousedown="handleModalMouseDown">
+  <div
+    class="modal-overlay"
+    @click="handleOverlayClick"
+    @mousedown="handleOverlayMouseDown"
+  >
+    <div
+      class="modal-content"
+      @click.stop
+      @mousedown="handleModalMouseDown"
+    >
       <div class="modal-header">
         <div class="header-content">
           <h3>Add Player Profile</h3>
-          <p class="subtitle">Link your in-game player name(s) to track stats and achievements</p>
+          <p class="subtitle">
+            Link your in-game player name(s) to track stats and achievements
+          </p>
         </div>
-        <button @click="$emit('close')" class="close-btn">✕</button>
+        <button
+          class="close-btn"
+          @click="$emit('close')"
+        >
+          ✕
+        </button>
       </div>
       
       <div class="modal-body">
@@ -25,11 +40,17 @@
             </small>
           </div>
 
-          <div v-if="error" class="error-message">
+          <div
+            v-if="error"
+            class="error-message"
+          >
             {{ error }}
           </div>
 
-          <div v-if="selectedPlayer" class="validation-result">
+          <div
+            v-if="selectedPlayer"
+            class="validation-result"
+          >
             <div class="player-preview">
               <h4>{{ selectedPlayer.playerName }}</h4>
               <div class="preview-stats">
@@ -42,24 +63,41 @@
                   <span class="label">Last Seen</span>
                 </div>
                 <div class="stat">
-                  <span class="value" :class="selectedPlayer.isActive ? 'online' : 'offline'">
+                  <span
+                    class="value"
+                    :class="selectedPlayer.isActive ? 'online' : 'offline'"
+                  >
                     {{ selectedPlayer.isActive ? '🟢 Online' : '⚫ Offline' }}
                   </span>
                   <span class="label">Status</span>
                 </div>
               </div>
-              <div v-if="selectedPlayer.currentServer && selectedPlayer.isActive" class="current-server">
+              <div
+                v-if="selectedPlayer.currentServer && selectedPlayer.isActive"
+                class="current-server"
+              >
                 Currently playing on {{ selectedPlayer.currentServer.serverName }}
               </div>
             </div>
           </div>
 
           <div class="form-actions">
-            <button type="button" @click="$emit('close')" class="cancel-btn">
+            <button
+              type="button"
+              class="cancel-btn"
+              @click="$emit('close')"
+            >
               Cancel
             </button>
-            <button type="submit" :disabled="!playerName.trim() || isSubmitting" class="submit-btn">
-              <span v-if="isSubmitting" class="spinner"></span>
+            <button
+              type="submit"
+              :disabled="!playerName.trim() || isSubmitting"
+              class="submit-btn"
+            >
+              <span
+                v-if="isSubmitting"
+                class="spinner"
+              />
               {{ isSubmitting ? 'Adding...' : 'Add Player' }}
             </button>
           </div>
@@ -70,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import PlayerSearch from '../PlayerSearch.vue';
 import { statsService } from '@/services/statsService';
 

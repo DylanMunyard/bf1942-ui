@@ -1,11 +1,17 @@
 <template>
   <div class="activity-feed">
-    <div v-if="activities.length === 0" class="no-activity">
+    <div
+      v-if="activities.length === 0"
+      class="no-activity"
+    >
       <span class="activity-icon">📊</span>
       <p>No recent activity to display</p>
       <small>Your battlefield achievements and activities will appear here</small>
     </div>
-    <div v-else class="activity-list">
+    <div
+      v-else
+      class="activity-list"
+    >
       <div
         v-for="activity in activities"
         :key="activity.id"
@@ -16,9 +22,14 @@
           <span class="activity-icon">{{ getActivityIcon(activity.type) }}</span>
         </div>
         <div class="activity-content">
-          <p class="activity-description">{{ activity.description }}</p>
+          <p class="activity-description">
+            {{ activity.description }}
+          </p>
           <span class="activity-time">{{ formatTimestamp(activity.timestamp) }}</span>
-          <span v-if="activity.playerName" class="activity-player">{{ activity.playerName }}</span>
+          <span
+            v-if="activity.playerName"
+            class="activity-player"
+          >{{ activity.playerName }}</span>
         </div>
       </div>
     </div>

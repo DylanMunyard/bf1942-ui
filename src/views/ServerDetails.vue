@@ -27,7 +27,6 @@ const isLiveServerLoading = ref(false);
 const error = ref<string | null>(null);
 const insightsError = ref<string | null>(null);
 const liveServerError = ref<string | null>(null);
-const isServerInsightsCollapsed = ref(true);
 const showPlayersModal = ref(false);
 const currentPeriod = ref('7d');
 
@@ -113,10 +112,6 @@ onMounted(() => {
   fetchData();
 });
 
-// Toggle server insights collapse state
-const toggleServerInsights = () => {
-  isServerInsightsCollapsed.value = !isServerInsightsCollapsed.value;
-};
 
 // Helper to get current time and UTC offset for a timezone string
 function getTimezoneDisplay(timezone: string | undefined): string | null {
@@ -133,7 +128,7 @@ function getTimezoneDisplay(timezone: string | undefined): string | null {
     const offsetHours = Math.round(offsetMinutes / 60);
     const sign = offsetHours >= 0 ? '+' : '-';
     return `${time} (${sign}${Math.abs(offsetHours)})`;
-  } catch (e) {
+  } catch {
     return timezone;
   }
 }

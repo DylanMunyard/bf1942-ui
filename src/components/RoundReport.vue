@@ -33,7 +33,6 @@ const isDragging = ref(false);
 const scrubberElement = ref<HTMLElement | null>(null);
 const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
 const isLiveUpdating = ref(false);
-const selectedTeamTab = ref(0); // For mobile tabbed interface
 
 // --- Player pinning state (now handles both pinning and focusing) ---
 const pinnedPlayers = ref<Set<string>>(new Set(
@@ -98,7 +97,7 @@ const pinnedPlayersChartData = computed(() => {
   if (!pinnedPlayers.value.size || !roundReport.value) return { labels: [], datasets: [] };
   
   // Create labels from timestamps
-  const labels = roundReport.value.leaderboardSnapshots.map((snap, idx) => 
+  const labels = roundReport.value.leaderboardSnapshots.map((snap) => 
     getElapsedTime(snap.timestamp)
   );
   
@@ -368,30 +367,7 @@ const formatDate = (dateString: string | null): string => {
   }
 };
 
-// Format duration between start and end times
-const formatDuration = (startTime: string, endTime: string): string => {
-  const start = new Date(startTime);
-  const end = new Date(endTime);
-  const diffMs = end.getTime() - start.getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  
-  const hours = Math.floor(diffMinutes / 60);
-  const remainingMinutes = diffMinutes % 60;
 
-  if (hours === 0) {
-    return `${remainingMinutes} minutes`;
-  } else if (hours === 1) {
-    return `${hours} hour ${remainingMinutes} minutes`;
-  } else {
-    return `${hours} hours ${remainingMinutes} minutes`;
-  }
-};
-
-// Calculate K/D ratio
-const calculateKDR = (kills: number, deaths: number): string => {
-  if (deaths === 0) return kills.toString();
-  return (kills / deaths).toFixed(2);
-};
 
 // Get the currently selected leaderboard snapshot
 const currentSnapshot = computed(() => {

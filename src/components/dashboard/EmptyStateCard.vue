@@ -4,9 +4,17 @@
       <div class="icon-container">
         <span class="icon">{{ icon }}</span>
       </div>
-      <h3 class="empty-title">{{ title }}</h3>
-      <p class="empty-description">{{ description }}</p>
-      <button v-if="actionText" @click="$emit('action')" class="action-button">
+      <h3 class="empty-title">
+        {{ title }}
+      </h3>
+      <p class="empty-description">
+        {{ description }}
+      </p>
+      <button
+        v-if="actionText"
+        class="action-button"
+        @click="$emit('action')"
+      >
         {{ actionText }}
       </button>
     </div>

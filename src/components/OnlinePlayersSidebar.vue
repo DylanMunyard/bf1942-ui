@@ -82,11 +82,31 @@ const getServerStatusColor = (current: number, max: number): string => {
   return '#95a5a6'; // Gray - Low
 };
 
+// Check if server is offline
+const isServerOffline = (current: number, max: number): boolean => {
+  return current === 0 || max === 0;
+};
+
+// Get server status class for styling (matching Dashboard FavoriteServerCard)
+const getServerStatusClass = (current: number, max: number): string => {
+  // If server is offline
+  if (isServerOffline(current, max)) return 'offline';
+  
+  const percentage = getServerFillPercentage(current, max);
+  
+  // Server is online, use green-based colors for online servers with players
+  if (current === 0) return 'online-empty';
+  if (current >= max) return 'online-full';
+  if (percentage >= 75) return 'online-hot';
+  if (percentage >= 50) return 'online-active';
+  return 'online-low';
+};
+
 // Total counts for display
 const totalOnlineBuddies = computed(() => dashboardData.value?.onlineBuddies.length || 0);
-const totalOfflineBuddies = computed(() => (dashboardData.value as any)?.offlineBuddies?.length || 0);
+const totalOfflineBuddies = computed(() => dashboardData.value?.offlineBuddies?.length || 0);
 const totalFavoriteServers = computed(() => dashboardData.value?.favoriteServers.length || 0);
-const totalOnline = computed(() => totalOnlineBuddies.value + totalFavoriteServers.value);
+const totalOnline = computed(() => totalOnlineBuddies.value);
 
 // Fetch dashboard data
 const fetchDashboardApiData = async () => {
@@ -221,9 +241,15 @@ onUnmounted(() => {
       >
         <p>{{ error }}</p>
       </div>
-      <div v-else-if="dashboardData" class="social-content">
+      <div
+        v-else-if="dashboardData"
+        class="social-content"
+      >
         <!-- Online Buddies Section -->
-        <div v-if="dashboardData.onlineBuddies.length > 0" class="section">
+        <div
+          v-if="dashboardData.onlineBuddies.length > 0"
+          class="section"
+        >
           <div class="section-header">
             <span class="status-dot online" />
             <h4>Online — {{ dashboardData.onlineBuddies.length }}</h4>
@@ -240,22 +266,24 @@ onUnmounted(() => {
                 <span class="online-status" />
               </div>
               <div class="buddy-info">
-                <div class="buddy-name">{{ buddy.playerName }}</div>
+                <div class="buddy-name">
+                  {{ buddy.playerName }}
+                </div>
                 <div class="buddy-activity">
                   <span class="activity-text">{{ buddy.serverName }}</span>
                   <span class="activity-map">{{ buddy.currentMap }}</span>
                 </div>
                 <div class="buddy-stats">
-                  <span class="stat">{{ buddy.currentKills }}K</span>
-                  <span class="stat">{{ buddy.currentDeaths }}D</span>
-                  <span class="stat">{{ formatDuration(buddy.sessionDurationMinutes) }}</span>
+                  <span class="stat score">{{ buddy.currentScore || 0 }}</span>
+                  <span class="stat kills">{{ buddy.currentKills }}</span>
+                  <span class="stat deaths">{{ buddy.currentDeaths }}</span>
                 </div>
               </div>
               <div class="buddy-actions">
                 <button 
                   class="join-btn"
-                  @click.stop="joinServer(buddy.joinLink)"
                   title="Join Server"
+                  @click.stop="joinServer(buddy.joinLink)"
                 >
                   🎮
                 </button>
@@ -265,14 +293,17 @@ onUnmounted(() => {
         </div>
 
         <!-- Offline Buddies Section -->
-        <div v-if="(dashboardData as any)?.offlineBuddies?.length > 0" class="section">
+        <div
+          v-if="dashboardData?.offlineBuddies?.length > 0"
+          class="section"
+        >
           <div class="section-header">
             <span class="status-dot offline" />
             <h4>Offline — {{ totalOfflineBuddies }}</h4>
           </div>
           <div class="buddy-list">
             <div
-              v-for="buddy in (dashboardData as any).offlineBuddies"
+              v-for="buddy in dashboardData.offlineBuddies.sort((a, b) => new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime())"
               :key="buddy.playerName"
               class="buddy-item offline"
               @click="goToPlayerDetails(buddy.playerName)"
@@ -282,10 +313,11 @@ onUnmounted(() => {
                 <span class="offline-status" />
               </div>
               <div class="buddy-info">
-                <div class="buddy-name">{{ buddy.playerName }}</div>
+                <div class="buddy-name">
+                  {{ buddy.playerName }}
+                </div>
                 <div class="buddy-activity">
-                  <span class="activity-text">{{ formatLastSeen(buddy.lastSeenAt) }}</span>
-                  <span v-if="buddy.lastSeenServer" class="activity-map">{{ buddy.lastSeenServer }}</span>
+                  <span class="activity-text">{{ formatLastSeen(buddy.lastSeen) }}</span>
                 </div>
               </div>
             </div>
@@ -293,7 +325,10 @@ onUnmounted(() => {
         </div>
 
         <!-- Favorite Servers Section -->
-        <div v-if="dashboardData.favoriteServers.length > 0" class="section">
+        <div
+          v-if="dashboardData.favoriteServers.length > 0"
+          class="section"
+        >
           <div class="section-header">
             <span class="server-icon">🖥️</span>
             <h4>Favorite Servers — {{ dashboardData.favoriteServers.length }}</h4>
@@ -317,35 +352,70 @@ onUnmounted(() => {
                 </div>
               </div>
               <div class="server-info">
-                <div class="server-name">{{ server.serverName }}</div>
+                <div class="server-name">
+                  {{ server.serverName }}
+                </div>
                 <div class="server-details">
-                  <span class="server-map">{{ server.currentMap }}</span>
-                  <span class="server-players">{{ server.currentPlayers }}/{{ server.maxPlayers }}</span>
+                  <div class="server-details-row">
+                    <span class="server-map">{{ server.currentMap || 'Unknown Map' }}</span>
+                    <div class="server-status-actions">
+                      <div
+                        class="player-count-badge"
+                        :class="getServerStatusClass(server.currentPlayers, server.maxPlayers)"
+                      >
+                        <template v-if="!isServerOffline(server.currentPlayers, server.maxPlayers)">
+                          <span class="count">{{ server.currentPlayers }}</span>
+                          <span class="max">/{{ server.maxPlayers }}</span>
+                        </template>
+                        <span
+                          v-else
+                          class="offline-text"
+                        >OFFLINE</span>
+                      </div>
+                      <button 
+                        v-if="!isServerOffline(server.currentPlayers, server.maxPlayers)"
+                        class="join-btn"
+                        title="Join Server"
+                        @click.stop="joinServer(server.joinLink)"
+                      >
+                        🎮
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="server-actions">
-                <button 
-                  class="join-btn"
-                  @click.stop="joinServer(server.joinLink)"
-                  title="Join Server"
-                >
-                  🎮
-                </button>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Empty State -->
-        <div v-if="dashboardData.onlineBuddies.length === 0 && dashboardData.favoriteServers.length === 0 && totalOfflineBuddies === 0" class="empty-state">
-          <div class="empty-icon">😴</div>
-          <p class="empty-text">No buddies online</p>
-          <p class="empty-subtext">Check back later or add some friends!</p>
+        <div
+          v-if="dashboardData.onlineBuddies.length === 0 && dashboardData.favoriteServers.length === 0 && dashboardData.offlineBuddies.length === 0"
+          class="empty-state"
+        >
+          <div class="empty-icon">
+            😴
+          </div>
+          <p class="empty-text">
+            No buddies online
+          </p>
+          <p class="empty-subtext">
+            Check back later or add some friends!
+          </p>
         </div>
       </div>
-      <div v-else class="empty-state">
-        <div class="empty-icon">👥</div>
-        <p class="empty-text">No social data</p>
+      <div
+        v-else
+        class="empty-state"
+      >
+        <div class="empty-icon">
+          👥
+        </div>
+        <p class="empty-text">
+          No social data
+        </p>
       </div>
     </div>
   </div>
@@ -621,6 +691,26 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
+.stat.score {
+  color: #DCDDDE;
+  background-color: #4F545C;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.stat.kills {
+  color: #4caf50;
+  background-color: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.stat.deaths {
+  color: #f44336;
+  background-color: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
 .buddy-actions {
   display: flex;
   gap: 4px;
@@ -707,8 +797,20 @@ onUnmounted(() => {
 
 .server-details {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.server-details-row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.server-status-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .server-map {
@@ -725,6 +827,70 @@ onUnmounted(() => {
   font-size: 12px;
   font-weight: 600;
   margin-left: 8px;
+}
+
+.player-count-badge {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 50px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* Offline server - red styling */
+.player-count-badge.offline {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.offline-text {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Online server with no players - light green */
+.player-count-badge.online-empty {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+/* Online server with low players - medium green */
+.player-count-badge.online-low {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+/* Online server with active players - bright green */
+.player-count-badge.online-active {
+  background-color: rgba(34, 197, 94, 0.3);
+  color: #15803d;
+}
+
+/* Online server with hot activity - vibrant green */
+.player-count-badge.online-hot {
+  background-color: rgba(34, 197, 94, 0.4);
+  color: #166534;
+}
+
+/* Online server that's full - dark green */
+.player-count-badge.online-full {
+  background-color: rgba(34, 197, 94, 0.5);
+  color: #14532d;
+}
+
+.count {
+  font-size: 0.8rem;
+}
+
+.max {
+  font-size: 0.7rem;
+  opacity: 0.7;
 }
 
 .server-actions {

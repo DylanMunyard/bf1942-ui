@@ -74,10 +74,10 @@ interface Props {
   server: ServerSummary | null;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 // Emits
-const emit = defineEmits<{
+defineEmits<{
   close: [];
 }>();
 </script>

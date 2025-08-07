@@ -1,21 +1,38 @@
 <template>
-  <div class="player-profile-card" :class="{ 'online': profile.isOnline }">
+  <div
+    class="player-profile-card"
+    :class="{ 'online': profile.isOnline }"
+  >
     <div class="card-header">
       <div class="player-info">
         <div class="player-avatar">
           <span class="avatar-letter">{{ profile.playerName[0].toUpperCase() }}</span>
-          <div v-if="profile.isOnline" class="online-indicator"></div>
+          <div
+            v-if="profile.isOnline"
+            class="online-indicator"
+          />
         </div>
         <div class="player-details">
-          <h3 class="player-name">{{ profile.playerName }}</h3>
+          <h3 class="player-name">
+            {{ profile.playerName }}
+          </h3>
           <div class="player-status">
-            <span v-if="profile.isOnline && profile.currentServer" class="status online">
+            <span
+              v-if="profile.isOnline && profile.currentServer"
+              class="status online"
+            >
               🎮 Playing on {{ profile.currentServer }}
             </span>
-            <span v-else-if="profile.isOnline" class="status online">
+            <span
+              v-else-if="profile.isOnline"
+              class="status online"
+            >
               🟢 Online
             </span>
-            <span v-else class="status offline">
+            <span
+              v-else
+              class="status offline"
+            >
               Last seen {{ formatLastSeen(profile.lastSeen) }}
             </span>
           </div>
@@ -59,7 +76,10 @@
         <span class="label">Favorite Server:</span>
         <span class="server-name">{{ profile.favoriteServer || 'Not set' }}</span>
       </div>
-      <button @click="$emit('viewDetails', profile.playerName)" class="view-details-btn">
+      <button
+        class="view-details-btn"
+        @click="$emit('viewDetails', profile.playerName)"
+      >
         View Details
         <span class="arrow">→</span>
       </button>

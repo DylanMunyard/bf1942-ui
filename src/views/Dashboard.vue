@@ -3,10 +3,24 @@
     <!-- Header Section -->
     <div class="dashboard-header">
       <div class="welcome-section">
-        <h1 v-if="isAuthenticated">Welcome back!</h1>
-        <h1 v-else>Welcome to Battlefield Command Center</h1>
-        <p v-if="isAuthenticated" class="subtitle">Ready for battle? Here's your tactical overview.</p>
-        <p v-else class="subtitle">Sign in to access your personal battlefield dashboard with player profiles, favorite servers, and squad management.</p>
+        <h1 v-if="isAuthenticated">
+          Welcome back!
+        </h1>
+        <h1 v-else>
+          Welcome to Battlefield Command Center
+        </h1>
+        <p
+          v-if="isAuthenticated"
+          class="subtitle"
+        >
+          Ready for battle? Here's your tactical overview.
+        </p>
+        <p
+          v-else
+          class="subtitle"
+        >
+          Sign in to access your personal battlefield dashboard with player profiles, favorite servers, and squad management.
+        </p>
       </div>
     </div>
 
@@ -24,17 +38,27 @@
         <div class="section-header">
           <div class="header-content">
             <h2>Your Battlefield Profiles</h2>
-            <p class="section-subtitle">Link your in-game player name(s) to track stats and achievements</p>
+            <p class="section-subtitle">
+              Link your in-game player name(s) to track stats and achievements
+            </p>
           </div>
           <div class="section-header-actions">
-            <button v-if="isAuthenticated && userProfiles.length > 0" @click="showAddPlayerModal = true" class="add-btn" title="Add Player Profile">
+            <button
+              v-if="isAuthenticated && userProfiles.length > 0"
+              class="add-btn"
+              title="Add Player Profile"
+              @click="showAddPlayerModal = true"
+            >
               <span class="icon">+</span>
             </button>
             <span class="section-count">{{ userProfiles.length }}</span>
           </div>
         </div>
         <div class="section-content">
-          <div v-if="userProfiles.length > 0" class="profiles-grid">
+          <div
+            v-if="userProfiles.length > 0"
+            class="profiles-grid"
+          >
             <PlayerNameCard
               v-for="profile in userProfiles"
               :key="profile.id"
@@ -66,17 +90,27 @@
         <div class="section-header">
           <div class="header-content">
             <h2>Favorite Servers</h2>
-            <p class="section-subtitle">Save servers to quickly monitor status and join battles</p>
+            <p class="section-subtitle">
+              Save servers to quickly monitor status and join battles
+            </p>
           </div>
           <div class="section-header-actions">
-            <button v-if="isAuthenticated && favoriteServers.length > 0" @click="showAddServerModal = true" class="add-btn" title="Add Favorite Server">
+            <button
+              v-if="isAuthenticated && favoriteServers.length > 0"
+              class="add-btn"
+              title="Add Favorite Server"
+              @click="showAddServerModal = true"
+            >
               <span class="icon">+</span>
             </button>
             <span class="section-count">{{ favoriteServers.length }}</span>
           </div>
         </div>
         <div class="section-content">
-          <div v-if="favoriteServers.length > 0" class="servers-grid">
+          <div
+            v-if="favoriteServers.length > 0"
+            class="servers-grid"
+          >
             <FavoriteServerCard
               v-for="server in favoriteServers"
               :key="server.id"
@@ -108,17 +142,27 @@
         <div class="section-header">
           <div class="header-content">
             <h2>Your Squad</h2>
-            <p class="section-subtitle">Track friends and squad mates across the battlefield</p>
+            <p class="section-subtitle">
+              Track friends and squad mates across the battlefield
+            </p>
           </div>
           <div class="section-header-actions">
-            <button v-if="isAuthenticated && buddies.length > 0" @click="showAddBuddyModal = true" class="add-btn" title="Add Squad Member">
+            <button
+              v-if="isAuthenticated && buddies.length > 0"
+              class="add-btn"
+              title="Add Squad Member"
+              @click="showAddBuddyModal = true"
+            >
               <span class="icon">+</span>
             </button>
             <span class="section-count">{{ buddies.length }}</span>
           </div>
         </div>
         <div class="section-content">
-          <div v-if="buddies.length > 0" class="buddies-grid">
+          <div
+            v-if="buddies.length > 0"
+            class="buddies-grid"
+          >
             <BuddyCard
               v-for="buddy in buddies"
               :key="buddy.id"
@@ -149,9 +193,21 @@
     </div>
 
     <!-- Modals -->
-    <AddPlayerModal v-if="showAddPlayerModal" @close="showAddPlayerModal = false" @added="onPlayerAdded" />
-    <AddServerModal v-if="showAddServerModal" @close="showAddServerModal = false" @added="onServerAdded" />
-    <AddBuddyModal v-if="showAddBuddyModal" @close="showAddBuddyModal = false" @added="onBuddyAdded" />
+    <AddPlayerModal
+      v-if="showAddPlayerModal"
+      @close="showAddPlayerModal = false"
+      @added="onPlayerAdded"
+    />
+    <AddServerModal
+      v-if="showAddServerModal"
+      @close="showAddServerModal = false"
+      @added="onServerAdded"
+    />
+    <AddBuddyModal
+      v-if="showAddBuddyModal"
+      @close="showAddBuddyModal = false"
+      @added="onBuddyAdded"
+    />
   </div>
 </template>
 
@@ -210,16 +266,6 @@ interface Buddy {
   player: Player;
 }
 
-interface DashboardProfile {
-  id: number;
-  email: string;
-  createdAt: string;
-  lastLoggedIn: string;
-  isActive: boolean;
-  playerNames: UserProfile[];
-  favoriteServers: FavoriteServer[];
-  buddies: Buddy[];
-}
 
 interface RecentActivity {
   id: string;
@@ -317,7 +363,7 @@ const removeBuddy = (buddyId: number) => {
   showBuddyConfirm.value = true;
 };
 
-const onPlayerAdded = (_playerName: string) => {
+const onPlayerAdded = () => {
   showAddPlayerModal.value = false;
   loadUserData(); // Refresh data
 };
