@@ -14,6 +14,13 @@
     <div class="dashboard-grid">
       <!-- Player Profiles Section -->
       <section class="dashboard-section player-profiles">
+        <ConfirmationModal
+          v-if="showPlayerConfirm"
+          :message="playerConfirmMessage"
+          confirm-text="Remove"
+          @confirm="handlePlayerRemove"
+          @cancel="cancelPlayerConfirm"
+        />
         <div class="section-header">
           <div class="header-content">
             <h2>Your Battlefield Profiles</h2>
@@ -49,6 +56,13 @@
 
       <!-- Favorite Servers Section -->
       <section class="dashboard-section favorite-servers">
+        <ConfirmationModal
+          v-if="showServerConfirm"
+          :message="serverConfirmMessage"
+          confirm-text="Remove"
+          @confirm="handleServerRemove"
+          @cancel="cancelServerConfirm"
+        />
         <div class="section-header">
           <div class="header-content">
             <h2>Favorite Servers</h2>
@@ -84,6 +98,13 @@
 
       <!-- Buddies Section -->
       <section class="dashboard-section buddies">
+        <ConfirmationModal
+          v-if="showBuddyConfirm"
+          :message="buddyConfirmMessage"
+          confirm-text="Remove"
+          @confirm="handleBuddyRemove"
+          @cancel="cancelBuddyConfirm"
+        />
         <div class="section-header">
           <div class="header-content">
             <h2>Your Squad</h2>
@@ -148,6 +169,7 @@ import RecentActivityFeed from '@/components/dashboard/RecentActivityFeed.vue';
 import AddPlayerModal from '@/components/dashboard/AddPlayerModal.vue';
 import AddServerModal from '@/components/dashboard/AddServerModal.vue';
 import AddBuddyModal from '@/components/dashboard/AddBuddyModal.vue';
+import ConfirmationModal from '@/components/dashboard/ConfirmationModal.vue';
 
 interface Player {
   name: string;
@@ -222,6 +244,17 @@ const showAddPlayerModal = ref(false);
 const showAddServerModal = ref(false);
 const showAddBuddyModal = ref(false);
 
+// Confirmation modal states for each section
+const showPlayerConfirm = ref(false);
+const showServerConfirm = ref(false);
+const showBuddyConfirm = ref(false);
+const playerConfirmMessage = ref('');
+const serverConfirmMessage = ref('');
+const buddyConfirmMessage = ref('');
+const pendingPlayerAction = ref<(() => Promise<void>) | null>(null);
+const pendingServerAction = ref<(() => Promise<void>) | null>(null);
+const pendingBuddyAction = ref<(() => Promise<void>) | null>(null);
+
 // Actions
 const goToPlayerDetails = (playerName: string) => {
   router.push(`/players/${playerName}`);
@@ -232,34 +265,55 @@ const joinServer = (server: FavoriteServer) => {
   console.log(`Joining server: ${server.serverName}`);
 };
 
-const removeFavoriteServer = async (serverId: number) => {
-  try {
-    await statsService.removeFavoriteServer(serverId);
-    favoriteServers.value = favoriteServers.value.filter(s => s.id !== serverId);
-  } catch (err) {
-    console.error('Error removing favorite server:', err);
-    error.value = 'Failed to remove favorite server';
-  }
+const removeFavoriteServer = (serverId: number) => {
+  const server = favoriteServers.value.find(s => s.id === serverId);
+  if (!server) return;
+  
+  serverConfirmMessage.value = `Remove ${server.serverName}`;
+  pendingServerAction.value = async () => {
+    try {
+      await statsService.removeFavoriteServer(serverId);
+      favoriteServers.value = favoriteServers.value.filter(s => s.id !== serverId);
+    } catch (err) {
+      console.error('Error removing favorite server:', err);
+      error.value = 'Failed to remove favorite server';
+    }
+  };
+  showServerConfirm.value = true;
 };
 
-const removePlayerName = async (playerId: number) => {
-  try {
-    await statsService.removePlayerName(playerId);
-    userProfiles.value = userProfiles.value.filter(p => p.id !== playerId);
-  } catch (err) {
-    console.error('Error removing player name:', err);
-    error.value = 'Failed to remove player name';
-  }
+const removePlayerName = (playerId: number) => {
+  const profile = userProfiles.value.find(p => p.id === playerId);
+  if (!profile) return;
+  
+  playerConfirmMessage.value = `Remove ${profile.playerName}`;
+  pendingPlayerAction.value = async () => {
+    try {
+      await statsService.removePlayerName(playerId);
+      userProfiles.value = userProfiles.value.filter(p => p.id !== playerId);
+    } catch (err) {
+      console.error('Error removing player name:', err);
+      error.value = 'Failed to remove player name';
+    }
+  };
+  showPlayerConfirm.value = true;
 };
 
-const removeBuddy = async (buddyId: number) => {
-  try {
-    await statsService.removeBuddy(buddyId);
-    buddies.value = buddies.value.filter(b => b.id !== buddyId);
-  } catch (err) {
-    console.error('Error removing buddy:', err);
-    error.value = 'Failed to remove buddy';
-  }
+const removeBuddy = (buddyId: number) => {
+  const buddy = buddies.value.find(b => b.id === buddyId);
+  if (!buddy) return;
+  
+  buddyConfirmMessage.value = `Remove ${buddy.buddyPlayerName}`;
+  pendingBuddyAction.value = async () => {
+    try {
+      await statsService.removeBuddy(buddyId);
+      buddies.value = buddies.value.filter(b => b.id !== buddyId);
+    } catch (err) {
+      console.error('Error removing buddy:', err);
+      error.value = 'Failed to remove buddy';
+    }
+  };
+  showBuddyConfirm.value = true;
 };
 
 const onPlayerAdded = (_playerName: string) => {
@@ -306,6 +360,46 @@ const loadUserData = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// Confirmation modal handlers
+const handlePlayerRemove = async () => {
+  if (pendingPlayerAction.value) {
+    await pendingPlayerAction.value();
+  }
+  cancelPlayerConfirm();
+};
+
+const cancelPlayerConfirm = () => {
+  showPlayerConfirm.value = false;
+  playerConfirmMessage.value = '';
+  pendingPlayerAction.value = null;
+};
+
+const handleServerRemove = async () => {
+  if (pendingServerAction.value) {
+    await pendingServerAction.value();
+  }
+  cancelServerConfirm();
+};
+
+const cancelServerConfirm = () => {
+  showServerConfirm.value = false;
+  serverConfirmMessage.value = '';
+  pendingServerAction.value = null;
+};
+
+const handleBuddyRemove = async () => {
+  if (pendingBuddyAction.value) {
+    await pendingBuddyAction.value();
+  }
+  cancelBuddyConfirm();
+};
+
+const cancelBuddyConfirm = () => {
+  showBuddyConfirm.value = false;
+  buddyConfirmMessage.value = '';
+  pendingBuddyAction.value = null;
 };
 
 onMounted(() => {
@@ -357,6 +451,7 @@ onMounted(() => {
   border-radius: 12px;
   border: 1px solid var(--color-border);
   overflow: hidden;
+  position: relative;
 }
 
 .dashboard-section.full-width {
