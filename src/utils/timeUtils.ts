@@ -7,8 +7,10 @@
  * Properly handles UTC timestamps and converts to user's local time
  */
 export function formatLastSeen(utcTimestamp: string): string {
-  // Parse the UTC timestamp correctly
-  const lastSeenDate = new Date(utcTimestamp);
+  // Parse the UTC timestamp and ensure it's treated as UTC by appending 'Z'
+  // If timestamp doesn't end with Z, append it to ensure UTC interpretation
+  const utcString = utcTimestamp.endsWith('Z') ? utcTimestamp : utcTimestamp + 'Z';
+  const lastSeenDate = new Date(utcString);
   const now = new Date();
   
   // Calculate the difference in milliseconds
