@@ -153,9 +153,9 @@ onUnmounted(() => {
   gap: 8px;
   width: 100%;
   padding: 12px 16px;
-  background: white;
-  color: #333;
-  border: 1px solid #dadce0;
+  background: var(--color-background);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
@@ -164,8 +164,8 @@ onUnmounted(() => {
 }
 
 .google-login-btn:hover:not(:disabled) {
-  box-shadow: 0 1px 2px 0 rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15);
-  border-color: #dadce0;
+  background: var(--color-background-soft);
+  border-color: var(--color-border-hover);
 }
 
 .google-login-btn:disabled {
@@ -259,7 +259,8 @@ onUnmounted(() => {
 
 .user-email {
   font-size: 12px;
-  color: var(--color-text-2);
+  color: var(--color-text);
+  opacity: 0.8;
   word-break: break-all;
 }
 
@@ -267,7 +268,7 @@ onUnmounted(() => {
   width: 100%;
   padding: 12px 16px;
   background: transparent;
-  color: var(--color-text-2);
+  color: var(--color-text);
   border: none;
   text-align: left;
   font-size: 14px;
