@@ -271,6 +271,13 @@ const joinText = computed(() => {
   transform: translateX(4px);
 }
 
+/* Breakpoint optimization for side-by-side cards */
+@media (min-width: 576px) and (max-width: 768px) {
+  .server-name {
+    font-size: 0.95rem;
+  }
+}
+
 /* Mobile responsiveness */
 @media (max-width: 480px) {
   .favorite-server-card {

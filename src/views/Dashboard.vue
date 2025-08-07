@@ -8,16 +8,6 @@
         <p v-if="isAuthenticated" class="subtitle">Ready for battle? Here's your tactical overview.</p>
         <p v-else class="subtitle">Sign in to access your personal battlefield dashboard with player profiles, favorite servers, and squad management.</p>
       </div>
-      <div v-if="isAuthenticated" class="quick-actions">
-        <button @click="showAddPlayerModal = true" class="action-btn primary">
-          <span class="icon">👤</span>
-          Add Player Profile
-        </button>
-        <button @click="showAddServerModal = true" class="action-btn secondary">
-          <span class="icon">🖥️</span>
-          Add Favorite Server
-        </button>
-      </div>
     </div>
 
     <!-- Main Content Grid -->
@@ -25,8 +15,16 @@
       <!-- Player Profiles Section -->
       <section class="dashboard-section player-profiles">
         <div class="section-header">
-          <h2>Your Battlefield Profiles</h2>
-          <span class="section-count">{{ userProfiles.length }}</span>
+          <div class="header-content">
+            <h2>Your Battlefield Profiles</h2>
+            <p class="section-subtitle">Link your in-game player name(s) to track stats and achievements</p>
+          </div>
+          <div class="section-header-actions">
+            <button v-if="isAuthenticated && userProfiles.length > 0" @click="showAddPlayerModal = true" class="add-btn" title="Add Player Profile">
+              <span class="icon">+</span>
+            </button>
+            <span class="section-count">{{ userProfiles.length }}</span>
+          </div>
         </div>
         <div class="section-content">
           <div v-if="userProfiles.length > 0" class="profiles-grid">
@@ -52,8 +50,16 @@
       <!-- Favorite Servers Section -->
       <section class="dashboard-section favorite-servers">
         <div class="section-header">
-          <h2>Favorite Servers</h2>
-          <span class="section-count">{{ favoriteServers.length }}</span>
+          <div class="header-content">
+            <h2>Favorite Servers</h2>
+            <p class="section-subtitle">Save servers to quickly monitor status and join battles</p>
+          </div>
+          <div class="section-header-actions">
+            <button v-if="isAuthenticated && favoriteServers.length > 0" @click="showAddServerModal = true" class="add-btn" title="Add Favorite Server">
+              <span class="icon">+</span>
+            </button>
+            <span class="section-count">{{ favoriteServers.length }}</span>
+          </div>
         </div>
         <div class="section-content">
           <div v-if="favoriteServers.length > 0" class="servers-grid">
@@ -79,8 +85,16 @@
       <!-- Buddies Section -->
       <section class="dashboard-section buddies">
         <div class="section-header">
-          <h2>Your Squad</h2>
-          <span class="section-count">{{ buddies.length }}</span>
+          <div class="header-content">
+            <h2>Your Squad</h2>
+            <p class="section-subtitle">Track friends and squad mates across the battlefield</p>
+          </div>
+          <div class="section-header-actions">
+            <button v-if="isAuthenticated && buddies.length > 0" @click="showAddBuddyModal = true" class="add-btn" title="Add Squad Member">
+              <span class="icon">+</span>
+            </button>
+            <span class="section-count">{{ buddies.length }}</span>
+          </div>
         </div>
         <div class="section-content">
           <div v-if="buddies.length > 0" class="buddies-grid">
@@ -330,43 +344,6 @@ onMounted(() => {
   font-size: 1rem;
 }
 
-.quick-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 8px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn.primary {
-  background-color: var(--color-accent);
-  color: white;
-}
-
-.action-btn.primary:hover {
-  background-color: var(--color-accent-hover);
-  transform: translateY(-1px);
-}
-
-.action-btn.secondary {
-  background-color: var(--color-card-bg);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-
-.action-btn.secondary:hover {
-  background-color: var(--color-card-bg-hover);
-  transform: translateY(-1px);
-}
 
 .dashboard-grid {
   display: grid;
@@ -395,11 +372,30 @@ onMounted(() => {
   background-color: rgba(var(--color-accent-rgb), 0.05);
 }
 
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .section-header h2 {
   color: var(--color-text);
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
+}
+
+.section-subtitle {
+  color: var(--color-text-secondary);
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .section-count {
@@ -409,6 +405,32 @@ onMounted(() => {
   border-radius: 12px;
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  background-color: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.add-btn:hover {
+  background-color: var(--color-accent);
+  color: white;
+  transform: scale(1.05);
+}
+
+.add-btn .icon {
+  line-height: 1;
 }
 
 .section-content {
@@ -447,18 +469,7 @@ onMounted(() => {
   }
 
   .dashboard-header {
-    flex-direction: column;
-    gap: 16px;
     text-align: center;
-  }
-
-  .quick-actions {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .action-btn {
-    flex: 1;
   }
 
   .section-content {
@@ -473,10 +484,6 @@ onMounted(() => {
 
   .welcome-section h1 {
     font-size: 1.5rem;
-  }
-
-  .quick-actions {
-    flex-direction: column;
   }
 
   .profiles-grid,

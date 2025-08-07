@@ -2,7 +2,10 @@
   <div class="modal-overlay" @click="handleOverlayClick" @mousedown="handleOverlayMouseDown">
     <div class="modal-content" @click.stop @mousedown="handleModalMouseDown">
       <div class="modal-header">
-        <h3>Add Favorite Server</h3>
+        <div class="header-content">
+          <h3>Add Favorite Server</h3>
+          <p class="subtitle">Save servers to quickly monitor status and join battles</p>
+        </div>
         <button @click="$emit('close')" class="close-btn">✕</button>
       </div>
       
@@ -211,11 +214,24 @@ const formatLastActivity = (lastActivity: string): string => {
   background-color: rgba(var(--color-accent-rgb), 0.05);
 }
 
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .modal-header h3 {
   color: var(--color-text);
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .close-btn {
