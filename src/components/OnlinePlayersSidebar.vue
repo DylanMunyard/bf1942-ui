@@ -84,7 +84,7 @@ const getServerStatusColor = (current: number, max: number): string => {
 
 // Check if server is offline
 const isServerOffline = (current: number, max: number): boolean => {
-  return current === 0 || max === 0;
+  return max === 0;
 };
 
 // Get server status class for styling (matching Dashboard FavoriteServerCard)
@@ -357,7 +357,10 @@ onUnmounted(() => {
                 </div>
                 <div class="server-details">
                   <div class="server-details-row">
-                    <span class="server-map">{{ server.currentMap || 'Unknown Map' }}</span>
+                    <span 
+                      v-if="!isServerOffline(server.currentPlayers, server.maxPlayers)" 
+                      class="server-map"
+                    >{{ server.currentMap || 'Unknown Map' }}</span>
                     <div class="server-status-actions">
                       <div
                         class="player-count-badge"
