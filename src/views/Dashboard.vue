@@ -199,6 +199,8 @@ interface FavoriteServer {
   createdAt: string;
   activeSessions: number;
   currentMap?: string;
+  maxPlayers: number;
+  joinLink?: string;
 }
 
 interface Buddy {

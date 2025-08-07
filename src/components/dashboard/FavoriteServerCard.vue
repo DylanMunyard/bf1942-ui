@@ -7,14 +7,25 @@
         </router-link>
         <div class="server-details">
           <span v-if="server.currentMap" class="current-map">{{ server.currentMap }}</span>
-          <span v-else class="idle-text">Awaiting Orders</span>
+          <div class="player-count-badge" :class="getStatusClass()">
+            <template v-if="server.currentMap">
+              <span class="count">{{ server.activeSessions }}</span>
+              <span class="max">/{{ server.maxPlayers }}</span>
+            </template>
+            <span v-else class="offline-text">OFFLINE</span>
+          </div>
         </div>
       </div>
       <div class="server-stats">
-        <div class="player-count-badge" :class="getStatusClass()">
-          <span class="count">{{ server.activeSessions }}</span>
-          <span class="max">/64</span>
-        </div>
+        <a 
+          v-if="server.joinLink" 
+          :href="server.joinLink" 
+          @click.stop 
+          class="join-btn" 
+          title="Join Server"
+        >
+          🚀
+        </a>
         <button @click.stop="$emit('remove', server.id)" class="remove-btn" title="Remove from favorites">
           ❤️
         </button>
@@ -33,6 +44,8 @@ interface FavoriteServer {
   createdAt: string;
   activeSessions: number;
   currentMap?: string;
+  maxPlayers: number;
+  joinLink?: string;
 }
 
 const props = defineProps<{
@@ -45,11 +58,18 @@ defineEmits<{
 }>();
 
 const getStatusClass = () => {
-  if (props.server.activeSessions === 0) return 'empty';
-  if (props.server.activeSessions >= 64) return 'full';
-  if (props.server.activeSessions >= 48) return 'hot';
-  if (props.server.activeSessions >= 32) return 'active';
-  return 'low';
+  // If no current map, server is offline
+  if (!props.server.currentMap) return 'offline';
+  
+  const maxPlayers = props.server.maxPlayers;
+  const sessions = props.server.activeSessions;
+  
+  // Server is online, use green-based colors for online servers with players
+  if (sessions === 0) return 'online-empty';
+  if (sessions >= maxPlayers) return 'online-full';
+  if (sessions >= maxPlayers * 0.75) return 'online-hot';
+  if (sessions >= maxPlayers * 0.5) return 'online-active';
+  return 'online-low';
 };
 </script>
 
@@ -81,6 +101,7 @@ const getStatusClass = () => {
 .server-info {
   flex: 1;
   min-width: 0;
+  margin-right: 12px;
 }
 
 .server-name-link {
@@ -106,7 +127,7 @@ const getStatusClass = () => {
 .server-details {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 .current-map {
@@ -129,6 +150,7 @@ const getStatusClass = () => {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  min-width: fit-content;
 }
 
 .player-count-badge {
@@ -139,33 +161,51 @@ const getStatusClass = () => {
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 700;
-  min-width: 45px;
+  min-width: 50px;
   justify-content: center;
+  white-space: nowrap;
 }
 
-.player-count-badge.empty {
-  background-color: rgba(107, 114, 128, 0.2);
-  color: var(--color-text-secondary);
+/* Offline server - red styling */
+.player-count-badge.offline {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
 }
 
-.player-count-badge.low {
-  background-color: rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+.offline-text {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
-.player-count-badge.active {
+/* Online server with no players - light green */
+.player-count-badge.online-empty {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+/* Online server with low players - medium green */
+.player-count-badge.online-low {
   background-color: rgba(34, 197, 94, 0.2);
   color: #22c55e;
 }
 
-.player-count-badge.hot {
-  background-color: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
+/* Online server with active players - bright green */
+.player-count-badge.online-active {
+  background-color: rgba(34, 197, 94, 0.3);
+  color: #15803d;
 }
 
-.player-count-badge.full {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+/* Online server with hot activity - vibrant green */
+.player-count-badge.online-hot {
+  background-color: rgba(34, 197, 94, 0.4);
+  color: #166534;
+}
+
+/* Online server that's full - dark green */
+.player-count-badge.online-full {
+  background-color: rgba(34, 197, 94, 0.5);
+  color: #14532d;
 }
 
 .count {
@@ -175,6 +215,30 @@ const getStatusClass = () => {
 .max {
   font-size: 0.7rem;
   opacity: 0.7;
+}
+
+.join-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  color: var(--color-text-secondary);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.join-btn:hover {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  transform: scale(1.1);
 }
 
 .remove-btn {
@@ -219,6 +283,7 @@ const getStatusClass = () => {
     min-width: 40px;
   }
   
+  .join-btn,
   .remove-btn {
     width: 20px;
     height: 20px;

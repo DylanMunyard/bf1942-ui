@@ -16,6 +16,7 @@
             <PlayerSearch
               v-model="playerName"
               placeholder="Search for your player name..."
+              auto-focus
               @select="onPlayerSelected"
               @enter="handleSubmit"
             />

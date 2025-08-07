@@ -15,6 +15,7 @@
           <ServerSearch
             v-model="serverName"
             placeholder="Search for server name..."
+            auto-focus
             @select="onServerSelected"
             @enter="handleSubmit"
           />
