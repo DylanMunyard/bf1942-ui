@@ -31,6 +31,12 @@ export default defineConfig({
       '/stats': {
         target: 'http://localhost:9222',
         changeOrigin: true
+      },
+      // Proxy SignalR hub requests during development
+      '/hub': {
+        target: 'http://localhost:9223',
+        changeOrigin: true,
+        ws: true // Enable WebSocket proxying
       }
     }
   }

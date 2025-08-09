@@ -2,9 +2,22 @@
 import { ref, onMounted, watch, provide } from 'vue';
 import DashboardLayout from './layouts/DashboardLayout.vue';
 import { initializeBadgeDefinitions } from './services/badgeService';
+import { useSignalR } from '@/composables/useSignalR';
 
 // Dark mode state
 const isDarkMode = ref(false);
+
+// Initialize SignalR
+const { isConnected, connectionId } = useSignalR();
+
+// Debug logging for SignalR connection status
+watch(isConnected, (connected) => {
+  console.log('App.vue - SignalR connection status changed:', connected);
+});
+
+watch(connectionId, (id) => {
+  console.log('App.vue - SignalR connection ID changed:', id);
+});
 
 // Function to toggle dark mode
 const toggleDarkMode = () => {
