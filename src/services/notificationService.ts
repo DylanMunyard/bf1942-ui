@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import router from '@/router';
 
 export interface BuddyOnlineNotification {
   type: 'buddy_online';
@@ -107,8 +108,7 @@ class NotificationService {
       action: {
         label: 'View Server',
         handler: () => {
-          // Navigate to server details - we'll implement this later
-          console.log('Navigate to server:', data.serverName);
+          router.push({ name: 'server-details', params: { serverName: data.serverName } });
         }
       }
     });
