@@ -8,10 +8,13 @@ export class SignalRService {
   private userEmail: string | null = null;
 
   async connect(user: UserProfile): Promise<void> {
-    if (this.connection?.state === signalR.HubConnectionState.Connected) {
-      console.log('SignalR already connected');
+    // If we already have a connection in any state other than Disconnected, don't create a new one
+    if (this.connection && this.connection.state !== signalR.HubConnectionState.Disconnected) {
+      console.log('SignalR connection already exists in state:', this.connection.state);
       return;
     }
+
+    console.log('SignalR: Starting connection process...');
 
     this.userEmail = user.email;
 
@@ -81,6 +84,8 @@ export class SignalRService {
 
   private setupEventHandlers(): void {
     if (!this.connection) return;
+
+    console.log('SignalR: Setting up event handlers...');
 
     // Buddy-related handler
     this.connection.on('BuddyOnline', (data: BuddyOnlineNotification) => {
