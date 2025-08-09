@@ -3,12 +3,16 @@ import { ref, onMounted, watch, provide } from 'vue';
 import DashboardLayout from './layouts/DashboardLayout.vue';
 import { initializeBadgeDefinitions } from './services/badgeService';
 import { useSignalR } from '@/composables/useSignalR';
+import { useNotifications } from '@/composables/useNotifications';
 
 // Dark mode state
 const isDarkMode = ref(false);
 
 // Initialize SignalR
 const { isConnected, connectionId } = useSignalR();
+
+// Initialize notifications
+const { canRequestPermission, requestPermission } = useNotifications();
 
 // Debug logging for SignalR connection status
 watch(isConnected, (connected) => {
@@ -63,6 +67,13 @@ onMounted(async () => {
       updateTheme();
     }
   });
+
+  // Request notification permission after a short delay for better UX
+  setTimeout(() => {
+    if (canRequestPermission.value) {
+      requestPermission();
+    }
+  }, 3000);
 });
 
 // Watch for changes to isDarkMode

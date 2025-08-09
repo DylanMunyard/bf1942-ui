@@ -1,6 +1,7 @@
 import * as signalR from '@microsoft/signalr';
 import type { UserProfile } from './authService';
 import { authService } from './authService';
+import { notificationService, type BuddyOnlineNotification } from './notificationService';
 
 export class SignalRService {
   private connection: signalR.HubConnection | null = null;
@@ -82,8 +83,11 @@ export class SignalRService {
     if (!this.connection) return;
 
     // Buddy-related handler
-    this.connection.on('BuddyOnline', (data: any) => {
+    this.connection.on('BuddyOnline', (data: BuddyOnlineNotification) => {
       console.log('SignalR - BuddyOnline:', data);
+      
+      // Handle the buddy online notification
+      notificationService.handleBuddyOnline(data);
     });
   }
 
