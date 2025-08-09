@@ -9,6 +9,10 @@
           `toast-${notification.type}`
         ]"
         @click="handleNotificationClick(notification)"
+        @touchstart="handleTouchStart"
+        @touchmove="handleTouchMove"
+        @touchend="handleTouchEnd"
+        :data-notification-id="notification.id"
       >
         <div class="toast-icon">
           <span v-if="notification.icon">{{ notification.icon }}</span>
@@ -23,18 +27,18 @@
         
         <div class="toast-actions">
           <button
-            v-if="notification.action"
-            class="toast-action-btn"
-            @click.stop="notification.action.handler()"
-          >
-            {{ notification.action.label }}
-          </button>
-          <button
             class="toast-close-btn"
             @click.stop="removeNotification(notification.id)"
             aria-label="Close notification"
           >
             ✕
+          </button>
+          <button
+            v-if="notification.action"
+            class="toast-action-btn"
+            @click.stop="notification.action.handler()"
+          >
+            {{ notification.action.label }}
           </button>
         </div>
         
@@ -50,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted } from 'vue';
+import { onUnmounted, ref } from 'vue';
 import { notificationService, type ToastNotification } from '@/services/notificationService';
 
 const notifications = notificationService.getNotifications();
@@ -63,9 +67,60 @@ const handleNotificationClick = (notification: ToastNotification) => {
   // Mark as viewed when clicked
   notificationService.markAsViewed();
   
+  // Close the notification when clicked
+  removeNotification(notification.id);
+  
   // If there's an action, execute it
   if (notification.action) {
     notification.action.handler();
+  }
+};
+
+// Touch handling for swipe gestures
+let touchStartX = 0;
+let touchStartY = 0;
+let touchStartTime = 0;
+const swipeThreshold = 50; // minimum distance for swipe
+const swipeTimeLimit = 300; // maximum time for swipe (ms)
+
+const handleTouchStart = (event: TouchEvent) => {
+  const touch = event.touches[0];
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+  touchStartTime = Date.now();
+};
+
+const handleTouchMove = (event: TouchEvent) => {
+  // Prevent default scrolling behavior during potential swipe
+  const touch = event.touches[0];
+  const deltaX = Math.abs(touch.clientX - touchStartX);
+  const deltaY = Math.abs(touch.clientY - touchStartY);
+  
+  // If horizontal swipe is more significant than vertical, prevent scroll
+  if (deltaX > deltaY && deltaX > 10) {
+    event.preventDefault();
+  }
+};
+
+const handleTouchEnd = (event: TouchEvent) => {
+  const touch = event.changedTouches[0];
+  const deltaX = touch.clientX - touchStartX;
+  const deltaY = touch.clientY - touchStartY;
+  const deltaTime = Date.now() - touchStartTime;
+  
+  // Check if it's a valid swipe (left or right)
+  const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > swipeThreshold;
+  const isQuickSwipe = deltaTime < swipeTimeLimit;
+  
+  if (isHorizontalSwipe && isQuickSwipe) {
+    // Get notification ID from the target element
+    const notificationElement = (event.target as Element).closest('[data-notification-id]');
+    if (notificationElement) {
+      const notificationId = notificationElement.getAttribute('data-notification-id');
+      if (notificationId) {
+        removeNotification(notificationId);
+      }
+    }
   }
 };
 
@@ -134,6 +189,7 @@ onUnmounted(() => {
   pointer-events: auto;
   overflow: hidden;
   transition: all 0.3s ease;
+  touch-action: pan-y; /* Allow vertical scrolling but enable horizontal swipe detection */
 }
 
 .toast:hover {
@@ -230,20 +286,27 @@ onUnmounted(() => {
 }
 
 .toast-close-btn {
-  background: none;
+  background: rgba(0, 0, 0, 0.1);
   border: none;
   color: var(--color-text-muted);
   cursor: pointer;
-  padding: 2px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 14px;
   line-height: 1;
   transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  order: -1; /* Move to the left */
 }
 
 .toast-close-btn:hover {
-  background: var(--color-background-mute);
-  color: var(--color-text);
+  background: rgba(255, 0, 0, 0.1);
+  color: #ef4444;
+  transform: scale(1.1);
 }
 
 .toast-progress {
