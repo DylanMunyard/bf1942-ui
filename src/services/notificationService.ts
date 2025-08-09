@@ -113,13 +113,6 @@ class NotificationService {
       }
     });
 
-    // Try to show browser notification if permission granted
-    this.showBrowserNotification({
-      title: `${data.buddyName} is online!`,
-      body: `Playing ${data.mapName} on ${data.serverName}`,
-      icon: '/favicon.ico', // Use app icon
-      tag: `buddy-${data.buddyName}`, // Prevent duplicate notifications
-    });
 
     return notification;
   }
@@ -151,48 +144,6 @@ class NotificationService {
     }
   }
 
-  // Show browser notification (if permission granted)
-  private showBrowserNotification(options: NotificationOptions & { title: string }) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification(options.title, {
-        body: options.body,
-        icon: options.icon,
-        tag: options.tag,
-        requireInteraction: false,
-      });
-
-      // Auto-close after 5 seconds
-      setTimeout(() => {
-        notification.close();
-      }, 5000);
-
-      // Click handler to focus the tab
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-      };
-    }
-  }
-
-  // Request browser notification permission
-  async requestNotificationPermission(): Promise<NotificationPermission> {
-    if (!('Notification' in window)) {
-      console.log('Browser notifications not supported');
-      return 'denied';
-    }
-
-    if (Notification.permission === 'granted') {
-      return 'granted';
-    }
-
-    if (Notification.permission === 'denied') {
-      return 'denied';
-    }
-
-    // Request permission
-    const permission = await Notification.requestPermission();
-    return permission;
-  }
 
   // Generate unique ID for notifications
   private generateId(): string {

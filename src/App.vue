@@ -12,7 +12,7 @@ const isDarkMode = ref(false);
 const { isConnected, connectionId } = useSignalR();
 
 // Initialize notifications
-const { canRequestPermission, requestPermission } = useNotifications();
+useNotifications();
 
 // Debug logging for SignalR connection status
 watch(isConnected, (connected) => {
@@ -68,12 +68,6 @@ onMounted(async () => {
     }
   });
 
-  // Request notification permission after a short delay for better UX
-  setTimeout(() => {
-    if (canRequestPermission.value) {
-      requestPermission();
-    }
-  }, 3000);
 });
 
 // Watch for changes to isDarkMode
