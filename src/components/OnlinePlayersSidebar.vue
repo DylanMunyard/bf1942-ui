@@ -4,10 +4,21 @@ import { useRouter } from 'vue-router';
 import { fetchDashboardData, DashboardResponse } from '../services/dashboardService';
 import { useAuth } from '@/composables/useAuth';
 import { formatLastSeen } from '@/utils/timeUtils';
+import { useNotifications } from '@/composables/useNotifications';
 
 // Router and Auth
 const router = useRouter();
 const { isAuthenticated } = useAuth();
+
+// Notifications
+const { 
+  recentNotifications,
+  unreadRecentCount,
+  missedNotificationCount,
+  removeRecentNotification,
+  markRecentAsViewed,
+  markAsInteracted
+} = useNotifications();
 
 // State variables
 const dashboardData = ref<DashboardResponse | null>(null);
@@ -20,8 +31,20 @@ const refreshIntervalSeconds = 30;
 const isAutoRefresh = ref(true);
 // Panel state management
 const isPanelOpen = ref(false);
+const activeTab = ref<'social' | 'notifications'>('social');
 const togglePanel = () => {
   isPanelOpen.value = !isPanelOpen.value;
+  // Mark recent notifications as viewed when opening panel
+  if (isPanelOpen.value && activeTab.value === 'notifications') {
+    markRecentAsViewed();
+  }
+};
+
+const switchTab = (tab: 'social' | 'notifications') => {
+  activeTab.value = tab;
+  if (tab === 'notifications') {
+    markRecentAsViewed();
+  }
 };
 
 // Close panel function
@@ -43,13 +66,6 @@ const handleClickOutside = (event: Event) => {
 
 // Helper functions
 
-// Format session duration
-const formatDuration = (minutes: number): string => {
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hours}h ${mins}m`;
-};
 
 // Note: formatLastSeen is now imported from @/utils/timeUtils
 
@@ -68,7 +84,7 @@ const getServerStatusColor = (current: number, max: number): string => {
 };
 
 // Check if server is offline
-const isServerOffline = (current: number, max: number): boolean => {
+const isServerOffline = (_current: number, max: number): boolean => {
   return max === 0;
 };
 
@@ -90,8 +106,11 @@ const getServerStatusClass = (current: number, max: number): string => {
 // Total counts for display
 const totalOnlineBuddies = computed(() => dashboardData.value?.onlineBuddies.length || 0);
 const totalOfflineBuddies = computed(() => dashboardData.value?.offlineBuddies?.length || 0);
-const totalFavoriteServers = computed(() => dashboardData.value?.favoriteServers.length || 0);
 const totalOnline = computed(() => totalOnlineBuddies.value);
+
+// Badge counts for display
+const showNotificationBadge = computed(() => unreadRecentCount.value > 0);
+const showMissedIndicator = computed(() => missedNotificationCount.value > 0);
 
 // Fetch dashboard data
 const fetchDashboardApiData = async () => {
@@ -129,6 +148,43 @@ const goToServerDetails = (serverName: string) => {
 // Join server function
 const joinServer = (joinLink: string) => {
   window.open(joinLink, '_blank');
+};
+
+// Handle notification click
+const handleNotificationClick = (notification: any) => {
+  // Mark as interacted when clicked from sidebar
+  markAsInteracted(notification.id);
+  
+  // Execute the action if it exists
+  if (notification.action) {
+    notification.action.handler();
+  }
+  closePanel();
+};
+
+// Format time ago for notifications
+const formatTimeAgo = (timestamp: Date): string => {
+  const now = new Date();
+  const diffMs = now.getTime() - timestamp.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+  
+  if (diffSec < 60) {
+    return 'Just now';
+  } else if (diffMin < 60) {
+    return `${diffMin}m ago`;
+  } else if (diffHour < 24) {
+    return `${diffHour}h ago`;
+  } else {
+    return `${diffDay}d ago`;
+  }
+};
+
+// Check if notification is truly missed (auto-closed without interaction)
+const isMissedNotification = (notification: any): boolean => {
+  return !notification.viewed && notification.autoRemoved && !notification.interacted;
 };
 
 // Auto-refresh functionality
@@ -195,8 +251,13 @@ onUnmounted(() => {
         v-if="!isPanelOpen"
         class="button-content"
       >
-        <span class="status-indicator" />
+        <span class="status-indicator" :class="{ 
+          'has-notifications': showNotificationBadge,
+          'has-missed': showMissedIndicator 
+        }" />
         {{ totalOnline }}
+        <span v-if="showMissedIndicator" class="missed-notification-badge">{{ missedNotificationCount.value }}</span>
+        <span v-else-if="showNotificationBadge" class="notification-badge">{{ unreadRecentCount.value }}</span>
       </span>
       <span v-else>×</span>
     </button>
@@ -207,10 +268,27 @@ onUnmounted(() => {
       :class="{ open: isPanelOpen }"
     >
       <div class="panel-header">
-        <h3 class="panel-title">
-          <span class="buddies-icon">👥</span>
-          Social
-        </h3>
+        <div class="tab-navigation">
+          <button
+            class="tab-button"
+            :class="{ active: activeTab === 'social' }"
+            @click="switchTab('social')"
+          >
+            <span class="tab-icon">👥</span>
+            <span class="tab-label">Social</span>
+            <span v-if="totalOnline > 0" class="tab-badge">{{ totalOnline }}</span>
+          </button>
+          <button
+            class="tab-button"
+            :class="{ active: activeTab === 'notifications' }"
+            @click="switchTab('notifications')"
+          >
+            <span class="tab-icon">🔔</span>
+            <span class="tab-label">Notifications</span>
+            <span v-if="missedNotificationCount.value > 0" class="tab-badge missed" title="Missed notifications">{{ missedNotificationCount.value }}!</span>
+            <span v-else-if="unreadRecentCount.value > 0" class="tab-badge notification">{{ unreadRecentCount.value }}</span>
+          </button>
+        </div>
       </div>
 
       <!-- Loading/Error States -->
@@ -227,7 +305,7 @@ onUnmounted(() => {
         <p>{{ error }}</p>
       </div>
       <div
-        v-else-if="dashboardData"
+        v-else-if="activeTab === 'social' && dashboardData"
         class="social-content"
       >
         <!-- Online Buddies Section -->
@@ -394,6 +472,52 @@ onUnmounted(() => {
           </p>
         </div>
       </div>
+
+      <!-- Notifications Tab Content -->
+      <div
+        v-else-if="activeTab === 'notifications'"
+        class="notifications-content"
+      >
+        <div v-if="recentNotifications.length > 0" class="notifications-list">
+          <div
+            v-for="notification in recentNotifications"
+            :key="notification.id"
+            class="notification-item"
+            :class="{ 
+              unread: !notification.viewed,
+              missed: isMissedNotification(notification)
+            }"
+            @click="handleNotificationClick(notification)"
+          >
+            <div class="notification-icon">
+              {{ notification.icon || '🔔' }}
+            </div>
+            <div class="notification-content">
+              <div class="notification-title">
+                {{ notification.title }}
+                <span v-if="isMissedNotification(notification)" class="missed-indicator" title="You missed this notification">!</span>
+              </div>
+              <div class="notification-message">{{ notification.message }}</div>
+              <div class="notification-timestamp">{{ formatTimeAgo(notification.timestamp) }}</div>
+            </div>
+            <div class="notification-actions">
+              <button
+                class="notification-close"
+                @click.stop="removeRecentNotification(notification.id)"
+                title="Remove notification"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-state">
+          <div class="empty-icon">🔔</div>
+          <p class="empty-text">No recent notifications</p>
+          <p class="empty-subtext">You'll see your recent notifications here</p>
+        </div>
+      </div>
+
       <div
         v-else
         class="empty-state"
@@ -458,6 +582,102 @@ onUnmounted(() => {
   animation: discord-pulse 2s infinite;
 }
 
+.status-indicator.has-notifications {
+  background-color: #F23F43;
+  animation: notification-pulse 1.5s infinite;
+}
+
+.status-indicator.has-missed {
+  background-color: #FF6B35;
+  animation: missed-pulse 1s infinite;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  background: #F23F43;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  border: 2px solid #5865F2;
+}
+
+.missed-notification-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  background: #FF6B35;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  border: 2px solid #5865F2;
+  animation: missed-badge-pulse 1s infinite;
+}
+
+@keyframes notification-pulse {
+  0% { 
+    opacity: 1;
+    transform: scale(1);
+    background-color: #F23F43;
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.3);
+    background-color: #FF6B6B;
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1);
+    background-color: #F23F43;
+  }
+}
+
+@keyframes missed-pulse {
+  0% { 
+    opacity: 1;
+    transform: scale(1);
+    background-color: #FF6B35;
+  }
+  50% { 
+    opacity: 0.7;
+    transform: scale(1.4);
+    background-color: #FF8C42;
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1);
+    background-color: #FF6B35;
+  }
+}
+
+@keyframes missed-badge-pulse {
+  0% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes discord-pulse {
   0% { 
     opacity: 1;
@@ -496,23 +716,99 @@ onUnmounted(() => {
 }
 
 .panel-header {
-  padding: 16px 20px;
   border-bottom: 1px solid #40444B;
   background: #36393F;
 }
 
-.panel-title {
-  color: #FFFFFF;
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
+.tab-navigation {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  width: 100%;
 }
 
-.buddies-icon {
-  font-size: 18px;
+.tab-button {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #B9BBBE;
+  padding: 16px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-button:hover {
+  background: rgba(79, 84, 92, 0.3);
+  color: #DCDDDE;
+}
+
+.tab-button.active {
+  color: #FFFFFF;
+  border-bottom-color: #5865F2;
+  background: rgba(88, 101, 242, 0.1);
+}
+
+.tab-icon {
+  font-size: 16px;
+}
+
+.tab-label {
+  font-weight: 600;
+}
+
+.tab-badge {
+  background: #4F545C;
+  color: #DCDDDE;
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-badge.notification {
+  background: #F23F43;
+  color: #FFFFFF;
+  animation: tab-badge-pulse 2s infinite;
+}
+
+.tab-badge.missed {
+  background: #FF6B35;
+  color: #FFFFFF;
+  animation: tab-missed-pulse 1s infinite;
+  font-weight: 800;
+}
+
+@keyframes tab-badge-pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes tab-missed-pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7;
+    transform: scale(1.15);
+  }
 }
 
 /* Social Content */
@@ -943,6 +1239,132 @@ onUnmounted(() => {
   .activity-text, .server-map {
     font-size: 14px;
   }
+}
+
+/* Notifications Content */
+.notifications-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.notifications-list {
+  padding: 12px;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  margin-bottom: 2px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-left: 3px solid transparent;
+}
+
+.notification-item:hover {
+  background-color: #34373C;
+}
+
+.notification-item.unread {
+  background-color: rgba(88, 101, 242, 0.05);
+  border-left-color: #5865F2;
+}
+
+.notification-item.unread:hover {
+  background-color: rgba(88, 101, 242, 0.1);
+}
+
+.notification-item.missed {
+  background-color: rgba(255, 107, 53, 0.08);
+  border-left-color: #FF6B35;
+  border-left-width: 4px;
+}
+
+.notification-item.missed:hover {
+  background-color: rgba(255, 107, 53, 0.15);
+}
+
+.notification-icon {
+  font-size: 20px;
+  margin-right: 12px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  color: #DCDDDE;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.notification-message {
+  color: #B9BBBE;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.notification-timestamp {
+  color: #72767D;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.missed-indicator {
+  display: inline-block;
+  margin-left: 6px;
+  color: #FF6B35;
+  font-weight: 800;
+  font-size: 14px;
+  animation: missed-indicator-pulse 1.5s infinite;
+}
+
+@keyframes missed-indicator-pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+.notification-actions {
+  display: flex;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.notification-close {
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  color: #72767D;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1;
+  transition: all 0.2s ease;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-close:hover {
+  background: rgba(255, 0, 0, 0.1);
+  color: #F23F43;
 }
 
 /* End of styles */

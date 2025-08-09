@@ -28,7 +28,7 @@
         <div class="toast-actions">
           <button
             class="toast-close-btn"
-            @click.stop="removeNotification(notification.id)"
+            @click.stop="removeNotification(notification.id, true)"
             aria-label="Close notification"
           >
             ✕
@@ -59,13 +59,20 @@ import { notificationService, type ToastNotification } from '@/services/notifica
 
 const notifications = notificationService.getNotifications();
 
-const removeNotification = (id: string) => {
+const removeNotification = (id: string, userClosed: boolean = false) => {
+  if (userClosed) {
+    // Mark as interacted when manually closed
+    notificationService.markAsInteracted(id);
+  }
   notificationService.removeNotification(id);
 };
 
 const handleNotificationClick = (notification: ToastNotification) => {
   // Mark as viewed when clicked
   notificationService.markAsViewed();
+  
+  // Mark as interacted
+  notificationService.markAsInteracted(notification.id);
   
   // Close the notification when clicked
   removeNotification(notification.id);
@@ -118,7 +125,7 @@ const handleTouchEnd = (event: TouchEvent) => {
     if (notificationElement) {
       const notificationId = notificationElement.getAttribute('data-notification-id');
       if (notificationId) {
-        removeNotification(notificationId);
+        removeNotification(notificationId, true); // Mark as user interaction
       }
     }
   }

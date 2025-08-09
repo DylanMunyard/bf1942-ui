@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import router from '@/router';
 
 export interface BuddyOnlineNotification {
@@ -18,6 +18,9 @@ export interface ToastNotification {
   timestamp: Date;
   duration?: number; // in milliseconds
   icon?: string;
+  viewed?: boolean; // for recent notifications tracking
+  interacted?: boolean; // true if user clicked on the toast
+  autoRemoved?: boolean; // true if toast was auto-removed vs manually closed
   action?: {
     label: string;
     handler: () => void;
@@ -26,9 +29,11 @@ export interface ToastNotification {
 
 class NotificationService {
   private notifications = ref<ToastNotification[]>([]);
+  private recentNotifications = ref<ToastNotification[]>([]);
   private originalTitle = ref<string>('');
   private titleInterval: number | null = null;
   private pendingNotifications = ref(0);
+  private MAX_RECENT_NOTIFICATIONS = 10;
 
   constructor() {
     // Store original title when service is initialized
@@ -47,6 +52,23 @@ class NotificationService {
     return this.pendingNotifications;
   }
 
+  // Get recent notifications for sidebar
+  getRecentNotifications() {
+    return this.recentNotifications;
+  }
+
+  // Get count of unread recent notifications
+  getUnreadRecentCount() {
+    return computed(() => this.recentNotifications.value.filter(n => !n.viewed).length);
+  }
+
+  // Get count of truly missed notifications (auto-closed without interaction)
+  getMissedNotificationCount() {
+    return computed(() => this.recentNotifications.value.filter(n => 
+      !n.viewed && n.autoRemoved && !n.interacted
+    ).length);
+  }
+
   // Add a new notification
   addNotification(notification: Omit<ToastNotification, 'id' | 'timestamp'>) {
     const newNotification: ToastNotification = {
@@ -54,10 +76,21 @@ class NotificationService {
       id: this.generateId(),
       timestamp: new Date(),
       duration: notification.duration || 5000, // 5 seconds default
+      viewed: false,
+      interacted: false,
+      autoRemoved: false,
     };
 
     this.notifications.value.unshift(newNotification);
     this.pendingNotifications.value++;
+    
+    // Add to recent notifications (at the beginning)
+    this.recentNotifications.value.unshift({ ...newNotification });
+    
+    // Keep only the most recent notifications
+    if (this.recentNotifications.value.length > this.MAX_RECENT_NOTIFICATIONS) {
+      this.recentNotifications.value = this.recentNotifications.value.slice(0, this.MAX_RECENT_NOTIFICATIONS);
+    }
     
     // Update tab title to indicate new notification
     this.updateTabTitle();
@@ -65,7 +98,7 @@ class NotificationService {
     // Auto-remove after duration
     if (newNotification.duration && newNotification.duration > 0) {
       setTimeout(() => {
-        this.removeNotification(newNotification.id);
+        this.removeNotification(newNotification.id, true); // Mark as auto-removed
       }, newNotification.duration);
     }
 
@@ -73,14 +106,28 @@ class NotificationService {
   }
 
   // Remove a specific notification
-  removeNotification(id: string) {
+  removeNotification(id: string, autoRemoved: boolean = false) {
     const index = this.notifications.value.findIndex(n => n.id === id);
     if (index > -1) {
+      // Mark the notification in recent notifications as auto-removed
+      const recentIndex = this.recentNotifications.value.findIndex(n => n.id === id);
+      if (recentIndex > -1) {
+        this.recentNotifications.value[recentIndex].autoRemoved = autoRemoved;
+      }
+      
       this.notifications.value.splice(index, 1);
       this.pendingNotifications.value = Math.max(0, this.pendingNotifications.value - 1);
       
       // Update tab title
       this.updateTabTitle();
+    }
+  }
+
+  // Mark notification as interacted (clicked)
+  markAsInteracted(id: string) {
+    const recentIndex = this.recentNotifications.value.findIndex(n => n.id === id);
+    if (recentIndex > -1) {
+      this.recentNotifications.value[recentIndex].interacted = true;
     }
   }
 
@@ -95,6 +142,19 @@ class NotificationService {
   markAsViewed() {
     this.pendingNotifications.value = 0;
     this.updateTabTitle();
+  }
+
+  // Mark recent notifications as viewed
+  markRecentAsViewed() {
+    this.recentNotifications.value.forEach(n => n.viewed = true);
+  }
+
+  // Remove a specific recent notification
+  removeRecentNotification(id: string) {
+    const index = this.recentNotifications.value.findIndex(n => n.id === id);
+    if (index > -1) {
+      this.recentNotifications.value.splice(index, 1);
+    }
   }
 
   // Handle buddy online notifications specifically
