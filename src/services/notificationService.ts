@@ -10,9 +10,18 @@ export interface BuddyOnlineNotification {
   message: string;
 }
 
+export interface ServerMapChangeNotification {
+  type: 'server_map_change';
+  serverName: string;
+  mapName: string;
+  timestamp: string;
+  message: string;
+  joinLink?: string;
+}
+
 export interface ToastNotification {
   id: string;
-  type: 'buddy_online' | 'server_favorite' | 'info' | 'success' | 'warning' | 'error';
+  type: 'buddy_online' | 'server_map_change' | 'server_favorite' | 'info' | 'success' | 'warning' | 'error';
   title: string;
   message: string;
   timestamp: Date;
@@ -173,6 +182,31 @@ class NotificationService {
       }
     });
 
+    return notification;
+  }
+
+  // Handle server map change notifications specifically
+  handleServerMapChange(data: ServerMapChangeNotification) {
+    const notification = this.addNotification({
+      type: 'server_map_change',
+      title: `Map Changed on ${data.serverName}`,
+      message: `Now playing ${data.mapName}`,
+      duration: 6000,
+      icon: '🗺️',
+      action: data.joinLink ? {
+        label: '🚀 Join',
+        handler: () => {
+          if (data.joinLink) {
+            window.open(data.joinLink, '_blank');
+          }
+        }
+      } : {
+        label: 'View Server',
+        handler: () => {
+          router.push({ name: 'server-details', params: { serverName: data.serverName } });
+        }
+      }
+    });
 
     return notification;
   }
@@ -235,12 +269,28 @@ class NotificationService {
     
     return this.handleBuddyOnline(testData);
   }
+
+  // Test function for server map change notifications
+  testServerMapChangeNotification(serverName: string = '-[HELLO]- Desert Combat') {
+    const testData: ServerMapChangeNotification = {
+      type: 'server_map_change',
+      serverName,
+      mapName: 'fh2 normandy_1944',
+      timestamp: new Date().toISOString(),
+      message: `Server ${serverName} changed map from fh2 sidi_bou_zid to fh2 normandy_1944`,
+      joinLink: 'bf1942://192.168.1.100:14567'
+    };
+    
+    return this.handleServerMapChange(testData);
+  }
 }
 
 export const notificationService = new NotificationService();
 
-// Expose test function to window for development
+// Expose test functions to window for development
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
   (window as any).testBuddyNotification = (buddyName?: string) => 
     notificationService.testBuddyOnlineNotification(buddyName);
+  (window as any).testServerMapChangeNotification = (serverName?: string) => 
+    notificationService.testServerMapChangeNotification(serverName);
 }

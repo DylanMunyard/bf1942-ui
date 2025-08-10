@@ -35,7 +35,10 @@
           </button>
           <button
             v-if="notification.action"
-            class="toast-action-btn"
+            :class="[
+              'toast-action-btn',
+              { 'toast-join-btn': notification.action.label.includes('🚀') }
+            ]"
             @click.stop="notification.action.handler()"
           >
             {{ notification.action.label }}
@@ -290,6 +293,19 @@ onUnmounted(() => {
 .toast-action-btn:hover {
   background: var(--color-primary-hover);
   transform: scale(1.05);
+}
+
+.toast-join-btn {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.toast-join-btn:hover {
+  background: rgba(34, 197, 94, 0.3);
+  color: #16a34a;
+  transform: scale(1.1);
+  border-color: rgba(34, 197, 94, 0.5);
 }
 
 .toast-close-btn {

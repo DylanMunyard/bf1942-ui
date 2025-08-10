@@ -1,7 +1,7 @@
 import * as signalR from '@microsoft/signalr';
 import type { UserProfile } from './authService';
 import { authService } from './authService';
-import { notificationService, type BuddyOnlineNotification } from './notificationService';
+import { notificationService, type BuddyOnlineNotification, type ServerMapChangeNotification } from './notificationService';
 
 export class SignalRService {
   private connection: signalR.HubConnection | null = null;
@@ -93,6 +93,14 @@ export class SignalRService {
       
       // Handle the buddy online notification
       notificationService.handleBuddyOnline(data);
+    });
+
+    // Server map change handler
+    this.connection.on('ServerMapChange', (data: ServerMapChangeNotification) => {
+      console.log('SignalR - ServerMapChange:', data);
+      
+      // Handle the server map change notification
+      notificationService.handleServerMapChange(data);
     });
   }
 
