@@ -50,9 +50,9 @@ const formatPlayTime = (minutes: number): string => {
 };
 
 // Format date to a readable format in the user's locale
-const formatDate = (dateString: string): string => {
+const _formatDate = (_dateString: string): string => {
   // Ensure the date is treated as UTC by appending 'Z' if it doesn't have timezone info
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+  const date = new Date(_dateString.endsWith('Z') ? _dateString : _dateString + 'Z');
   return date.toLocaleString(undefined, {
     year: 'numeric',
     month: 'short',
@@ -197,13 +197,13 @@ const resetFilters = () => {
 };
 
 // Handle sort column click
-const handleSort = (column: string) => {
+const _handleSort = (_column: string) => {
   // If clicking the same column, toggle order
-  if (sortBy.value === column) {
+  if (sortBy.value === _column) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
   } else {
     // If clicking a new column, set it as the sort column and default to descending
-    sortBy.value = column;
+    sortBy.value = _column;
     sortOrder.value = 'desc';
   }
 

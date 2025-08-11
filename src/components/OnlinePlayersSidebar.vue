@@ -251,13 +251,22 @@ onUnmounted(() => {
         v-if="!isPanelOpen"
         class="button-content"
       >
-        <span class="status-indicator" :class="{ 
-          'has-notifications': showNotificationBadge,
-          'has-missed': showMissedIndicator 
-        }" />
+        <span
+          class="status-indicator"
+          :class="{ 
+            'has-notifications': showNotificationBadge,
+            'has-missed': showMissedIndicator 
+          }"
+        />
         {{ totalOnline }}
-        <span v-if="showMissedIndicator" class="missed-notification-badge">{{ missedNotificationCount.value }}</span>
-        <span v-else-if="showNotificationBadge" class="notification-badge">{{ unreadRecentCount.value }}</span>
+        <span
+          v-if="showMissedIndicator"
+          class="missed-notification-badge"
+        >{{ missedNotificationCount.value }}</span>
+        <span
+          v-else-if="showNotificationBadge"
+          class="notification-badge"
+        >{{ unreadRecentCount.value }}</span>
       </span>
       <span v-else>×</span>
     </button>
@@ -276,7 +285,10 @@ onUnmounted(() => {
           >
             <span class="tab-icon">👥</span>
             <span class="tab-label">Social</span>
-            <span v-if="totalOnline > 0" class="tab-badge">{{ totalOnline }}</span>
+            <span
+              v-if="totalOnline > 0"
+              class="tab-badge"
+            >{{ totalOnline }}</span>
           </button>
           <button
             class="tab-button"
@@ -285,8 +297,15 @@ onUnmounted(() => {
           >
             <span class="tab-icon">🔔</span>
             <span class="tab-label">Notifications</span>
-            <span v-if="missedNotificationCount.value > 0" class="tab-badge missed" title="Missed notifications">{{ missedNotificationCount.value }}!</span>
-            <span v-else-if="unreadRecentCount.value > 0" class="tab-badge notification">{{ unreadRecentCount.value }}</span>
+            <span
+              v-if="missedNotificationCount.value > 0"
+              class="tab-badge missed"
+              title="Missed notifications"
+            >{{ missedNotificationCount.value }}!</span>
+            <span
+              v-else-if="unreadRecentCount.value > 0"
+              class="tab-badge notification"
+            >{{ unreadRecentCount.value }}</span>
           </button>
         </div>
       </div>
@@ -450,8 +469,7 @@ onUnmounted(() => {
                   </div>
                 </div>
               </div>
-              <div class="server-actions">
-              </div>
+              <div class="server-actions" />
             </div>
           </div>
         </div>
@@ -478,7 +496,10 @@ onUnmounted(() => {
         v-else-if="activeTab === 'notifications'"
         class="notifications-content"
       >
-        <div v-if="recentNotifications.length > 0" class="notifications-list">
+        <div
+          v-if="recentNotifications.length > 0"
+          class="notifications-list"
+        >
           <div
             v-for="notification in recentNotifications"
             :key="notification.id"
@@ -495,26 +516,43 @@ onUnmounted(() => {
             <div class="notification-content">
               <div class="notification-title">
                 {{ notification.title }}
-                <span v-if="isMissedNotification(notification)" class="missed-indicator" title="You missed this notification">!</span>
+                <span
+                  v-if="isMissedNotification(notification)"
+                  class="missed-indicator"
+                  title="You missed this notification"
+                >!</span>
               </div>
-              <div class="notification-message">{{ notification.message }}</div>
-              <div class="notification-timestamp">{{ formatTimeAgo(notification.timestamp) }}</div>
+              <div class="notification-message">
+                {{ notification.message }}
+              </div>
+              <div class="notification-timestamp">
+                {{ formatTimeAgo(notification.timestamp) }}
+              </div>
             </div>
             <div class="notification-actions">
               <button
                 class="notification-close"
-                @click.stop="removeRecentNotification(notification.id)"
                 title="Remove notification"
+                @click.stop="removeRecentNotification(notification.id)"
               >
                 ✕
               </button>
             </div>
           </div>
         </div>
-        <div v-else class="empty-state">
-          <div class="empty-icon">🔔</div>
-          <p class="empty-text">No recent notifications</p>
-          <p class="empty-subtext">You'll see your recent notifications here</p>
+        <div
+          v-else
+          class="empty-state"
+        >
+          <div class="empty-icon">
+            🔔
+          </div>
+          <p class="empty-text">
+            No recent notifications
+          </p>
+          <p class="empty-subtext">
+            You'll see your recent notifications here
+          </p>
         </div>
       </div>
 

@@ -48,6 +48,14 @@ class StatsService {
   private baseUrl = '/stats';
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const { authService } = await import('./authService');
+    
+    // Ensure we have a valid token
+    const isValid = await authService.ensureValidToken();
+    if (!isValid) {
+      throw new Error('Authentication required but token is invalid');
+    }
+    
     const token = sessionStorage.getItem('authToken');
     
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -58,6 +66,43 @@ class StatsService {
         ...options.headers,
       },
     });
+
+    // Handle 401 errors by attempting token refresh
+    if (response.status === 401) {
+      console.log('Received 401 in statsService, attempting token refresh...');
+      const refreshed = await authService.refreshToken();
+      
+      if (refreshed) {
+        // Retry the request with new token
+        const newToken = sessionStorage.getItem('authToken');
+        const retryResponse = await fetch(`${this.baseUrl}${endpoint}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(newToken && { 'Authorization': `Bearer ${newToken}` }),
+            ...options.headers,
+          },
+        });
+        
+        if (!retryResponse.ok) {
+          throw new Error(`HTTP error! status: ${retryResponse.status}`);
+        }
+        
+        // Handle empty responses for retry
+        const retryContentType = retryResponse.headers.get('content-type');
+        const retryHasJsonContent = retryContentType && retryContentType.includes('application/json');
+        
+        if (!retryHasJsonContent || retryResponse.status === 204) {
+          return {} as T;
+        }
+        
+        return retryResponse.json();
+      } else {
+        // Refresh failed, logout user
+        await authService.logout();
+        throw new Error('Session expired. Please login again.');
+      }
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

@@ -1,5 +1,6 @@
 
 export interface UserProfile {
+  id: number;
   name: string;
   email: string;
 }
@@ -57,39 +58,46 @@ class AuthService {
     try {
       // Get the Google ID token
       const idToken = response.credential;
-      const payload = this.parseJwt(idToken);
 
       // Authenticate with backend using Google ID token
       try {
         const loginResponse = await fetch('/stats/auth/login', {
           method: 'POST',
           headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`
+            'Content-Type': 'application/json'
           },
-          credentials: 'include',
-          body: JSON.stringify({ email: payload.email })
+          body: JSON.stringify({ googleIdToken: idToken })
         });
 
         if (loginResponse.ok) {
-          // Extract user profile from Google JWT payload
-          console.log('JWT payload:', payload);
+          // Parse response from backend
+          const loginData = await loginResponse.json();
+          console.log('Backend login response:', loginData);
+          
           const userProfile: UserProfile = {
-            name: payload.name || payload.email,
-            email: payload.email,
+            id: loginData.user.id,
+            name: loginData.user.name,
+            email: loginData.user.email,
           };
-          console.log('Extracted user profile:', userProfile);
+          console.log('User profile from backend:', userProfile);
 
           const authState: AuthState = {
             isAuthenticated: true,
-            token: idToken, // Use the Google ID token directly
+            // Use backend-issued access token
+            token: loginData.accessToken,
             user: userProfile,
           };
 
-          // Store the Google ID token and user profile in sessionStorage
-          sessionStorage.setItem('authToken', idToken);
+          // Store the backend access token, user profile, and expiration in sessionStorage
+          sessionStorage.setItem('authToken', loginData.accessToken);
           sessionStorage.setItem('userProfile', JSON.stringify(userProfile));
-          console.log('Stored user profile in sessionStorage:', JSON.stringify(userProfile));
+          if (loginData.expiresAt) {
+            sessionStorage.setItem('tokenExpiresAt', loginData.expiresAt);
+          }
+          console.log('Stored auth data in sessionStorage:', {
+            userProfile: JSON.stringify(userProfile),
+            expiresAt: loginData.expiresAt
+          });
           
           // Trigger success event
           window.dispatchEvent(new CustomEvent('google-auth-success', { detail: authState }));
@@ -186,20 +194,20 @@ class AuthService {
 
 
   async logout(): Promise<void> {
+    // Inform backend to revoke refresh token and clear cookie
     try {
-      // Call backend logout endpoint
       await fetch('/stats/auth/logout', {
         method: 'POST',
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
       });
-    } catch (error) {
-      console.error('Backend logout error:', error);
-      // Continue with local cleanup even if backend fails
+    } catch (e) {
+      console.warn('Logout request failed (continuing to clear client state):', e);
     }
-    
     // Clear stored token and user profile
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('userProfile');
+    sessionStorage.removeItem('tokenExpiresAt');
     
     // Disable Google auto-select
     window.google?.accounts?.id?.disableAutoSelect?.();
@@ -231,67 +239,62 @@ class AuthService {
 
   async refreshToken(): Promise<boolean> {
     try {
-      console.log('Attempting silent token refresh...');
-      
-      // Check if Google Identity Services is available
-      if (!window.google?.accounts?.id) {
-        console.log('Google Identity Services not available for refresh');
+      console.log('Attempting backend token refresh...');
+      const response = await fetch('/stats/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Same-origin fetch will include cookies by default; explicit for clarity
+        credentials: 'same-origin',
+      });
+
+      if (!response.ok) {
+        console.log('Refresh endpoint returned non-OK status:', response.status);
         return false;
       }
-      
-      // Use Google Identity Services silent refresh
-      return new Promise((resolve) => {
-        // Set up a temporary callback for the refresh
-        const originalCallback = window.google.accounts.id.initialize;
-        
-        window.google.accounts.id.initialize({
-          client_id: this.clientId,
-          callback: (response: any) => {
-            if (response.credential) {
-              // Successfully got new token
-              this.handleCredentialResponse(response).then(() => {
-                console.log('Silent token refresh successful');
-                resolve(true);
-              }).catch(() => {
-                console.log('Silent token refresh failed during handling');
-                resolve(false);
-              });
-            } else {
-              console.log('Silent token refresh failed - no credential returned');
-              resolve(false);
-            }
-          },
-          auto_select: true, // Enable silent refresh
-          use_fedcm_for_prompt: false,
-        });
-        
-        // Trigger silent prompt
-        window.google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            console.log('Silent refresh not available, user needs to login again');
-            resolve(false);
-          }
-        });
-        
-        // Timeout after 5 seconds
-        setTimeout(() => {
-          console.log('Silent token refresh timeout');
-          resolve(false);
-        }, 5000);
-      });
+
+      const data = await response.json();
+      const accessToken: string = data.accessToken;
+      const expiresAt: string | undefined = data.expiresAt;
+
+      if (!accessToken) {
+        console.log('No accessToken returned from refresh');
+        return false;
+      }
+
+      // Update stored token and expiration
+      sessionStorage.setItem('authToken', accessToken);
+      if (expiresAt) {
+        sessionStorage.setItem('tokenExpiresAt', expiresAt);
+      }
+
+      console.log('Backend token refresh successful');
+      return true;
     } catch (error) {
-      console.error('Silent token refresh error:', error);
+      console.error('Backend token refresh error:', error);
       return false;
     }
   }
 
   async ensureValidToken(): Promise<boolean> {
-    const token = sessionStorage.getItem('authToken');
+    let token = sessionStorage.getItem('authToken');
     if (!token) {
-      return false;
+      // Try to obtain a new access token using refresh cookie
+      const refreshed = await this.refreshToken();
+      if (!refreshed) return false;
+      token = sessionStorage.getItem('authToken');
+      if (!token) return false;
     }
 
-    if (this.isTokenExpired(token)) {
+    const storedExpiresAt = sessionStorage.getItem('tokenExpiresAt');
+    let isExpired = false;
+    if (storedExpiresAt) {
+      const expiryMs = Date.parse(storedExpiresAt);
+      isExpired = isNaN(expiryMs) ? this.isTokenExpired(token) : Date.now() >= expiryMs;
+    } else {
+      isExpired = this.isTokenExpired(token);
+    }
+
+    if (isExpired) {
       console.log('Token expired, attempting refresh...');
       try {
         const refreshed = await this.refreshToken();
@@ -314,7 +317,9 @@ class AuthService {
     const token = sessionStorage.getItem('authToken');
     if (!token) return;
 
-    const expirationTime = this.getTokenExpirationTime(token);
+    // Prefer server-provided expiresAt; fallback to JWT exp
+    const expiresAtStr = sessionStorage.getItem('tokenExpiresAt');
+    const expirationTime = expiresAtStr ? Date.parse(expiresAtStr) : this.getTokenExpirationTime(token);
     if (!expirationTime) return;
 
     const currentTime = Date.now();

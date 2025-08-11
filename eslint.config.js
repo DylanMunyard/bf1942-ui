@@ -36,7 +36,20 @@ export default [
         setInterval: 'readonly',
         URL: 'readonly',
         HTMLSelectElement: 'readonly',
-        NodeJS: 'readonly'
+        HTMLInputElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLCanvasElement: 'readonly',
+        HTMLImageElement: 'readonly',
+        NodeJS: 'readonly',
+        alert: 'readonly',
+        confirm: 'readonly',
+        prompt: 'readonly',
+        sessionStorage: 'readonly',
+        URLSearchParams: 'readonly',
+        RequestInit: 'readonly',
+        MutationObserver: 'readonly',
+        getComputedStyle: 'readonly',
+        ResizeObserver: 'readonly'
       }
     },
     plugins: {
@@ -102,7 +115,20 @@ export default [
         setInterval: 'readonly',
         URL: 'readonly',
         HTMLSelectElement: 'readonly',
-        NodeJS: 'readonly'
+        HTMLInputElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLCanvasElement: 'readonly',
+        HTMLImageElement: 'readonly',
+        NodeJS: 'readonly',
+        alert: 'readonly',
+        confirm: 'readonly',
+        prompt: 'readonly',
+        sessionStorage: 'readonly',
+        URLSearchParams: 'readonly',
+        RequestInit: 'readonly',
+        MutationObserver: 'readonly',
+        getComputedStyle: 'readonly',
+        ResizeObserver: 'readonly'
       }
     },
     plugins: {

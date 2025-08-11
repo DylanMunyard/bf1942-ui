@@ -98,18 +98,17 @@ interface Props {
   autoFocus?: boolean;
 }
 
-interface Emits {
-  (e: 'update:modelValue', value: string): void;
-  (e: 'select', player: PlayerSearchResult): void;
-  (e: 'enter', value: string): void;
-}
-
 const props = withDefaults(defineProps<Props>(), {
+  modelValue: '',
   placeholder: 'Search player name...',
   autoFocus: false
 });
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<{
+  'update:modelValue': [value: string];
+  'select': [player: PlayerSearchResult];
+  'enter': [value: string];
+}>();
 
 const inputRef = ref<HTMLInputElement>();
 const searchInput = ref(props.modelValue || '');

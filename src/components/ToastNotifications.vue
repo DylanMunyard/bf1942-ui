@@ -1,6 +1,9 @@
 <template>
   <div class="toast-container">
-    <TransitionGroup name="toast" tag="div">
+    <TransitionGroup
+      name="toast"
+      tag="div"
+    >
       <div
         v-for="notification in notifications"
         :key="notification.id"
@@ -8,11 +11,11 @@
           'toast',
           `toast-${notification.type}`
         ]"
+        :data-notification-id="notification.id"
         @click="handleNotificationClick(notification)"
         @touchstart="handleTouchStart"
         @touchmove="handleTouchMove"
         @touchend="handleTouchEnd"
-        :data-notification-id="notification.id"
       >
         <div class="toast-icon">
           <span v-if="notification.icon">{{ notification.icon }}</span>
@@ -20,16 +23,22 @@
         </div>
         
         <div class="toast-content">
-          <div class="toast-title">{{ notification.title }}</div>
-          <div class="toast-message">{{ notification.message }}</div>
-          <div class="toast-timestamp">{{ formatTimestamp(notification.timestamp) }}</div>
+          <div class="toast-title">
+            {{ notification.title }}
+          </div>
+          <div class="toast-message">
+            {{ notification.message }}
+          </div>
+          <div class="toast-timestamp">
+            {{ formatTimestamp(notification.timestamp) }}
+          </div>
         </div>
         
         <div class="toast-actions">
           <button
             class="toast-close-btn"
-            @click.stop="removeNotification(notification.id, true)"
             aria-label="Close notification"
+            @click.stop="removeNotification(notification.id, true)"
           >
             ✕
           </button>
@@ -45,11 +54,14 @@
           </button>
         </div>
         
-        <div class="toast-progress" v-if="notification.duration">
+        <div
+          v-if="notification.duration"
+          class="toast-progress"
+        >
           <div
             class="toast-progress-bar"
             :style="{ animationDuration: `${notification.duration}ms` }"
-          ></div>
+          />
         </div>
       </div>
     </TransitionGroup>
@@ -57,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue';
+import { onUnmounted } from 'vue';
 import { notificationService, type ToastNotification } from '@/services/notificationService';
 
 const notifications = notificationService.getNotifications();

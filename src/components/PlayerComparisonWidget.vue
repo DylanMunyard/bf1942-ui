@@ -5,7 +5,6 @@ import { ref, onMounted, onUnmounted } from 'vue';
 const {
   selectedPlayers,
   isVisible,
-  canAddPlayer: _canAddPlayer,
   canCompare,
   hasSelections,
   removePlayer,
