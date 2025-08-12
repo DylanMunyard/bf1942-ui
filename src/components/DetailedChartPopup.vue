@@ -145,23 +145,23 @@ const chartOptions = {
     legend: {
       display: true,
       position: 'top',
-      onClick: (e, legendItem, legend) => {
+      onClick: (e: any, legendItem: any, legend: any) => {
         // Get the index of the clicked dataset
         const index = legendItem.datasetIndex;
 
         // Check if the clicked dataset is the only visible one
-        const isOnlyVisibleDataset = legend.chart.data.datasets.every((dataset, i) => 
+        const isOnlyVisibleDataset = legend.chart.data.datasets.every((dataset: any, i: number) => 
           i === index ? legend.chart.getDatasetMeta(i).hidden === false : legend.chart.getDatasetMeta(i).hidden === true
         );
 
         if (isOnlyVisibleDataset) {
           // If it's the only visible dataset, show all datasets (unselect)
-          legend.chart.data.datasets.forEach((dataset, i) => {
+          legend.chart.data.datasets.forEach((dataset: any, i: number) => {
             legend.chart.setDatasetVisibility(i, true);
           });
         } else {
           // Otherwise, hide all datasets and show only the clicked one (select)
-          legend.chart.data.datasets.forEach((dataset, i) => {
+          legend.chart.data.datasets.forEach((dataset: any, i: number) => {
             legend.chart.setDatasetVisibility(i, false);
           });
           legend.chart.setDatasetVisibility(index, true);
@@ -175,7 +175,7 @@ const chartOptions = {
       mode: 'index',
       intersect: false,
       callbacks: {
-        title: (tooltipItems) => {
+        title: (tooltipItems: any) => {
           // Get the hour from the label (format is "HH:00")
           const label = tooltipItems[0].label;
           const hour = parseInt(label.split(':')[0]);
@@ -211,7 +211,7 @@ const chartOptions = {
           // Return timezone information including user's local time
           return `🏠 ${localTime} | 🇦🇺 ${aestTime} | 🇫🇷 ${franceTime} | 🇺🇸E ${usEastTime} | 🇺🇸W ${usWestTime}`;
         },
-        label: (context) => {
+        label: (context: any) => {
           return `${context.dataset.label}: ${context.raw}`;
         },
         afterLabel: () => {
@@ -236,7 +236,7 @@ const chartOptions = {
       },
       ticks: {
         display: true,
-        callback: function(value, index) {
+        callback: function(value: any, index: any) {
           // Only show every 3 hours to avoid overcrowding
           if (index % 3 !== 0) return null;
 

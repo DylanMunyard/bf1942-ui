@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import Servers from '../views/Servers.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Players from '../views/Players.vue'
@@ -13,9 +13,7 @@ import WorkInProgressPlaceholder from '../components/WorkInProgressPlaceholder.v
 import PlayerComparison from '../views/PlayerComparison.vue'
 import { useAuth } from '../composables/useAuth'
 
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
+const routes: RouteRecordRaw[] = [
     {
       path: '/',
       name: 'home',
@@ -128,7 +126,11 @@ const router = createRouter({
       name: 'tk-livewire',
       component: WorkInProgressPlaceholder
     }
-  ]
+]
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes
 })
 
 export default router
