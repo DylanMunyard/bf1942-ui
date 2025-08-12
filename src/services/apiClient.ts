@@ -16,7 +16,7 @@ class ApiClient {
       }
 
       // Add auth header
-      const token = sessionStorage.getItem('authToken');
+      const token = localStorage.getItem('authToken');
       if (token) {
         fetchOptions.headers = {
           ...fetchOptions.headers,
@@ -34,7 +34,7 @@ class ApiClient {
       
       if (refreshed) {
         // Retry the request with new token
-        const newToken = sessionStorage.getItem('authToken');
+        const newToken = localStorage.getItem('authToken');
         if (newToken) {
           fetchOptions.headers = {
             ...fetchOptions.headers,

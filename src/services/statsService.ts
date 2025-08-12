@@ -56,7 +56,7 @@ class StatsService {
       throw new Error('Authentication required but token is invalid');
     }
     
-    const token = sessionStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken');
     
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
@@ -74,7 +74,7 @@ class StatsService {
       
       if (refreshed) {
         // Retry the request with new token
-        const newToken = sessionStorage.getItem('authToken');
+        const newToken = localStorage.getItem('authToken');
         const retryResponse = await fetch(`${this.baseUrl}${endpoint}`, {
           ...options,
           headers: {

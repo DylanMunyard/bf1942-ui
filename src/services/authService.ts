@@ -56,10 +56,10 @@ class AuthService {
 
   private async handleCredentialResponse(response: any): Promise<void> {
     try {
-      // Get the Google ID token
+      // Get the Google ID token (only used for initial authentication)
       const idToken = response.credential;
 
-      // Authenticate with backend using Google ID token
+      // Exchange Google ID token for long-lived JWT from our backend
       try {
         const loginResponse = await fetch('/stats/auth/login', {
           method: 'POST',
@@ -83,18 +83,18 @@ class AuthService {
 
           const authState: AuthState = {
             isAuthenticated: true,
-            // Use backend-issued access token
+            // Use backend-issued long-lived JWT (1 week expiry)
             token: loginData.accessToken,
             user: userProfile,
           };
 
-          // Store the backend access token, user profile, and expiration in sessionStorage
-          sessionStorage.setItem('authToken', loginData.accessToken);
-          sessionStorage.setItem('userProfile', JSON.stringify(userProfile));
+          // Store the backend JWT, user profile, and expiration in localStorage
+          localStorage.setItem('authToken', loginData.accessToken);
+          localStorage.setItem('userProfile', JSON.stringify(userProfile));
           if (loginData.expiresAt) {
-            sessionStorage.setItem('tokenExpiresAt', loginData.expiresAt);
+            localStorage.setItem('tokenExpiresAt', loginData.expiresAt);
           }
-          console.log('Stored auth data in sessionStorage:', {
+          console.log('Stored auth data in localStorage:', {
             userProfile: JSON.stringify(userProfile),
             expiresAt: loginData.expiresAt
           });
@@ -172,8 +172,8 @@ class AuthService {
   }
 
   getStoredAuthState(): AuthState {
-    const token = sessionStorage.getItem('authToken');
-    const userProfileJson = sessionStorage.getItem('userProfile');
+    const token = localStorage.getItem('authToken');
+    const userProfileJson = localStorage.getItem('userProfile');
     let user: UserProfile | null = null;
 
     if (userProfileJson) {
@@ -205,9 +205,9 @@ class AuthService {
       console.warn('Logout request failed (continuing to clear client state):', e);
     }
     // Clear stored token and user profile
-    sessionStorage.removeItem('authToken');
-    sessionStorage.removeItem('userProfile');
-    sessionStorage.removeItem('tokenExpiresAt');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userProfile');
+    localStorage.removeItem('tokenExpiresAt');
     
     // Disable Google auto-select
     window.google?.accounts?.id?.disableAutoSelect?.();
@@ -243,7 +243,7 @@ class AuthService {
       const response = await fetch('/stats/auth/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Same-origin fetch will include cookies by default; explicit for clarity
+        // Uses httpOnly refresh token cookie (60-day expiry)
         credentials: 'same-origin',
       });
 
@@ -262,9 +262,9 @@ class AuthService {
       }
 
       // Update stored token and expiration
-      sessionStorage.setItem('authToken', accessToken);
+      localStorage.setItem('authToken', accessToken);
       if (expiresAt) {
-        sessionStorage.setItem('tokenExpiresAt', expiresAt);
+        localStorage.setItem('tokenExpiresAt', expiresAt);
       }
 
       console.log('Backend token refresh successful');
@@ -276,16 +276,16 @@ class AuthService {
   }
 
   async ensureValidToken(): Promise<boolean> {
-    let token = sessionStorage.getItem('authToken');
+    let token = localStorage.getItem('authToken');
     if (!token) {
       // Try to obtain a new access token using refresh cookie
       const refreshed = await this.refreshToken();
       if (!refreshed) return false;
-      token = sessionStorage.getItem('authToken');
+      token = localStorage.getItem('authToken');
       if (!token) return false;
     }
 
-    const storedExpiresAt = sessionStorage.getItem('tokenExpiresAt');
+    const storedExpiresAt = localStorage.getItem('tokenExpiresAt');
     let isExpired = false;
     if (storedExpiresAt) {
       const expiryMs = Date.parse(storedExpiresAt);
@@ -314,21 +314,25 @@ class AuthService {
   }
 
   setupAutoRefresh(): void {
-    const token = sessionStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken');
     if (!token) return;
 
     // Prefer server-provided expiresAt; fallback to JWT exp
-    const expiresAtStr = sessionStorage.getItem('tokenExpiresAt');
+    const expiresAtStr = localStorage.getItem('tokenExpiresAt');
     const expirationTime = expiresAtStr ? Date.parse(expiresAtStr) : this.getTokenExpirationTime(token);
     if (!expirationTime) return;
 
     const currentTime = Date.now();
     const timeUntilExpiration = expirationTime - currentTime;
     
-    // Try to refresh token 5 minutes before expiration
-    const refreshTime = Math.max(0, timeUntilExpiration - (5 * 60 * 1000));
+    // For long-lived tokens (> 1 day), refresh 1 hour before expiration
+    // For shorter tokens, refresh 5 minutes before expiration
+    const isLongLived = timeUntilExpiration > (24 * 60 * 60 * 1000); // > 1 day
+    const refreshBuffer = isLongLived ? (60 * 60 * 1000) : (5 * 60 * 1000); // 1 hour or 5 minutes
+    const refreshTime = Math.max(0, timeUntilExpiration - refreshBuffer);
 
-    console.log(`Setting up auto-refresh in ${refreshTime / 1000} seconds`);
+    const refreshTimeInHours = refreshTime / (1000 * 60 * 60);
+    console.log(`Setting up auto-refresh in ${refreshTimeInHours > 1 ? `${refreshTimeInHours.toFixed(1)} hours` : `${Math.round(refreshTime / 1000)} seconds`}`);
     
     setTimeout(async () => {
       console.log('Auto-refreshing token...');
@@ -340,7 +344,7 @@ class AuthService {
         console.log('Auto-refresh failed, user will need to login again');
         // Set a timer to logout 1 minute later if no manual intervention
         setTimeout(async () => {
-          const currentToken = sessionStorage.getItem('authToken');
+          const currentToken = localStorage.getItem('authToken');
           if (currentToken && this.isTokenExpired(currentToken)) {
             console.log('Token still expired after failed refresh, logging out...');
             await this.logout();
