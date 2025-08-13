@@ -224,91 +224,80 @@ onUnmounted(() => {
       v-else-if="servers.length > 0"
       class="server-info"
     >
-      <div class="table-container">
-        <div class="table-scroll-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th class="server-name-header">
-                  <div class="server-name-header-content">
-                    <span>Server Name</span>
-                    <div class="filter-container">
-                      <input
-                        v-model="serverFilter"
-                        placeholder="Filter..."
-                        class="server-filter-input"
-                      >
-                      <button
-                        v-if="serverFilter"
-                        class="clear-filter-button"
-                        title="Clear filter"
-                        @click="serverFilter = ''"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                </th>
-                <th>Players</th>
-                <th>Map</th>
-                <th>Game Type</th>
-                <th>Join</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="server in filteredServers"
-                :key="server.guid"
-              >
-                <td class="server-name-cell">
-                  <router-link
-                    :to="`/servers/${encodeURIComponent(server.name)}`"
-                    class="server-name-link"
-                  >
-                    {{ server.name }}
-                  </router-link>
-                  <div class="server-details">
-                    ({{ formatTime(server.roundTimeRemain) }} | {{ server.tickets1 }} | {{ server.tickets2 }})
-                  </div>
-                  <!-- Mobile condensed map and player info -->
-                  <div class="mobile-details mobile-only">
-                    <div class="mobile-detail">
-                      <strong>Map:</strong> {{ server.mapName }}
-                    </div>
-                    <div
-                      class="mobile-detail players-link"
-                      @click="showPlayers(server)"
-                    >
-                      <strong>Players:</strong> {{ server.numPlayers }} / {{ server.maxPlayers }}
-                    </div>
-                  </div>
-                </td>
-                <td
-                  class="players-column"
-                  @click="showPlayers(server)"
-                >
-                  {{ server.numPlayers }} / {{ server.maxPlayers }}
-                </td>
-                <td class="map-cell">
-                  {{ server.mapName }}
-                </td>
-                <td class="gametype-cell">
-                  {{ server.gameType }}
-                </td>
-                <td>
-                  <a
-                    href="#"
-                    class="join-link"
-                    @click.prevent="joinServer(server)"
-                  >Join Server</a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="filter-container">
+          <input
+            v-model="serverFilter"
+            placeholder="Filter servers..."
+            class="server-filter-input"
+          >
+          <button
+            v-if="serverFilter"
+            class="clear-filter-button"
+            title="Clear filter"
+            @click="serverFilter = ''"
+          >
+            ×
+          </button>
         </div>
+      </div>
+
+      <!-- Compact server list -->
+      <div class="server-list-container">
+        <div
+          v-for="server in filteredServers"
+          :key="server.guid"
+          class="server-row"
+        >
+          <div class="server-main-info">
+            <router-link
+              :to="`/servers/${encodeURIComponent(server.name)}`"
+              class="server-name"
+            >
+              {{ server.name }}
+            </router-link>
+            <div class="server-metrics">
+              <span class="time-remaining">{{ formatTime(server.roundTimeRemain) }}</span>
+              <span class="tickets">{{ server.tickets1 }} | {{ server.tickets2 }}</span>
+            </div>
+          </div>
+          
+          <div class="server-details-row">
+            <div class="detail-group players-group" @click="showPlayers(server)">
+              <span class="detail-label">Players</span>
+              <span class="detail-value players-value">{{ server.numPlayers }}/{{ server.maxPlayers }}</span>
+            </div>
+            
+            <div class="detail-group map-group">
+              <span class="detail-label">Map</span>
+              <span class="detail-value map-value">{{ server.mapName }}</span>
+            </div>
+            
+            <div class="detail-group connection-group">
+              <span class="detail-label">Connect</span>
+              <span class="detail-value connection-value">{{ server.ip }}:{{ server.port }}</span>
+            </div>
+            
+            <div class="detail-group gametype-group">
+              <span class="detail-label">Mode</span>
+              <span class="detail-value gametype-value">{{ server.gameType }}</span>
+            </div>
+          </div>
+          
+          <div class="server-actions">
+            <button
+              class="join-button"
+              @click="joinServer(server)"
+            >
+              Join
+            </button>
+          </div>
+        </div>
+        
         <div
           v-if="tabSwitchLoading"
-          class="table-loading-overlay"
+          class="loading-overlay"
         >
           <div class="loading-spinner" />
           <div class="loading-text">
@@ -388,16 +377,16 @@ onUnmounted(() => {
 <style scoped>
 .server-table-container {
   background: var(--color-background);
-  padding: 20px;
+  padding: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 @media (max-width: 768px) {
   .server-table-container {
-    padding: 15px;
-    margin-right: -15px;
-    margin-left: -15px;
+    padding: 8px;
+    margin-right: -8px;
+    margin-left: -8px;
     border-radius: 0;
   }
 }
@@ -406,7 +395,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--color-border);
   flex-wrap: wrap;
   gap: 10px;
@@ -414,7 +403,7 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .tabs-container {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
   }
 }
 
@@ -503,91 +492,6 @@ onUnmounted(() => {
   }
 }
 
-.server-name-header {
-  padding: 8px 12px !important;
-}
-
-.server-name-header-content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-start;
-}
-
-.filter-container {
-  display: flex;
-  align-items: center;
-  position: relative;
-  width: 100%;
-  max-width: 200px;
-}
-
-.server-filter-input {
-  padding: 4px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background-color: var(--color-background);
-  color: var(--color-text);
-  font-size: 12px;
-  width: 100%;
-  transition: border-color 0.2s ease;
-  padding-right: 24px; /* Make space for clear button */
-}
-
-.clear-filter-button {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.clear-filter-button:hover {
-  background-color: var(--color-background-soft);
-  color: var(--color-text);
-}
-
-.server-filter-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.server-filter-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-@media (max-width: 768px) {
-  .filter-container {
-    max-width: 150px;
-  }
-  
-  .server-filter-input {
-    font-size: 11px;
-    padding: 3px 6px;
-    padding-right: 20px;
-  }
-  
-  .clear-filter-button {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
-    right: 3px;
-  }
-}
-
 .ai-chat-button {
   padding: 8px 16px;
   background-color: var(--color-background);
@@ -635,131 +539,329 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.table-scroll-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 8px;
+/* Filter bar styles */
+.filter-bar {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+}
+
+.server-filter-input {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-size: 14px;
+  width: 100%;
+  transition: border-color 0.2s ease;
+  padding-right: 32px;
+}
+
+.clear-filter-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.clear-filter-button:hover {
+  background-color: var(--color-background-soft);
+  color: var(--color-text);
+}
+
+.server-filter-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.server-filter-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+  .filter-container {
+    max-width: 100%;
+  }
+  
+  .server-filter-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+}
+
+/* Compact server list styles */
+.server-list-container {
   position: relative;
 }
 
-.table-scroll-wrapper::after {
-  content: "← Swipe to see more →";
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8em;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-@media (max-width: 768px) {
-  .table-scroll-wrapper::after {
-    display: none; /* Hide swipe indicator on mobile since columns are hidden */
-  }
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 800px; /* Minimum width to ensure readability */
-}
-
-@media (max-width: 768px) {
-  table {
-    min-width: 100%; /* Remove fixed min-width on mobile */
-  }
-}
-
-th, td {
+.server-row {
+  background: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  margin-bottom: 8px;
   padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
-th {
-  background-color: var(--color-background-mute);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.server-name-cell {
-  min-width: 300px;
-  max-width: 350px;
-}
-
-.server-name-cell .server-details {
-  font-size: 0.85em;
-  color: var(--color-text-muted, #666);
-  margin-top: 4px;
-}
-
-.map-cell {
-  min-width: 150px;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.gametype-cell {
-  min-width: 120px;
+.server-row:hover {
+  background: var(--color-background-mute);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 @media (max-width: 768px) {
-  th, td {
-    padding: 8px;
-    font-size: 0.9em;
-  }
-  
-  .server-name-cell {
-    min-width: 250px;
-    max-width: 280px;
-  }
-  
-  .server-name-cell .server-details {
-    font-size: 0.8em;
-  }
-  
-  .map-cell {
-    min-width: 120px;
-    max-width: 150px;
-  }
-  
-  .gametype-cell {
-    min-width: 100px;
+  .server-row {
+    padding: 10px;
+    margin-bottom: 6px;
   }
 }
 
-.server-name-link {
+.server-main-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+  .server-main-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+}
+
+.server-name {
   color: var(--color-primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 16px;
+  transition: color 0.2s ease;
 }
 
-.players-column {
-  cursor: pointer;
-  color: var(--color-primary);
-  font-weight: 500;
-  transition: background-color 0.2s;
+.server-name:hover {
+  color: var(--color-accent);
 }
 
-.players-column:hover {
-  background-color: var(--color-background-soft);
+@media (max-width: 768px) {
+  .server-name {
+    font-size: 14px;
+  }
 }
 
-.join-link {
-  display: inline-block;
-  padding: 6px 12px;
-  background-color: var(--color-primary);
+.server-metrics {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+  .server-metrics {
+    gap: 8px;
+    font-size: 12px;
+  }
+}
+
+.time-remaining {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
   color: white;
-  text-decoration: none;
+  padding: 2px 6px;
   border-radius: 4px;
+  font-weight: 500;
+}
+
+.tickets {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.server-details-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+  .server-details-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+}
+
+.detail-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+  .detail-label {
+    font-size: 10px;
+  }
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .detail-value {
+    font-size: 13px;
+  }
+}
+
+/* Color-coded detail values */
+.players-group {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.players-group:hover {
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.players-value {
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.map-value {
+  color: #FF9800;
+  font-weight: 500;
+}
+
+.connection-value {
+  color: #2196F3;
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .connection-value {
+    font-size: 11px;
+  }
+}
+
+.gametype-value {
+  color: #9C27B0;
+  font-weight: 500;
+}
+
+.server-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .server-actions {
+    margin-top: 8px;
+  }
+}
+
+.join-button {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.join-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+}
+
+.join-button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .join-button {
+    padding: 6px 12px;
+    font-size: 12px;
+    width: 100%;
+  }
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(var(--color-primary-rgb), 0.1);
+  backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
+  border-radius: 50%;
+  border-top-color: var(--color-primary);
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 8px;
+}
+
+.loading-text {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .spinner {
@@ -774,29 +876,6 @@ th {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-.table-loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(var(--color-primary-rgb), 0.1);
-  backdrop-filter: blur(2px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-}
-
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
-  border-radius: 50%;
-  border-top-color: var(--color-primary);
-  animation: spin 1s ease-in-out infinite;
 }
 
 /* Modal styles */
@@ -877,40 +956,5 @@ th {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-}
-
-/* Add mobile-only visibility and hide columns on mobile */
-.mobile-only { display: none; }
-@media (max-width: 768px) {
-  .mobile-only { display: block; }
-  .map-cell, .players-column, .join-link { display: none !important; }
-}
-
-/* Mobile players link styling */
-@media (max-width: 768px) {
-  .players-link {
-    cursor: pointer;
-    color: var(--color-primary);
-    transition: all 0.2s ease;
-    padding: 2px 4px;
-    border-radius: 3px;
-  }
-  
-  .players-link:hover {
-    background-color: var(--color-background-soft);
-    text-decoration: underline;
-  }
-  
-  .players-link:active {
-    transform: translateY(1px);
-  }
-}
-
-/* Add CSS to hide all columns except the first on mobile */
-@media (max-width: 768px) {
-  .table-scroll-wrapper table th:not(:first-child),
-  .table-scroll-wrapper table td:not(:first-child) {
-    display: none !important;
-  }
 }
 </style>
