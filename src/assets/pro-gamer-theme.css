@@ -1,0 +1,112 @@
+/* Pro Gamer Theme Enhancement */
+:root {
+  /* Enhanced gaming color palette */
+  --pro-gamer-primary: #ff6b35;
+  --pro-gamer-secondary: #00d4ff;
+  --pro-gamer-accent: #7c3aed;
+  --pro-gamer-success: #10b981;
+  --pro-gamer-warning: #f59e0b;
+  --pro-gamer-danger: #ef4444;
+  
+  /* Gaming-specific gradients */
+  --pro-gamer-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --pro-gamer-hero-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #7c3aed 100%);
+  --pro-gamer-card-gradient: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+  
+  /* Enhanced shadows for depth */
+  --pro-gamer-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --pro-gamer-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --pro-gamer-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --pro-gamer-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  
+  /* Gaming typography */
+  --pro-gamer-font-gaming: 'Orbitron', 'Rajdhani', 'Exo 2', sans-serif;
+}
+
+/* Enhanced dark mode for pro gamers */
+.dark-mode {
+  /* Enhanced gaming shadows for dark mode */
+  --pro-gamer-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --pro-gamer-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --pro-gamer-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+  --pro-gamer-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
+  
+  /* Neon effects for dark mode */
+  --pro-gamer-neon-blue: 0 0 10px #00d4ff;
+  --pro-gamer-neon-orange: 0 0 10px #ff6b35;
+  --pro-gamer-neon-purple: 0 0 10px #7c3aed;
+}
+
+/* Pro gamer animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(var(--color-accent-rgb), 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.8);
+  }
+}
+
+@keyframes slide-in-right {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Gaming-specific utility classes */
+.pro-gamer-glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .pro-gamer-glass {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pro-gamer-text-glow {
+  text-shadow: 0 0 10px currentColor;
+}
+
+.pro-gamer-hover-lift:hover {
+  transform: translateY(-4px);
+  transition: transform 0.2s ease;
+}
+
+/* Enhanced scrollbar for gaming theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background-mute);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, var(--pro-gamer-primary), var(--pro-gamer-accent));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, var(--pro-gamer-accent), var(--pro-gamer-secondary));
+}
