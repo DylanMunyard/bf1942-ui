@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import Servers from '../views/Servers.vue'
+import LandingPage from '../views/LandingPage.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Players from '../views/Players.vue'
 import PlayerDetails from '../views/PlayerDetails.vue'
@@ -22,9 +23,14 @@ const routes: RouteRecordRaw[] = [
         if (isAuthenticated.value) {
           next('/dashboard')
         } else {
-          next('/servers/bf1942')
+          next('/landing')
         }
       }
+    },
+    {
+      path: '/landing',
+      name: 'landing',
+      component: LandingPage
     },
     {
       path: '/dashboard',
