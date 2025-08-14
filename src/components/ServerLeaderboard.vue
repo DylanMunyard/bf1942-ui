@@ -1,35 +1,22 @@
 <template>
-  <div class="server-leaderboard">
-    <!-- Desktop Layout -->
-    <div
-      v-if="!isMobile"
-      class="desktop-layout"
-    >
-      <div class="players-header">
-        <div class="header-rank">
-          #
-        </div>
-        <div class="header-player">
-          Player
-        </div>
-        <div class="header-score">
-          {{ scoreLabel }}
-        </div>
-        <div class="header-kd">
-          K/D
-        </div>
-      </div>
-      
-      <div class="players-list">
-        <div
+  <div class="compact-leaderboard-container">
+    <table class="compact-leaderboard-table">
+      <thead>
+        <tr>
+          <th class="rank-col">#</th>
+          <th class="player-col">Player</th>
+          <th class="score-col">{{ scoreLabel }}</th>
+          <th class="kd-col">K/D</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
           v-for="player in playersWithRank"
           :key="`${player.playerName}-${props.timePeriod}`"
           class="player-row"
-          :class="{ 
-            'top-player': player.rank === 1
-          }"
+          :class="getRankClass(player.rank)"
         >
-          <div class="player-rank">
+          <td class="rank-cell">
             <span
               v-if="player.rank === 1"
               class="rank-medal"
@@ -46,104 +33,38 @@
               v-else
               class="rank-number"
             >{{ player.rank }}</span>
-          </div>
-          <div class="player-name">
+          </td>
+          <td class="player-cell">
             <router-link
               :to="`/players/${encodeURIComponent(player.playerName)}`"
-              class="player-link"
+              class="player-name-link"
             >
-              <PlayerName
-                :name="player.playerName"
-                :source="source"
-              />
+              <div class="player-name">
+                <PlayerName
+                  :name="player.playerName"
+                  :source="source"
+                />
+              </div>
             </router-link>
-          </div>
-          <div class="player-score">
-            {{ player.score.toLocaleString() }}
-          </div>
-          <div class="player-kd">
-            <span class="kills">{{ player.kills }}</span>
-            <span class="separator">/</span>
-            <span class="deaths">{{ player.deaths }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mobile Layout -->
-    <div
-      v-else
-      class="mobile-layout"
-    >
-      <div class="players-header">
-        <div class="header-rank">
-          #
-        </div>
-        <div class="header-player">
-          Player
-        </div>
-        <div class="header-score">
-          {{ scoreLabel }}
-        </div>
-        <div class="header-kd">
-          K/D
-        </div>
-      </div>
-      
-      <div class="players-list">
-        <div
-          v-for="player in playersWithRank"
-          :key="`${player.playerName}-${props.timePeriod}`"
-          class="player-row"
-          :class="{ 
-            'top-player': player.rank === 1
-          }"
-        >
-          <div class="player-rank">
-            <span
-              v-if="player.rank === 1"
-              class="rank-medal"
-            >🥇</span>
-            <span
-              v-else-if="player.rank === 2"
-              class="rank-medal"
-            >🥈</span>
-            <span
-              v-else-if="player.rank === 3"
-              class="rank-medal"
-            >🥉</span>
-            <span
-              v-else
-              class="rank-number"
-            >{{ player.rank }}</span>
-          </div>
-          <div class="player-name">
-            <router-link
-              :to="`/players/${encodeURIComponent(player.playerName)}`"
-              class="player-link"
-            >
-              <PlayerName
-                :name="player.playerName"
-                :source="source"
-              />
-            </router-link>
-          </div>
-          <div class="player-score">
-            {{ player.score.toLocaleString() }}
-          </div>
-          <div class="player-kd">
-            <span class="kills">{{ player.kills }}</span>
-            <span class="separator">/</span>
-            <span class="deaths">{{ player.deaths }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+          </td>
+          <td class="score-cell">
+            <span class="score-value">{{ player.score.toLocaleString() }}</span>
+          </td>
+          <td class="kd-cell">
+            <div class="kd-stats">
+              <span class="kills">{{ player.kills }}</span>
+              <span class="separator">/</span>
+              <span class="deaths">{{ player.deaths }}</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { computed } from 'vue';
 import PlayerName from './PlayerName.vue';
 
 interface Player {
@@ -172,13 +93,6 @@ const props = withDefaults(defineProps<Props>(), {
   timePeriod: 'week'
 });
 
-const isMobile = ref(false);
-
-// Check if mobile
-const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768;
-};
-
 // Sort players by score and assign ranks
 const playersWithRank = computed(() => {
   if (!props.players.length) return [];
@@ -191,114 +105,148 @@ const playersWithRank = computed(() => {
   }));
 });
 
-onMounted(() => {
-  checkMobile();
-  window.addEventListener('resize', checkMobile);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile);
-});
+// Get CSS class for rank-based styling
+const getRankClass = (rank: number): string => {
+  if (rank === 1) return 'rank-first';
+  if (rank === 2) return 'rank-second';
+  if (rank === 3) return 'rank-third';
+  return '';
+};
 </script>
 
 <style scoped>
-.server-leaderboard {
-  width: 100%;
-  background: var(--color-background);
+.compact-leaderboard-container {
+  background: var(--color-background-soft);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   border: 1px solid var(--color-border);
 }
 
-/* Desktop Layout */
-.desktop-layout {
-  display: block;
+.compact-leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
 }
 
-.players-header {
-  display: grid;
-  grid-template-columns: 40px 1fr 80px 60px;
-  gap: 10px;
-  padding: 12px 15px;
+.compact-leaderboard-table th {
   background: var(--color-background-mute);
-  font-size: 0.8rem;
+  padding: 8px 12px;
+  text-align: left;
   font-weight: 600;
-  color: var(--color-text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text);
+  border-bottom: 2px solid var(--color-border);
 }
 
-.players-list {
-  overflow-y: auto;
+.compact-leaderboard-table th.rank-col {
+  width: 40px;
+  text-align: center;
+}
+
+.compact-leaderboard-table th.score-col {
+  width: 80px;
+  text-align: center;
+}
+
+.compact-leaderboard-table th.kd-col {
+  width: 70px;
+  text-align: center;
+}
+
+.compact-leaderboard-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
 }
 
 .player-row {
-  display: grid;
-  grid-template-columns: 40px 1fr 80px 60px;
-  gap: 10px;
-  padding: 12px 15px;
-  border-bottom: 1px solid var(--color-border);
+  transition: all 0.2s ease;
 }
 
 .player-row:hover {
-  background: var(--color-background-soft);
+  background: var(--color-background);
 }
 
-.player-row.top-player {
-  background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+.player-row.rank-first {
+  background: rgba(255, 215, 0, 0.08);
 }
 
-.player-rank {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.player-row.rank-second {
+  background: rgba(192, 192, 192, 0.08);
+}
+
+.player-row.rank-third {
+  background: rgba(205, 127, 50, 0.08);
+}
+
+.rank-cell {
+  text-align: center;
+  width: 40px;
 }
 
 .rank-medal {
-  font-size: 1rem;
+  font-size: 14px;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 .rank-number {
-  font-size: 0.8rem;
+  font-size: 12px;
   color: var(--color-text-muted);
-  background: var(--color-background-mute);
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-weight: 600;
+}
+
+.player-cell {
+  max-width: 200px;
+}
+
+.player-name-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: color 0.2s ease;
+}
+
+.player-name-link:hover {
+  color: var(--color-primary);
 }
 
 .player-name {
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score-cell {
+  text-align: center;
+  width: 80px;
+}
+
+.score-value {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.kd-cell {
+  text-align: center;
+  width: 70px;
+}
+
+.kd-stats {
   display: flex;
   align-items: center;
-}
-
-.player-link {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.player-link:hover {
-  text-decoration: underline;
-}
-
-.player-score {
-  text-align: center;
-  font-weight: 500;
-}
-
-.player-kd {
-  display: flex;
   justify-content: center;
   gap: 2px;
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .kills {
   color: #4caf50;
-  font-weight: 600;
 }
 
 .separator {
@@ -307,87 +255,84 @@ onUnmounted(() => {
 
 .deaths {
   color: #f44336;
-  font-weight: 600;
 }
 
-/* Mobile Layout */
-.mobile-layout {
-  display: none;
-}
-
-.mobile-layout .players-header {
-  display: grid;
-  grid-template-columns: 30px 1fr 60px 50px;
-  gap: 8px;
-  padding: 8px 12px;
-  font-size: 0.75rem;
-}
-
-.mobile-layout .player-row {
-  display: grid;
-  grid-template-columns: 30px 1fr 60px 50px;
-  gap: 8px;
-  padding: 10px 12px;
-  font-size: 0.9rem;
-}
-
-/* Responsive Design */
+/* Mobile Responsiveness */
 @media (max-width: 768px) {
-  .desktop-layout {
-    display: none;
+  .compact-leaderboard-table {
+    font-size: 12px;
   }
   
-  .mobile-layout {
-    display: block;
-  }
-}
-
-@media (max-width: 480px) {
-  .mobile-layout .players-header {
-    grid-template-columns: 25px 1fr 50px 45px;
-    gap: 6px;
+  .compact-leaderboard-table th,
+  .compact-leaderboard-table td {
     padding: 6px 8px;
-    font-size: 0.7rem;
   }
-
-  .mobile-layout .player-row {
-    grid-template-columns: 25px 1fr 50px 45px;
-    gap: 6px;
-    padding: 8px;
-    font-size: 0.8rem;
+  
+  .compact-leaderboard-table th.rank-col {
+    width: 30px;
   }
-
+  
+  .compact-leaderboard-table th.score-col {
+    width: 60px;
+  }
+  
+  .compact-leaderboard-table th.kd-col {
+    width: 60px;
+  }
+  
   .rank-medal {
-    font-size: 0.9rem;
+    font-size: 12px;
   }
-
+  
   .rank-number {
-    width: 18px;
-    height: 18px;
-    font-size: 0.7rem;
+    font-size: 11px;
   }
-}
-
-.kdr-icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 4px;
-}
-
-@media (max-width: 768px) {
-  .kdr-icon {
-    width: 20px;
-    height: 20px;
-    margin-right: 2px;
+  
+  .player-name {
+    font-size: 12px;
+  }
+  
+  .kd-stats {
+    font-size: 11px;
   }
 }
 
 @media (max-width: 480px) {
-  .kdr-icon {
-    width: 18px;
-    height: 18px;
-    margin-right: 1px;
+  .compact-leaderboard-table {
+    font-size: 11px;
+  }
+  
+  .compact-leaderboard-table th,
+  .compact-leaderboard-table td {
+    padding: 4px 6px;
+  }
+  
+  .compact-leaderboard-table th.rank-col {
+    width: 25px;
+  }
+  
+  .compact-leaderboard-table th.score-col {
+    width: 50px;
+  }
+  
+  .compact-leaderboard-table th.kd-col {
+    width: 50px;
+  }
+  
+  .rank-medal {
+    font-size: 11px;
+  }
+  
+  .rank-number {
+    font-size: 10px;
+  }
+  
+  .player-name {
+    font-size: 11px;
+  }
+  
+  .kd-stats {
+    font-size: 10px;
   }
 }
 </style> 
