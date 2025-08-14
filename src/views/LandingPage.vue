@@ -110,7 +110,9 @@
                   :class="getServerStatusClass(server)"
                 >
                   <td class="server-name-cell">
-                    <div class="server-name">{{ server.name }}</div>
+                    <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="server-name-link">
+                      <div class="server-name">{{ server.name }}</div>
+                    </router-link>
                   </td>
                   <td class="players-cell" @click="showPlayers(server)">
                     <div class="player-count" :class="getPlayerCountClass(server)">
@@ -895,6 +897,17 @@ onUnmounted(() => {
 
 .server-name-cell {
   max-width: 300px;
+}
+
+.server-name-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: color 0.2s ease;
+}
+
+.server-name-link:hover {
+  color: var(--color-primary);
 }
 
 .server-name {

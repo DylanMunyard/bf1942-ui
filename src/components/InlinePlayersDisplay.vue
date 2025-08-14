@@ -537,6 +537,8 @@ const sortPlayersBy = (field: string) => {
 }
 
 .player-rank {
+  text-align: center;
+  vertical-align: middle;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -545,6 +547,11 @@ const sortPlayersBy = (field: string) => {
 .rank-medal {
   font-size: 1.2rem;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
 }
 
 .rank-number {
@@ -666,9 +673,7 @@ const sortPlayersBy = (field: string) => {
 }
 
 .player-kd {
-  display: flex;
-  justify-content: center;
-  gap: 2px;
+  text-align: center;
 }
 
 .kd-values {
