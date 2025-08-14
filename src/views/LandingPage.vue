@@ -47,17 +47,22 @@
 
       <!-- Main Content Area -->
       <div class="main-content">
-        <!-- Game Filter Buttons -->
-        <div class="game-filters">
-          <button
-            v-for="game in gameTypes.filter(g => g.id !== 'all')"
-            :key="game.id"
-            :class="['game-filter', { active: activeFilter === game.id }]"
-            @click="setActiveFilter(game.id)"
-            :title="game.name"
-          >
-            <i :class="`tab-icon ${game.iconClass}`"></i>
-          </button>
+        <!-- Game Filter Buttons and Server Count -->
+        <div class="filters-and-count">
+          <div class="game-filters">
+            <button
+              v-for="game in gameTypes.filter(g => g.id !== 'all')"
+              :key="game.id"
+              :class="['game-filter', { active: activeFilter === game.id }]"
+              @click="setActiveFilter(game.id)"
+              :title="game.name"
+            >
+              <i :class="`tab-icon ${game.iconClass}`"></i>
+            </button>
+          </div>
+          <div v-if="!loading && !error" class="server-count">
+            Showing {{ sortedServers.length }} servers ({{ servers.length }} total)
+          </div>
         </div>
 
         <!-- Server Table -->
@@ -69,9 +74,6 @@
             {{ error }}
           </div>
           <div v-else>
-            <div class="server-count">
-              Showing {{ sortedServers.length }} servers ({{ servers.length }} total)
-            </div>
             <div class="server-table-container">
             <table class="server-table">
               <thead>
@@ -681,12 +683,21 @@ onUnmounted(() => {
   overflow-x: auto;
 }
 
+/* Filters and Count Container */
+.filters-and-count {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
 /* Game Filter Buttons */
 .game-filters {
   display: flex;
   justify-content: flex-start;
   gap: 12px;
-  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
@@ -778,11 +789,9 @@ onUnmounted(() => {
 }
 
 .server-count {
-  margin-bottom: 12px;
-  padding: 8px 0;
   font-size: 14px;
   color: var(--color-text-muted);
-  text-align: right;
+  white-space: nowrap;
 }
 
 .loading, .error {
@@ -1079,9 +1088,20 @@ onUnmounted(() => {
     padding: 15px;
   }
   
+  .filters-and-count {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
   .game-filters {
     justify-content: center;
     gap: 8px;
+  }
+  
+  .server-count {
+    text-align: center;
+    font-size: 13px;
   }
   
   .game-filter {
