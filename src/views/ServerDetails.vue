@@ -5,7 +5,7 @@ import { ServerDetails, ServerInsights, fetchServerDetails, fetchServerInsights,
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { countryCodeToName } from '../types/countryCodes';
 import { ServerSummary } from '../types/server';
-import PlayersModal from '../components/PlayersModal.vue';
+import PlayersPanel from '../components/PlayersPanel.vue';
 import ServerPlayerActivityChart from '../components/ServerPlayerActivityChart.vue';
 import ServerLeaderboards from '../components/ServerLeaderboards.vue';
 import ServerRecentRounds from '../components/ServerRecentRounds.vue';
@@ -350,8 +350,8 @@ const handlePeriodChange = async (period: string) => {
       </div>
     </div>
     
-    <!-- Players Modal -->
-    <PlayersModal 
+    <!-- Players Panel -->
+    <PlayersPanel 
       :show="showPlayersModal" 
       :server="liveServerInfo" 
       @close="closePlayersModal" 
