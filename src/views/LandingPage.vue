@@ -54,9 +54,9 @@
             :key="game.id"
             :class="['game-filter', { active: activeFilter === game.id }]"
             @click="setActiveFilter(game.id)"
+            :title="game.name"
           >
             <i :class="`tab-icon ${game.iconClass}`"></i>
-            <span>{{ game.name }}</span>
           </button>
         </div>
 
@@ -829,38 +829,71 @@ onUnmounted(() => {
 .game-filter {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  justify-content: center;
+  padding: 12px;
   background: var(--color-background-soft);
   border: 2px solid transparent;
-  border-radius: 8px;
+  border-radius: 12px;
   color: var(--color-text);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   font-size: 14px;
+  position: relative;
 }
 
 .game-filter:hover {
   background: var(--color-background-mute);
   border-color: var(--color-primary);
+  transform: translateY(-2px);
 }
 
 .game-filter.active {
   background: var(--color-primary);
   color: white;
   border-color: var(--color-primary);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.6), 0 0 40px rgba(102, 126, 234, 0.4), 0 2px 8px rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+}
+
+.game-filter.active::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: linear-gradient(45deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+  border-radius: 16px;
+  z-index: -1;
+  animation: glow-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow-pulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }
 
 .tab-icon {
   display: inline-block;
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.game-filter.active .tab-icon {
+  transform: scale(1.1);
+  filter: brightness(1.2) contrast(1.1);
 }
 
 .icon-bf1942 {
@@ -1188,13 +1221,13 @@ onUnmounted(() => {
   }
   
   .game-filter {
-    padding: 8px 12px;
+    padding: 10px;
     font-size: 12px;
   }
   
   .tab-icon {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
   }
   
   .server-table th,
