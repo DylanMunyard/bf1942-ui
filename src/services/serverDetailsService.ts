@@ -214,7 +214,7 @@ interface ServersResponse {
 }
 
 /**
- * Fetches all servers from backend API with caching support for ServerTable component
+ * Fetches all servers from backend API with caching support
  * @param game The game name used by the API
  * @returns All servers sorted by player count
  */

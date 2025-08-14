@@ -88,6 +88,10 @@
                     Map
                     <span class="sort-indicator" :class="getSortClass('mapName')">▲</span>
                   </th>
+                  <th @click="sortBy('roundTimeRemain')" class="sortable">
+                    Time Left
+                    <span class="sort-indicator" :class="getSortClass('roundTimeRemain')">▲</span>
+                  </th>
                   <th @click="sortBy('gameType')" class="sortable">
                     Game
                     <span class="sort-indicator" :class="getSortClass('gameType')">▲</span>
@@ -118,6 +122,9 @@
                   </td>
                   <td class="map-cell">
                     <span class="map-name">{{ server.mapName }}</span>
+                  </td>
+                  <td class="time-cell">
+                    <span class="time-remaining">{{ formatTimeRemaining(server.roundTimeRemain) }}</span>
                   </td>
                   <td class="game-cell">
                     <span class="game-type" :class="getGameTypeClass(server.gameType)">{{ getGameDisplayName(server.gameType) }}</span>
@@ -157,20 +164,42 @@
                 <span class="team-name">{{ team.label }}</span>
                 <span class="team-tickets">{{ team.tickets }} tickets</span>
               </div>
-              <div class="team-players">
-                <div
-                  v-for="player in getTeamPlayers(team.index).slice().sort((a, b) => b.score - a.score)"
-                  :key="player.name"
-                  class="player-row"
-                  @click="navigateToPlayerProfile(player.name)"
-                >
-                  <span class="player-name">{{ player.name }}</span>
-                  <div class="player-stats">
-                    <span class="stat">{{ player.score }}</span>
-                    <span class="stat">{{ player.kills }}/{{ player.deaths }}</span>
-                    <span class="stat">{{ player.ping }}ms</span>
-                  </div>
-                </div>
+              <div class="team-table-container">
+                <table class="players-table">
+                  <thead>
+                    <tr>
+                      <th @click="sortPlayersBy('name')" class="sortable">
+                        Player
+                      </th>
+                      <th @click="sortPlayersBy('score')" class="sortable">
+                        Score
+                      </th>
+                      <th @click="sortPlayersBy('kills')" class="sortable">
+                        Kills
+                      </th>
+                      <th @click="sortPlayersBy('deaths')" class="sortable">
+                        Deaths
+                      </th>
+                      <th @click="sortPlayersBy('ping')" class="sortable">
+                        Ping
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="player in getSortedTeamPlayers(team.index)"
+                      :key="player.name"
+                      class="player-table-row"
+                      @click="navigateToPlayerProfile(player.name)"
+                    >
+                      <td class="player-name-cell">{{ player.name }}</td>
+                      <td class="score-cell" :class="getScoreClass(player.score)">{{ player.score }}</td>
+                      <td class="kills-cell" :class="getKillsClass(player.kills)">{{ player.kills }}</td>
+                      <td class="deaths-cell" :class="getDeathsClass(player.deaths)">{{ player.deaths }}</td>
+                      <td class="ping-cell" :class="getPingClass(player.ping)">{{ player.ping }}ms</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -212,6 +241,13 @@ interface PlayerSearchResponse {
 
 const router = useRouter()
 
+// Props from router
+interface Props {
+  initialMode?: 'FH2' | '42' | 'BFV';
+}
+
+const props = defineProps<Props>();
+
 // Game types configuration
 const gameTypes = [
   { id: 'all', name: 'ALL', iconClass: '' },
@@ -220,12 +256,26 @@ const gameTypes = [
   { id: 'bfvietnam', name: 'BFV', iconClass: 'icon-bfv' }
 ]
 
+// Map router props to filter IDs
+const getFilterFromMode = (mode?: string) => {
+  switch (mode) {
+    case '42':
+      return 'bf1942'
+    case 'FH2':
+      return 'fh2'
+    case 'BFV':
+      return 'bfvietnam'
+    default:
+      return 'bf1942'
+  }
+}
+
 // State
 const playerSearchQuery = ref('')
 const playerSuggestions = ref<PlayerSearchResult[]>([])
 const isSearchLoading = ref(false)
 const showPlayerDropdown = ref(false)
-const activeFilter = ref('bf1942')
+const activeFilter = ref(getFilterFromMode(props.initialMode))
 const sortField = ref('numPlayers')
 const sortDirection = ref('desc')
 const servers = ref<ServerSummary[]>([])
@@ -238,6 +288,8 @@ let blurTimeout: number | null = null
 // Players panel state
 const showPlayersPanel = ref(false)
 const selectedServer = ref<ServerSummary | null>(null)
+const playerSortField = ref('score')
+const playerSortDirection = ref('desc')
 
 
 // Computed properties
@@ -269,6 +321,10 @@ const sortedServers = computed(() => {
       case 'gameType':
         aVal = a.gameType?.toLowerCase() || ''
         bVal = b.gameType?.toLowerCase() || ''
+        break
+      case 'roundTimeRemain':
+        aVal = a.roundTimeRemain || 0
+        bVal = b.roundTimeRemain || 0
         break
       default:
         aVal = a.numPlayers
@@ -352,6 +408,18 @@ const formatPlayTime = (minutes: number): string => {
   return `${days}d ${hours % 24}h`
 }
 
+const formatTimeRemaining = (timeValue: number): string => {
+  if (!timeValue || timeValue < 0) return '-'
+  
+  // Extract minutes and seconds from the combined value
+  // e.g., 823 = 8 minutes 23 seconds, 2403 = 24 minutes 3 seconds
+  const minutes = Math.floor(timeValue / 100)
+  const seconds = timeValue % 100
+  
+  // Format as MM:SS
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
 const navigateToPlayer = () => {
   if (playerSearchQuery.value.trim()) {
     navigateToPlayerProfile(playerSearchQuery.value.trim())
@@ -364,6 +432,19 @@ const navigateToPlayerProfile = (playerName: string) => {
 
 const setActiveFilter = (filterId: string) => {
   activeFilter.value = filterId
+  
+  // Update the route to match the new filter
+  const routeMap = {
+    'bf1942': '/servers/bf1942',
+    'fh2': '/servers/fh2',
+    'bfvietnam': '/servers/bfv'
+  }
+  
+  const newRoute = routeMap[filterId as keyof typeof routeMap]
+  if (newRoute && router.currentRoute.value.path !== newRoute) {
+    router.push(newRoute)
+  }
+  
   // fetchServersForGame will be called by the watcher
 }
 
@@ -385,6 +466,9 @@ const joinServer = (server: ServerSummary) => {
 const showPlayers = (server: ServerSummary) => {
   selectedServer.value = server
   showPlayersPanel.value = true
+  // Reset to default sorting when opening new server
+  playerSortField.value = 'score'
+  playerSortDirection.value = 'desc'
 }
 
 const closePlayersPanel = () => {
@@ -392,9 +476,85 @@ const closePlayersPanel = () => {
   selectedServer.value = null
 }
 
-const getTeamPlayers = (teamIndex: number) => {
+
+const getScoreClass = (score: number) => {
+  if (score >= 100) return 'score-excellent'
+  if (score >= 50) return 'score-good'
+  if (score >= 25) return 'score-average'
+  return 'score-low'
+}
+
+const getKillsClass = (kills: number) => {
+  if (kills >= 30) return 'kills-excellent'
+  if (kills >= 15) return 'kills-good'
+  if (kills >= 5) return 'kills-average'
+  return 'kills-low'
+}
+
+const getDeathsClass = (deaths: number) => {
+  if (deaths >= 20) return 'deaths-high'
+  if (deaths >= 10) return 'deaths-medium'
+  if (deaths >= 5) return 'deaths-low'
+  return 'deaths-minimal'
+}
+
+const getPingClass = (ping: number) => {
+  if (ping <= 50) return 'ping-excellent'
+  if (ping <= 100) return 'ping-good'
+  if (ping <= 150) return 'ping-average'
+  return 'ping-poor'
+}
+
+const sortPlayersBy = (field: string) => {
+  if (playerSortField.value === field) {
+    playerSortDirection.value = playerSortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    playerSortField.value = field
+    playerSortDirection.value = field === 'name' ? 'asc' : 'desc'
+  }
+}
+
+
+const getSortedTeamPlayers = (teamIndex: number) => {
   if (!selectedServer.value?.players) return []
-  return selectedServer.value.players.filter(player => player.team === teamIndex)
+  
+  const teamPlayers = selectedServer.value.players.filter(player => player.team === teamIndex)
+  
+  return [...teamPlayers].sort((a, b) => {
+    let aVal, bVal
+    
+    switch (playerSortField.value) {
+      case 'name':
+        aVal = a.name.toLowerCase()
+        bVal = b.name.toLowerCase()
+        break
+      case 'score':
+        aVal = a.score
+        bVal = b.score
+        break
+      case 'kills':
+        aVal = a.kills
+        bVal = b.kills
+        break
+      case 'deaths':
+        aVal = a.deaths
+        bVal = b.deaths
+        break
+      case 'ping':
+        aVal = a.ping
+        bVal = b.ping
+        break
+      default:
+        aVal = a.score
+        bVal = b.score
+    }
+    
+    if (playerSortDirection.value === 'asc') {
+      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+    } else {
+      return aVal > bVal ? -1 : aVal < bVal ? 1 : 0
+    }
+  })
 }
 
 const sortBy = (field: string) => {
@@ -447,7 +607,7 @@ const getGameTypeClass = (gameType: string) => {
   return 'game-unknown'
 }
 
-const fetchServersForGame = async (gameType: string, isInitialLoad = false) => {
+const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isInitialLoad = false) => {
   if (isInitialLoad) {
     loading.value = true
   }
@@ -468,17 +628,17 @@ const fetchServersForGame = async (gameType: string, isInitialLoad = false) => {
 
 // Watch for game filter changes and fetch new data
 watch(activeFilter, (newFilter) => {
-  fetchServersForGame(newFilter, true) // Show loading when switching game types
+  fetchServersForGame(newFilter as 'bf1942' | 'fh2' | 'bfvietnam', true) // Show loading when switching game types
 })
 
 // Lifecycle
 onMounted(() => {
   // Fetch initial data for BF1942
-  fetchServersForGame(activeFilter.value, true)
+  fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', true)
   
   // Auto-refresh every 30 seconds for current game type (no loading state)
   refreshTimer.value = window.setInterval(() => {
-    fetchServersForGame(activeFilter.value, false)
+    fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', false)
   }, 30000)
 })
 
@@ -903,6 +1063,17 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 
+.time-cell {
+  min-width: 80px;
+  text-align: center;
+}
+
+.time-remaining {
+  color: #4caf50;
+  font-weight: 600;
+  font-size: 12px;
+}
+
 .game-cell {
   min-width: 80px;
 }
@@ -1053,7 +1224,7 @@ onUnmounted(() => {
 .players-panel {
   background: var(--color-background);
   width: 100%;
-  max-width: 500px;
+  max-width: 900px;
   height: 100%;
   box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
   animation: slideInRight 0.3s ease-out;
@@ -1103,8 +1274,24 @@ onUnmounted(() => {
   padding: 20px;
 }
 
+.teams-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 769px) {
+  .teams-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+}
+
 .team-section {
-  margin-bottom: 30px;
+  background: var(--color-background-soft);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
 }
 
 .team-header {
@@ -1112,9 +1299,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: var(--color-background-soft);
-  border-radius: 6px;
-  margin-bottom: 12px;
+  background: var(--color-background-mute);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .team-name {
@@ -1128,42 +1314,148 @@ onUnmounted(() => {
   color: var(--color-text-muted);
 }
 
-.team-players {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.team-table-container {
+  background: var(--color-background-soft);
+  overflow: hidden;
 }
 
-.player-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: var(--color-background);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.players-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
 }
 
-.player-row:hover {
+.players-table th {
   background: var(--color-background-mute);
-  transform: translateX(4px);
-}
-
-.player-row .player-name {
-  font-weight: 500;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.player-stats {
-  display: flex;
-  gap: 12px;
-  font-size: 14px;
+.players-table th.sortable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+  user-select: none;
+}
+
+.players-table th.sortable:hover {
+  background: var(--color-background);
+}
+
+.players-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.player-table-row {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.player-table-row:hover {
+  background: var(--color-background);
+}
+
+.player-table-row:last-child td {
+  border-bottom: none;
+}
+
+.player-name-cell {
+  font-weight: 600;
+  color: var(--color-text);
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Score color coding */
+.score-excellent {
+  color: #4caf50;
+  font-weight: 700;
+}
+
+.score-good {
+  color: #2196f3;
+  font-weight: 600;
+}
+
+.score-average {
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.score-low {
   color: var(--color-text-muted);
 }
 
-.player-stats .stat {
+/* Kills color coding */
+.kills-excellent {
+  color: #f44336;
+  font-weight: 700;
+}
+
+.kills-good {
+  color: #ff9800;
+  font-weight: 600;
+}
+
+.kills-average {
+  color: #4caf50;
   font-weight: 500;
+}
+
+.kills-low {
+  color: var(--color-text-muted);
+}
+
+/* Deaths color coding */
+.deaths-high {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.deaths-medium {
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.deaths-low {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.deaths-minimal {
+  color: #2196f3;
+  font-weight: 500;
+}
+
+/* Ping color coding */
+.ping-excellent {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.ping-good {
+  color: #2196f3;
+  font-weight: 500;
+}
+
+.ping-average {
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.ping-poor {
+  color: #f44336;
+  font-weight: 600;
 }
 
 /* Mobile players panel */
@@ -1180,9 +1472,21 @@ onUnmounted(() => {
     padding: 16px;
   }
   
-  .player-stats {
-    gap: 8px;
-    font-size: 13px;
+  .teams-container {
+    gap: 15px;
+  }
+  
+  .players-table {
+    font-size: 11px;
+  }
+  
+  .players-table th,
+  .players-table td {
+    padding: 4px 8px;
+  }
+  
+  .player-name-cell {
+    max-width: 80px;
   }
 }
 </style>

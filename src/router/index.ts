@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import Servers from '../views/Servers.vue'
 import Dashboard from '../views/Dashboard.vue'
 import LandingPage from '../views/LandingPage.vue'
 import Players from '../views/Players.vue'
@@ -53,19 +52,19 @@ const routes: RouteRecordRaw[] = [
     {
       path: '/servers/bf1942',
       name: 'servers-bf1942',
-      component: Servers,
+      component: LandingPage,
       props: { initialMode: '42' }
     },
     {
       path: '/servers/fh2',
       name: 'servers-fh2',
-      component: Servers,
+      component: LandingPage,
       props: { initialMode: 'FH2' }
     },
     {
       path: '/servers/bfv',
       name: 'servers-bfv',
-      component: Servers,
+      component: LandingPage,
       props: { initialMode: 'BFV' }
     },
     {
