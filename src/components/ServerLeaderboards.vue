@@ -141,7 +141,7 @@ const currentTopScores = computed(() => {
 .enhanced-leaderboards-container {
   display: flex;
   flex-direction: row;
-  gap: 24px;
+  gap: 16px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -150,73 +150,73 @@ const currentTopScores = computed(() => {
 .enhanced-leaderboard-section {
   flex: 1;
   min-width: 0;
-  background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background) 100%);
-  border-radius: 16px;
-  padding: 20px;
+  background: var(--color-background-soft);
+  border-radius: 8px;
+  padding: 12px;
   border: 1px solid var(--color-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
 }
 
 .enhanced-leaderboard-section:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
 .enhanced-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--color-border);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .section-icon {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   background: linear-gradient(135deg, var(--color-primary) 0%, #9c27b0 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
 .section-title h3 {
   margin: 0;
   color: var(--color-heading);
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .section-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .section-time-controls {
   display: flex;
-  gap: 4px;
-  padding: 4px;
+  gap: 2px;
+  padding: 2px;
   background: var(--color-background-mute);
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--color-border);
 }
 
 .enhanced-time-tab {
-  padding: 8px 16px;
+  padding: 6px 12px;
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-text-muted);
   transition: all 0.2s ease;
@@ -229,18 +229,18 @@ const currentTopScores = computed(() => {
 }
 
 .enhanced-time-tab.active {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #9c27b0 100%);
+  background: var(--color-primary);
   color: white;
-  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
+  box-shadow: 0 1px 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
 }
 
 .view-all-button {
   color: var(--color-primary);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
   background: var(--color-background-mute);
   border: 1px solid var(--color-border);
   transition: all 0.2s ease;
@@ -256,7 +256,7 @@ const currentTopScores = computed(() => {
 /* Leaderboard Table */
 .leaderboard-table-container {
   overflow-x: auto;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .leaderboard-table {
@@ -333,29 +333,29 @@ const currentTopScores = computed(() => {
 @media (max-width: 1024px) {
   .enhanced-leaderboards-container {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
   
   .enhanced-leaderboard-section {
-    padding: 16px;
+    padding: 10px;
   }
   
   .section-title h3 {
-    font-size: 1.3rem;
+    font-size: 1.05rem;
   }
 }
 
 @media (max-width: 768px) {
   .enhanced-leaderboard-section {
-    padding: 12px;
-    border-radius: 12px;
+    padding: 8px;
+    border-radius: 6px;
   }
   
   .enhanced-section-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 8px;
+    margin-bottom: 10px;
   }
   
   .section-controls {
@@ -369,31 +369,31 @@ const currentTopScores = computed(() => {
   
   .enhanced-time-tab {
     flex: 1;
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 5px 10px;
+    font-size: 11px;
   }
 }
 
 @media (max-width: 480px) {
   .enhanced-leaderboards-container {
-    gap: 12px;
+    gap: 8px;
   }
   
   .enhanced-leaderboard-section {
-    padding: 8px;
+    padding: 6px;
   }
   
   .section-title h3 {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
   
   .section-icon {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 
   .view-all-button {
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 5px 10px;
+    font-size: 11px;
   }
 }
 </style> 

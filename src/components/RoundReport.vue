@@ -6,6 +6,7 @@ import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import PlayerName from './PlayerName.vue';
 import PlayerLeaderboard from './PlayerLeaderboard.vue';
+import InlinePlayersDisplay from './InlinePlayersDisplay.vue';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -892,22 +893,22 @@ const goBack = () => {
             </div>
           </div>
           
-          <!-- Shared Player Leaderboard -->
-          <PlayerLeaderboard 
+          <!-- Inline Players Display -->
+          <InlinePlayersDisplay
             :players="currentSnapshot.entries.map(entry => ({
-              name: entry.playerName,
+              playerName: entry.playerName,
               score: entry.score,
               kills: entry.kills,
               deaths: entry.deaths,
               ping: entry.ping,
-              team: 0, // Default team value since LeaderboardEntry doesn't have team
+              rank: entry.rank,
               teamLabel: entry.teamLabel
             }))"
             :pinned-players="pinnedPlayers"
-            source="round-report"
-            :server-guid="props.serverGuid"
             :show-pin-buttons="true"
-            :on-pin-toggle="togglePlayerPin"
+            :show-performance-chart="true"
+            @pin-toggle="togglePlayerPin"
+            @clear-pinned="clearAllPinnedPlayers"
           />
         </div>
       </div>
@@ -919,6 +920,7 @@ const goBack = () => {
       </div>
     </div>
   </div>
+
 </template>
 
 <style scoped>
@@ -2418,5 +2420,7 @@ html[data-theme="dark"] .performance-chart-container,
 .chart-wrapper canvas {
   /* No special effects - let the data points do the talking */
 }
+
+/* Players display is now inline - no toggle needed */
 
 </style>

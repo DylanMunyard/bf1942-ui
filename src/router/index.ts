@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import Servers from '../views/Servers.vue'
 import Dashboard from '../views/Dashboard.vue'
+import LandingPage from '../views/LandingPage.vue'
 import Players from '../views/Players.vue'
 import PlayerDetails from '../views/PlayerDetails.vue'
 import PlayerAllAchievements from '../views/PlayerAllAchievements.vue'
@@ -22,9 +22,14 @@ const routes: RouteRecordRaw[] = [
         if (isAuthenticated.value) {
           next('/dashboard')
         } else {
-          next('/servers/bf1942')
+          next('/landing')
         }
       }
+    },
+    {
+      path: '/landing',
+      name: 'landing',
+      component: LandingPage
     },
     {
       path: '/dashboard',
@@ -47,19 +52,19 @@ const routes: RouteRecordRaw[] = [
     {
       path: '/servers/bf1942',
       name: 'servers-bf1942',
-      component: Servers,
+      component: LandingPage,
       props: { initialMode: '42' }
     },
     {
       path: '/servers/fh2',
       name: 'servers-fh2',
-      component: Servers,
+      component: LandingPage,
       props: { initialMode: 'FH2' }
     },
     {
       path: '/servers/bfv',
       name: 'servers-bfv',
-      component: Servers,
+      component: LandingPage,
       props: { initialMode: 'BFV' }
     },
     {

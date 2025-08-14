@@ -1,257 +1,200 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { fetchPlayersList, PlayerListItem } from '../services/playerStatsService';
+import { formatLastSeen } from '@/utils/timeUtils';
+
+// Interface for player search results - matching what's used in other parts of the app
+interface PlayerSearchResult {
+  playerName: string;
+  totalPlayTimeMinutes: number;
+  lastSeen: string;
+  isActive: boolean;
+  currentServer?: {
+    serverGuid: string;
+    serverName: string;
+    sessionKills: number;
+    sessionDeaths: number;
+    mapName: string;
+    gameId: string;
+  };
+}
+
+interface PlayerSearchResponse {
+  items: PlayerSearchResult[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
 
 // Router
 const router = useRouter();
 const route = useRoute();
 
 // State variables
-const players = ref<PlayerListItem[]>([]);
-const loading = ref(true);
+const players = ref<PlayerSearchResult[]>([]);
+const loading = ref(false);
 const error = ref<string | null>(null);
 const sortBy = ref<string>('lastSeen');
 const sortOrder = ref<'asc' | 'desc'>('desc');
-// Pagination state
+
+// Search functionality
+const searchQuery = ref('');
+const isSearchLoading = ref(false);
+const searchTimeout = ref<number | null>(null);
+
+// Pagination state - start with reasonable defaults
 const currentPage = ref(1);
-const pageSize = ref(50);
+const pageSize = ref(25);
 const totalItems = ref(0);
 const totalPages = ref(0);
-// Mobile filters state
-const showFilters = ref(false);
 
-// Filter variables
-const nameFilter = ref('');
-const nameInputValue = ref(''); // Separate value for the input display
-const gameIdFilter = ref('');
-const serverNameFilter = ref('');
-const uniqueGameIds = ref<string[]>([]);
-const uniqueServerNames = ref<string[]>([]);
+// No filters for now - just search
 
-// Debounced search functionality
-const searchTimeout = ref<any>(null);
-const isSearching = ref(false);
-
-// Format minutes to hours and minutes
+// Format minutes to hours and minutes - simpler format
 const formatPlayTime = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-
-  if (hours === 0) {
-    return `${remainingMinutes} minutes`;
-  } else if (hours === 1) {
-    return `${hours} hour ${remainingMinutes} minutes`;
-  } else {
-    return `${hours} hours ${remainingMinutes} minutes`;
+  if (hours < 24) {
+    return `${hours}h`;
   }
+  const days = Math.floor(hours / 24);
+  return `${days}d ${hours % 24}h`;
 };
 
-// Format date to a readable format in the user's locale
-const formatDate = (dateString: string): string => {
-  // Ensure the date is treated as UTC by appending 'Z' if it doesn't have timezone info
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  return date.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'short'
-  });
-};
-
-// Format date to a human-readable relative time (e.g., "2 days ago")
-const formatRelativeTime = (dateString: string): string => {
-  // Ensure the date is treated as UTC by appending 'Z' if it doesn't have timezone info
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-  const diffMonths = Math.floor(diffDays / 30);
-  const diffYears = Math.floor(diffMonths / 12);
-
-  if (diffYears > 0) {
-    return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
-  } else if (diffMonths > 0) {
-    return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
-  } else if (diffDays > 0) {
-    return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
-  } else if (diffHours > 0) {
-    return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
-  } else if (diffMinutes > 0) {
-    return diffMinutes === 1 ? '1 minute ago' : `${diffMinutes} minutes ago`;
+// Sort players function
+const sortPlayers = (field: string) => {
+  if (sortBy.value === field) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
   } else {
-    return 'Just now';
+    sortBy.value = field;
+    sortOrder.value = field === 'lastSeen' ? 'desc' : 'asc';
   }
+  
+  currentPage.value = 1;
+  fetchPlayers();
+};
+
+const getSortClass = (field: string) => {
+  if (sortBy.value !== field) return '';
+  return sortOrder.value === 'asc' ? 'asc' : 'desc';
+};
+
+// Pro gamer color coding functions (inspired by PlayersPanel.vue)
+const getScoreClass = (score: number) => {
+  if (score >= 100) return 'score-excellent';
+  if (score >= 50) return 'score-good';
+  if (score >= 25) return 'score-average';
+  return 'score-low';
+};
+
+const getKillsClass = (kills: number) => {
+  if (kills >= 30) return 'kills-excellent';
+  if (kills >= 15) return 'kills-good';
+  if (kills >= 5) return 'kills-average';
+  return 'kills-low';
+};
+
+const getDeathsClass = (deaths: number) => {
+  if (deaths >= 20) return 'deaths-high';
+  if (deaths >= 10) return 'deaths-medium';
+  if (deaths >= 5) return 'deaths-low';
+  return 'deaths-minimal';
 };
 
 
 
-// Fetch players data with pagination, sorting, and filtering
-const fetchPlayersData = async () => {
+// Handle search input with debouncing
+const onSearchInput = () => {
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+
+  searchTimeout.value = setTimeout(() => {
+    currentPage.value = 1; // Reset to first page when searching
+    fetchPlayers();
+  }, 300) as unknown as number;
+};
+
+// Navigate to player profile
+const navigateToPlayer = (playerName: string) => {
+  router.push(`/players/${encodeURIComponent(playerName)}`);
+};
+
+// Fetch players list for main table
+const fetchPlayers = async () => {
   loading.value = true;
   error.value = null;
 
   try {
-    // Build filter object from current filter values
-    const filters: Record<string, string> = {};
-    if (nameFilter.value) filters.playerName = nameFilter.value;
-    if (gameIdFilter.value) filters.gameId = gameIdFilter.value;
-    if (serverNameFilter.value) filters.serverName = serverNameFilter.value;
+    // Available query parameters for future use:
+    // page, pageSize, sortBy, sortOrder, playerName, minPlayTime, maxPlayTime,
+    // lastSeenFrom, lastSeenTo, isActive, serverName, gameId, mapName
+    
+    // Build query parameters
+    const params = new URLSearchParams({
+      page: currentPage.value.toString(),
+      pageSize: pageSize.value.toString(),
+      sortBy: sortBy.value,
+      sortOrder: sortOrder.value
+    });
 
-    // Fetch the players list with pagination, sorting, and filtering
-    const result = await fetchPlayersList(
-      currentPage.value,
-      pageSize.value,
-      sortBy.value,
-      sortOrder.value,
-      filters
-    );
+    // Add search query if provided - use playerName parameter
+    if (searchQuery.value.trim()) {
+      params.append('playerName', searchQuery.value.trim());
+      // Don't filter by isActive when searching to include offline players
+    } else {
+      // Only show active players when not searching
+      params.append('isActive', 'true');
+    }
 
-    players.value = result.items;
-    totalItems.value = result.totalItems;
-    totalPages.value = result.totalPages;
+    const response = await fetch(`/stats/players?${params.toString()}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch players');
+    }
 
-    // Update unique values for filters (these will come from server response eventually)
-    updateUniqueGameIds();
-    updateUniqueServerNames();
+    const data: PlayerSearchResponse = await response.json();
+    players.value = data.items;
+    totalItems.value = data.totalItems;
+    totalPages.value = data.totalPages;
+
   } catch (err) {
-    console.error('Error fetching players data:', err);
+    console.error('Error fetching players:', err);
     error.value = 'Failed to fetch players data. Please try again.';
   } finally {
     loading.value = false;
   }
 };
 
-// Update the list of unique game IDs from the players
-const updateUniqueGameIds = () => {
-  const gameIds = new Set<string>();
-
-  players.value.forEach(player => {
-    if (player.currentServer && player.currentServer.gameId) {
-      gameIds.add(player.currentServer.gameId);
-    }
-  });
-
-  uniqueGameIds.value = Array.from(gameIds).sort();
-};
-
-// Update the list of unique server names from the players
-const updateUniqueServerNames = () => {
-  const serverNames = new Set<string>();
-
-  players.value.forEach(player => {
-    if (player.currentServer && player.currentServer.serverName) {
-      serverNames.add(player.currentServer.serverName);
-    }
-  });
-
-  uniqueServerNames.value = Array.from(serverNames).sort();
-};
-
-// Handle sort column click - now refetches data from server
-const handleSort = (column: string) => {
-  // If clicking the same column, toggle order
-  if (sortBy.value === column) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    // If clicking a new column, set it as the sort column and default to descending
-    sortBy.value = column;
-    sortOrder.value = 'desc';
-  }
-
-  // Reset to first page and refetch data
-  currentPage.value = 1;
-  updateQueryParams();
-  fetchPlayersData();
-};
-
-// Debounced name filter function
-const debouncedNameSearch = (searchTerm: string) => {
-  // Clear existing timeout
-  if (searchTimeout.value) {
-    clearTimeout(searchTimeout.value);
-  }
-
-  isSearching.value = true;
-
-  // Set new timeout
-  searchTimeout.value = setTimeout(() => {
-    nameFilter.value = searchTerm;
-    currentPage.value = 1; // Reset to first page when filtering
-    isSearching.value = false;
-    updateQueryParams();
-    fetchPlayersData();
-  }, 500); // 500ms delay
-};
-
-// Handle name filter change - now with debouncing
-const handleNameFilterChange = (searchTerm: string) => {
-  debouncedNameSearch(searchTerm);
-};
-
-// Handle game ID filter change - now triggers server-side search
-const handleGameIdFilterChange = (event: Event) => {
-  gameIdFilter.value = (event.target as HTMLSelectElement).value;
-  currentPage.value = 1; // Reset to first page when filtering
-  updateQueryParams();
-  fetchPlayersData();
-};
-
-// Handle server name filter change - now triggers server-side search
-const handleServerNameFilterChange = (event: Event) => {
-  serverNameFilter.value = (event.target as HTMLSelectElement).value;
-  currentPage.value = 1; // Reset to first page when filtering
-  updateQueryParams();
-  fetchPlayersData();
-};
-
-// Clear name filter
-const clearNameFilter = () => {
-  // Cancel any pending search
-  if (searchTimeout.value) {
-    clearTimeout(searchTimeout.value);
-    searchTimeout.value = null;
-  }
-  
-  nameFilter.value = '';
-  nameInputValue.value = '';
-  isSearching.value = false;
-  currentPage.value = 1; // Reset to first page when clearing filter
-  updateQueryParams();
-  fetchPlayersData();
-};
-
-// Reset all filters
-const resetFilters = () => {
-  nameFilter.value = '';
-  nameInputValue.value = '';
-  gameIdFilter.value = '';
-  serverNameFilter.value = '';
-  currentPage.value = 1; // Reset to first page when resetting filters
-  updateQueryParams();
-  fetchPlayersData();
-};
-
-// Function to go to a specific page
+// Pagination functions
 const goToPage = (page: number) => {
   if (page < 1 || page > totalPages.value) return;
   currentPage.value = page;
-  updateQueryParams();
-  fetchPlayersData();
+  fetchPlayers();
 };
 
-// Function to change page size
 const changePageSize = (newPageSize: number) => {
   pageSize.value = newPageSize;
-  currentPage.value = 1; // Reset to first page
-  updateQueryParams();
-  fetchPlayersData();
+  currentPage.value = 1;
+  fetchPlayers();
+};
+
+// Handle enter key in search
+const onSearchEnter = () => {
+  if (searchQuery.value.trim() && players.value.length === 1) {
+    // If there's exactly one result, navigate to that player
+    navigateToPlayer(players.value[0].playerName);
+  } else if (searchQuery.value.trim() && players.value.length > 0) {
+    // If there are multiple results, navigate to the first one
+    navigateToPlayer(players.value[0].playerName);
+  }
+};
+
+// Clear search
+const clearSearch = () => {
+  searchQuery.value = '';
+  currentPage.value = 1;
+  fetchPlayers();
 };
 
 // Computed property for pagination range display
@@ -274,82 +217,13 @@ const paginationRange = computed(() => {
   return range;
 });
 
-// Initialize state from URL query parameters
-const initializeFromQuery = () => {
-  const query = route.query;
-  
-  // Set filters from query params
-  if (query.name && typeof query.name === 'string') {
-    nameFilter.value = query.name;
-    nameInputValue.value = query.name;
-  }
-  if (query.gameId && typeof query.gameId === 'string') {
-    gameIdFilter.value = query.gameId;
-  }
-  if (query.server && typeof query.server === 'string') {
-    serverNameFilter.value = query.server;
-  }
-  
-  // Set sorting from query params
-  if (query.sortBy && typeof query.sortBy === 'string') {
-    sortBy.value = query.sortBy;
-  }
-  if (query.sortOrder && (query.sortOrder === 'asc' || query.sortOrder === 'desc')) {
-    sortOrder.value = query.sortOrder;
-  }
-  
-  // Set pagination from query params
-  if (query.page && typeof query.page === 'string') {
-    const pageNum = parseInt(query.page);
-    if (!isNaN(pageNum) && pageNum > 0) {
-      currentPage.value = pageNum;
-    }
-  }
-  if (query.pageSize && typeof query.pageSize === 'string') {
-    const size = parseInt(query.pageSize);
-    if (!isNaN(size) && [25, 50, 100].includes(size)) {
-      pageSize.value = size;
-    }
-  }
-};
-
-// Update URL query parameters
-const updateQueryParams = () => {
-  const query: Record<string, string> = {};
-  
-  // Add filters to query
-  if (nameFilter.value) query.name = nameFilter.value;
-  if (gameIdFilter.value) query.gameId = gameIdFilter.value;
-  if (serverNameFilter.value) query.server = serverNameFilter.value;
-  
-  // Add sorting to query
-  if (sortBy.value !== 'lastSeen') query.sortBy = sortBy.value;
-  if (sortOrder.value !== 'desc') query.sortOrder = sortOrder.value;
-  
-  // Add pagination to query
-  if (currentPage.value !== 1) query.page = currentPage.value.toString();
-  if (pageSize.value !== 50) query.pageSize = pageSize.value.toString();
-  
-  // Update URL without triggering navigation
-  router.replace({ query });
-};
-
-// Fetch data when component is mounted
+// Lifecycle hooks
 onMounted(() => {
-  initializeFromQuery();
-  fetchPlayersData();
+  // Load active players by default on page load
+  fetchPlayers();
 });
 
-// Watch for external changes to nameFilter and sync with input
-watch(nameFilter, (newValue) => {
-  if (newValue !== nameInputValue.value) {
-    nameInputValue.value = newValue;
-  }
-});
-
-// Cleanup when component is unmounted
 onUnmounted(() => {
-  // Clear any pending search timeout
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value);
   }
@@ -357,1037 +231,733 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="players-page-container">
-    <div class="header">
-      <h1>Players</h1>
-      <button
-        class="refresh-button"
-        @click="fetchPlayersData"
-      >
-        <span v-if="!loading">Refresh</span>
-        <span
-          v-else
-          class="spinner"
-        />
-      </button>
-    </div>
-
-    <!-- Filter controls -->
-    <div class="filter-section">
-      <!-- Always visible name search on mobile -->
-      <div class="mobile-name-search">
-        <div class="filter-group">
-          <label for="mobileNameFilter">Search Players:</label>
-          <div class="input-with-clear">
-            <input 
-              id="mobileNameFilter" 
-              v-model="nameInputValue" 
-              type="text"
-              placeholder="Enter player name" 
-              class="filter-input"
-              @input="handleNameFilterChange(nameInputValue)"
-            >
-            <span
-              v-if="isSearching"
-              class="search-indicator"
-            >🔍</span>
-            <span 
-              v-if="nameInputValue && !isSearching" 
-              class="clear-input" 
-              title="Clear filter"
-              @click="clearNameFilter"
-            >×</span>
+  <div class="players-page">
+    <!-- Prominent Search Section -->
+    <div class="search-section">
+      <h1>Find Players</h1>
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <i class="search-icon">🔍</i>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search players..."
+            class="search-input"
+            @input="onSearchInput"
+            @keyup.enter="onSearchEnter"
+          >
+          <div v-if="isSearchLoading" class="search-spinner">
+            🔄
           </div>
+          <button v-if="searchQuery" @click="clearSearch" class="clear-search">×</button>
         </div>
-      </div>
-
-      <div class="filter-toggle">
-        <button
-          class="filter-toggle-button"
-          @click="showFilters = !showFilters"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="filter-icon"
-          >
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-          </svg>
-          More Filters
-          <span
-            v-if="gameIdFilter || serverNameFilter"
-            class="active-filter-indicator"
-          >●</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="chevron-icon"
-            :class="{ 'rotated': showFilters }"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
       </div>
       
-      <div
-        class="filter-container"
-        :class="{ 'filters-visible': showFilters }"
-      >
-        <div class="filter-group desktop-name-filter">
-          <label for="nameFilter">Filter by Name:</label>
-          <div class="input-with-clear">
-            <input 
-              id="nameFilter" 
-              v-model="nameInputValue" 
-              type="text"
-              placeholder="Enter player name" 
-              class="filter-input"
-              @input="handleNameFilterChange(nameInputValue)"
-            >
-            <span
-              v-if="isSearching"
-              class="search-indicator"
-            >🔍</span>
-            <span 
-              v-if="nameInputValue && !isSearching" 
-              class="clear-input" 
-              title="Clear filter"
-              @click="clearNameFilter"
-            >×</span>
-          </div>
-        </div>
-
-        <div class="filter-group">
-          <label for="gameIdFilter">Currently Playing:</label>
-          <select 
-            id="gameIdFilter" 
-            v-model="gameIdFilter" 
-            class="filter-select"
-            @change="handleGameIdFilterChange"
-          >
-            <option value="">
-              All Games
-            </option>
-            <option
-              v-for="gameId in uniqueGameIds"
-              :key="gameId"
-              :value="gameId"
-            >
-              {{ gameId }}
-            </option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label for="serverNameFilter">Currently Playing On:</label>
-          <select 
-            id="serverNameFilter" 
-            v-model="serverNameFilter" 
-            class="filter-select"
-            @change="handleServerNameFilterChange"
-          >
-            <option value="">
-              All Servers
-            </option>
-            <option
-              v-for="serverName in uniqueServerNames"
-              :key="serverName"
-              :value="serverName"
-            >
-              {{ serverName }}
-            </option>
-          </select>
-        </div>
-
-        <button
-          class="reset-filters-button"
-          @click="resetFilters"
-        >
-          Reset Filters
-        </button>
-      </div>
     </div>
 
-    <div
-      v-if="loading && players.length === 0"
-      class="loading"
-    >
-      Loading players data...
+    <!-- Players Table -->
+    <div v-if="loading" class="loading">
+      Loading players...
     </div>
-    <div
-      v-else-if="error"
-      class="error"
-    >
+    
+    <div v-else-if="error" class="error">
       {{ error }}
     </div>
-    <div
-      v-else-if="players.length > 0"
-      class="players-table-container"
-    >
-      <!-- Players count and pagination info -->
+    
+    <div v-else-if="!searchQuery.trim() && players.length === 0" class="hero-section">
+      <div class="hero-content">
+        <p>Start typing a player name above to find their stats and recent activity.</p>
+        <div class="search-tips">
+          <div class="tip">💡 <strong>Tip:</strong> You can search by partial names</div>
+          <div class="tip">⚡ <strong>Quick:</strong> Press Enter to go to the first result</div>
+        </div>
+      </div>
+    </div>
+    
+    <div v-else-if="searchQuery.trim() && players.length === 0" class="no-results-section">
+      <div class="no-results-content">
+        <h3>🔍 No players found</h3>
+        <p>No players match "<strong>{{ searchQuery }}</strong>"</p>
+        <p class="suggestion">Try a different spelling or partial name.</p>
+      </div>
+    </div>
+    
+    <div v-else class="players-table-section">
+      <!-- Table Header -->
       <div class="table-header">
         <div class="players-count">
-          Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} players
+          {{ totalItems }} players found
         </div>
         <div class="page-size-selector">
-          <label for="pageSize">Players per page:</label>
-          <select
-            id="pageSize"
-            :value="pageSize"
-            @change="changePageSize(Number(($event.target as HTMLSelectElement).value))"
-          >
-            <option value="25">
-              25
-            </option>
-            <option value="50">
-              50
-            </option>
-            <option value="100">
-              100
-            </option>
+          <label>Show:</label>
+          <select :value="pageSize" @change="changePageSize(Number(($event.target as HTMLSelectElement).value))">
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
           </select>
         </div>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th
-              class="sortable"
-              @click="handleSort('playerName')"
+      <!-- Compact Table -->
+      <div class="table-container">
+        <table class="players-table">
+          <thead>
+            <tr>
+              <th @click="sortPlayers('playerName')" class="sortable">
+                Player
+                <span class="sort-indicator" :class="getSortClass('playerName')">▲</span>
+              </th>
+              <th @click="sortPlayers('totalPlayTimeMinutes')" class="sortable">
+                Playtime
+                <span class="sort-indicator" :class="getSortClass('totalPlayTimeMinutes')">▲</span>
+              </th>
+              <th @click="sortPlayers('lastSeen')" class="sortable">
+                Last Seen
+                <span class="sort-indicator" :class="getSortClass('lastSeen')">▲</span>
+              </th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="player in players"
+              :key="player.playerName"
+              class="player-row"
+              :class="{ 'online': player.isActive }"
             >
-              Player Name
-              <span
-                v-if="sortBy === 'playerName'"
-                class="sort-indicator"
-              >
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th
-              class="sortable"
-              @click="handleSort('totalPlayTimeMinutes')"
-            >
-              Total Play Time
-              <span
-                v-if="sortBy === 'totalPlayTimeMinutes'"
-                class="sort-indicator"
-              >
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th
-              class="sortable"
-              @click="handleSort('lastSeen')"
-            >
-              Last Seen
-              <span
-                v-if="sortBy === 'lastSeen'"
-                class="sort-indicator"
-              >
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th
-              class="sortable"
-              @click="handleSort('isActive')"
-            >
-              Status
-              <span
-                v-if="sortBy === 'isActive'"
-                class="sort-indicator"
-              >
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="player in players"
-            :key="player.playerName"
-            class="player-row"
-          >
-            <td class="player-name-cell">
-              <router-link
-                :to="`/players/${encodeURIComponent(player.playerName)}`"
-                class="player-name-link"
-              >
-                {{ player.playerName }}
-              </router-link>
-              <div
-                v-if="player.currentServer"
-                class="current-server"
-              >
-                <router-link
-                  :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`"
-                  class="server-name-link"
-                >
-                  {{ player.currentServer.serverName }}
+              <td class="player-cell">
+                <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-name">
+                  {{ player.playerName }}
                 </router-link>
-              </div>
-            </td>
-            <td class="play-time-cell">
-              {{ formatPlayTime(player.totalPlayTimeMinutes) }}
-            </td>
-            <td
-              class="last-seen-cell"
-              :title="formatDate(player.lastSeen)"
-            >
-              <span
-                v-if="formatRelativeTime(player.lastSeen) === 'Just now'"
-                class="online-badge"
-              >Online</span>
-              <span v-else>{{ formatRelativeTime(player.lastSeen) }}</span>
-            </td>
-            <td class="status-cell">
-              <div
-                v-if="player.isActive"
-                class="active-status"
-              >
-                <div class="server-info">
-                  <router-link
-                    v-if="player.currentServer"
-                    :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`"
-                    class="server-name-link"
-                  >
-                    {{ player.currentServer.serverName }}
-                  </router-link>
-                  <span v-else>Online</span>
+              </td>
+              <td class="playtime-cell">
+                {{ formatPlayTime(player.totalPlayTimeMinutes) }}
+              </td>
+              <td class="lastseen-cell">
+                {{ formatLastSeen(player.lastSeen) }}
+              </td>
+              <td class="status-cell">
+                <div v-if="player.isActive" class="status online-status">
+                  <span class="online-indicator">🟢</span>
+                  <div v-if="player.currentServer" class="server-info">
+                    <div class="server-name">{{ player.currentServer.serverName }}</div>
+                    <div class="game-stats">
+                      <span class="score-stat" :class="getScoreClass(player.currentServer.sessionKills + player.currentServer.sessionDeaths)">
+                        {{ (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) }}
+                      </span>
+                      <span class="separator"> / </span>
+                      <span class="kills-stat" :class="getKillsClass(player.currentServer.sessionKills || 0)">
+                        {{ player.currentServer.sessionKills || 0 }}
+                      </span>
+                      <span class="separator"> / </span>
+                      <span class="deaths-stat" :class="getDeathsClass(player.currentServer.sessionDeaths || 0)">
+                        {{ player.currentServer.sessionDeaths || 0 }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div
-                  v-if="player.currentServer && (player.currentServer.sessionKills !== undefined || player.currentServer.sessionDeaths !== undefined)"
-                  class="player-stats"
-                >
-                  <span class="stat-item">K: {{ player.currentServer.sessionKills || 0 }}</span>
-                  <span class="stat-item">D: {{ player.currentServer.sessionDeaths || 0 }}</span>
-                  <span class="stat-item"><img
-                    src="@/assets/kdr.png"
-                    alt="KDR"
-                    class="kdr-icon"
-                  > {{ player.currentServer.sessionDeaths ? ((player.currentServer.sessionKills || 0) / player.currentServer.sessionDeaths).toFixed(2) : player.currentServer.sessionKills || 0 }}</span>
+                <div v-else class="status offline-status">
+                  <span class="offline-indicator">⚫</span>
+                  <span>Offline</span>
                 </div>
-              </div>
-              <div
-                v-else
-                class="inactive-status"
-              >
-                Offline
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Pagination controls -->
-      <div
-        v-if="totalPages > 1"
-        class="pagination-container"
-      >
-        <div class="pagination-controls">
-          <button 
-            class="pagination-button" 
-            :disabled="currentPage === 1" 
-            title="First Page"
-            @click="goToPage(1)"
-          >
-            &laquo;
-          </button>
-          <button 
-            class="pagination-button" 
-            :disabled="currentPage === 1" 
-            title="Previous Page"
-            @click="goToPage(currentPage - 1)"
-          >
-            &lsaquo;
-          </button>
-          <button 
-            v-for="page in paginationRange" 
-            :key="page" 
-            class="pagination-button" 
-            :class="{ active: page === currentPage }" 
-            @click="goToPage(page)"
-          >
-            {{ page }}
-          </button>
-          <button 
-            class="pagination-button" 
-            :disabled="currentPage === totalPages" 
-            title="Next Page"
-            @click="goToPage(currentPage + 1)"
-          >
-            &rsaquo;
-          </button>
-          <button 
-            class="pagination-button" 
-            :disabled="currentPage === totalPages" 
-            title="Last Page"
-            @click="goToPage(totalPages)"
-          >
-            &raquo;
-          </button>
-        </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </div>
-    <div
-      v-else
-      class="no-data"
-    >
-      No players found.
+
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="pagination">
+        <button 
+          class="pagination-btn" 
+          :disabled="currentPage === 1" 
+          @click="goToPage(1)"
+        >
+          ««
+        </button>
+        <button 
+          class="pagination-btn" 
+          :disabled="currentPage === 1" 
+          @click="goToPage(currentPage - 1)"
+        >
+          ‹
+        </button>
+        <button 
+          v-for="page in paginationRange" 
+          :key="page" 
+          class="pagination-btn" 
+          :class="{ active: page === currentPage }" 
+          @click="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+        <button 
+          class="pagination-btn" 
+          :disabled="currentPage === totalPages" 
+          @click="goToPage(currentPage + 1)"
+        >
+          ›
+        </button>
+        <button 
+          class="pagination-btn" 
+          :disabled="currentPage === totalPages" 
+          @click="goToPage(totalPages)"
+        >
+          ››
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.players-page-container {
+.players-page {
+  min-height: 100vh;
   background: var(--color-background);
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.header h1 {
-  margin: 0;
-  color: var(--color-heading);
-}
-
-.refresh-button {
-  padding: 8px 16px;
-  background-color: var(--color-accent);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.refresh-button:hover {
-  background-color: var(--color-accent-hover);
-}
-
-.filter-section {
-  margin-bottom: 20px;
-}
-
-.mobile-name-search {
-  display: none;
-  margin-bottom: 15px;
-}
-
-.filter-toggle {
-  display: none;
-  margin-bottom: 15px;
-}
-
-.filter-toggle-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  width: 100%;
-  justify-content: center;
-}
-
-.filter-toggle-button:hover {
-  background-color: var(--color-background-mute);
-  border-color: var(--color-accent);
-}
-
-.filter-toggle-button:active {
-  transform: translateY(1px);
-}
-
-.filter-icon {
-  color: var(--color-accent);
-}
-
-.active-filter-indicator {
-  color: var(--color-accent);
-  font-size: 12px;
-  margin-left: auto;
-  margin-right: -4px;
-}
-
-.chevron-icon {
-  transition: transform 0.2s ease;
-  margin-left: auto;
-}
-
-.chevron-icon.rotated {
-  transform: rotate(180deg);
-}
-
-.filter-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  align-items: flex-end;
-  transition: all 0.3s ease;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  min-width: 200px;
-}
-
-.filter-group label {
-  margin-bottom: 5px;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.filter-input, .filter-select {
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 14px;
-  background-color: var(--color-background-soft);
-  color: var(--color-text);
-}
-
-.filter-input:focus, .filter-select:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.input-with-clear {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-indicator {
-  position: absolute;
-  right: 10px;
-  font-size: 18px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
-
-.clear-input {
-  position: absolute;
-  right: 10px;
-  font-size: 18px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
-
-.clear-input:hover {
-  color: var(--color-text-muted);
-  background-color: var(--color-background-mute);
-}
-
-.reset-filters-button {
-  padding: 8px 16px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  height: 36px;
-  align-self: flex-end;
-}
-
-.reset-filters-button:hover {
-  background-color: #5a6268;
-}
-
-.game-id {
-  margin-left: 10px;
-  padding: 2px 6px;
-  background-color: var(--color-accent);
-  color: white;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading, .error, .no-data {
-  padding: 20px;
+/* Search Section */
+.search-section {
+  max-width: 800px;
+  margin: 0 auto 40px auto;
   text-align: center;
 }
 
-.error {
-  color: #ff5252;
-}
-
-.players-table-container {
-  width: 100%;
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
+.search-section h1 {
+  font-size: 2.5rem;
+  color: var(--color-heading);
   margin-bottom: 20px;
 }
 
-th, td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text);
-}
-
-tbody tr:nth-child(even) {
-  background-color: var(--color-background-soft);
-}
-
-tbody tr:hover {
-  background-color: var(--color-background-mute);
-}
-
-th {
-  background-color: var(--color-background-mute);
-  font-weight: bold;
-  color: var(--color-heading);
-}
-
-.sortable {
-  cursor: pointer;
+.search-container {
   position: relative;
-  user-select: none;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.sortable:hover {
-  background-color: var(--color-background-soft);
+.search-input-wrapper {
+  position: relative;
+  margin-bottom: 10px;
 }
 
-.sort-indicator {
-  margin-left: 5px;
-  font-size: 12px;
-}
-
-.sort-option {
-  display: inline-block;
-  background-color: var(--color-background-soft);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: bold;
-  color: var(--color-text);
-}
-
-.status-column {
-  min-width: 200px;
-}
-
-.sort-badges {
-  display: flex;
-  gap: 5px;
-  margin-top: 5px;
-}
-
-.sort-badge {
-  display: inline-block;
-  background-color: var(--color-background-soft);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: bold;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.sort-badge:hover {
-  background-color: var(--color-background-mute);
-}
-
-.sort-badge.active {
-  background-color: var(--color-accent);
-  color: white;
-}
-
-.player-name-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.player-name-link:hover {
-  text-decoration: underline;
-}
-
-.server-name-link {
-  color: var(--color-accent);
-  text-decoration: none;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.server-name-link:hover {
-  text-decoration: underline;
-  color: var(--color-accent-hover);
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: white;
-}
-
-.status-badge.active {
-  background-color: #4CAF50;
-}
-
-.status-badge.inactive {
-  background-color: #9e9e9e;
-}
-
-.active-status {
-  background-color: var(--color-background-mute);
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  color: var(--color-heading);
-  border-left: 4px solid #4CAF50;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.server-info {
-  font-size: 0.9rem;
-  color: var(--color-text);
-  font-weight: 600;
-}
-
-.player-stats {
-  margin-top: 0;
-  display: flex;
-  gap: 8px;
-  font-size: 0.8rem;
-}
-
-.stat-item {
-  background-color: var(--color-background);
-  padding: 4px 8px;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.current-server {
-  font-size: 0.8rem;
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--color-text-muted);
-  margin-top: 2px;
+  font-size: 16px;
+  z-index: 2;
+}
+
+.search-input {
+  width: 100%;
+  padding: 16px 50px 16px 50px;
+  font-size: 18px;
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background);
+  color: var(--color-text);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.search-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-spinner {
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  animation: spin 1s linear infinite;
+}
+
+.clear-search {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.clear-search:hover {
+  background: var(--color-background-mute);
+  color: var(--color-text);
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+
+/* Loading and Error States */
+.loading, .error {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 18px;
+}
+
+.error {
+  color: #e74c3c;
+}
+
+/* Hero Section */
+.hero-section {
+  max-width: 600px;
+  margin: 60px auto;
+  text-align: center;
+}
+
+.hero-content h2 {
+  font-size: 2rem;
+  color: var(--color-heading);
+  margin-bottom: 16px;
+}
+
+.hero-content p {
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.search-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  background: var(--color-background-soft);
+  border-radius: 8px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+}
+
+.tip {
+  font-size: 14px;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tip strong {
+  color: var(--color-primary);
+}
+
+/* No Results Section */
+.no-results-section {
+  max-width: 500px;
+  margin: 60px auto;
+  text-align: center;
+}
+
+.no-results-content h3 {
+  font-size: 1.5rem;
+  color: var(--color-heading);
+  margin-bottom: 12px;
+}
+
+.no-results-content p {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.suggestion {
+  font-style: italic;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* Table Section */
+.players-table-section {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 .players-count {
-  font-weight: bold;
+  font-size: 14px;
+  color: var(--color-text);
+  font-weight: 600;
 }
 
 .page-size-selector {
   display: flex;
   align-items: center;
-}
-
-.page-size-selector label {
-  margin-right: 5px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 10px;
-}
-
-.pagination-controls {
-  display: flex;
-  gap: 5px;
-}
-
-.pagination-button {
-  padding: 8px 16px;
-  background-color: var(--color-background-soft);
+  gap: 8px;
+  font-size: 14px;
   color: var(--color-text);
-  border: none;
+}
+
+.page-size-selector select {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+/* Table Container - matching LandingPage style */
+.table-container {
+  background: var(--color-background-soft);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.players-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.players-table th {
+  background: var(--color-background-mute);
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text);
+  border-bottom: 2px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.players-table th.sortable {
   cursor: pointer;
   transition: background-color 0.2s;
+  user-select: none;
 }
 
-.pagination-button:hover {
-  background-color: var(--color-background-mute);
+.players-table th.sortable:hover {
+  background: var(--color-background);
 }
 
-.pagination-button.active {
-  background-color: var(--color-accent);
+.sort-indicator {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  transition: transform 0.2s;
+  opacity: 0.5;
+}
+
+.sort-indicator.asc {
+  transform: rotate(0deg);
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+.sort-indicator.desc {
+  transform: rotate(180deg);
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+.players-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.player-row {
+  transition: all 0.2s ease;
+}
+
+.player-row:hover {
+  background: var(--color-background);
+}
+
+.player-row.online {
+  background: rgba(76, 175, 80, 0.02);
+}
+
+.player-cell {
+  max-width: 200px;
+}
+
+.player-name {
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-name:hover {
+  text-decoration: underline;
+}
+
+.playtime-cell, .lastseen-cell {
+  font-size: 13px;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.status-cell {
+  min-width: 200px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.online-status {
+  color: var(--color-text);
+}
+
+.offline-status {
+  color: var(--color-text-muted);
+}
+
+.online-indicator, .offline-indicator {
+  font-size: 12px;
+}
+
+.server-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.server-name {
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.game-stats {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.separator {
+  color: var(--color-text-muted);
+}
+
+/* Pro gamer color coding (from PlayersPanel.vue) */
+.score-excellent {
+  color: #4caf50;
+  font-weight: 700;
+}
+
+.score-good {
+  color: #2196f3;
+  font-weight: 600;
+}
+
+.score-average {
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.score-low {
+  color: var(--color-text-muted);
+}
+
+.kills-excellent {
+  color: #f44336;
+  font-weight: 700;
+}
+
+.kills-good {
+  color: #ff9800;
+  font-weight: 600;
+}
+
+.kills-average {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.kills-low {
+  color: var(--color-text-muted);
+}
+
+.deaths-high {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.deaths-medium {
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.deaths-low {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.deaths-minimal {
+  color: #2196f3;
+  font-weight: 500;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 20px;
+}
+
+.pagination-btn {
+  padding: 8px 12px;
+  background: var(--color-background-soft);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  min-width: 36px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--color-background-mute);
+  border-color: var(--color-primary);
+}
+
+.pagination-btn.active {
+  background: var(--color-primary);
   color: white;
+  border-color: var(--color-primary);
 }
 
-/* Mobile styles */
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
-  .players-page-container {
+  .players-page {
     padding: 15px;
   }
 
-  /* Show mobile name search */
-  .mobile-name-search {
-    display: block;
+  .search-section h1 {
+    font-size: 2rem;
   }
 
-  /* Hide desktop name filter on mobile */
-  .desktop-name-filter {
-    display: none;
+  .search-input {
+    padding: 12px 40px 12px 40px;
+    font-size: 16px;
   }
 
-  /* Show filter toggle on mobile */
-  .filter-toggle {
-    display: block;
+  .hero-section {
+    margin: 40px auto;
+    padding: 0 10px;
   }
 
-  /* Hide filters by default on mobile */
-  .filter-container {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    margin-bottom: 0;
+  .hero-content h2 {
+    font-size: 1.6rem;
   }
 
-  /* Show filters when toggled */
-  .filter-container.filters-visible {
-    max-height: 500px;
-    opacity: 1;
-    margin-bottom: 20px;
+  .hero-content p {
+    font-size: 1rem;
   }
 
-  .filter-group {
-    min-width: 100%;
-    margin-bottom: 15px;
+  .search-tips {
+    padding: 20px;
   }
 
-  .reset-filters-button {
-    width: 100%;
-    align-self: stretch;
+  .tip {
+    font-size: 13px;
   }
 
-  /* Mobile table layout: Use grid to create a two-line layout per player */
-  table {
-    border-collapse: collapse;
-    border-spacing: 0;
-  }
-
-  thead th {
-    display: none;
-  }
-
-  .player-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "name lastseen"
-      "status status";
-    gap: 4px 10px;
-    /* Remove box styles and adopt row styles */
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    margin-bottom: 0;
-    padding: 12px 0;
-    box-shadow: none;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .player-row:hover {
-    box-shadow: none;
-    background-color: var(--color-background-mute);
-  }
-
-  .player-row td {
-    display: block;
-    width: 100%;
-    border: none;
-    padding: 0;
-    background: transparent; /* Cells inherit background from row */
-  }
-
-  /* Hide desktop-only cells on mobile */
-  .player-row .play-time-cell {
-    display: none;
-  }
-  
-  /* --- Grid cell placement and styling --- */
-
-  .player-name-cell {
-    grid-area: name;
-    align-self: center;
-    /* Allow long names to break and prevent overflow */
-    word-break: break-all;
-    min-width: 0; /* Ensures the cell can shrink */
-  }
-
-  .player-name-link {
-    font-size: 1.1rem;
-    font-weight: 600;
-  }
-  
-  .current-server {
-    display: none; /* Hide desktop server name under player name */
-  }
-
-  .last-seen-cell {
-    grid-area: lastseen;
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    text-align: right;
-    align-self: center;
-  }
-  
-  .status-cell {
-    grid-area: status;
-  }
-  
-  /* Re-style active/inactive status for mobile's second row */
-  .status-cell .active-status {
-    background: var(--color-background-mute);
-    padding: 6px 8px;
-    border-radius: 4px;
-    border-left: 4px solid #4CAF50;
-    font-size: 0.8rem;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    justify-content: space-between;
-    margin-top: 8px;
-  }
-
-  .status-cell .inactive-status {
-    display: none;
-  }
-
-  .status-cell .server-info {
-    font-weight: 600;
-  }
-
-  .status-cell .player-stats {
-    gap: 6px;
-    font-size: 0.8rem;
-  }
-
-  .status-cell .stat-item {
-    padding: 2px 4px;
-    font-size: 0.75rem;
+  .no-results-section {
+    margin: 40px auto;
+    padding: 0 10px;
   }
 
   .table-header {
     flex-direction: column;
     gap: 10px;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
   .page-size-selector {
-    width: 100%;
     justify-content: space-between;
   }
 
-  .pagination-controls {
+  .players-table {
+    min-width: 600px;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .pagination {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
   }
 
-  .pagination-button {
-    padding: 6px 12px;
-    font-size: 0.9rem;
-  }
-}
-
-/* Hide mobile details on desktop */
-@media (min-width: 769px) {
-  .mobile-details-cell {
-    display: none;
-  }
-
-  /* Hide mobile name search on desktop */
-  .mobile-name-search {
-    display: none;
+  .pagination-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 32px;
   }
 }
 
-.online-badge {
-  display: inline-block;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: white;
-  background-color: #4CAF50;
-}
+@media (max-width: 480px) {
+  .search-section {
+    margin-bottom: 30px;
+  }
 
-.kdr-icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 4px;
+  .search-section h1 {
+    font-size: 1.8rem;
+  }
+
+  .players-table th,
+  .players-table td {
+    padding: 8px 12px;
+  }
+
+  .server-name {
+    max-width: 120px;
+  }
 }
 </style>
