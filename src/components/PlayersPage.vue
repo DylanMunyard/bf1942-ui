@@ -340,7 +340,12 @@ onUnmounted(() => {
                 <div v-if="player.isActive" class="status online-status">
                   <span class="online-indicator">🟢</span>
                   <div v-if="player.currentServer" class="server-info">
-                    <div class="server-name">{{ player.currentServer.serverName }}</div>
+                    <router-link 
+                      :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" 
+                      class="server-name server-link"
+                    >
+                      {{ player.currentServer.serverName }}
+                    </router-link>
                     <div class="game-stats">
                       <span class="score-stat" :class="getScoreClass(player.currentServer.sessionKills + player.currentServer.sessionDeaths)">
                         {{ (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) }}
@@ -763,6 +768,17 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 150px;
+}
+
+.server-link {
+  text-decoration: none;
+  color: var(--color-primary);
+  transition: color 0.2s ease;
+}
+
+.server-link:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
 }
 
 .game-stats {
