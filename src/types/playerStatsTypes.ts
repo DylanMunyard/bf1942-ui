@@ -136,6 +136,19 @@ export interface BestScore {
   sessionId: number;
 }
 
+export interface TrendDataPoint {
+  timestamp: string; // ISO date string
+  value: number;
+}
+
+export interface RecentStats {
+  analysisPeriodStart: string; // ISO date string
+  analysisPeriodEnd: string; // ISO date string
+  totalRoundsAnalyzed: number;
+  kdRatioTrend: TrendDataPoint[];
+  killRateTrend: TrendDataPoint[];
+}
+
 export interface PlayerTimeStatistics {
   totalPlayTimeMinutes: number;
   totalSessions: number;
@@ -151,6 +164,7 @@ export interface PlayerTimeStatistics {
   recentSessions: Session[];
   insights?: PlayerInsights;
   killMilestones: KillMilestone[];
+  recentStats?: RecentStats;
 }
 
 // New interface for server stats in PlayerTimeStatistics

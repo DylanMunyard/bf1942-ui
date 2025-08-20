@@ -140,6 +140,155 @@ const similarPlayers = computed(() => similarPlayersData.value?.similarPlayers |
 
 // --- End Similar Players ---
 
+// Computed properties for trend charts
+const kdTrendChartData = computed(() => {
+  if (!playerStats.value?.recentStats?.kdRatioTrend) return { labels: [], datasets: [] };
+
+  const trend = playerStats.value.recentStats.kdRatioTrend;
+  const labels = trend.map((point: any) => new Date(point.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+  const data = trend.map((point: any) => point.value);
+
+  return {
+    labels,
+    datasets: [{
+      label: 'K/D Ratio',
+      data,
+      borderColor: '#ff6b35',
+      backgroundColor: 'rgba(255, 107, 53, 0.1)',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      pointBackgroundColor: '#ff6b35',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 1,
+    }]
+  };
+});
+
+const killRateTrendChartData = computed(() => {
+  if (!playerStats.value?.recentStats?.killRateTrend) return { labels: [], datasets: [] };
+
+  const trend = playerStats.value.recentStats.killRateTrend;
+  const labels = trend.map((point: any) => new Date(point.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+  const data = trend.map((point: any) => point.value);
+
+  return {
+    labels,
+    datasets: [{
+      label: 'Kill Rate',
+      data,
+      borderColor: '#4CAF50',
+      backgroundColor: 'rgba(76, 175, 80, 0.1)',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      pointBackgroundColor: '#4CAF50',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 1,
+    }]
+  };
+});
+
+const tickerChartOptions = computed(() => {
+  const computedStyles = window.getComputedStyle(document.documentElement);
+  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') || 
+                    document.documentElement.classList.contains('dark-mode') ||
+                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      intersect: false,
+      mode: 'index' as const
+    },
+    scales: {
+      y: {
+        display: false,
+        grid: {
+          display: false
+        }
+      },
+      x: {
+        display: false,
+        grid: {
+          display: false
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        enabled: true,
+        backgroundColor: isDarkMode ? 'rgba(35, 21, 53, 0.95)' : 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        borderColor: isDarkMode ? '#9c27b0' : '#666666',
+        borderWidth: 1,
+        cornerRadius: 6,
+        displayColors: false,
+        titleFont: { size: 10, weight: 'bold' as const },
+        bodyFont: { size: 9 },
+        callbacks: {
+          title: function(context: any) {
+            return context[0].label;
+          },
+          label: function(context: any) {
+            const label = context.dataset.label;
+            const value = context.parsed.y;
+            if (label === 'Kill Rate') {
+              return `${value.toFixed(3)} kills/min`;
+            }
+            return `${label}: ${value.toFixed(3)}`;
+          }
+        }
+      }
+    },
+    elements: {
+      point: {
+        radius: 0,
+        hoverRadius: 4
+      },
+      line: {
+        borderWidth: 2
+      }
+    }
+  };
+});
+
+// Computed properties for gauge data
+const currentKDRatio = computed(() => {
+  if (!playerStats.value?.recentStats?.kdRatioTrend?.length) return 0;
+  return playerStats.value.recentStats.kdRatioTrend[playerStats.value.recentStats.kdRatioTrend.length - 1].value;
+});
+
+const currentKillRate = computed(() => {
+  if (!playerStats.value?.recentStats?.killRateTrend?.length) return 0;
+  return playerStats.value.recentStats.killRateTrend[playerStats.value.recentStats.killRateTrend.length - 1].value;
+});
+
+const getGaugeColor = (value: number, type: 'kdr' | 'killrate') => {
+  if (type === 'kdr') {
+    if (value >= 3.0) return '#4CAF50'; // Excellent (green)
+    if (value >= 2.0) return '#8BC34A'; // Great (light green)
+    if (value >= 1.5) return '#FFC107'; // Good (yellow)
+    if (value >= 1.0) return '#FF9800'; // Average (orange)
+    return '#F44336'; // Below average (red)
+  } else { // killrate
+    if (value >= 1.2) return '#4CAF50'; // Excellent (green)
+    if (value >= 0.8) return '#8BC34A'; // Great (light green)
+    if (value >= 0.6) return '#FFC107'; // Good (yellow)
+    if (value >= 0.4) return '#FF9800'; // Average (orange)
+    return '#F44336'; // Below average (red)
+  }
+};
+
 // Function to fetch map stats for a server
 const fetchMapStats = async (serverGuid: string) => {
   mapStatsLoading.value = true;
@@ -615,23 +764,6 @@ watch(
             <span class="player-playtime">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
             <span class="player-last-seen">Last seen: {{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
           </div>
-          <div
-            v-if="playerStats"
-            class="player-header-stats"
-          >
-            <div class="header-stat">
-              <span class="header-stat-value header-stat-kills">{{ playerStats.totalKills }}</span>
-              <span class="header-stat-label">Kills</span>
-            </div>
-            <div class="header-stat">
-              <span class="header-stat-value header-stat-deaths">{{ playerStats.totalDeaths }}</span>
-              <span class="header-stat-label">Deaths</span>
-            </div>
-            <div class="header-stat">
-              <span class="header-stat-value">{{ calculateKDR(playerStats.totalKills, playerStats.totalDeaths) }}</span>
-              <span class="header-stat-label">K/D</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -695,6 +827,81 @@ watch(
               alt="KDR"
               class="kdr-icon"
             > {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }})
+          </div>
+        </div>
+
+        <!-- Performance Analytics section -->
+        <div 
+          v-if="playerStats?.recentStats"
+          class="stats-section performance-analytics"
+        >
+          <div class="section-header-with-action">
+            <h3>📊 Performance Analytics</h3>
+            <div class="analytics-period">
+              {{ Math.ceil((new Date(playerStats.recentStats.analysisPeriodEnd).getTime() - new Date(playerStats.recentStats.analysisPeriodStart).getTime()) / (1000 * 60 * 60 * 24)) }} days 
+              ({{ playerStats.recentStats.totalRoundsAnalyzed }} rounds)
+            </div>
+          </div>
+          
+          <!-- Performance Metrics Section -->
+          <div class="performance-metrics">
+            <!-- Compact Trend Tickers -->
+            <div class="trend-tickers">
+              <div class="ticker-item">
+                <div class="ticker-header">
+                  <div class="ticker-label">
+                    <span class="ticker-icon">📈</span>
+                    <span>K/D Ratio</span>
+                  </div>
+                  <div class="ticker-value" :style="{ color: getGaugeColor(currentKDRatio, 'kdr') }">
+                    {{ currentKDRatio.toFixed(3) }}
+                  </div>
+                </div>
+                <div class="ticker-chart">
+                  <Line 
+                    :data="kdTrendChartData" 
+                    :options="tickerChartOptions" 
+                  />
+                </div>
+              </div>
+              
+              <div class="ticker-item">
+                <div class="ticker-header">
+                  <div class="ticker-label">
+                    <span class="ticker-icon">⚡</span>
+                    <span>Kill Rate</span>
+                  </div>
+                  <div class="ticker-value" :style="{ color: getGaugeColor(currentKillRate, 'killrate') }">
+                    {{ currentKillRate.toFixed(2) }} <span class="ticker-unit">k/min</span>
+                  </div>
+                </div>
+                <div class="ticker-chart">
+                  <Line 
+                    :data="killRateTrendChartData" 
+                    :options="tickerChartOptions" 
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <!-- Total Stats Cards -->
+            <div class="stat-cards">
+              <div class="stat-card kills-card">
+                <div class="stat-card-icon">🎯</div>
+                <div class="stat-card-content">
+                  <div class="stat-card-value">{{ playerStats.totalKills.toLocaleString() }}</div>
+                  <div class="stat-card-label">Total Kills</div>
+                </div>
+              </div>
+              
+              <div class="stat-card deaths-card">
+                <div class="stat-card-icon">💀</div>
+                <div class="stat-card-content">
+                  <div class="stat-card-value">{{ playerStats.totalDeaths.toLocaleString() }}</div>
+                  <div class="stat-card-label">Total Deaths</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -774,6 +981,13 @@ watch(
                       >
                         {{ server.highestScore }}
                       </span>
+                    </div>
+                    <div
+                      v-if="server.ranking"
+                      class="server-stat-block"
+                    >
+                      <span class="server-stat-label">Rank</span>
+                      <span class="server-stat-value ranking-badge">{{ server.ranking.rankDisplay }}</span>
                     </div>
                     <div class="server-stat-block">
                       <span class="server-stat-label">KPM</span>
@@ -971,245 +1185,113 @@ watch(
                   v-else-if="mapStats.length > 0"
                   class="map-stats-content"
                 >
-                  <!-- Desktop grid view -->
-                  <div class="desktop-only map-stats-grid">
-                    <!-- Headers -->
-                    <div
-                      class="header-cell"
-                      @click="changeMapStatsSort('mapName')"
-                    >
-                      Map Name
-                      <span
-                        v-if="mapStatsSortField === 'mapName'"
-                        class="sort-indicator"
-                      >
-                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </div>
-                    <div
-                      class="header-cell"
-                      @click="changeMapStatsSort('totalScore')"
-                    >
-                      Score
-                      <span
-                        v-if="mapStatsSortField === 'totalScore'"
-                        class="sort-indicator"
-                      >
-                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </div>
-                    <div
-                      class="header-cell"
-                      @click="changeMapStatsSort('kdRatio')"
-                    >
-                      <img
-                        src="@/assets/kdr.png"
-                        alt="KDR"
-                        class="kdr-icon"
-                      >
-                      <span
-                        v-if="mapStatsSortField === 'kdRatio'"
-                        class="sort-indicator"
-                      >
-                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </div>
-                    <div
-                      class="header-cell"
-                      @click="changeMapStatsSort('totalKills')"
-                    >
-                      <img
-                        src="@/assets/kills.png"
-                        alt="Kills"
-                        class="kills-icon"
-                      >
-                      <span
-                        v-if="mapStatsSortField === 'totalKills'"
-                        class="sort-indicator"
-                      >
-                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </div>
-                    <div
-                      class="header-cell"
-                      @click="changeMapStatsSort('totalDeaths')"
-                    >
-                      <img
-                        src="@/assets/deaths.png"
-                        alt="Deaths"
-                        class="deaths-icon"
-                      >
-                      <span
-                        v-if="mapStatsSortField === 'totalDeaths'"
-                        class="sort-indicator"
-                      >
-                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </div>
-                    <div
-                      class="header-cell"
-                      @click="changeMapStatsSort('sessionsPlayed')"
-                    >
-                      Sessions
-                      <span
-                        v-if="mapStatsSortField === 'sessionsPlayed'"
-                        class="sort-indicator"
-                      >
-                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </div>
-                    <div
-                      class="header-cell"
-                      @click="changeMapStatsSort('totalPlayTimeMinutes')"
-                    >
-                      Play Time
-                      <span
-                        v-if="mapStatsSortField === 'totalPlayTimeMinutes'"
-                        class="sort-indicator"
-                      >
-                        {{ mapStatsSortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </div>
-                    
-                    <!-- Data rows -->
-                    <template
-                      v-for="(map, mapIndex) in sortedMapStats"
-                      :key="mapIndex"
-                    >
-                      <div class="data-cell">
-                        <router-link 
-                          :to="{
-                            path: `/players/${encodeURIComponent(playerName)}/sessions`,
-                            query: { 
-                              map: map.mapName,
-                              ...(expandedServerName && { server: expandedServerName })
-                            }
-                          }"
-                          class="map-link"
+                  <!-- Table view with horizontal scrolling for mobile -->
+                  <div class="map-stats-table-container">
+                    <table class="map-stats-table">
+                      <thead>
+                        <tr>
+                          <th @click="changeMapStatsSort('mapName')" class="sortable">
+                            Map Name
+                            <span
+                              v-if="mapStatsSortField === 'mapName'"
+                              class="sort-indicator"
+                              :class="mapStatsSortDirection"
+                            >▲</span>
+                          </th>
+                          <th @click="changeMapStatsSort('totalScore')" class="sortable">
+                            Score
+                            <span
+                              v-if="mapStatsSortField === 'totalScore'"
+                              class="sort-indicator"
+                              :class="mapStatsSortDirection"
+                            >▲</span>
+                          </th>
+                          <th @click="changeMapStatsSort('kdRatio')" class="sortable">
+                            K/D Ratio
+                            <span
+                              v-if="mapStatsSortField === 'kdRatio'"
+                              class="sort-indicator"
+                              :class="mapStatsSortDirection"
+                            >▲</span>
+                          </th>
+                          <th @click="changeMapStatsSort('totalKills')" class="sortable">
+                            Kills
+                            <span
+                              v-if="mapStatsSortField === 'totalKills'"
+                              class="sort-indicator"
+                              :class="mapStatsSortDirection"
+                            >▲</span>
+                          </th>
+                          <th @click="changeMapStatsSort('totalDeaths')" class="sortable">
+                            Deaths
+                            <span
+                              v-if="mapStatsSortField === 'totalDeaths'"
+                              class="sort-indicator"
+                              :class="mapStatsSortDirection"
+                            >▲</span>
+                          </th>
+                          <th @click="changeMapStatsSort('sessionsPlayed')" class="sortable">
+                            Sessions
+                            <span
+                              v-if="mapStatsSortField === 'sessionsPlayed'"
+                              class="sort-indicator"
+                              :class="mapStatsSortDirection"
+                            >▲</span>
+                          </th>
+                          <th @click="changeMapStatsSort('totalPlayTimeMinutes')" class="sortable">
+                            Play Time
+                            <span
+                              v-if="mapStatsSortField === 'totalPlayTimeMinutes'"
+                              class="sort-indicator"
+                              :class="mapStatsSortDirection"
+                            >▲</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          v-for="(map, mapIndex) in sortedMapStats"
+                          :key="mapIndex"
+                          class="map-row"
                         >
-                          {{ map.mapName }}
-                        </router-link>
-                      </div>
-                      <div class="data-cell">
-                        {{ map.totalScore }}
-                      </div>
-                      <div class="data-cell">
-                        {{ calculateKDR(map.totalKills, map.totalDeaths) }}
-                      </div>
-                      <div class="data-cell">
-                        {{ map.totalKills }}
-                      </div>
-                      <div class="data-cell">
-                        {{ map.totalDeaths }}
-                      </div>
-                      <div class="data-cell">
-                        {{ map.sessionsPlayed }}
-                      </div>
-                      <div class="data-cell">
-                        {{ formatPlayTime(map.totalPlayTimeMinutes) }}
-                      </div>
-                    </template>
+                          <td class="map-name-cell">
+                            <router-link 
+                              :to="{
+                                path: `/players/${encodeURIComponent(playerName)}/sessions`,
+                                query: { 
+                                  map: map.mapName,
+                                  ...(expandedServerName && { server: expandedServerName })
+                                }
+                              }"
+                              class="map-name-link"
+                            >
+                              {{ map.mapName }}
+                            </router-link>
+                          </td>
+                          <td class="score-cell">
+                            {{ map.totalScore }}
+                          </td>
+                          <td class="kdr-cell">
+                            {{ calculateKDR(map.totalKills, map.totalDeaths) }}
+                          </td>
+                          <td class="kills-cell">
+                            {{ map.totalKills }}
+                          </td>
+                          <td class="deaths-cell">
+                            {{ map.totalDeaths }}
+                          </td>
+                          <td class="sessions-cell">
+                            {{ map.sessionsPlayed }}
+                          </td>
+                          <td class="playtime-cell">
+                            {{ formatPlayTime(map.totalPlayTimeMinutes) }}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
 
-                  <!-- Mobile card view -->
-                  <div class="mobile-only map-stats-cards">
-                    <div class="mobile-sort-controls">
-                      <label>Sort by:</label>
-                      <select
-                        v-model="mapStatsSortField"
-                        class="mobile-sort-select"
-                        @change="changeMapStatsSort(mapStatsSortField)"
-                      >
-                        <option value="totalScore">
-                          Score
-                        </option>
-                        <option value="kdRatio">
-                          K/D Ratio
-                        </option>
-                        <option value="mapName">
-                          Map Name
-                        </option>
-                        <option value="totalKills">
-                          Kills
-                        </option>
-                        <option value="totalDeaths">
-                          Deaths
-                        </option>
-                        <option value="sessionsPlayed">
-                          Sessions
-                        </option>
-                        <option value="totalPlayTimeMinutes">
-                          Play Time
-                        </option>
-                      </select>
-                      <button
-                        class="mobile-sort-direction"
-                        @click="mapStatsSortDirection = mapStatsSortDirection === 'asc' ? 'desc' : 'asc'"
-                      >
-                        {{ mapStatsSortDirection === 'asc' ? '↑' : '↓' }}
-                      </button>
-                    </div>
-                    <div
-                      v-for="(map, mapIndex) in sortedMapStats"
-                      :key="mapIndex"
-                      class="map-stat-card"
-                    >
-                      <div class="map-stat-header">
-                        <h5 class="map-name">
-                          <router-link 
-                            :to="{
-                              path: `/players/${encodeURIComponent(playerName)}/sessions`,
-                              query: { 
-                                map: map.mapName,
-                                ...(expandedServerName && { server: expandedServerName })
-                              }
-                            }"
-                            class="map-link"
-                          >
-                            {{ map.mapName }}
-                          </router-link>
-                        </h5>
-                        <div class="map-score">
-                          {{ map.totalScore }}
-                        </div>
-                      </div>
-                      <div class="map-stat-details">
-                        <div class="stat-row-condensed">
-                          <span class="stat-item">
-                            <img
-                              src="@/assets/kdr.png"
-                              alt="KDR"
-                              class="kdr-icon"
-                            >
-                            {{ calculateKDR(map.totalKills, map.totalDeaths) }}
-                          </span>
-                          <span class="stat-separator">•</span>
-                          <span class="stat-item">
-                            <img
-                              src="@/assets/kills.png"
-                              alt="Kills"
-                              class="kills-icon"
-                            >
-                            {{ map.totalKills }}
-                          </span>
-                          <span class="stat-separator">•</span>
-                          <span class="stat-item">
-                            <img
-                              src="@/assets/deaths.png"
-                              alt="Deaths"
-                              class="deaths-icon"
-                            >
-                            {{ map.totalDeaths }}
-                          </span>
-                        </div>
-                        <div class="stat-row-condensed">
-                          <span class="stat-item">Sessions: {{ map.sessionsPlayed }}</span>
-                          <span class="stat-separator">•</span>
-                          <span class="stat-item">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+
                 </div>
                 <div
                   v-else
@@ -3032,6 +3114,135 @@ tbody tr:hover {
   background-color: var(--color-background-mute);
 }
 
+/* Map Stats Table - Adopting LandingPage.vue styling */
+.map-stats-table-container {
+  background: var(--color-background-soft);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+
+.map-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 800px;
+}
+
+.map-stats-table th {
+  background: var(--color-background-mute);
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text);
+  border-bottom: 2px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.map-stats-table th.sortable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+  user-select: none;
+}
+
+.map-stats-table th.sortable:hover {
+  background: var(--color-background);
+}
+
+.map-stats-table .sort-indicator {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  transition: transform 0.2s;
+  opacity: 0.5;
+}
+
+.map-stats-table .sort-indicator.asc {
+  transform: rotate(0deg);
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+.map-stats-table .sort-indicator.desc {
+  transform: rotate(180deg);
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+.map-stats-table td {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.map-stats-table .map-row {
+  transition: all 0.2s ease;
+}
+
+.map-stats-table .map-row:hover {
+  background: var(--color-background);
+}
+
+.map-stats-table .map-name-cell {
+  max-width: 200px;
+}
+
+.map-stats-table .map-name-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: color 0.2s ease;
+  color: #ff9800;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map-stats-table .map-name-link:hover {
+  color: var(--color-primary);
+}
+
+.map-stats-table .score-cell {
+  text-align: center;
+  font-weight: 600;
+}
+
+.map-stats-table .kdr-cell {
+  text-align: center;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.map-stats-table .kills-cell {
+  text-align: center;
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.map-stats-table .deaths-cell {
+  text-align: center;
+  color: #f44336;
+  font-weight: 500;
+}
+
+.map-stats-table .sessions-cell {
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.map-stats-table .playtime-cell {
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
 .server-name-container {
   display: flex;
   align-items: center;
@@ -3233,17 +3444,16 @@ tbody tr:hover {
 
   .map-stats-table th,
   .map-stats-table td {
-    padding: 6px;
+    padding: 8px 12px;
     font-size: 0.9rem;
   }
 
-  .map-stats-table th.sortable-header {
-    padding-right: 20px;
+  .map-stats-table th.sortable {
+    padding-right: 24px;
   }
 
   .map-stats-table .sort-indicator {
-    right: 6px;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
   }
 
   .stat-row-condensed {
@@ -3481,17 +3691,16 @@ tbody tr:hover {
 
   .map-stats-table th,
   .map-stats-table td {
-    padding: 4px;
-    font-size: 0.8rem;
+    padding: 6px 8px;
+    font-size: 0.85rem;
   }
 
-  .map-stats-table th.sortable-header {
-    padding-right: 16px;
+  .map-stats-table th.sortable {
+    padding-right: 20px;
   }
 
   .map-stats-table .sort-indicator {
-    right: 4px;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
   }
 }
 
@@ -6223,5 +6432,274 @@ tbody tr:hover {
   .stats-category:first-child {
     grid-column: 1 / -1;
   }
+}
+
+/* Ranking badge styles */
+.ranking-badge {
+  background: linear-gradient(90deg, #4CAF50 0%, #2E7D32 100%);
+  color: white;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 1.05rem;
+  box-shadow: 0 2px 8px rgba(76,175,80,0.12);
+}
+
+@media (max-width: 768px) {
+  .ranking-badge {
+    font-size: 0.9rem;
+    padding: 2px 7px;
+  }
+}
+
+/* Performance Analytics Styles */
+.performance-analytics {
+  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-background-soft) 100%);
+  border: 2px solid var(--color-border-hover);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+}
+
+
+.analytics-period {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.performance-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.trend-tickers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ticker-item {
+  background: var(--color-background-soft);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.ticker-item:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.ticker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ticker-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.ticker-icon {
+  font-size: 1rem;
+}
+
+.ticker-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-heading);
+}
+
+.ticker-unit {
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.ticker-chart {
+  height: 40px;
+  position: relative;
+  background: var(--color-background-mute);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background-mute) 100%);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: var(--color-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.kills-card {
+  border-color: #4CAF50;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, var(--color-background-mute) 100%);
+}
+
+.deaths-card {
+  border-color: #f44336;
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.05) 0%, var(--color-background-mute) 100%);
+}
+
+.stat-card-icon {
+  font-size: 2rem;
+  opacity: 0.8;
+}
+
+.stat-card-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-card-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-card-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+
+/* Mobile responsiveness for performance analytics */
+@media (max-width: 768px) {
+  .performance-analytics {
+    padding: 16px;
+    margin: 16px 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .analytics-period {
+    font-size: 0.75rem;
+    text-align: center;
+    white-space: normal;
+  }
+  
+  
+  .performance-metrics {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .trend-tickers {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+    overflow-x: hidden;
+  }
+  
+  .ticker-item {
+    padding: 12px;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .ticker-header {
+    margin-bottom: 10px;
+  }
+  
+  .ticker-label {
+    font-size: 0.85rem;
+  }
+  
+  .ticker-value {
+    font-size: 1.1rem;
+  }
+  
+  .ticker-chart {
+    height: 35px;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  .stat-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 16px;
+  }
+  
+  .stat-card-value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .performance-analytics {
+    padding: 12px;
+    margin: 12px 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .analytics-period {
+    font-size: 0.7rem;
+  }
+
+
+  .performance-metrics {
+    gap: 12px;
+  }
+  
+  .ticker-item {
+    padding: 10px;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .ticker-chart {
+    height: 30px;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  .stat-card {
+    padding: 12px;
+    gap: 12px;
+  }
+  
 }
 </style>
