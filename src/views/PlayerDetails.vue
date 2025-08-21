@@ -886,26 +886,26 @@ watch(
             </div>
             
             <!-- Total Stats Cards -->
-            <div class="flex gap-3 mt-4">
-              <Card class="flex-1">
+            <div class="stat-cards-primevue">
+              <Card class="stat-card-prime">
                 <template #content>
-                  <div class="flex align-items-center gap-3">
-                    <div class="text-3xl">🎯</div>
-                    <div>
-                      <div class="text-2xl font-bold text-primary">{{ playerStats.totalKills.toLocaleString() }}</div>
-                      <div class="text-600">Total Kills</div>
+                  <div class="stat-card-content-prime">
+                    <div class="stat-icon-prime">🎯</div>
+                    <div class="stat-details-prime">
+                      <div class="stat-value-prime kills-value">{{ playerStats.totalKills.toLocaleString() }}</div>
+                      <div class="stat-label-prime">Total Kills</div>
                     </div>
                   </div>
                 </template>
               </Card>
               
-              <Card class="flex-1">
+              <Card class="stat-card-prime">
                 <template #content>
-                  <div class="flex align-items-center gap-3">
-                    <div class="text-3xl">💀</div>
-                    <div>
-                      <div class="text-2xl font-bold text-red-500">{{ playerStats.totalDeaths.toLocaleString() }}</div>
-                      <div class="text-600">Total Deaths</div>
+                  <div class="stat-card-content-prime">
+                    <div class="stat-icon-prime">💀</div>
+                    <div class="stat-details-prime">
+                      <div class="stat-value-prime deaths-value">{{ playerStats.totalDeaths.toLocaleString() }}</div>
+                      <div class="stat-label-prime">Total Deaths</div>
                     </div>
                   </div>
                 </template>
@@ -6546,7 +6546,61 @@ tbody tr:hover {
   padding: 4px;
 }
 
-/* Removed .stat-cards, .stat-card, .kills-card, .deaths-card, .stat-card-icon, .stat-card-content, .stat-card-value, .stat-card-label styles - now using PrimeVue Card components */
+/* PrimeVue stat cards styling */
+.stat-cards-primevue {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.stat-card-prime {
+  transition: all 0.3s ease;
+}
+
+.stat-card-prime:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.stat-card-content-prime {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px;
+}
+
+.stat-icon-prime {
+  font-size: 2rem;
+  opacity: 0.8;
+}
+
+.stat-details-prime {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value-prime {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.kills-value {
+  color: #4CAF50;
+}
+
+.deaths-value {
+  color: #f44336;
+}
+
+.stat-label-prime {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
 
 
 /* Mobile responsiveness for performance analytics */
@@ -6604,7 +6658,20 @@ tbody tr:hover {
     overflow: hidden;
   }
   
-  /* Removed mobile .stat-cards and .stat-card styles - using PrimeVue responsive utilities */
+  /* PrimeVue stat cards mobile styles */
+  .stat-cards-primevue {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .stat-card-content-prime {
+    padding: 2px;
+    gap: 12px;
+  }
+  
+  .stat-value-prime {
+    font-size: 1.5rem;
+  }
 }
 
 @media (max-width: 480px) {
