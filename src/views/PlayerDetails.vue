@@ -6555,12 +6555,28 @@ tbody tr:hover {
 }
 
 .stat-card-prime {
+  background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background-mute) 100%);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
   transition: all 0.3s ease;
 }
 
 .stat-card-prime:hover {
+  border-color: var(--color-border-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+/* Add specific card styling for kills and deaths */
+.stat-card-prime:has(.kills-value) {
+  border-color: #4CAF50;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, var(--color-background-mute) 100%);
+}
+
+.stat-card-prime:has(.deaths-value) {
+  border-color: #f44336;
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.05) 0%, var(--color-background-mute) 100%);
 }
 
 .stat-card-content-prime {
@@ -6662,6 +6678,10 @@ tbody tr:hover {
   .stat-cards-primevue {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+  
+  .stat-card-prime {
+    padding: 16px;
   }
   
   .stat-card-content-prime {
