@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayersResponse, PlayerComparisonStats } from '../services/playerStatsService';
 import { Line } from 'vue-chartjs';
@@ -37,6 +37,28 @@ const timeRangeOptions = [
 // New state for map stats sorting
 const mapStatsSortField = ref('totalScore');
 const mapStatsSortDirection = ref('desc');
+
+// Recent rounds carousel state
+const carouselCurrentIndex = ref(0);
+const carouselItemsPerView = ref(3);
+const carouselContainer = ref<HTMLElement | null>(null);
+
+// Responsive carousel configuration
+const updateCarouselItemsPerView = () => {
+  if (typeof window !== 'undefined') {
+    if (window.innerWidth < 640) {
+      carouselItemsPerView.value = 1; // Mobile: 1 item
+    } else if (window.innerWidth < 1024) {
+      carouselItemsPerView.value = 2; // Tablet: 2 items
+    } else {
+      carouselItemsPerView.value = 3; // Desktop: 3 items
+    }
+    // Reset carousel position if it's out of bounds
+    if (carouselCurrentIndex.value > carouselMaxIndex.value) {
+      carouselCurrentIndex.value = carouselMaxIndex.value;
+    }
+  }
+};
 
 // --- Similar Players state & functions ---
 const similarPlayersData = ref<SimilarPlayersResponse | null>(null);
@@ -557,6 +579,37 @@ const changeMapStatsSort = (field: string) => {
   }
 };
 
+// Recent rounds carousel functions
+const carouselMaxIndex = computed(() => {
+  if (!playerStats.value?.recentSessions) return 0;
+  return Math.max(0, playerStats.value.recentSessions.length - carouselItemsPerView.value);
+});
+
+const nextSlide = () => {
+  if (carouselCurrentIndex.value < carouselMaxIndex.value) {
+    carouselCurrentIndex.value++;
+  }
+};
+
+const prevSlide = () => {
+  if (carouselCurrentIndex.value > 0) {
+    carouselCurrentIndex.value--;
+  }
+};
+
+const goToSlide = (index: number) => {
+  carouselCurrentIndex.value = Math.max(0, Math.min(index, carouselMaxIndex.value));
+};
+
+const getHighestPerformanceRound = computed(() => {
+  if (!playerStats.value?.recentSessions) return null;
+  return playerStats.value.recentSessions.reduce((best, current) => {
+    const currentScore = current.totalScore || 0;
+    const bestScore = best?.totalScore || 0;
+    return currentScore > bestScore ? current : best;
+  }, playerStats.value.recentSessions[0]);
+});
+
 // Computed property to sort map stats
 const sortedMapStats = computed(() => {
   if (!mapStats.value) return [];
@@ -652,6 +705,16 @@ const getTimeGap = (currentSession: any, nextSession: any): string => {
 // Clean up event listeners when component is unmounted
 onMounted(() => {
   fetchData();
+  // Initialize carousel responsiveness
+  updateCarouselItemsPerView();
+  window.addEventListener('resize', updateCarouselItemsPerView);
+});
+
+// Add cleanup for resize listener
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateCarouselItemsPerView);
+  }
 });
 
 // Add this helper function to the <script setup> section:
@@ -918,6 +981,174 @@ watch(
                   K/D: {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }}
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Rounds Carousel -->
+        <div 
+          v-if="playerStats.recentSessions && playerStats.recentSessions.length > 0"
+          class="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-lg rounded-2xl border border-slate-700/50 hover:border-cyan-500/30 transition-all duration-500"
+        >
+          <!-- Background Effects -->
+          <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5"></div>
+          <div class="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 rounded-full blur-2xl animate-pulse"></div>
+          <div class="absolute -bottom-16 -left-16 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
+          
+          <div class="relative z-10 p-8">
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+              <div class="space-y-2">
+                <h3 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  🏆 Recent Battle Highlights
+                </h3>
+                <p class="text-slate-400">Your latest battlefield performances</p>
+              </div>
+              <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Navigation buttons -->
+                <button
+                  @click="prevSlide"
+                  :disabled="carouselCurrentIndex <= 0"
+                  class="group flex items-center justify-center w-12 h-12 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/50 hover:border-cyan-500/50 rounded-full transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 group-hover:text-cyan-400 transition-colors">
+                    <path d="m15 18-6-6 6-6"/>
+                  </svg>
+                </button>
+                <button
+                  @click="nextSlide"
+                  :disabled="carouselCurrentIndex >= carouselMaxIndex"
+                  class="group flex items-center justify-center w-12 h-12 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/50 hover:border-cyan-500/50 rounded-full transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 group-hover:text-cyan-400 transition-colors">
+                    <path d="m9 18 6-6-6-6"/>
+                  </svg>
+                </button>
+                <router-link
+                  :to="`/players/${encodeURIComponent(playerName)}/sessions`"
+                  class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 border border-slate-600/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300"
+                >
+                  View All
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m9 18 6-6-6-6"/>
+                  </svg>
+                </router-link>
+              </div>
+            </div>
+
+            <!-- Carousel Container -->
+            <div class="relative overflow-hidden">
+              <div 
+                ref="carouselContainer"
+                class="flex transition-transform duration-500 ease-out gap-4 sm:gap-6"
+                :style="{ transform: `translateX(-${carouselCurrentIndex * (100 / carouselItemsPerView)}%)` }"
+              >
+                <div
+                  v-for="(session, index) in playerStats.recentSessions"
+                  :key="`session-${index}`"
+                  class="flex-none w-full sm:w-80 lg:w-96"
+                >
+                  <!-- Round Card -->
+                  <div 
+                    class="group relative overflow-hidden bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                    @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)"
+                  >
+                    <!-- Card Background Effects -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    <!-- Performance Badge -->
+                    <div 
+                      v-if="session === getHighestPerformanceRound"
+                      class="absolute -top-2 -right-2 z-20 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    >
+                      🔥 Best
+                    </div>
+                    
+                    <div class="relative z-10 p-6 space-y-4">
+                      <!-- Header -->
+                      <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                          <router-link 
+                            :to="getRoundReportRoute(session)" 
+                            class="text-lg font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
+                          >
+                            {{ formatRelativeTime(session.startTime) }}
+                          </router-link>
+                          <span
+                            v-if="session.isActive"
+                            class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse"
+                          >
+                            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                            Live
+                          </span>
+                        </div>
+                        <router-link 
+                          :to="`/servers/${encodeURIComponent(session.serverName)}`" 
+                          class="block text-slate-300 hover:text-white transition-colors truncate"
+                        >
+                          {{ session.serverName }}
+                        </router-link>
+                      </div>
+
+                      <!-- Map Info -->
+                      <div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700/30">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-2xl">
+                          🗺️
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <p class="font-semibold text-white truncate">{{ session.mapName }}</p>
+                          <p class="text-sm text-slate-400">{{ session.gameType }}</p>
+                        </div>
+                      </div>
+
+                      <!-- Stats Grid -->
+                      <div class="grid grid-cols-3 gap-4">
+                        <!-- Score -->
+                        <div class="text-center p-3 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-lg border border-yellow-500/20">
+                          <p class="text-2xl font-bold text-yellow-400">{{ session.totalScore }}</p>
+                          <p class="text-xs text-slate-400 font-medium">Score</p>
+                        </div>
+                        
+                        <!-- K/D -->
+                        <div class="text-center p-3 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+                          <p class="text-2xl font-bold text-green-400">{{ calculateKDR(session.totalKills, session.totalDeaths) }}</p>
+                          <p class="text-xs text-slate-400 font-medium">K/D</p>
+                        </div>
+                        
+                        <!-- Kills -->
+                        <div class="text-center p-3 bg-gradient-to-br from-red-500/10 to-pink-500/10 rounded-lg border border-red-500/20">
+                          <p class="text-2xl font-bold text-red-400">{{ session.totalKills }}</p>
+                          <p class="text-xs text-slate-400 font-medium">Kills</p>
+                        </div>
+                      </div>
+
+                      <!-- Performance Indicator -->
+                      <div class="flex items-center gap-2">
+                        <div 
+                          class="w-3 h-3 rounded-full"
+                          :class="getPerformanceClass(session)"
+                          :title="getPerformanceLabel(session)"
+                        ></div>
+                        <span class="text-sm text-slate-400 font-medium">{{ getPerformanceLabel(session) }} Performance</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carousel Indicators -->
+            <div v-if="playerStats.recentSessions.length > carouselItemsPerView" class="flex justify-center gap-2 mt-6">
+              <button
+                v-for="index in Math.ceil(playerStats.recentSessions.length / carouselItemsPerView)"
+                :key="index"
+                @click="goToSlide(index - 1)"
+                class="w-2 h-2 rounded-full transition-all duration-300"
+                :class="carouselCurrentIndex === index - 1 
+                  ? 'bg-cyan-500 w-8' 
+                  : 'bg-slate-600 hover:bg-slate-500'"
+              ></button>
             </div>
           </div>
         </div>
@@ -1389,8 +1620,8 @@ watch(
                 </thead>
                 <tbody class="divide-y divide-bf-border">
                   <template
-                    v-for="(ranking, idx) in playerStats.insights.serverRankings"
-                    :key="idx"
+                    v-for="ranking in playerStats.insights.serverRankings"
+                    :key="ranking.serverGuid"
                   >
                     <tr
                       class="hover:bg-bf-background-soft cursor-pointer transition-colors duration-200"

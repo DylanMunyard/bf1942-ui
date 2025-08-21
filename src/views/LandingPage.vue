@@ -1,150 +1,241 @@
 <template>
-  <div class="landing-page">
-    <div class="main-layout">
+  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div class="relative overflow-hidden">
+      <!-- Background effects -->
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20"></div>
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
+      
+    <div class="relative z-10 flex flex-col lg:flex-row min-h-screen">
       <!-- Player Search Sidebar -->
-      <div class="player-search-sidebar" :class="{ 'expanded': playerSearchQuery.length >= 2 || playerSuggestions.length > 0 }">
-        <div class="search-input-wrapper">
-          <i class="search-icon">🔍</i>
+      <div class="flex-shrink-0 transition-all duration-300 ease-in-out"
+           :class="{
+             'lg:w-80 w-full': playerSearchQuery.length >= 2 || playerSuggestions.length > 0,
+             'lg:w-72 w-full': !(playerSearchQuery.length >= 2 || playerSuggestions.length > 0)
+           }"
+      >
+        <div class="lg:sticky lg:top-0 lg:h-screen overflow-y-auto bg-slate-800/30 backdrop-blur-md lg:border-r border-b lg:border-b-0 border-slate-700/50">
+        <div class="relative m-5">
+          <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm z-10">🔍</div>
           <input
             v-model="playerSearchQuery"
             type="text"
             placeholder="Search players..."
-            class="player-search-input"
+            class="w-full pl-10 pr-12 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 backdrop-blur-sm transition-all duration-300"
             @input="onPlayerSearchInput"
             @keyup.enter="navigateToPlayer"
             @focus="onSearchFocus"
             @blur="onSearchBlur"
           >
-          <div v-if="isSearchLoading" class="search-spinner">
+          <div v-if="isSearchLoading" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-cyan-400 animate-spin">
             🔄
           </div>
         </div>
-        <div v-if="showPlayerDropdown" class="player-suggestions">
+        <div v-if="showPlayerDropdown" class="mx-5 mb-5 bg-slate-800/80 backdrop-blur-lg rounded-lg border border-slate-700/50 max-h-96 overflow-y-auto shadow-2xl">
           <div
             v-for="player in playerSuggestions"
             :key="player.playerName"
-            class="player-suggestion"
+            class="p-4 border-b border-slate-700/30 hover:bg-slate-700/40 cursor-pointer transition-all duration-200 last:border-b-0"
             @mousedown.prevent="selectPlayer(player)"
           >
-            <div class="player-info">
-              <div class="player-name">{{ player.playerName }}</div>
-              <div class="player-details">
-                <span class="play-time">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
-                <span class="last-seen">{{ formatLastSeen(player.lastSeen) }}</span>
-                <span v-if="player.isActive" class="online">🟢 Online</span>
-                <span v-else class="offline">⚫ Offline</span>
+            <div class="space-y-2">
+              <div class="font-semibold text-slate-200 text-sm">{{ player.playerName }}</div>
+              <div class="flex items-center gap-3 flex-wrap text-xs text-slate-400">
+                <span>{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
+                <span>{{ formatLastSeen(player.lastSeen) }}</span>
+                <span v-if="player.isActive" class="text-green-400 font-medium text-xs">🟢 Online</span>
+                <span v-else class="text-slate-500 text-xs">⚫ Offline</span>
               </div>
-              <div v-if="player.currentServer && player.isActive" class="current-server">
+              <div v-if="player.currentServer && player.isActive" class="text-xs text-cyan-400 italic">
                 {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
               </div>
             </div>
           </div>
-          <div v-if="playerSuggestions.length === 0 && !isSearchLoading && playerSearchQuery.length >= 2" class="no-results">
+          <div v-if="playerSuggestions.length === 0 && !isSearchLoading && playerSearchQuery.length >= 2" class="p-4 text-center text-slate-400 text-xs italic">
             No players found
           </div>
         </div>
-      </div>
-
+        </div>
       <!-- Main Content Area -->
-      <div class="main-content">
+      <div class="flex-1 p-4 lg:p-6 overflow-x-auto">
         <!-- Game Filter Buttons and Server Count -->
-        <div class="filters-and-count">
-          <div class="game-filters">
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 gap-4 lg:gap-5">
+          <div class="flex gap-2 lg:gap-3 flex-wrap justify-center lg:justify-start">
             <button
               v-for="game in gameTypes.filter(g => g.id !== 'all')"
               :key="game.id"
-              :class="['game-filter', { active: activeFilter === game.id }]"
+              :class="[
+                'group relative flex items-center justify-center p-2 lg:p-3 rounded-lg lg:rounded-xl border-2 transition-all duration-300 transform hover:scale-105',
+                activeFilter === game.id
+                  ? 'bg-gradient-to-r from-cyan-500 to-purple-600 border-cyan-500/50 shadow-lg shadow-cyan-500/25 text-white'
+                  : 'bg-slate-800/50 border-slate-700/50 hover:border-cyan-500/50 text-slate-300 hover:bg-slate-700/70 backdrop-blur-sm'
+              ]"
               @click="setActiveFilter(game.id)"
               :title="game.name"
             >
-              <i :class="`tab-icon ${game.iconClass}`"></i>
+              <div class="relative">
+                <div
+                  :class="[
+                    'w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-cover bg-center transition-all duration-300',
+                    activeFilter === game.id ? 'scale-110 brightness-110' : ''
+                  ]"
+                  :style="{ backgroundImage: getGameIcon(game.iconClass) }"
+                ></div>
+                <div v-if="activeFilter === game.id" class="absolute -inset-0.5 lg:-inset-1 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-full blur animate-pulse"></div>
+              </div>
             </button>
           </div>
-          <div v-if="!loading && !error" class="server-count">
+          <div v-if="!loading && !error" class="text-xs lg:text-sm text-slate-400 text-center lg:text-left whitespace-nowrap">
             Showing {{ sortedServers.length }} servers ({{ servers.length }} total)
           </div>
         </div>
 
         <!-- Server Table -->
-        <div class="servers-section">
-          <div v-if="loading" class="loading">
-            Loading server data...
+        <div class="flex-1">
+          <div v-if="loading" class="flex flex-col items-center justify-center py-20 space-y-4">
+            <div class="relative">
+              <div class="w-16 h-16 border-4 border-slate-700 rounded-full animate-spin">
+                <div class="absolute top-0 left-0 w-16 h-16 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin"></div>
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-6 h-6 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+            <div class="text-center space-y-2">
+              <p class="text-lg font-semibold text-slate-300">Loading server data...</p>
+              <p class="text-slate-500 text-sm">Fetching battlefield intelligence</p>
+            </div>
           </div>
-          <div v-else-if="error" class="error">
-            {{ error }}
+          <div v-else-if="error" class="flex flex-col items-center justify-center py-20 space-y-4">
+            <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+            </div>
+            <div class="text-center space-y-2">
+              <p class="text-lg font-semibold text-red-400">{{ error }}</p>
+            </div>
           </div>
           <div v-else>
-            <div class="server-table-container">
-            <table class="server-table">
+            <div class="bg-slate-800/40 backdrop-blur-lg rounded-xl border border-slate-700/50 overflow-hidden shadow-2xl">
+              <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-xs lg:text-sm min-w-[800px]">
               <thead>
-                <tr>
-                  <th @click="sortBy('name')" class="sortable">
-                    Server Name
-                    <span class="sort-indicator" :class="getSortClass('name')">▲</span>
+                <tr class="bg-slate-900/50">
+                  <th @click="sortBy('name')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200 select-none sticky top-0 z-10">
+                    <div class="flex items-center gap-2">
+                      Server Name
+                      <span class="text-xs transition-transform duration-200" :class="{
+                        'text-cyan-400 opacity-100': sortField === 'name',
+                        'opacity-50': sortField !== 'name',
+                        'rotate-0': sortField === 'name' && sortDirection === 'asc',
+                        'rotate-180': sortField === 'name' && sortDirection === 'desc'
+                      }">▲</span>
+                    </div>
                   </th>
-                  <th @click="sortBy('numPlayers')" class="sortable players-col">
-                    Players
-                    <span class="sort-indicator" :class="getSortClass('numPlayers')">▲</span>
+                  <th @click="sortBy('numPlayers')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200 select-none sticky top-0 z-10 min-w-[100px]">
+                    <div class="flex items-center gap-2">
+                      Players
+                      <span class="text-xs transition-transform duration-200" :class="{
+                        'text-cyan-400 opacity-100': sortField === 'numPlayers',
+                        'opacity-50': sortField !== 'numPlayers',
+                        'rotate-0': sortField === 'numPlayers' && sortDirection === 'asc',
+                        'rotate-180': sortField === 'numPlayers' && sortDirection === 'desc'
+                      }">▲</span>
+                    </div>
                   </th>
-                  <th @click="sortBy('mapName')" class="sortable">
-                    Map
-                    <span class="sort-indicator" :class="getSortClass('mapName')">▲</span>
+                  <th @click="sortBy('mapName')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200 select-none sticky top-0 z-10">
+                    <div class="flex items-center gap-2">
+                      Map
+                      <span class="text-xs transition-transform duration-200" :class="{
+                        'text-cyan-400 opacity-100': sortField === 'mapName',
+                        'opacity-50': sortField !== 'mapName',
+                        'rotate-0': sortField === 'mapName' && sortDirection === 'asc',
+                        'rotate-180': sortField === 'mapName' && sortDirection === 'desc'
+                      }">▲</span>
+                    </div>
                   </th>
-                  <th @click="sortBy('roundTimeRemain')" class="sortable">
-                    Time Left
-                    <span class="sort-indicator" :class="getSortClass('roundTimeRemain')">▲</span>
+                  <th @click="sortBy('roundTimeRemain')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200 select-none sticky top-0 z-10 min-w-[100px]">
+                    <div class="flex items-center gap-2">
+                      Time Left
+                      <span class="text-xs transition-transform duration-200" :class="{
+                        'text-cyan-400 opacity-100': sortField === 'roundTimeRemain',
+                        'opacity-50': sortField !== 'roundTimeRemain',
+                        'rotate-0': sortField === 'roundTimeRemain' && sortDirection === 'asc',
+                        'rotate-180': sortField === 'roundTimeRemain' && sortDirection === 'desc'
+                      }">▲</span>
+                    </div>
                   </th>
-                  <th @click="sortBy('gameType')" class="sortable">
-                    Game
-                    <span class="sort-indicator" :class="getSortClass('gameType')">▲</span>
+                  <th @click="sortBy('gameType')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200 select-none sticky top-0 z-10 min-w-[100px]">
+                    <div class="flex items-center gap-2">
+                      Game
+                      <span class="text-xs transition-transform duration-200" :class="{
+                        'text-cyan-400 opacity-100': sortField === 'gameType',
+                        'opacity-50': sortField !== 'gameType',
+                        'rotate-0': sortField === 'gameType' && sortDirection === 'asc',
+                        'rotate-180': sortField === 'gameType' && sortDirection === 'desc'
+                      }">▲</span>
+                    </div>
                   </th>
-                  <th>Connection</th>
-                  <th>Action</th>
+                  <th class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 sticky top-0 z-10 min-w-[120px]">Connection</th>
+                  <th class="p-4 text-center font-semibold text-xs uppercase tracking-wider text-slate-300 sticky top-0 z-10 min-w-[100px]">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
                   v-for="server in sortedServers"
                   :key="server.guid"
-                  class="server-row"
+                  class="transition-all duration-200 hover:bg-slate-700/30"
                   :class="getServerStatusClass(server)"
                 >
-                  <td class="server-name-cell">
-                    <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="server-name-link">
-                      <div class="server-name">{{ server.name }}</div>
+                  <td class="p-3 border-b border-slate-700/30 max-w-xs">
+                    <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="block text-slate-200 hover:text-cyan-400 transition-colors duration-200 no-underline">
+                      <div class="font-semibold text-sm truncate">{{ server.name }}</div>
                     </router-link>
                   </td>
-                  <td class="players-cell" @click="showPlayers(server)">
-                    <div class="player-count" :class="getPlayerCountClass(server)">
-                      <span class="current">{{ server.numPlayers }}</span>
-                      <span class="separator">/</span>
-                      <span class="max">{{ server.maxPlayers }}</span>
+                  <td class="p-3 border-b border-slate-700/30 cursor-pointer min-w-[100px]" @click="showPlayers(server)">
+                    <div class="flex items-center gap-1 font-semibold mb-1" :class="getPlayerCountClass(server)">
+                      <span class="text-sm">{{ server.numPlayers }}</span>
+                      <span class="text-slate-500 text-sm">/</span>
+                      <span class="text-slate-500 text-sm">{{ server.maxPlayers }}</span>
                     </div>
-                    <div class="player-bar">
-                      <div class="player-fill" :style="{ width: getPlayerPercentage(server) + '%', backgroundColor: getPlayerBarColor(server) }"></div>
+                    <div class="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
+                      <div class="h-full transition-all duration-300 rounded-full" :style="{ width: getPlayerPercentage(server) + '%', backgroundColor: getPlayerBarColor(server) }"></div>
                     </div>
                   </td>
-                  <td class="map-cell">
-                    <span class="map-name">{{ server.mapName }}</span>
+                  <td class="p-3 border-b border-slate-700/30 max-w-[200px]">
+                    <span class="text-orange-400 font-medium text-sm truncate block">{{ server.mapName }}</span>
                   </td>
-                  <td class="time-cell">
-                    <span class="time-remaining">{{ formatTimeRemaining(server.roundTimeRemain) }}</span>
+                  <td class="p-3 border-b border-slate-700/30 text-center min-w-[100px]">
+                    <span class="text-green-400 font-semibold text-xs">{{ formatTimeRemaining(server.roundTimeRemain) }}</span>
                   </td>
-                  <td class="game-cell">
-                    <span class="game-type" :class="getGameTypeClass(server.gameType)">{{ getGameDisplayName(server.gameType) }}</span>
+                  <td class="p-3 border-b border-slate-700/30 min-w-[100px]">
+                    <span class="px-2 py-1 rounded text-xs font-semibold uppercase" :class="getGameTypeClass(server.gameType)">{{ getGameDisplayName(server.gameType) }}</span>
                   </td>
-                  <td class="connection-cell">
-                    <span class="connection-info">{{ server.ip }}:{{ server.port }}</span>
+                  <td class="p-3 border-b border-slate-700/30 min-w-[120px]">
+                    <span class="font-mono text-xs text-slate-400">{{ server.ip }}:{{ server.port }}</span>
                   </td>
-                  <td class="action-cell">
-                    <button class="join-btn" @click="joinServer(server)" :disabled="server.numPlayers >= server.maxPlayers">
+                  <td class="p-3 border-b border-slate-700/30 text-center min-w-[100px]">
+                    <button 
+                      class="px-3 py-1.5 text-xs font-semibold uppercase transition-all duration-200 rounded border-2"
+                      :class="{
+                        'bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white border-transparent transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25': server.numPlayers < server.maxPlayers,
+                        'bg-slate-600 text-slate-400 cursor-not-allowed opacity-60 border-slate-600': server.numPlayers >= server.maxPlayers
+                      }"
+                      @click="joinServer(server)" 
+                      :disabled="server.numPlayers >= server.maxPlayers"
+                    >
                       {{ server.numPlayers >= server.maxPlayers ? 'FULL' : 'JOIN' }}
                     </button>
                   </td>
                 </tr>
               </tbody>
             </table>
-          </div>
+            </div>
           </div>
         </div>
       </div>
@@ -403,6 +494,15 @@ const getGameDisplayName = (gameType: string): string => {
   return gameType || 'Unknown'
 }
 
+const getGameIcon = (iconClass: string): string => {
+  const iconMap: Record<string, string> = {
+    'icon-bf1942': "url('../assets/bf1942.jpg')",
+    'icon-fh2': "url('../assets/fh2.jpg')",
+    'icon-bfv': "url('../assets/bfv.jpg')"
+  }
+  return iconMap[iconClass] || "url('../assets/servers.jpg')"
+}
+
 const joinServer = (server: ServerSummary) => {
   const joinUrl = `bf1942://${server.ip}:${server.port}`
   const newWindow = window.open(joinUrl, '_blank', 'noopener,noreferrer')
@@ -445,10 +545,10 @@ const getPlayerPercentage = (server: ServerSummary) => {
 
 const getPlayerCountClass = (server: ServerSummary) => {
   const percentage = getPlayerPercentage(server)
-  if (percentage >= 100) return 'full'
-  if (percentage >= 80) return 'high'
-  if (percentage >= 40) return 'medium'
-  return 'low'
+  if (percentage >= 100) return 'text-red-400'
+  if (percentage >= 80) return 'text-orange-400'
+  if (percentage >= 40) return 'text-green-400'
+  return 'text-blue-400'
 }
 
 const getPlayerBarColor = (server: ServerSummary) => {
@@ -461,18 +561,18 @@ const getPlayerBarColor = (server: ServerSummary) => {
 
 const getServerStatusClass = (server: ServerSummary) => {
   const percentage = getPlayerPercentage(server)
-  if (percentage >= 100) return 'server-full'
-  if (percentage >= 80) return 'server-high'
-  if (percentage === 0) return 'server-empty'
-  return 'server-active'
+  if (percentage >= 100) return 'bg-red-500/5'
+  if (percentage >= 80) return 'bg-orange-500/5'
+  if (percentage === 0) return 'bg-slate-500/5'
+  return 'bg-green-500/5'
 }
 
 const getGameTypeClass = (gameType: string) => {
   const type = gameType?.toLowerCase() || ''
-  if (type.includes('bf1942')) return 'game-bf1942'
-  if (type.includes('fh2')) return 'game-fh2'
-  if (type.includes('vietnam')) return 'game-bfv'
-  return 'game-unknown'
+  if (type.includes('bf1942')) return 'bg-blue-500/20 text-blue-400'
+  if (type.includes('fh2')) return 'bg-green-500/20 text-green-400'
+  if (type.includes('vietnam')) return 'bg-purple-500/20 text-purple-400'
+  return 'bg-slate-500/20 text-slate-400'
 }
 
 const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isInitialLoad = false) => {
