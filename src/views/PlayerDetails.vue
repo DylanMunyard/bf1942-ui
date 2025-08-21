@@ -1203,146 +1203,46 @@ watch(
           </div>
         </div>
 
-        <!-- Top Servers Section -->
+        <!-- Player Achievements Section -->
         <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50">
           <!-- Background Effects -->
-          <div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-purple-500/5"></div>
-          <div class="absolute bottom-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full blur-3xl"></div>
+          <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-orange-500/5 to-red-500/5"></div>
+          <div class="absolute top-0 left-0 w-64 h-64 bg-gradient-to-br from-yellow-500/10 to-transparent rounded-full blur-3xl"></div>
           
           <div class="relative z-10 p-8 space-y-6">
             <!-- Section Header -->
-            <div class="space-y-2">
-              <h3 class="text-3xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                🎮 Favorite Battlegrounds
-              </h3>
-              <p class="text-slate-400">Your most active server destinations</p>
-            </div>
-            
-            <!-- Server Cards Grid -->
-            <div v-if="hasServers" class="w-full">
-              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                <div
-                  v-for="server in sortedServers"
-                  :key="server.serverGuid"
-                  class="group relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]"
-                >
-                  <!-- Card Background Effects -->
-                  <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
-                  <div class="relative z-10 p-6 space-y-4">
-                    <!-- Server Header -->
-                    <div class="flex items-start gap-3">
-                      <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg p-2 group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
-                          <img
-                            :src="getGameIcon(server.gameId)"
-                            alt="Server"
-                            class="w-full h-full rounded object-cover"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div class="flex-1 min-w-0 space-y-2">
-                        <div class="flex items-start justify-between gap-2">
-                          <router-link
-                            :to="`/servers/${encodeURIComponent(server.serverName)}`"
-                            class="group/link font-bold text-white hover:text-cyan-400 transition-colors duration-200 line-clamp-2 leading-tight"
-                            :title="`View server details for ${server.serverName}`"
-                          >
-                            {{ server.serverName }}
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline ml-1 opacity-0 group-hover/link:opacity-100 transition-opacity">
-                              <path d="m9 18 6-6-6-6"/>
-                            </svg>
-                          </router-link>
-                          <span class="flex-shrink-0 px-2 py-1 text-xs font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full">
-                            {{ server.gameId.toUpperCase() }}
-                          </span>
-                        </div>
-                        
-                        <!-- Quick Stats Bar -->
-                        <div class="flex items-center gap-4 text-sm">
-                          <div class="flex items-center gap-1">
-                            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                            <span class="text-green-400 font-medium">{{ server.kdRatio.toFixed(2) }} K/D</span>
-                          </div>
-                          <div class="flex items-center gap-1">
-                            <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-                            <span class="text-blue-400 font-medium">{{ server.totalRounds }} rounds</span>
-                          </div>
-                          <div class="flex items-center gap-1">
-                            <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
-                            <span class="text-purple-400 font-medium">{{ server.killsPerMinute.toFixed(2) }} KPM</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Detailed Stats Grid -->
-                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
-                      <!-- Best Score -->
-                      <div class="space-y-1">
-                        <p class="text-xs text-slate-400 font-medium">Best Score</p>
-                        <router-link
-                          v-if="(server.serverGuid && server.highestScoreMapName && server.highestScoreStartTime) || (server.serverGuid && server.mapName && server.bestScoreDate)"
-                          class="group/score inline-flex items-center gap-1 text-lg font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent hover:from-yellow-300 hover:to-orange-300 transition-all duration-200"
-                          :to="{
-                            path: '/servers/round-report',
-                            query: {
-                              serverGuid: server.serverGuid,
-                              mapName: server.highestScoreMapName || server.mapName,
-                              startTime: server.highestScoreStartTime || server.bestScoreDate,
-                              players: playerName
-                            }
-                          }"
-                          :title="`View round report for best score on ${server.highestScoreMapName || server.mapName} (${formatRelativeTime((server.highestScoreStartTime || server.bestScoreDate) ?? '')})`"
-                        >
-                          {{ server.highestScore?.toLocaleString() }}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover/score:opacity-100 transition-opacity text-orange-400">
-                            <path d="m9 18 6-6-6-6"/>
-                          </svg>
-                        </router-link>
-                        <span v-else class="text-lg font-bold text-white">
-                          {{ server.highestScore?.toLocaleString() }}
-                        </span>
-                      </div>
-                      
-                      <!-- KPM -->
-                      <div class="space-y-1">
-                        <p class="text-xs text-slate-400 font-medium">Kills/Min</p>
-                        <p class="text-lg font-bold text-cyan-400">{{ server.killsPerMinute.toFixed(2) }}</p>
-                      </div>
-                      
-                      <!-- Combat Stats -->
-                      <div class="space-y-1">
-                        <p class="text-xs text-slate-400 font-medium">Combat</p>
-                        <div class="flex items-center gap-2 text-sm font-bold">
-                          <span class="text-green-400">{{ server.totalKills }}</span>
-                          <span class="text-slate-500">/</span>
-                          <span class="text-red-400">{{ server.totalDeaths }}</span>
-                        </div>
-                      </div>
-                      
-                      <!-- Play Time -->
-                      <div class="space-y-1">
-                        <p class="text-xs text-slate-400 font-medium">Time Played</p>
-                        <p class="text-lg font-bold text-purple-400">{{ formatPlayTime(Math.round(server.totalMinutes)) }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div class="space-y-2">
+                <h3 class="text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent">
+                  🏆 Achievements & Streaks
+                </h3>
+                <p class="text-slate-400">Unlock your battlefield legacy</p>
               </div>
-            </div>
-            
-            <!-- No Servers State -->
-            <div v-else class="text-center py-12">
-              <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-500">
-                  <rect width="20" height="16" x="2" y="4" rx="2"/>
-                  <path d="m22 7-10 5L2 7"/>
+              <router-link
+                :to="`/players/${encodeURIComponent(playerName)}/achievements`"
+                class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-yellow-500/25"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-12 transition-transform duration-300">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                  <path d="M4 22h16"/>
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
                 </svg>
+                View All Achievements
+              </router-link>
+            </div>
+            
+            <!-- Achievements Component with Enhanced Container -->
+            <div class="relative">
+              <div class="absolute inset-0 bg-gradient-to-r from-slate-800/30 to-slate-900/30 rounded-xl"></div>
+              <div class="relative z-10 p-6 rounded-xl border border-slate-700/30">
+                <PlayerAchievements
+                  :player-name="playerName"
+                  :player-stats="playerStats"
+                />
               </div>
-              <p class="text-slate-400">No server data available</p>
             </div>
           </div>
         </div>
