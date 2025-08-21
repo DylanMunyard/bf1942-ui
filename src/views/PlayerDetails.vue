@@ -5,6 +5,7 @@ import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPla
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import PlayerAchievements from '../components/PlayerAchievements.vue';
+import Card from 'primevue/card';
 
 import bf1942Icon from '@/assets/bf1942.jpg';
 import fh2Icon from '@/assets/fh2.jpg';
@@ -885,22 +886,30 @@ watch(
             </div>
             
             <!-- Total Stats Cards -->
-            <div class="stat-cards">
-              <div class="stat-card kills-card">
-                <div class="stat-card-icon">🎯</div>
-                <div class="stat-card-content">
-                  <div class="stat-card-value">{{ playerStats.totalKills.toLocaleString() }}</div>
-                  <div class="stat-card-label">Total Kills</div>
-                </div>
-              </div>
+            <div class="flex gap-3 mt-4">
+              <Card class="flex-1">
+                <template #content>
+                  <div class="flex align-items-center gap-3">
+                    <div class="text-3xl">🎯</div>
+                    <div>
+                      <div class="text-2xl font-bold text-primary">{{ playerStats.totalKills.toLocaleString() }}</div>
+                      <div class="text-600">Total Kills</div>
+                    </div>
+                  </div>
+                </template>
+              </Card>
               
-              <div class="stat-card deaths-card">
-                <div class="stat-card-icon">💀</div>
-                <div class="stat-card-content">
-                  <div class="stat-card-value">{{ playerStats.totalDeaths.toLocaleString() }}</div>
-                  <div class="stat-card-label">Total Deaths</div>
-                </div>
-              </div>
+              <Card class="flex-1">
+                <template #content>
+                  <div class="flex align-items-center gap-3">
+                    <div class="text-3xl">💀</div>
+                    <div>
+                      <div class="text-2xl font-bold text-red-500">{{ playerStats.totalDeaths.toLocaleString() }}</div>
+                      <div class="text-600">Total Deaths</div>
+                    </div>
+                  </div>
+                </template>
+              </Card>
             </div>
           </div>
         </div>
@@ -6537,62 +6546,7 @@ tbody tr:hover {
   padding: 4px;
 }
 
-.stat-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.stat-card {
-  background: linear-gradient(135deg, var(--color-background-soft) 0%, var(--color-background-mute) 100%);
-  border: 2px solid var(--color-border);
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  border-color: var(--color-border-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.kills-card {
-  border-color: #4CAF50;
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, var(--color-background-mute) 100%);
-}
-
-.deaths-card {
-  border-color: #f44336;
-  background: linear-gradient(135deg, rgba(244, 67, 54, 0.05) 0%, var(--color-background-mute) 100%);
-}
-
-.stat-card-icon {
-  font-size: 2rem;
-  opacity: 0.8;
-}
-
-.stat-card-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-card-value {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--color-heading);
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.stat-card-label {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
+/* Removed .stat-cards, .stat-card, .kills-card, .deaths-card, .stat-card-icon, .stat-card-content, .stat-card-value, .stat-card-label styles - now using PrimeVue Card components */
 
 
 /* Mobile responsiveness for performance analytics */
@@ -6650,18 +6604,7 @@ tbody tr:hover {
     overflow: hidden;
   }
   
-  .stat-cards {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .stat-card {
-    padding: 16px;
-  }
-  
-  .stat-card-value {
-    font-size: 1.5rem;
-  }
+  /* Removed mobile .stat-cards and .stat-card styles - using PrimeVue responsive utilities */
 }
 
 @media (max-width: 480px) {
