@@ -541,11 +541,12 @@ onMounted(async () => {
     </div>
 
     <!-- Streak Details Modal -->
-    <div
-      v-if="showStreakModal && selectedStreakGroup"
-      class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-5"
-      @click="closeStreakModal"
-    >
+    <Teleport to="body">
+      <div
+        v-if="showStreakModal && selectedStreakGroup"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-5"
+        @click="closeStreakModal"
+      >
       <div
         class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         @click.stop
@@ -636,7 +637,7 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-    </div>
+    </Teleport>
 
     <!-- Achievement Modal -->
     <AchievementModal
@@ -647,11 +648,12 @@ onMounted(async () => {
     />
 
     <!-- Next Milestone Modal -->
-    <div
-      v-if="showNextMilestoneModal && nextMilestone"
-      class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-5"
-      @click="closeNextMilestoneModal"
-    >
+    <Teleport to="body">
+      <div
+        v-if="showNextMilestoneModal && nextMilestone"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-5"
+        @click="closeNextMilestoneModal"
+      >
       <div 
         class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl overflow-hidden"
         @click.stop
@@ -709,7 +711,7 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
