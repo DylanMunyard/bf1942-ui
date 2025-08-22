@@ -354,253 +354,264 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="player-achievements">
+  <div class="relative">
     <div
       v-if="isLoading"
-      class="loading-container"
+      class="flex flex-col items-center justify-center min-h-[200px] space-y-4"
     >
-      <div class="loading-spinner" />
-      <p>Loading achievements...</p>
+      <div class="w-10 h-10 border-4 border-slate-600/30 border-t-yellow-500 rounded-full animate-spin" />
+      <p class="text-slate-400 font-medium">Loading achievements...</p>
     </div>
     
     <div
       v-else-if="error"
-      class="error-container"
+      class="flex flex-col items-center justify-center min-h-[200px] space-y-4"
     >
-      <p class="error-message">
+      <div class="text-6xl opacity-50">⚠️</div>
+      <p class="text-red-400 font-bold text-center">
         {{ error }}
       </p>
     </div>
     
     <div
       v-else-if="gamificationData"
-      class="achievements-content"
+      class="space-y-10"
     >
-      <!-- Kill Streaks -->
-      <div
-        v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0 || gamificationData.bestStreaks.recentStreaks.length > 0"
-        class="recent-streaks"
-      >
-        <h4>Kill Streaks</h4>
-        <div class="streaks-grid">
-          <!-- Best Streak -->
+      <!-- Unified Badge Grid: Best Streak → Recent Streaks → Next Milestone → Achievements -->
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2">
+          <!-- Best Streak (first position) -->
           <div
             v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0"
-            class="streak-card best-streak"
+            class="group relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-yellow-500/70 hover:border-yellow-400 transition-all duration-300 cursor-pointer hover:scale-105 p-1 aspect-square hover:shadow-xl hover:shadow-yellow-500/30"
+            @click="openBestStreakModal"
+            :title="`BEST: ${gamificationData.bestStreaks.bestSingleRoundStreak} Kill Streak - ${gamificationData.bestStreaks.bestStreakMap}`"
           >
-            <div
-              class="streak-icon-container"
-              @click="openBestStreakModal"
-            >
+            <!-- Best streak background glow -->
+            <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-yellow-500/15 to-orange-500/15"></div>
+            
+            <!-- Crown badge -->
+            <div class="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-yellow-900 text-xs font-bold px-1 py-0.5 rounded-lg shadow-lg border border-yellow-300 z-20">
+              👑
+            </div>
+            
+            <div class="relative z-10 flex items-center justify-center h-full p-0.5">
               <img 
                 :src="getAchievementImage('kill_streak_' + gamificationData.bestStreaks.bestSingleRoundStreak)" 
                 :alt="'Kill streak ' + gamificationData.bestStreaks.bestSingleRoundStreak"
-                class="streak-card-icon"
+                class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 rounded-lg"
                 @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
               >
-              <div class="best-streak-badge">
-                Best
-              </div>
-            </div>
-            <div class="streak-meta">
-              <div class="streak-map">
-                {{ gamificationData.bestStreaks.bestStreakMap }}
-              </div>
-              <div class="streak-date">
-                {{ formatRelativeTime(gamificationData.bestStreaks.bestStreakDate) }}
-              </div>
             </div>
           </div>
-          
-          <!-- Recent Separator -->
-          <div
-            v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0 && gamificationData.bestStreaks.recentStreaks.length > 0"
-            class="recent-separator"
-          >
-            <div class="separator-line" />
-            <span class="separator-text">Recent</span>
-            <div class="separator-line" />
-          </div>
-          
+
           <!-- Recent Streaks -->
           <div 
-            v-for="(item, index) in combinedStreaks" 
-            :key="index"
-            class="streak-card recent-streak"
+            v-for="(item, index) in combinedStreaks.slice(0, 8)" 
+            :key="`streak-${index}`"
+            class="group relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-orange-500/50 hover:border-orange-400 transition-all duration-300 cursor-pointer hover:scale-105 p-1 aspect-square hover:shadow-xl hover:shadow-orange-500/25"
+            @click="openStreakModal(item)"
+            :title="`${item.streak.streakCount} Kill Streak - ${item.streak.mapName}`"
           >
+            <!-- Tier background glow -->
+            <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-orange-500/10 to-red-500/10"></div>
+            
+            <!-- Count badge -->
             <div
-              class="streak-icon-container"
-              @click="openStreakModal(item)"
+              v-if="item.count > 1"
+              class="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold px-1 py-0.5 rounded-lg shadow-lg border border-orange-400 z-20"
             >
+              ×{{ item.count }}
+            </div>
+            
+            <div class="relative z-10 flex items-center justify-center h-full p-0.5">
               <img 
                 :src="getAchievementImage('kill_streak_' + item.streak.streakCount)" 
                 :alt="'Kill streak ' + item.streak.streakCount"
-                class="streak-card-icon"
+                class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 rounded-lg"
                 @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
               >
-              <div
-                v-if="item.count > 1"
-                class="streak-count-badge"
-              >
-                x{{ item.count }}
-              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Achievement Timeline -->
-      <div
-        v-if="nextMilestone || flattenedAchievements.length > 0"
-        class="achievements-timeline"
-      >
-        <h4>Achievement Timeline</h4>
-        <div class="achievements-single-grid">
-          <!-- Next Milestone (if available) -->
+          
+          <!-- Next Milestone -->
           <div 
             v-if="nextMilestone"
-            class="achievement-compact-card next-milestone"
-            :class="[`tier-legendary`]"
-            :style="{ 
-              boxShadow: getTierGlow('legendary'),
-              '--progress-percentage': nextMilestone.progress * 100 + '%'
-            }"
+            class="group relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-blue-500/70 hover:border-blue-400 transition-all duration-300 cursor-pointer hover:scale-105 p-1 aspect-square hover:shadow-xl hover:shadow-blue-500/30 overflow-hidden"
             @click="openNextMilestoneModal"
+            :title="`Next Milestone: ${nextMilestone.milestone.toLocaleString()} Kills (${Math.floor(nextMilestone.progress * 100)}% complete)`"
           >
-            <div class="achievement-compact-icon-container">
+            <!-- Progress bar at bottom -->
+            <div 
+              class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-400 via-purple-500 to-indigo-500 transition-all duration-1000 ease-out"
+              :style="{ width: nextMilestone.progress * 100 + '%' }"
+            ></div>
+            
+            <!-- Milestone background glow -->
+            <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10"></div>
+            
+            <!-- Target badge -->
+            <div class="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-blue-400 to-purple-500 text-white text-xs font-bold px-1 py-0.5 rounded-lg shadow-lg border border-blue-300 z-20">
+              🎯
+            </div>
+            
+            <div class="relative z-10 flex items-center justify-center h-full p-0.5">
               <img 
                 :src="getMilestoneImage(nextMilestone.milestone)" 
                 :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
-                class="achievement-compact-icon milestone-icon"
+                class="w-full h-full object-contain filter grayscale-[0.3] brightness-110 transition-transform duration-300 group-hover:scale-110 rounded-lg"
               >
-            </div>
-            
-            <div class="achievement-compact-info next-milestone-info">
-              <div class="achievement-compact-time next-milestone-label">
-                Next: {{ nextMilestone.milestone.toLocaleString() }} Kills
-              </div>
-              <div class="achievement-compact-location next-milestone-progress">
-                {{ Math.floor(nextMilestone.progress * 100) }}% ({{ nextMilestone.killsRemaining.toLocaleString() }} to go)
-              </div>
             </div>
           </div>
           
           <!-- Regular Achievements -->
           <div 
-            v-for="(achievement, index) in flattenedAchievements" 
+            v-for="(achievement, index) in flattenedAchievements.slice(0, 24)" 
             :key="`achievement-${index}`"
-            class="achievement-compact-card"
-            :class="[`tier-${achievement.tier.toLowerCase()}`, achievement.achievementType]"
-            :style="{ boxShadow: getTierGlow(achievement.tier) }"
+            class="group relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border transition-all duration-300 cursor-pointer hover:scale-105 p-1 aspect-square"
+            :class="[
+              achievement.tier.toLowerCase() === 'legendary' ? 'border-orange-500/50 hover:border-orange-400 hover:shadow-xl hover:shadow-orange-500/25' :
+              achievement.tier.toLowerCase() === 'epic' ? 'border-purple-500/50 hover:border-purple-400 hover:shadow-xl hover:shadow-purple-500/25' :
+              achievement.tier.toLowerCase() === 'rare' ? 'border-blue-500/50 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/25' :
+              achievement.tier.toLowerCase() === 'uncommon' ? 'border-emerald-500/50 hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-500/25' :
+              'border-slate-600/50 hover:border-slate-500 hover:shadow-lg hover:shadow-slate-500/20'
+            ]"
             :title="getAchievementTooltip(achievement)"
             @click="openAchievementModal(achievement)"
           >
-            <div class="achievement-compact-icon-container">
+            <!-- Tier background glow (no more tier indicator dots) -->
+            <div class="absolute inset-0 rounded-xl opacity-10" :class="[
+              achievement.tier.toLowerCase() === 'legendary' ? 'bg-gradient-to-br from-orange-500 to-red-500' :
+              achievement.tier.toLowerCase() === 'epic' ? 'bg-gradient-to-br from-purple-500 to-pink-500' :
+              achievement.tier.toLowerCase() === 'rare' ? 'bg-gradient-to-br from-blue-500 to-cyan-500' :
+              achievement.tier.toLowerCase() === 'uncommon' ? 'bg-gradient-to-br from-emerald-500 to-green-500' :
+              'bg-gradient-to-br from-slate-500 to-slate-600'
+            ]"></div>
+            
+            <div class="relative z-10 flex items-center justify-center h-full p-0.5">
               <img 
                 :src="getAchievementImage(achievement.achievementId)" 
                 :alt="achievement.achievementName"
-                class="achievement-compact-icon"
+                class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 rounded-lg"
                 @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
               >
             </div>
-            
-            <div class="achievement-compact-info">
-              <div class="achievement-compact-time">
-                {{ formatRelativeTime(achievement.achievedAt) }}
-              </div>
-              <div
-                v-if="achievement.mapName"
-                class="achievement-compact-location"
-              >
-                {{ achievement.mapName }}
-              </div>
-            </div>
           </div>
         </div>
-      </div>
+        
+        <!-- View All Button -->
+        <div
+          v-if="(flattenedAchievements.length > 24) || (combinedStreaks.length > 8)"
+          class="flex justify-center pt-6"
+        >
+          <button class="bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-slate-600 hover:border-slate-500">
+            View All {{ (gamificationData.bestStreaks.bestSingleRoundStreak > 0 ? 1 : 0) + combinedStreaks.length + (nextMilestone ? 1 : 0) + flattenedAchievements.length }} Items
+          </button>
+        </div>
 
       <!-- No Achievements State -->
       <div
         v-if="flattenedAchievements.length === 0 && !gamificationData.bestStreaks.bestSingleRoundStreak && !nextMilestone"
-        class="no-achievements"
+        class="text-center py-20 space-y-8"
       >
-        <div class="no-achievements-icon">
-          🏆
+        <div class="relative">
+          <div class="text-9xl opacity-30 animate-bounce">
+            🏆
+          </div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-32 h-32 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full animate-pulse"></div>
+          </div>
         </div>
-        <h4>No Achievements Yet</h4>
-        <p>Start playing to unlock achievements and build your legacy!</p>
+        
+        <div class="space-y-4 max-w-lg mx-auto">
+          <h3 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            Your Legend Awaits
+          </h3>
+          <p class="text-slate-300 text-lg leading-relaxed">
+            Every battlefield hero starts somewhere. Begin your journey to unlock achievements, build epic kill streaks, and establish your legendary reputation.
+          </p>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div class="bg-gradient-to-r from-slate-700 to-slate-800 px-6 py-4 rounded-xl border border-slate-600 flex items-center gap-3">
+            <span class="text-2xl">🎮</span>
+            <span class="text-slate-300 font-medium">Ready to make history?</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Streak Details Modal -->
     <div
       v-if="showStreakModal && selectedStreakGroup"
-      class="modal-overlay"
+      class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-5"
       @click="closeStreakModal"
     >
       <div
-        class="modal-content"
+        class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         @click.stop
       >
-        <div class="modal-header">
-          <div class="achievement-title-info">
-            <h3 class="modal-achievement-name">
+        <div class="flex justify-between items-start p-6 border-b border-slate-700/50">
+          <div class="flex-1">
+            <h3 class="text-2xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent mb-2">
               {{ selectedStreakGroup.streak.streakCount }} Kill Streak
             </h3>
-            <div class="modal-achievement-date">
-              <span class="date-label">Achieved {{ selectedStreakGroup.count }} time{{ selectedStreakGroup.count !== 1 ? 's' : '' }}</span>
+            <div class="text-slate-400">
+              <span class="font-medium text-slate-300">Achieved {{ selectedStreakGroup.count }} time{{ selectedStreakGroup.count !== 1 ? 's' : '' }}</span>
             </div>
           </div>
           <button
-            class="close-button"
+            class="text-slate-400 hover:text-white transition-colors duration-200 text-3xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-700/50"
             @click="closeStreakModal"
           >
             &times;
           </button>
         </div>
         
-        <div class="modal-body">
-          <div class="modal-achievement-image-container">
+        <div class="p-6">
+          <div class="flex justify-center mb-6">
             <img 
               :src="getAchievementImage('kill_streak_' + selectedStreakGroup.streak.streakCount)" 
               :alt="selectedStreakGroup.streak.streakCount + ' Kill Streak'"
-              class="modal-achievement-image"
+              class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50"
             >
           </div>
 
           <!-- Badge Description -->
           <div
             v-if="selectedStreakDescription"
-            class="achievement-description"
+            class="mb-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50"
           >
-            <h4>Description</h4>
-            <p>{{ selectedStreakDescription }}</p>
+            <h4 class="text-lg font-semibold text-slate-200 mb-2">Description</h4>
+            <p class="text-slate-300 leading-relaxed">{{ selectedStreakDescription }}</p>
           </div>
           
-          <div class="timeline-container">
+          <div class="space-y-4">
             <template
               v-for="(streak, index) in selectedStreakGroup.allStreaks.sort((a, b) => new Date(b.streakStart).getTime() - new Date(a.streakStart).getTime())"
               :key="index"
             >
               <!-- Streak timeline item -->
-              <div class="timeline-item">
+              <div class="relative flex items-start">
+                <!-- Timeline line -->
+                <div v-if="index < selectedStreakGroup.allStreaks.length - 1" class="absolute left-2 top-0 w-0.5 h-full bg-slate-600 z-0"></div>
+                
                 <!-- Timeline node -->
-                <div class="timeline-node-container">
-                  <div class="timeline-node streak-node" />
+                <div class="relative flex flex-col items-center mr-4 z-10">
+                  <div class="w-2 h-2 bg-orange-500 border-2 border-slate-800 rounded-full hover:scale-150 transition-transform duration-200 cursor-pointer"></div>
                 </div>
                 
                 <!-- Streak card -->
                 <div
-                  class="streak-card"
+                  class="flex-1 bg-slate-800/30 hover:bg-slate-700/50 rounded-lg p-4 border border-transparent hover:border-slate-600 transition-all duration-200 cursor-pointer"
                   title="View round report"
                   @click="navigateToRoundReport(streak)"
                 >
-                  <div class="streak-line-1">
-                    <span class="streak-time-text">{{ formatRelativeTime(streak.streakStart) }}</span>
-                    <span class="streak-separator">-</span>
-                    <div class="streak-map-container">
-                      <span class="streak-map">{{ streak.mapName }}</span>
-                      <span class="streak-detail-time">
+                  <div class="flex flex-wrap items-start gap-2">
+                    <span class="text-slate-400 font-medium text-sm">{{ formatRelativeTime(streak.streakStart) }}</span>
+                    <span class="text-slate-500">-</span>
+                    <div class="flex flex-col">
+                      <span class="text-slate-200 font-medium text-sm">{{ streak.mapName }}</span>
+                      <span class="text-slate-400 text-xs italic">
                         {{ new Date(streak.streakStart.endsWith('Z') ? streak.streakStart : streak.streakStart + 'Z').toLocaleString() }}
                       </span>
                     </div>
@@ -611,14 +622,14 @@ onMounted(async () => {
               <!-- Time gap as a separate timeline item -->
               <div 
                 v-if="index < selectedStreakGroup.allStreaks.length - 1 && getTimeGap(streak, selectedStreakGroup.allStreaks[index + 1])" 
-                class="timeline-gap-item"
+                class="flex justify-center py-2 ml-7"
               >
-                <div class="time-gap-separator">
-                  <div class="time-gap-line" />
-                  <div class="time-gap-badge">
+                <div class="flex items-center gap-2 min-w-[200px] max-w-[400px]">
+                  <div class="flex-1 h-0.5 bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
+                  <div class="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 italic whitespace-nowrap">
                     {{ getTimeGap(streak, selectedStreakGroup.allStreaks[index + 1]) }}
                   </div>
-                  <div class="time-gap-line" />
+                  <div class="flex-1 h-0.5 bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
                 </div>
               </div>
             </template>
@@ -638,60 +649,62 @@ onMounted(async () => {
     <!-- Next Milestone Modal -->
     <div
       v-if="showNextMilestoneModal && nextMilestone"
-      class="modal-overlay"
+      class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-5"
       @click="closeNextMilestoneModal"
     >
       <div 
-        class="modal-content milestone-modal" 
-        :style="{ '--progress-percentage': nextMilestone.progress * 100 + '%' }"
+        class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl overflow-hidden"
         @click.stop
       >
-        <div class="modal-header">
-          <div class="achievement-title-info">
-            <h3 class="modal-achievement-name">
+        <!-- Progress bar at bottom -->
+        <div class="absolute bottom-0 left-0 h-1.5 bg-gradient-to-r from-cyan-400 to-yellow-400 transition-all duration-700 z-10" :style="{ width: nextMilestone.progress * 100 + '%' }"></div>
+        
+        <div class="flex justify-between items-start p-6 border-b border-slate-700/50">
+          <div class="flex-1">
+            <h3 class="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
               Next Milestone: {{ nextMilestone.milestone.toLocaleString() }} Kills
             </h3>
-            <div class="modal-achievement-date">
-              <span class="date-label">Current Progress:</span>
+            <div class="text-slate-400">
+              <span class="font-medium text-slate-300">Current Progress:</span>
               {{ nextMilestone.currentKills.toLocaleString() }} / {{ nextMilestone.milestone.toLocaleString() }} kills
             </div>
           </div>
           <button
-            class="close-button"
+            class="text-slate-400 hover:text-white transition-colors duration-200 text-3xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-700/50"
             @click="closeNextMilestoneModal"
           >
             &times;
           </button>
         </div>
         
-        <div class="modal-body">
-          <div class="modal-achievement-image-container">
+        <div class="p-6">
+          <div class="flex justify-center mb-6">
             <img 
               :src="getMilestoneImage(nextMilestone.milestone)" 
               :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
-              class="modal-achievement-image milestone-icon-large"
+              class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50 filter grayscale-[0.3] brightness-110"
             >
           </div>
           
-          <div class="achievement-details-grid">
-            <div class="detail-item full-width">
-              <span class="detail-label">Progress:</span>
-              <span class="detail-value">{{ Math.floor(nextMilestone.progress * 100) }}% complete</span>
+          <div class="grid gap-4">
+            <div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <span class="text-slate-400 font-medium">Progress:</span>
+              <span class="text-yellow-400 font-bold">{{ Math.floor(nextMilestone.progress * 100) }}% complete</span>
             </div>
             
-            <div class="detail-item full-width">
-              <span class="detail-label">Kills Remaining:</span>
-              <span class="detail-value">{{ nextMilestone.killsRemaining.toLocaleString() }} kills to go</span>
+            <div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <span class="text-slate-400 font-medium">Kills Remaining:</span>
+              <span class="text-orange-400 font-bold">{{ nextMilestone.killsRemaining.toLocaleString() }} kills to go</span>
             </div>
             
-            <div class="detail-item full-width">
-              <span class="detail-label">Current Total:</span>
-              <span class="detail-value">{{ nextMilestone.currentKills.toLocaleString() }} kills</span>
+            <div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <span class="text-slate-400 font-medium">Current Total:</span>
+              <span class="text-blue-400 font-bold">{{ nextMilestone.currentKills.toLocaleString() }} kills</span>
             </div>
             
-            <div class="detail-item full-width">
-              <span class="detail-label">Target:</span>
-              <span class="detail-value">{{ nextMilestone.milestone.toLocaleString() }} kills</span>
+            <div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <span class="text-slate-400 font-medium">Target:</span>
+              <span class="text-green-400 font-bold">{{ nextMilestone.milestone.toLocaleString() }} kills</span>
             </div>
           </div>
         </div>
@@ -701,918 +714,59 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.player-achievements {
-  background-color: var(--color-background-soft);
-  border-radius: 8px;
-  padding: 16px;
+/* Custom animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 
-.loading-container, .error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
-  border-radius: 50%;
-  border-top-color: var(--color-primary);
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 15px;
+/* Responsive adjustments for new grid system */
+@media (max-width: 1536px) {
+  .\\32 xl\\:grid-cols-10 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@media (max-width: 1280px) {
+  .xl\\:grid-cols-8 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
 }
 
-.error-message {
-  color: #ff5252;
-  font-weight: bold;
+@media (max-width: 1024px) {
+  .lg\\:grid-cols-6 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
 
-.achievements-content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.best-streak-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: linear-gradient(135deg, #FFD700, #FFA500);
-  color: #8B4513;
-  font-size: 0.7rem;
-  font-weight: bold;
-  padding: 3px 8px;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 2px 6px rgba(255, 215, 0, 0.4);
-  border: 2px solid var(--color-background);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.best-streak {
-  border: 2px solid #FFD700;
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-  background: linear-gradient(135deg, var(--color-background) 0%, rgba(255, 215, 0, 0.05) 100%);
-}
-
-.recent-streak {
-  background: transparent;
-  border: none;
-  padding: 8px;
-}
-
-.recent-streak:hover {
-  border: none;
-  box-shadow: none;
-}
-
-.recent-separator {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  margin: 0 16px;
-  min-width: 120px;
-}
-
-.separator-line {
-  flex: 1;
-  height: 1px;
-  background: var(--color-border);
-}
-
-.separator-text {
-  margin: 0 12px;
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.recent-streaks h4 {
-  margin: 0 0 16px 0;
-  color: var(--color-heading);
-  font-size: 1.1rem;
-}
-
-.streaks-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.streak-card {
-  background-color: var(--color-background);
-  border-radius: 8px;
-  padding: 12px;
-  text-align: center;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  width: 120px;
-  flex-shrink: 0;
-}
-
-.streak-icon-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.streak-icon-container:hover {
-  transform: scale(1.05);
-}
-
-.streak-card-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 4px;
-  object-fit: contain;
-}
-
-.streak-count-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: linear-gradient(135deg, #FF6B35, #FF9F1C);
-  color: white;
-  font-size: 0.7rem;
-  font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 12px;
-  min-width: 20px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  border: 2px solid var(--color-background);
-}
-
-.streak-card:hover {
-  border-color: #FF6B35;
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);
-}
-
-.streak-count {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #FF6B35;
-  margin-bottom: 4px;
-}
-
-.streak-meta {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
-.streak-map {
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.achievements-timeline h4 {
-  margin: 0 0 20px 0;
-  color: var(--color-heading);
-  font-size: 1.1rem;
-}
-
-.achievements-single-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: flex-start;
-  align-items: flex-start;
-}
-
-.achievement-compact-card {
-  background-color: var(--color-background);
-  border-radius: 8px;
-  padding: 12px;
-  text-align: center;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  width: 120px;
-  min-width: 120px;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.achievement-compact-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, transparent 0%, var(--tier-color, transparent) 100%);
-  opacity: 0.05;
-  pointer-events: none;
-}
-
-.achievement-compact-card.tier-legendary {
-  --tier-color: #FF6B35;
-}
-
-.achievement-compact-card.tier-epic {
-  --tier-color: #9D4EDD;
-}
-
-.achievement-compact-card.tier-rare {
-  --tier-color: #3A86FF;
-}
-
-.achievement-compact-card.tier-uncommon {
-  --tier-color: #06FFA5;
-}
-
-.achievement-compact-card.tier-common {
-  --tier-color: #8D99AE;
-}
-
-.achievement-compact-card:hover {
-  border-color: var(--tier-color);
-  cursor: pointer;
-  transform: translateY(-2px);
-}
-
-.achievement-compact-icon-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: transform 0.2s ease;
-}
-
-.achievement-compact-icon-container:hover {
-  transform: scale(1.05);
-}
-
-.achievement-compact-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 4px;
-  object-fit: contain;
-}
-
-.achievement-compact-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
-}
-
-.achievement-compact-time {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
-
-.achievement-compact-location {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-  font-style: italic;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-/* Next Milestone Styles */
-.next-milestone {
-  border: 3px solid #FFD700;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, var(--color-background) 50%, rgba(255, 215, 0, 0.05) 100%);
-  position: relative;
-  overflow: visible;
-}
-
-.next-milestone::before {
-  content: '🎯';
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 24px;
-  height: 24px;
-  background: #FFD700;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
-  z-index: 10;
-}
-
-.next-milestone::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 4px;
-  width: var(--progress-percentage);
-  background: linear-gradient(90deg, #26C6DA, #FFD700);
-  border-radius: 0 0 6px 6px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.milestone-icon {
-  filter: grayscale(0.3) brightness(1.1);
-}
-
-.next-milestone-info {
-  text-align: center;
-}
-
-.next-milestone-label {
-  font-weight: 700;
-  color: #FFD700;
-  font-size: 0.8rem;
-}
-
-.next-milestone-progress {
-  font-size: 0.7rem;
-  color: var(--color-text);
-  font-weight: 500;
-}
-
-.no-achievements {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--color-text-muted);
-}
-
-.no-achievements-icon {
-  font-size: 4rem;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-achievements h4 {
-  margin: 0 0 8px 0;
-  color: var(--color-heading);
-}
-
-.no-achievements p {
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-/* Mobile Responsive */
 @media (max-width: 768px) {
-  .player-achievements {
-    padding: 12px;
+  .md\\:grid-cols-5 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   
-  .achievements-content {
-    gap: 16px;
+  .text-3xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .sm\\:grid-cols-4 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   
-  .streaks-grid {
-    gap: 8px;
-  }
-  
-  .streak-card {
-    width: 100px;
-  }
-  
-  .achievements-single-grid {
-    gap: 8px;
-  }
-  
-  .achievement-compact-card {
-    width: 100px;
-    padding: 12px;
-    gap: 8px;
-  }
-  
-  .achievement-compact-icon {
-    width: 64px;
-    height: 64px;
-  }
-  
-  .achievement-compact-info {
-    display: none;
-  }
-  
-  .next-milestone .achievement-compact-info {
-    display: flex;
-  }
-  
-  .milestone-progress-border {
-    width: 58px;
-    height: 58px;
-    top: -2px;
-    left: -2px;
+  .gap-2 {
+    gap: 0.25rem;
   }
 }
 
 @media (max-width: 480px) {
-  .achievement-compact-card {
-    width: 100px;
-    padding: 12px;
-    gap: 8px;
-  }
-  
-  .achievement-compact-icon {
-    width: 64px;
-    height: 64px;
-  }
-  
-  .achievement-compact-info {
-    display: none;
-  }
-  
-  .next-milestone .achievement-compact-info {
-    display: flex;
-  }
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-content {
-  background-color: var(--color-background);
-  border-radius: 16px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  border: 2px solid var(--color-border);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 24px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.achievement-title-info {
-  flex: 1;
-}
-
-.modal-achievement-name {
-  margin: 0 0 8px 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  line-height: 1.2;
-}
-
-.modal-achievement-date {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-}
-
-.date-label {
-  font-weight: 500;
-  color: var(--color-text);
-  margin-right: 4px;
-}
-
-.relative-time {
-  font-style: italic;
-  opacity: 0.8;
-  margin-left: 8px;
-}
-
-.modal-achievement-image-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 24px;
-  padding: 8px;
-}
-
-.modal-achievement-image {
-  width: 180px;
-  height: 240px;
-  border-radius: 16px;
-  object-fit: contain;
-  background-color: var(--color-background-mute);
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.close-button:hover {
-  background-color: var(--color-background-mute);
-  color: var(--color-text);
-}
-
-.modal-body {
-  padding: 24px;
-  overflow: visible;
-}
-
-
-
-/* Modal responsive */
-@media (max-width: 768px) {
-  .modal-overlay {
-    padding: 10px;
-  }
-  
-  .modal-content {
-    max-height: 95vh;
-  }
-  
-  .modal-header {
-    padding: 16px;
-  }
-  
-  .modal-achievement-image {
-    width: 150px;
-    height: 200px;
-  }
-  
-  .modal-achievement-name {
-    font-size: 1.2rem;
-  }
-  
-  .modal-body {
-    padding: 16px;
-  }
-  
-  .achievement-details-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-}
-
-/* Streak Details Modal Styles */
-.streak-details-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.streak-detail-item {
-  background-color: var(--color-background-soft);
-  border-radius: 8px;
-  padding: 12px;
-  border: 1px solid var(--color-border);
-}
-
-.streak-detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.streak-detail-map {
-  font-weight: 600;
-  color: var(--color-text);
-  font-size: 0.95rem;
-}
-
-.streak-detail-date {
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.streak-detail-time {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-style: italic;
-}
-
-.round-report-btn {
-  margin-top: 8px;
-  padding: 6px 12px;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  align-self: flex-start;
-}
-
-.round-report-btn:hover {
-  background: var(--color-primary-dark, var(--color-primary));
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Next Milestone Modal Styles */
-.milestone-modal::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 6px;
-  width: var(--progress-percentage);
-  background: linear-gradient(90deg, #26C6DA, #FFD700);
-  border-radius: 0 0 14px 14px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1;
-}
-
-.milestone-icon-large {
-  filter: grayscale(0.3) brightness(1.1);
-}
-
-.detail-item.full-width {
-  grid-column: 1 / -1;
-}
-
-/* Timeline Styles for Streak Modal - Only apply within modal context */
-.modal-content .timeline-container {
-  position: relative;
-  padding: 0;
-  margin: 12px 0;
-}
-
-.modal-content .timeline-item {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.modal-content .timeline-item:last-child {
-  margin-bottom: 0;
-}
-
-.modal-content .timeline-item::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--color-border);
-  z-index: 1;
-}
-
-.modal-content .timeline-node-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 12px;
-  min-width: 16px;
-  z-index: 2;
-  align-self: flex-start;
-  margin-top: 1.8em;
-}
-
-.modal-content .timeline-node {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 2px solid var(--color-background);
-  position: relative;
-  z-index: 3;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.modal-content .timeline-node:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
-}
-
-.modal-content .streak-node {
-  background-color: #FF9800;
-  border-color: #E65100;
-}
-
-.modal-content .streak-card {
-  flex: 1;
-  background-color: transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  line-height: 1.4;
-  border-radius: 4px;
-  padding: 8px;
-  border: 1px solid transparent;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-}
-
-.modal-content .streak-card:hover {
-  background-color: var(--color-background-soft);
-  border-color: var(--color-border);
-}
-
-.modal-content .timeline-item:hover::before {
-  background: var(--color-primary);
-}
-
-.modal-content .streak-line-1 {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin-bottom: 3px;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-}
-
-.modal-content .streak-time-text {
-  color: var(--color-text-muted);
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.modal-content .streak-separator {
-  color: var(--color-text-muted);
-  font-weight: normal;
-  margin: 0 4px;
-}
-
-.modal-content .streak-map-container {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.modal-content .streak-map {
-  font-weight: 500;
-  color: var(--color-text);
-  margin-right: 4px;
-  font-size: 0.9rem;
-}
-
-.modal-content .streak-detail-time {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-style: italic;
-}
-
-.modal-content .streak-line-2 {
-  margin-bottom: 3px;
-}
-
-.modal-content .streak-line-3 {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  flex-wrap: wrap;
-  font-size: 0.85rem;
-  color: var(--color-text);
-  justify-content: flex-start;
-}
-
-.modal-content .timeline-gap-item {
-  position: relative;
-  padding: 8px 0;
-  margin-left: 28px;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: flex-start;
-}
-
-.modal-content .time-gap-separator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: fit-content;
-  min-width: 200px;
-  max-width: 400px;
-}
-
-.modal-content .time-gap-line {
-  flex: 1;
-  height: 2px;
-  min-width: 40px;
-  max-width: 100px;
-  background-image: repeating-linear-gradient(-45deg,
-    var(--color-border) 0px,
-    var(--color-border) 4px,
-    transparent 4px,
-    transparent 8px);
-  background-size: 8px 2px;
-}
-
-.modal-content .time-gap-badge {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  background-color: var(--color-background);
-  padding: 2px 8px;
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-  font-style: italic;
-  white-space: nowrap;
-  z-index: 2;
-}
-
-/* Mobile responsive styles for timeline - Only apply within modal context */
-@media (max-width: 768px) {
-  .modal-content .timeline-container {
-    margin: 8px 0;
-  }
-  
-  .modal-content .timeline-item {
-    margin-bottom: 12px;
-  }
-  
-  .modal-content .timeline-item::before {
-    left: 5px;
-  }
-  
-  .modal-content .timeline-node-container {
-    margin-right: 10px;
-    min-width: 12px;
-    margin-top: 1.5em;
-  }
-  
-  .modal-content .timeline-node {
-    width: 6px;
-    height: 6px;
-  }
-  
-  .modal-content .streak-card {
-    padding: 4px 6px;
-  }
-  
-  .modal-content .streak-line-1 .streak-time-link,
-  .modal-content .streak-line-1 .streak-map {
-    font-size: 0.85rem;
-  }
-  
-  .modal-content .streak-detail-time {
-    font-size: 0.8rem;
-  }
-  
-  .modal-content .streak-line-3 {
-    font-size: 0.8rem;
-    gap: 6px;
-  }
-  
-  .modal-content .timeline-gap-item {
-    margin-left: 24px;
-    padding: 6px 0;
-    margin-bottom: 12px;
-  }
-  
-  .modal-content .time-gap-separator {
-    min-width: 160px;
-    max-width: 300px;
-  }
-  
-  .modal-content .time-gap-line {
-    min-width: 30px;
-    max-width: 80px;
-    height: 1px;
-  }
-  
-  .modal-content .time-gap-badge {
-    font-size: 0.75rem;
-    padding: 1px 6px;
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>
