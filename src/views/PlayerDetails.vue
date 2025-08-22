@@ -777,6 +777,7 @@ const daysBetween = (start: string, end: string): number => {
 };
 
 // Color helper for similarity score
+// Enhanced similarity color function with more gradients
 const similarityColor = (score: number): string => {
   if (score >= 0.8) return '#4CAF50'; // green
   if (score >= 0.6) return '#FFC107'; // amber
@@ -919,7 +920,7 @@ watch(
                         <div class="flex-1">
                           <router-link
                             :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}`"
-                            class="font-semibold text-green-400 hover:text-green-300 transition-colors"
+                            class="font-semibold !text-white hover:!text-green-300 transition-colors"
                           >
                             {{ playerStats.currentServer.serverName }}
                           </router-link>
@@ -929,18 +930,28 @@ watch(
                           v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined"
                           class="flex items-center gap-4 text-sm font-medium"
                         >
-                          <div class="flex items-center gap-2">
-                            <span class="text-green-400">{{ playerStats.currentServer.sessionKills }}</span>
-                            <img src="@/assets/kills.png" alt="Kills" class="w-4 h-4" />
+                          <!-- K/D Ratio -->
+                          <div class="text-center">
+                            <div class="text-lg font-bold text-cyan-400">
+                              {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }}
+                            </div>
+                            <div class="text-xs text-slate-400">K/D</div>
                           </div>
-                          <span class="text-slate-500">/</span>
-                          <div class="flex items-center gap-2">
-                            <span class="text-red-400">{{ playerStats.currentServer.sessionDeaths }}</span>
-                            <img src="@/assets/deaths.png" alt="Deaths" class="w-4 h-4" />
+                          <!-- Kills -->
+                          <div class="text-center">
+                            <div class="text-lg font-bold text-green-400">{{ playerStats.currentServer.sessionKills }}</div>
+                            <div class="text-xs text-slate-400">K</div>
                           </div>
-                          <span class="text-cyan-400">
-                            K/D: {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }}
-                          </span>
+                          <!-- Deaths -->
+                          <div class="text-center">
+                            <div class="text-lg font-bold text-red-400">{{ playerStats.currentServer.sessionDeaths }}</div>
+                            <div class="text-xs text-slate-400">D</div>
+                          </div>
+                          <!-- Score (if available) -->
+                          <div v-if="playerStats.currentServer.sessionScore !== undefined || playerStats.currentServer.score !== undefined" class="text-center">
+                            <div class="text-lg font-bold text-yellow-400">{{ playerStats.currentServer.sessionScore || playerStats.currentServer.score }}</div>
+                            <div class="text-xs text-slate-400">S</div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1063,7 +1074,7 @@ watch(
                 </button>
                 <router-link
                   :to="`/players/${encodeURIComponent(playerName)}/sessions`"
-                  class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 border border-slate-600/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300"
+                  class="flex items-center gap-2 px-4 py-2 text-sm font-medium !text-white hover:!text-cyan-100 bg-slate-800/80 hover:bg-slate-700/90 border border-slate-600/70 hover:border-cyan-500/70 rounded-lg transition-all duration-300"
                 >
                   View All
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1106,10 +1117,10 @@ watch(
                     <div class="relative z-10 p-3 space-y-3">
                       <!-- Header: Server name only -->
                       <div class="flex items-center justify-between text-sm">
-                        <div class="flex items-center gap-1 text-slate-300 truncate flex-1 min-w-0">
+                        <div class="flex items-center gap-1 text-white truncate flex-1 min-w-0">
                           <router-link 
                             :to="`/servers/${encodeURIComponent(session.serverName)}`" 
-                            class="hover:text-white transition-colors truncate"
+                            class="!text-white hover:!text-cyan-300 transition-colors truncate"
                           >
                             {{ session.serverName }}
                           </router-link>
@@ -1128,15 +1139,12 @@ watch(
                         <div class="space-y-3">
                           <!-- Upper Stats Row -->
                           <div class="flex items-center justify-between">
-                            <!-- K/D and Performance Icon -->
-                            <div class="flex items-center gap-3">
-                              <div class="text-center">
-                                <div class="text-xl font-bold" :class="getKDTextClass(session)">
-                                  {{ calculateKDR(session.totalKills, session.totalDeaths) }}
-                                </div>
-                                <div class="text-xs text-slate-400">K/D</div>
+                            <!-- K/D -->
+                            <div class="text-center">
+                              <div class="text-xl font-bold" :class="getKDTextClass(session)">
+                                {{ calculateKDR(session.totalKills, session.totalDeaths) }}
                               </div>
-                              <div class="text-lg">{{ getKDPerformanceLabel(session) }}</div>
+                              <div class="text-xs text-slate-400">K/D</div>
                             </div>
                             
                             <!-- Compact Stats -->
@@ -1160,11 +1168,11 @@ watch(
                           <div class="flex items-center justify-between text-sm">
                             <router-link 
                               :to="getRoundReportRoute(session)" 
-                              class="text-cyan-400 hover:text-cyan-300 font-medium"
+                              class="!text-cyan-300 hover:!text-cyan-200 font-medium"
                             >
                               {{ formatRelativeTime(session.startTime) }}
                             </router-link>
-                            <span class="text-slate-400 truncate">{{ session.mapName }}</span>
+                            <span class="text-slate-300 truncate">{{ session.mapName }}</span>
                           </div>
                         </div>
                       </div>
@@ -1610,17 +1618,6 @@ watch(
                           of {{ ranking.totalRankedPlayers }}
                         </div>
                       </div>
-                      <div 
-                        class="absolute -top-1 -left-1 text-6xl font-black opacity-20 -z-10"
-                        :class="{
-                          'text-yellow-500': ranking.rank === 1,
-                          'text-slate-500': ranking.rank === 2,
-                          'text-orange-500': ranking.rank === 3,
-                          'text-purple-500': ranking.rank > 3
-                        }"
-                      >
-                        #{{ ranking.rank }}
-                      </div>
                     </div>
                   </div>
 
@@ -1938,7 +1935,7 @@ watch(
               </div>
               <router-link
                 :to="`/players/${encodeURIComponent(playerName)}/achievements`"
-                class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-yellow-500/25"
+                class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-bold !text-white bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-700 hover:to-orange-800 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-yellow-500/25"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-12 transition-transform duration-300">
                   <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
@@ -1983,21 +1980,33 @@ watch(
           </h3>
           <div v-if="similarSectionExpanded">
             <!-- Detection Mode Selector -->
-            <div class="detection-mode-selector">
-              <div class="segmented-control">
+            <div class="mb-6 p-1 bg-bf-card-bg/30 rounded-xl border border-bf-border/30 backdrop-blur-sm">
+              <div class="flex rounded-lg overflow-hidden shadow-lg">
                 <button 
-                  :class="['segment', { active: detectionMode === 'default' }]"
+                  :class="[
+                    'flex-1 flex items-center justify-center gap-3 px-6 py-4 font-semibold transition-all duration-300 ease-out',
+                    detectionMode === 'default' 
+                      ? 'bg-gradient-to-r from-bf-primary to-cyan-500 text-white shadow-lg shadow-bf-primary/25 transform scale-105' 
+                      : 'bg-bf-card-bg/50 text-bf-text-secondary hover:bg-bf-card-bg/80 hover:text-bf-text-primary hover:shadow-md'
+                  ]"
                   @click="setDetectionMode('default')"
                 >
-                  <span class="segment-icon">👥</span>
-                  Similar Players
+                  <span class="text-xl">👥</span>
+                  <span class="hidden sm:inline">Similar Players</span>
+                  <span class="sm:hidden">Similar</span>
                 </button>
                 <button 
-                  :class="['segment', { active: detectionMode === 'aliasdetection' }]"
+                  :class="[
+                    'flex-1 flex items-center justify-center gap-3 px-6 py-4 font-semibold transition-all duration-300 ease-out',
+                    detectionMode === 'aliasdetection' 
+                      ? 'bg-gradient-to-r from-bf-primary to-cyan-500 text-white shadow-lg shadow-bf-primary/25 transform scale-105' 
+                      : 'bg-bf-card-bg/50 text-bf-text-secondary hover:bg-bf-card-bg/80 hover:text-bf-text-primary hover:shadow-md'
+                  ]"
                   @click="setDetectionMode('aliasdetection')"
                 >
-                  <span class="segment-icon">🔍</span>
-                  Find Aliases
+                  <span class="text-xl">🔍</span>
+                  <span class="hidden sm:inline">Find Aliases</span>
+                  <span class="sm:hidden">Aliases</span>
                 </button>
               </div>
             </div>
@@ -2005,121 +2014,162 @@ watch(
             <!-- Filter Controls -->
             <div
               v-if="similarPlayers.length > 0 && targetPlayerStats"
-              class="comparison-filters"
+              class="mb-6 p-4 bg-bf-card-bg/20 rounded-xl border border-bf-border/20 backdrop-blur-sm"
             >
-              <div class="filter-toggle">
-                <label class="toggle-switch">
-                  <input
-                    v-model="showOnlyComparable"
-                    type="checkbox"
-                  >
-                  <span class="toggle-slider" />
-                  <span class="toggle-label">Show only comparable data</span>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="text-sm font-medium text-bf-text-secondary">🔧 Filters</span>
+                  <div class="h-4 w-px bg-bf-border/30"></div>
+                </div>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <span class="text-sm font-medium text-bf-text-primary group-hover:text-bf-primary transition-colors">
+                    Show only comparable data
+                  </span>
+                  <div class="relative">
+                    <input
+                      v-model="showOnlyComparable"
+                      type="checkbox"
+                      class="sr-only"
+                    >
+                    <div :class="[
+                      'relative w-11 h-6 rounded-full border transition-all duration-300 ease-out',
+                      showOnlyComparable 
+                        ? 'bg-gradient-to-r from-bf-primary to-cyan-500 border-bf-primary shadow-lg shadow-bf-primary/25' 
+                        : 'bg-bf-card-bg/50 border-bf-border/50'
+                    ]">
+                      <div :class="[
+                        'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ease-out',
+                        showOnlyComparable ? 'transform translate-x-5' : 'transform translate-x-0'
+                      ]"></div>
+                    </div>
+                  </div>
                 </label>
               </div>
             </div>
             
             <div
               v-if="loadingSimilarPlayers"
-              class="loading-container"
+              class="flex flex-col items-center justify-center p-8 bg-bf-card-bg/30 rounded-xl border border-bf-border/30 backdrop-blur-sm"
             >
-              <div class="loading-spinner" />
-              <p>Loading similar players...</p>
+              <div class="w-8 h-8 border-2 border-bf-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p class="text-bf-text-secondary font-medium animate-pulse">Loading similar players...</p>
             </div>
             <div
               v-else-if="similarPlayersError"
-              class="error-container"
+              class="p-6 bg-red-500/10 border border-red-500/30 rounded-xl backdrop-blur-sm"
             >
-              <p class="error-message">
+              <p class="text-red-400 font-medium flex items-center gap-2">
+                <span class="text-xl">⚠️</span>
                 {{ similarPlayersError }}
               </p>
             </div>
             <div
               v-else-if="similarPlayers.length > 0 && targetPlayerStats"
-              class="comparison-cards-container"
+              class="space-y-6"
             >
               <!-- Comparison cards for each similar player -->
               <div
                 v-for="(similarPlayer, idx) in similarPlayers"
                 :key="idx"
-                class="comparison-card"
-                :class="{ expanded: isPlayerCardExpanded(idx) }"
+                :class="[
+                  'group relative overflow-hidden rounded-xl border transition-all duration-500 ease-out',
+                  'bg-gradient-to-br from-bf-card-bg/40 via-bf-card-bg/30 to-bf-card-bg/20 backdrop-blur-md',
+                  'border-bf-border/30 hover:border-bf-primary/40',
+                  'shadow-lg hover:shadow-2xl hover:shadow-bf-primary/10',
+                  isPlayerCardExpanded(idx) 
+                    ? 'ring-2 ring-bf-primary/30 shadow-2xl shadow-bf-primary/20 transform scale-[1.02]' 
+                    : 'hover:transform hover:scale-[1.01]'
+                ]"
               >
+                <!-- Animated background gradient -->
+                <div class="absolute inset-0 bg-gradient-to-br from-bf-primary/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
                 <div 
-                  class="comparison-card-header"
+                  class="relative p-6 cursor-pointer"
                   @click="togglePlayerCard(idx)"
                 >
-                  <div class="player-comparison-summary">
-                    <div class="target-player-info">
-                      <h4 class="player-name">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex-1">
+                      <h4 class="text-lg font-bold text-bf-primary mb-1">
                         {{ targetPlayerStats.playerName }}
                       </h4>
-                      <span class="player-label">Target Player</span>
+                      <span class="text-xs font-medium text-bf-text-secondary uppercase tracking-wide">Target Player</span>
                     </div>
-                    <div class="vs-divider">
-                      <span class="vs-text">vs</span>
+                    
+                    <div class="flex items-center gap-4 mx-6">
+                      <span class="text-bf-text-muted font-bold text-2xl">VS</span>
                       <div 
-                        class="similarity-score"
+                        class="px-3 py-1.5 rounded-full text-white font-bold text-sm shadow-lg border border-white/20"
                         :style="{ backgroundColor: similarityColor(similarPlayer.similarityScore) }"
                       >
                         {{ (similarPlayer.similarityScore * 100).toFixed(0) }}%
                       </div>
                     </div>
-                    <div class="similar-player-info">
+                    
+                    <div class="flex-1 text-right">
                       <router-link
                         :to="{ name: 'player-comparison', query: { player1: playerName, player2: similarPlayer.playerName } }"
-                        class="player-name similar-player-link"
+                        class="text-lg font-bold text-white hover:text-cyan-300 transition-colors duration-200 block mb-1"
                         @click.stop
                       >
                         {{ similarPlayer.playerName }}
                       </router-link>
-                      <span class="player-label">
+                      <span class="text-xs font-medium text-bf-text-secondary uppercase tracking-wide">
                         {{ detectionMode === 'aliasdetection' ? 'Potential Alias' : 'Similar Player' }}
                       </span>
                     </div>
                   </div>
                   
                   <!-- Compact stats summary when collapsed -->
-                  <div class="compact-stats-summary">
-                    <div class="compact-stat">
-                      <span class="compact-label">K/D:</span>
-                      <span class="compact-values">
-                        {{ targetPlayerStats.killDeathRatio.toFixed(2) }} vs {{ similarPlayer.killDeathRatio.toFixed(2) }}
-                      </span>
+                  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-bf-card-bg/20 rounded-lg border border-bf-border/20 mb-4">
+                    <div class="flex flex-col items-center p-3 bg-bf-card-bg/30 rounded-lg border border-bf-border/20">
+                      <span class="text-xs font-medium text-bf-text-secondary mb-1 uppercase tracking-wide">K/D Ratio</span>
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-bf-primary">{{ targetPlayerStats.killDeathRatio.toFixed(2) }}</span>
+                        <span class="text-xs text-bf-text-muted">vs</span>
+                        <span class="text-sm font-bold text-white">{{ similarPlayer.killDeathRatio.toFixed(2) }}</span>
+                      </div>
                     </div>
-                    <div class="compact-stat">
-                      <span class="compact-label">KPM:</span>
-                      <span class="compact-values">
-                        {{ targetPlayerStats.killsPerMinute.toFixed(2) }} vs {{ similarPlayer.killsPerMinute.toFixed(2) }}
-                      </span>
+                    <div class="flex flex-col items-center p-3 bg-bf-card-bg/30 rounded-lg border border-bf-border/20">
+                      <span class="text-xs font-medium text-bf-text-secondary mb-1 uppercase tracking-wide">Kills/Min</span>
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-bf-primary">{{ targetPlayerStats.killsPerMinute.toFixed(2) }}</span>
+                        <span class="text-xs text-bf-text-muted">vs</span>
+                        <span class="text-sm font-bold text-white">{{ similarPlayer.killsPerMinute.toFixed(2) }}</span>
+                      </div>
                     </div>
-                    <div class="compact-stat">
-                      <span class="compact-label">Server:</span>
-                      <span class="compact-values">
+                    <div class="flex flex-col items-center p-3 bg-bf-card-bg/30 rounded-lg border border-bf-border/20">
+                      <span class="text-xs font-medium text-bf-text-secondary mb-1 uppercase tracking-wide">Server Match</span>
+                      <span :class="[
+                        'text-sm font-bold',
+                        targetPlayerStats.favoriteServerName === similarPlayer.favoriteServerName 
+                          ? 'text-green-400' 
+                          : 'text-red-400'
+                      ]">
                         {{ targetPlayerStats.favoriteServerName === similarPlayer.favoriteServerName ? '✓ Same' : '✗ Different' }}
                       </span>
                     </div>
-                    <div class="compact-stat">
-                      <span class="compact-label">Common Servers:</span>
-                      <span class="compact-values">
+                    <div class="flex flex-col items-center p-3 bg-bf-card-bg/30 rounded-lg border border-bf-border/20">
+                      <span class="text-xs font-medium text-bf-text-secondary mb-1 uppercase tracking-wide">Common Servers</span>
+                      <span class="text-sm font-bold text-cyan-400">
                         {{ getCommonServers(targetPlayerStats, similarPlayer).length }}
                       </span>
                     </div>
                   </div>
                   
                   <!-- Key similarity reasons - always show top 2 -->
-                  <div class="similarity-reasons-summary">
-                    <div class="reasons-grid compact">
+                  <div class="mb-4">
+                    <div class="flex flex-wrap gap-2 mb-3">
                       <div
                         v-for="(reason, rIdx) in similarPlayer.similarityReasons.slice(0, 2)"
                         :key="rIdx"
-                        class="reason-chip compact"
+                        class="px-3 py-1.5 bg-gradient-to-r from-bf-primary/20 to-cyan-500/20 border border-bf-primary/30 rounded-full text-xs font-medium text-bf-primary"
                       >
                         {{ reason }}
                       </div>
                       <div
                         v-if="similarPlayer.similarityReasons.length > 2"
-                        class="reason-chip more-reasons compact"
+                        class="px-3 py-1.5 bg-bf-text-muted/20 border border-bf-text-muted/30 rounded-full text-xs font-medium text-bf-text-muted"
                       >
                         +{{ similarPlayer.similarityReasons.length - 2 }} more
                       </div>
@@ -2127,176 +2177,409 @@ watch(
                   </div>
 
                   <!-- Expand/collapse indicator -->
-                  <div class="expand-indicator">
-                    <span class="expand-text">{{ isPlayerCardExpanded(idx) ? 'Click to collapse' : 'Click for detailed comparison' }}</span>
-                    <span class="expand-icon">{{ isPlayerCardExpanded(idx) ? '▲' : '▼' }}</span>
+                  <div class="flex items-center justify-between pt-2 border-t border-bf-border/20">
+                    <span class="text-xs text-bf-text-secondary">
+                      {{ isPlayerCardExpanded(idx) ? 'Click to collapse detailed analysis' : 'Click for detailed comparison' }}
+                    </span>
+                    <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 bg-bf-primary rounded-full animate-pulse"></div>
+                      <span class="text-bf-text-muted text-lg">{{ isPlayerCardExpanded(idx) ? '▲' : '▼' }}</span>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Detailed comparison stats - only show when expanded -->
                 <div 
                   v-if="isPlayerCardExpanded(idx)"
-                  class="comparison-stats-grid"
+                  class="border-t border-bf-border/20 bg-gradient-to-br from-bf-card-bg/10 via-transparent to-bf-card-bg/5 rounded-b-xl"
                 >
-                  <!-- Basic stats comparison -->
-                  <div class="stats-category">
-                    <h5 class="category-title">
-                      Performance Stats
-                    </h5>
-                    <div class="stat-comparison-row">
-                      <div class="stat-comparison-item">
-                        <span class="stat-label">K/D Ratio</span>
-                        <div class="stat-values">
-                          <span class="target-value">{{ targetPlayerStats.killDeathRatio.toFixed(2) }}</span>
-                          <span class="comparison-divider">vs</span>
-                          <span class="similar-value">{{ similarPlayer.killDeathRatio.toFixed(2) }}</span>
+                  <!-- Advanced Performance Analytics -->
+                  <div class="p-6 space-y-8">
+                    <div class="relative">
+                      <div class="flex items-center gap-3 mb-6">
+                        <div class="w-8 h-8 bg-gradient-to-r from-bf-primary to-cyan-500 rounded-lg flex items-center justify-center">
+                          <span class="text-white text-sm font-bold">📊</span>
                         </div>
+                        <h5 class="text-lg font-bold text-bf-heading">
+                          Performance Analytics
+                        </h5>
                       </div>
-                      <div class="stat-comparison-item">
-                        <span class="stat-label">Kills/Min</span>
-                        <div class="stat-values">
-                          <span class="target-value">{{ targetPlayerStats.killsPerMinute.toFixed(2) }}</span>
-                          <span class="comparison-divider">vs</span>
-                          <span class="similar-value">{{ similarPlayer.killsPerMinute.toFixed(2) }}</span>
+                      
+                      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="relative overflow-hidden bg-gradient-to-br from-bf-card-bg/40 to-bf-card-bg/20 p-6 rounded-xl border border-bf-border/30 hover:shadow-lg transition-all duration-300">
+                          <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent"></div>
+                          <div class="relative">
+                            <span class="text-xs font-medium text-bf-text-secondary mb-2 block uppercase tracking-widest">Kill/Death Performance</span>
+                            <div class="flex items-center justify-between mb-3">
+                              <span class="text-2xl font-bold text-bf-primary">{{ targetPlayerStats.killDeathRatio.toFixed(2) }}</span>
+                              <div class="text-bf-text-muted px-2">VS</div>
+                              <span class="text-2xl font-bold text-white">{{ similarPlayer.killDeathRatio.toFixed(2) }}</span>
+                            </div>
+                            <div class="flex items-center justify-center">
+                              <div :class="[
+                                'px-3 py-1 rounded-full text-xs font-bold',
+                                targetPlayerStats.killDeathRatio > similarPlayer.killDeathRatio 
+                                  ? 'bg-green-500/20 text-green-400' 
+                                  : targetPlayerStats.killDeathRatio < similarPlayer.killDeathRatio 
+                                  ? 'bg-red-500/20 text-red-400'
+                                  : 'bg-yellow-500/20 text-yellow-400'
+                              ]">
+                                {{ targetPlayerStats.killDeathRatio > similarPlayer.killDeathRatio ? '↑ Better' : 
+                                   targetPlayerStats.killDeathRatio < similarPlayer.killDeathRatio ? '↓ Lower' : '≈ Equal' }}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div class="stat-comparison-item">
-                        <span class="stat-label">Play Time</span>
-                        <div class="stat-values">
-                          <span class="target-value">{{ formatPlayTime(targetPlayerStats.totalPlayTimeMinutes) }}</span>
-                          <span class="comparison-divider">vs</span>
-                          <span class="similar-value">{{ formatPlayTime(similarPlayer.totalPlayTimeMinutes) }}</span>
+                        
+                        <div class="relative overflow-hidden bg-gradient-to-br from-bf-card-bg/40 to-bf-card-bg/20 p-6 rounded-xl border border-bf-border/30 hover:shadow-lg transition-all duration-300">
+                          <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent"></div>
+                          <div class="relative">
+                            <span class="text-xs font-medium text-bf-text-secondary mb-2 block uppercase tracking-widest">Killing Efficiency</span>
+                            <div class="flex items-center justify-between mb-3">
+                              <span class="text-2xl font-bold text-bf-primary">{{ targetPlayerStats.killsPerMinute.toFixed(2) }}</span>
+                              <div class="text-bf-text-muted px-2">VS</div>
+                              <span class="text-2xl font-bold text-white">{{ similarPlayer.killsPerMinute.toFixed(2) }}</span>
+                            </div>
+                            <div class="flex items-center justify-center">
+                              <div :class="[
+                                'px-3 py-1 rounded-full text-xs font-bold',
+                                targetPlayerStats.killsPerMinute > similarPlayer.killsPerMinute 
+                                  ? 'bg-green-500/20 text-green-400' 
+                                  : targetPlayerStats.killsPerMinute < similarPlayer.killsPerMinute 
+                                  ? 'bg-red-500/20 text-red-400'
+                                  : 'bg-yellow-500/20 text-yellow-400'
+                              ]">
+                                {{ targetPlayerStats.killsPerMinute > similarPlayer.killsPerMinute ? '↑ Faster' : 
+                                   targetPlayerStats.killsPerMinute < similarPlayer.killsPerMinute ? '↓ Slower' : '≈ Equal' }}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Server preferences comparison -->
-                  <div 
-                    v-if="!showOnlyComparable || getCommonServers(targetPlayerStats, similarPlayer).length > 0"
-                    class="stats-category"
-                  >
-                    <h5 class="category-title">
-                      Server Preferences
-                    </h5>
-                    <div class="stat-comparison-row">
-                      <div class="stat-comparison-item full-width">
-                        <span class="stat-label">Favorite Server</span>
-                        <div class="stat-values vertical">
-                          <span class="target-value">{{ targetPlayerStats.favoriteServerName }}</span>
-                          <span class="similar-value">{{ similarPlayer.favoriteServerName }}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      v-if="getCommonServers(targetPlayerStats, similarPlayer).length > 0"
-                      class="common-data-section"
-                    >
-                      <span class="common-label">Common Servers ({{ getCommonServers(targetPlayerStats, similarPlayer).length }}):</span>
-                      <div class="server-ping-comparison-grid">
-                        <div
-                          v-for="server in getCommonServers(targetPlayerStats, similarPlayer).slice(0, 4)"
-                          :key="server"
-                          class="server-ping-item"
-                        >
-                          <span class="server-name">{{ server }}</span>
-                          <div class="ping-comparison">
-                            <span class="target-ping">{{ Math.round(targetPlayerStats.serverPings[server]) }}ms</span>
-                            <span class="vs">vs</span>
-                            <span class="similar-ping">{{ Math.round(similarPlayer.serverPings[server]) }}ms</span>
-                            <span 
-                              class="ping-diff"
-                              :class="{ 
-                                'similar-pings': Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]) <= 10,
-                                'different-pings': Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]) > 30
-                              }"
-                            >
-                              ({{ Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]).toFixed(0) }}ms diff)
-                            </span>
+                        
+                        <div class="relative overflow-hidden bg-gradient-to-br from-bf-card-bg/40 to-bf-card-bg/20 p-6 rounded-xl border border-bf-border/30 hover:shadow-lg transition-all duration-300">
+                          <div class="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent"></div>
+                          <div class="relative">
+                            <span class="text-xs font-medium text-bf-text-secondary mb-2 block uppercase tracking-widest">Experience Level</span>
+                            <div class="flex items-center justify-between mb-3">
+                              <span class="text-lg font-bold text-bf-primary">{{ formatPlayTime(targetPlayerStats.totalPlayTimeMinutes) }}</span>
+                              <div class="text-bf-text-muted px-2">VS</div>
+                              <span class="text-lg font-bold text-white">{{ formatPlayTime(similarPlayer.totalPlayTimeMinutes) }}</span>
+                            </div>
+                            <div class="flex items-center justify-center">
+                              <div :class="[
+                                'px-3 py-1 rounded-full text-xs font-bold',
+                                targetPlayerStats.totalPlayTimeMinutes > similarPlayer.totalPlayTimeMinutes 
+                                  ? 'bg-blue-500/20 text-blue-400' 
+                                  : targetPlayerStats.totalPlayTimeMinutes < similarPlayer.totalPlayTimeMinutes 
+                                  ? 'bg-purple-500/20 text-purple-400'
+                                  : 'bg-yellow-500/20 text-yellow-400'
+                              ]">
+                                {{ targetPlayerStats.totalPlayTimeMinutes > similarPlayer.totalPlayTimeMinutes ? '↑ More' : 
+                                   targetPlayerStats.totalPlayTimeMinutes < similarPlayer.totalPlayTimeMinutes ? '↓ Less' : '≈ Similar' }}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div
-                        v-if="getCommonServers(targetPlayerStats, similarPlayer).length > 4"
-                        class="more-servers-indicator"
-                      >
-                        +{{ getCommonServers(targetPlayerStats, similarPlayer).length - 4 }} more servers in common
-                      </div>
                     </div>
-                  </div>
 
-                  <!-- Map performance comparison -->
-                  <div 
-                    v-if="!showOnlyComparable || getCommonMaps(targetPlayerStats, similarPlayer).length > 0"
-                    class="stats-category"
-                  >
-                    <h5 class="category-title">
-                      Map Performance
-                    </h5>
-                    <div
-                      v-if="getCommonMaps(targetPlayerStats, similarPlayer).length > 0"
-                      class="common-data-section"
+                    <!-- Server Intelligence Analysis -->
+                    <div 
+                      v-if="!showOnlyComparable || getCommonServers(targetPlayerStats, similarPlayer).length > 0"
+                      class="relative"
                     >
-                      <span class="common-label">Common Maps ({{ getCommonMaps(targetPlayerStats, similarPlayer).length }}):</span>
-                      <div class="map-comparison-grid">
-                        <div
-                          v-for="map in getCommonMaps(targetPlayerStats, similarPlayer).slice(0, 4)"
-                          :key="map"
-                          class="map-comparison-item"
-                        >
-                          <span class="map-name">{{ map }}</span>
-                          <div class="map-scores">
-                            <span class="target-score">{{ targetPlayerStats.mapDominanceScores[map].toFixed(1) }}</span>
-                            <span class="vs">vs</span>
-                            <span class="similar-score">{{ similarPlayer.mapDominanceScores[map].toFixed(1) }}</span>
+                      <div class="flex items-center gap-3 mb-6">
+                        <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                          <span class="text-white text-sm font-bold">🌐</span>
+                        </div>
+                        <h5 class="text-lg font-bold text-bf-heading">
+                          Server Intelligence & Geography
+                        </h5>
+                      </div>
+                      
+                      <!-- Favorite Server Comparison -->
+                      <div class="bg-gradient-to-r from-bf-card-bg/40 to-bf-card-bg/20 p-6 rounded-xl border border-bf-border/30 mb-6">
+                        <div class="grid grid-cols-2 gap-6">
+                          <div class="text-center">
+                            <span class="text-xs font-medium text-bf-text-secondary mb-2 block uppercase tracking-widest">Favorite Server</span>
+                            <div class="text-bf-primary font-bold text-lg truncate" title="{{ targetPlayerStats.favoriteServerName }}">
+                              {{ targetPlayerStats.favoriteServerName }}
+                            </div>
+                          </div>
+                          <div class="text-center">
+                            <span class="text-xs font-medium text-bf-text-secondary mb-2 block uppercase tracking-widest">Their Favorite</span>
+                            <div class="text-white font-bold text-lg truncate" title="{{ similarPlayer.favoriteServerName }}">
+                              {{ similarPlayer.favoriteServerName }}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="mt-4 text-center">
+                          <div :class="[
+                            'inline-flex px-4 py-2 rounded-full text-sm font-bold',
+                            targetPlayerStats.favoriteServerName === similarPlayer.favoriteServerName 
+                              ? 'bg-green-500/20 text-green-400' 
+                              : 'bg-yellow-500/20 text-yellow-400'
+                          ]">
+                            {{ targetPlayerStats.favoriteServerName === similarPlayer.favoriteServerName ? '🎯 Same Server!' : '🔄 Different Servers' }}
                           </div>
                         </div>
                       </div>
+                      
+                      <!-- Common Servers Network Analysis -->
                       <div
-                        v-if="getCommonMaps(targetPlayerStats, similarPlayer).length > 4"
-                        class="more-maps-indicator"
+                        v-if="getCommonServers(targetPlayerStats, similarPlayer).length > 0"
+                        class="space-y-4"
                       >
-                        +{{ getCommonMaps(targetPlayerStats, similarPlayer).length - 4 }} more maps in common
-                      </div>
-                    </div>
-                    <div
-                      v-else-if="!showOnlyComparable"
-                      class="no-common-data"
-                    >
-                      <span class="no-common-label">No common maps found</span>
-                    </div>
-                  </div>
-
-                  <!-- Online hours comparison -->
-                  <div 
-                    v-if="!showOnlyComparable || getCommonOnlineHours(targetPlayerStats, similarPlayer).length > 0"
-                    class="stats-category"
-                  >
-                    <h5 class="category-title">
-                      Activity Patterns
-                    </h5>
-                    <div
-                      v-if="getCommonOnlineHours(targetPlayerStats, similarPlayer).length > 0"
-                      class="common-data-section"
-                    >
-                      <span class="common-label">Common Online Hours - Your Time ({{ getCommonOnlineHours(targetPlayerStats, similarPlayer).length }}):</span>
-                      <div class="common-hours">
-                        {{ formatOnlineHours(getCommonOnlineHours(targetPlayerStats, similarPlayer)) }}
-                      </div>
-                    </div>
-                    <div class="temporal-overlap-info">
-                      <div class="overlap-stat">
-                        <span class="stat-label">Temporal Overlap:</span>
-                        <span class="stat-value">{{ formatPlayTime(similarPlayer.temporalOverlapMinutes) }}</span>
-                      </div>
-                      <div class="overlap-stat">
-                        <span class="stat-label">Non-overlap Score:</span>
-                        <span 
-                          class="stat-value"
-                          :class="{ 'high-score': similarPlayer.temporalNonOverlapScore > 0.8 }"
+                        <div class="flex items-center justify-between mb-4">
+                          <h6 class="text-bf-text-primary font-semibold">
+                            Shared Server Network ({{ getCommonServers(targetPlayerStats, similarPlayer).length }})
+                          </h6>
+                          <div class="text-xs px-3 py-1 bg-bf-primary/20 text-bf-primary rounded-full">
+                            {{ getCommonServers(targetPlayerStats, similarPlayer).length === 1 ? 'Single Connection' : 'Multi-Node Network' }}
+                          </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div
+                            v-for="server in getCommonServers(targetPlayerStats, similarPlayer).slice(0, 4)"
+                            :key="server"
+                            class="relative overflow-hidden bg-gradient-to-br from-bf-card-bg/50 to-bf-card-bg/30 p-4 rounded-xl border border-bf-border/30"
+                          >
+                            <div class="flex items-center justify-between mb-3">
+                              <div class="font-medium text-bf-text-primary text-sm truncate flex-1" :title="server">
+                                {{ server }}
+                              </div>
+                              <div class="ml-2 flex items-center gap-1">
+                                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                <span class="text-xs text-bf-text-secondary">Active</span>
+                              </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 text-center">
+                              <div class="bg-bf-card-bg/40 p-3 rounded-lg">
+                                <span class="text-xs text-bf-text-secondary block mb-1">Your Ping</span>
+                                <span :class="[
+                                  'font-bold text-lg',
+                                  targetPlayerStats.serverPings[server] <= 50 ? 'text-green-400' :
+                                  targetPlayerStats.serverPings[server] <= 100 ? 'text-yellow-400' : 'text-red-400'
+                                ]">
+                                  {{ Math.round(targetPlayerStats.serverPings[server]) }}ms
+                                </span>
+                              </div>
+                              <div class="bg-bf-card-bg/40 p-3 rounded-lg">
+                                <span class="text-xs text-bf-text-secondary block mb-1">Their Ping</span>
+                                <span :class="[
+                                  'font-bold text-lg',
+                                  similarPlayer.serverPings[server] <= 50 ? 'text-green-400' :
+                                  similarPlayer.serverPings[server] <= 100 ? 'text-yellow-400' : 'text-red-400'
+                                ]">
+                                  {{ Math.round(similarPlayer.serverPings[server]) }}ms
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div class="mt-3 text-center">
+                              <div :class="[
+                                'inline-flex px-3 py-1 rounded-full text-xs font-medium',
+                                Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]) <= 10 
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]) <= 30
+                                  ? 'bg-yellow-500/20 text-yellow-400'
+                                  : 'bg-red-500/20 text-red-400'
+                              ]">
+                                {{ Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]) <= 10 ? '🎯 Similar Latency' :
+                                   Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]) <= 30 ? '⚠️ Moderate Diff' : '🌍 Geographic Diff' }}
+                                ({{ Math.abs(targetPlayerStats.serverPings[server] - similarPlayer.serverPings[server]).toFixed(0) }}ms)
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div
+                          v-if="getCommonServers(targetPlayerStats, similarPlayer).length > 4"
+                          class="text-center p-4 bg-bf-card-bg/20 rounded-lg border border-bf-border/20"
                         >
-                          {{ (similarPlayer.temporalNonOverlapScore * 100).toFixed(0) }}%
-                        </span>
+                          <span class="text-sm text-bf-text-secondary">
+                            🌐 +{{ getCommonServers(targetPlayerStats, similarPlayer).length - 4 }} additional servers in your shared network
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Battlefield Mastery Analysis -->
+                    <div 
+                      v-if="!showOnlyComparable || getCommonMaps(targetPlayerStats, similarPlayer).length > 0"
+                      class="relative"
+                    >
+                      <div class="flex items-center gap-3 mb-6">
+                        <div class="w-8 h-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg flex items-center justify-center">
+                          <span class="text-white text-sm font-bold">🗺️</span>
+                        </div>
+                        <h5 class="text-lg font-bold text-bf-heading">
+                          Battlefield Mastery & Tactical Analysis
+                        </h5>
+                      </div>
+                      
+                      <div
+                        v-if="getCommonMaps(targetPlayerStats, similarPlayer).length > 0"
+                        class="space-y-4"
+                      >
+                        <div class="flex items-center justify-between mb-4">
+                          <h6 class="text-bf-text-primary font-semibold">
+                            Shared Combat Zones ({{ getCommonMaps(targetPlayerStats, similarPlayer).length }})
+                          </h6>
+                          <div class="text-xs px-3 py-1 bg-red-500/20 text-red-400 rounded-full">
+                            Tactical Intelligence
+                          </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div
+                            v-for="map in getCommonMaps(targetPlayerStats, similarPlayer).slice(0, 4)"
+                            :key="map"
+                            class="relative overflow-hidden bg-gradient-to-br from-red-500/10 to-orange-500/5 p-5 rounded-xl border border-red-500/20 hover:shadow-lg transition-all duration-300"
+                          >
+                            <div class="absolute top-2 right-2">
+                              <div class="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                            </div>
+                            
+                            <div class="mb-4">
+                              <h6 class="font-bold text-white text-lg mb-1">{{ map }}</h6>
+                              <span class="text-xs text-bf-text-secondary uppercase tracking-wide">Battlefield Analysis</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                              <div class="text-center bg-bf-card-bg/30 p-3 rounded-lg">
+                                <span class="text-xs text-bf-text-secondary block mb-1">Your Dominance</span>
+                                <span class="text-xl font-bold text-bf-primary">
+                                  {{ targetPlayerStats.mapDominanceScores[map].toFixed(1) }}
+                                </span>
+                              </div>
+                              <div class="text-center bg-bf-card-bg/30 p-3 rounded-lg">
+                                <span class="text-xs text-bf-text-secondary block mb-1">Their Dominance</span>
+                                <span class="text-xl font-bold text-white">
+                                  {{ similarPlayer.mapDominanceScores[map].toFixed(1) }}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div class="text-center">
+                              <div :class="[
+                                'inline-flex px-3 py-1.5 rounded-full text-xs font-bold',
+                                targetPlayerStats.mapDominanceScores[map] > similarPlayer.mapDominanceScores[map] 
+                                  ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                  : targetPlayerStats.mapDominanceScores[map] < similarPlayer.mapDominanceScores[map] 
+                                  ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                  : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                              ]">
+                                {{ targetPlayerStats.mapDominanceScores[map] > similarPlayer.mapDominanceScores[map] ? '🎯 Superior Tactics' : 
+                                   targetPlayerStats.mapDominanceScores[map] < similarPlayer.mapDominanceScores[map] ? '⚔️ They Excel Here' : '⚖️ Matched Skills' }}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div
+                          v-if="getCommonMaps(targetPlayerStats, similarPlayer).length > 4"
+                          class="text-center p-4 bg-red-500/10 rounded-lg border border-red-500/20"
+                        >
+                          <span class="text-sm text-red-400">
+                            🗺️ +{{ getCommonMaps(targetPlayerStats, similarPlayer).length - 4 }} additional battlefields where you both have combat experience
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div
+                        v-else-if="!showOnlyComparable"
+                        class="text-center p-6 bg-bf-card-bg/20 rounded-lg border border-bf-border/20"
+                      >
+                        <span class="text-bf-text-secondary">🚫 No common battlefield experience detected</span>
+                      </div>
+                    </div>
+
+                    <!-- Temporal Analysis Intelligence -->
+                    <div 
+                      v-if="!showOnlyComparable || getCommonOnlineHours(targetPlayerStats, similarPlayer).length > 0"
+                      class="relative"
+                    >
+                      <div class="flex items-center gap-3 mb-6">
+                        <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                          <span class="text-white text-sm font-bold">⏰</span>
+                        </div>
+                        <h5 class="text-lg font-bold text-bf-heading">
+                          Temporal Behavioral Analysis
+                        </h5>
+                      </div>
+                      
+                      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Common Activity Hours -->
+                        <div
+                          v-if="getCommonOnlineHours(targetPlayerStats, similarPlayer).length > 0"
+                          class="bg-gradient-to-br from-purple-500/10 to-pink-500/5 p-6 rounded-xl border border-purple-500/20"
+                        >
+                          <div class="flex items-center justify-between mb-4">
+                            <h6 class="font-semibold text-bf-text-primary">Synchronized Activity</h6>
+                            <div class="text-xs px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full">
+                              {{ getCommonOnlineHours(targetPlayerStats, similarPlayer).length }} hours overlap
+                            </div>
+                          </div>
+                          
+                          <div class="bg-bf-card-bg/30 p-4 rounded-lg mb-4">
+                            <div class="text-center">
+                              <div class="text-lg font-bold text-purple-300 mb-1">
+                                {{ formatOnlineHours(getCommonOnlineHours(targetPlayerStats, similarPlayer)) }}
+                              </div>
+                              <div class="text-xs text-bf-text-secondary uppercase tracking-wide">
+                                Common Active Hours (Your Time)
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div :class="[
+                            'text-center px-3 py-2 rounded-lg text-sm font-medium',
+                            getCommonOnlineHours(targetPlayerStats, similarPlayer).length >= 4 
+                              ? 'bg-green-500/20 text-green-400' 
+                              : getCommonOnlineHours(targetPlayerStats, similarPlayer).length >= 2
+                              ? 'bg-yellow-500/20 text-yellow-400'
+                              : 'bg-red-500/20 text-red-400'
+                          ]">
+                            {{ getCommonOnlineHours(targetPlayerStats, similarPlayer).length >= 4 ? '🎯 High Synchronization' :
+                               getCommonOnlineHours(targetPlayerStats, similarPlayer).length >= 2 ? '⚠️ Moderate Overlap' : '❌ Minimal Sync' }}
+                          </div>
+                        </div>
+                        
+                        <!-- Temporal Overlap Metrics -->
+                        <div class="bg-gradient-to-br from-bf-card-bg/40 to-bf-card-bg/20 p-6 rounded-xl border border-bf-border/30">
+                          <h6 class="font-semibold text-bf-text-primary mb-4">Behavioral Metrics</h6>
+                          
+                          <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 bg-bf-card-bg/30 rounded-lg">
+                              <span class="text-sm text-bf-text-secondary">Temporal Overlap</span>
+                              <span class="font-bold text-bf-primary">{{ formatPlayTime(similarPlayer.temporalOverlapMinutes) }}</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-bf-card-bg/30 rounded-lg">
+                              <span class="text-sm text-bf-text-secondary">Pattern Similarity</span>
+                              <div class="flex items-center gap-2">
+                                <span :class="[
+                                  'font-bold text-lg',
+                                  similarPlayer.temporalNonOverlapScore > 0.8 ? 'text-green-400' :
+                                  similarPlayer.temporalNonOverlapScore > 0.6 ? 'text-yellow-400' : 'text-red-400'
+                                ]">
+                                  {{ (similarPlayer.temporalNonOverlapScore * 100).toFixed(0) }}%
+                                </span>
+                                <div :class="[
+                                  'text-xs px-2 py-1 rounded-full',
+                                  similarPlayer.temporalNonOverlapScore > 0.8 ? 'bg-green-500/20 text-green-400' :
+                                  similarPlayer.temporalNonOverlapScore > 0.6 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'
+                                ]">
+                                  {{ similarPlayer.temporalNonOverlapScore > 0.8 ? 'High' :
+                                     similarPlayer.temporalNonOverlapScore > 0.6 ? 'Medium' : 'Low' }}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2305,9 +2588,13 @@ watch(
             </div>
             <div
               v-else
-              class="no-data-container"
+              class="text-center p-8 bg-bf-card-bg/20 rounded-xl border border-bf-border/20 backdrop-blur-sm"
             >
-              <p>No similar players found.</p>
+              <div class="w-16 h-16 mx-auto mb-4 bg-bf-text-muted/20 rounded-full flex items-center justify-center">
+                <span class="text-2xl">🔍</span>
+              </div>
+              <p class="text-bf-text-secondary font-medium">No similar players found.</p>
+              <p class="text-sm text-bf-text-muted mt-1">Try adjusting your detection mode or filter settings.</p>
             </div>
           </div>
         </div>
