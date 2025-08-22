@@ -317,10 +317,16 @@ const fetchMapStats = async (serverGuid: string) => {
   try {
     const response = await fetch(`/stats/players/${encodeURIComponent(playerName.value)}/server/${serverGuid}/mapstats?range=${selectedTimeRange.value}`);
     if (!response.ok) throw new Error('Failed to fetch map stats');
-    mapStats.value = await response.json();
+    const newData = await response.json();
+    
+    // Only update data after successful fetch to prevent flash
+    mapStats.value = newData;
   } catch (err) {
     console.error('Error fetching map stats:', err);
-    mapStats.value = [];
+    // Only clear on error if no existing data
+    if (mapStats.value.length === 0) {
+      mapStats.value = [];
+    }
   } finally {
     mapStatsLoading.value = false;
   }
@@ -1585,100 +1591,206 @@ watch(
               </div>
               
               <!-- Server Rankings Cards Grid -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
                 <div
-                  v-for="ranking in playerStats.insights.serverRankings"
+                  v-for="(ranking, index) in playerStats.insights.serverRankings"
                   :key="ranking.serverGuid"
-                  class="group relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02]"
+                  class="group relative overflow-hidden rounded-2xl"
+                  :class="{
+                    'bg-gradient-to-br from-yellow-500/20 via-amber-600/30 to-yellow-700/20 border-2 border-yellow-500/40 shadow-xl shadow-yellow-500/20': ranking.rank === 1,
+                    'bg-gradient-to-br from-slate-400/20 via-slate-500/30 to-slate-600/20 border-2 border-slate-400/40 shadow-xl shadow-slate-400/20': ranking.rank === 2,
+                    'bg-gradient-to-br from-orange-600/20 via-amber-700/30 to-orange-800/20 border-2 border-orange-600/40 shadow-xl shadow-orange-600/20': ranking.rank === 3,
+                    'bg-gradient-to-br from-slate-800/80 via-slate-900/90 to-black/80 border-2 border-slate-700/50 shadow-xl shadow-slate-900/30': ranking.rank > 3
+                  }"
+                  :style="{ animationDelay: `${index * 100}ms` }"
                 >
-                  <!-- Card Background Effects -->
-                  <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
-                  <div class="relative z-10 p-6 space-y-4">
-                    <!-- Server Header with Rank -->
-                    <div class="flex items-start gap-3">
-                      <!-- Rank Badge -->
-                      <div class="flex-shrink-0">
-                        <div class="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg shadow-lg">
-                          <div class="text-white font-bold text-sm text-center">
-                            <div class="text-xs uppercase tracking-wide opacity-80">RANK</div>
-                            <div class="text-lg font-black">#{{ ranking.rankDisplay }}</div>
-                          </div>
+                  <!-- Animated Background Particles -->
+                  <div class="absolute inset-0 overflow-hidden">
+                    <div 
+                      class="absolute -top-10 -right-10 w-20 h-20 rounded-full blur-xl opacity-30 animate-pulse"
+                      :class="{
+                        'bg-yellow-400': ranking.rank === 1,
+                        'bg-slate-400': ranking.rank === 2,
+                        'bg-orange-500': ranking.rank === 3,
+                        'bg-purple-500': ranking.rank > 3
+                      }"
+                    ></div>
+                    <div 
+                      class="absolute -bottom-8 -left-8 w-16 h-16 rounded-full blur-lg opacity-20 animate-pulse delay-700"
+                      :class="{
+                        'bg-yellow-300': ranking.rank === 1,
+                        'bg-slate-300': ranking.rank === 2,
+                        'bg-orange-400': ranking.rank === 3,
+                        'bg-purple-400': ranking.rank > 3
+                      }"
+                    ></div>
+                  </div>
+
+                  <!-- Trophy Icon for Top 3 -->
+                  <div 
+                    v-if="ranking.rank <= 3"
+                    class="absolute top-4 right-4 z-20 animate-bounce"
+                    style="animation-duration: 2s"
+                  >
+                    <div 
+                      class="w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
+                      :class="{
+                        'bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900': ranking.rank === 1,
+                        'bg-gradient-to-br from-slate-400 to-slate-600 text-slate-900': ranking.rank === 2,
+                        'bg-gradient-to-br from-orange-500 to-orange-700 text-orange-900': ranking.rank === 3
+                      }"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div class="relative z-10 p-8 space-y-6">
+                    <!-- Rank Badge - More Prominent -->
+                    <div class="flex items-center justify-between">
+                      <div class="relative">
+                        <div 
+                          class="text-6xl font-black leading-none"
+                          :class="{
+                            'text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600': ranking.rank === 1,
+                            'text-transparent bg-clip-text bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500': ranking.rank === 2,
+                            'text-transparent bg-clip-text bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600': ranking.rank === 3,
+                            'text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-pink-400 to-indigo-400': ranking.rank > 3
+                          }"
+                        >
+                          #{{ ranking.rankDisplay }}
                         </div>
-                      </div>
-                      <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg p-2 group-hover:from-amber-600 group-hover:to-orange-600 transition-all duration-300">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full text-white">
-                            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-                            <line x1="3" y1="6" x2="21" y2="6"/>
-                            <path d="M16 10a4 4 0 01-8 0"/>
-                          </svg>
+                        <div 
+                          class="absolute -top-1 -left-1 text-6xl font-black opacity-20 -z-10"
+                          :class="{
+                            'text-yellow-500': ranking.rank === 1,
+                            'text-slate-500': ranking.rank === 2,
+                            'text-orange-500': ranking.rank === 3,
+                            'text-purple-500': ranking.rank > 3
+                          }"
+                        >
+                          #{{ ranking.rankDisplay }}
                         </div>
                       </div>
                       
-                      <div class="flex-1 min-w-0 space-y-2">
-                        <router-link
-                          :to="`/servers/${encodeURIComponent(ranking.serverName)}`"
-                          class="group/link font-bold text-white hover:text-amber-400 transition-colors duration-200 line-clamp-2 leading-tight block"
-                          :title="`View server details for ${ranking.serverName}`"
-                        >
-                          {{ ranking.serverName }}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline ml-1 opacity-0 group-hover/link:opacity-100 transition-opacity">
-                            <path d="m9 18 6-6-6-6"/>
-                          </svg>
-                        </router-link>
+                      <!-- Performance Ring -->
+                      <div class="relative w-16 h-16">
+                        <svg class="transform -rotate-90 w-16 h-16" viewBox="0 0 36 36">
+                          <path
+                            class="stroke-current opacity-20"
+                            :class="{
+                              'text-yellow-500': ranking.rank === 1,
+                              'text-slate-500': ranking.rank === 2,
+                              'text-orange-500': ranking.rank === 3,
+                              'text-purple-500': ranking.rank > 3
+                            }"
+                            stroke-width="3"
+                            fill="none"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          />
+                          <path
+                            class="stroke-current transition-all duration-1000 ease-out"
+                            :class="{
+                              'text-yellow-400': ranking.rank === 1,
+                              'text-slate-400': ranking.rank === 2,
+                              'text-orange-400': ranking.rank === 3,
+                              'text-purple-400': ranking.rank > 3
+                            }"
+                            stroke-width="3"
+                            fill="none"
+                            :stroke-dasharray="`${Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1)))} 100`"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          />
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                          <div class="text-center">
+                            <div class="text-xs opacity-70 leading-tight">TOP</div>
+                            <div 
+                              class="text-xs font-bold leading-none mt-1"
+                              :class="{
+                                'text-yellow-300': ranking.rank === 1,
+                                'text-slate-300': ranking.rank === 2,
+                                'text-orange-300': ranking.rank === 3,
+                                'text-purple-300': ranking.rank > 3
+                              }"
+                            >
+                              {{ Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1))) }}%
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <!-- Performance Metrics -->
-                    <div class="grid grid-cols-2 gap-4">
-                      <div class="space-y-1">
-                        <div class="text-xs text-slate-400 uppercase tracking-wide font-medium">Score</div>
-                        <div class="text-lg font-bold text-white">{{ ranking.scoreDisplay }}</div>
-                      </div>
-                      <div class="space-y-1">
-                        <div class="text-xs text-slate-400 uppercase tracking-wide font-medium">Ping</div>
-                        <div class="text-lg font-bold"
+                    <!-- Server Name -->
+                    <div class="space-y-3">
+                      <router-link
+                        :to="`/servers/${encodeURIComponent(ranking.serverName)}`"
+                        class="group/link block"
+                        :title="`View server details for ${ranking.serverName}`"
+                      >
+                        <h5 class="text-xl font-bold text-white group-hover/link:text-transparent group-hover/link:bg-clip-text transition-all duration-300 leading-tight"
+                          :class="{
+                            'group-hover/link:bg-gradient-to-r group-hover/link:from-yellow-300 group-hover/link:to-yellow-500': ranking.rank === 1,
+                            'group-hover/link:bg-gradient-to-r group-hover/link:from-slate-300 group-hover/link:to-slate-500': ranking.rank === 2,
+                            'group-hover/link:bg-gradient-to-r group-hover/link:from-orange-300 group-hover/link:to-orange-500': ranking.rank === 3,
+                            'group-hover/link:bg-gradient-to-r group-hover/link:from-purple-300 group-hover/link:to-pink-400': ranking.rank > 3
+                          }"
+                        >
+                          {{ ranking.serverName }}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline ml-2 opacity-0 group-hover/link:opacity-100 transition-opacity transform group-hover/link:translate-x-1">
+                            <path d="m9 18 6-6-6-6"/>
+                          </svg>
+                        </h5>
+                      </router-link>
+                    </div>
+
+                    <!-- Ping Display -->
+                    <div class="text-center space-y-3">
+                      <div class="text-xs uppercase tracking-widest font-bold opacity-60">AVERAGE PING</div>
+                      <div class="flex items-center justify-center gap-2">
+                        <div 
+                          class="w-2 h-2 rounded-full animate-pulse"
+                          :class="{
+                            'bg-green-400': ranking.averagePing < 50,
+                            'bg-yellow-400': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                            'bg-red-400': ranking.averagePing >= 100
+                          }"
+                        ></div>
+                        <div 
+                          class="text-2xl font-black"
                           :class="{
                             'text-green-400': ranking.averagePing < 50,
                             'text-yellow-400': ranking.averagePing >= 50 && ranking.averagePing < 100,
                             'text-red-400': ranking.averagePing >= 100
                           }"
                         >
-                          {{ ranking.averagePing }}ms
+                          {{ ranking.averagePing }}<span class="text-base opacity-60">ms</span>
                         </div>
                       </div>
                     </div>
 
-                    <!-- Performance Bar -->
-                    <div class="space-y-2">
-                      <div class="flex justify-between items-center">
-                        <span class="text-xs text-slate-400 uppercase tracking-wide font-medium">Performance</span>
-                        <span class="text-xs text-slate-300">{{ Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1))) }}%</span>
-                      </div>
-                      <div class="w-full bg-slate-700 rounded-full h-2">
-                        <div 
-                          class="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-500"
-                          :style="{ width: Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1))) + '%' }"
-                        ></div>
-                      </div>
-                    </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex gap-2 pt-2">
-                      <button
-                        @click="toggleServerExpansion(ranking.serverGuid)"
-                        class="flex-1 px-3 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-white text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Action Button - VIEW MAPS functionality -->
+                    <button
+                      @click="toggleServerExpansion(ranking.serverGuid)"
+                      class="w-full mt-6 px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-all duration-300 transform hover:scale-105 active:scale-95"
+                      :class="{
+                        'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-300 hover:from-yellow-500/30 hover:to-yellow-600/30 hover:border-yellow-400/50 shadow-lg shadow-yellow-500/10': ranking.rank === 1,
+                        'bg-gradient-to-r from-slate-500/20 to-slate-600/20 border border-slate-500/30 text-slate-300 hover:from-slate-500/30 hover:to-slate-600/30 hover:border-slate-400/50 shadow-lg shadow-slate-500/10': ranking.rank === 2,
+                        'bg-gradient-to-r from-orange-500/20 to-orange-600/20 border border-orange-500/30 text-orange-300 hover:from-orange-500/30 hover:to-orange-600/30 hover:border-orange-400/50 shadow-lg shadow-orange-500/10': ranking.rank === 3,
+                        'bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/30 text-slate-300 hover:from-slate-600/60 hover:to-slate-700/60 hover:border-slate-500/50 shadow-lg shadow-slate-900/20': ranking.rank > 3
+                      }"
+                    >
+                      <div class="flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:rotate-12">
                           <path d="M9 19c-5 0-8-3-8-7s3-7 8-7 8 3 8 7-3 7-8 7"/>
                           <path d="m13.5 10.5 2.5-2.5"/>
                           <path d="m13.5 13.5 2.5 2.5"/>
                         </svg>
                         {{ expandedServerId === ranking.serverGuid ? 'Hide Maps' : 'View Maps' }}
-                      </button>
-                    </div>
+                      </div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1714,7 +1826,7 @@ watch(
                 
                 <div class="p-6">
                   <div
-                    v-if="mapStatsLoading"
+                    v-if="mapStats.length === 0 && mapStatsLoading"
                     class="flex flex-col items-center justify-center p-12 space-y-4"
                   >
                     <div class="relative">
@@ -1726,8 +1838,18 @@ watch(
                   
                   <div
                     v-else-if="mapStats.length > 0"
-                    class="overflow-hidden"
+                    class="relative overflow-hidden"
                   >
+                    <!-- Loading Overlay for time range changes -->
+                    <div
+                      v-if="mapStatsLoading"
+                      class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-20 transition-all duration-200"
+                    >
+                      <div class="flex items-center gap-3 px-4 py-2 bg-slate-800/90 rounded-lg border border-slate-700">
+                        <div class="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-amber-400 font-medium text-sm">Updating...</span>
+                      </div>
+                    </div>
                     <!-- Map Stats Table -->
                     <table class="w-full border-collapse">
                       <!-- Table Header -->
@@ -2242,7 +2364,6 @@ watch(
             </div>
           </div>
         </div>
-
       </div>
       <div
         v-else
