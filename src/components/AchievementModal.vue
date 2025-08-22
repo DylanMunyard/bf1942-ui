@@ -34,7 +34,7 @@
             :src="getAchievementImage(achievement.achievementId)" 
             :alt="achievement.achievementName"
             class="modal-achievement-image"
-          >
+          />
         </div>
 
         <!-- Badge Description -->
@@ -97,6 +97,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
   </Teleport>
 </template>

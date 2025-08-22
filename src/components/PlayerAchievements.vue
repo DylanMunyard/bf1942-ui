@@ -359,7 +359,7 @@ onMounted(async () => {
       v-if="isLoading"
       class="flex flex-col items-center justify-center min-h-[200px] space-y-4"
     >
-      <div class="w-10 h-10 border-4 border-slate-600/30 border-t-yellow-500 rounded-full animate-spin" />
+      <div class="w-10 h-10 border-4 border-slate-600/30 border-t-yellow-500 rounded-full animate-spin"></div>
       <p class="text-slate-400 font-medium">Loading achievements...</p>
     </div>
     
@@ -400,7 +400,7 @@ onMounted(async () => {
                 :alt="'Kill streak ' + gamificationData.bestStreaks.bestSingleRoundStreak"
                 class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 rounded-lg"
                 @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-              >
+              />
             </div>
           </div>
 
@@ -429,7 +429,7 @@ onMounted(async () => {
                 :alt="'Kill streak ' + item.streak.streakCount"
                 class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 rounded-lg"
                 @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-              >
+              />
             </div>
           </div>
           
@@ -459,7 +459,7 @@ onMounted(async () => {
                 :src="getMilestoneImage(nextMilestone.milestone)" 
                 :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
                 class="w-full h-full object-contain filter grayscale-[0.3] brightness-110 transition-transform duration-300 group-hover:scale-110 rounded-lg"
-              >
+              />
             </div>
           </div>
           
@@ -493,7 +493,7 @@ onMounted(async () => {
                 :alt="achievement.achievementName"
                 class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 rounded-lg"
                 @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-              >
+              />
             </div>
           </div>
         </div>
@@ -574,7 +574,7 @@ onMounted(async () => {
               :src="getAchievementImage('kill_streak_' + selectedStreakGroup.streak.streakCount)" 
               :alt="selectedStreakGroup.streak.streakCount + ' Kill Streak'"
               class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50"
-            >
+            />
           </div>
 
           <!-- Badge Description -->
@@ -637,6 +637,7 @@ onMounted(async () => {
           </div>
         </div>
       </div>
+      </div>
     </Teleport>
 
     <!-- Achievement Modal -->
@@ -685,7 +686,7 @@ onMounted(async () => {
               :src="getMilestoneImage(nextMilestone.milestone)" 
               :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
               class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50 filter grayscale-[0.3] brightness-110"
-            >
+            />
           </div>
           
           <div class="grid gap-4">
@@ -710,6 +711,7 @@ onMounted(async () => {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </Teleport>
   </div>
