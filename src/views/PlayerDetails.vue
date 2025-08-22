@@ -1962,258 +1962,274 @@ watch(
           </div>
         </div>
 
-        <!-- Player Comparison section -->
-        <div
+        <!-- Player Comparison & Analysis Section -->
+        <div 
           v-if="playerStats"
-          class="bg-bf-background-soft border border-bf-border rounded-lg p-6 space-y-4 mt-8"
+          class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8"
         >
-          <h3
-            class="flex items-center justify-between text-xl font-bold text-bf-heading cursor-pointer hover:text-bf-primary transition-colors duration-200"
-            @click="toggleSimilarPlayersSection"
-          >
-            Player Comparison & Analysis
-            <span class="text-bf-text-muted">{{ similarSectionExpanded ? '▲' : '▼' }}</span>
-            <span
-              v-if="!similarSectionExpanded"
-              class="text-sm text-bf-text-muted ml-2"
-            >Click to find players like {{ playerName }}</span>
-          </h3>
-          <div v-if="similarSectionExpanded">
-            <!-- Detection Mode Selector -->
-            <div class="mb-6 p-1 bg-bf-card-bg/30 rounded-xl border border-bf-border/30 backdrop-blur-sm">
-              <div class="flex rounded-lg overflow-hidden shadow-lg">
-                <button 
-                  :class="[
-                    'flex-1 flex items-center justify-center gap-3 px-6 py-4 font-semibold transition-all duration-300 ease-out',
-                    detectionMode === 'default' 
-                      ? 'bg-gradient-to-r from-bf-primary to-cyan-500 text-white shadow-lg shadow-bf-primary/25 transform scale-105' 
-                      : 'bg-bf-card-bg/50 text-bf-text-secondary hover:bg-bf-card-bg/80 hover:text-bf-text-primary hover:shadow-md'
-                  ]"
-                  @click="setDetectionMode('default')"
+          <!-- Background Effects -->
+          <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5"></div>
+          <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl"></div>
+          <div class="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-purple-500/10 to-transparent rounded-full blur-2xl"></div>
+          
+          <div class="relative z-10 p-8 space-y-6">
+            <!-- Section Header -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div class="space-y-2">
+                <h3 
+                  class="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent cursor-pointer hover:from-cyan-300 hover:via-blue-300 hover:to-purple-300 transition-all duration-300"
+                  @click="toggleSimilarPlayersSection"
                 >
-                  <span class="text-xl">👥</span>
-                  <span class="hidden sm:inline">Similar Players</span>
-                  <span class="sm:hidden">Similar</span>
-                </button>
-                <button 
-                  :class="[
-                    'flex-1 flex items-center justify-center gap-3 px-6 py-4 font-semibold transition-all duration-300 ease-out',
-                    detectionMode === 'aliasdetection' 
-                      ? 'bg-gradient-to-r from-bf-primary to-cyan-500 text-white shadow-lg shadow-bf-primary/25 transform scale-105' 
-                      : 'bg-bf-card-bg/50 text-bf-text-secondary hover:bg-bf-card-bg/80 hover:text-bf-text-primary hover:shadow-md'
-                  ]"
-                  @click="setDetectionMode('aliasdetection')"
-                >
-                  <span class="text-xl">🔍</span>
-                  <span class="hidden sm:inline">Find Aliases</span>
-                  <span class="sm:hidden">Aliases</span>
-                </button>
+                  🔍 Player Intelligence & Analysis
+                </h3>
+                <p class="text-slate-400">Advanced behavioral pattern recognition and player comparison</p>
               </div>
-            </div>
-            
-            <!-- Filter Controls -->
-            <div
-              v-if="similarPlayers.length > 0 && targetPlayerStats"
-              class="mb-6 p-4 bg-bf-card-bg/20 rounded-xl border border-bf-border/20 backdrop-blur-sm"
-            >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <span class="text-sm font-medium text-bf-text-secondary">🔧 Filters</span>
-                  <div class="h-4 w-px bg-bf-border/30"></div>
+              <div class="flex items-center gap-3">
+                <div class="text-slate-400">{{ similarSectionExpanded ? '▲ Collapse' : '▼ Expand' }}</div>
+                <div
+                  v-if="!similarSectionExpanded"
+                  class="hidden lg:block text-sm text-slate-500 italic"
+                >
+                  Click to find players like {{ playerName }}
                 </div>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <span class="text-sm font-medium text-bf-text-primary group-hover:text-bf-primary transition-colors">
-                    Show only comparable data
-                  </span>
-                  <div class="relative">
-                    <input
-                      v-model="showOnlyComparable"
-                      type="checkbox"
-                      class="sr-only"
-                    >
-                    <div :class="[
-                      'relative w-11 h-6 rounded-full border transition-all duration-300 ease-out',
-                      showOnlyComparable 
-                        ? 'bg-gradient-to-r from-bf-primary to-cyan-500 border-bf-primary shadow-lg shadow-bf-primary/25' 
-                        : 'bg-bf-card-bg/50 border-bf-border/50'
-                    ]">
-                      <div :class="[
-                        'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ease-out',
-                        showOnlyComparable ? 'transform translate-x-5' : 'transform translate-x-0'
-                      ]"></div>
-                    </div>
-                  </div>
-                </label>
               </div>
             </div>
+            <div v-if="similarSectionExpanded" class="space-y-6">
+              <!-- Detection Mode Selector -->
+              <div class="p-1 bg-slate-800/40 rounded-xl border border-slate-600/50 backdrop-blur-sm">
+                <div class="flex rounded-lg overflow-hidden">
+                  <button 
+                    :class="[
+                      'flex-1 flex items-center justify-center gap-3 px-6 py-4 font-semibold transition-all duration-300 ease-out',
+                      detectionMode === 'default' 
+                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25' 
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 hover:text-white hover:shadow-md'
+                    ]"
+                    @click="setDetectionMode('default')"
+                  >
+                    <span class="text-xl">👥</span>
+                    <span class="hidden sm:inline">Similar Players</span>
+                    <span class="sm:hidden">Similar</span>
+                  </button>
+                  <button 
+                    :class="[
+                      'flex-1 flex items-center justify-center gap-3 px-6 py-4 font-semibold transition-all duration-300 ease-out',
+                      detectionMode === 'aliasdetection' 
+                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25' 
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 hover:text-white hover:shadow-md'
+                    ]"
+                    @click="setDetectionMode('aliasdetection')"
+                  >
+                    <span class="text-xl">🔍</span>
+                    <span class="hidden sm:inline">Find Aliases</span>
+                    <span class="sm:hidden">Aliases</span>
+                  </button>
+                </div>
+              </div>
             
-            <div
-              v-if="loadingSimilarPlayers"
-              class="flex flex-col items-center justify-center p-8 bg-bf-card-bg/30 rounded-xl border border-bf-border/30 backdrop-blur-sm"
-            >
-              <div class="w-8 h-8 border-2 border-bf-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p class="text-bf-text-secondary font-medium animate-pulse">Loading similar players...</p>
-            </div>
-            <div
-              v-else-if="similarPlayersError"
-              class="p-6 bg-red-500/10 border border-red-500/30 rounded-xl backdrop-blur-sm"
-            >
-              <p class="text-red-400 font-medium flex items-center gap-2">
-                <span class="text-xl">⚠️</span>
-                {{ similarPlayersError }}
-              </p>
-            </div>
-            <div
-              v-else-if="similarPlayers.length > 0 && targetPlayerStats"
-              class="space-y-6"
-            >
-              <!-- Comparison cards for each similar player -->
+              <!-- Filter Controls -->
               <div
-                v-for="(similarPlayer, idx) in similarPlayers"
-                :key="idx"
-                :class="[
-                  'group relative overflow-hidden rounded-xl border transition-all duration-500 ease-out',
-                  'bg-gradient-to-br from-bf-card-bg/40 via-bf-card-bg/30 to-bf-card-bg/20 backdrop-blur-md',
-                  'border-bf-border/30 hover:border-bf-primary/40',
-                  'shadow-lg hover:shadow-2xl hover:shadow-bf-primary/10',
-                  isPlayerCardExpanded(idx) 
-                    ? 'ring-2 ring-bf-primary/30 shadow-2xl shadow-bf-primary/20 transform scale-[1.02]' 
-                    : 'hover:transform hover:scale-[1.01]'
-                ]"
+                v-if="similarPlayers.length > 0 && targetPlayerStats"
+                class="p-4 bg-slate-800/40 rounded-xl border border-slate-600/50 backdrop-blur-sm"
               >
-                <!-- Animated background gradient -->
-                <div class="absolute inset-0 bg-gradient-to-br from-bf-primary/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                <div 
-                  class="relative p-6 cursor-pointer"
-                  @click="togglePlayerCard(idx)"
-                >
-                  <div class="flex items-center justify-between mb-4">
-                    <div class="flex-1">
-                      <h4 class="text-lg font-bold text-bf-primary mb-1">
-                        {{ targetPlayerStats.playerName }}
-                      </h4>
-                      <span class="text-xs font-medium text-bf-text-secondary uppercase tracking-wide">Target Player</span>
-                    </div>
-                    
-                    <div class="flex items-center gap-4 mx-6">
-                      <span class="text-bf-text-muted font-bold text-2xl">VS</span>
-                      <div 
-                        class="px-3 py-1.5 rounded-full text-white font-bold text-sm shadow-lg border border-white/20"
-                        :style="{ backgroundColor: similarityColor(similarPlayer.similarityScore) }"
-                      >
-                        {{ (similarPlayer.similarityScore * 100).toFixed(0) }}%
-                      </div>
-                    </div>
-                    
-                    <div class="flex-1 text-right">
-                      <router-link
-                        :to="{ name: 'player-comparison', query: { player1: playerName, player2: similarPlayer.playerName } }"
-                        class="text-lg font-bold text-white hover:text-cyan-300 transition-colors duration-200 block mb-1"
-                        @click.stop
-                      >
-                        {{ similarPlayer.playerName }}
-                      </router-link>
-                      <span class="text-xs font-medium text-bf-text-secondary uppercase tracking-wide">
-                        {{ detectionMode === 'aliasdetection' ? 'Potential Alias' : 'Similar Player' }}
-                      </span>
-                    </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm font-medium text-slate-300">🔧 Filters</span>
+                    <div class="h-4 w-px bg-slate-600"></div>
                   </div>
-                  
-                  <!-- Compact stats summary when collapsed -->
-                  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-bf-card-bg/20 rounded-lg border border-bf-border/20 mb-4">
-                    <div class="flex flex-col items-center p-3 bg-bf-card-bg/30 rounded-lg border border-bf-border/20">
-                      <span class="text-xs font-medium text-bf-text-secondary mb-1 uppercase tracking-wide">K/D Ratio</span>
-                      <div class="flex items-center gap-2">
-                        <span class="text-sm font-bold text-bf-primary">{{ targetPlayerStats.killDeathRatio.toFixed(2) }}</span>
-                        <span class="text-xs text-bf-text-muted">vs</span>
-                        <span class="text-sm font-bold text-white">{{ similarPlayer.killDeathRatio.toFixed(2) }}</span>
-                      </div>
-                    </div>
-                    <div class="flex flex-col items-center p-3 bg-bf-card-bg/30 rounded-lg border border-bf-border/20">
-                      <span class="text-xs font-medium text-bf-text-secondary mb-1 uppercase tracking-wide">Kills/Min</span>
-                      <div class="flex items-center gap-2">
-                        <span class="text-sm font-bold text-bf-primary">{{ targetPlayerStats.killsPerMinute.toFixed(2) }}</span>
-                        <span class="text-xs text-bf-text-muted">vs</span>
-                        <span class="text-sm font-bold text-white">{{ similarPlayer.killsPerMinute.toFixed(2) }}</span>
-                      </div>
-                    </div>
-                    <div class="flex flex-col items-center p-3 bg-bf-card-bg/30 rounded-lg border border-bf-border/20">
-                      <span class="text-xs font-medium text-bf-text-secondary mb-1 uppercase tracking-wide">Server Match</span>
-                      <span :class="[
-                        'text-sm font-bold',
-                        targetPlayerStats.favoriteServerName === similarPlayer.favoriteServerName 
-                          ? 'text-green-400' 
-                          : 'text-red-400'
-                      ]">
-                        {{ targetPlayerStats.favoriteServerName === similarPlayer.favoriteServerName ? '✓ Same' : '✗ Different' }}
-                      </span>
-                    </div>
-                    <div class="flex flex-col items-center p-3 bg-bf-card-bg/30 rounded-lg border border-bf-border/20">
-                      <span class="text-xs font-medium text-bf-text-secondary mb-1 uppercase tracking-wide">Common Servers</span>
-                      <span class="text-sm font-bold text-cyan-400">
-                        {{ getCommonServers(targetPlayerStats, similarPlayer).length }}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <!-- Key similarity reasons - always show top 2 -->
-                  <div class="mb-4">
-                    <div class="flex flex-wrap gap-2 mb-3">
-                      <div
-                        v-for="(reason, rIdx) in similarPlayer.similarityReasons.slice(0, 2)"
-                        :key="rIdx"
-                        class="px-3 py-1.5 bg-gradient-to-r from-bf-primary/20 to-cyan-500/20 border border-bf-primary/30 rounded-full text-xs font-medium text-bf-primary"
-                      >
-                        {{ reason }}
-                      </div>
-                      <div
-                        v-if="similarPlayer.similarityReasons.length > 2"
-                        class="px-3 py-1.5 bg-bf-text-muted/20 border border-bf-text-muted/30 rounded-full text-xs font-medium text-bf-text-muted"
-                      >
-                        +{{ similarPlayer.similarityReasons.length - 2 }} more
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Expand/collapse indicator -->
-                  <div class="flex items-center justify-between pt-2 border-t border-bf-border/20">
-                    <span class="text-xs text-bf-text-secondary">
-                      {{ isPlayerCardExpanded(idx) ? 'Click to collapse detailed analysis' : 'Click for detailed comparison' }}
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <span class="text-sm font-medium text-slate-300 group-hover:text-cyan-400 transition-colors">
+                      Show only comparable data
                     </span>
-                    <div class="flex items-center gap-2">
-                      <div class="w-2 h-2 bg-bf-primary rounded-full animate-pulse"></div>
-                      <span class="text-bf-text-muted text-lg">{{ isPlayerCardExpanded(idx) ? '▲' : '▼' }}</span>
+                    <div class="relative">
+                      <input
+                        v-model="showOnlyComparable"
+                        type="checkbox"
+                        class="sr-only"
+                      >
+                      <div :class="[
+                        'relative w-11 h-6 rounded-full border transition-all duration-300 ease-out',
+                        showOnlyComparable 
+                          ? 'bg-gradient-to-r from-cyan-500 to-blue-500 border-cyan-400 shadow-lg shadow-cyan-500/25' 
+                          : 'bg-slate-700 border-slate-600'
+                      ]">
+                        <div :class="[
+                          'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ease-out',
+                          showOnlyComparable ? 'transform translate-x-5' : 'transform translate-x-0'
+                        ]"></div>
+                      </div>
                     </div>
-                  </div>
+                  </label>
+                </div>
+              </div>
+            
+              <div
+                v-if="loadingSimilarPlayers"
+                class="flex flex-col items-center justify-center p-8 bg-slate-800/40 rounded-xl border border-slate-600/50 backdrop-blur-sm"
+              >
+                <div class="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p class="text-slate-300 font-medium animate-pulse">Loading similar players...</p>
+              </div>
+              <div
+                v-else-if="similarPlayersError"
+                class="p-6 bg-red-500/10 border border-red-400/50 rounded-xl backdrop-blur-sm"
+              >
+                <p class="text-red-300 font-medium flex items-center gap-2">
+                  <span class="text-xl">⚠️</span>
+                  {{ similarPlayersError }}
+                </p>
+              </div>
+              <div
+                v-else-if="similarPlayers.length > 0 && targetPlayerStats"
+                class="space-y-4"
+              >
+                <!-- Comparison cards for each similar player -->
+                <div
+                  v-for="(similarPlayer, idx) in similarPlayers"
+                  :key="idx"
+                  :class="[
+                    'group relative overflow-hidden rounded-xl border transition-all duration-500 ease-out',
+                    'bg-gradient-to-br from-slate-800/70 via-slate-800/50 to-slate-900/50 backdrop-blur-md',
+                    'border-slate-600/50 hover:border-cyan-400/60',
+                    'shadow-lg hover:shadow-xl hover:shadow-cyan-500/10',
+                    isPlayerCardExpanded(idx) 
+                      ? 'ring-2 ring-cyan-400/50 shadow-xl shadow-cyan-500/20 transform scale-[1.01]' 
+                      : 'hover:transform hover:scale-[1.005]'
+                  ]"
+                >
+                  <!-- Animated background gradient -->
+                  <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <div 
+                    class="relative p-6 cursor-pointer"
+                    @click="togglePlayerCard(idx)"
+                  >
+                    <div class="flex items-center justify-between mb-4">
+                      <div class="flex-1">
+                        <h4 class="text-lg font-bold text-cyan-400 mb-1">
+                          {{ targetPlayerStats.playerName }}
+                        </h4>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">Target Player</span>
+                      </div>
+                      
+                      <div class="flex items-center gap-4 mx-6">
+                        <span class="text-slate-400 font-bold text-2xl">VS</span>
+                        <div 
+                          class="px-3 py-1.5 rounded-full text-white font-bold text-sm shadow-lg border border-white/20"
+                          :style="{ backgroundColor: similarityColor(similarPlayer.similarityScore) }"
+                        >
+                          {{ (similarPlayer.similarityScore * 100).toFixed(0) }}%
+                        </div>
+                      </div>
+                      
+                      <div class="flex-1 text-right">
+                        <router-link
+                          :to="{ name: 'player-comparison', query: { player1: playerName, player2: similarPlayer.playerName } }"
+                          class="text-lg font-bold text-white hover:text-cyan-300 transition-colors duration-200 block mb-1"
+                          @click.stop
+                        >
+                          {{ similarPlayer.playerName }}
+                        </router-link>
+                        <span class="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                          {{ detectionMode === 'aliasdetection' ? 'Potential Alias' : 'Similar Player' }}
+                        </span>
+                      </div>
+                    </div>
+                  
+                    <!-- Compact stats summary when collapsed -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-slate-800/30 rounded-lg border border-slate-700/30 mb-4">
+                      <div class="flex flex-col items-center p-3 bg-slate-700/40 rounded-lg border border-slate-600/30">
+                        <span class="text-xs font-medium text-slate-400 mb-1 uppercase tracking-wide">K/D Ratio</span>
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm font-bold text-cyan-400">{{ targetPlayerStats.killDeathRatio.toFixed(2) }}</span>
+                          <span class="text-xs text-slate-500">vs</span>
+                          <span class="text-sm font-bold text-slate-200">{{ similarPlayer.killDeathRatio.toFixed(2) }}</span>
+                        </div>
+                      </div>
+                      <div class="flex flex-col items-center p-3 bg-slate-700/40 rounded-lg border border-slate-600/30">
+                        <span class="text-xs font-medium text-slate-400 mb-1 uppercase tracking-wide">Kills/Min</span>
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm font-bold text-cyan-400">{{ targetPlayerStats.killsPerMinute.toFixed(2) }}</span>
+                          <span class="text-xs text-slate-500">vs</span>
+                          <span class="text-sm font-bold text-slate-200">{{ similarPlayer.killsPerMinute.toFixed(2) }}</span>
+                        </div>
+                      </div>
+                      <div class="flex flex-col items-center p-3 bg-slate-700/40 rounded-lg border border-slate-600/30">
+                        <span class="text-xs font-medium text-slate-400 mb-1 uppercase tracking-wide">Server Match</span>
+                        <span :class="[
+                          'text-sm font-bold',
+                          targetPlayerStats.favoriteServerName === similarPlayer.favoriteServerName 
+                            ? 'text-green-400' 
+                            : 'text-orange-400'
+                        ]">
+                          {{ targetPlayerStats.favoriteServerName === similarPlayer.favoriteServerName ? '✓ Same' : '✗ Different' }}
+                        </span>
+                      </div>
+                      <div class="flex flex-col items-center p-3 bg-slate-700/40 rounded-lg border border-slate-600/30">
+                        <span class="text-xs font-medium text-slate-400 mb-1 uppercase tracking-wide">Common Servers</span>
+                        <span class="text-sm font-bold text-purple-400">
+                          {{ getCommonServers(targetPlayerStats, similarPlayer).length }}
+                        </span>
+                      </div>
+                    </div>
+                  
+                    <!-- Key similarity reasons - always show top 2 -->
+                    <div class="mb-4">
+                      <div class="flex flex-wrap gap-2 mb-3">
+                        <div
+                          v-for="(reason, rIdx) in similarPlayer.similarityReasons.slice(0, 2)"
+                          :key="rIdx"
+                          class="px-3 py-1.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/40 rounded-full text-xs font-medium text-cyan-300"
+                        >
+                          {{ reason }}
+                        </div>
+                        <div
+                          v-if="similarPlayer.similarityReasons.length > 2"
+                          class="px-3 py-1.5 bg-slate-600/30 border border-slate-500/40 rounded-full text-xs font-medium text-slate-400"
+                        >
+                          +{{ similarPlayer.similarityReasons.length - 2 }} more
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Expand/collapse indicator -->
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-600/30">
+                      <span class="text-xs text-slate-400">
+                        {{ isPlayerCardExpanded(idx) ? 'Click to collapse detailed analysis' : 'Click for detailed comparison' }}
+                      </span>
+                      <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+                        <span class="text-slate-400 text-lg">{{ isPlayerCardExpanded(idx) ? '▲' : '▼' }}</span>
+                      </div>
+                    </div>
                 </div>
 
-                <!-- Detailed comparison stats - only show when expanded -->
-                <div 
-                  v-if="isPlayerCardExpanded(idx)"
-                  class="border-t border-bf-border/20 bg-gradient-to-br from-bf-card-bg/10 via-transparent to-bf-card-bg/5 rounded-b-xl"
-                >
+                  <!-- Detailed comparison stats - only show when expanded -->
+                  <div 
+                    v-if="isPlayerCardExpanded(idx)"
+                    class="border-t border-slate-600/30 bg-gradient-to-br from-slate-800/50 via-slate-800/30 to-slate-900/30 rounded-b-xl"
+                  >
                   <!-- Advanced Performance Analytics -->
                   <div class="p-6 space-y-8">
                     <div class="relative">
                       <div class="flex items-center gap-3 mb-6">
-                        <div class="w-8 h-8 bg-gradient-to-r from-bf-primary to-cyan-500 rounded-lg flex items-center justify-center">
+                        <div class="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
                           <span class="text-white text-sm font-bold">📊</span>
                         </div>
-                        <h5 class="text-lg font-bold text-bf-heading">
+                        <h5 class="text-lg font-bold text-slate-200">
                           Performance Analytics
                         </h5>
                       </div>
                       
                       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div class="relative overflow-hidden bg-gradient-to-br from-bf-card-bg/40 to-bf-card-bg/20 p-6 rounded-xl border border-bf-border/30 hover:shadow-lg transition-all duration-300">
+                        <div class="relative overflow-hidden bg-gradient-to-br from-slate-700/50 to-slate-800/40 p-6 rounded-xl border border-slate-600/40 hover:shadow-lg transition-all duration-300">
                           <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent"></div>
                           <div class="relative">
-                            <span class="text-xs font-medium text-bf-text-secondary mb-2 block uppercase tracking-widest">Kill/Death Performance</span>
+                            <span class="text-xs font-medium text-slate-400 mb-2 block uppercase tracking-widest">Kill/Death Performance</span>
                             <div class="flex items-center justify-between mb-3">
-                              <span class="text-2xl font-bold text-bf-primary">{{ targetPlayerStats.killDeathRatio.toFixed(2) }}</span>
-                              <div class="text-bf-text-muted px-2">VS</div>
-                              <span class="text-2xl font-bold text-white">{{ similarPlayer.killDeathRatio.toFixed(2) }}</span>
+                              <span class="text-2xl font-bold text-cyan-400">{{ targetPlayerStats.killDeathRatio.toFixed(2) }}</span>
+                              <div class="text-slate-400 px-2">VS</div>
+                              <span class="text-2xl font-bold text-slate-200">{{ similarPlayer.killDeathRatio.toFixed(2) }}</span>
                             </div>
                             <div class="flex items-center justify-center">
                               <div :class="[
@@ -2586,15 +2602,16 @@ watch(
                 </div>
               </div>
             </div>
-            <div
-              v-else
-              class="text-center p-8 bg-bf-card-bg/20 rounded-xl border border-bf-border/20 backdrop-blur-sm"
-            >
-              <div class="w-16 h-16 mx-auto mb-4 bg-bf-text-muted/20 rounded-full flex items-center justify-center">
-                <span class="text-2xl">🔍</span>
+              <div
+                v-else
+                class="text-center p-8 bg-slate-800/30 rounded-xl border border-slate-700/40 backdrop-blur-sm"
+              >
+                <div class="w-16 h-16 mx-auto mb-4 bg-slate-600/30 rounded-full flex items-center justify-center">
+                  <span class="text-2xl">🔍</span>
+                </div>
+                <p class="text-slate-300 font-medium">No similar players found.</p>
+                <p class="text-sm text-slate-400 mt-1">Try adjusting your detection mode or filter settings.</p>
               </div>
-              <p class="text-bf-text-secondary font-medium">No similar players found.</p>
-              <p class="text-sm text-bf-text-muted mt-1">Try adjusting your detection mode or filter settings.</p>
             </div>
           </div>
         </div>
