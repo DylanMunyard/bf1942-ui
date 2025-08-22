@@ -1578,67 +1578,68 @@ watch(
             >
               <!-- Server Rankings Header -->
               <div class="space-y-2">
-                <h4 class="text-2xl font-bold text-white flex items-center gap-3">
+                <h4 class="text-3xl font-bold bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text text-transparent flex items-center gap-3">
                   🏅 Server Rankings
                 </h4>
                 <p class="text-slate-400">Your competitive standings across servers</p>
               </div>
-              <div class="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden">
-              <table class="w-full">
-                <thead class="bg-bf-background-mute">
-                  <tr class="border-b border-bf-border">
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-bf-heading">Server Name</th>
-                    <th class="hidden md:table-cell px-4 py-3 text-left text-sm font-semibold text-bf-heading">
-                      Rank
-                    </th>
-                    <th class="hidden md:table-cell px-4 py-3 text-left text-sm font-semibold text-bf-heading">
-                      Score
-                    </th>
-                    <th class="hidden md:table-cell px-4 py-3 text-left text-sm font-semibold text-bf-heading">
-                      Ping
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-bf-border">
-                  <template
-                    v-for="ranking in playerStats.insights.serverRankings"
-                    :key="ranking.serverGuid"
-                  >
-                    <tr
-                      class="hover:bg-bf-background-soft cursor-pointer transition-colors duration-200"
-                      @click="toggleServerExpansion(ranking.serverGuid)"
-                    >
-                      <td class="px-4 py-3">
-                        <div class="flex items-center space-x-2">
-                          <span class="text-bf-text-muted">{{ expandedServerId === ranking.serverGuid ? '▼' : '▶' }}</span>
-                          <span class="font-medium text-bf-text hover:text-bf-primary transition-colors duration-200">{{ ranking.serverName }}</span>
+              
+              <!-- Server Rankings Cards Grid -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div
+                  v-for="ranking in playerStats.insights.serverRankings"
+                  :key="ranking.serverGuid"
+                  class="group relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02]"
+                >
+                  <!-- Card Background Effects -->
+                  <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  <div class="relative z-10 p-6 space-y-4">
+                    <!-- Server Header with Rank -->
+                    <div class="flex items-start gap-3">
+                      <!-- Rank Badge -->
+                      <div class="flex-shrink-0">
+                        <div class="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg shadow-lg">
+                          <div class="text-white font-bold text-sm text-center">
+                            <div class="text-xs uppercase tracking-wide opacity-80">RANK</div>
+                            <div class="text-lg font-black">#{{ ranking.rankDisplay }}</div>
+                          </div>
                         </div>
-                        <div class="md:hidden mt-2 flex flex-wrap items-center gap-2 text-sm text-bf-text-muted">
-                          <span>Rank: {{ ranking.rankDisplay }}</span>
-                          <span>•</span>
-                          <span>Score: {{ ranking.scoreDisplay }}</span>
-                          <span>•</span>
-                          <span>
-                            <span
-                              :class="{
-                                'text-green-400': ranking.averagePing < 50,
-                                'text-yellow-400': ranking.averagePing >= 50 && ranking.averagePing < 100,
-                                'text-red-400': ranking.averagePing >= 100
-                              }"
-                            >
-                              {{ ranking.averagePing }}ms
-                            </span>
-                          </span>
+                      </div>
+                      <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg p-2 group-hover:from-amber-600 group-hover:to-orange-600 transition-all duration-300">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full text-white">
+                            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <path d="M16 10a4 4 0 01-8 0"/>
+                          </svg>
                         </div>
-                      </td>
-                      <td class="hidden md:table-cell px-4 py-3">
-                        {{ ranking.rankDisplay }}
-                      </td>
-                      <td class="hidden md:table-cell px-4 py-3">
-                        {{ ranking.scoreDisplay }}
-                      </td>
-                      <td class="hidden md:table-cell px-4 py-3">
-                        <span
+                      </div>
+                      
+                      <div class="flex-1 min-w-0 space-y-2">
+                        <router-link
+                          :to="`/servers/${encodeURIComponent(ranking.serverName)}`"
+                          class="group/link font-bold text-white hover:text-amber-400 transition-colors duration-200 line-clamp-2 leading-tight block"
+                          :title="`View server details for ${ranking.serverName}`"
+                        >
+                          {{ ranking.serverName }}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline ml-1 opacity-0 group-hover/link:opacity-100 transition-opacity">
+                            <path d="m9 18 6-6-6-6"/>
+                          </svg>
+                        </router-link>
+                      </div>
+                    </div>
+
+                    <!-- Performance Metrics -->
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="space-y-1">
+                        <div class="text-xs text-slate-400 uppercase tracking-wide font-medium">Score</div>
+                        <div class="text-lg font-bold text-white">{{ ranking.scoreDisplay }}</div>
+                      </div>
+                      <div class="space-y-1">
+                        <div class="text-xs text-slate-400 uppercase tracking-wide font-medium">Ping</div>
+                        <div class="text-lg font-bold"
                           :class="{
                             'text-green-400': ranking.averagePing < 50,
                             'text-yellow-400': ranking.averagePing >= 50 && ranking.averagePing < 100,
@@ -1646,112 +1647,188 @@ watch(
                           }"
                         >
                           {{ ranking.averagePing }}ms
-                        </span>
-                      </td>
-                    </tr>
-                  </template>
-                </tbody>
-              </table>
-              
-              <!-- Expanded map stats section - outside the table -->
-              <div
-                v-if="expandedServerId"
-                class="mt-4 p-4 bg-bf-background-mute border-t border-bf-border"
-              >
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0 mb-4">
-                  <span class="font-medium text-bf-text">Time Range:</span>
-                  <div class="flex space-x-2">
-                    <button
-                      v-for="option in timeRangeOptions"
-                      :key="option.value"
-                      :class="['px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200', selectedTimeRange === option.value ? 'bg-bf-primary text-white' : 'bg-bf-background text-bf-text hover:bg-bf-background-soft border border-bf-border']"
-                      @click="selectedTimeRange = option.value"
-                    >
-                      {{ option.label }}
-                    </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Performance Bar -->
+                    <div class="space-y-2">
+                      <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-400 uppercase tracking-wide font-medium">Performance</span>
+                        <span class="text-xs text-slate-300">{{ Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1))) }}%</span>
+                      </div>
+                      <div class="w-full bg-slate-700 rounded-full h-2">
+                        <div 
+                          class="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-500"
+                          :style="{ width: Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1))) + '%' }"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2 pt-2">
+                      <button
+                        @click="toggleServerExpansion(ranking.serverGuid)"
+                        class="flex-1 px-3 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-white text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M9 19c-5 0-8-3-8-7s3-7 8-7 8 3 8 7-3 7-8 7"/>
+                          <path d="m13.5 10.5 2.5-2.5"/>
+                          <path d="m13.5 13.5 2.5 2.5"/>
+                        </svg>
+                        {{ expandedServerId === ranking.serverGuid ? 'Hide Maps' : 'View Maps' }}
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div
-                  v-if="mapStatsLoading"
-                  class="flex flex-col items-center justify-center p-8 space-y-4"
-                >
-                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-bf-primary" />
-                  <p class="text-bf-text-muted">Loading map statistics...</p>
+              </div>
+              
+              <!-- Expanded Map Stats Section -->
+              <div
+                v-if="expandedServerId"
+                class="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden"
+              >
+                <div class="p-6 border-b border-slate-700/50">
+                  <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                    <div class="space-y-1">
+                      <h5 class="text-xl font-bold text-white">Map Performance</h5>
+                      <p class="text-slate-400 text-sm">{{ expandedServerName || 'Selected Server' }}</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        v-for="option in timeRangeOptions"
+                        :key="option.value"
+                        :class="[
+                          'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                          selectedTimeRange === option.value 
+                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg' 
+                            : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 border border-slate-600'
+                        ]"
+                        @click="selectedTimeRange = option.value"
+                      >
+                        {{ option.label }}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div
-                  v-else-if="mapStats.length > 0"
-                  class="space-y-4"
-                >
-                  <!-- Table view with horizontal scrolling for mobile -->
-                  <div class="overflow-x-auto">
-                    <table class="w-full min-w-full bg-bf-background border border-bf-border rounded-lg overflow-hidden">
-                      <thead>
-                        <tr>
-                          <th @click="changeMapStatsSort('mapName')" class="sortable">
-                            Map Name
-                            <span
-                              v-if="mapStatsSortField === 'mapName'"
-                              class="sort-indicator"
-                              :class="mapStatsSortDirection"
-                            >▲</span>
+                
+                <div class="p-6">
+                  <div
+                    v-if="mapStatsLoading"
+                    class="flex flex-col items-center justify-center p-12 space-y-4"
+                  >
+                    <div class="relative">
+                      <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-600"></div>
+                      <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-amber-500 absolute top-0"></div>
+                    </div>
+                    <p class="text-slate-400 font-medium">Loading map statistics...</p>
+                  </div>
+                  
+                  <div
+                    v-else-if="mapStats.length > 0"
+                    class="overflow-hidden"
+                  >
+                    <!-- Map Stats Table -->
+                    <table class="w-full border-collapse">
+                      <!-- Table Header -->
+                      <thead class="sticky top-0 z-10">
+                        <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+                          <th @click="changeMapStatsSort('mapName')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-amber-500/50">
+                            <div class="flex items-center gap-1.5">
+                              <span class="text-amber-400 text-xs">🗺️</span>
+                              <span class="font-mono font-bold">MAP</span>
+                              <span class="text-xs transition-transform duration-200" :class="{
+                                'text-amber-400 opacity-100': mapStatsSortField === 'mapName',
+                                'opacity-50': mapStatsSortField !== 'mapName',
+                                'rotate-0': mapStatsSortField === 'mapName' && mapStatsSortDirection === 'asc',
+                                'rotate-180': mapStatsSortField === 'mapName' && mapStatsSortDirection === 'desc'
+                              }">▲</span>
+                            </div>
                           </th>
-                          <th @click="changeMapStatsSort('totalScore')" class="sortable">
-                            Score
-                            <span
-                              v-if="mapStatsSortField === 'totalScore'"
-                              class="sort-indicator"
-                              :class="mapStatsSortDirection"
-                            >▲</span>
+                          <th @click="changeMapStatsSort('totalScore')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-yellow-500/50">
+                            <div class="flex items-center gap-1.5">
+                              <span class="text-yellow-400 text-xs">🏆</span>
+                              <span class="font-mono font-bold">SCORE</span>
+                              <span class="text-xs transition-transform duration-200" :class="{
+                                'text-yellow-400 opacity-100': mapStatsSortField === 'totalScore',
+                                'opacity-50': mapStatsSortField !== 'totalScore',
+                                'rotate-0': mapStatsSortField === 'totalScore' && mapStatsSortDirection === 'asc',
+                                'rotate-180': mapStatsSortField === 'totalScore' && mapStatsSortDirection === 'desc'
+                              }">▲</span>
+                            </div>
                           </th>
-                          <th @click="changeMapStatsSort('kdRatio')" class="sortable">
-                            K/D Ratio
-                            <span
-                              v-if="mapStatsSortField === 'kdRatio'"
-                              class="sort-indicator"
-                              :class="mapStatsSortDirection"
-                            >▲</span>
+                          <th @click="changeMapStatsSort('kdRatio')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-green-500/50">
+                            <div class="flex items-center gap-1.5">
+                              <span class="text-green-400 text-xs">⚔️</span>
+                              <span class="font-mono font-bold">K/D</span>
+                              <span class="text-xs transition-transform duration-200" :class="{
+                                'text-green-400 opacity-100': mapStatsSortField === 'kdRatio',
+                                'opacity-50': mapStatsSortField !== 'kdRatio',
+                                'rotate-0': mapStatsSortField === 'kdRatio' && mapStatsSortDirection === 'asc',
+                                'rotate-180': mapStatsSortField === 'kdRatio' && mapStatsSortDirection === 'desc'
+                              }">▲</span>
+                            </div>
                           </th>
-                          <th @click="changeMapStatsSort('totalKills')" class="sortable">
-                            Kills
-                            <span
-                              v-if="mapStatsSortField === 'totalKills'"
-                              class="sort-indicator"
-                              :class="mapStatsSortDirection"
-                            >▲</span>
+                          <th @click="changeMapStatsSort('totalKills')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-red-500/50">
+                            <div class="flex items-center gap-1.5">
+                              <span class="text-red-400 text-xs">🎯</span>
+                              <span class="font-mono font-bold">KILLS</span>
+                              <span class="text-xs transition-transform duration-200" :class="{
+                                'text-red-400 opacity-100': mapStatsSortField === 'totalKills',
+                                'opacity-50': mapStatsSortField !== 'totalKills',
+                                'rotate-0': mapStatsSortField === 'totalKills' && mapStatsSortDirection === 'asc',
+                                'rotate-180': mapStatsSortField === 'totalKills' && mapStatsSortDirection === 'desc'
+                              }">▲</span>
+                            </div>
                           </th>
-                          <th @click="changeMapStatsSort('totalDeaths')" class="sortable">
-                            Deaths
-                            <span
-                              v-if="mapStatsSortField === 'totalDeaths'"
-                              class="sort-indicator"
-                              :class="mapStatsSortDirection"
-                            >▲</span>
+                          <th @click="changeMapStatsSort('totalDeaths')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-purple-500/50">
+                            <div class="flex items-center gap-1.5">
+                              <span class="text-purple-400 text-xs">💀</span>
+                              <span class="font-mono font-bold">DEATHS</span>
+                              <span class="text-xs transition-transform duration-200" :class="{
+                                'text-purple-400 opacity-100': mapStatsSortField === 'totalDeaths',
+                                'opacity-50': mapStatsSortField !== 'totalDeaths',
+                                'rotate-0': mapStatsSortField === 'totalDeaths' && mapStatsSortDirection === 'asc',
+                                'rotate-180': mapStatsSortField === 'totalDeaths' && mapStatsSortDirection === 'desc'
+                              }">▲</span>
+                            </div>
                           </th>
-                          <th @click="changeMapStatsSort('sessionsPlayed')" class="sortable">
-                            Sessions
-                            <span
-                              v-if="mapStatsSortField === 'sessionsPlayed'"
-                              class="sort-indicator"
-                              :class="mapStatsSortDirection"
-                            >▲</span>
+                          <th @click="changeMapStatsSort('sessionsPlayed')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-blue-500/50">
+                            <div class="flex items-center gap-1.5">
+                              <span class="text-blue-400 text-xs">🎮</span>
+                              <span class="font-mono font-bold">SESSIONS</span>
+                              <span class="text-xs transition-transform duration-200" :class="{
+                                'text-blue-400 opacity-100': mapStatsSortField === 'sessionsPlayed',
+                                'opacity-50': mapStatsSortField !== 'sessionsPlayed',
+                                'rotate-0': mapStatsSortField === 'sessionsPlayed' && mapStatsSortDirection === 'asc',
+                                'rotate-180': mapStatsSortField === 'sessionsPlayed' && mapStatsSortDirection === 'desc'
+                              }">▲</span>
+                            </div>
                           </th>
-                          <th @click="changeMapStatsSort('totalPlayTimeMinutes')" class="sortable">
-                            Play Time
-                            <span
-                              v-if="mapStatsSortField === 'totalPlayTimeMinutes'"
-                              class="sort-indicator"
-                              :class="mapStatsSortDirection"
-                            >▲</span>
+                          <th @click="changeMapStatsSort('totalPlayTimeMinutes')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-cyan-500/50">
+                            <div class="flex items-center gap-1.5">
+                              <span class="text-cyan-400 text-xs">⏱️</span>
+                              <span class="font-mono font-bold">TIME</span>
+                              <span class="text-xs transition-transform duration-200" :class="{
+                                'text-cyan-400 opacity-100': mapStatsSortField === 'totalPlayTimeMinutes',
+                                'opacity-50': mapStatsSortField !== 'totalPlayTimeMinutes',
+                                'rotate-0': mapStatsSortField === 'totalPlayTimeMinutes' && mapStatsSortDirection === 'asc',
+                                'rotate-180': mapStatsSortField === 'totalPlayTimeMinutes' && mapStatsSortDirection === 'desc'
+                              }">▲</span>
+                            </div>
                           </th>
                         </tr>
                       </thead>
+
+                      <!-- Table Body -->
                       <tbody>
                         <tr
                           v-for="(map, mapIndex) in sortedMapStats"
                           :key="mapIndex"
-                          class="map-row"
+                          class="group transition-all duration-300 hover:bg-gradient-to-r hover:from-slate-800/40 hover:to-slate-900/40 border-b border-slate-800/50 hover:border-slate-700/50 hover:shadow-lg"
                         >
-                          <td class="map-name-cell">
+                          <!-- Map Name -->
+                          <td class="p-1.5">
                             <router-link 
                               :to="{
                                 path: `/players/${encodeURIComponent(playerName)}/sessions`,
@@ -1760,45 +1837,62 @@ watch(
                                   ...(expandedServerName && { server: expandedServerName })
                                 }
                               }"
-                              class="map-name-link"
+                              class="block group-hover:text-amber-400 transition-all duration-300 no-underline"
                             >
-                              {{ map.mapName }}
+                              <div class="font-bold text-slate-200 truncate max-w-xs text-sm">{{ map.mapName }}</div>
                             </router-link>
                           </td>
-                          <td class="score-cell">
-                            {{ map.totalScore }}
+
+                          <!-- Score -->
+                          <td class="p-1.5">
+                            <div class="font-mono text-sm font-bold text-yellow-400">{{ map.totalScore.toLocaleString() }}</div>
                           </td>
-                          <td class="kdr-cell">
-                            {{ calculateKDR(map.totalKills, map.totalDeaths) }}
+
+                          <!-- K/D Ratio -->
+                          <td class="p-1.5">
+                            <div class="font-mono text-sm font-bold text-green-400">{{ calculateKDR(map.totalKills, map.totalDeaths) }}</div>
                           </td>
-                          <td class="kills-cell">
-                            {{ map.totalKills }}
+
+                          <!-- Kills -->
+                          <td class="p-1.5">
+                            <div class="font-mono text-sm font-bold text-red-400">{{ map.totalKills }}</div>
                           </td>
-                          <td class="deaths-cell">
-                            {{ map.totalDeaths }}
+
+                          <!-- Deaths -->
+                          <td class="p-1.5">
+                            <div class="font-mono text-sm font-bold text-purple-400">{{ map.totalDeaths }}</div>
                           </td>
-                          <td class="sessions-cell">
-                            {{ map.sessionsPlayed }}
+
+                          <!-- Sessions -->
+                          <td class="p-1.5">
+                            <div class="font-mono text-sm font-bold text-blue-400">{{ map.sessionsPlayed }}</div>
                           </td>
-                          <td class="playtime-cell">
-                            {{ formatPlayTime(map.totalPlayTimeMinutes) }}
+
+                          <!-- Play Time -->
+                          <td class="p-1.5">
+                            <div class="font-mono text-sm font-bold text-cyan-400">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</div>
                           </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
-
-
-                </div>
-                <div
-                  v-else
-                  class="text-center text-bf-text-muted py-8"
-                >
-                  <p>No map statistics available for the selected time range.</p>
+                  
+                  <div
+                    v-else
+                    class="text-center py-12"
+                  >
+                    <div class="space-y-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-slate-500">
+                        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 011-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 011.52 0C14.51 3.81 17 5 19 5a1 1 0 011 1z"/>
+                        <path d="m9 12 2 2 4-4"/>
+                      </svg>
+                      <p class="text-slate-400 font-medium">No map statistics available for the selected time range</p>
+                      <p class="text-slate-500 text-sm">Try selecting a different time period</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
           </div>
         </div>
 
