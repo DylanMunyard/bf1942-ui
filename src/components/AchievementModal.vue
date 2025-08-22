@@ -5,7 +5,7 @@
       class="modal-overlay"
       @click="closeModal"
     >
-    <div
+      <div
       class="modal-content"
       @click.stop
     >

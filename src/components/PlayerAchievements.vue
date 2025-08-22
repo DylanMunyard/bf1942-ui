@@ -547,7 +547,7 @@ onMounted(async () => {
         class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-5"
         @click="closeStreakModal"
       >
-      <div
+        <div
         class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         @click.stop
       >
@@ -654,7 +654,7 @@ onMounted(async () => {
         class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-5"
         @click="closeNextMilestoneModal"
       >
-      <div 
+        <div 
         class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl overflow-hidden"
         @click.stop
       >
