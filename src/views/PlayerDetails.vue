@@ -1335,42 +1335,52 @@ watch(
               <!-- Activity Timeline Chart -->
               <div 
                 v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0"
-                class="space-y-4"
+                class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-purple-500/50 transition-all duration-300"
               >
-                <div class="flex items-center justify-between">
-                  <div class="space-y-1">
-                    <h4 class="text-xl font-bold text-white flex items-center gap-3">
-                      ⏰ Activity Timeline
-                      <span class="text-sm font-normal text-slate-400">
-                        ({{ daysBetween(playerStats.insights.startPeriod, playerStats.insights.endPeriod) }} days)
-                      </span>
-                    </h4>
-                    <p class="text-slate-400 text-sm">Gaming activity patterns by hour</p>
-                  </div>
-                </div>
+                <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
-                <!-- Compact Activity Chart -->
-                <div class="relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden">
-                  <!-- Time Period Background Zones -->
-                  <div class="absolute inset-0 flex">
-                    <div class="flex-1 bg-gradient-to-b from-blue-500/5 to-blue-600/5"></div>
-                    <div class="flex-1 bg-gradient-to-b from-yellow-500/5 to-orange-600/5"></div>
-                    <div class="flex-1 bg-gradient-to-b from-purple-500/5 to-indigo-600/5"></div>
+                <div class="relative z-10 p-6 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                        <span class="text-2xl">⏰</span>
+                      </div>
+                      <div>
+                        <h4 class="text-lg font-bold text-white">Typical online hours</h4>
+                        <p class="text-slate-400 text-sm">Last {{ daysBetween(playerStats.insights.startPeriod, playerStats.insights.endPeriod) }} days</p>
+                      </div>
+                    </div>
                   </div>
                   
-                  <!-- Compact Chart -->
-                  <div class="relative z-10 p-4 h-32">
-                    <Line
-                      :data="activityChartData"
-                      :options="activityChartOptions"
-                    />
+                  <!-- Activity Chart -->
+                  <div class="relative overflow-hidden bg-slate-900/50 rounded-lg border border-slate-600/30">
+                    <!-- Time Period Background Zones -->
+                    <div class="absolute inset-0 flex">
+                      <div class="flex-1 bg-gradient-to-b from-blue-500/5 to-blue-600/5"></div>
+                      <div class="flex-1 bg-gradient-to-b from-yellow-500/5 to-orange-600/5"></div>
+                      <div class="flex-1 bg-gradient-to-b from-purple-500/5 to-indigo-600/5"></div>
+                    </div>
+                    
+                    <!-- Chart -->
+                    <div class="relative z-10 p-4 h-32">
+                      <Line
+                        :data="activityChartData"
+                        :options="activityChartOptions"
+                      />
+                    </div>
                   </div>
                   
-                  <!-- Time Period Labels -->
-                  <div class="absolute bottom-2 left-0 right-0 flex justify-between px-4 text-xs text-slate-500">
-                    <span>🌙 Night</span>
-                    <span>☀️ Day</span>
-                    <span>🌆 Evening</span>
+                  <!-- Time Period Labels - Below Chart -->
+                  <div class="flex px-4 pb-2">
+                    <div class="flex-1 flex justify-center">
+                      <span class="text-xs text-slate-500">🌙 Night</span>
+                    </div>
+                    <div class="flex-1 flex justify-center">
+                      <span class="text-xs text-slate-500">☀️ Day</span>
+                    </div>
+                    <div class="flex-1 flex justify-center">
+                      <span class="text-xs text-slate-500">🌆 Evening</span>
+                    </div>
                   </div>
                 </div>
               </div>
