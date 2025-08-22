@@ -569,71 +569,79 @@ onMounted(async () => {
         </div>
         
         <div class="p-6">
-          <div class="flex justify-center mb-6">
-            <img 
-              :src="getAchievementImage('kill_streak_' + selectedStreakGroup.streak.streakCount)" 
-              :alt="selectedStreakGroup.streak.streakCount + ' Kill Streak'"
-              class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50"
-            />
-          </div>
-
-          <!-- Badge Description -->
-          <div
-            v-if="selectedStreakDescription"
-            class="mb-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50"
-          >
-            <h4 class="text-lg font-semibold text-slate-200 mb-2">Description</h4>
-            <p class="text-slate-300 leading-relaxed">{{ selectedStreakDescription }}</p>
+          <div class="flex flex-col items-center mb-6">
+            <div class="relative">
+              <img 
+                :src="getAchievementImage('kill_streak_' + selectedStreakGroup.streak.streakCount)" 
+                :alt="selectedStreakGroup.streak.streakCount + ' Kill Streak'"
+                class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50"
+              />
+              
+              <!-- Badge Description Overlay -->
+              <div
+                v-if="selectedStreakDescription"
+                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent backdrop-blur-md rounded-b-2xl p-4"
+              >
+                <p class="text-white text-sm leading-relaxed font-medium text-center drop-shadow-lg">{{ selectedStreakDescription }}</p>
+              </div>
+            </div>
           </div>
           
-          <div class="space-y-4">
-            <template
-              v-for="(streak, index) in selectedStreakGroup.allStreaks.sort((a, b) => new Date(b.streakStart).getTime() - new Date(a.streakStart).getTime())"
-              :key="index"
-            >
-              <!-- Streak timeline item -->
-              <div class="relative flex items-start">
-                <!-- Timeline line -->
-                <div v-if="index < selectedStreakGroup.allStreaks.length - 1" class="absolute left-2 top-0 w-0.5 h-full bg-slate-600 z-0"></div>
+          <!-- Gaming-style timeline with compact streak records -->
+          <div class="space-y-2">
+            <div class="text-sm font-semibold text-orange-400 mb-4 flex items-center gap-2">
+              <span class="w-1 h-4 bg-gradient-to-b from-orange-400 to-red-400 rounded-full"></span>
+              Recent {{ selectedStreakGroup.streak.streakCount }}-Kill Streak Records
+            </div>
+            
+            <!-- Compact grid layout for maximum records on screen -->
+            <div class="grid gap-2 max-h-96 overflow-y-auto custom-scrollbar">
+              <div
+                v-for="(streak, index) in selectedStreakGroup.allStreaks.sort((a, b) => new Date(b.streakStart).getTime() - new Date(a.streakStart).getTime()).slice(0, 12)"
+                :key="index"
+                class="group relative bg-gradient-to-r from-slate-800/40 to-slate-700/40 hover:from-orange-500/20 hover:to-red-500/20 rounded-lg border border-slate-600/50 hover:border-orange-500/50 transition-all duration-300 cursor-pointer overflow-hidden"
+                title="Click to view round report"
+                @click="navigateToRoundReport(streak)"
+              >
+                <!-- Animated background effect on hover -->
+                <div class="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
-                <!-- Timeline node -->
-                <div class="relative flex flex-col items-center mr-4 z-10">
-                  <div class="w-2 h-2 bg-orange-500 border-2 border-slate-800 rounded-full hover:scale-150 transition-transform duration-200 cursor-pointer"></div>
-                </div>
+                <!-- Timeline indicator dot -->
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-orange-400 to-red-400 rounded-r-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
-                <!-- Streak card -->
-                <div
-                  class="flex-1 bg-slate-800/30 hover:bg-slate-700/50 rounded-lg p-4 border border-transparent hover:border-slate-600 transition-all duration-200 cursor-pointer"
-                  title="View round report"
-                  @click="navigateToRoundReport(streak)"
-                >
-                  <div class="flex flex-wrap items-start gap-2">
-                    <span class="text-slate-400 font-medium text-sm">{{ formatRelativeTime(streak.streakStart) }}</span>
-                    <span class="text-slate-500">-</span>
-                    <div class="flex flex-col">
-                      <span class="text-slate-200 font-medium text-sm">{{ streak.mapName }}</span>
-                      <span class="text-slate-400 text-xs italic">
-                        {{ new Date(streak.streakStart.endsWith('Z') ? streak.streakStart : streak.streakStart + 'Z').toLocaleString() }}
+                <div class="relative z-10 p-3 pl-5 flex items-center justify-between">
+                  <div class="flex flex-col gap-1 min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                      <span class="text-slate-200 font-semibold text-sm truncate">{{ streak.mapName }}</span>
+                    </div>
+                    <div class="text-xs text-slate-400 flex items-center gap-2">
+                      <span class="bg-slate-700/50 px-2 py-0.5 rounded-full font-medium">{{ formatRelativeTime(streak.streakStart) }}</span>
+                      <span class="text-slate-500">•</span>
+                      <span class="font-mono text-xs opacity-75">
+                        {{ new Date(streak.streakStart.endsWith('Z') ? streak.streakStart : streak.streakStart + 'Z').toLocaleDateString() }}
                       </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Performance indicator -->
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="text-orange-400 opacity-75 group-hover:opacity-100 transition-opacity">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                      </svg>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <!-- Time gap as a separate timeline item -->
+              
+              <!-- Show more indicator if there are additional records -->
               <div 
-                v-if="index < selectedStreakGroup.allStreaks.length - 1 && getTimeGap(streak, selectedStreakGroup.allStreaks[index + 1])" 
-                class="flex justify-center py-2 ml-7"
+                v-if="selectedStreakGroup.allStreaks.length > 12"
+                class="text-center py-3 text-slate-400 text-xs font-medium bg-slate-800/20 rounded-lg border border-slate-600/30 border-dashed"
               >
-                <div class="flex items-center gap-2 min-w-[200px] max-w-[400px]">
-                  <div class="flex-1 h-0.5 bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
-                  <div class="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 italic whitespace-nowrap">
-                    {{ getTimeGap(streak, selectedStreakGroup.allStreaks[index + 1]) }}
-                  </div>
-                  <div class="flex-1 h-0.5 bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
-                </div>
+                + {{ selectedStreakGroup.allStreaks.length - 12 }} more record{{ selectedStreakGroup.allStreaks.length - 12 !== 1 ? 's' : '' }}
               </div>
-            </template>
+            </div>
           </div>
         </div>
       </div>
@@ -772,5 +780,23 @@ onMounted(async () => {
   .grid-cols-3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* Custom scrollbar styling for streak timeline */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #f97316, #dc2626);
+  border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #ea580c, #b91c1c);
 }
 </style>

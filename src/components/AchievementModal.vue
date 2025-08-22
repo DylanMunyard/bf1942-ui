@@ -2,102 +2,91 @@
   <Teleport to="body">
     <div
       v-if="isVisible && achievement"
-      class="modal-overlay"
+      class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-5"
       @click="closeModal"
     >
       <div
-      class="modal-content"
-      @click.stop
-    >
-      <div class="modal-header">
-        <div class="achievement-title-info">
-          <h3 class="modal-achievement-name">
-            {{ achievement.achievementName }}
-          </h3>
-          <div class="modal-achievement-date">
-            <span class="date-label">Achieved:</span>
-            {{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleString() }}
-            <span class="relative-time">({{ formatRelativeTime(achievement.achievedAt) }})</span>
+        class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        @click.stop
+      >
+        <!-- Header with achievement title -->
+        <div class="flex justify-between items-start p-6 border-b border-slate-700/50">
+          <div class="flex-1">
+            <h3 class="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
+              {{ achievement.achievementName }}
+            </h3>
+            <div class="text-slate-400 text-sm">
+              <span class="font-medium text-slate-300 mr-1">Achieved:</span>
+              {{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleString() }}
+              <span class="text-slate-500 italic ml-2">({{ formatRelativeTime(achievement.achievedAt) }})</span>
+            </div>
           </div>
-        </div>
-        <button
-          class="close-button"
-          @click="closeModal"
-        >
-          &times;
-        </button>
-      </div>
-      
-      <div class="modal-body">
-        <div class="modal-achievement-image-container">
-          <img 
-            :src="getAchievementImage(achievement.achievementId)" 
-            :alt="achievement.achievementName"
-            class="modal-achievement-image"
-          />
-        </div>
-
-        <!-- Badge Description -->
-        <div
-          v-if="badgeDescription"
-          class="achievement-description"
-        >
-          <h4>Description</h4>
-          <p>{{ badgeDescription }}</p>
+          <button
+            class="text-slate-400 hover:text-white transition-colors duration-200 text-3xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-700/50"
+            @click="closeModal"
+          >
+            &times;
+          </button>
         </div>
         
-        <div class="achievement-details-grid">
-          <div
-            v-if="achievement.mapName"
-            class="detail-item"
-          >
-            <span class="detail-label">Map:</span>
-            <span class="detail-value">
-              <router-link 
-                v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt && playerName"
-                :to="{
-                  path: '/servers/round-report',
-                  query: {
-                    serverGuid: achievement.serverGuid,
-                    mapName: achievement.mapName,
-                    startTime: achievement.achievedAt,
-                    players: playerName
-                  }
-                }"
-                class="map-link"
+        <!-- Modal body -->
+        <div class="p-6">
+          <!-- Achievement image with description overlay -->
+          <div class="flex flex-col items-center mb-6">
+            <div class="relative">
+              <img 
+                :src="getAchievementImage(achievement.achievementId)" 
+                :alt="achievement.achievementName"
+                class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50"
+              />
+              
+              <!-- Badge Description Overlay -->
+              <div
+                v-if="badgeDescription"
+                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent backdrop-blur-md rounded-b-2xl p-4"
               >
-                {{ achievement.mapName }}
-              </router-link>
-              <span v-else>{{ achievement.mapName }}</span>
-            </span>
+                <p class="text-white text-sm leading-relaxed font-medium text-center drop-shadow-lg">{{ badgeDescription }}</p>
+              </div>
+            </div>
           </div>
           
-          <div
-            v-if="achievement.serverGuid"
-            class="detail-item"
-          >
-            <span class="detail-label">Server ID:</span>
-            <span class="detail-value">{{ achievement.serverGuid }}</span>
-          </div>
-          
-          <div
-            v-if="achievement.value"
-            class="detail-item"
-          >
-            <span class="detail-label">Value:</span>
-            <span class="detail-value">{{ achievement.value.toLocaleString() }}</span>
-          </div>
-
-          <div
-            v-if="playerName"
-            class="detail-item"
-          >
-            <span class="detail-label">Player:</span>
-            <span class="detail-value">{{ playerName }}</span>
+          <!-- Achievement details grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div
+              v-if="achievement.mapName"
+              class="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4"
+            >
+              <span class="text-slate-400 font-medium text-sm block mb-1">Map:</span>
+              <span class="text-slate-200 font-medium">
+                <router-link 
+                  v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt && playerName"
+                  :to="{
+                    path: '/servers/round-report',
+                    query: {
+                      serverGuid: achievement.serverGuid,
+                      mapName: achievement.mapName,
+                      startTime: achievement.achievedAt,
+                      players: playerName
+                    }
+                  }"
+                  class="text-yellow-400 hover:text-yellow-300 hover:underline transition-colors duration-200"
+                >
+                  {{ achievement.mapName }}
+                </router-link>
+                <span v-else class="text-slate-200">{{ achievement.mapName }}</span>
+              </span>
+            </div>
+            
+            <div
+              v-if="achievement.serverGuid"
+              class="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4"
+            >
+              <span class="text-slate-400 font-medium text-sm block mb-1">Server ID:</span>
+              <span class="text-slate-200 font-medium text-xs font-mono">{{ achievement.serverGuid }}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </div>
   </Teleport>
 </template>
@@ -177,200 +166,23 @@ const badgeDescription = computed(() => {
 </script>
 
 <style scoped>
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 20px;
-}
-
-.modal-content {
-  background-color: var(--color-background);
-  border-radius: 16px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  border: 2px solid var(--color-border);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 24px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.achievement-title-info {
-  flex: 1;
-}
-
-.modal-achievement-name {
-  margin: 0 0 8px 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  line-height: 1.2;
-}
-
-.modal-achievement-date {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-}
-
-.date-label {
-  font-weight: 500;
-  color: var(--color-text);
-  margin-right: 4px;
-}
-
-.relative-time {
-  font-style: italic;
-  opacity: 0.8;
-  margin-left: 8px;
-}
-
-.modal-achievement-image-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 24px;
-  padding: 8px;
-}
-
-.modal-achievement-image {
-  width: 180px;
-  height: 240px;
-  border-radius: 16px;
-  object-fit: contain;
-  background-color: var(--color-background-mute);
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.close-button:hover {
-  background-color: var(--color-background-mute);
-  color: var(--color-text);
-}
-
-.modal-body {
-  padding: 24px;
-  overflow: visible;
-}
-
-.achievement-details-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.detail-label {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
-
-.detail-value {
-  font-size: 1rem;
-  color: var(--color-text);
-  font-weight: 400;
-  word-break: break-word;
-}
-
-/* Achievement Description Styles */
-.achievement-description {
-  padding: 16px;
-  background-color: var(--color-background-soft);
-  border-radius: 8px;
-  margin-bottom: 16px;
-  border-left: 4px solid var(--color-primary);
-}
-
-.achievement-description h4 {
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-heading);
-}
-
-.achievement-description p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--color-text);
-  line-height: 1.5;
-}
-
-.map-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: opacity 0.2s;
-}
-
-.map-link:hover {
-  opacity: 0.8;
-  text-decoration: underline;
-}
-
-/* Modal responsive */
+/* Mobile responsive adjustments */
 @media (max-width: 768px) {
-  .modal-overlay {
-    padding: 10px;
+  .sm\:grid-cols-2 {
+    grid-template-columns: 1fr;
   }
   
-  .modal-content {
-    max-height: 95vh;
-  }
-  
-  .modal-header {
-    padding: 16px;
-  }
-  
-  .modal-achievement-image {
+  .w-48 {
     width: 150px;
+  }
+  
+  .h-64 {
     height: 200px;
   }
   
-  .modal-achievement-name {
-    font-size: 1.2rem;
-  }
-  
-  .modal-body {
-    padding: 16px;
-  }
-  
-  .achievement-details-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+  .text-2xl {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
   }
 }
 </style> 
