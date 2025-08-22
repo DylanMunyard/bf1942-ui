@@ -94,8 +94,12 @@
 
         <!-- Loading State -->
         <div v-if="loading" class="flex items-center justify-center py-20">
-          <div class="text-center space-y-4">
-            <div class="w-8 h-8 border-2 border-slate-600 border-t-white rounded-full animate-spin mx-auto"></div>
+          <div class="text-center space-y-6">
+            <div class="relative flex items-center justify-center">
+              <div class="w-20 h-20 border-4 border-slate-700 rounded-full animate-spin"></div>
+              <div class="absolute w-20 h-20 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin"></div>
+              <div class="absolute w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full animate-pulse"></div>
+            </div>
             <div class="text-lg font-semibold text-white">
               Loading servers...
             </div>
