@@ -1317,6 +1317,49 @@ watch(
                   </div>
                 </div>
               </div>
+              
+              <!-- Activity Timeline Chart -->
+              <div 
+                v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0"
+                class="space-y-4"
+              >
+                <div class="flex items-center justify-between">
+                  <div class="space-y-1">
+                    <h4 class="text-xl font-bold text-white flex items-center gap-3">
+                      ⏰ Activity Timeline
+                      <span class="text-sm font-normal text-slate-400">
+                        ({{ daysBetween(playerStats.insights.startPeriod, playerStats.insights.endPeriod) }} days)
+                      </span>
+                    </h4>
+                    <p class="text-slate-400 text-sm">Gaming activity patterns by hour</p>
+                  </div>
+                </div>
+                
+                <!-- Compact Activity Chart -->
+                <div class="relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden">
+                  <!-- Time Period Background Zones -->
+                  <div class="absolute inset-0 flex">
+                    <div class="flex-1 bg-gradient-to-b from-blue-500/5 to-blue-600/5"></div>
+                    <div class="flex-1 bg-gradient-to-b from-yellow-500/5 to-orange-600/5"></div>
+                    <div class="flex-1 bg-gradient-to-b from-purple-500/5 to-indigo-600/5"></div>
+                  </div>
+                  
+                  <!-- Compact Chart -->
+                  <div class="relative z-10 p-4 h-32">
+                    <Line
+                      :data="activityChartData"
+                      :options="activityChartOptions"
+                    />
+                  </div>
+                  
+                  <!-- Time Period Labels -->
+                  <div class="absolute bottom-2 left-0 right-0 flex justify-between px-4 text-xs text-slate-500">
+                    <span>🌙 Night</span>
+                    <span>☀️ Day</span>
+                    <span>🌆 Evening</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1527,99 +1570,6 @@ watch(
               <p class="text-slate-400">Advanced behavioral analytics and patterns</p>
             </div>
 
-            <!-- Activity By Hour -->
-            <div
-              v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0"
-              class="space-y-6"
-            >
-              <!-- Activity Header -->
-              <div class="space-y-2">
-                <h4 class="text-2xl font-bold text-white flex items-center gap-3">
-                  ⏰ Activity Timeline
-                  <span class="text-sm font-normal text-slate-400">
-                    ({{ daysBetween(playerStats.insights.startPeriod, playerStats.insights.endPeriod) }} days analysis)
-                  </span>
-                </h4>
-                <p class="text-slate-400">Gaming activity patterns in your local timezone</p>
-              </div>
-
-              <!-- Enhanced Chart Container -->
-              <div class="space-y-6">
-                <div class="relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden">
-                  <!-- Time Period Background Zones with Enhanced Styling -->
-                  <div class="absolute inset-0 flex">
-                    <!-- Early Hours (12AM-8AM) -->
-                    <div class="flex-1 bg-gradient-to-b from-blue-500/10 to-blue-600/5 relative">
-                      <div class="absolute top-2 left-2 opacity-50">
-                        <span class="text-blue-400 text-xs font-medium">🌙 Early</span>
-                      </div>
-                    </div>
-                    <!-- Day Hours (8AM-4PM) -->
-                    <div class="flex-1 bg-gradient-to-b from-yellow-500/10 to-orange-600/5 relative">
-                      <div class="absolute top-2 left-1/2 transform -translate-x-1/2 opacity-50">
-                        <span class="text-yellow-400 text-xs font-medium">☀️ Day</span>
-                      </div>
-                    </div>
-                    <!-- Night Hours (4PM-12AM) -->
-                    <div class="flex-1 bg-gradient-to-b from-purple-500/10 to-indigo-600/5 relative">
-                      <div class="absolute top-2 right-2 opacity-50">
-                        <span class="text-purple-400 text-xs font-medium">🌆 Evening</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Chart with Improved Padding -->
-                  <div class="relative z-10 p-6 h-64">
-                    <Line
-                      :data="activityChartData"
-                      :options="activityChartOptions"
-                    />
-                  </div>
-                </div>
-                
-                <!-- Enhanced Time Period Labels -->
-                <div class="grid grid-cols-3 gap-4">
-                  <div class="group text-center p-4 bg-gradient-to-br from-blue-900/20 to-blue-800/10 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
-                      <span class="text-2xl">🌙</span>
-                    </div>
-                    <div class="space-y-1">
-                      <h5 class="font-bold text-blue-400">Early Hours</h5>
-                      <p class="text-xs text-slate-400">Midnight - 8AM</p>
-                      <p class="text-lg font-bold text-white">
-                        {{ Math.round(sortedLocalActivityHours.filter((h: any) => h.localHour >= 0 && h.localHour < 8).reduce((sum: number, h: any) => sum + h.minutesActive, 0) / 60) }}h
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div class="group text-center p-4 bg-gradient-to-br from-yellow-900/20 to-orange-800/10 rounded-xl border border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300">
-                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
-                      <span class="text-2xl">☀️</span>
-                    </div>
-                    <div class="space-y-1">
-                      <h5 class="font-bold text-yellow-400">Daytime</h5>
-                      <p class="text-xs text-slate-400">8AM - 4PM</p>
-                      <p class="text-lg font-bold text-white">
-                        {{ Math.round(sortedLocalActivityHours.filter((h: any) => h.localHour >= 8 && h.localHour < 16).reduce((sum: number, h: any) => sum + h.minutesActive, 0) / 60) }}h
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div class="group text-center p-4 bg-gradient-to-br from-purple-900/20 to-indigo-800/10 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300">
-                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
-                      <span class="text-2xl">🌆</span>
-                    </div>
-                    <div class="space-y-1">
-                      <h5 class="font-bold text-purple-400">Evening</h5>
-                      <p class="text-xs text-slate-400">4PM - Midnight</p>
-                      <p class="text-lg font-bold text-white">
-                        {{ Math.round(sortedLocalActivityHours.filter((h: any) => h.localHour >= 16 && h.localHour < 24).reduce((sum: number, h: any) => sum + h.minutesActive, 0) / 60) }}h
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <!-- Server Rankings -->
             <div
