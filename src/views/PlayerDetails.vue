@@ -425,6 +425,51 @@ const calculateKDR = (kills: number, deaths: number): string => {
   return (kills / deaths).toFixed(2);
 };
 
+// Enhanced K/D styling functions for battle highlights
+const getKDColorClass = (session: any): string => {
+  const kdr = session.totalDeaths === 0 ? session.totalKills : session.totalKills / session.totalDeaths;
+  
+  if (kdr >= 3.0) return 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/60 shadow-purple-500/25';
+  if (kdr >= 2.0) return 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 border-emerald-500/60 shadow-emerald-500/25';
+  if (kdr >= 1.5) return 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-500/60 shadow-blue-500/25';
+  if (kdr >= 1.0) return 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/60 shadow-yellow-500/25';
+  if (kdr >= 0.5) return 'bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/60 shadow-orange-500/25';
+  return 'bg-gradient-to-r from-red-500/20 to-red-700/20 border-red-500/60 shadow-red-500/25';
+};
+
+const getKDTextClass = (session: any): string => {
+  const kdr = session.totalDeaths === 0 ? session.totalKills : session.totalKills / session.totalDeaths;
+  
+  if (kdr >= 3.0) return 'text-purple-300';
+  if (kdr >= 2.0) return 'text-emerald-300';
+  if (kdr >= 1.5) return 'text-blue-300';
+  if (kdr >= 1.0) return 'text-yellow-300';
+  if (kdr >= 0.5) return 'text-orange-300';
+  return 'text-red-300';
+};
+
+const getKDBadgeClass = (session: any): string => {
+  const kdr = session.totalDeaths === 0 ? session.totalKills : session.totalKills / session.totalDeaths;
+  
+  if (kdr >= 3.0) return 'bg-purple-500/20 text-purple-300 border-purple-500/50';
+  if (kdr >= 2.0) return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50';
+  if (kdr >= 1.5) return 'bg-blue-500/20 text-blue-300 border-blue-500/50';
+  if (kdr >= 1.0) return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50';
+  if (kdr >= 0.5) return 'bg-orange-500/20 text-orange-300 border-orange-500/50';
+  return 'bg-red-500/20 text-red-300 border-red-500/50';
+};
+
+const getKDPerformanceLabel = (session: any): string => {
+  const kdr = session.totalDeaths === 0 ? session.totalKills : session.totalKills / session.totalDeaths;
+  
+  if (kdr >= 3.0) return '🔥';
+  if (kdr >= 2.0) return '⚡';
+  if (kdr >= 1.5) return '💪';
+  if (kdr >= 1.0) return '✓';
+  if (kdr >= 0.5) return '⚠️';
+  return '💀';
+};
+
 // Function to get round report route for a session
 const getRoundReportRoute = (session: any) => {
   if (session.serverGuid) {
@@ -837,17 +882,60 @@ watch(
                       <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                         {{ playerName }}
                       </h1>
+                      <!-- Currently in game badge -->
+                      <div
+                        v-if="playerStats?.isActive && playerStats?.currentServer"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse"
+                      >
+                        <div class="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+                        🎮 LIVE
+                      </div>
                     </div>
                     
                     <!-- Player Stats Summary -->
-                    <div class="flex items-center gap-6 text-slate-300 text-lg">
-                      <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
-                        <span class="font-medium">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
+                    <div class="flex flex-col gap-4">
+                      <div class="flex items-center gap-6 text-slate-300 text-lg flex-wrap">
+                        <div class="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                          <span class="font-medium">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+                          <span>{{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
+                        </div>
                       </div>
-                      <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
-                        <span>{{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
+                      
+                      <!-- Current session info -->
+                      <div
+                        v-if="playerStats?.isActive && playerStats?.currentServer"
+                        class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg"
+                      >
+                        <div class="flex-1">
+                          <router-link
+                            :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}`"
+                            class="font-semibold text-green-400 hover:text-green-300 transition-colors"
+                          >
+                            {{ playerStats.currentServer.serverName }}
+                          </router-link>
+                          <p class="text-sm text-slate-400">{{ playerStats.currentServer.gameId?.toUpperCase() }}</p>
+                        </div>
+                        <div
+                          v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined"
+                          class="flex items-center gap-4 text-sm font-medium"
+                        >
+                          <div class="flex items-center gap-2">
+                            <span class="text-green-400">{{ playerStats.currentServer.sessionKills }}</span>
+                            <img src="@/assets/kills.png" alt="Kills" class="w-4 h-4" />
+                          </div>
+                          <span class="text-slate-500">/</span>
+                          <div class="flex items-center gap-2">
+                            <span class="text-red-400">{{ playerStats.currentServer.sessionDeaths }}</span>
+                            <img src="@/assets/deaths.png" alt="Deaths" class="w-4 h-4" />
+                          </div>
+                          <span class="text-cyan-400">
+                            K/D: {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -928,64 +1016,8 @@ watch(
         v-else-if="playerStats"
         class="max-w-7xl mx-auto px-6 pb-12 space-y-8"
       >
-        <!-- Active Session Alert -->
-        <div
-          v-if="playerStats.isActive && playerStats.currentServer"
-          class="relative overflow-hidden bg-gradient-to-r from-green-900/40 to-emerald-900/40 backdrop-blur-sm border border-green-500/30 rounded-xl p-6"
-        >
-          <!-- Animated Background -->
-          <div class="absolute inset-0 bg-gradient-to-r from-green-500/5 to-emerald-500/5 animate-pulse"></div>
-          
-          <div class="relative z-10 space-y-4">
-            <div class="flex items-center gap-3">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <span class="text-green-400 font-bold text-lg">🎮 CURRENTLY IN GAME</span>
-              </div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <!-- Server Info -->
-              <div class="space-y-2">
-                <p class="text-slate-400 text-sm font-medium">Server</p>
-                <router-link
-                  :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}`"
-                  class="group flex items-center gap-2 text-lg font-bold text-white hover:text-cyan-400 transition-colors"
-                >
-                  <span class="truncate">{{ playerStats.currentServer.serverName }}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <path d="m9 18 6-6-6-6"/>
-                  </svg>
-                </router-link>
-                <p class="text-green-400 text-sm">{{ playerStats.currentServer.gameId?.toUpperCase() }}</p>
-              </div>
 
-              <!-- Session Stats -->
-              <div
-                v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined"
-                class="space-y-2"
-              >
-                <p class="text-slate-400 text-sm font-medium">Current Session</p>
-                <div class="flex items-center gap-4 text-lg font-bold">
-                  <div class="flex items-center gap-2">
-                    <span class="text-green-400">{{ playerStats.currentServer.sessionKills }}</span>
-                    <img src="@/assets/kills.png" alt="Kills" class="w-5 h-5" />
-                  </div>
-                  <span class="text-slate-500">/</span>
-                  <div class="flex items-center gap-2">
-                    <span class="text-red-400">{{ playerStats.currentServer.sessionDeaths }}</span>
-                    <img src="@/assets/deaths.png" alt="Deaths" class="w-5 h-5" />
-                  </div>
-                </div>
-                <p class="text-cyan-400 text-sm">
-                  K/D: {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Rounds Carousel -->
+        <!-- Recent Battles Carousel -->
         <div 
           v-if="playerStats.recentSessions && playerStats.recentSessions.length > 0"
           class="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-lg rounded-2xl border border-slate-700/50 hover:border-cyan-500/30 transition-all duration-500"
@@ -1000,9 +1032,8 @@ watch(
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
               <div class="space-y-2">
                 <h3 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  🏆 Recent Battle Highlights
+                  🏆 Recent Battles
                 </h3>
-                <p class="text-slate-400">Your latest battlefield performances</p>
               </div>
               <div class="flex items-center gap-2 sm:gap-3">
                 <!-- Navigation buttons -->
@@ -1040,17 +1071,18 @@ watch(
             <div class="relative overflow-hidden">
               <div 
                 ref="carouselContainer"
-                class="flex transition-transform duration-500 ease-out gap-4 sm:gap-6"
+                class="flex transition-transform duration-500 ease-out"
                 :style="{ transform: `translateX(-${carouselCurrentIndex * (100 / carouselItemsPerView)}%)` }"
               >
                 <div
                   v-for="(session, index) in playerStats.recentSessions"
                   :key="`session-${index}`"
-                  class="flex-none w-full sm:w-80 lg:w-96"
+                  class="flex-none px-2"
+                  :style="{ width: `${100 / carouselItemsPerView}%` }"
                 >
                   <!-- Round Card -->
                   <div 
-                    class="group relative overflow-hidden bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                    class="group relative overflow-hidden bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer h-full"
                     @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)"
                   >
                     <!-- Card Background Effects -->
@@ -1065,73 +1097,72 @@ watch(
                       🔥 Best
                     </div>
                     
-                    <div class="relative z-10 p-6 space-y-4">
-                      <!-- Header -->
-                      <div class="space-y-2">
-                        <div class="flex items-center justify-between">
+                    <div class="relative z-10 p-3 space-y-3">
+                      <!-- Header: Server name only -->
+                      <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-1 text-slate-300 truncate flex-1 min-w-0">
                           <router-link 
-                            :to="getRoundReportRoute(session)" 
-                            class="text-lg font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
+                            :to="`/servers/${encodeURIComponent(session.serverName)}`" 
+                            class="hover:text-white transition-colors truncate"
                           >
-                            {{ formatRelativeTime(session.startTime) }}
+                            {{ session.serverName }}
                           </router-link>
-                          <span
-                            v-if="session.isActive"
-                            class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse"
-                          >
-                            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                            Live
-                          </span>
                         </div>
-                        <router-link 
-                          :to="`/servers/${encodeURIComponent(session.serverName)}`" 
-                          class="block text-slate-300 hover:text-white transition-colors truncate"
+                        <span
+                          v-if="session.isActive"
+                          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse shrink-0 ml-2"
                         >
-                          {{ session.serverName }}
-                        </router-link>
+                          <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                          Live
+                        </span>
                       </div>
 
-                      <!-- Map Info -->
-                      <div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700/30">
-                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-2xl">
-                          🗺️
-                        </div>
-                        <div class="flex-1 min-w-0">
-                          <p class="font-semibold text-white truncate">{{ session.mapName }}</p>
-                          <p class="text-sm text-slate-400">{{ session.gameType }}</p>
+                      <!-- Compact Battle Stats -->
+                      <div class="p-3 rounded-lg border transition-all duration-300" :class="getKDColorClass(session)">
+                        <div class="space-y-3">
+                          <!-- Upper Stats Row -->
+                          <div class="flex items-center justify-between">
+                            <!-- K/D and Performance Icon -->
+                            <div class="flex items-center gap-3">
+                              <div class="text-center">
+                                <div class="text-xl font-bold" :class="getKDTextClass(session)">
+                                  {{ calculateKDR(session.totalKills, session.totalDeaths) }}
+                                </div>
+                                <div class="text-xs text-slate-400">K/D</div>
+                              </div>
+                              <div class="text-lg">{{ getKDPerformanceLabel(session) }}</div>
+                            </div>
+                            
+                            <!-- Compact Stats -->
+                            <div class="flex items-center gap-4 text-sm">
+                              <div class="text-center">
+                                <div class="font-semibold text-emerald-400">{{ session.totalKills }}</div>
+                                <div class="text-xs text-slate-500">K</div>
+                              </div>
+                              <div class="text-center">
+                                <div class="font-semibold text-red-400">{{ session.totalDeaths }}</div>
+                                <div class="text-xs text-slate-500">D</div>
+                              </div>
+                              <div class="text-center">
+                                <div class="font-semibold text-yellow-400">{{ session.totalScore }}</div>
+                                <div class="text-xs text-slate-500">S</div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <!-- Lower Row: Time (left) and Map (right) -->
+                          <div class="flex items-center justify-between text-sm">
+                            <router-link 
+                              :to="getRoundReportRoute(session)" 
+                              class="text-cyan-400 hover:text-cyan-300 font-medium"
+                            >
+                              {{ formatRelativeTime(session.startTime) }}
+                            </router-link>
+                            <span class="text-slate-400 truncate">{{ session.mapName }}</span>
+                          </div>
                         </div>
                       </div>
 
-                      <!-- Stats Grid -->
-                      <div class="grid grid-cols-3 gap-4">
-                        <!-- Score -->
-                        <div class="text-center p-3 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-lg border border-yellow-500/20">
-                          <p class="text-2xl font-bold text-yellow-400">{{ session.totalScore }}</p>
-                          <p class="text-xs text-slate-400 font-medium">Score</p>
-                        </div>
-                        
-                        <!-- K/D -->
-                        <div class="text-center p-3 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
-                          <p class="text-2xl font-bold text-green-400">{{ calculateKDR(session.totalKills, session.totalDeaths) }}</p>
-                          <p class="text-xs text-slate-400 font-medium">K/D</p>
-                        </div>
-                        
-                        <!-- Kills -->
-                        <div class="text-center p-3 bg-gradient-to-br from-red-500/10 to-pink-500/10 rounded-lg border border-red-500/20">
-                          <p class="text-2xl font-bold text-red-400">{{ session.totalKills }}</p>
-                          <p class="text-xs text-slate-400 font-medium">Kills</p>
-                        </div>
-                      </div>
-
-                      <!-- Performance Indicator -->
-                      <div class="flex items-center gap-2">
-                        <div 
-                          class="w-3 h-3 rounded-full"
-                          :class="getPerformanceClass(session)"
-                          :title="getPerformanceLabel(session)"
-                        ></div>
-                        <span class="text-sm text-slate-400 font-medium">{{ getPerformanceLabel(session) }} Performance</span>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -1156,7 +1187,7 @@ watch(
         <!-- Performance Analytics Section -->
         <div 
           v-if="playerStats?.recentStats"
-          class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50"
+          class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8"
         >
           <!-- Section Background Effects -->
           <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5"></div>
@@ -1291,7 +1322,7 @@ watch(
         </div>
 
         <!-- Top Servers Section -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50">
+        <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8">
           <!-- Background Effects -->
           <div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-purple-500/5"></div>
           <div class="absolute bottom-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full blur-3xl"></div>
@@ -1435,7 +1466,7 @@ watch(
         </div>
 
         <!-- Player Achievements Section -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50">
+        <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8">
           <!-- Background Effects -->
           <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-orange-500/5 to-red-500/5"></div>
           <div class="absolute top-0 left-0 w-64 h-64 bg-gradient-to-br from-yellow-500/10 to-transparent rounded-full blur-3xl"></div>
@@ -1481,7 +1512,7 @@ watch(
         <!-- Player Insights Section -->
         <div
           v-if="playerStats.insights"
-          class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50"
+          class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8"
         >
           <!-- Background Effects -->
           <div class="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-indigo-500/5"></div>
@@ -1824,7 +1855,7 @@ watch(
         <!-- Player Comparison section -->
         <div
           v-if="playerStats"
-          class="bg-bf-background-soft border border-bf-border rounded-lg p-6 space-y-4"
+          class="bg-bf-background-soft border border-bf-border rounded-lg p-6 space-y-4 mt-8"
         >
           <h3
             class="flex items-center justify-between text-xl font-bold text-bf-heading cursor-pointer hover:text-bf-primary transition-colors duration-200"
@@ -2168,93 +2199,6 @@ watch(
           </div>
         </div>
 
-        <!-- Recent rounds section -->
-        <div
-          v-if="playerStats.recentSessions.length > 0"
-          class="bg-bf-background-soft border border-bf-border rounded-lg p-6 space-y-4"
-        >
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-            <h3 class="text-xl font-bold text-bf-heading">Recent Rounds</h3>
-            <router-link
-              :to="`/players/${encodeURIComponent(playerName)}/sessions`"
-              class="inline-flex items-center px-3 py-2 text-sm font-medium text-bf-text bg-bf-primary hover:bg-bf-primary-hover border border-bf-border rounded-md transition-colors duration-200"
-            >
-              View All
-            </router-link>
-          </div>
-          <!-- Timeline container -->
-          <div class="space-y-4">
-            <template
-              v-for="(session, index) in playerStats.recentSessions"
-              :key="index"
-            >
-              <!-- Session timeline item -->
-              <div class="timeline-item">
-                <!-- Timeline node -->
-                <div class="timeline-node-container">
-                  <div 
-                    class="timeline-node" 
-                    :class="getPerformanceClass(session)"
-                    :title="getPerformanceLabel(session)"
-                  />
-                </div>
-                
-                <!-- Session card -->
-                <div 
-                  class="session-card"
-                  @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)"
-                >
-                  <div class="session-line-1">
-                    <router-link 
-                      :to="getRoundReportRoute(session)" 
-                      class="time-link"
-                    >
-                      {{ formatRelativeTime(session.startTime) }}
-                    </router-link>
-                    <span class="session-separator">-</span>
-                    <router-link 
-                      :to="`/servers/${encodeURIComponent(session.serverName)}`" 
-                      class="server-link"
-                    >
-                      {{ session.serverName }}
-                    </router-link>
-                    <span
-                      v-if="session.isActive"
-                      class="active-session-badge"
-                    >Active</span>
-                  </div>
-                  
-                  <div class="session-line-2">
-                    <span class="map-name">{{ session.mapName }}</span>
-                    <span class="game-type">({{ session.gameType }})</span>
-                  </div>
-                  
-                  <div class="session-line-3">
-                    <span class="session-score">{{ session.totalScore }} pts</span>
-                    <span class="stat-separator">•</span>
-                    <span class="stat-item">
-                      {{ calculateKDR(session.totalKills, session.totalDeaths) }} KDR (<span class="kills-count">{{ session.totalKills }}</span> / <span class="deaths-count">{{ session.totalDeaths }}</span>)
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Time gap as a separate timeline item -->
-              <div 
-                v-if="index < playerStats.recentSessions.length - 1 && getTimeGap(session, playerStats.recentSessions[index + 1])" 
-                class="timeline-gap-item"
-              >
-                <div class="time-gap-separator">
-                  <div class="time-gap-line" />
-                  <div class="time-gap-badge">
-                    {{ getTimeGap(session, playerStats.recentSessions[index + 1]) }}
-                  </div>
-                  <div class="time-gap-line" />
-                </div>
-              </div>
-            </template>
-          </div>
-        </div>
       </div>
       <div
         v-else
