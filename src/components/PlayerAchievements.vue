@@ -618,7 +618,7 @@ onMounted(async () => {
                       <span class="bg-slate-700/50 px-2 py-0.5 rounded-full font-medium">{{ formatRelativeTime(streak.streakStart) }}</span>
                       <span class="text-slate-500">•</span>
                       <span class="font-mono text-xs opacity-75">
-                        {{ new Date(streak.streakStart.endsWith('Z') ? streak.streakStart : streak.streakStart + 'Z').toLocaleDateString() }}
+                        {{ new Date(streak.streakStart.endsWith('Z') ? streak.streakStart : streak.streakStart + 'Z').toLocaleString() }}
                       </span>
                     </div>
                   </div>

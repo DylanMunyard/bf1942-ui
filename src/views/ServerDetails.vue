@@ -199,154 +199,224 @@ const handlePeriodChange = async (period: string) => {
 </script>
 
 <template>
-  <div class="server-details-container">
-    <div class="server-details-header">
-      <div
-        class="server-name-container"
-        style="flex-direction: column; align-items: flex-start;"
-      >
-        <router-link
-          :to="getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string))"
-          class="back-button"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="feather feather-arrow-left"
-          ><line
-            x1="19"
-            y1="12"
-            x2="5"
-            y2="12"
-          /><polyline points="12 19 5 12 12 5" /></svg>
-          Back to Servers
-        </router-link>
-        <h2>Server Details: {{ serverName }}</h2>
-        <div
-          v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone)"
-          class="server-region-badge"
-        >
-          <span>
-            <template v-if="serverDetails.region">{{ serverDetails.region }}</template>
-            <template v-if="serverDetails.region && (serverDetails.country || serverDetails.countryCode)"> <span class="dot">•</span> </template>
-            <template v-if="serverDetails.country || serverDetails.countryCode">{{ getCountryName(serverDetails.country, serverDetails.country) }}</template>
-            <template v-if="(serverDetails.region || serverDetails.country || serverDetails.countryCode) && serverDetails.timezone"> <span class="dot">•</span> </template>
-            <template v-if="serverDetails.timezone">
-              <span v-if="getTimezoneDisplay(serverDetails.timezone)"> {{ getTimezoneDisplay(serverDetails.timezone) }}</span>
-            </template>
-          </span>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <!-- Current Players Link -->
-        <button
-          v-if="liveServerInfo && liveServerInfo.players.length > 0"
-          class="current-players-link"
-          @click="openPlayersModal"
-        >
-          <div class="players-info">
-            <span class="player-count">{{ liveServerInfo.numPlayers }} Online</span>
-            <span
-              v-if="liveServerInfo.mapName"
-              class="current-map"
-            >Currently playing {{ liveServerInfo.mapName }}</span>
-          </div>
-        </button>
-        <div
-          v-else-if="liveServerInfo && liveServerInfo.players.length === 0"
-          class="current-players-empty"
-        >
-          <div class="players-info">
-            <span class="player-count">0 Online</span>
-            <span
-              v-if="liveServerInfo.mapName"
-              class="current-map"
-            >Currently playing {{ liveServerInfo.mapName }}</span>
-          </div>
-        </div>
-        <div
-          v-else-if="isLiveServerLoading"
-          class="current-players-loading"
-        >
-          <div class="loading-spinner small" />
-          <span>Loading...</span>
-        </div>
-        
-        <!-- Join Server Button -->
-        <button
-          v-if="liveServerInfo?.joinLink"
-          class="join-server-button"
-          @click="joinServer"
-        >
-          🎮 Join Server
-        </button>
-      </div>
+  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <!-- Animated background elements -->
+    <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10"></div>
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"></div>
+      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
     </div>
-    <div class="server-details-body">
-      <div
-        v-if="isLoading"
-        class="loading-container"
-      >
-        <div class="loading-spinner" />
-        <p>Loading server details...</p>
-      </div>
-      <div
-        v-else-if="error"
-        class="error-container"
-      >
-        <p class="error-message">
-          {{ error }}
-        </p>
-      </div>
-      <div
-        v-else-if="serverDetails"
-        class="stats-container"
-      >
-        <!-- Period information -->
-        <div class="period-info">
-          Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
-        </div>
 
-        <!-- Player Activity Section -->
-        <ServerPlayerActivityChart
-          :server-insights="serverInsights"
-          :is-loading="isInsightsLoading"
-          @period-change="handlePeriodChange"
-        />
-        <div
-          v-if="insightsError"
-          class="insights-error"
+    <div class="relative z-10 p-6">
+      <!-- Back Navigation -->
+      <router-link
+        :to="getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string))"
+        class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer mb-8"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="group-hover:-translate-x-1 transition-transform duration-300"
         >
-          <p class="error-message-small">
-            {{ insightsError }}
-          </p>
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+        Back to Servers
+      </router-link>
+
+      <div class="relative z-10 pb-12">
+        <div class="max-w-7xl mx-auto">
+          <!-- Server Profile Hero -->
+          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-8">
+            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50"></div>
+            <div class="relative z-10 p-8 md:p-12">
+              <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+                <!-- Server Icon/Avatar -->
+                <div class="flex-shrink-0">
+                  <div class="relative">
+                    <div class="w-32 h-32 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 p-1">
+                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-3xl font-bold text-slate-900">
+                          🖥️
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Status indicator -->
+                    <div class="absolute -bottom-2 -right-2">
+                      <div class="w-8 h-8 bg-green-500 rounded-full border-4 border-slate-900 animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Server Info -->
+                <div class="flex-grow">
+                  <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4">
+                    {{ serverName }}
+                  </h1>
+                  
+                  <!-- Server Metadata -->
+                  <div 
+                    v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone)"
+                    class="flex flex-wrap gap-4 mb-6"
+                  >
+                    <div v-if="serverDetails.region" class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
+                      📍 {{ serverDetails.region }}
+                    </div>
+                    <div v-if="serverDetails.country || serverDetails.countryCode" class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
+                      🌍 {{ getCountryName(serverDetails.countryCode, serverDetails.country) }}
+                    </div>
+                    <div v-if="serverDetails.timezone && getTimezoneDisplay(serverDetails.timezone)" class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
+                      🕒 {{ getTimezoneDisplay(serverDetails.timezone) }}
+                    </div>
+                  </div>
+
+                  <!-- Period Info -->
+                  <div v-if="serverDetails" class="text-slate-400 text-sm mb-6">
+                    📊 Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
+                  </div>
+                </div>
+
+                <!-- Live Server Status & Actions -->
+                <div class="flex flex-col gap-4 items-end">
+                  <!-- Current Players -->
+                  <button
+                    v-if="liveServerInfo && liveServerInfo.players.length > 0"
+                    @click="openPlayersModal"
+                    class="group bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white px-6 py-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-emerald-500/25"
+                  >
+                    <div class="flex flex-col items-center">
+                      <div class="text-2xl font-bold">{{ liveServerInfo.numPlayers }}</div>
+                      <div class="text-sm opacity-90">Players Online</div>
+                      <div v-if="liveServerInfo.mapName" class="text-xs opacity-75 mt-1">
+                        Playing {{ liveServerInfo.mapName }}
+                      </div>
+                    </div>
+                  </button>
+                  
+                  <div
+                    v-else-if="liveServerInfo && liveServerInfo.players.length === 0"
+                    class="bg-slate-700/50 backdrop-blur-sm text-slate-400 px-6 py-4 rounded-xl border border-slate-600/50"
+                  >
+                    <div class="flex flex-col items-center">
+                      <div class="text-2xl font-bold">0</div>
+                      <div class="text-sm">Players Online</div>
+                      <div v-if="liveServerInfo.mapName" class="text-xs opacity-75 mt-1">
+                        Playing {{ liveServerInfo.mapName }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    v-else-if="isLiveServerLoading"
+                    class="bg-slate-700/50 backdrop-blur-sm text-slate-400 px-6 py-4 rounded-xl border border-slate-600/50 flex items-center gap-3"
+                  >
+                    <div class="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-sm">Loading...</span>
+                  </div>
+
+                  <!-- Join Server Button -->
+                  <button
+                    v-if="liveServerInfo?.joinLink"
+                    @click="joinServer"
+                    class="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 flex items-center gap-2"
+                  >
+                    <span class="text-xl">🎮</span>
+                    <span class="font-semibold">Join Server</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div
+            v-if="isLoading"
+            class="flex flex-col items-center justify-center py-20 text-slate-400"
+          >
+            <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+            <p class="text-lg">Loading server profile...</p>
+          </div>
+
+          <!-- Error State -->
+          <div
+            v-else-if="error"
+            class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center"
+          >
+            <div class="text-6xl mb-4">⚠️</div>
+            <p class="text-red-400 text-lg font-semibold">{{ error }}</p>
+          </div>
+
+          <!-- Server Content -->
+          <div v-else-if="serverDetails" class="space-y-8">
+            <!-- Player Activity Section -->
+            <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+              <div class="p-6 border-b border-slate-700/50">
+                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 flex items-center gap-3">
+                  📈 Player Activity Analysis
+                </h3>
+              </div>
+              <div class="p-6">
+                <ServerPlayerActivityChart
+                  :server-insights="serverInsights"
+                  :is-loading="isInsightsLoading"
+                  @period-change="handlePeriodChange"
+                />
+                <div
+                  v-if="insightsError"
+                  class="mt-4 bg-red-900/20 border border-red-700/50 rounded-lg p-4"
+                >
+                  <p class="text-red-400 text-sm">{{ insightsError }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Leaderboards Section -->
+            <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+              <div class="p-6 border-b border-slate-700/50">
+                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
+                  🏆 Server Leaderboards
+                </h3>
+              </div>
+              <div class="p-6">
+                <ServerLeaderboards
+                  :server-details="serverDetails"
+                  :server-name="serverName"
+                />
+              </div>
+            </div>
+
+            <!-- Recent Rounds Section -->
+            <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+              <div class="p-6 border-b border-slate-700/50">
+                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
+                  🎯 Recent Battle Reports
+                </h3>
+              </div>
+              <div class="p-6">
+                <ServerRecentRounds
+                  :server-details="serverDetails"
+                  :server-name="serverName"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- No Data State -->
+          <div
+            v-else
+            class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center"
+          >
+            <div class="text-6xl mb-4 opacity-50">📊</div>
+            <p class="text-slate-400 text-lg">No server data available</p>
+          </div>
         </div>
-
-        <!-- Enhanced Leaderboards Container -->
-        <ServerLeaderboards
-          :server-details="serverDetails"
-          :server-name="serverName"
-        />
-
-        <!-- Recent Rounds -->
-        <ServerRecentRounds
-          v-if="serverDetails"
-          :server-details="serverDetails"
-          :server-name="serverName"
-        />
-      </div>
-      <div
-        v-else
-        class="no-data-container"
-      >
-        <p>No server details available.</p>
       </div>
     </div>
     
@@ -360,199 +430,13 @@ const handlePeriodChange = async (period: string) => {
 </template>
 
 <style scoped>
-.server-details-container {
-  background-color: var(--color-background);
-  border-radius: 0;
-  box-shadow: none;
-  padding: 12px;
-}
-
-.server-details-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 12px;
-}
-
-.server-name-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background-color: var(--color-background-mute);
-  border-radius: 6px;
-  color: var(--color-text);
-  text-decoration: none;
-  font-weight: 500;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.back-button:hover {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.server-details-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: var(--color-heading);
-}
-
-.modal-actions {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-
-.current-players-link {
-  padding: 8px 16px;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.current-players-link:hover {
-  background-color: var(--color-primary-hover);
-}
-
-.current-players-empty {
-  padding: 8px 16px;
-  background-color: var(--color-background-mute);
-  color: var(--color-text-muted);
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid var(--color-border);
-}
-
-.players-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.player-count {
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.current-map {
-  font-size: 11px;
-  font-weight: 400;
-  opacity: 0.9;
-  text-align: center;
-}
-
-.current-players-loading {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background-color: var(--color-background-soft);
-  border-radius: 4px;
-  border: 1px solid var(--color-border);
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-.join-server-button {
-  padding: 8px 16px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.join-server-button:hover {
-  background-color: #45a049;
-}
-
-
-.server-details-body {
-  padding: 0;
-}
-
-.loading-container, .error-container, .no-data-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
-  border-radius: 50%;
-  border-top-color: var(--color-primary);
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 15px;
-}
-
-@keyframes spin {
+/* Custom animations for enhanced visual effects */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-.error-message {
-  color: #ff5252;
-  font-weight: bold;
-}
-
-.stats-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.period-info {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  margin-bottom: 10px;
-}
-
-.insights-loading, .insights-error {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  background: var(--color-background-soft);
-  border-radius: 8px;
-  margin-bottom: 12px;
-}
-
-.loading-spinner.small {
-  width: 20px;
-  height: 20px;
-  margin-bottom: 0;
-}
-
-.error-message-small {
-  color: #ff5252;
-  font-size: 0.9rem;
-  margin: 0;
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }
 </style>
