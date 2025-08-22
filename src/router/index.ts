@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
 import LandingPage from '../views/LandingPage.vue'
+import LandingPageV2 from '../views/LandingPageV2.vue'
 import Players from '../views/Players.vue'
 import PlayerDetails from '../views/PlayerDetails.vue'
 import PlayerAllAchievements from '../views/PlayerAllAchievements.vue'
@@ -65,6 +66,30 @@ const routes: RouteRecordRaw[] = [
       path: '/servers/bfv',
       name: 'servers-bfv',
       component: LandingPage,
+      props: { initialMode: 'BFV' }
+    },
+    // V2 Routes with optimized table layout
+    {
+      path: '/v2',
+      name: 'servers-v2',
+      redirect: '/v2/bf1942'
+    },
+    {
+      path: '/v2/bf1942',
+      name: 'servers-v2-bf1942',
+      component: LandingPageV2,
+      props: { initialMode: '42' }
+    },
+    {
+      path: '/v2/fh2',
+      name: 'servers-v2-fh2',
+      component: LandingPageV2,
+      props: { initialMode: 'FH2' }
+    },
+    {
+      path: '/v2/bfv',
+      name: 'servers-v2-bfv',
+      component: LandingPageV2,
       props: { initialMode: 'BFV' }
     },
     {

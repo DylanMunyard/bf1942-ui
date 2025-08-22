@@ -1,29 +1,24 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
     <div class="relative overflow-hidden">
-      <!-- Background effects -->
+      <!-- Animated Background Pattern -->
       <div class="absolute inset-0 opacity-10">
         <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20"></div>
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
       
-    <div class="relative z-10 flex flex-col lg:flex-row min-h-screen">
+    <div class="relative z-10 flex flex-col lg:flex-row min-h-screen max-w-none">
       <!-- Player Search Sidebar -->
-      <div class="flex-shrink-0 transition-all duration-300 ease-in-out"
-           :class="{
-             'lg:w-80 w-full': playerSearchQuery.length >= 2 || playerSuggestions.length > 0,
-             'lg:w-72 w-full': !(playerSearchQuery.length >= 2 || playerSuggestions.length > 0)
-           }"
-      >
-        <div class="lg:sticky lg:top-0 lg:h-screen overflow-y-auto bg-slate-800/30 backdrop-blur-md lg:border-r border-b lg:border-b-0 border-slate-700/50">
+      <div class="flex-shrink-0 transition-all duration-300 ease-in-out lg:w-80 w-full">
+        <div class="lg:sticky lg:top-0 lg:max-h-screen overflow-y-auto bg-gradient-to-b from-slate-800/40 to-slate-900/40 backdrop-blur-lg lg:border-r border-b lg:border-b-0 border-slate-700/50">
         <div class="relative m-5">
           <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm z-10">🔍</div>
           <input
             v-model="playerSearchQuery"
             type="text"
             placeholder="Search players..."
-            class="w-full pl-10 pr-12 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 backdrop-blur-sm transition-all duration-300"
+            class="w-full pl-10 pr-12 py-3 bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-sm border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 hover:border-purple-500/30 transition-all duration-300"
             @input="onPlayerSearchInput"
             @keyup.enter="navigateToPlayer"
             @focus="onSearchFocus"
@@ -33,11 +28,11 @@
             🔄
           </div>
         </div>
-        <div v-if="showPlayerDropdown" class="mx-5 mb-5 bg-slate-800/80 backdrop-blur-lg rounded-lg border border-slate-700/50 max-h-96 overflow-y-auto shadow-2xl">
+        <div v-if="showPlayerDropdown" class="mx-5 mb-5 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-96 overflow-y-auto shadow-2xl">
           <div
             v-for="player in playerSuggestions"
             :key="player.playerName"
-            class="p-4 border-b border-slate-700/30 hover:bg-slate-700/40 cursor-pointer transition-all duration-200 last:border-b-0"
+            class="p-4 border-b border-slate-700/30 hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 cursor-pointer transition-all duration-300 last:border-b-0"
             @mousedown.prevent="selectPlayer(player)"
           >
             <div class="space-y-2">
@@ -57,9 +52,9 @@
             No players found
           </div>
         </div>
-        </div>
+      </div>
       <!-- Main Content Area -->
-      <div class="flex-1 p-4 lg:p-6 overflow-x-auto">
+      <div class="flex-1 p-4 lg:p-6 min-w-0">
         <!-- Game Filter Buttons and Server Count -->
         <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 gap-4 lg:gap-5">
           <div class="flex gap-2 lg:gap-3 flex-wrap justify-center lg:justify-start">
@@ -67,10 +62,10 @@
               v-for="game in gameTypes.filter(g => g.id !== 'all')"
               :key="game.id"
               :class="[
-                'group relative flex items-center justify-center p-2 lg:p-3 rounded-lg lg:rounded-xl border-2 transition-all duration-300 transform hover:scale-105',
+                'group relative flex items-center justify-center p-2 lg:p-3 rounded-xl border-2 transition-all duration-300 transform hover:scale-105',
                 activeFilter === game.id
                   ? 'bg-gradient-to-r from-cyan-500 to-purple-600 border-cyan-500/50 shadow-lg shadow-cyan-500/25 text-white'
-                  : 'bg-slate-800/50 border-slate-700/50 hover:border-cyan-500/50 text-slate-300 hover:bg-slate-700/70 backdrop-blur-sm'
+                  : 'bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm border-slate-700/50 hover:border-cyan-500/50 text-slate-300 hover:from-slate-700/70 hover:to-slate-800/70'
               ]"
               @click="setActiveFilter(game.id)"
               :title="game.name"
@@ -94,39 +89,45 @@
 
         <!-- Server Table -->
         <div class="flex-1">
-          <div v-if="loading" class="flex flex-col items-center justify-center py-20 space-y-4">
+          <div v-if="loading" class="flex flex-col items-center justify-center py-20 space-y-6">
             <div class="relative">
-              <div class="w-16 h-16 border-4 border-slate-700 rounded-full animate-spin">
-                <div class="absolute top-0 left-0 w-16 h-16 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin"></div>
+              <div class="w-20 h-20 border-4 border-slate-700 rounded-full animate-spin">
+                <div class="absolute top-0 left-0 w-20 h-20 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin"></div>
               </div>
               <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-6 h-6 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full animate-pulse"></div>
+                <div class="w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full animate-pulse"></div>
               </div>
             </div>
-            <div class="text-center space-y-2">
-              <p class="text-lg font-semibold text-slate-300">Loading server data...</p>
-              <p class="text-slate-500 text-sm">Fetching battlefield intelligence</p>
+            <div class="text-center space-y-3">
+              <p class="text-xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Loading server data...</p>
+              <p class="text-slate-400 text-sm">⚡ Fetching battlefield intelligence</p>
             </div>
           </div>
-          <div v-else-if="error" class="flex flex-col items-center justify-center py-20 space-y-4">
-            <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="15" y1="9" x2="9" y2="15"/>
-                <line x1="9" y1="9" x2="15" y2="15"/>
-              </svg>
+          <div v-else-if="error" class="flex flex-col items-center justify-center py-20 space-y-6">
+            <div class="relative">
+              <div class="w-20 h-20 bg-gradient-to-br from-red-500/30 to-rose-500/30 backdrop-blur-sm rounded-full flex items-center justify-center border border-red-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+              </div>
+              <div class="absolute inset-0 bg-red-500/20 rounded-full animate-ping"></div>
             </div>
-            <div class="text-center space-y-2">
-              <p class="text-lg font-semibold text-red-400">{{ error }}</p>
+            <div class="text-center space-y-3">
+              <p class="text-xl font-bold bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">{{ error }}</p>
+              <p class="text-slate-400 text-sm">🚨 Unable to connect to battlefield servers</p>
             </div>
           </div>
           <div v-else>
-            <div class="bg-slate-800/40 backdrop-blur-lg rounded-xl border border-slate-700/50 overflow-hidden shadow-2xl">
-              <div class="overflow-x-auto">
-            <table class="w-full border-collapse text-xs lg:text-sm min-w-[800px]">
+            <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 shadow-2xl">
+              <!-- Background Effects -->
+              <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5"></div>
+              <div class="relative z-10">
+            <table class="w-full border-collapse text-xs lg:text-sm table-auto">
               <thead>
-                <tr class="bg-slate-900/50">
-                  <th @click="sortBy('name')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200 select-none sticky top-0 z-10">
+                <tr class="bg-gradient-to-r from-slate-900/70 to-slate-800/70 backdrop-blur-sm">
+                  <th @click="sortBy('name')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 transition-all duration-300 select-none sticky top-0 z-10">
                     <div class="flex items-center gap-2">
                       Server Name
                       <span class="text-xs transition-transform duration-200" :class="{
@@ -137,7 +138,7 @@
                       }">▲</span>
                     </div>
                   </th>
-                  <th @click="sortBy('numPlayers')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200 select-none sticky top-0 z-10 min-w-[100px]">
+                  <th @click="sortBy('numPlayers')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 transition-all duration-300 select-none sticky top-0 z-10">
                     <div class="flex items-center gap-2">
                       Players
                       <span class="text-xs transition-transform duration-200" :class="{
@@ -148,7 +149,7 @@
                       }">▲</span>
                     </div>
                   </th>
-                  <th @click="sortBy('mapName')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200 select-none sticky top-0 z-10">
+                  <th @click="sortBy('mapName')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 transition-all duration-300 select-none sticky top-0 z-10">
                     <div class="flex items-center gap-2">
                       Map
                       <span class="text-xs transition-transform duration-200" :class="{
@@ -159,7 +160,7 @@
                       }">▲</span>
                     </div>
                   </th>
-                  <th @click="sortBy('roundTimeRemain')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200 select-none sticky top-0 z-10 min-w-[100px]">
+                  <th @click="sortBy('roundTimeRemain')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 transition-all duration-300 select-none sticky top-0 z-10">
                     <div class="flex items-center gap-2">
                       Time Left
                       <span class="text-xs transition-transform duration-200" :class="{
@@ -170,7 +171,7 @@
                       }">▲</span>
                     </div>
                   </th>
-                  <th @click="sortBy('gameType')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200 select-none sticky top-0 z-10 min-w-[100px]">
+                  <th @click="sortBy('gameType')" class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 cursor-pointer hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 transition-all duration-300 select-none sticky top-0 z-10">
                     <div class="flex items-center gap-2">
                       Game
                       <span class="text-xs transition-transform duration-200" :class="{
@@ -181,23 +182,23 @@
                       }">▲</span>
                     </div>
                   </th>
-                  <th class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 sticky top-0 z-10 min-w-[120px]">Connection</th>
-                  <th class="p-4 text-center font-semibold text-xs uppercase tracking-wider text-slate-300 sticky top-0 z-10 min-w-[100px]">Action</th>
+                  <th class="p-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-300 sticky top-0 z-10">Connection</th>
+                  <th class="p-4 text-center font-semibold text-xs uppercase tracking-wider text-slate-300 sticky top-0 z-10">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
                   v-for="server in sortedServers"
                   :key="server.guid"
-                  class="transition-all duration-200 hover:bg-slate-700/30"
+                  class="group transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-500/5 hover:to-purple-500/5"
                   :class="getServerStatusClass(server)"
                 >
                   <td class="p-3 border-b border-slate-700/30 max-w-xs">
-                    <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="block text-slate-200 hover:text-cyan-400 transition-colors duration-200 no-underline">
+                    <router-link :to="`/servers/${encodeURIComponent(server.name)}`" class="block text-slate-200 hover:bg-gradient-to-r hover:from-cyan-400 hover:to-purple-400 hover:bg-clip-text hover:text-transparent transition-all duration-300 no-underline font-medium">
                       <div class="font-semibold text-sm truncate">{{ server.name }}</div>
                     </router-link>
                   </td>
-                  <td class="p-3 border-b border-slate-700/30 cursor-pointer min-w-[100px]" @click="showPlayers(server)">
+                  <td class="p-3 border-b border-slate-700/30 cursor-pointer" @click="showPlayers(server)">
                     <div class="flex items-center gap-1 font-semibold mb-1" :class="getPlayerCountClass(server)">
                       <span class="text-sm">{{ server.numPlayers }}</span>
                       <span class="text-slate-500 text-sm">/</span>
@@ -210,21 +211,21 @@
                   <td class="p-3 border-b border-slate-700/30 max-w-[200px]">
                     <span class="text-orange-400 font-medium text-sm truncate block">{{ server.mapName }}</span>
                   </td>
-                  <td class="p-3 border-b border-slate-700/30 text-center min-w-[100px]">
+                  <td class="p-3 border-b border-slate-700/30 text-center">
                     <span class="text-green-400 font-semibold text-xs">{{ formatTimeRemaining(server.roundTimeRemain) }}</span>
                   </td>
-                  <td class="p-3 border-b border-slate-700/30 min-w-[100px]">
+                  <td class="p-3 border-b border-slate-700/30">
                     <span class="px-2 py-1 rounded text-xs font-semibold uppercase" :class="getGameTypeClass(server.gameType)">{{ getGameDisplayName(server.gameType) }}</span>
                   </td>
-                  <td class="p-3 border-b border-slate-700/30 min-w-[120px]">
+                  <td class="p-3 border-b border-slate-700/30">
                     <span class="font-mono text-xs text-slate-400">{{ server.ip }}:{{ server.port }}</span>
                   </td>
-                  <td class="p-3 border-b border-slate-700/30 text-center min-w-[100px]">
+                  <td class="p-3 border-b border-slate-700/30 text-center">
                     <button 
-                      class="px-3 py-1.5 text-xs font-semibold uppercase transition-all duration-200 rounded border-2"
+                      class="px-4 py-2 text-xs font-bold uppercase transition-all duration-300 rounded-lg border-2"
                       :class="{
-                        'bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white border-transparent transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25': server.numPlayers < server.maxPlayers,
-                        'bg-slate-600 text-slate-400 cursor-not-allowed opacity-60 border-slate-600': server.numPlayers >= server.maxPlayers
+                        'bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white border-transparent transform hover:scale-110 shadow-lg hover:shadow-cyan-500/30 hover:shadow-lg': server.numPlayers < server.maxPlayers,
+                        'bg-gradient-to-r from-slate-700 to-slate-800 text-slate-400 cursor-not-allowed opacity-60 border-slate-600/50': server.numPlayers >= server.maxPlayers
                       }"
                       @click="joinServer(server)" 
                       :disabled="server.numPlayers >= server.maxPlayers"
@@ -235,11 +236,13 @@
                 </tr>
               </tbody>
             </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
     <!-- Players Panel -->
     <PlayersPanel
@@ -247,6 +250,7 @@
       :server="selectedServer"
       @close="closePlayersPanel"
     />
+  </div>
   </div>
 </template>
 
@@ -534,10 +538,6 @@ const sortBy = (field: string) => {
   }
 }
 
-const getSortClass = (field: string) => {
-  if (sortField.value !== field) return ''
-  return sortDirection.value === 'asc' ? 'asc' : 'desc'
-}
 
 const getPlayerPercentage = (server: ServerSummary) => {
   return server.maxPlayers > 0 ? (server.numPlayers / server.maxPlayers) * 100 : 0
@@ -618,261 +618,21 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.landing-page {
-  min-height: 100vh;
-  background: var(--color-background);
-}
-
-/* Main Layout */
-.main-layout {
-  display: flex;
-  min-height: 100vh;
-  gap: 0;
-}
-
-/* Player Search Sidebar */
-.player-search-sidebar {
-  width: 280px;
-  background: transparent;
-  border-right: 2px solid var(--color-border);
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  transition: width 0.3s ease;
-}
-
-.player-search-sidebar.expanded {
-  width: 320px;
-}
-
-.search-input-wrapper {
-  position: relative;
-  margin: 20px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-text-muted);
-  font-size: 14px;
-  z-index: 2;
-}
-
-.search-spinner {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 12px;
-  animation: spin 1s linear infinite;
-  pointer-events: none;
-}
-
-.player-search-input {
-  width: 100%;
-  padding: 10px 40px 10px 36px;
-  font-size: 14px;
-  border: 2px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-background);
-  color: var(--color-text);
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-}
-
-.player-search-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.player-search-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  background: var(--color-background);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.player-suggestions {
-  margin: 0 20px 20px 20px;
-  background: var(--color-background);
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.player-suggestion {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border);
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.player-suggestion:last-child {
-  border-bottom: none;
-}
-
-.player-suggestion:hover {
-  background-color: var(--color-background-soft);
-}
-
-.player-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.player-name {
-  font-weight: 600;
-  color: var(--color-text);
-  font-size: 14px;
-}
-
-.player-details {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
-.play-time,
-.last-seen {
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
-.current-server {
-  font-size: 11px;
-  color: var(--color-primary);
-  font-style: italic;
-  margin-top: 2px;
-}
-
-.no-results {
-  padding: 16px;
-  text-align: center;
-  color: var(--color-text-muted);
-  font-style: italic;
-  font-size: 13px;
-}
-
-.online {
-  color: #4CAF50;
-  font-weight: 500;
-  font-size: 10px;
-}
-
-.offline {
-  color: #999;
-  font-size: 10px;
-}
-
-@keyframes spin {
-  0% { transform: translateY(-50%) rotate(0deg); }
-  100% { transform: translateY(-50%) rotate(360deg); }
-}
-
-/* Main Content */
-.main-content {
-  flex: 1;
-  padding: 20px;
-  overflow-x: auto;
-}
-
-/* Filters and Count Container */
-.filters-and-count {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-/* Game Filter Buttons */
-.game-filters {
-  display: flex;
-  justify-content: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.game-filter {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  background: var(--color-background-soft);
-  border: 2px solid transparent;
-  border-radius: 12px;
-  color: var(--color-text);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  position: relative;
-}
-
-.game-filter:hover {
-  background: var(--color-background-mute);
-  border-color: var(--color-primary);
-  transform: translateY(-2px);
-}
-
-.game-filter.active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 20px rgba(102, 126, 234, 0.6), 0 0 40px rgba(102, 126, 234, 0.4), 0 2px 8px rgba(102, 126, 234, 0.3);
-  transform: translateY(-2px);
-}
-
-.game-filter.active::before {
-  content: '';
-  position: absolute;
-  top: -4px;
-  left: -4px;
-  right: -4px;
-  bottom: -4px;
-  background: linear-gradient(45deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
-  border-radius: 16px;
-  z-index: -1;
-  animation: glow-pulse 2s ease-in-out infinite alternate;
-}
-
-@keyframes glow-pulse {
-  0% {
-    opacity: 0.5;
-    transform: scale(1);
+/* Custom animations for enhanced gaming feel */
+@keyframes animate-spin-slow {
+  from {
+    transform: rotate(0deg);
   }
-  100% {
-    opacity: 1;
-    transform: scale(1.05);
+  to {
+    transform: rotate(360deg);
   }
 }
 
-.tab-icon {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  border-radius: 50%;
-  transition: all 0.3s ease;
+.animate-spin-slow {
+  animation: animate-spin-slow 3s linear infinite;
 }
 
-.game-filter.active .tab-icon {
-  transform: scale(1.1);
-  filter: brightness(1.2) contrast(1.1);
-}
-
+/* Game icon backgrounds */
 .icon-bf1942 {
   background-image: url('../assets/bf1942.jpg');
 }
@@ -884,358 +644,4 @@ onUnmounted(() => {
 .icon-bfv {
   background-image: url('../assets/bfv.jpg');
 }
-
-/* Server Table */
-.servers-section {
-  flex: 1;
-}
-
-.server-count {
-  font-size: 14px;
-  color: var(--color-text-muted);
-  white-space: nowrap;
-}
-
-.loading, .error {
-  text-align: center;
-  padding: 40px 20px;
-  font-size: 18px;
-}
-
-.error {
-  color: #e74c3c;
-}
-
-.server-table-container {
-  background: var(--color-background-soft);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-}
-
-.server-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.server-table th {
-  background: var(--color-background-mute);
-  padding: 12px 16px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text);
-  border-bottom: 2px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.server-table th.sortable {
-  cursor: pointer;
-  transition: background-color 0.2s;
-  position: relative;
-  user-select: none;
-}
-
-.server-table th.sortable:hover {
-  background: var(--color-background);
-}
-
-.sort-indicator {
-  display: inline-block;
-  margin-left: 6px;
-  font-size: 10px;
-  transition: transform 0.2s;
-  opacity: 0.5;
-}
-
-.sort-indicator.asc {
-  transform: rotate(0deg);
-  opacity: 1;
-  color: var(--color-primary);
-}
-
-.sort-indicator.desc {
-  transform: rotate(180deg);
-  opacity: 1;
-  color: var(--color-primary);
-}
-
-.server-table td {
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--color-border);
-  vertical-align: middle;
-}
-
-.server-row {
-  transition: all 0.2s ease;
-}
-
-.server-row:hover {
-  background: var(--color-background);
-}
-
-.server-row.server-full {
-  background: rgba(244, 67, 54, 0.05);
-}
-
-.server-row.server-high {
-  background: rgba(255, 152, 0, 0.05);
-}
-
-.server-row.server-empty {
-  background: rgba(158, 158, 158, 0.05);
-}
-
-.server-row.server-active {
-  background: rgba(76, 175, 80, 0.02);
-}
-
-.server-name-cell {
-  max-width: 300px;
-}
-
-.server-name-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-  transition: color 0.2s ease;
-}
-
-.server-name-link:hover {
-  color: var(--color-primary);
-}
-
-.server-name {
-  font-weight: 600;
-  color: var(--color-text);
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.players-cell {
-  cursor: pointer;
-  min-width: 80px;
-}
-
-.player-count {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.player-count.full .current {
-  color: #f44336;
-}
-
-.player-count.high .current {
-  color: #ff9800;
-}
-
-.player-count.medium .current {
-  color: #4caf50;
-}
-
-.player-count.low .current {
-  color: #2196f3;
-}
-
-.separator {
-  color: var(--color-text-muted);
-}
-
-.max {
-  color: var(--color-text-muted);
-}
-
-.player-bar {
-  width: 100%;
-  height: 3px;
-  background: var(--color-background-mute);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.player-fill {
-  height: 100%;
-  transition: width 0.3s ease;
-  border-radius: 2px;
-}
-
-.map-cell {
-  max-width: 200px;
-}
-
-.map-name {
-  color: #ff9800;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.time-cell {
-  min-width: 80px;
-  text-align: center;
-}
-
-.time-remaining {
-  color: #4caf50;
-  font-weight: 600;
-  font-size: 12px;
-}
-
-.game-cell {
-  min-width: 80px;
-}
-
-.game-type {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.game-bf1942 {
-  background: rgba(33, 150, 243, 0.2);
-  color: #2196f3;
-}
-
-.game-fh2 {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
-}
-
-.game-bfv {
-  background: rgba(156, 39, 176, 0.2);
-  color: #9c27b0;
-}
-
-.game-unknown {
-  background: rgba(158, 158, 158, 0.2);
-  color: #9e9e9e;
-}
-
-.connection-cell {
-  font-family: monospace;
-  font-size: 12px;
-  color: var(--color-text-muted);
-  min-width: 120px;
-}
-
-.action-cell {
-  text-align: center;
-  min-width: 80px;
-}
-
-.join-btn {
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-transform: uppercase;
-  min-width: 50px;
-}
-
-.join-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.join-btn:disabled {
-  background: #666;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 1024px) {
-  .main-layout {
-    flex-direction: column;
-  }
-  
-  .player-search-sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-  }
-  
-  .player-search-sidebar.expanded {
-    width: 100%;
-  }
-  
-  .search-input-wrapper {
-    margin: 15px;
-  }
-  
-  .player-suggestions {
-    margin: 0 15px 15px 15px;
-    max-height: 200px;
-  }
-  
-  .server-table-container {
-    overflow-x: auto;
-  }
-  
-  .server-table {
-    min-width: 700px;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    padding: 15px;
-  }
-  
-  .filters-and-count {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-  
-  .game-filters {
-    justify-content: center;
-    gap: 8px;
-  }
-  
-  .server-count {
-    text-align: center;
-    font-size: 13px;
-  }
-  
-  .game-filter {
-    padding: 10px;
-    font-size: 12px;
-  }
-  
-  .tab-icon {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .server-table th,
-  .server-table td {
-    padding: 8px 12px;
-  }
-  
-  .server-table {
-    font-size: 12px;
-  }
-}
-
-/* Players Panel styles are now handled by PlayersPanel component */
 </style>
