@@ -1582,20 +1582,33 @@ watch(
                   </div>
                 </div>
 
-                <div class="relative z-10 p-8 space-y-6">
+                <div class="relative z-10 p-8 h-full flex flex-col">
                   <!-- Rank Badge - More Prominent -->
-                  <div class="flex items-center justify-between">
-                    <div class="relative">
-                      <div 
-                        class="text-6xl font-black leading-none"
-                        :class="{
-                          'text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600': ranking.rank === 1,
-                          'text-transparent bg-clip-text bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500': ranking.rank === 2,
-                          'text-transparent bg-clip-text bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600': ranking.rank === 3,
-                          'text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-pink-400 to-indigo-400': ranking.rank > 3
-                        }"
-                      >
-                        #{{ ranking.rankDisplay }}
+                  <div class="text-center">
+                    <div class="relative inline-block">
+                      <div class="flex items-baseline justify-center gap-2">
+                        <div 
+                          class="text-6xl font-black leading-none"
+                          :class="{
+                            'text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600': ranking.rank === 1,
+                            'text-transparent bg-clip-text bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500': ranking.rank === 2,
+                            'text-transparent bg-clip-text bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600': ranking.rank === 3,
+                            'text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-pink-400 to-indigo-400': ranking.rank > 3
+                          }"
+                        >
+                          #{{ ranking.rank }}
+                        </div>
+                        <div 
+                          class="text-lg font-semibold opacity-80 mt-4"
+                          :class="{
+                            'text-yellow-300': ranking.rank === 1,
+                            'text-slate-300': ranking.rank === 2,
+                            'text-orange-300': ranking.rank === 3,
+                            'text-purple-300': ranking.rank > 3
+                          }"
+                        >
+                          of {{ ranking.totalRankedPlayers }}
+                        </div>
                       </div>
                       <div 
                         class="absolute -top-1 -left-1 text-6xl font-black opacity-20 -z-10"
@@ -1606,60 +1619,13 @@ watch(
                           'text-purple-500': ranking.rank > 3
                         }"
                       >
-                        #{{ ranking.rankDisplay }}
-                      </div>
-                    </div>
-                    
-                    <!-- Performance Ring -->
-                    <div class="relative w-16 h-16">
-                      <svg class="transform -rotate-90 w-16 h-16" viewBox="0 0 36 36">
-                        <path
-                          class="stroke-current opacity-20"
-                          :class="{
-                            'text-yellow-500': ranking.rank === 1,
-                            'text-slate-500': ranking.rank === 2,
-                            'text-orange-500': ranking.rank === 3,
-                            'text-purple-500': ranking.rank > 3
-                          }"
-                          stroke-width="3"
-                          fill="none"
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        />
-                        <path
-                          class="stroke-current transition-all duration-1000 ease-out"
-                          :class="{
-                            'text-yellow-400': ranking.rank === 1,
-                            'text-slate-400': ranking.rank === 2,
-                            'text-orange-400': ranking.rank === 3,
-                            'text-purple-400': ranking.rank > 3
-                          }"
-                          stroke-width="3"
-                          fill="none"
-                          :stroke-dasharray="`${Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1)))} 100`"
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        />
-                      </svg>
-                      <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="text-center">
-                          <div class="text-xs opacity-70 leading-tight">TOP</div>
-                          <div 
-                            class="text-xs font-bold leading-none mt-1"
-                            :class="{
-                              'text-yellow-300': ranking.rank === 1,
-                              'text-slate-300': ranking.rank === 2,
-                              'text-orange-300': ranking.rank === 3,
-                              'text-purple-300': ranking.rank > 3
-                            }"
-                          >
-                            {{ Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1))) }}%
-                          </div>
-                        </div>
+                        #{{ ranking.rank }}
                       </div>
                     </div>
                   </div>
 
                   <!-- Server Name -->
-                  <div class="space-y-3">
+                  <div class="space-y-3 flex-grow">
                     <router-link
                       :to="`/servers/${encodeURIComponent(ranking.serverName)}`"
                       class="group/link block"
@@ -1708,25 +1674,27 @@ watch(
 
 
                   <!-- Action Button - VIEW MAPS functionality -->
-                  <button
-                    @click="toggleServerExpansion(ranking.serverGuid)"
-                    class="w-full mt-6 px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-all duration-300 transform hover:scale-105 active:scale-95"
-                    :class="{
-                      'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-300 hover:from-yellow-500/30 hover:to-yellow-600/30 hover:border-yellow-400/50 shadow-lg shadow-yellow-500/10': ranking.rank === 1,
-                      'bg-gradient-to-r from-slate-500/20 to-slate-600/20 border border-slate-500/30 text-slate-300 hover:from-slate-500/30 hover:to-slate-600/30 hover:border-slate-400/50 shadow-lg shadow-slate-500/10': ranking.rank === 2,
-                      'bg-gradient-to-r from-orange-500/20 to-orange-600/20 border border-orange-500/30 text-orange-300 hover:from-orange-500/30 hover:to-orange-600/30 hover:border-orange-400/50 shadow-lg shadow-orange-500/10': ranking.rank === 3,
-                      'bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/30 text-slate-300 hover:from-slate-600/60 hover:to-slate-700/60 hover:border-slate-500/50 shadow-lg shadow-slate-900/20': ranking.rank > 3
-                    }"
-                  >
-                    <div class="flex items-center justify-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:rotate-12">
-                        <path d="M9 19c-5 0-8-3-8-7s3-7 8-7 8 3 8 7-3 7-8 7"/>
-                        <path d="m13.5 10.5 2.5-2.5"/>
-                        <path d="m13.5 13.5 2.5 2.5"/>
-                      </svg>
-                      {{ expandedServerId === ranking.serverGuid ? 'Hide Maps' : 'View Maps' }}
-                    </div>
-                  </button>
+                  <div class="mt-auto pt-6">
+                    <button
+                      @click="toggleServerExpansion(ranking.serverGuid)"
+                      class="w-full px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-all duration-300 transform hover:scale-105 active:scale-95"
+                      :class="{
+                        'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-300 hover:from-yellow-500/30 hover:to-yellow-600/30 hover:border-yellow-400/50 shadow-lg shadow-yellow-500/10': ranking.rank === 1,
+                        'bg-gradient-to-r from-slate-500/20 to-slate-600/20 border border-slate-500/30 text-slate-300 hover:from-slate-500/30 hover:to-slate-600/30 hover:border-slate-400/50 shadow-lg shadow-slate-500/10': ranking.rank === 2,
+                        'bg-gradient-to-r from-orange-500/20 to-orange-600/20 border border-orange-500/30 text-orange-300 hover:from-orange-500/30 hover:to-orange-600/30 hover:border-orange-400/50 shadow-lg shadow-orange-500/10': ranking.rank === 3,
+                        'bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/30 text-slate-300 hover:from-slate-600/60 hover:to-slate-700/60 hover:border-slate-500/50 shadow-lg shadow-slate-900/20': ranking.rank > 3
+                      }"
+                    >
+                      <div class="flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:rotate-12">
+                          <path d="M9 19c-5 0-8-3-8-7s3-7 8-7 8 3 8 7-3 7-8 7"/>
+                          <path d="m13.5 10.5 2.5-2.5"/>
+                          <path d="m13.5 13.5 2.5 2.5"/>
+                        </svg>
+                        {{ expandedServerId === ranking.serverGuid ? 'Hide Maps' : 'View Maps' }}
+                      </div>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
