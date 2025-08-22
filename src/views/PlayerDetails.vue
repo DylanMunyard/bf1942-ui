@@ -1512,6 +1512,445 @@ watch(
               <p class="text-slate-400">No server data available</p>
             </div>
           </div>
+
+          <!-- Server Rankings within Favorite Battlegrounds -->
+          <div
+            v-if="playerStats.insights?.serverRankings && playerStats.insights.serverRankings.length > 0"
+            class="relative z-10 px-8 pb-8 pt-4 space-y-6"
+          >
+            <!-- Server Rankings Header -->
+            <div class="space-y-2">
+              <h4 class="text-3xl font-bold bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text text-transparent flex items-center gap-3">
+                🏅 Server Rankings
+              </h4>
+              <p class="text-slate-400">Your competitive standings across servers</p>
+            </div>
+            
+            <!-- Server Rankings Cards Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div
+                v-for="(ranking, index) in playerStats.insights.serverRankings"
+                :key="ranking.serverGuid"
+                class="group relative overflow-hidden rounded-2xl"
+                :class="{
+                  'bg-gradient-to-br from-yellow-500/20 via-amber-600/30 to-yellow-700/20 border-2 border-yellow-500/40 shadow-xl shadow-yellow-500/20': ranking.rank === 1,
+                  'bg-gradient-to-br from-slate-400/20 via-slate-500/30 to-slate-600/20 border-2 border-slate-400/40 shadow-xl shadow-slate-400/20': ranking.rank === 2,
+                  'bg-gradient-to-br from-orange-600/20 via-amber-700/30 to-orange-800/20 border-2 border-orange-600/40 shadow-xl shadow-orange-600/20': ranking.rank === 3,
+                  'bg-gradient-to-br from-slate-800/80 via-slate-900/90 to-black/80 border-2 border-slate-700/50 shadow-xl shadow-slate-900/30': ranking.rank > 3
+                }"
+                :style="{ animationDelay: `${index * 100}ms` }"
+              >
+                <!-- Animated Background Particles -->
+                <div class="absolute inset-0 overflow-hidden">
+                  <div 
+                    class="absolute -top-10 -right-10 w-20 h-20 rounded-full blur-xl opacity-30 animate-pulse"
+                    :class="{
+                      'bg-yellow-400': ranking.rank === 1,
+                      'bg-slate-400': ranking.rank === 2,
+                      'bg-orange-500': ranking.rank === 3,
+                      'bg-purple-500': ranking.rank > 3
+                    }"
+                  ></div>
+                  <div 
+                    class="absolute -bottom-8 -left-8 w-16 h-16 rounded-full blur-lg opacity-20 animate-pulse delay-700"
+                    :class="{
+                      'bg-yellow-300': ranking.rank === 1,
+                      'bg-slate-300': ranking.rank === 2,
+                      'bg-orange-400': ranking.rank === 3,
+                      'bg-purple-400': ranking.rank > 3
+                    }"
+                  ></div>
+                </div>
+
+                <!-- Trophy Icon for Top 3 -->
+                <div 
+                  v-if="ranking.rank <= 3"
+                  class="absolute top-4 right-4 z-20 animate-bounce"
+                  style="animation-duration: 2s"
+                >
+                  <div 
+                    class="w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
+                    :class="{
+                      'bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900': ranking.rank === 1,
+                      'bg-gradient-to-br from-slate-400 to-slate-600 text-slate-900': ranking.rank === 2,
+                      'bg-gradient-to-br from-orange-500 to-orange-700 text-orange-900': ranking.rank === 3
+                    }"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <div class="relative z-10 p-8 space-y-6">
+                  <!-- Rank Badge - More Prominent -->
+                  <div class="flex items-center justify-between">
+                    <div class="relative">
+                      <div 
+                        class="text-6xl font-black leading-none"
+                        :class="{
+                          'text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600': ranking.rank === 1,
+                          'text-transparent bg-clip-text bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500': ranking.rank === 2,
+                          'text-transparent bg-clip-text bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600': ranking.rank === 3,
+                          'text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-pink-400 to-indigo-400': ranking.rank > 3
+                        }"
+                      >
+                        #{{ ranking.rankDisplay }}
+                      </div>
+                      <div 
+                        class="absolute -top-1 -left-1 text-6xl font-black opacity-20 -z-10"
+                        :class="{
+                          'text-yellow-500': ranking.rank === 1,
+                          'text-slate-500': ranking.rank === 2,
+                          'text-orange-500': ranking.rank === 3,
+                          'text-purple-500': ranking.rank > 3
+                        }"
+                      >
+                        #{{ ranking.rankDisplay }}
+                      </div>
+                    </div>
+                    
+                    <!-- Performance Ring -->
+                    <div class="relative w-16 h-16">
+                      <svg class="transform -rotate-90 w-16 h-16" viewBox="0 0 36 36">
+                        <path
+                          class="stroke-current opacity-20"
+                          :class="{
+                            'text-yellow-500': ranking.rank === 1,
+                            'text-slate-500': ranking.rank === 2,
+                            'text-orange-500': ranking.rank === 3,
+                            'text-purple-500': ranking.rank > 3
+                          }"
+                          stroke-width="3"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path
+                          class="stroke-current transition-all duration-1000 ease-out"
+                          :class="{
+                            'text-yellow-400': ranking.rank === 1,
+                            'text-slate-400': ranking.rank === 2,
+                            'text-orange-400': ranking.rank === 3,
+                            'text-purple-400': ranking.rank > 3
+                          }"
+                          stroke-width="3"
+                          fill="none"
+                          :stroke-dasharray="`${Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1)))} 100`"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                      </svg>
+                      <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                          <div class="text-xs opacity-70 leading-tight">TOP</div>
+                          <div 
+                            class="text-xs font-bold leading-none mt-1"
+                            :class="{
+                              'text-yellow-300': ranking.rank === 1,
+                              'text-slate-300': ranking.rank === 2,
+                              'text-orange-300': ranking.rank === 3,
+                              'text-purple-300': ranking.rank > 3
+                            }"
+                          >
+                            {{ Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1))) }}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Server Name -->
+                  <div class="space-y-3">
+                    <router-link
+                      :to="`/servers/${encodeURIComponent(ranking.serverName)}`"
+                      class="group/link block"
+                      :title="`View server details for ${ranking.serverName}`"
+                    >
+                      <h5 class="text-xl font-bold text-white group-hover/link:text-transparent group-hover/link:bg-clip-text transition-all duration-300 leading-tight"
+                        :class="{
+                          'group-hover/link:bg-gradient-to-r group-hover/link:from-yellow-300 group-hover/link:to-yellow-500': ranking.rank === 1,
+                          'group-hover/link:bg-gradient-to-r group-hover/link:from-slate-300 group-hover/link:to-slate-500': ranking.rank === 2,
+                          'group-hover/link:bg-gradient-to-r group-hover/link:from-orange-300 group-hover/link:to-orange-500': ranking.rank === 3,
+                          'group-hover/link:bg-gradient-to-r group-hover/link:from-purple-300 group-hover/link:to-pink-400': ranking.rank > 3
+                        }"
+                      >
+                        {{ ranking.serverName }}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline ml-2 opacity-0 group-hover/link:opacity-100 transition-opacity transform group-hover/link:translate-x-1">
+                          <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                      </h5>
+                    </router-link>
+                  </div>
+
+                  <!-- Ping Display -->
+                  <div class="text-center space-y-3">
+                    <div class="text-xs uppercase tracking-widest font-bold opacity-60">AVERAGE PING</div>
+                    <div class="flex items-center justify-center gap-2">
+                      <div 
+                        class="w-2 h-2 rounded-full animate-pulse"
+                        :class="{
+                          'bg-green-400': ranking.averagePing < 50,
+                          'bg-yellow-400': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                          'bg-red-400': ranking.averagePing >= 100
+                        }"
+                      ></div>
+                      <div 
+                        class="text-2xl font-black"
+                        :class="{
+                          'text-green-400': ranking.averagePing < 50,
+                          'text-yellow-400': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                          'text-red-400': ranking.averagePing >= 100
+                        }"
+                      >
+                        {{ ranking.averagePing }}<span class="text-base opacity-60">ms</span>
+                      </div>
+                    </div>
+                  </div>
+
+
+                  <!-- Action Button - VIEW MAPS functionality -->
+                  <button
+                    @click="toggleServerExpansion(ranking.serverGuid)"
+                    class="w-full mt-6 px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-all duration-300 transform hover:scale-105 active:scale-95"
+                    :class="{
+                      'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-300 hover:from-yellow-500/30 hover:to-yellow-600/30 hover:border-yellow-400/50 shadow-lg shadow-yellow-500/10': ranking.rank === 1,
+                      'bg-gradient-to-r from-slate-500/20 to-slate-600/20 border border-slate-500/30 text-slate-300 hover:from-slate-500/30 hover:to-slate-600/30 hover:border-slate-400/50 shadow-lg shadow-slate-500/10': ranking.rank === 2,
+                      'bg-gradient-to-r from-orange-500/20 to-orange-600/20 border border-orange-500/30 text-orange-300 hover:from-orange-500/30 hover:to-orange-600/30 hover:border-orange-400/50 shadow-lg shadow-orange-500/10': ranking.rank === 3,
+                      'bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/30 text-slate-300 hover:from-slate-600/60 hover:to-slate-700/60 hover:border-slate-500/50 shadow-lg shadow-slate-900/20': ranking.rank > 3
+                    }"
+                  >
+                    <div class="flex items-center justify-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:rotate-12">
+                        <path d="M9 19c-5 0-8-3-8-7s3-7 8-7 8 3 8 7-3 7-8 7"/>
+                        <path d="m13.5 10.5 2.5-2.5"/>
+                        <path d="m13.5 13.5 2.5 2.5"/>
+                      </svg>
+                      {{ expandedServerId === ranking.serverGuid ? 'Hide Maps' : 'View Maps' }}
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Expanded Map Stats Section -->
+            <div
+              v-if="expandedServerId"
+              class="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden"
+            >
+              <div class="p-6 border-b border-slate-700/50">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                  <div class="space-y-1">
+                    <h5 class="text-xl font-bold text-white">Map Performance</h5>
+                    <p class="text-slate-400 text-sm">{{ expandedServerName || 'Selected Server' }}</p>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      v-for="option in timeRangeOptions"
+                      :key="option.value"
+                      :class="[
+                        'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                        selectedTimeRange === option.value 
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg' 
+                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 border border-slate-600'
+                      ]"
+                      @click="selectedTimeRange = option.value"
+                    >
+                      {{ option.label }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="p-6">
+                <div
+                  v-if="mapStats.length === 0 && mapStatsLoading"
+                  class="flex flex-col items-center justify-center p-12 space-y-4"
+                >
+                  <div class="relative">
+                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-600"></div>
+                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-amber-500 absolute top-0"></div>
+                  </div>
+                  <p class="text-slate-400 font-medium">Loading map statistics...</p>
+                </div>
+                
+                <div
+                  v-else-if="mapStats.length > 0"
+                  class="relative overflow-hidden"
+                >
+                  <!-- Loading Overlay for time range changes -->
+                  <div
+                    v-if="mapStatsLoading"
+                    class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-20 transition-all duration-200"
+                  >
+                    <div class="flex items-center gap-3 px-4 py-2 bg-slate-800/90 rounded-lg border border-slate-700">
+                      <div class="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span class="text-amber-400 font-medium text-sm">Updating...</span>
+                    </div>
+                  </div>
+                  <!-- Map Stats Table -->
+                  <table class="w-full border-collapse">
+                    <!-- Table Header -->
+                    <thead class="sticky top-0 z-10">
+                      <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+                        <th @click="changeMapStatsSort('mapName')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-amber-500/50">
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-amber-400 text-xs">🗺️</span>
+                            <span class="font-mono font-bold">MAP</span>
+                            <span class="text-xs transition-transform duration-200" :class="{
+                              'text-amber-400 opacity-100': mapStatsSortField === 'mapName',
+                              'opacity-50': mapStatsSortField !== 'mapName',
+                              'rotate-0': mapStatsSortField === 'mapName' && mapStatsSortDirection === 'asc',
+                              'rotate-180': mapStatsSortField === 'mapName' && mapStatsSortDirection === 'desc'
+                            }">▲</span>
+                          </div>
+                        </th>
+                        <th @click="changeMapStatsSort('totalScore')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-yellow-500/50">
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-yellow-400 text-xs">🏆</span>
+                            <span class="font-mono font-bold">SCORE</span>
+                            <span class="text-xs transition-transform duration-200" :class="{
+                              'text-yellow-400 opacity-100': mapStatsSortField === 'totalScore',
+                              'opacity-50': mapStatsSortField !== 'totalScore',
+                              'rotate-0': mapStatsSortField === 'totalScore' && mapStatsSortDirection === 'asc',
+                              'rotate-180': mapStatsSortField === 'totalScore' && mapStatsSortDirection === 'desc'
+                            }">▲</span>
+                          </div>
+                        </th>
+                        <th @click="changeMapStatsSort('kdRatio')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-green-500/50">
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-green-400 text-xs">⚔️</span>
+                            <span class="font-mono font-bold">K/D</span>
+                            <span class="text-xs transition-transform duration-200" :class="{
+                              'text-green-400 opacity-100': mapStatsSortField === 'kdRatio',
+                              'opacity-50': mapStatsSortField !== 'kdRatio',
+                              'rotate-0': mapStatsSortField === 'kdRatio' && mapStatsSortDirection === 'asc',
+                              'rotate-180': mapStatsSortField === 'kdRatio' && mapStatsSortDirection === 'desc'
+                            }">▲</span>
+                          </div>
+                        </th>
+                        <th @click="changeMapStatsSort('totalKills')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-red-500/50">
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-red-400 text-xs">🎯</span>
+                            <span class="font-mono font-bold">KILLS</span>
+                            <span class="text-xs transition-transform duration-200" :class="{
+                              'text-red-400 opacity-100': mapStatsSortField === 'totalKills',
+                              'opacity-50': mapStatsSortField !== 'totalKills',
+                              'rotate-0': mapStatsSortField === 'totalKills' && mapStatsSortDirection === 'asc',
+                              'rotate-180': mapStatsSortField === 'totalKills' && mapStatsSortDirection === 'desc'
+                            }">▲</span>
+                          </div>
+                        </th>
+                        <th @click="changeMapStatsSort('totalDeaths')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-purple-500/50">
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-purple-400 text-xs">💀</span>
+                            <span class="font-mono font-bold">DEATHS</span>
+                            <span class="text-xs transition-transform duration-200" :class="{
+                              'text-purple-400 opacity-100': mapStatsSortField === 'totalDeaths',
+                              'opacity-50': mapStatsSortField !== 'totalDeaths',
+                              'rotate-0': mapStatsSortField === 'totalDeaths' && mapStatsSortDirection === 'asc',
+                              'rotate-180': mapStatsSortField === 'totalDeaths' && mapStatsSortDirection === 'desc'
+                            }">▲</span>
+                          </div>
+                        </th>
+                        <th @click="changeMapStatsSort('sessionsPlayed')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-blue-500/50">
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-blue-400 text-xs">🎮</span>
+                            <span class="font-mono font-bold">SESSIONS</span>
+                            <span class="text-xs transition-transform duration-200" :class="{
+                              'text-blue-400 opacity-100': mapStatsSortField === 'sessionsPlayed',
+                              'opacity-50': mapStatsSortField !== 'sessionsPlayed',
+                              'rotate-0': mapStatsSortField === 'sessionsPlayed' && mapStatsSortDirection === 'asc',
+                              'rotate-180': mapStatsSortField === 'sessionsPlayed' && mapStatsSortDirection === 'desc'
+                            }">▲</span>
+                          </div>
+                        </th>
+                        <th @click="changeMapStatsSort('totalPlayTimeMinutes')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-cyan-500/50">
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-cyan-400 text-xs">⏱️</span>
+                            <span class="font-mono font-bold">TIME</span>
+                            <span class="text-xs transition-transform duration-200" :class="{
+                              'text-cyan-400 opacity-100': mapStatsSortField === 'totalPlayTimeMinutes',
+                              'opacity-50': mapStatsSortField !== 'totalPlayTimeMinutes',
+                              'rotate-0': mapStatsSortField === 'totalPlayTimeMinutes' && mapStatsSortDirection === 'asc',
+                              'rotate-180': mapStatsSortField === 'totalPlayTimeMinutes' && mapStatsSortDirection === 'desc'
+                            }">▲</span>
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <!-- Table Body -->
+                    <tbody>
+                      <tr
+                        v-for="(map, mapIndex) in sortedMapStats"
+                        :key="mapIndex"
+                        class="group transition-all duration-300 hover:bg-gradient-to-r hover:from-slate-800/40 hover:to-slate-900/40 border-b border-slate-800/50 hover:border-slate-700/50 hover:shadow-lg"
+                      >
+                        <!-- Map Name -->
+                        <td class="p-1.5">
+                          <router-link 
+                            :to="{
+                              path: `/players/${encodeURIComponent(playerName)}/sessions`,
+                              query: { 
+                                map: map.mapName,
+                                ...(expandedServerName && { server: expandedServerName })
+                              }
+                            }"
+                            class="block group-hover:text-amber-400 transition-all duration-300 no-underline"
+                          >
+                            <div class="font-bold text-slate-200 truncate max-w-xs text-sm">{{ map.mapName }}</div>
+                          </router-link>
+                        </td>
+
+                        <!-- Score -->
+                        <td class="p-1.5">
+                          <div class="font-mono text-sm font-bold text-yellow-400">{{ map.totalScore.toLocaleString() }}</div>
+                        </td>
+
+                        <!-- K/D Ratio -->
+                        <td class="p-1.5">
+                          <div class="font-mono text-sm font-bold text-green-400">{{ calculateKDR(map.totalKills, map.totalDeaths) }}</div>
+                        </td>
+
+                        <!-- Kills -->
+                        <td class="p-1.5">
+                          <div class="font-mono text-sm font-bold text-red-400">{{ map.totalKills }}</div>
+                        </td>
+
+                        <!-- Deaths -->
+                        <td class="p-1.5">
+                          <div class="font-mono text-sm font-bold text-purple-400">{{ map.totalDeaths }}</div>
+                        </td>
+
+                        <!-- Sessions -->
+                        <td class="p-1.5">
+                          <div class="font-mono text-sm font-bold text-blue-400">{{ map.sessionsPlayed }}</div>
+                        </td>
+
+                        <!-- Play Time -->
+                        <td class="p-1.5">
+                          <div class="font-mono text-sm font-bold text-cyan-400">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div
+                  v-else
+                  class="text-center py-12"
+                >
+                  <div class="space-y-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-slate-500">
+                      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 011-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 011.52 0C14.51 3.81 17 5 19 5a1 1 0 011 1z"/>
+                      <path d="m9 12 2 2 4-4"/>
+                    </svg>
+                    <p class="text-slate-400 font-medium">No map statistics available for the selected time range</p>
+                    <p class="text-slate-500 text-sm">Try selecting a different time period</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Player Achievements Section -->
@@ -1553,466 +1992,6 @@ watch(
                   :player-name="playerName"
                   :player-stats="playerStats"
                 />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Player Insights Section -->
-        <div
-          v-if="playerStats.insights"
-          class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8"
-        >
-          <!-- Background Effects -->
-          <div class="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-indigo-500/5"></div>
-          <div class="absolute top-1/2 left-0 w-64 h-64 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full blur-3xl"></div>
-          
-          <div class="relative z-10 p-8 space-y-8">
-            <!-- Section Header -->
-            <div class="space-y-2">
-              <h3 class="text-3xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent">
-                🧠 Player Intelligence
-              </h3>
-              <p class="text-slate-400">Advanced behavioral analytics and patterns</p>
-            </div>
-
-
-            <!-- Server Rankings -->
-            <div
-              v-if="playerStats.insights?.serverRankings && playerStats.insights.serverRankings.length > 0"
-              class="space-y-6"
-            >
-              <!-- Server Rankings Header -->
-              <div class="space-y-2">
-                <h4 class="text-3xl font-bold bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text text-transparent flex items-center gap-3">
-                  🏅 Server Rankings
-                </h4>
-                <p class="text-slate-400">Your competitive standings across servers</p>
-              </div>
-              
-              <!-- Server Rankings Cards Grid -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                <div
-                  v-for="(ranking, index) in playerStats.insights.serverRankings"
-                  :key="ranking.serverGuid"
-                  class="group relative overflow-hidden rounded-2xl"
-                  :class="{
-                    'bg-gradient-to-br from-yellow-500/20 via-amber-600/30 to-yellow-700/20 border-2 border-yellow-500/40 shadow-xl shadow-yellow-500/20': ranking.rank === 1,
-                    'bg-gradient-to-br from-slate-400/20 via-slate-500/30 to-slate-600/20 border-2 border-slate-400/40 shadow-xl shadow-slate-400/20': ranking.rank === 2,
-                    'bg-gradient-to-br from-orange-600/20 via-amber-700/30 to-orange-800/20 border-2 border-orange-600/40 shadow-xl shadow-orange-600/20': ranking.rank === 3,
-                    'bg-gradient-to-br from-slate-800/80 via-slate-900/90 to-black/80 border-2 border-slate-700/50 shadow-xl shadow-slate-900/30': ranking.rank > 3
-                  }"
-                  :style="{ animationDelay: `${index * 100}ms` }"
-                >
-                  <!-- Animated Background Particles -->
-                  <div class="absolute inset-0 overflow-hidden">
-                    <div 
-                      class="absolute -top-10 -right-10 w-20 h-20 rounded-full blur-xl opacity-30 animate-pulse"
-                      :class="{
-                        'bg-yellow-400': ranking.rank === 1,
-                        'bg-slate-400': ranking.rank === 2,
-                        'bg-orange-500': ranking.rank === 3,
-                        'bg-purple-500': ranking.rank > 3
-                      }"
-                    ></div>
-                    <div 
-                      class="absolute -bottom-8 -left-8 w-16 h-16 rounded-full blur-lg opacity-20 animate-pulse delay-700"
-                      :class="{
-                        'bg-yellow-300': ranking.rank === 1,
-                        'bg-slate-300': ranking.rank === 2,
-                        'bg-orange-400': ranking.rank === 3,
-                        'bg-purple-400': ranking.rank > 3
-                      }"
-                    ></div>
-                  </div>
-
-                  <!-- Trophy Icon for Top 3 -->
-                  <div 
-                    v-if="ranking.rank <= 3"
-                    class="absolute top-4 right-4 z-20 animate-bounce"
-                    style="animation-duration: 2s"
-                  >
-                    <div 
-                      class="w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
-                      :class="{
-                        'bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900': ranking.rank === 1,
-                        'bg-gradient-to-br from-slate-400 to-slate-600 text-slate-900': ranking.rank === 2,
-                        'bg-gradient-to-br from-orange-500 to-orange-700 text-orange-900': ranking.rank === 3
-                      }"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                      </svg>
-                    </div>
-                  </div>
-
-                  <div class="relative z-10 p-8 space-y-6">
-                    <!-- Rank Badge - More Prominent -->
-                    <div class="flex items-center justify-between">
-                      <div class="relative">
-                        <div 
-                          class="text-6xl font-black leading-none"
-                          :class="{
-                            'text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600': ranking.rank === 1,
-                            'text-transparent bg-clip-text bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500': ranking.rank === 2,
-                            'text-transparent bg-clip-text bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600': ranking.rank === 3,
-                            'text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-pink-400 to-indigo-400': ranking.rank > 3
-                          }"
-                        >
-                          #{{ ranking.rankDisplay }}
-                        </div>
-                        <div 
-                          class="absolute -top-1 -left-1 text-6xl font-black opacity-20 -z-10"
-                          :class="{
-                            'text-yellow-500': ranking.rank === 1,
-                            'text-slate-500': ranking.rank === 2,
-                            'text-orange-500': ranking.rank === 3,
-                            'text-purple-500': ranking.rank > 3
-                          }"
-                        >
-                          #{{ ranking.rankDisplay }}
-                        </div>
-                      </div>
-                      
-                      <!-- Performance Ring -->
-                      <div class="relative w-16 h-16">
-                        <svg class="transform -rotate-90 w-16 h-16" viewBox="0 0 36 36">
-                          <path
-                            class="stroke-current opacity-20"
-                            :class="{
-                              'text-yellow-500': ranking.rank === 1,
-                              'text-slate-500': ranking.rank === 2,
-                              'text-orange-500': ranking.rank === 3,
-                              'text-purple-500': ranking.rank > 3
-                            }"
-                            stroke-width="3"
-                            fill="none"
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          />
-                          <path
-                            class="stroke-current transition-all duration-1000 ease-out"
-                            :class="{
-                              'text-yellow-400': ranking.rank === 1,
-                              'text-slate-400': ranking.rank === 2,
-                              'text-orange-400': ranking.rank === 3,
-                              'text-purple-400': ranking.rank > 3
-                            }"
-                            stroke-width="3"
-                            fill="none"
-                            :stroke-dasharray="`${Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1)))} 100`"
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          />
-                        </svg>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                          <div class="text-center">
-                            <div class="text-xs opacity-70 leading-tight">TOP</div>
-                            <div 
-                              class="text-xs font-bold leading-none mt-1"
-                              :class="{
-                                'text-yellow-300': ranking.rank === 1,
-                                'text-slate-300': ranking.rank === 2,
-                                'text-orange-300': ranking.rank === 3,
-                                'text-purple-300': ranking.rank > 3
-                              }"
-                            >
-                              {{ Math.max(0, Math.min(100, 100 - Math.min(99, parseInt(ranking.rankDisplay.replace(/[^\d]/g, '')) || 1))) }}%
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Server Name -->
-                    <div class="space-y-3">
-                      <router-link
-                        :to="`/servers/${encodeURIComponent(ranking.serverName)}`"
-                        class="group/link block"
-                        :title="`View server details for ${ranking.serverName}`"
-                      >
-                        <h5 class="text-xl font-bold text-white group-hover/link:text-transparent group-hover/link:bg-clip-text transition-all duration-300 leading-tight"
-                          :class="{
-                            'group-hover/link:bg-gradient-to-r group-hover/link:from-yellow-300 group-hover/link:to-yellow-500': ranking.rank === 1,
-                            'group-hover/link:bg-gradient-to-r group-hover/link:from-slate-300 group-hover/link:to-slate-500': ranking.rank === 2,
-                            'group-hover/link:bg-gradient-to-r group-hover/link:from-orange-300 group-hover/link:to-orange-500': ranking.rank === 3,
-                            'group-hover/link:bg-gradient-to-r group-hover/link:from-purple-300 group-hover/link:to-pink-400': ranking.rank > 3
-                          }"
-                        >
-                          {{ ranking.serverName }}
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline ml-2 opacity-0 group-hover/link:opacity-100 transition-opacity transform group-hover/link:translate-x-1">
-                            <path d="m9 18 6-6-6-6"/>
-                          </svg>
-                        </h5>
-                      </router-link>
-                    </div>
-
-                    <!-- Ping Display -->
-                    <div class="text-center space-y-3">
-                      <div class="text-xs uppercase tracking-widest font-bold opacity-60">AVERAGE PING</div>
-                      <div class="flex items-center justify-center gap-2">
-                        <div 
-                          class="w-2 h-2 rounded-full animate-pulse"
-                          :class="{
-                            'bg-green-400': ranking.averagePing < 50,
-                            'bg-yellow-400': ranking.averagePing >= 50 && ranking.averagePing < 100,
-                            'bg-red-400': ranking.averagePing >= 100
-                          }"
-                        ></div>
-                        <div 
-                          class="text-2xl font-black"
-                          :class="{
-                            'text-green-400': ranking.averagePing < 50,
-                            'text-yellow-400': ranking.averagePing >= 50 && ranking.averagePing < 100,
-                            'text-red-400': ranking.averagePing >= 100
-                          }"
-                        >
-                          {{ ranking.averagePing }}<span class="text-base opacity-60">ms</span>
-                        </div>
-                      </div>
-                    </div>
-
-
-                    <!-- Action Button - VIEW MAPS functionality -->
-                    <button
-                      @click="toggleServerExpansion(ranking.serverGuid)"
-                      class="w-full mt-6 px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-all duration-300 transform hover:scale-105 active:scale-95"
-                      :class="{
-                        'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-300 hover:from-yellow-500/30 hover:to-yellow-600/30 hover:border-yellow-400/50 shadow-lg shadow-yellow-500/10': ranking.rank === 1,
-                        'bg-gradient-to-r from-slate-500/20 to-slate-600/20 border border-slate-500/30 text-slate-300 hover:from-slate-500/30 hover:to-slate-600/30 hover:border-slate-400/50 shadow-lg shadow-slate-500/10': ranking.rank === 2,
-                        'bg-gradient-to-r from-orange-500/20 to-orange-600/20 border border-orange-500/30 text-orange-300 hover:from-orange-500/30 hover:to-orange-600/30 hover:border-orange-400/50 shadow-lg shadow-orange-500/10': ranking.rank === 3,
-                        'bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/30 text-slate-300 hover:from-slate-600/60 hover:to-slate-700/60 hover:border-slate-500/50 shadow-lg shadow-slate-900/20': ranking.rank > 3
-                      }"
-                    >
-                      <div class="flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:rotate-12">
-                          <path d="M9 19c-5 0-8-3-8-7s3-7 8-7 8 3 8 7-3 7-8 7"/>
-                          <path d="m13.5 10.5 2.5-2.5"/>
-                          <path d="m13.5 13.5 2.5 2.5"/>
-                        </svg>
-                        {{ expandedServerId === ranking.serverGuid ? 'Hide Maps' : 'View Maps' }}
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Expanded Map Stats Section -->
-              <div
-                v-if="expandedServerId"
-                class="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden"
-              >
-                <div class="p-6 border-b border-slate-700/50">
-                  <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                    <div class="space-y-1">
-                      <h5 class="text-xl font-bold text-white">Map Performance</h5>
-                      <p class="text-slate-400 text-sm">{{ expandedServerName || 'Selected Server' }}</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                      <button
-                        v-for="option in timeRangeOptions"
-                        :key="option.value"
-                        :class="[
-                          'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-                          selectedTimeRange === option.value 
-                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg' 
-                            : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 border border-slate-600'
-                        ]"
-                        @click="selectedTimeRange = option.value"
-                      >
-                        {{ option.label }}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="p-6">
-                  <div
-                    v-if="mapStats.length === 0 && mapStatsLoading"
-                    class="flex flex-col items-center justify-center p-12 space-y-4"
-                  >
-                    <div class="relative">
-                      <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-600"></div>
-                      <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-amber-500 absolute top-0"></div>
-                    </div>
-                    <p class="text-slate-400 font-medium">Loading map statistics...</p>
-                  </div>
-                  
-                  <div
-                    v-else-if="mapStats.length > 0"
-                    class="relative overflow-hidden"
-                  >
-                    <!-- Loading Overlay for time range changes -->
-                    <div
-                      v-if="mapStatsLoading"
-                      class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-20 transition-all duration-200"
-                    >
-                      <div class="flex items-center gap-3 px-4 py-2 bg-slate-800/90 rounded-lg border border-slate-700">
-                        <div class="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                        <span class="text-amber-400 font-medium text-sm">Updating...</span>
-                      </div>
-                    </div>
-                    <!-- Map Stats Table -->
-                    <table class="w-full border-collapse">
-                      <!-- Table Header -->
-                      <thead class="sticky top-0 z-10">
-                        <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
-                          <th @click="changeMapStatsSort('mapName')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-amber-500/50">
-                            <div class="flex items-center gap-1.5">
-                              <span class="text-amber-400 text-xs">🗺️</span>
-                              <span class="font-mono font-bold">MAP</span>
-                              <span class="text-xs transition-transform duration-200" :class="{
-                                'text-amber-400 opacity-100': mapStatsSortField === 'mapName',
-                                'opacity-50': mapStatsSortField !== 'mapName',
-                                'rotate-0': mapStatsSortField === 'mapName' && mapStatsSortDirection === 'asc',
-                                'rotate-180': mapStatsSortField === 'mapName' && mapStatsSortDirection === 'desc'
-                              }">▲</span>
-                            </div>
-                          </th>
-                          <th @click="changeMapStatsSort('totalScore')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-yellow-500/50">
-                            <div class="flex items-center gap-1.5">
-                              <span class="text-yellow-400 text-xs">🏆</span>
-                              <span class="font-mono font-bold">SCORE</span>
-                              <span class="text-xs transition-transform duration-200" :class="{
-                                'text-yellow-400 opacity-100': mapStatsSortField === 'totalScore',
-                                'opacity-50': mapStatsSortField !== 'totalScore',
-                                'rotate-0': mapStatsSortField === 'totalScore' && mapStatsSortDirection === 'asc',
-                                'rotate-180': mapStatsSortField === 'totalScore' && mapStatsSortDirection === 'desc'
-                              }">▲</span>
-                            </div>
-                          </th>
-                          <th @click="changeMapStatsSort('kdRatio')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-green-500/50">
-                            <div class="flex items-center gap-1.5">
-                              <span class="text-green-400 text-xs">⚔️</span>
-                              <span class="font-mono font-bold">K/D</span>
-                              <span class="text-xs transition-transform duration-200" :class="{
-                                'text-green-400 opacity-100': mapStatsSortField === 'kdRatio',
-                                'opacity-50': mapStatsSortField !== 'kdRatio',
-                                'rotate-0': mapStatsSortField === 'kdRatio' && mapStatsSortDirection === 'asc',
-                                'rotate-180': mapStatsSortField === 'kdRatio' && mapStatsSortDirection === 'desc'
-                              }">▲</span>
-                            </div>
-                          </th>
-                          <th @click="changeMapStatsSort('totalKills')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-red-500/50">
-                            <div class="flex items-center gap-1.5">
-                              <span class="text-red-400 text-xs">🎯</span>
-                              <span class="font-mono font-bold">KILLS</span>
-                              <span class="text-xs transition-transform duration-200" :class="{
-                                'text-red-400 opacity-100': mapStatsSortField === 'totalKills',
-                                'opacity-50': mapStatsSortField !== 'totalKills',
-                                'rotate-0': mapStatsSortField === 'totalKills' && mapStatsSortDirection === 'asc',
-                                'rotate-180': mapStatsSortField === 'totalKills' && mapStatsSortDirection === 'desc'
-                              }">▲</span>
-                            </div>
-                          </th>
-                          <th @click="changeMapStatsSort('totalDeaths')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-purple-500/50">
-                            <div class="flex items-center gap-1.5">
-                              <span class="text-purple-400 text-xs">💀</span>
-                              <span class="font-mono font-bold">DEATHS</span>
-                              <span class="text-xs transition-transform duration-200" :class="{
-                                'text-purple-400 opacity-100': mapStatsSortField === 'totalDeaths',
-                                'opacity-50': mapStatsSortField !== 'totalDeaths',
-                                'rotate-0': mapStatsSortField === 'totalDeaths' && mapStatsSortDirection === 'asc',
-                                'rotate-180': mapStatsSortField === 'totalDeaths' && mapStatsSortDirection === 'desc'
-                              }">▲</span>
-                            </div>
-                          </th>
-                          <th @click="changeMapStatsSort('sessionsPlayed')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-blue-500/50">
-                            <div class="flex items-center gap-1.5">
-                              <span class="text-blue-400 text-xs">🎮</span>
-                              <span class="font-mono font-bold">SESSIONS</span>
-                              <span class="text-xs transition-transform duration-200" :class="{
-                                'text-blue-400 opacity-100': mapStatsSortField === 'sessionsPlayed',
-                                'opacity-50': mapStatsSortField !== 'sessionsPlayed',
-                                'rotate-0': mapStatsSortField === 'sessionsPlayed' && mapStatsSortDirection === 'asc',
-                                'rotate-180': mapStatsSortField === 'sessionsPlayed' && mapStatsSortDirection === 'desc'
-                              }">▲</span>
-                            </div>
-                          </th>
-                          <th @click="changeMapStatsSort('totalPlayTimeMinutes')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-cyan-500/50">
-                            <div class="flex items-center gap-1.5">
-                              <span class="text-cyan-400 text-xs">⏱️</span>
-                              <span class="font-mono font-bold">TIME</span>
-                              <span class="text-xs transition-transform duration-200" :class="{
-                                'text-cyan-400 opacity-100': mapStatsSortField === 'totalPlayTimeMinutes',
-                                'opacity-50': mapStatsSortField !== 'totalPlayTimeMinutes',
-                                'rotate-0': mapStatsSortField === 'totalPlayTimeMinutes' && mapStatsSortDirection === 'asc',
-                                'rotate-180': mapStatsSortField === 'totalPlayTimeMinutes' && mapStatsSortDirection === 'desc'
-                              }">▲</span>
-                            </div>
-                          </th>
-                        </tr>
-                      </thead>
-
-                      <!-- Table Body -->
-                      <tbody>
-                        <tr
-                          v-for="(map, mapIndex) in sortedMapStats"
-                          :key="mapIndex"
-                          class="group transition-all duration-300 hover:bg-gradient-to-r hover:from-slate-800/40 hover:to-slate-900/40 border-b border-slate-800/50 hover:border-slate-700/50 hover:shadow-lg"
-                        >
-                          <!-- Map Name -->
-                          <td class="p-1.5">
-                            <router-link 
-                              :to="{
-                                path: `/players/${encodeURIComponent(playerName)}/sessions`,
-                                query: { 
-                                  map: map.mapName,
-                                  ...(expandedServerName && { server: expandedServerName })
-                                }
-                              }"
-                              class="block group-hover:text-amber-400 transition-all duration-300 no-underline"
-                            >
-                              <div class="font-bold text-slate-200 truncate max-w-xs text-sm">{{ map.mapName }}</div>
-                            </router-link>
-                          </td>
-
-                          <!-- Score -->
-                          <td class="p-1.5">
-                            <div class="font-mono text-sm font-bold text-yellow-400">{{ map.totalScore.toLocaleString() }}</div>
-                          </td>
-
-                          <!-- K/D Ratio -->
-                          <td class="p-1.5">
-                            <div class="font-mono text-sm font-bold text-green-400">{{ calculateKDR(map.totalKills, map.totalDeaths) }}</div>
-                          </td>
-
-                          <!-- Kills -->
-                          <td class="p-1.5">
-                            <div class="font-mono text-sm font-bold text-red-400">{{ map.totalKills }}</div>
-                          </td>
-
-                          <!-- Deaths -->
-                          <td class="p-1.5">
-                            <div class="font-mono text-sm font-bold text-purple-400">{{ map.totalDeaths }}</div>
-                          </td>
-
-                          <!-- Sessions -->
-                          <td class="p-1.5">
-                            <div class="font-mono text-sm font-bold text-blue-400">{{ map.sessionsPlayed }}</div>
-                          </td>
-
-                          <!-- Play Time -->
-                          <td class="p-1.5">
-                            <div class="font-mono text-sm font-bold text-cyan-400">{{ formatPlayTime(map.totalPlayTimeMinutes) }}</div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  <div
-                    v-else
-                    class="text-center py-12"
-                  >
-                    <div class="space-y-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-slate-500">
-                        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 011-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 011.52 0C14.51 3.81 17 5 19 5a1 1 0 011 1z"/>
-                        <path d="m9 12 2 2 4-4"/>
-                      </svg>
-                      <p class="text-slate-400 font-medium">No map statistics available for the selected time range</p>
-                      <p class="text-slate-500 text-sm">Try selecting a different time period</p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
