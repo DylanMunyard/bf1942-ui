@@ -122,11 +122,11 @@
 
         <!-- Server Table -->
         <div v-else class="overflow-hidden">
-            <table class="w-full border-collapse">
+            <table class="w-full border-collapse border border-slate-700/30">
               <!-- Table Header -->
               <thead class="sticky top-0 z-10">
                 <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
-                  <th @click="sortBy('name')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-cyan-500/50">
+                  <th @click="sortBy('name')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50">
                     <div class="flex items-center gap-1.5">
                       <span class="text-slate-400 text-xs">🏷️</span>
                       <span class="font-mono font-bold">SERVER</span>
@@ -138,7 +138,7 @@
                       }">▲</span>
                     </div>
                   </th>
-                  <th @click="sortBy('numPlayers')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-green-500/50">
+                  <th @click="sortBy('numPlayers')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50">
                     <div class="flex items-center gap-1.5">
                       <span class="text-green-400 text-xs">👥</span>
                       <span class="font-mono font-bold">PLAYERS</span>
@@ -150,7 +150,7 @@
                       }">▲</span>
                     </div>
                   </th>
-                  <th @click="sortBy('mapName')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-orange-500/50">
+                  <th @click="sortBy('mapName')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50">
                     <div class="flex items-center gap-1.5">
                       <span class="text-orange-400 text-xs">🗺️</span>
                       <span class="font-mono font-bold">MAP</span>
@@ -162,7 +162,7 @@
                       }">▲</span>
                     </div>
                   </th>
-                  <th @click="sortBy('roundTimeRemain')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-yellow-500/50">
+                  <th @click="sortBy('roundTimeRemain')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-yellow-500/50">
                     <div class="flex items-center gap-1.5">
                       <span class="text-yellow-400 text-xs">⏱️</span>
                       <span class="font-mono font-bold">TIME</span>
@@ -174,7 +174,7 @@
                       }">▲</span>
                     </div>
                   </th>
-                  <th @click="sortBy('gameType')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/50 hover:border-purple-500/50">
+                  <th @click="sortBy('gameType')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-purple-500/50">
                     <div class="flex items-center gap-1.5">
                       <span class="text-purple-400 text-xs">🎮</span>
                       <span class="font-mono font-bold">MODE</span>
@@ -186,13 +186,13 @@
                       }">▲</span>
                     </div>
                   </th>
-                  <th class="p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/50">
+                  <th class="p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
                     <div class="flex items-center gap-1.5">
                       <span class="text-blue-400 text-xs">🔗</span>
                       <span class="font-mono font-bold">IP</span>
                     </div>
                   </th>
-                  <th class="p-1.5 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/50">
+                  <th class="p-1.5 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
                     <div class="flex items-center justify-center gap-1.5">
                       <span class="text-red-400 text-xs">⚔️</span>
                       <span class="font-mono font-bold">JOIN</span>
@@ -206,7 +206,7 @@
                 <tr
                   v-for="server in sortedServers"
                   :key="server.guid"
-                  class="group transition-all duration-300 hover:bg-gradient-to-r hover:from-slate-800/40 hover:to-slate-900/40 border-b border-slate-800/50 hover:border-slate-700/50 hover:shadow-lg"
+                  class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
                   :class="getServerStatusClass(server)"
                 >
                   <!-- Server Name -->
@@ -571,9 +571,9 @@ const setActiveFilter = (filterId: string) => {
   activeFilter.value = filterId
   
   const routeMap = {
-    'bf1942': '/v2/bf1942',
-    'fh2': '/v2/fh2',
-    'bfvietnam': '/v2/bfv'
+    'bf1942': '/servers/bf1942',
+    'fh2': '/servers/fh2',
+    'bfvietnam': '/servers/bfv'
   }
   
   const newRoute = routeMap[filterId as keyof typeof routeMap]
@@ -747,14 +747,17 @@ onUnmounted(() => {
 
 /* Enhanced table row hover effects */
 tbody tr:hover {
-  transform: translateX(3px);
-  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.15);
+  /* Removed transform and box-shadow to prevent wobbling */
+}
+
+/* Clean typography for the entire table */
+table {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Compact row spacing with better typography */
 tbody tr {
   height: 32px;
-  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
 }
 
 /* Gaming-style glow effects */

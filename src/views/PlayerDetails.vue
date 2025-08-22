@@ -1974,21 +1974,23 @@ watch(
           
           <div class="relative z-10 p-8 space-y-6">
             <!-- Section Header -->
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div 
+              class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 cursor-pointer group p-2 -m-2 rounded-xl hover:bg-slate-800/30 transition-all duration-300"
+              @click="toggleSimilarPlayersSection"
+            >
               <div class="space-y-2">
-                <h3 
-                  class="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent cursor-pointer hover:from-cyan-300 hover:via-blue-300 hover:to-purple-300 transition-all duration-300"
-                  @click="toggleSimilarPlayersSection"
-                >
+                <h3 class="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent group-hover:from-cyan-300 group-hover:via-blue-300 group-hover:to-purple-300 transition-all duration-300">
                   🔍 Player Intelligence & Analysis
                 </h3>
-                <p class="text-slate-400">Advanced behavioral pattern recognition and player comparison</p>
+                <p class="text-slate-400 group-hover:text-slate-300 transition-colors duration-300">Advanced behavioral pattern recognition and player comparison</p>
               </div>
               <div class="flex items-center gap-3">
-                <div class="text-slate-400">{{ similarSectionExpanded ? '▲ Collapse' : '▼ Expand' }}</div>
+                <div class="text-slate-400 group-hover:text-cyan-400 transition-colors duration-300 font-medium">
+                  {{ similarSectionExpanded ? '▲ Collapse' : '▼ Expand' }}
+                </div>
                 <div
                   v-if="!similarSectionExpanded"
-                  class="hidden lg:block text-sm text-slate-500 italic"
+                  class="hidden lg:block text-sm text-slate-500 italic group-hover:text-slate-400 transition-colors duration-300"
                 >
                   Click to find players like {{ playerName }}
                 </div>
