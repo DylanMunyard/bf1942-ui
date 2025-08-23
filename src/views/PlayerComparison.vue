@@ -1182,34 +1182,6 @@ const formatRelativeTime = (dateString: string): string => {
 
     <!-- Comparison Results -->
     <div v-if="comparisonData" class="max-w-7xl mx-auto p-6 space-y-8">
-      <!-- Server Context Banner -->
-      <div
-        v-if="comparisonData.serverDetails"
-        class="bg-gradient-to-r from-blue-600/80 to-purple-600/80 backdrop-blur-lg rounded-2xl border border-blue-500/30 overflow-hidden"
-      >
-        <div class="p-6">
-          <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3 flex-wrap">
-              <span class="text-blue-100 font-medium">🎮 Server comparison for:</span>
-              <router-link 
-                :to="`/servers/${encodeURIComponent(comparisonData.serverDetails.name)}/rankings`"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 border border-white/30 hover:border-white/50 rounded-lg text-white font-bold text-sm transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-                :title="`View rankings for ${comparisonData.serverDetails.name}`"
-              >
-                <span>📈</span>
-                {{ comparisonData.serverDetails.name }}
-              </router-link>
-            </div>
-            <button 
-              class="flex items-center justify-center w-8 h-8 bg-white/20 hover:bg-white/30 border border-white/30 hover:border-white/50 rounded-full text-white transition-all duration-300 transform hover:scale-110 hover:shadow-lg"
-              title="Compare across all servers"
-              @click="clearServerFilter"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      </div>
 
       <!-- Common Servers Selector -->
       <div
@@ -1218,38 +1190,58 @@ const formatRelativeTime = (dateString: string): string => {
       >
         <div class="p-6">
           <div class="mb-4">
-            <h3 class="text-lg font-bold text-slate-200 mb-2 flex items-center gap-2">
-              🎮 Compare performance on specific servers:
-            </h3>
-            <p class="text-sm text-slate-400">Select a server to focus the comparison on that server's data only</p>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+              <div>
+                <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                  🎮 Compare performance on specific servers
+                  <span v-if="comparisonData.serverDetails" class="text-sm font-normal text-slate-400">(🎯 Currently: {{ comparisonData.serverDetails.name }})</span>
+                </h3>
+                <p class="text-sm text-slate-400 mt-1">Select a server to focus the comparison</p>
+              </div>
+              <button 
+                v-if="comparisonData.serverDetails"
+                class="self-start sm:self-auto px-4 py-2 bg-slate-700/60 hover:bg-slate-600/80 border border-slate-600/50 hover:border-slate-500/50 rounded-lg text-slate-300 hover:text-white text-sm font-medium transition-all duration-300 flex items-center gap-2"
+                @click="clearServerFilter"
+                title="View comparison across all common servers"
+              >
+                <span>🌍</span>
+                All Servers
+              </button>
+            </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <button 
               v-for="server in comparisonData.commonServers" 
               :key="server.guid"
-              class="group p-4 bg-slate-800/60 hover:bg-slate-700/80 border border-slate-700/50 hover:border-blue-500/50 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-left"
+              class="group relative p-3 rounded-lg transition-all duration-300 text-left transform hover:scale-105"
               :class="{ 
-                'bg-blue-600/80 border-blue-500/70 shadow-blue-500/20 shadow-lg': comparisonData.serverDetails?.guid === server.guid,
-                'hover:shadow-blue-500/20': comparisonData.serverDetails?.guid !== server.guid
+                'bg-gradient-to-r from-blue-600/80 to-purple-600/80 border-2 border-blue-400/50 shadow-lg shadow-blue-500/20': comparisonData.serverDetails?.guid === server.guid,
+                'bg-slate-800/40 border-2 border-slate-700/50 hover:bg-slate-700/60 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10': comparisonData.serverDetails?.guid !== server.guid
               }"
               :title="`Compare performance on ${server.name}`"
               @click="selectServer(server.guid)"
             >
-              <div class="space-y-2">
-                <div class="font-bold text-slate-200 group-hover:text-blue-400 transition-colors text-sm truncate"
-                     :class="{ 'text-white': comparisonData.serverDetails?.guid === server.guid }">
+              <!-- Selected indicator -->
+              <div v-if="comparisonData.serverDetails?.guid === server.guid" class="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-xs font-bold">
+                ✓
+              </div>
+              
+              <div class="flex items-center justify-between">
+                <div class="font-bold text-base truncate pr-2"
+                     :class="{ 
+                       'text-white': comparisonData.serverDetails?.guid === server.guid,
+                       'text-slate-200 group-hover:text-blue-400': comparisonData.serverDetails?.guid !== server.guid
+                     }">
                   {{ server.name }}
                 </div>
-                <div class="flex items-center gap-2 flex-wrap text-xs">
-                  <span class="px-2 py-1 bg-slate-700/60 border border-slate-600/50 rounded-full text-slate-300 font-medium uppercase"
-                        :class="{ 'bg-white/20 border-white/30 text-white': comparisonData.serverDetails?.guid === server.guid }">
-                    {{ server.gameId }}
-                  </span>
-                  <span v-if="server.country" class="text-slate-400 font-medium"
-                        :class="{ 'text-blue-100': comparisonData.serverDetails?.guid === server.guid }">
-                    🌍 {{ server.country }}
-                  </span>
-                </div>
+                
+                <span v-if="server.country" class="text-sm font-medium flex items-center gap-1 flex-shrink-0"
+                      :class="{ 
+                        'text-blue-100': comparisonData.serverDetails?.guid === server.guid,
+                        'text-slate-400 group-hover:text-blue-300': comparisonData.serverDetails?.guid !== server.guid
+                      }">
+                  🌍 {{ server.country }}
+                </span>
               </div>
             </button>
           </div>
@@ -1276,10 +1268,7 @@ const formatRelativeTime = (dateString: string): string => {
               :to="`/players/${encodeURIComponent(comparisonData.player1)}`"
               class="group block mb-4 hover:transform hover:scale-105 transition-all duration-300"
             >
-              <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-2xl font-bold text-slate-900">
-                👤
-              </div>
-              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 group-hover:from-cyan-300 group-hover:to-blue-300 transition-all duration-300">
+              <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 group-hover:from-cyan-300 group-hover:to-blue-300 transition-all duration-300">
                 {{ comparisonData.player1 }}
               </h2>
             </router-link>
@@ -1309,10 +1298,7 @@ const formatRelativeTime = (dateString: string): string => {
               :to="`/players/${encodeURIComponent(comparisonData.player2)}`"
               class="group block mb-4 hover:transform hover:scale-105 transition-all duration-300"
             >
-              <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-gradient-to-r from-orange-400 to-red-500 flex items-center justify-center text-2xl font-bold text-slate-900">
-                👤
-              </div>
-              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 group-hover:from-orange-300 group-hover:to-red-300 transition-all duration-300">
+              <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 group-hover:from-orange-300 group-hover:to-red-300 transition-all duration-300">
                 {{ comparisonData.player2 }}
               </h2>
             </router-link>
@@ -1689,18 +1675,16 @@ const formatRelativeTime = (dateString: string): string => {
                   </th>
                   
                   <!-- Player 1 Headers -->
-                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-cyan-400 border-b border-slate-700/30 bg-cyan-500/5" :colspan="showExtraColumns ? 4 : 2">
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-cyan-400 border-b border-slate-700/30 bg-cyan-500/10 border-l-4 border-l-cyan-400/60" :colspan="showExtraColumns ? 4 : 2">
                     <div class="flex items-center justify-center gap-2">
-                      <span>👤</span>
-                      <span class="font-mono font-bold">{{ comparisonData.player1 }}</span>
+                      <span class="font-mono font-bold text-sm">{{ comparisonData.player1 }}</span>
                     </div>
                   </th>
                   
                   <!-- Player 2 Headers -->
-                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-orange-400 border-b border-slate-700/30 bg-orange-500/5" :colspan="showExtraColumns ? 4 : 2">
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-orange-400 border-b border-slate-700/30 bg-orange-500/10 border-l-4 border-l-orange-400/60" :colspan="showExtraColumns ? 4 : 2">
                     <div class="flex items-center justify-center gap-2">
-                      <span>👤</span>
-                      <span class="font-mono font-bold">{{ comparisonData.player2 }}</span>
+                      <span class="font-mono font-bold text-sm">{{ comparisonData.player2 }}</span>
                     </div>
                   </th>
                 </tr>
@@ -1709,7 +1693,7 @@ const formatRelativeTime = (dateString: string): string => {
                   
                   <!-- Player 1 Sub Headers -->
                   <th 
-                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50"
+                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50 bg-cyan-500/5 border-l-4 border-l-cyan-400/60"
                     :class="{ 'text-cyan-400': sortColumn === 'p1-score' }"
                     @click="sortMapPerformance('p1-score')"
                   >
@@ -1720,7 +1704,7 @@ const formatRelativeTime = (dateString: string): string => {
                     </div>
                   </th>
                   <th v-if="showExtraColumns" 
-                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50"
+                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50 bg-cyan-500/5"
                       :class="{ 'text-cyan-400': sortColumn === 'p1-kills' }"
                       @click="sortMapPerformance('p1-kills')">
                     <div class="flex items-center justify-center gap-1">
@@ -1730,7 +1714,7 @@ const formatRelativeTime = (dateString: string): string => {
                     </div>
                   </th>
                   <th v-if="showExtraColumns" 
-                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50"
+                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50 bg-cyan-500/5"
                       :class="{ 'text-cyan-400': sortColumn === 'p1-deaths' }"
                       @click="sortMapPerformance('p1-deaths')">
                     <div class="flex items-center justify-center gap-1">
@@ -1740,7 +1724,7 @@ const formatRelativeTime = (dateString: string): string => {
                     </div>
                   </th>
                   <th 
-                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50"
+                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50 bg-cyan-500/5 border-r-4 border-r-cyan-400/60"
                     :class="{ 'text-cyan-400': sortColumn === 'p1-kdr' }"
                     @click="sortMapPerformance('p1-kdr')"
                   >
@@ -1753,7 +1737,7 @@ const formatRelativeTime = (dateString: string): string => {
                   
                   <!-- Player 2 Sub Headers -->
                   <th 
-                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50"
+                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50 bg-orange-500/5 border-l-4 border-l-orange-400/60"
                     :class="{ 'text-orange-400': sortColumn === 'p2-score' }"
                     @click="sortMapPerformance('p2-score')"
                   >
@@ -1764,7 +1748,7 @@ const formatRelativeTime = (dateString: string): string => {
                     </div>
                   </th>
                   <th v-if="showExtraColumns" 
-                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50"
+                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50 bg-orange-500/5"
                       :class="{ 'text-orange-400': sortColumn === 'p2-kills' }"
                       @click="sortMapPerformance('p2-kills')">
                     <div class="flex items-center justify-center gap-1">
@@ -1774,7 +1758,7 @@ const formatRelativeTime = (dateString: string): string => {
                     </div>
                   </th>
                   <th v-if="showExtraColumns" 
-                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50"
+                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50 bg-orange-500/5"
                       :class="{ 'text-orange-400': sortColumn === 'p2-deaths' }"
                       @click="sortMapPerformance('p2-deaths')">
                     <div class="flex items-center justify-center gap-1">
@@ -1784,7 +1768,7 @@ const formatRelativeTime = (dateString: string): string => {
                     </div>
                   </th>
                   <th 
-                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50"
+                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50 bg-orange-500/5"
                     :class="{ 'text-orange-400': sortColumn === 'p2-kdr' }"
                     @click="sortMapPerformance('p2-kdr')"
                   >
@@ -1812,22 +1796,22 @@ const formatRelativeTime = (dateString: string): string => {
                   </td>
 
                   <!-- Player 1 Stats -->
-                  <td class="p-2 text-center">
+                  <td class="p-2 text-center bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ map.player1Totals.score?.toLocaleString() }}
                     </div>
                   </td>
-                  <td v-if="showExtraColumns" class="p-2 text-center">
+                  <td v-if="showExtraColumns" class="p-2 text-center bg-cyan-500/5">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ map.player1Totals.kills?.toLocaleString() }}
                     </div>
                   </td>
-                  <td v-if="showExtraColumns" class="p-2 text-center">
+                  <td v-if="showExtraColumns" class="p-2 text-center bg-cyan-500/5">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ map.player1Totals.deaths?.toLocaleString() }}
                     </div>
                   </td>
-                  <td class="p-2 text-center">
+                  <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
                     <div class="font-bold text-xs font-mono" :class="{
                       'text-green-400': parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) > parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)),
                       'text-cyan-400': parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) <= parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths))
@@ -1837,22 +1821,22 @@ const formatRelativeTime = (dateString: string): string => {
                   </td>
 
                   <!-- Player 2 Stats -->
-                  <td class="p-2 text-center">
+                  <td class="p-2 text-center bg-orange-500/5 border-l-2 border-l-orange-400/40">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ map.player2Totals.score?.toLocaleString() }}
                     </div>
                   </td>
-                  <td v-if="showExtraColumns" class="p-2 text-center">
+                  <td v-if="showExtraColumns" class="p-2 text-center bg-orange-500/5">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ map.player2Totals.kills?.toLocaleString() }}
                     </div>
                   </td>
-                  <td v-if="showExtraColumns" class="p-2 text-center">
+                  <td v-if="showExtraColumns" class="p-2 text-center bg-orange-500/5">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ map.player2Totals.deaths?.toLocaleString() }}
                     </div>
                   </td>
-                  <td class="p-2 text-center">
+                  <td class="p-2 text-center bg-orange-500/5">
                     <div class="font-bold text-xs font-mono" :class="{
                       'text-green-400': parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) > parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)),
                       'text-orange-400': parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) <= parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths))
@@ -1897,18 +1881,16 @@ const formatRelativeTime = (dateString: string): string => {
                   </th>
                   
                   <!-- Player 1 Headers -->
-                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-cyan-400 border-b border-slate-700/30 bg-cyan-500/5" colspan="3">
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-cyan-400 border-b border-slate-700/30 bg-cyan-500/10 border-l-4 border-l-cyan-400/60" colspan="3">
                     <div class="flex items-center justify-center gap-2">
-                      <span>👤</span>
-                      <span class="font-mono font-bold">{{ comparisonData.player1 }}</span>
+                      <span class="font-mono font-bold text-sm">{{ comparisonData.player1 }}</span>
                     </div>
                   </th>
                   
                   <!-- Player 2 Headers -->
-                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-orange-400 border-b border-slate-700/30 bg-orange-500/5" colspan="3">
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-orange-400 border-b border-slate-700/30 bg-orange-500/10 border-l-4 border-l-orange-400/60" colspan="3">
                     <div class="flex items-center justify-center gap-2">
-                      <span>👤</span>
-                      <span class="font-mono font-bold">{{ comparisonData.player2 }}</span>
+                      <span class="font-mono font-bold text-sm">{{ comparisonData.player2 }}</span>
                     </div>
                   </th>
                 </tr>
@@ -1917,19 +1899,19 @@ const formatRelativeTime = (dateString: string): string => {
                   <th class="p-2 border-b border-slate-700/30"></th>
                   
                   <!-- Player 1 Sub Headers -->
-                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60">
                     <div class="flex items-center justify-center gap-1">
                       <span>🎖️</span>
                       <span class="font-mono">SCORE</span>
                     </div>
                   </th>
-                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
                     <div class="flex items-center justify-center gap-1">
                       <span>⚔️</span>
                       <span class="font-mono">KILLS</span>
                     </div>
                   </th>
-                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-r-4 border-r-cyan-400/60">
                     <div class="flex items-center justify-center gap-1">
                       <span>☠️</span>
                       <span class="font-mono">DEATHS</span>
@@ -1937,19 +1919,19 @@ const formatRelativeTime = (dateString: string): string => {
                   </th>
                   
                   <!-- Player 2 Sub Headers -->
-                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60">
                     <div class="flex items-center justify-center gap-1">
                       <span>🎖️</span>
                       <span class="font-mono">SCORE</span>
                     </div>
                   </th>
-                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
                     <div class="flex items-center justify-center gap-1">
                       <span>⚔️</span>
                       <span class="font-mono">KILLS</span>
                     </div>
                   </th>
-                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
                     <div class="flex items-center justify-center gap-1">
                       <span>☠️</span>
                       <span class="font-mono">DEATHS</span>
@@ -1997,34 +1979,34 @@ const formatRelativeTime = (dateString: string): string => {
                   </td>
 
                   <!-- Player 1 Stats -->
-                  <td class="p-2 text-center">
+                  <td class="p-2 text-center bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ encounter.player1Score?.toLocaleString() }}
                     </div>
                   </td>
-                  <td class="p-2 text-center">
+                  <td class="p-2 text-center bg-cyan-500/5">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ encounter.player1Kills }}
                     </div>
                   </td>
-                  <td class="p-2 text-center">
+                  <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ encounter.player1Deaths }}
                     </div>
                   </td>
 
                   <!-- Player 2 Stats -->
-                  <td class="p-2 text-center">
+                  <td class="p-2 text-center bg-orange-500/5 border-l-2 border-l-orange-400/40">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ encounter.player2Score?.toLocaleString() }}
                     </div>
                   </td>
-                  <td class="p-2 text-center">
+                  <td class="p-2 text-center bg-orange-500/5">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ encounter.player2Kills }}
                     </div>
                   </td>
-                  <td class="p-2 text-center">
+                  <td class="p-2 text-center bg-orange-500/5">
                     <div class="text-slate-200 font-bold text-xs font-mono">
                       {{ encounter.player2Deaths }}
                     </div>
@@ -2052,11 +2034,8 @@ const formatRelativeTime = (dateString: string): string => {
           <!-- Player 1 Milestone Achievements -->
           <div v-if="comparisonData.player1MilestoneAchievements?.length" class="space-y-6">
             <div class="text-center">
-              <div class="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-xl">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-slate-900 font-bold text-sm">
-                  👤
-                </div>
-                <h4 class="text-xl font-bold text-cyan-400">{{ comparisonData.player1 }}</h4>
+              <div class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-xl">
+                <h4 class="text-2xl font-bold text-cyan-400">{{ comparisonData.player1 }}</h4>
               </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -2102,11 +2081,8 @@ const formatRelativeTime = (dateString: string): string => {
           <!-- Player 2 Milestone Achievements -->
           <div v-if="comparisonData.player2MilestoneAchievements?.length" class="space-y-6">
             <div class="text-center">
-              <div class="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-xl">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-orange-400 to-red-500 flex items-center justify-center text-slate-900 font-bold text-sm">
-                  👤
-                </div>
-                <h4 class="text-xl font-bold text-orange-400">{{ comparisonData.player2 }}</h4>
+              <div class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-xl">
+                <h4 class="text-2xl font-bold text-orange-400">{{ comparisonData.player2 }}</h4>
               </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
