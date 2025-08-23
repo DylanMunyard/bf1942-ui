@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchRoundReport, RoundReport } from '../services/serverDetailsService';
 import PlayerName from './PlayerName.vue';
@@ -41,6 +41,13 @@ const batchUpdateEvents = ref<Array<{timestamp: string, events: typeof battleEve
 const isScrollFrozen = ref(false);
 const lastScrollTop = ref(0);
 const consoleElement = ref<HTMLElement | null>(null);
+const timeNavigationTrigger = ref<HTMLElement | null>(null);
+const timeCheckpoints = ref<Array<{
+  index: number;
+  timestamp: string;
+  offset: string;
+  minutes: number;
+}>>([]);
 
 // Generate battle narrative from leaderboard snapshots
 const generateBattleEvents = () => {
@@ -158,6 +165,79 @@ const generateBattleEvents = () => {
     timestamp,
     events
   })).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  
+  // Generate time-based checkpoints
+  generateTimeCheckpoints();
+};
+
+// Generate time-based checkpoints (every minute)
+const generateTimeCheckpoints = () => {
+  if (!batchUpdateEvents.value.length || !roundReport.value) return;
+  
+  const checkpoints: typeof timeCheckpoints.value = [];
+  const startTime = new Date(roundReport.value.round.startTime).getTime();
+  const endTime = new Date(batchUpdateEvents.value[batchUpdateEvents.value.length - 1].timestamp).getTime();
+  const totalDuration = endTime - startTime;
+  const totalMinutes = Math.ceil(totalDuration / (1000 * 60));
+  
+  console.log('Generating checkpoints:', { totalMinutes, startTime, endTime, totalDuration });
+  
+  // Create checkpoints every minute
+  for (let minute = 0; minute <= totalMinutes; minute++) {
+    const targetTime = startTime + (minute * 60 * 1000);
+    
+    // Find closest batch event to this time
+    let closestIndex = 0;
+    let closestDiff = Math.abs(new Date(batchUpdateEvents.value[0].timestamp).getTime() - targetTime);
+    
+    for (let i = 1; i < batchUpdateEvents.value.length; i++) {
+      const eventTime = new Date(batchUpdateEvents.value[i].timestamp).getTime();
+      const diff = Math.abs(eventTime - targetTime);
+      
+      if (diff < closestDiff) {
+        closestDiff = diff;
+        closestIndex = i;
+      }
+    }
+    
+    // Format the time display
+    let timeDisplay;
+    if (minute === 0) {
+      timeDisplay = 'Start';
+    } else if (minute < 60) {
+      timeDisplay = `+${minute}m`;
+    } else {
+      const hours = Math.floor(minute / 60);
+      const mins = minute % 60;
+      timeDisplay = `+${hours}h${mins > 0 ? mins + 'm' : ''}`;
+    }
+    
+    checkpoints.push({
+      index: closestIndex,
+      timestamp: batchUpdateEvents.value[closestIndex].timestamp,
+      offset: timeDisplay,
+      minutes: minute
+    });
+  }
+  
+  console.log('Generated checkpoints:', checkpoints);
+  
+  // If no checkpoints were generated, create some sample ones for testing
+  if (checkpoints.length === 0 && batchUpdateEvents.value.length > 0) {
+    console.log('No checkpoints generated, creating samples');
+    const sampleCount = Math.min(10, batchUpdateEvents.value.length);
+    for (let i = 0; i < sampleCount; i++) {
+      const batchIndex = Math.floor((i / (sampleCount - 1)) * (batchUpdateEvents.value.length - 1));
+      checkpoints.push({
+        index: batchIndex,
+        timestamp: batchUpdateEvents.value[batchIndex].timestamp,
+        offset: i === 0 ? 'Start' : `+${i}m`,
+        minutes: i
+      });
+    }
+  }
+  
+  timeCheckpoints.value = checkpoints;
 };
 
 // Fetch round report
@@ -181,9 +261,6 @@ const fetchData = async () => {
   }
 };
 
-onMounted(() => {
-  fetchData();
-});
 
 // Terminal-style scroll management
 const handleScroll = () => {
@@ -285,6 +362,96 @@ const scrollToTop = () => {
   }
 };
 
+// Time navigation state
+const selectedTimeIndex = ref(0);
+
+// Jump to time checkpoint
+const jumpToTimeCheckpoint = (checkpointIndex: number) => {
+  const checkpoint = timeCheckpoints.value[checkpointIndex];
+  if (!checkpoint) return;
+  
+  // Stop current playback
+  stopPlayback();
+  
+  // Jump to the checkpoint batch index
+  visibleEventIndex.value = checkpoint.index;
+  selectedTimeIndex.value = checkpointIndex;
+  newEventIds.value.clear();
+  isScrollFrozen.value = false;
+  autoScrollEnabled.value = true;
+  
+  // Scroll to top to show the checkpoint
+  scrollToTop();
+};
+
+// Update selected index based on current position
+const updateSelectedTimeIndex = () => {
+  if (timeCheckpoints.value.length > 0) {
+    let closestIndex = 0;
+    let closestDiff = Math.abs(timeCheckpoints.value[0].index - visibleEventIndex.value);
+    
+    for (let i = 1; i < timeCheckpoints.value.length; i++) {
+      const diff = Math.abs(timeCheckpoints.value[i].index - visibleEventIndex.value);
+      if (diff < closestDiff) {
+        closestDiff = diff;
+        closestIndex = i;
+      }
+    }
+    
+    selectedTimeIndex.value = closestIndex;
+  }
+};
+
+// Navigate time checkpoints (in reversed display order)
+const navigateTime = (direction: 'up' | 'down') => {
+  const currentReversedIndex = reversedSelectedIndex.value;
+  let newReversedIndex = currentReversedIndex;
+  
+  if (direction === 'up' && currentReversedIndex > 0) {
+    newReversedIndex = currentReversedIndex - 1;
+  } else if (direction === 'down' && currentReversedIndex < timeCheckpoints.value.length - 1) {
+    newReversedIndex = currentReversedIndex + 1;
+  }
+  
+  if (newReversedIndex !== currentReversedIndex) {
+    jumpToReversedCheckpoint(newReversedIndex);
+  }
+};
+
+// Handle keyboard navigation
+const handleKeydown = (event: KeyboardEvent) => {
+  // Only handle arrow keys when the console area has focus or when no input is focused
+  const activeElement = document.activeElement;
+  const isInputFocused = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'SELECT');
+  
+  if (isInputFocused) return;
+  
+  switch (event.key) {
+    case 'ArrowUp':
+      event.preventDefault();
+      navigateTime('up');
+      break;
+    case 'ArrowDown':
+      event.preventDefault();
+      navigateTime('down');
+      break;
+    case 'Home':
+      event.preventDefault();
+      jumpToReversedCheckpoint(0); // Jump to latest (first in reversed list)
+      break;
+    case 'End':
+      event.preventDefault();
+      jumpToReversedCheckpoint(timeCheckpoints.value.length - 1); // Jump to earliest (last in reversed list)
+      break;
+  }
+};
+
+// Get current time offset for display
+const getCurrentTimeOffset = () => {
+  if (timeCheckpoints.value.length === 0) return 'Loading...';
+  return timeCheckpoints.value[selectedTimeIndex.value]?.offset || timeCheckpoints.value[0].offset;
+};
+
 // Visible events for display
 const visibleEvents = computed(() => {
   if (visibleEventIndex.value >= batchUpdateEvents.value.length) {
@@ -360,9 +527,42 @@ const formatDate = (dateString: string | null): string => {
   }
 };
 
+// Update selected index when playback changes
+watch(visibleEventIndex, () => {
+  updateSelectedTimeIndex();
+});
+
+// Reversed time checkpoints (latest first to match console ordering)
+const reversedTimeCheckpoints = computed(() => {
+  return [...timeCheckpoints.value].reverse();
+});
+
+// Get reversed index for navigation
+const getReverseIndex = (index: number) => {
+  return timeCheckpoints.value.length - 1 - index;
+};
+
+// Jump to checkpoint using reversed index
+const jumpToReversedCheckpoint = (reversedIndex: number) => {
+  const originalIndex = getReverseIndex(reversedIndex);
+  jumpToTimeCheckpoint(originalIndex);
+  selectedTimeIndex.value = originalIndex;
+};
+
+// Get current selected index in reversed array
+const reversedSelectedIndex = computed(() => {
+  return getReverseIndex(selectedTimeIndex.value);
+});
+
 // Cleanup
 onUnmounted(() => {
   stopPlayback();
+  document.removeEventListener('keydown', handleKeydown);
+});
+
+onMounted(() => {
+  fetchData();
+  document.addEventListener('keydown', handleKeydown);
 });
 
 const goBack = () => {
@@ -531,7 +731,38 @@ const getRankIcon = (rank: number) => {
       <!-- Main Content -->
       <div v-else-if="roundReport" class="grid grid-cols-1 xl:grid-cols-3 gap-8 h-[calc(100vh-200px)]">
         <!-- Battle Console (2/3 width) -->
-        <div class="xl:col-span-2 flex flex-col gap-6 h-full">
+        <div class="xl:col-span-2 flex flex-col gap-6 h-full relative">
+          <!-- Time Navigator - Left Side -->
+          <div 
+            v-if="timeCheckpoints.length > 0"
+            class="absolute left-0 w-16 bg-gradient-to-b from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-r border-slate-700/50 rounded-bl-2xl z-20 flex flex-col time-navigator"
+            style="top: 60px; bottom: 0;"
+          >
+            <!-- Current Time Indicator -->
+            <div class="p-2 text-center border-b border-slate-700/50">
+              <div class="text-xs text-slate-400 font-mono font-bold bg-cyan-500/20 border border-cyan-500/40 rounded px-1 py-0.5">
+                {{ getCurrentTimeOffset() }}
+              </div>
+            </div>
+            
+            <!-- Checkpoint List (Latest First) -->
+            <div class="flex-1 overflow-y-auto overflow-x-hidden py-2 space-y-1 custom-scrollbar">
+              <button
+                v-for="(checkpoint, reversedIndex) in reversedTimeCheckpoints"
+                :key="reversedIndex"
+                @click="jumpToReversedCheckpoint(reversedIndex)"
+                class="w-full px-2 py-2 text-xs font-mono font-bold rounded-lg transition-all duration-300 hover:scale-105 active:scale-95"
+                :class="[
+                  reversedIndex === reversedSelectedIndex 
+                    ? 'text-cyan-300 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 border border-cyan-400/50 shadow-lg shadow-cyan-500/25' 
+                    : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/30'
+                ]"
+                :title="`Jump to ${checkpoint.offset}`"
+              >
+                {{ checkpoint.offset }}
+              </button>
+            </div>
+          </div>
           <!-- Battle Events Console -->
           <div 
             class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden flex flex-col flex-1"
@@ -620,10 +851,11 @@ const getRankIcon = (rank: number) => {
               </div>
             </div>
             
+            
             <div 
               ref="consoleElement"
               @scroll="handleScroll"
-              class="battle-console p-4 bg-black/20 font-mono text-sm space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent"
+              class="battle-console p-4 pl-20 bg-black/20 font-mono text-sm space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
               style="height: calc(100vh - 280px); max-height: calc(100vh - 280px);"
             >
               <div v-if="visibleEvents.length === 0" class="text-slate-500 text-center py-8">
@@ -753,24 +985,51 @@ const getRankIcon = (rank: number) => {
         </div>
       </div>
     </div>
+    
   </div>
 </template>
 
 <style scoped>
-.battle-console::-webkit-scrollbar {
+/* Custom scrollbar styling for theme consistency */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, rgba(6, 182, 212, 0.6), rgba(59, 130, 246, 0.6));
+  border-radius: 4px;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, rgba(6, 182, 212, 0.8), rgba(59, 130, 246, 0.8));
+  border-color: rgba(6, 182, 212, 0.4);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(to bottom, rgba(6, 182, 212, 1), rgba(59, 130, 246, 1));
+}
+
+/* Time navigator specific styling */
+.time-navigator .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
 
-.battle-console::-webkit-scrollbar-track {
-  background: transparent;
+.time-navigator .custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.2);
 }
 
-.battle-console::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.5);
-  border-radius: 3px;
+.time-navigator .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+  border: none;
 }
 
-.battle-console::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.8);
+.time-navigator .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
 }
 </style>
