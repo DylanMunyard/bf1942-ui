@@ -34,12 +34,9 @@ const battleEvents = ref<Array<{
 const visibleEventIndex = ref(0);
 const autoScrollEnabled = ref(true);
 const showLiveLadder = ref(false);
-const expandedConsole = ref(false);
 const trackedPlayer = ref('');
 const newEventIds = ref(new Set<number>());
 const batchUpdateEvents = ref<Array<{timestamp: string, events: typeof battleEvents.value}>>([]);
-const isScrollFrozen = ref(false);
-const lastScrollTop = ref(0);
 const consoleElement = ref<HTMLElement | null>(null);
 const timeNavigationTrigger = ref<HTMLElement | null>(null);
 const timeCheckpoints = ref<Array<{
@@ -262,36 +259,18 @@ const fetchData = async () => {
 };
 
 
-// Terminal-style scroll management
-const handleScroll = () => {
-  if (!consoleElement.value || !isPlaying.value) return;
-  
-  const element = consoleElement.value;
-  const currentScrollTop = element.scrollTop;
-  
-  // If user scrolled away from the top, freeze auto-scroll
-  if (currentScrollTop > 10 && !isScrollFrozen.value) {
-    isScrollFrozen.value = true;
-    autoScrollEnabled.value = false;
-  }
-  
-  // If user scrolled back to near the top, resume auto-scroll
-  if (currentScrollTop <= 10 && isScrollFrozen.value) {
-    isScrollFrozen.value = false;
-    autoScrollEnabled.value = true;
-  }
-  
-  lastScrollTop.value = currentScrollTop;
-};
 
 // Playback controls
 const startPlayback = () => {
   if (!batchUpdateEvents.value.length) return;
   
-  visibleEventIndex.value = 0;
+  // If we're at the end, start from the beginning, otherwise start from current position
+  if (visibleEventIndex.value >= batchUpdateEvents.value.length - 1) {
+    visibleEventIndex.value = 0;
+  }
+  
   isPlaying.value = true;
   newEventIds.value.clear();
-  isScrollFrozen.value = false;
   autoScrollEnabled.value = true;
   
   playbackInterval.value = setInterval(() => {
@@ -313,8 +292,8 @@ const startPlayback = () => {
         }, 1000);
       }
       
-      // Only auto-scroll if not frozen
-      if (autoScrollEnabled.value && !isScrollFrozen.value) {
+      // Auto-scroll to top
+      if (autoScrollEnabled.value) {
         scrollToTop();
       }
     } else {
@@ -335,7 +314,6 @@ const resetPlayback = () => {
   stopPlayback();
   visibleEventIndex.value = 0;
   newEventIds.value.clear();
-  isScrollFrozen.value = false;
   autoScrollEnabled.value = true;
 };
 
@@ -351,7 +329,6 @@ const jumpToEnd = () => {
   stopPlayback();
   visibleEventIndex.value = batchUpdateEvents.value.length - 1;
   newEventIds.value.clear();
-  isScrollFrozen.value = false;
   autoScrollEnabled.value = true;
   scrollToTop();
 };
@@ -377,7 +354,6 @@ const jumpToTimeCheckpoint = (checkpointIndex: number) => {
   visibleEventIndex.value = checkpoint.index;
   selectedTimeIndex.value = checkpointIndex;
   newEventIds.value.clear();
-  isScrollFrozen.value = false;
   autoScrollEnabled.value = true;
   
   // Scroll to top to show the checkpoint
@@ -480,11 +456,32 @@ const visibleEventsReversed = computed(() => {
 const currentLeaderboard = computed(() => {
   if (!roundReport.value || !roundReport.value.leaderboardSnapshots.length) return [];
   
-  if (showLiveLadder.value && isPlaying.value) {
-    // Find the snapshot that corresponds to current playback position
-    const currentTime = visibleEventIndex.value > 0 ? battleEvents.value[visibleEventIndex.value - 1]?.timestamp : roundReport.value.round.startTime;
-    const snapshotIndex = roundReport.value.leaderboardSnapshots.findIndex(snapshot => snapshot.timestamp >= currentTime);
-    const targetSnapshot = snapshotIndex >= 0 ? roundReport.value.leaderboardSnapshots[snapshotIndex] : roundReport.value.leaderboardSnapshots[roundReport.value.leaderboardSnapshots.length - 1];
+  if (showLiveLadder.value) {
+    // Find the snapshot that corresponds to current time position (whether playing or manually navigated)
+    let currentTime;
+    
+    if (visibleEventIndex.value > 0 && visibleEventIndex.value < batchUpdateEvents.value.length) {
+      // Use the timestamp from the current batch event
+      currentTime = batchUpdateEvents.value[visibleEventIndex.value].timestamp;
+    } else if (visibleEventIndex.value === 0) {
+      // At the beginning
+      currentTime = roundReport.value.round.startTime;
+    } else {
+      // At or past the end, use final timestamp
+      currentTime = batchUpdateEvents.value[batchUpdateEvents.value.length - 1]?.timestamp || roundReport.value.round.startTime;
+    }
+    
+    // Find the leaderboard snapshot that matches or is closest to the current time
+    let targetSnapshot = roundReport.value.leaderboardSnapshots[0]; // Default to first
+    
+    for (const snapshot of roundReport.value.leaderboardSnapshots) {
+      if (new Date(snapshot.timestamp).getTime() <= new Date(currentTime).getTime()) {
+        targetSnapshot = snapshot;
+      } else {
+        break;
+      }
+    }
+    
     return targetSnapshot.entries;
   } else {
     // Show final standings
@@ -826,27 +823,6 @@ const getRankIcon = (rank: number) => {
                       title="Enter player name to highlight their events"
                     />
                   </div>
-                  
-                  <div class="flex items-center gap-2 text-sm text-slate-400">
-                    <div class="w-2 h-2 rounded-full" :class="
-                      isPlaying ? 
-                        (isScrollFrozen ? 'bg-yellow-500 animate-pulse' : 'bg-red-500 animate-pulse') : 
-                        'bg-slate-500'
-                    "></div>
-                    <span>
-                      {{ isPlaying ? 
-                        (isScrollFrozen ? 'FROZEN (scroll to top to resume)' : 'LIVE') : 
-                        'PAUSED' 
-                      }}
-                    </span>
-                  </div>
-                  <button
-                    @click="expandedConsole = !expandedConsole"
-                    class="px-2 py-1 text-xs bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded transition-all duration-200"
-                    :title="expandedConsole ? 'Fixed height' : 'Expand infinitely'"
-                  >
-                    {{ expandedConsole ? '📌' : '📈' }}
-                  </button>
                 </div>
               </div>
             </div>
@@ -854,7 +830,6 @@ const getRankIcon = (rank: number) => {
             
             <div 
               ref="consoleElement"
-              @scroll="handleScroll"
               class="battle-console p-4 pl-20 bg-black/20 font-mono text-sm space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
               style="height: calc(100vh - 280px); max-height: calc(100vh - 280px);"
             >
