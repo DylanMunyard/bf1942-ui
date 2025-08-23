@@ -355,6 +355,22 @@ const handlePeriodChange = async (period: string) => {
 
           <!-- Server Content -->
           <div v-else-if="serverDetails" class="space-y-8">
+
+            <!-- Recent Rounds Section -->
+            <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+              <div class="p-6 border-b border-slate-700/50">
+                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
+                  🎯 Recent Rounds
+                </h3>
+              </div>
+              <div class="p-6">
+                <ServerRecentRounds
+                    :server-details="serverDetails"
+                    :server-name="serverName"
+                />
+              </div>
+            </div>
+
             <!-- Player Activity Section -->
             <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
               <div class="p-6 border-b border-slate-700/50">
@@ -392,21 +408,6 @@ const handlePeriodChange = async (period: string) => {
               </div>
               <div class="p-6">
                 <ServerLeaderboards
-                  :server-details="serverDetails"
-                  :server-name="serverName"
-                />
-              </div>
-            </div>
-
-            <!-- Recent Rounds Section -->
-            <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-              <div class="p-6 border-b border-slate-700/50">
-                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
-                  🎯 Recent Battle Reports
-                </h3>
-              </div>
-              <div class="p-6">
-                <ServerRecentRounds
                   :server-details="serverDetails"
                   :server-name="serverName"
                 />

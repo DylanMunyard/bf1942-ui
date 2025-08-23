@@ -394,485 +394,280 @@ const handlePeriodChange = (period: string) => {
 <template>
   <div
     v-if="serverInsights?.playerCountHistory && serverInsights.playerCountHistory.length > 0"
-    class="stats-section"
+    class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300"
   >
-    <div class="chart-header">
-      <h3>Player Activity{{ serverInsights?.pingByHour?.data?.length > 0 ? ' with Connection Quality Zones' : '' }}</h3>
-      <div class="chart-controls">
-        <div class="period-filters">
-          <button
-            v-for="option in periodOptions"
-            :key="option.value"
-            class="period-filter-button"
-            :class="{ 'active': selectedPeriod === option.value, 'loading': selectedPeriod === option.value && props.isLoading }"
-            :title="`Show data for ${option.label.toLowerCase()}`"
-            :disabled="props.isLoading"
-            @click="handlePeriodChange(option.value)"
-          >
-            <div
-              v-if="selectedPeriod === option.value && props.isLoading"
-              class="button-spinner"
-            />
-            <span :class="{ 'loading-text': selectedPeriod === option.value && props.isLoading }">{{ option.label }}</span>
-          </button>
-        </div>
-        <button
-          v-if="serverInsights?.pingByHour?.data?.length > 0"
-          class="metric-toggle-button"
-          :title="`Switch to ${pingMetric === 'median' ? 'P95' : 'Median'} ping`"
-          @click="togglePingMetric"
-        >
-          {{ pingMetric === 'median' ? 'Median' : 'P95' }} Ping
-        </button>
-        <button
-          class="expand-chart-button"
-          :title="isChartExpanded ? 'Collapse chart' : 'Expand chart'"
-          @click="toggleChartExpansion"
-        >
-          {{ isChartExpanded ? '📉' : '📊' }}
-        </button>
-      </div>
-    </div>
-    <div class="chart-stats">
-      <div class="stat-item">
-        <span class="stat-label">Peak:</span>
-        <span class="stat-value stat-max">{{ playerCountStats.max }} players</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Median:</span>
-        <span class="stat-value stat-median">{{ playerCountStats.median }} players</span>
-      </div>
-      <div
-        v-if="serverInsights?.playerCountSummary?.changePercentFromPreviousPeriod && serverInsights.playerCountSummary.changePercentFromPreviousPeriod !== 0"
-        class="stat-item"
-      >
-        <span class="stat-label">Period change:</span>
-        <span
-          class="stat-value"
-          :class="{ 
-            'stat-positive': serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0, 
-            'stat-negative': serverInsights.playerCountSummary.changePercentFromPreviousPeriod < 0 
-          }"
-        >
-          {{ serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0 ? '+' : '' }}{{ serverInsights.playerCountSummary.changePercentFromPreviousPeriod }}%
-        </span>
-      </div>
-    </div>
-    <div
-      class="chart-container"
-      :class="{ 'chart-expanded': isChartExpanded }"
-      @click="!isChartExpanded && toggleChartExpansion()"
-    >
-      <Line
-        :data="chartData"
-        :options="chartOptions"
-      />
-    </div>
+    <!-- Background Effects -->
+    <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
     
-    <!-- Ping Data Explanation -->
-    <div
-      v-if="serverInsights?.pingByHour?.data && serverInsights.pingByHour.data.length > 0"
-      class="ping-explainer"
-      :class="{ 'collapsed': isPingExplainerCollapsed }"
-    >
-      <div
-        class="ping-explainer-header"
-        @click="togglePingExplainer"
-      >
-        <span class="ping-explainer-title">💡 How to interpret ping data</span>
-        <button
-          class="collapse-toggle"
-          :title="isPingExplainerCollapsed ? 'Show explanation' : 'Hide explanation'"
-        >
-          {{ isPingExplainerCollapsed ? '▶' : '▼' }}
-        </button>
+    <div class="relative z-10 space-y-6">
+      <!-- Header with Period Controls -->
+      <div class="p-8 pb-4 space-y-6">
+        <!-- Title and Controls -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div class="space-y-2">
+            <h4 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+              {{ serverInsights?.pingByHour?.data?.length > 0 ? '📊 Player Activity & Connection Analysis' : '📊 Player Activity Timeline' }}
+            </h4>
+            <p class="text-slate-400 text-sm">
+              Real-time server population trends{{ serverInsights?.pingByHour?.data?.length > 0 ? ' with connection quality zones' : '' }}
+            </p>
+          </div>
+          
+          <!-- Action Controls -->
+          <div class="flex items-center gap-3 flex-wrap">
+            <!-- Ping Metric Toggle -->
+            <button
+              v-if="serverInsights?.pingByHour?.data?.length > 0"
+              class="group/metric inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-cyan-400 bg-slate-700/50 hover:bg-cyan-500/20 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300"
+              :title="`Switch to ${pingMetric === 'median' ? 'P95' : 'Median'} ping`"
+              @click="togglePingMetric"
+            >
+              <span class="text-xs">📡</span>
+              <span>{{ pingMetric === 'median' ? 'Median' : 'P95' }} Ping</span>
+            </button>
+            
+            <!-- Expand Chart Button -->
+            <button
+              class="group/expand inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 bg-slate-700/50 hover:bg-blue-500/20 backdrop-blur-sm border border-slate-600/50 hover:border-blue-500/50 rounded-lg transition-all duration-300 transform hover:scale-105"
+              :title="isChartExpanded ? 'Collapse chart' : 'Expand chart for detailed view'"
+              @click="toggleChartExpansion"
+            >
+              <span class="text-lg transition-transform duration-300" :class="isChartExpanded ? 'rotate-180' : 'group-hover/expand:scale-110'">{{ isChartExpanded ? '📉' : '📊' }}</span>
+              <span>{{ isChartExpanded ? 'Collapse' : 'Expand' }}</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Period Selection Filters -->
+        <div class="flex flex-wrap gap-2">
+          <div class="text-sm text-slate-400 flex items-center gap-2 mr-4">
+            <span class="text-xs">⏰</span>
+            <span>Time Range:</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="option in periodOptions"
+              :key="option.value"
+              class="group/period relative inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg border backdrop-blur-sm"
+              :class="{
+                'text-white bg-gradient-to-r from-cyan-500 to-blue-500 border-cyan-400/50 shadow-lg shadow-cyan-500/25': selectedPeriod === option.value,
+                'text-slate-400 bg-slate-700/30 border-slate-600/50 hover:text-cyan-400 hover:bg-slate-600/50 hover:border-cyan-500/50': selectedPeriod !== option.value
+              }"
+              :title="`Show data for ${option.label.toLowerCase()}`"
+              :disabled="props.isLoading"
+              @click="handlePeriodChange(option.value)"
+            >
+              <div
+                v-if="selectedPeriod === option.value && props.isLoading"
+                class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"
+              ></div>
+              <span :class="{ 'opacity-80': selectedPeriod === option.value && props.isLoading }">{{ option.label }}</span>
+              <div v-if="selectedPeriod === option.value" class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-lg animate-pulse"></div>
+            </button>
+          </div>
+        </div>
       </div>
+      
+      <!-- Stats Cards -->
+      <div class="px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Peak Players Card -->
+          <div class="group/stat relative overflow-hidden bg-gradient-to-br from-green-500/10 to-emerald-600/10 backdrop-blur-sm rounded-xl border border-green-500/30 hover:border-green-400/50 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10 p-4 space-y-2">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center text-xl">
+                  🔥
+                </div>
+                <div>
+                  <p class="text-green-400 text-sm font-medium">Peak Players</p>
+                  <p class="text-2xl font-bold text-white">{{ playerCountStats.max }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Average Players Card -->
+          <div class="group/stat relative overflow-hidden bg-gradient-to-br from-blue-500/10 to-cyan-600/10 backdrop-blur-sm rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10 p-4 space-y-2">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center text-xl">
+                  📊
+                </div>
+                <div>
+                  <p class="text-blue-400 text-sm font-medium">Median Players</p>
+                  <p class="text-2xl font-bold text-white">{{ playerCountStats.median }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Trend Card -->
+          <div
+            v-if="serverInsights?.playerCountSummary?.changePercentFromPreviousPeriod && serverInsights.playerCountSummary.changePercentFromPreviousPeriod !== 0"
+            class="group/stat relative overflow-hidden backdrop-blur-sm rounded-xl border transition-all duration-300"
+            :class="{
+              'bg-gradient-to-br from-green-500/10 to-emerald-600/10 border-green-500/30 hover:border-green-400/50': serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0,
+              'bg-gradient-to-br from-red-500/10 to-rose-600/10 border-red-500/30 hover:border-red-400/50': serverInsights.playerCountSummary.changePercentFromPreviousPeriod < 0
+            }"
+          >
+            <div class="absolute inset-0 bg-gradient-to-br from-current/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10 p-4 space-y-2">
+              <div class="flex items-center gap-3">
+                <div 
+                  class="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
+                  :class="{
+                    'bg-gradient-to-br from-green-500 to-emerald-600': serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0,
+                    'bg-gradient-to-br from-red-500 to-rose-600': serverInsights.playerCountSummary.changePercentFromPreviousPeriod < 0
+                  }"
+                >
+                  {{ serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0 ? '📈' : '📉' }}
+                </div>
+                <div>
+                  <p 
+                    class="text-sm font-medium"
+                    :class="{
+                      'text-green-400': serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0,
+                      'text-red-400': serverInsights.playerCountSummary.changePercentFromPreviousPeriod < 0
+                    }"
+                  >
+                    Period Change
+                  </p>
+                  <p 
+                    class="text-2xl font-bold"
+                    :class="{
+                      'text-green-300': serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0,
+                      'text-red-300': serverInsights.playerCountSummary.changePercentFromPreviousPeriod < 0
+                    }"
+                  >
+                    {{ serverInsights.playerCountSummary.changePercentFromPreviousPeriod > 0 ? '+' : '' }}{{ serverInsights.playerCountSummary.changePercentFromPreviousPeriod }}%
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Chart Container -->
+      <div class="px-8 pb-6">
+        <div
+          class="relative overflow-hidden rounded-xl border transition-all duration-500"
+          :class="{
+            'h-20 bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-slate-600/50 cursor-pointer hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/25': !isChartExpanded,
+            'h-96 bg-slate-800/30 border-cyan-500/50 shadow-xl shadow-cyan-500/20': isChartExpanded
+          }"
+          @click="!isChartExpanded && toggleChartExpansion()"
+        >
+          <!-- Chart Overlay for Collapsed State -->
+          <div 
+            v-if="!isChartExpanded" 
+            class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-blue-500/5 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 z-10"
+          >
+            <div class="flex items-center gap-3 text-cyan-400 font-medium">
+              <span class="text-2xl animate-pulse">📊</span>
+              <span>Click to expand chart</span>
+            </div>
+          </div>
+          
+          <Line
+            :data="chartData"
+            :options="chartOptions"
+          />
+        </div>
+      </div>
+      
+      <!-- Connection Quality Info -->
       <div
-        v-show="!isPingExplainerCollapsed"
-        class="ping-explainer-content"
+        v-if="serverInsights?.pingByHour?.data && serverInsights.pingByHour.data.length > 0"
+        class="mx-8 mb-8"
       >
-        <p><strong>Background color guide:</strong> The chart background is tinted to show connection quality periods. <strong>Green zones</strong> indicate low ping (good connections), <strong>orange zones</strong> show medium ping, and <strong>red zones</strong> indicate high ping periods.</p>
-        <p>If you're playing from outside the host country, look for red/orange zones to find when players with similar connections are online for more balanced gameplay. Hover over the chart when expanded to see exact ping values.</p>
+        <div 
+          class="relative overflow-hidden bg-gradient-to-r from-purple-500/10 to-indigo-600/10 backdrop-blur-sm rounded-xl border transition-all duration-300"
+          :class="isPingExplainerCollapsed ? 'border-purple-500/30 hover:border-purple-400/50' : 'border-purple-400/50'"
+        >
+          <!-- Collapsible Header -->
+          <button
+            class="w-full p-4 text-left hover:bg-purple-500/5 transition-colors duration-300 flex items-center justify-between"
+            @click="togglePingExplainer"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-xl">💡</span>
+              <div>
+                <p class="text-purple-400 font-semibold">Connection Quality Guide</p>
+                <p class="text-slate-400 text-sm">Learn how to interpret ping zones</p>
+              </div>
+            </div>
+            <div 
+              class="w-8 h-8 bg-slate-700/50 rounded-lg flex items-center justify-center transition-transform duration-300"
+              :class="isPingExplainerCollapsed ? '' : 'rotate-180'"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-400">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+          
+          <!-- Expandable Content -->
+          <div 
+            v-show="!isPingExplainerCollapsed"
+            class="px-4 pb-4 space-y-3 border-t border-purple-500/20"
+          >
+            <div class="mt-4 space-y-4">
+              <!-- Color Legend -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                  <div>
+                    <p class="text-green-400 font-medium text-sm">Low Ping Zone</p>
+                    <p class="text-slate-400 text-xs">Optimal connection</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                  <div class="w-4 h-4 bg-orange-500 rounded-full"></div>
+                  <div>
+                    <p class="text-orange-400 font-medium text-sm">Medium Ping Zone</p>
+                    <p class="text-slate-400 text-xs">Moderate latency</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                  <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                  <div>
+                    <p class="text-red-400 font-medium text-sm">High Ping Zone</p>
+                    <p class="text-slate-400 text-xs">Higher latency</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Usage Tips -->
+              <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-600/30">
+                <p class="text-slate-300 text-sm leading-relaxed">
+                  <strong class="text-purple-400">Pro Tip:</strong> If you're playing from outside the host country, look for orange/red zones to find when players with similar connections are online for more balanced gameplay. Expand the chart and hover over data points to see exact ping values.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.stats-section {
-  background-color: var(--color-background-soft);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.stats-section h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: var(--color-heading);
-  font-size: 1.2rem;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 8px;
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.chart-header h3 {
-  margin: 0;
-  color: var(--color-heading);
-  font-size: 1.2rem;
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.expand-chart-button {
-  background: var(--color-background-mute);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 1.1rem;
-  transition: all 0.2s ease;
-  color: var(--color-text);
-}
-
-.expand-chart-button:hover {
-  background: var(--color-primary);
-  color: white;
-  transform: translateY(-1px);
-}
-
-.chart-controls {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.period-filters {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--color-background-mute);
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-}
-
-.period-filter-button {
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  color: var(--color-text-muted);
-  min-width: 50px;
-  white-space: nowrap;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.period-filter-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.period-filter-button:disabled:not(.active) {
-  opacity: 0.4;
-}
-
-.period-filter-button:hover {
-  background: var(--color-background-soft);
-  color: var(--color-text);
-}
-
-.period-filter-button.active {
-  background: var(--color-primary);
-  color: white;
-  font-weight: 600;
-}
-
-.period-filter-button.active:hover {
-  background: var(--color-primary-hover);
-}
-
-.button-spinner {
-  width: 12px;
-  height: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
-  flex-shrink: 0;
-}
-
-.loading-text {
-  opacity: 0.8;
-}
-
-@keyframes spin {
+/* Custom animations for enhanced visual effects */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-.metric-toggle-button {
-  background: var(--color-background-mute);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  color: var(--color-text);
-  min-width: 70px;
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }
 
-.metric-toggle-button:hover {
-  background: var(--color-primary);
-  color: white;
-  transform: translateY(-1px);
-}
-
-.ping-explainer {
-  margin-bottom: 15px;
-  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(156, 39, 176, 0.03) 100%);
-  border-radius: 8px;
-  border: 1px solid rgba(156, 39, 176, 0.2);
-  transition: all 0.3s ease;
-}
-
-.ping-explainer.collapsed {
-  background: linear-gradient(135deg, var(--color-background-mute) 0%, rgba(156, 39, 176, 0.02) 100%);
-}
-
-.ping-explainer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.ping-explainer-header:hover {
-  background: rgba(156, 39, 176, 0.05);
-  border-radius: 8px;
-}
-
-.ping-explainer-title {
-  font-weight: 600;
-  color: var(--color-heading);
-  font-size: 0.95rem;
-}
-
-.collapse-toggle {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  min-width: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.collapse-toggle:hover {
-  background: rgba(156, 39, 176, 0.1);
-  color: #9c27b0;
-}
-
-.ping-explainer-content {
-  padding: 0 12px 12px 12px;
-  transition: all 0.3s ease;
-}
-
-.ping-explainer-content p {
-  margin: 0 0 8px 0;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  color: var(--color-text);
-}
-
-.ping-explainer-content p:last-child {
-  margin-bottom: 0;
-}
-
-.ping-explainer-content strong {
-  color: var(--color-heading);
-}
-
-.chart-stats {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
-  padding: 8px 12px;
-  background: var(--color-background-mute);
-  border-radius: 6px;
-  border-left: 3px solid var(--color-primary);
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
-
-.stat-value {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.stat-max {
-  color: #4caf50;
-}
-
-.stat-median {
-  color: var(--color-primary);
-}
-
-.stat-positive {
-  color: #4caf50;
-  font-weight: 600;
-}
-
-.stat-negative {
-  color: #f44336;
-  font-weight: 600;
-}
-
-.chart-container {
-  height: 80px;
-  margin-bottom: 12px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 2px solid transparent;
-  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-background-soft) 100%);
-}
-
-.chart-container:hover:not(.chart-expanded) {
-  border-color: var(--color-primary);
-  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
-  background: linear-gradient(135deg, var(--color-background-soft) 0%, rgba(var(--color-primary-rgb, 33, 150, 243), 0.05) 100%);
-}
-
-.chart-container.chart-expanded {
-  height: 400px;
-  cursor: default;
-  border-color: var(--color-primary);
-  box-shadow: 0 8px 25px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
-  background: var(--color-background);
-}
-
-/* Mobile responsive styles */
-@media (max-width: 768px) {
-  .chart-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .chart-header h3 {
-    text-align: center;
-    font-size: 1.1rem;
-    line-height: 1.3;
-    word-wrap: break-word;
-    hyphens: auto;
-  }
-
-  .chart-controls {
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .period-filters {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px;
-    width: 100%;
-  }
-
-  .period-filter-button {
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    min-width: 60px;
-    flex: 1;
-    max-width: calc(50% - 3px);
-  }
-
-  .metric-toggle-button {
-    padding: 8px 16px;
-    font-size: 0.85rem;
-    min-width: 80px;
-  }
-
-  .expand-chart-button {
-    padding: 8px 16px;
-    font-size: 1rem;
-  }
-
-  .chart-stats {
-    flex-direction: column;
-    gap: 8px;
-    text-align: center;
-  }
-
-  .chart-stats .stat-item {
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .stats-section {
-    padding: 8px;
-  }
-
-  .chart-header h3 {
-    font-size: 1rem;
-  }
-
-  .period-filter-button {
-    padding: 6px 8px;
-    font-size: 0.8rem;
-    min-width: 50px;
-  }
-
-  .period-filters {
-    gap: 4px;
-    padding: 4px;
-  }
-
-  .chart-controls {
-    gap: 6px;
-  }
-
-  .metric-toggle-button,
-  .expand-chart-button {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-  }
+/* Override default line chart styles for better integration */
+:deep(.chart-container canvas) {
+  border-radius: 0.75rem;
 }
 </style> 
