@@ -379,10 +379,16 @@ const handlePeriodChange = async (period: string) => {
 
             <!-- Leaderboards Section -->
             <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-              <div class="p-6 border-b border-slate-700/50">
+              <div class="p-6 border-b border-slate-700/50 flex items-center justify-between">
                 <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
                   🏆 Server Leaderboards
                 </h3>
+                <router-link 
+                  :to="`/servers/${encodeURIComponent(serverName)}/rankings`" 
+                  class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70 rounded-lg border border-slate-600/50 hover:border-cyan-500/50 backdrop-blur-sm"
+                >
+                  View Rankings
+                </router-link>
               </div>
               <div class="p-6">
                 <ServerLeaderboards

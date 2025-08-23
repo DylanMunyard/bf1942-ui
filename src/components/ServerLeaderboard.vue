@@ -115,224 +115,285 @@ const getRankClass = (rank: number): string => {
 </script>
 
 <style scoped>
+/* Modern Cyberpunk Table Container */
 .compact-leaderboard-container {
-  background: var(--color-background-soft);
-  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--color-border);
 }
 
+/* High-Density Cyberpunk Table */
 .compact-leaderboard-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+/* Table Headers */
+.compact-leaderboard-table thead {
+  position: sticky;
+  top: 0;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 10;
 }
 
 .compact-leaderboard-table th {
-  background: var(--color-background-mute);
-  padding: 8px 12px;
+  padding: 0.375rem 0.5rem;
   text-align: left;
-  font-weight: 600;
-  font-size: 11px;
+  font-weight: 700;
+  font-size: 0.625rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text);
-  border-bottom: 2px solid var(--color-border);
+  letter-spacing: 0.05em;
+  color: rgba(148, 163, 184, 1);
+  border-bottom: 1px solid rgba(100, 116, 139, 0.3);
+  background: transparent;
 }
 
 .compact-leaderboard-table th.rank-col {
-  width: 40px;
+  width: 2rem;
   text-align: center;
 }
 
 .compact-leaderboard-table th.score-col {
-  width: 80px;
+  width: 4rem;
   text-align: center;
 }
 
 .compact-leaderboard-table th.kd-col {
-  width: 70px;
+  width: 3.5rem;
   text-align: center;
 }
 
+/* Table Body Rows */
 .compact-leaderboard-table td {
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.2);
   vertical-align: middle;
+  line-height: 1.2;
 }
 
 .player-row {
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
 }
 
 .player-row:hover {
-  background: var(--color-background);
+  background: rgba(30, 41, 59, 0.4);
+  border-left-color: rgba(6, 182, 212, 0.6);
 }
 
+/* Rank-based styling with cyberpunk colors */
 .player-row.rank-first {
-  background: rgba(255, 215, 0, 0.08);
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+  border-left-color: rgba(255, 215, 0, 0.6);
 }
 
 .player-row.rank-second {
-  background: rgba(192, 192, 192, 0.08);
+  background: linear-gradient(90deg, rgba(192, 192, 192, 0.1) 0%, rgba(192, 192, 192, 0.05) 100%);
+  border-left-color: rgba(192, 192, 192, 0.6);
 }
 
 .player-row.rank-third {
-  background: rgba(205, 127, 50, 0.08);
+  background: linear-gradient(90deg, rgba(205, 127, 50, 0.1) 0%, rgba(205, 127, 50, 0.05) 100%);
+  border-left-color: rgba(205, 127, 50, 0.6);
 }
 
+/* Rank Cell */
 .rank-cell {
   text-align: center;
-  width: 40px;
+  width: 2rem;
 }
 
 .rank-medal {
-  font-size: 14px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  font-size: 0.875rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 
 .rank-number {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  font-weight: 600;
+  font-size: 0.6875rem;
+  color: rgba(148, 163, 184, 1);
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 
+/* Player Cell */
 .player-cell {
-  max-width: 200px;
+  max-width: 0;
+  width: 100%;
 }
 
 .player-name-link {
   text-decoration: none;
   color: inherit;
   display: block;
-  transition: color 0.2s ease;
+  transition: color 0.3s ease;
 }
 
 .player-name-link:hover {
-  color: var(--color-primary);
+  color: #06b6d4;
 }
 
 .player-name {
   font-weight: 600;
-  color: var(--color-text);
-  font-size: 13px;
+  color: rgba(226, 232, 240, 1);
+  font-size: 0.75rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.3s ease;
 }
 
+.player-name-link:hover .player-name {
+  color: #06b6d4;
+}
+
+/* Score Cell */
 .score-cell {
   text-align: center;
-  width: 80px;
+  width: 4rem;
 }
 
 .score-value {
-  font-weight: 600;
-  color: var(--color-text);
+  font-weight: 700;
+  color: #fbbf24;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.75rem;
 }
 
+/* K/D Cell */
 .kd-cell {
   text-align: center;
-  width: 70px;
+  width: 3.5rem;
 }
 
 .kd-stats {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  font-weight: 600;
-  font-size: 12px;
+  gap: 0.125rem;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 
 .kills {
-  color: #4caf50;
+  color: #10b981;
 }
 
 .separator {
-  color: var(--color-text-muted);
+  color: rgba(148, 163, 184, 0.6);
 }
 
 .deaths {
-  color: #f44336;
+  color: #ef4444;
+}
+
+/* Custom scrollbar for table container */
+.compact-leaderboard-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.compact-leaderboard-container::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 3px;
+}
+
+.compact-leaderboard-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, rgba(6, 182, 212, 0.6), rgba(59, 130, 246, 0.6));
+  border-radius: 3px;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.compact-leaderboard-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, rgba(6, 182, 212, 0.8), rgba(59, 130, 246, 0.8));
+  border-color: rgba(6, 182, 212, 0.4);
 }
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .compact-leaderboard-table {
-    font-size: 12px;
+    font-size: 0.6875rem;
   }
   
   .compact-leaderboard-table th,
   .compact-leaderboard-table td {
-    padding: 6px 8px;
+    padding: 0.25rem 0.375rem;
   }
   
   .compact-leaderboard-table th.rank-col {
-    width: 30px;
+    width: 1.75rem;
   }
   
   .compact-leaderboard-table th.score-col {
-    width: 60px;
+    width: 3.5rem;
   }
   
   .compact-leaderboard-table th.kd-col {
-    width: 60px;
+    width: 3rem;
   }
   
   .rank-medal {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
   
   .rank-number {
-    font-size: 11px;
+    font-size: 0.625rem;
   }
   
   .player-name {
-    font-size: 12px;
+    font-size: 0.6875rem;
+  }
+  
+  .score-value {
+    font-size: 0.6875rem;
   }
   
   .kd-stats {
-    font-size: 11px;
+    font-size: 0.625rem;
   }
 }
 
 @media (max-width: 480px) {
   .compact-leaderboard-table {
-    font-size: 11px;
+    font-size: 0.625rem;
   }
   
   .compact-leaderboard-table th,
   .compact-leaderboard-table td {
-    padding: 4px 6px;
+    padding: 0.1875rem 0.25rem;
   }
   
   .compact-leaderboard-table th.rank-col {
-    width: 25px;
+    width: 1.5rem;
   }
   
   .compact-leaderboard-table th.score-col {
-    width: 50px;
+    width: 3rem;
   }
   
   .compact-leaderboard-table th.kd-col {
-    width: 50px;
+    width: 2.5rem;
   }
   
   .rank-medal {
-    font-size: 11px;
+    font-size: 0.6875rem;
   }
   
   .rank-number {
-    font-size: 10px;
+    font-size: 0.5625rem;
   }
   
   .player-name {
-    font-size: 11px;
+    font-size: 0.625rem;
+  }
+  
+  .score-value {
+    font-size: 0.625rem;
   }
   
   .kd-stats {
-    font-size: 10px;
+    font-size: 0.5625rem;
   }
 }
 </style> 
