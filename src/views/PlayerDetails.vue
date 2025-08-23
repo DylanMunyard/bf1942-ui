@@ -1518,17 +1518,6 @@ watch(
                 </div>
               </div>
             </div>
-            
-            <!-- No Servers State -->
-            <div v-else class="text-center py-12">
-              <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-500">
-                  <rect width="20" height="16" x="2" y="4" rx="2"/>
-                  <path d="m22 7-10 5L2 7"/>
-                </svg>
-              </div>
-              <p class="text-slate-400">No server data available</p>
-            </div>
           </div>
 
           <!-- Server Rankings within Favorite Battlegrounds -->

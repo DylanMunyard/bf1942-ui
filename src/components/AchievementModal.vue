@@ -50,39 +50,26 @@
             </div>
           </div>
           
-          <!-- Achievement details grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div
-              v-if="achievement.mapName"
-              class="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4"
-            >
-              <span class="text-slate-400 font-medium text-sm block mb-1">Map:</span>
-              <span class="text-slate-200 font-medium">
-                <router-link 
-                  v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt && playerName"
-                  :to="{
-                    path: '/servers/round-report',
-                    query: {
-                      serverGuid: achievement.serverGuid,
-                      mapName: achievement.mapName,
-                      startTime: achievement.achievedAt,
-                      players: playerName
-                    }
-                  }"
-                  class="text-yellow-400 hover:text-yellow-300 hover:underline transition-colors duration-200"
-                >
-                  {{ achievement.mapName }}
-                </router-link>
-                <span v-else class="text-slate-200">{{ achievement.mapName }}</span>
-              </span>
-            </div>
-            
-            <div
-              v-if="achievement.serverGuid"
-              class="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4"
-            >
-              <span class="text-slate-400 font-medium text-sm block mb-1">Server ID:</span>
-              <span class="text-slate-200 font-medium text-xs font-mono">{{ achievement.serverGuid }}</span>
+          <!-- Achievement details -->
+          <div v-if="achievement.mapName" class="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 font-medium text-sm">Map:</span>
+              <router-link 
+                v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt && playerName"
+                :to="{
+                  path: '/servers/round-report',
+                  query: {
+                    serverGuid: achievement.serverGuid,
+                    mapName: achievement.mapName,
+                    startTime: achievement.achievedAt,
+                    players: playerName
+                  }
+                }"
+                class="text-yellow-400 hover:text-yellow-300 hover:underline transition-colors duration-200 font-medium"
+              >
+                {{ achievement.mapName }}
+              </router-link>
+              <span v-else class="text-slate-200 font-medium">{{ achievement.mapName }}</span>
             </div>
           </div>
         </div>
