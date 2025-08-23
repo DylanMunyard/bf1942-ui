@@ -33,6 +33,8 @@ const battleEvents = ref<Array<{
 }>>([]);
 const visibleEventIndex = ref(0);
 const autoScrollEnabled = ref(true);
+const showLiveLadder = ref(false);
+const expandedConsole = ref(false);
 
 // Generate battle narrative from leaderboard snapshots
 const generateBattleEvents = () => {
@@ -176,7 +178,7 @@ const startPlayback = () => {
     if (visibleEventIndex.value < battleEvents.value.length - 1) {
       visibleEventIndex.value++;
       if (autoScrollEnabled.value) {
-        scrollToBottom();
+        scrollToTop();
       }
     } else {
       stopPlayback();
@@ -208,13 +210,13 @@ const togglePlayback = () => {
 const jumpToEnd = () => {
   stopPlayback();
   visibleEventIndex.value = battleEvents.value.length - 1;
-  scrollToBottom();
+  scrollToTop();
 };
 
-const scrollToBottom = () => {
+const scrollToTop = () => {
   const consoleElement = document.querySelector('.battle-console');
   if (consoleElement) {
-    consoleElement.scrollTop = consoleElement.scrollHeight;
+    consoleElement.scrollTop = 0;
   }
 };
 
@@ -223,11 +225,26 @@ const visibleEvents = computed(() => {
   return battleEvents.value.slice(0, visibleEventIndex.value + 1);
 });
 
-// Final leaderboard
-const finalLeaderboard = computed(() => {
+// Reversed visible events (newest first)
+const visibleEventsReversed = computed(() => {
+  return [...visibleEvents.value].reverse();
+});
+
+// Current leaderboard (live or final)
+const currentLeaderboard = computed(() => {
   if (!roundReport.value || !roundReport.value.leaderboardSnapshots.length) return [];
-  const finalSnapshot = roundReport.value.leaderboardSnapshots[roundReport.value.leaderboardSnapshots.length - 1];
-  return finalSnapshot.entries;
+  
+  if (showLiveLadder.value && isPlaying.value) {
+    // Find the snapshot that corresponds to current playback position
+    const currentTime = visibleEventIndex.value > 0 ? battleEvents.value[visibleEventIndex.value - 1]?.timestamp : roundReport.value.round.startTime;
+    const snapshotIndex = roundReport.value.leaderboardSnapshots.findIndex(snapshot => snapshot.timestamp >= currentTime);
+    const targetSnapshot = snapshotIndex >= 0 ? roundReport.value.leaderboardSnapshots[snapshotIndex] : roundReport.value.leaderboardSnapshots[roundReport.value.leaderboardSnapshots.length - 1];
+    return targetSnapshot.entries;
+  } else {
+    // Show final standings
+    const finalSnapshot = roundReport.value.leaderboardSnapshots[roundReport.value.leaderboardSnapshots.length - 1];
+    return finalSnapshot.entries;
+  }
 });
 
 // Format date
@@ -277,15 +294,15 @@ const goBack = () => {
   }
 };
 
-// Team groups for final leaderboard
+// Team groups for current leaderboard
 const teamGroups = computed(() => {
-  if (!finalLeaderboard.value.length) return [];
+  if (!currentLeaderboard.value.length) return [];
   
-  const groups = finalLeaderboard.value.reduce((acc, entry) => {
+  const groups = currentLeaderboard.value.reduce((acc, entry) => {
     if (!acc[entry.teamLabel]) acc[entry.teamLabel] = [];
     acc[entry.teamLabel].push(entry);
     return acc;
-  }, {} as Record<string, typeof finalLeaderboard.value>);
+  }, {} as Record<string, typeof currentLeaderboard.value>);
   
   return Object.entries(groups).map(([teamName, players]) => ({
     teamName,
@@ -296,19 +313,21 @@ const teamGroups = computed(() => {
   })).sort((a, b) => b.totalScore - a.totalScore);
 });
 
-// Get player rank styling
-const getPlayerRankStyle = (rank: number) => {
-  if (rank === 1) return 'text-yellow-400 text-xl';
-  if (rank === 2) return 'text-slate-300 text-lg';
-  if (rank === 3) return 'text-amber-600 text-lg';
-  return 'text-slate-400';
+// Get player count styling (from LandingPageV2)
+const getPlayerCountClass = (kills: number, deaths: number) => {
+  const kd = deaths > 0 ? kills / deaths : kills;
+  if (kd >= 2) return 'text-emerald-400';
+  if (kd >= 1.5) return 'text-green-400';
+  if (kd >= 1) return 'text-yellow-400';
+  if (kd >= 0.5) return 'text-orange-400';
+  return 'text-red-400';
 };
 
 const getRankIcon = (rank: number) => {
   if (rank === 1) return '🥇';
   if (rank === 2) return '🥈';
   if (rank === 3) return '🥉';
-  return rank;
+  return rank.toString();
 };
 </script>
 
@@ -324,44 +343,46 @@ const getRankIcon = (rank: number) => {
     <div class="relative z-10 p-6">
       <!-- Header -->
       <div class="mb-8">
-        <button
-          @click="goBack"
-          class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer mb-6"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="group-hover:-translate-x-1 transition-transform duration-300"
+        <div class="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
+          <button
+            @click="goBack"
+            class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer flex-shrink-0"
           >
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
-          Back to Server
-        </button>
-
-        <div v-if="roundReport" class="space-y-2">
-          <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400">
-            🗺️ {{ roundReport.round.mapName }}
-          </h1>
-          <div class="flex flex-wrap items-center gap-4 text-slate-400">
-            <div class="flex items-center gap-2">
-              <div class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-              <span class="text-sm">{{ formatDate(roundReport.round.startTime) }}</span>
-            </div>
-            <div class="text-slate-600">•</div>
-            <router-link 
-              :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
-              class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="group-hover:-translate-x-1 transition-transform duration-300"
             >
-              {{ roundReport.session.serverName }}
-            </router-link>
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Back to Server
+          </button>
+
+          <div v-if="roundReport" class="flex-1 min-w-0">
+            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-2">
+              🗺️ {{ roundReport.round.mapName }}
+            </h1>
+            <div class="flex flex-wrap items-center gap-4 text-slate-400">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+                <span class="text-sm">{{ formatDate(roundReport.round.startTime) }}</span>
+              </div>
+              <div class="text-slate-600">•</div>
+              <router-link 
+                :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
+                class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium truncate"
+              >
+                {{ roundReport.session.serverName }}
+              </router-link>
+            </div>
           </div>
         </div>
       </div>
@@ -379,80 +400,89 @@ const getRankIcon = (rank: number) => {
       </div>
 
       <!-- Main Content -->
-      <div v-else-if="roundReport" class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div v-else-if="roundReport" class="grid grid-cols-1 xl:grid-cols-3 gap-8 h-[calc(100vh-200px)]">
         <!-- Battle Console (2/3 width) -->
-        <div class="xl:col-span-2 space-y-6">
-          <!-- Playback Controls -->
-          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-                🎮 Battle Console
-              </h3>
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <div class="w-2 h-2 rounded-full" :class="isPlaying ? 'bg-red-500 animate-pulse' : 'bg-slate-500'"></div>
-                <span>{{ isPlaying ? 'LIVE' : 'PAUSED' }}</span>
-              </div>
-            </div>
-            
-            <div class="flex items-center justify-between gap-4">
-              <div class="flex items-center gap-2">
-                <button
-                  @click="resetPlayback"
-                  class="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded-lg transition-all duration-300 flex items-center gap-2"
-                >
-                  ⏮️ <span class="hidden sm:inline">Reset</span>
-                </button>
-                <button
-                  @click="togglePlayback"
-                  class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg transition-all duration-300 flex items-center gap-2 font-semibold"
-                >
-                  {{ isPlaying ? '⏸️ Pause' : '▶️ Play' }}
-                </button>
-                <button
-                  @click="jumpToEnd"
-                  class="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded-lg transition-all duration-300 flex items-center gap-2"
-                >
-                  ⏭️ <span class="hidden sm:inline">End</span>
-                </button>
-              </div>
-              
-              <div class="flex items-center gap-3">
-                <label class="text-sm text-slate-400">Speed:</label>
-                <select
-                  v-model="playbackSpeed"
-                  class="px-3 py-1 bg-slate-800/60 border border-slate-600 rounded-lg text-slate-300 text-sm focus:outline-none focus:border-cyan-500"
-                >
-                  <option :value="2000">0.5x</option>
-                  <option :value="1000">1x</option>
-                  <option :value="500">2x</option>
-                  <option :value="250">4x</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
+        <div class="xl:col-span-2 flex flex-col gap-6 h-full">
           <!-- Battle Events Console -->
-          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-            <div class="p-4 border-b border-slate-700/50 bg-slate-900/60">
+          <div 
+            class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden flex flex-col flex-1"
+          >
+            <div class="p-4 border-b border-slate-700/50 bg-slate-900/60 flex-shrink-0">
               <div class="flex items-center justify-between">
-                <h4 class="font-mono text-green-400 text-sm flex items-center gap-2">
-                  <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  BATTLE_CONSOLE.EXE
-                </h4>
-                <div class="text-xs text-slate-500">
-                  {{ visibleEvents.length }} / {{ battleEvents.length }} events
+                <div class="flex items-center gap-3">
+                  <h4 class="font-mono text-green-400 text-sm flex items-center gap-2">
+                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    BATTLE_CONSOLE.EXE
+                  </h4>
+                  
+                  <!-- Playback Controls in Header -->
+                  <div class="flex items-center gap-1">
+                    <button
+                      @click="resetPlayback"
+                      class="p-1.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded transition-all duration-300 text-sm"
+                      title="Reset"
+                    >
+                      ⏮️
+                    </button>
+                    <button
+                      @click="togglePlayback"
+                      class="p-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded transition-all duration-300 font-semibold text-sm"
+                      :title="isPlaying ? 'Pause' : 'Play'"
+                    >
+                      {{ isPlaying ? '⏸️' : '▶️' }}
+                    </button>
+                    <button
+                      @click="jumpToEnd"
+                      class="p-1.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded transition-all duration-300 text-sm"
+                      title="Jump to End"
+                    >
+                      ⏭️
+                    </button>
+                    
+                    <!-- Speed Control -->
+                    <select
+                      v-model="playbackSpeed"
+                      class="ml-2 px-2 py-1 bg-slate-800/60 border border-slate-600 rounded text-slate-300 text-xs focus:outline-none focus:border-cyan-500"
+                      title="Playback Speed"
+                    >
+                      <option :value="2000">0.5x</option>
+                      <option :value="1000">1x</option>
+                      <option :value="500">2x</option>
+                      <option :value="250">4x</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-2 text-sm text-slate-400">
+                    <div class="w-2 h-2 rounded-full" :class="isPlaying ? 'bg-red-500 animate-pulse' : 'bg-slate-500'"></div>
+                    <span>{{ isPlaying ? 'LIVE' : 'PAUSED' }}</span>
+                  </div>
+                  <button
+                    @click="expandedConsole = !expandedConsole"
+                    class="px-2 py-1 text-xs bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded transition-all duration-200"
+                    :title="expandedConsole ? 'Fixed height' : 'Expand infinitely'"
+                  >
+                    {{ expandedConsole ? '📌' : '📈' }}
+                  </button>
                 </div>
               </div>
             </div>
             
             <div 
-              class="battle-console h-96 overflow-y-auto p-4 bg-black/20 font-mono text-sm space-y-1 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent"
+              class="battle-console p-4 bg-black/20 font-mono text-sm space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent"
+              style="height: calc(100vh - 280px); max-height: calc(100vh - 280px);"
             >
+              <div v-if="visibleEvents.length === 0" class="text-slate-500 text-center py-8">
+                <div class="text-2xl mb-2">⚔️</div>
+                <p>Press Play to witness the battle unfold...</p>
+              </div>
+              
               <div
-                v-for="(event, index) in visibleEvents"
-                :key="index"
+                v-for="(event, index) in visibleEventsReversed"
+                :key="visibleEvents.length - index - 1"
                 class="py-1 px-2 rounded-sm transition-all duration-300"
-                :class="index === visibleEvents.length - 1 && isPlaying ? 'bg-cyan-500/10 border-l-2 border-cyan-400' : ''"
+                :class="index === 0 && isPlaying ? 'bg-cyan-500/10 border-l-2 border-cyan-400' : ''"
               >
                 <div class="flex items-start gap-3">
                   <div class="text-xs text-slate-500 font-mono min-w-16 mt-0.5">
@@ -463,73 +493,105 @@ const getRankIcon = (rank: number) => {
                   </div>
                 </div>
               </div>
-              
-              <div v-if="visibleEvents.length === 0" class="text-slate-500 text-center py-8">
-                <div class="text-2xl mb-2">⚔️</div>
-                <p>Press Play to witness the battle unfold...</p>
-              </div>
             </div>
           </div>
         </div>
 
-        <!-- Final Leaderboard (1/3 width) -->
-        <div class="space-y-6">
-          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-            <div class="p-6 border-b border-slate-700/50">
-              <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center gap-2">
-                🏆 Final Standings
-              </h3>
+        <!-- Leaderboard (1/3 width) -->
+        <div class="flex flex-col gap-6 h-full">
+          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden flex-1 flex flex-col">
+            <div class="p-4 border-b border-slate-700/50 flex-shrink-0">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center gap-2">
+                  🏆 {{ showLiveLadder && isPlaying ? 'Live' : 'Final' }} Standings
+                </h3>
+              </div>
+              
+              <!-- Live Ladder Toggle -->
+              <div class="flex items-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    v-model="showLiveLadder"
+                    type="checkbox"
+                    class="sr-only peer"
+                  >
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                  <span class="ml-3 text-sm font-medium text-slate-300">Live Ladder</span>
+                </label>
+              </div>
             </div>
             
-            <div class="divide-y divide-slate-700/30">
+            <!-- Data Table -->
+            <div class="flex-1 overflow-hidden">
               <div
-                v-for="team in teamGroups"
+                v-for="(team, teamIndex) in teamGroups"
                 :key="team.teamName"
-                class="p-6 space-y-4"
+                class="border-b border-slate-700/30 last:border-b-0"
               >
-                <div class="flex items-center justify-between">
-                  <h4 class="text-lg font-bold text-slate-200">{{ team.teamName }}</h4>
-                  <div class="text-sm text-slate-400">
-                    {{ team.totalKills }} kills • {{ team.totalScore }} pts
+                <!-- Team Header -->
+                <div class="sticky top-0 bg-slate-800/90 backdrop-blur-sm px-4 py-2 border-b border-slate-700/50">
+                  <div class="flex items-center justify-between">
+                    <h4 class="font-bold text-slate-200 text-sm">{{ team.teamName }}</h4>
+                    <div class="text-xs text-slate-400 flex items-center gap-2">
+                      <span>{{ team.totalKills }}K</span>
+                      <span>{{ team.totalScore }}P</span>
+                    </div>
                   </div>
                 </div>
                 
-                <div class="space-y-2">
-                  <div
-                    v-for="player in team.players.slice(0, 5)"
-                    :key="player.playerName"
-                    class="flex items-center gap-3 p-3 rounded-lg bg-slate-800/30 hover:bg-slate-700/30 transition-colors"
-                  >
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-slate-900 font-bold text-sm">
-                      <span :class="getPlayerRankStyle(player.rank)">
-                        {{ typeof getRankIcon(player.rank) === 'string' ? getRankIcon(player.rank) : getRankIcon(player.rank) }}
-                      </span>
-                    </div>
-                    
-                    <div class="flex-1 min-w-0">
-                      <PlayerName
-                        :name="player.playerName"
-                        source="round-report-v2"
-                        :server-guid="props.serverGuid"
-                        class="font-semibold text-slate-200"
-                      />
-                      <div class="text-xs text-slate-400">
-                        {{ player.score }} pts • {{ player.kills }}/{{ player.deaths }}
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-2 text-sm">
-                      <span class="text-green-400 font-bold">{{ player.kills }}</span>
-                      <span class="text-slate-500">/</span>
-                      <span class="text-red-400 font-bold">{{ player.deaths }}</span>
-                    </div>
-                  </div>
-                  
-                  <div v-if="team.players.length > 5" class="text-center py-2">
-                    <button class="text-xs text-slate-500 hover:text-slate-400 transition-colors">
-                      + {{ team.players.length - 5 }} more players
-                    </button>
-                  </div>
+                <!-- Players Data Table -->
+                <div class="overflow-y-auto max-h-80">
+                  <table class="w-full text-xs">
+                    <thead class="sticky top-0 bg-slate-900/95">
+                      <tr class="border-b border-slate-700/30">
+                        <th class="text-left p-1 font-mono text-slate-400 w-6">#</th>
+                        <th class="text-left p-1 font-mono text-slate-400">PLAYER</th>
+                        <th class="text-center p-1 font-mono text-slate-400 w-12">PTS</th>
+                        <th class="text-center p-1 font-mono text-slate-400 w-8">K</th>
+                        <th class="text-center p-1 font-mono text-slate-400 w-8">D</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="player in team.players"
+                        :key="player.playerName"
+                        class="group hover:bg-slate-800/30 border-b border-slate-700/20 transition-colors"
+                      >
+                        <!-- Rank -->
+                        <td class="p-1">
+                          <div class="w-4 h-4 flex items-center justify-center">
+                            <span v-if="player.rank <= 3" class="text-xs">{{ getRankIcon(player.rank) }}</span>
+                            <span v-else class="text-xs text-slate-400 font-mono">{{ player.rank }}</span>
+                          </div>
+                        </td>
+                        
+                        <!-- Player Name -->
+                        <td class="p-1 min-w-0">
+                          <PlayerName
+                            :name="player.playerName"
+                            source="round-report-v2-table"
+                            :server-guid="props.serverGuid"
+                            class="text-slate-200 group-hover:text-cyan-400 transition-colors truncate text-xs font-medium"
+                          />
+                        </td>
+                        
+                        <!-- Score -->
+                        <td class="p-1 text-center">
+                          <span class="font-mono font-bold text-yellow-400">{{ player.score }}</span>
+                        </td>
+                        
+                        <!-- Kills -->
+                        <td class="p-1 text-center">
+                          <span class="font-mono font-bold" :class="getPlayerCountClass(player.kills, player.deaths)">{{ player.kills }}</span>
+                        </td>
+                        
+                        <!-- Deaths -->
+                        <td class="p-1 text-center">
+                          <span class="font-mono text-red-400 font-bold">{{ player.deaths }}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
