@@ -22,7 +22,7 @@ const error = ref<string | null>(null);
 const selectedSnapshotIndex = ref(0);
 const isPlaying = ref(false);
 const playbackInterval = ref<NodeJS.Timeout | null>(null);
-const playbackSpeed = ref(1000); // milliseconds between events
+const playbackSpeed = ref(800); // milliseconds between events
 const battleEvents = ref<Array<{
   timestamp: string;
   type: 'kill' | 'death' | 'objective' | 'spawn';
@@ -35,6 +35,12 @@ const visibleEventIndex = ref(0);
 const autoScrollEnabled = ref(true);
 const showLiveLadder = ref(false);
 const expandedConsole = ref(false);
+const trackedPlayer = ref('');
+const newEventIds = ref(new Set<number>());
+const batchUpdateEvents = ref<Array<{timestamp: string, events: typeof battleEvents.value}>>([]);
+const isScrollFrozen = ref(false);
+const lastScrollTop = ref(0);
+const consoleElement = ref<HTMLElement | null>(null);
 
 // Generate battle narrative from leaderboard snapshots
 const generateBattleEvents = () => {
@@ -140,6 +146,18 @@ const generateBattleEvents = () => {
   });
   
   battleEvents.value = events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  
+  // Group events by timestamp for batch updates
+  const eventGroups = events.reduce((acc, event) => {
+    if (!acc[event.timestamp]) acc[event.timestamp] = [];
+    acc[event.timestamp].push(event);
+    return acc;
+  }, {} as Record<string, typeof events>);
+  
+  batchUpdateEvents.value = Object.entries(eventGroups).map(([timestamp, events]) => ({
+    timestamp,
+    events
+  })).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 };
 
 // Fetch round report
@@ -154,7 +172,7 @@ const fetchData = async () => {
     roundReport.value = data;
     generateBattleEvents();
     selectedSnapshotIndex.value = data.leaderboardSnapshots.length - 1;
-    visibleEventIndex.value = battleEvents.value.length - 1;
+    visibleEventIndex.value = batchUpdateEvents.value.length - 1;
   } catch (err) {
     console.error('Error fetching round report:', err);
     error.value = 'Failed to fetch round report';
@@ -167,17 +185,59 @@ onMounted(() => {
   fetchData();
 });
 
+// Terminal-style scroll management
+const handleScroll = () => {
+  if (!consoleElement.value || !isPlaying.value) return;
+  
+  const element = consoleElement.value;
+  const currentScrollTop = element.scrollTop;
+  
+  // If user scrolled away from the top, freeze auto-scroll
+  if (currentScrollTop > 10 && !isScrollFrozen.value) {
+    isScrollFrozen.value = true;
+    autoScrollEnabled.value = false;
+  }
+  
+  // If user scrolled back to near the top, resume auto-scroll
+  if (currentScrollTop <= 10 && isScrollFrozen.value) {
+    isScrollFrozen.value = false;
+    autoScrollEnabled.value = true;
+  }
+  
+  lastScrollTop.value = currentScrollTop;
+};
+
 // Playback controls
 const startPlayback = () => {
-  if (!battleEvents.value.length) return;
+  if (!batchUpdateEvents.value.length) return;
   
   visibleEventIndex.value = 0;
   isPlaying.value = true;
+  newEventIds.value.clear();
+  isScrollFrozen.value = false;
+  autoScrollEnabled.value = true;
   
   playbackInterval.value = setInterval(() => {
-    if (visibleEventIndex.value < battleEvents.value.length - 1) {
+    if (visibleEventIndex.value < batchUpdateEvents.value.length - 1) {
       visibleEventIndex.value++;
-      if (autoScrollEnabled.value) {
+      
+      // Add new event IDs for animation
+      const currentBatch = batchUpdateEvents.value[visibleEventIndex.value];
+      const startIndex = battleEvents.value.findIndex(e => e.timestamp === currentBatch.timestamp);
+      if (startIndex >= 0) {
+        for (let i = 0; i < currentBatch.events.length; i++) {
+          newEventIds.value.add(startIndex + i);
+        }
+        // Remove animation class after a delay
+        setTimeout(() => {
+          for (let i = 0; i < currentBatch.events.length; i++) {
+            newEventIds.value.delete(startIndex + i);
+          }
+        }, 1000);
+      }
+      
+      // Only auto-scroll if not frozen
+      if (autoScrollEnabled.value && !isScrollFrozen.value) {
         scrollToTop();
       }
     } else {
@@ -197,6 +257,9 @@ const stopPlayback = () => {
 const resetPlayback = () => {
   stopPlayback();
   visibleEventIndex.value = 0;
+  newEventIds.value.clear();
+  isScrollFrozen.value = false;
+  autoScrollEnabled.value = true;
 };
 
 const togglePlayback = () => {
@@ -209,20 +272,36 @@ const togglePlayback = () => {
 
 const jumpToEnd = () => {
   stopPlayback();
-  visibleEventIndex.value = battleEvents.value.length - 1;
+  visibleEventIndex.value = batchUpdateEvents.value.length - 1;
+  newEventIds.value.clear();
+  isScrollFrozen.value = false;
+  autoScrollEnabled.value = true;
   scrollToTop();
 };
 
 const scrollToTop = () => {
-  const consoleElement = document.querySelector('.battle-console');
-  if (consoleElement) {
-    consoleElement.scrollTop = 0;
+  if (consoleElement.value) {
+    consoleElement.value.scrollTop = 0;
   }
 };
 
 // Visible events for display
 const visibleEvents = computed(() => {
-  return battleEvents.value.slice(0, visibleEventIndex.value + 1);
+  if (visibleEventIndex.value >= batchUpdateEvents.value.length) {
+    return battleEvents.value;
+  }
+  
+  const currentBatch = batchUpdateEvents.value[visibleEventIndex.value];
+  if (!currentBatch) return [];
+  
+  // Find the index of the last event in the current batch
+  const lastEventInBatch = currentBatch.events[currentBatch.events.length - 1];
+  const lastEventIndex = battleEvents.value.findIndex(e => 
+    e.timestamp === lastEventInBatch.timestamp && 
+    e.message === lastEventInBatch.message
+  );
+  
+  return battleEvents.value.slice(0, lastEventIndex + 1);
 });
 
 // Reversed visible events (newest first)
@@ -312,6 +391,56 @@ const teamGroups = computed(() => {
     totalDeaths: players.reduce((sum, player) => sum + player.deaths, 0)
   })).sort((a, b) => b.totalScore - a.totalScore);
 });
+
+// Format time offset from round start
+const formatTimeOffset = (eventTimestamp: string) => {
+  if (!roundReport.value) return '+0:00';
+  
+  const roundStartTime = new Date(roundReport.value.round.startTime).getTime();
+  const eventTime = new Date(eventTimestamp).getTime();
+  const offsetMs = eventTime - roundStartTime;
+  
+  // Handle negative offsets (shouldn't happen, but just in case)
+  if (offsetMs < 0) return '+0:00';
+  
+  const totalSeconds = Math.floor(offsetMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  
+  return `+${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+// Check if event involves tracked player
+const isTrackedPlayerEvent = (event: typeof battleEvents.value[0]) => {
+  if (!trackedPlayer.value.trim()) return false;
+  return event.player.toLowerCase().includes(trackedPlayer.value.toLowerCase()) ||
+         event.message.toLowerCase().includes(trackedPlayer.value.toLowerCase());
+};
+
+// Get event styling based on tracking
+const getEventStyling = (event: typeof battleEvents.value[0], eventIndex: number) => {
+  const isNew = newEventIds.value.has(eventIndex);
+  const isTracked = isTrackedPlayerEvent(event);
+  const isCurrentEvent = eventIndex === 0 && isPlaying.value;
+  
+  let classes = 'py-1 px-2 rounded-sm transition-all duration-500 ';
+  
+  if (isNew) {
+    classes += 'animate-pulse bg-cyan-500/20 border-l-2 border-cyan-400 ';
+  } else if (isCurrentEvent) {
+    classes += 'bg-cyan-500/10 border-l-2 border-cyan-400 ';
+  }
+  
+  if (trackedPlayer.value.trim()) {
+    if (isTracked) {
+      classes += 'bg-yellow-500/10 border-l-2 border-yellow-400 ';
+    } else {
+      classes += 'opacity-40 ';
+    }
+  }
+  
+  return classes;
+};
 
 // Get player count styling (from LandingPageV2)
 const getPlayerCountClass = (kills: number, deaths: number) => {
@@ -445,18 +574,40 @@ const getRankIcon = (rank: number) => {
                       class="ml-2 px-2 py-1 bg-slate-800/60 border border-slate-600 rounded text-slate-300 text-xs focus:outline-none focus:border-cyan-500"
                       title="Playback Speed"
                     >
-                      <option :value="2000">0.5x</option>
-                      <option :value="1000">1x</option>
-                      <option :value="500">2x</option>
-                      <option :value="250">4x</option>
+                      <option :value="1600">0.5x</option>
+                      <option :value="800">1x</option>
+                      <option :value="400">2x</option>
+                      <option :value="200">4x</option>
+                      <option :value="100">8x</option>
                     </select>
                   </div>
                 </div>
                 
                 <div class="flex items-center gap-3">
+                  <!-- Player Tracking Input -->
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400">Track:</span>
+                    <input
+                      v-model="trackedPlayer"
+                      type="text"
+                      placeholder="Player name..."
+                      class="px-2 py-1 bg-slate-800/60 border border-slate-600 rounded text-slate-300 text-xs focus:outline-none focus:border-cyan-500 w-24"
+                      title="Enter player name to highlight their events"
+                    />
+                  </div>
+                  
                   <div class="flex items-center gap-2 text-sm text-slate-400">
-                    <div class="w-2 h-2 rounded-full" :class="isPlaying ? 'bg-red-500 animate-pulse' : 'bg-slate-500'"></div>
-                    <span>{{ isPlaying ? 'LIVE' : 'PAUSED' }}</span>
+                    <div class="w-2 h-2 rounded-full" :class="
+                      isPlaying ? 
+                        (isScrollFrozen ? 'bg-yellow-500 animate-pulse' : 'bg-red-500 animate-pulse') : 
+                        'bg-slate-500'
+                    "></div>
+                    <span>
+                      {{ isPlaying ? 
+                        (isScrollFrozen ? 'FROZEN (scroll to top to resume)' : 'LIVE') : 
+                        'PAUSED' 
+                      }}
+                    </span>
                   </div>
                   <button
                     @click="expandedConsole = !expandedConsole"
@@ -470,6 +621,8 @@ const getRankIcon = (rank: number) => {
             </div>
             
             <div 
+              ref="consoleElement"
+              @scroll="handleScroll"
               class="battle-console p-4 bg-black/20 font-mono text-sm space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent"
               style="height: calc(100vh - 280px); max-height: calc(100vh - 280px);"
             >
@@ -481,14 +634,15 @@ const getRankIcon = (rank: number) => {
               <div
                 v-for="(event, index) in visibleEventsReversed"
                 :key="visibleEvents.length - index - 1"
-                class="py-1 px-2 rounded-sm transition-all duration-300"
-                :class="index === 0 && isPlaying ? 'bg-cyan-500/10 border-l-2 border-cyan-400' : ''"
+                :class="getEventStyling(event, index)"
               >
                 <div class="flex items-start gap-3">
-                  <div class="text-xs text-slate-500 font-mono min-w-16 mt-0.5">
-                    {{ new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
+                  <div class="text-xs font-mono min-w-16 mt-0.5 transition-colors duration-300"
+                       :class="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'text-slate-600' : 'text-slate-500'">
+                    {{ formatTimeOffset(event.timestamp) }}
                   </div>
-                  <div :class="event.color" class="flex-1">
+                  <div :class="[event.color, 'flex-1 transition-colors duration-300']" 
+                       :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''">
                     {{ event.message }}
                   </div>
                 </div>
