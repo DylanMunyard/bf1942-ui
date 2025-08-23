@@ -9,6 +9,7 @@ import ServerRankingsPage from '../components/ServerRankingsPage.vue'
 import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
 import RoundsPage from '../components/RoundsPage.vue'
 import RoundReportPage from '../components/RoundReportPage.vue'
+import RoundReportPageV2 from '../components/RoundReportPageV2.vue'
 import WorkInProgressPlaceholder from '../components/WorkInProgressPlaceholder.vue'
 import PlayerComparison from '../views/PlayerComparison.vue'
 import { useAuth } from '../composables/useAuth'
@@ -120,6 +121,16 @@ const routes: RouteRecordRaw[] = [
       path: '/servers/round-report',
       name: 'round-report',
       component: RoundReportPage,
+      props: route => ({
+        serverGuid: route.query.serverGuid,
+        mapName: route.query.mapName,
+        startTime: route.query.startTime
+      })
+    },
+    {
+      path: '/servers/round-report-v2',
+      name: 'round-report-v2',
+      component: RoundReportPageV2,
       props: route => ({
         serverGuid: route.query.serverGuid,
         mapName: route.query.mapName,
