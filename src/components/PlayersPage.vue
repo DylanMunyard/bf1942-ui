@@ -45,7 +45,7 @@ const searchTimeout = ref<number | null>(null);
 
 // Pagination state - start with reasonable defaults
 const currentPage = ref(1);
-const pageSize = ref(25);
+const pageSize = ref(100);
 const totalItems = ref(0);
 const totalPages = ref(0);
 
@@ -231,66 +231,143 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="players-page">
-    <!-- Prominent Search Section -->
-    <div class="search-section">
-      <h1>Find Players</h1>
-      <div class="search-container">
-        <div class="search-input-wrapper">
-          <i class="search-icon">🔍</i>
+  <div class="min-h-screen bg-slate-900">
+    <!-- Enhanced Search Section -->
+    <div class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-3 sm:p-6">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-4 sm:mb-6">
+          <h1 class="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">Find Players</h1>
+          <p class="text-slate-400 text-xs sm:text-sm">Search for players and view their stats, activity, and current server status</p>
+        </div>
+        
+        <div class="relative group max-w-2xl mx-auto">
+          <!-- Enhanced Search Icon with Glow -->
+          <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+            <div class="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
+              <span class="text-slate-900 text-xs font-bold">🔍</span>
+            </div>
+          </div>
+          
+          <!-- Premium Search Input -->
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search players..."
-            class="search-input"
+            placeholder="Search for any player..."
+            class="w-full pl-12 sm:pl-14 pr-16 sm:pr-20 py-3 sm:py-4 bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-lg border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-300 font-medium shadow-lg hover:shadow-cyan-500/20 focus:shadow-cyan-500/30 text-base sm:text-lg"
             @input="onSearchInput"
             @keyup.enter="onSearchEnter"
           >
-          <div v-if="isSearchLoading" class="search-spinner">
-            🔄
+          
+          <!-- Loading Spinner -->
+          <div v-if="isSearchLoading" class="absolute right-12 sm:right-16 top-1/2 transform -translate-y-1/2">
+            <div class="w-4 h-4 sm:w-5 sm:h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>
           </div>
-          <button v-if="searchQuery" @click="clearSearch" class="clear-search">×</button>
+          
+          <!-- Clear Button -->
+          <button 
+            v-if="searchQuery" 
+            @click="clearSearch" 
+            class="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-7 h-7 sm:w-8 sm:h-8 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 rounded-lg text-slate-400 hover:text-white transition-all duration-200 flex items-center justify-center font-bold text-base sm:text-lg hover:scale-105"
+          >
+            ×
+          </button>
+          
+          <!-- Search Glow Effect -->
+          <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
         </div>
       </div>
-      
     </div>
 
-    <!-- Players Table -->
-    <div v-if="loading" class="loading">
-      Loading players...
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="text-center space-y-6">
+        <div class="relative flex items-center justify-center">
+          <div class="w-20 h-20 border-4 border-slate-700 rounded-full animate-spin"></div>
+          <div class="absolute w-20 h-20 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin"></div>
+          <div class="absolute w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full animate-pulse"></div>
+        </div>
+        <div class="text-lg font-semibold text-white">
+          Loading players...
+        </div>
+      </div>
     </div>
-    
-    <div v-else-if="error" class="error">
-      {{ error }}
+
+    <!-- Error State -->
+    <div v-else-if="error" class="flex items-center justify-center py-20">
+      <div class="text-center space-y-4">
+        <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <div class="text-lg font-semibold text-red-400">{{ error }}</div>
+      </div>
     </div>
-    
-    <div v-else-if="!searchQuery.trim() && players.length === 0" class="hero-section">
-      <div class="hero-content">
-        <p>Start typing a player name above to find their stats and recent activity.</p>
-        <div class="search-tips">
-          <div class="tip">💡 <strong>Tip:</strong> You can search by partial names</div>
-          <div class="tip">⚡ <strong>Quick:</strong> Press Enter to go to the first result</div>
+
+    <!-- Hero Section -->
+    <div v-else-if="!searchQuery.trim() && players.length === 0" class="max-w-4xl mx-auto px-6 py-16">
+      <div class="text-center space-y-8">
+        <div class="space-y-4">
+          <div class="w-24 h-24 mx-auto bg-gradient-to-br from-slate-700/50 to-slate-800/50 rounded-full flex items-center justify-center border border-slate-600/50">
+            <span class="text-4xl">🎯</span>
+          </div>
+          <p class="text-xl text-slate-300 font-medium">Start typing a player name above to find their stats and recent activity.</p>
+        </div>
+        
+        <div class="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 max-w-lg mx-auto">
+          <h3 class="text-lg font-bold text-cyan-400 mb-4 flex items-center gap-2">
+            <span>💡</span> Search Tips
+          </h3>
+          <div class="space-y-3 text-left">
+            <div class="flex items-start gap-3 text-sm text-slate-300">
+              <span class="text-green-400 font-bold">•</span>
+              <span>You can search by <strong class="text-white">partial names</strong></span>
+            </div>
+            <div class="flex items-start gap-3 text-sm text-slate-300">
+              <span class="text-cyan-400 font-bold">•</span>
+              <span>Press <strong class="text-white">Enter</strong> to go to the first result</span>
+            </div>
+            <div class="flex items-start gap-3 text-sm text-slate-300">
+              <span class="text-purple-400 font-bold">•</span>
+              <span>See <strong class="text-white">live server activity</strong> and stats</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Results Section -->
+    <div v-else-if="searchQuery.trim() && players.length === 0" class="max-w-2xl mx-auto px-6 py-16">
+      <div class="text-center space-y-6">
+        <div class="w-20 h-20 mx-auto bg-gradient-to-br from-slate-700/50 to-slate-800/50 rounded-full flex items-center justify-center border border-slate-600/50">
+          <span class="text-3xl">🔍</span>
+        </div>
+        <div class="space-y-2">
+          <h3 class="text-2xl font-bold text-slate-200">No players found</h3>
+          <p class="text-slate-400">No players match "<strong class="text-white">{{ searchQuery }}</strong>"</p>
+          <p class="text-sm text-slate-500 italic">Try a different spelling or partial name.</p>
         </div>
       </div>
     </div>
     
-    <div v-else-if="searchQuery.trim() && players.length === 0" class="no-results-section">
-      <div class="no-results-content">
-        <h3>🔍 No players found</h3>
-        <p>No players match "<strong>{{ searchQuery }}</strong>"</p>
-        <p class="suggestion">Try a different spelling or partial name.</p>
-      </div>
-    </div>
-    
-    <div v-else class="players-table-section">
+    <!-- Players Table Section -->
+    <div v-else class="max-w-7xl mx-auto px-3 sm:px-6 pt-6">
       <!-- Table Header -->
-      <div class="table-header">
-        <div class="players-count">
-          {{ totalItems }} players found
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6">
+        <div class="flex items-center gap-4">
+          <div class="text-sm font-bold text-slate-300">
+            <span class="text-cyan-400">{{ totalItems }}</span> players found
+          </div>
         </div>
-        <div class="page-size-selector">
-          <label>Show:</label>
-          <select :value="pageSize" @change="changePageSize(Number(($event.target as HTMLSelectElement).value))">
+        <div class="flex items-center gap-2 text-sm">
+          <label class="text-slate-400 font-medium">Show:</label>
+          <select 
+            :value="pageSize" 
+            @change="changePageSize(Number(($event.target as HTMLSelectElement).value))"
+            class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+          >
             <option value="25">25</option>
             <option value="50">50</option>
             <option value="100">100</option>
@@ -298,72 +375,136 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Compact Table -->
-      <div class="table-container">
-        <table class="players-table">
-          <thead>
-            <tr>
-              <th @click="sortPlayers('playerName')" class="sortable">
-                Player
-                <span class="sort-indicator" :class="getSortClass('playerName')">▲</span>
+      <!-- Compact Players Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse border border-slate-700/30 min-w-[800px] lg:min-w-full">
+          <!-- Table Header -->
+          <thead class="sticky top-0 z-10">
+            <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+              <th @click="sortPlayers('playerName')" class="group p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50">
+                <div class="flex items-center gap-2">
+                  <span class="text-cyan-400 text-xs">👤</span>
+                  <span class="font-mono font-bold">PLAYER</span>
+                  <span class="text-xs transition-transform duration-200" :class="{
+                    'text-cyan-400 opacity-100': sortBy === 'playerName',
+                    'opacity-50': sortBy !== 'playerName',
+                    'rotate-0': sortBy === 'playerName' && sortOrder === 'asc',
+                    'rotate-180': sortBy === 'playerName' && sortOrder === 'desc'
+                  }">▲</span>
+                </div>
               </th>
-              <th @click="sortPlayers('totalPlayTimeMinutes')" class="sortable">
-                Playtime
-                <span class="sort-indicator" :class="getSortClass('totalPlayTimeMinutes')">▲</span>
+              <th @click="sortPlayers('totalPlayTimeMinutes')" class="group p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50">
+                <div class="flex items-center gap-2">
+                  <span class="text-green-400 text-xs">⏰</span>
+                  <span class="font-mono font-bold">PLAYTIME</span>
+                  <span class="text-xs transition-transform duration-200" :class="{
+                    'text-green-400 opacity-100': sortBy === 'totalPlayTimeMinutes',
+                    'opacity-50': sortBy !== 'totalPlayTimeMinutes',
+                    'rotate-0': sortBy === 'totalPlayTimeMinutes' && sortOrder === 'asc',
+                    'rotate-180': sortBy === 'totalPlayTimeMinutes' && sortOrder === 'desc'
+                  }">▲</span>
+                </div>
               </th>
-              <th @click="sortPlayers('lastSeen')" class="sortable">
-                Last Seen
-                <span class="sort-indicator" :class="getSortClass('lastSeen')">▲</span>
+              <th @click="sortPlayers('lastSeen')" class="group p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50">
+                <div class="flex items-center gap-2">
+                  <span class="text-orange-400 text-xs">📅</span>
+                  <span class="font-mono font-bold">LAST SEEN</span>
+                  <span class="text-xs transition-transform duration-200" :class="{
+                    'text-orange-400 opacity-100': sortBy === 'lastSeen',
+                    'opacity-50': sortBy !== 'lastSeen',
+                    'rotate-0': sortBy === 'lastSeen' && sortOrder === 'asc',
+                    'rotate-180': sortBy === 'lastSeen' && sortOrder === 'desc'
+                  }">▲</span>
+                </div>
               </th>
-              <th>Status</th>
+              <th class="p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                <div class="flex items-center gap-2">
+                  <span class="text-purple-400 text-xs">📡</span>
+                  <span class="font-mono font-bold">STATUS</span>
+                </div>
+              </th>
             </tr>
           </thead>
+
+          <!-- Table Body -->
           <tbody>
             <tr
               v-for="player in players"
               :key="player.playerName"
-              class="player-row"
-              :class="{ 'online': player.isActive }"
+              class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/30"
+              :class="{
+                'bg-green-500/5': player.isActive,
+                'bg-slate-500/5': !player.isActive
+              }"
             >
-              <td class="player-cell">
-                <router-link :to="`/players/${encodeURIComponent(player.playerName)}`" class="player-name">
+              <!-- Player Name -->
+              <td class="p-2">
+                <router-link 
+                  :to="`/players/${encodeURIComponent(player.playerName)}`" 
+                  class="font-bold text-slate-200 hover:text-cyan-400 transition-colors duration-300 no-underline block max-w-[200px] truncate text-sm"
+                >
                   {{ player.playerName }}
                 </router-link>
               </td>
-              <td class="playtime-cell">
-                {{ formatPlayTime(player.totalPlayTimeMinutes) }}
+
+              <!-- Playtime -->
+              <td class="p-2">
+                <div class="font-mono text-sm text-green-400 font-bold">
+                  {{ formatPlayTime(player.totalPlayTimeMinutes) }}
+                </div>
               </td>
-              <td class="lastseen-cell">
-                {{ formatLastSeen(player.lastSeen) }}
+
+              <!-- Last Seen -->
+              <td class="p-2">
+                <div class="font-mono text-sm text-orange-400 font-medium">
+                  {{ formatLastSeen(player.lastSeen) }}
+                </div>
               </td>
-              <td class="status-cell">
-                <div v-if="player.isActive" class="status online-status">
-                  <span class="online-indicator">🟢</span>
-                  <div v-if="player.currentServer" class="server-info">
+
+              <!-- Status -->
+              <td class="p-2">
+                <div v-if="player.isActive" class="flex items-start gap-2">
+                  <span class="text-green-400 text-xs mt-0.5">🟢</span>
+                  <div v-if="player.currentServer" class="space-y-1">
                     <router-link 
                       :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" 
-                      class="server-name server-link"
+                      class="text-cyan-400 hover:text-cyan-300 font-medium text-xs block max-w-[160px] truncate no-underline transition-colors duration-300"
                     >
                       {{ player.currentServer.serverName }}
                     </router-link>
-                    <div class="game-stats">
-                      <span class="score-stat" :class="getScoreClass(player.currentServer.sessionKills + player.currentServer.sessionDeaths)">
+                    <div class="flex items-center gap-1 text-xs font-mono">
+                      <span class="font-bold" :class="{
+                        'text-emerald-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 100,
+                        'text-blue-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 50,
+                        'text-orange-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 25,
+                        'text-slate-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) < 25
+                      }">
                         {{ (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) }}
                       </span>
-                      <span class="separator"> / </span>
-                      <span class="kills-stat" :class="getKillsClass(player.currentServer.sessionKills || 0)">
+                      <span class="text-slate-500">/</span>
+                      <span class="font-bold" :class="{
+                        'text-red-400': (player.currentServer.sessionKills || 0) >= 30,
+                        'text-orange-400': (player.currentServer.sessionKills || 0) >= 15,
+                        'text-green-400': (player.currentServer.sessionKills || 0) >= 5,
+                        'text-slate-400': (player.currentServer.sessionKills || 0) < 5
+                      }">
                         {{ player.currentServer.sessionKills || 0 }}
                       </span>
-                      <span class="separator"> / </span>
-                      <span class="deaths-stat" :class="getDeathsClass(player.currentServer.sessionDeaths || 0)">
+                      <span class="text-slate-500">/</span>
+                      <span class="font-bold" :class="{
+                        'text-red-400': (player.currentServer.sessionDeaths || 0) >= 20,
+                        'text-orange-400': (player.currentServer.sessionDeaths || 0) >= 10,
+                        'text-green-400': (player.currentServer.sessionDeaths || 0) >= 5,
+                        'text-blue-400': (player.currentServer.sessionDeaths || 0) < 5
+                      }">
                         {{ player.currentServer.sessionDeaths || 0 }}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div v-else class="status offline-status">
-                  <span class="offline-indicator">⚫</span>
-                  <span>Offline</span>
+                <div v-else class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">⚫</span>
+                  <span class="text-slate-500 font-medium text-xs uppercase">OFFLINE</span>
                 </div>
               </td>
             </tr>
@@ -371,40 +512,52 @@ onUnmounted(() => {
         </table>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="pagination">
+      <!-- Enhanced Pagination -->
+      <div v-if="totalPages > 1" class="flex flex-wrap items-center justify-center gap-1 sm:gap-2 mt-4 sm:mt-6 pb-4 sm:pb-6">
+        <!-- First Page -->
         <button 
-          class="pagination-btn" 
+          class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold bg-slate-800/60 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="currentPage === 1" 
           @click="goToPage(1)"
         >
           ««
         </button>
+        
+        <!-- Previous Page -->
         <button 
-          class="pagination-btn" 
+          class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold bg-slate-800/60 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="currentPage === 1" 
           @click="goToPage(currentPage - 1)"
         >
           ‹
         </button>
+        
+        <!-- Page Numbers -->
         <button 
           v-for="page in paginationRange" 
           :key="page" 
-          class="pagination-btn" 
-          :class="{ active: page === currentPage }" 
+          class="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold rounded-lg transition-all duration-200 min-w-[32px] sm:min-w-[40px]"
+          :class="{
+            'bg-gradient-to-r from-cyan-600 to-purple-600 border border-cyan-500/50 text-white shadow-lg shadow-cyan-500/30': page === currentPage,
+            'bg-slate-800/60 border border-slate-700/50 text-slate-400 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-white': page !== currentPage
+          }"
           @click="goToPage(page)"
         >
           {{ page }}
         </button>
+        
+        <!-- Next Page -->
         <button 
-          class="pagination-btn" 
+          class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold bg-slate-800/60 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="currentPage === totalPages" 
           @click="goToPage(currentPage + 1)"
         >
           ›
         </button>
+        
+        <!-- Last Page -->
         <button 
-          class="pagination-btn" 
+          class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold bg-slate-800/60 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="currentPage === totalPages" 
           @click="goToPage(totalPages)"
         >
@@ -416,564 +569,29 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.players-page {
-  min-height: 100vh;
-  background: var(--color-background);
-  padding: 20px;
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-/* Search Section */
-.search-section {
-  max-width: 800px;
-  margin: 0 auto 40px auto;
-  text-align: center;
+::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.5);
 }
 
-.search-section h1 {
-  font-size: 2.5rem;
-  color: var(--color-heading);
-  margin-bottom: 20px;
+::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.5);
+  border-radius: 3px;
 }
 
-.search-container {
-  position: relative;
-  max-width: 600px;
-  margin: 0 auto;
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.7);
 }
 
-.search-input-wrapper {
-  position: relative;
-  margin-bottom: 10px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-text-muted);
-  font-size: 16px;
-  z-index: 2;
-}
-
-.search-input {
-  width: 100%;
-  padding: 16px 50px 16px 50px;
-  font-size: 18px;
-  border: 2px solid var(--color-border);
-  border-radius: 12px;
-  background: var(--color-background);
-  color: var(--color-text);
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-}
-
-.search-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.search-spinner {
-  position: absolute;
-  right: 50px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 16px;
-  animation: spin 1s linear infinite;
-}
-
-.clear-search {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.clear-search:hover {
-  background: var(--color-background-mute);
-  color: var(--color-text);
-}
-
-@keyframes spin {
-  0% { transform: translateY(-50%) rotate(0deg); }
-  100% { transform: translateY(-50%) rotate(360deg); }
-}
-
-
-/* Loading and Error States */
-.loading, .error {
-  text-align: center;
-  padding: 40px 20px;
-  font-size: 18px;
-}
-
-.error {
-  color: #e74c3c;
-}
-
-/* Hero Section */
-.hero-section {
-  max-width: 600px;
-  margin: 60px auto;
-  text-align: center;
-}
-
-.hero-content h2 {
-  font-size: 2rem;
-  color: var(--color-heading);
-  margin-bottom: 16px;
-}
-
-.hero-content p {
-  font-size: 1.1rem;
-  color: var(--color-text-muted);
-  margin-bottom: 32px;
-  line-height: 1.5;
-}
-
-.search-tips {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  text-align: left;
-  background: var(--color-background-soft);
-  border-radius: 8px;
-  padding: 24px;
-  border: 1px solid var(--color-border);
-}
-
-.tip {
-  font-size: 14px;
-  color: var(--color-text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tip strong {
-  color: var(--color-primary);
-}
-
-/* No Results Section */
-.no-results-section {
-  max-width: 500px;
-  margin: 60px auto;
-  text-align: center;
-}
-
-.no-results-content h3 {
-  font-size: 1.5rem;
-  color: var(--color-heading);
-  margin-bottom: 12px;
-}
-
-.no-results-content p {
-  font-size: 1rem;
-  color: var(--color-text-muted);
-  margin-bottom: 8px;
-}
-
-.suggestion {
-  font-style: italic;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-}
-
-/* Table Section */
-.players-table-section {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.players-count {
-  font-size: 14px;
-  color: var(--color-text);
-  font-weight: 600;
-}
-
-.page-size-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--color-text);
-}
-
-.page-size-selector select {
-  padding: 4px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background: var(--color-background);
-  color: var(--color-text);
-}
-
-/* Table Container - matching LandingPage style */
-.table-container {
-  background: var(--color-background-soft);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-}
-
-.players-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.players-table th {
-  background: var(--color-background-mute);
-  padding: 12px 16px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text);
-  border-bottom: 2px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.players-table th.sortable {
-  cursor: pointer;
-  transition: background-color 0.2s;
-  user-select: none;
-}
-
-.players-table th.sortable:hover {
-  background: var(--color-background);
-}
-
-.sort-indicator {
-  display: inline-block;
-  margin-left: 6px;
-  font-size: 10px;
-  transition: transform 0.2s;
-  opacity: 0.5;
-}
-
-.sort-indicator.asc {
-  transform: rotate(0deg);
-  opacity: 1;
-  color: var(--color-primary);
-}
-
-.sort-indicator.desc {
-  transform: rotate(180deg);
-  opacity: 1;
-  color: var(--color-primary);
-}
-
-.players-table td {
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--color-border);
-  vertical-align: middle;
-}
-
-.player-row {
-  transition: all 0.2s ease;
-}
-
-.player-row:hover {
-  background: var(--color-background);
-}
-
-.player-row.online {
-  background: rgba(76, 175, 80, 0.02);
-}
-
-.player-cell {
-  max-width: 200px;
-}
-
-.player-name {
-  font-weight: 600;
-  color: var(--color-primary);
-  text-decoration: none;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.player-name:hover {
-  text-decoration: underline;
-}
-
-.playtime-cell, .lastseen-cell {
-  font-size: 13px;
-  color: var(--color-text);
-  white-space: nowrap;
-}
-
-.status-cell {
-  min-width: 200px;
-}
-
-.status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.online-status {
-  color: var(--color-text);
-}
-
-.offline-status {
-  color: var(--color-text-muted);
-}
-
-.online-indicator, .offline-indicator {
-  font-size: 12px;
-}
-
-.server-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.server-name {
-  font-weight: 500;
-  font-size: 12px;
-  color: var(--color-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 150px;
-}
-
-.server-link {
-  text-decoration: none;
-  color: var(--color-primary);
-  transition: color 0.2s ease;
-}
-
-.server-link:hover {
-  color: var(--color-primary-hover);
-  text-decoration: underline;
-}
-
-.game-stats {
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.separator {
-  color: var(--color-text-muted);
-}
-
-/* Pro gamer color coding (from PlayersPanel.vue) */
-.score-excellent {
-  color: #4caf50;
-  font-weight: 700;
-}
-
-.score-good {
-  color: #2196f3;
-  font-weight: 600;
-}
-
-.score-average {
-  color: #ff9800;
-  font-weight: 500;
-}
-
-.score-low {
-  color: var(--color-text-muted);
-}
-
-.kills-excellent {
-  color: #f44336;
-  font-weight: 700;
-}
-
-.kills-good {
-  color: #ff9800;
-  font-weight: 600;
-}
-
-.kills-average {
-  color: #4caf50;
-  font-weight: 500;
-}
-
-.kills-low {
-  color: var(--color-text-muted);
-}
-
-.deaths-high {
-  color: #f44336;
-  font-weight: 600;
-}
-
-.deaths-medium {
-  color: #ff9800;
-  font-weight: 500;
-}
-
-.deaths-low {
-  color: #4caf50;
-  font-weight: 500;
-}
-
-.deaths-minimal {
-  color: #2196f3;
-  font-weight: 500;
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 20px;
-}
-
-.pagination-btn {
-  padding: 8px 12px;
-  background: var(--color-background-soft);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 13px;
-  min-width: 36px;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background: var(--color-background-mute);
-  border-color: var(--color-primary);
-}
-
-.pagination-btn.active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .players-page {
-    padding: 15px;
-  }
-
-  .search-section h1 {
-    font-size: 2rem;
-  }
-
-  .search-input {
-    padding: 12px 40px 12px 40px;
-    font-size: 16px;
-  }
-
-  .hero-section {
-    margin: 40px auto;
-    padding: 0 10px;
-  }
-
-  .hero-content h2 {
-    font-size: 1.6rem;
-  }
-
-  .hero-content p {
-    font-size: 1rem;
-  }
-
-  .search-tips {
-    padding: 20px;
-  }
-
-  .tip {
-    font-size: 13px;
-  }
-
-  .no-results-section {
-    margin: 40px auto;
-    padding: 0 10px;
-  }
-
-  .table-header {
-    flex-direction: column;
-    gap: 10px;
-    align-items: stretch;
-  }
-
-  .page-size-selector {
-    justify-content: space-between;
-  }
-
-  .players-table {
-    min-width: 600px;
-  }
-
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .pagination {
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .pagination-btn {
-    padding: 6px 10px;
-    font-size: 12px;
-    min-width: 32px;
-  }
-}
-
-@media (max-width: 480px) {
-  .search-section {
-    margin-bottom: 30px;
-  }
-
-  .search-section h1 {
-    font-size: 1.8rem;
-  }
-
-  .players-table th,
-  .players-table td {
-    padding: 8px 12px;
-  }
-
-  .server-name {
-    max-width: 120px;
+/* Ensure table has proper scrolling on mobile */
+@media (max-width: 1024px) {
+  table {
+    min-width: 800px;
   }
 }
 </style>
