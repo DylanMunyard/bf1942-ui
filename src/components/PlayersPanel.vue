@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-end"
+    class="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] flex items-center justify-end"
     @click="$emit('close')"
   >
     <div 
