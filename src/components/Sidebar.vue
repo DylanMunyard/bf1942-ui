@@ -1,382 +1,200 @@
 <template>
-  <div class="sidebar">
-    <div class="auth-section">
-      <LoginButton />
-    </div>
-    <div class="nav-menu">
-      <router-link
-        v-if="isAuthenticated"
-        to="/dashboard"
-        active-class="active"
-        class="nav-item"
-        data-tooltip="true"
-      >
-        <i class="icon-dashboard" />
-        <div class="tooltip">
-          <div class="tooltip-icon icon-dashboard" />
-          <div class="tooltip-text">
-            Your personal battlefield command center. View player profiles, favorite servers, and squad status.
-          </div>
-        </div>
-      </router-link>
-      <router-link
-        to="/servers"
-        active-class="active"
-        class="nav-item"
-        data-tooltip="true"
-      >
-        <i class="icon-servers" />
-        <div class="tooltip">
-          <div class="tooltip-icon icon-servers" />
-          <div class="tooltip-text">
-            Find BF1942, FH2, and BF Vietnam servers. Thanks to <a
-              href="https://github.com/cetteup"
-              target="_blank"
-              rel="noopener"
-            >@cetteup</a> for providing these APIs
-          </div>
-        </div>
-      </router-link>
-      <router-link
-        to="/players"
-        active-class="active"
-        class="nav-item"
-        data-tooltip="true"
-      >
-        <i class="icon-players" />
-        <div class="tooltip">
-          <div class="tooltip-icon icon-players" />
-          <div class="tooltip-text">
-            Search for players and view player statistics
-          </div>
-        </div>
-      </router-link>
-      <router-link
-        to="/players/compare"
-        active-class="active"
-        class="nav-item"
-        data-tooltip="true"
-      >
-        <i class="icon-player-comparison" />
-        <div class="tooltip">
-          <div class="tooltip-icon icon-player-comparison" />
-          <div class="tooltip-text">
-            Compare two players' performance statistics side-by-side
-          </div>
-        </div>
-      </router-link>
-      <div
-        class="nav-item theme-toggle-item"
-        :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-        @click="toggleDarkMode"
-      >
-        <span class="toggle-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
+  <!-- Desktop Sidebar -->
+  <div class="fixed right-0 top-0 w-20 h-full bg-gradient-to-b from-slate-800/80 to-slate-900/90 backdrop-blur-xl border-l border-slate-700/50 z-50 hidden md:flex flex-col shadow-2xl">
+    <!-- Animated background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-purple-500/5 opacity-60"></div>
+    <div class="absolute top-1/4 -left-20 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
+    <div class="absolute bottom-1/4 -left-20 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    
+    <div class="relative z-10 flex flex-col h-full">
+      <!-- Auth Section -->
+      <div class="flex-shrink-0 p-4 border-b border-slate-700/30">
+        <LoginButton />
       </div>
+      
+      <!-- Navigation Menu -->
+      <nav class="flex-1 py-6 space-y-3 overflow-y-auto">
+        <!-- Dashboard Link -->
+        <router-link
+          v-if="isAuthenticated"
+          to="/dashboard"
+          class="group relative flex flex-col items-center justify-center w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
+          active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
+        >
+          <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+               :style="{ backgroundImage: 'url(/src/assets/achievements/dashboard-sidemenu.png)' }"></div>
+          
+          <!-- Enhanced Tooltip -->
+          <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+            <div class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 p-4 shadow-2xl min-w-80">
+              <div class="flex items-center gap-4 mb-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center">
+                  <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat"
+                       :style="{ backgroundImage: 'url(/src/assets/achievements/dashboard-sidemenu.png)' }"></div>
+                </div>
+                <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">Dashboard</div>
+              </div>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                Your personal battlefield command center. View player profiles, favorite servers, and squad status.
+              </p>
+            </div>
+            <!-- Arrow -->
+            <div class="absolute left-full top-1/2 -translate-y-1/2 border-l-8 border-l-slate-800 border-y-8 border-y-transparent"></div>
+          </div>
+        </router-link>
+
+        <!-- Servers Link -->
+        <router-link
+          to="/servers"
+          class="group relative flex flex-col items-center justify-center w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
+          active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
+        >
+          <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+               :style="{ backgroundImage: 'url(/src/assets/servers.jpg)' }"></div>
+          
+          <!-- Enhanced Tooltip -->
+          <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+            <div class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 p-4 shadow-2xl min-w-80">
+              <div class="flex items-center gap-4 mb-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 border border-emerald-500/30 flex items-center justify-center">
+                  <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat"
+                       :style="{ backgroundImage: 'url(/src/assets/servers.jpg)' }"></div>
+                </div>
+                <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400">Servers</div>
+              </div>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                Find BF1942, FH2, and BF Vietnam servers. Thanks to <a href="https://github.com/cetteup" target="_blank" rel="noopener" class="text-cyan-400 hover:text-cyan-300 underline">@cetteup</a> for providing these APIs
+              </p>
+            </div>
+            <!-- Arrow -->
+            <div class="absolute left-full top-1/2 -translate-y-1/2 border-l-8 border-l-slate-800 border-y-8 border-y-transparent"></div>
+          </div>
+        </router-link>
+
+        <!-- Players Link -->
+        <router-link
+          to="/players"
+          class="group relative flex flex-col items-center justify-center w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
+          active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
+        >
+          <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+               :style="{ backgroundImage: 'url(/src/assets/players.jpg)' }"></div>
+          
+          <!-- Enhanced Tooltip -->
+          <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+            <div class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 p-4 shadow-2xl min-w-80">
+              <div class="flex items-center gap-4 mb-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center">
+                  <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat"
+                       :style="{ backgroundImage: 'url(/src/assets/players.jpg)' }"></div>
+                </div>
+                <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Players</div>
+              </div>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                Search for players and view player statistics
+              </p>
+            </div>
+            <!-- Arrow -->
+            <div class="absolute left-full top-1/2 -translate-y-1/2 border-l-8 border-l-slate-800 border-y-8 border-y-transparent"></div>
+          </div>
+        </router-link>
+
+        <!-- Player Comparison Link -->
+        <router-link
+          to="/players/compare"
+          class="group relative flex flex-col items-center justify-center w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
+          active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
+        >
+          <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+               :style="{ backgroundImage: 'url(/src/assets/player_vs_player.png)' }"></div>
+          
+          <!-- Enhanced Tooltip -->
+          <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+            <div class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 p-4 shadow-2xl min-w-80">
+              <div class="flex items-center gap-4 mb-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 flex items-center justify-center">
+                  <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat"
+                       :style="{ backgroundImage: 'url(/src/assets/player_vs_player.png)' }"></div>
+                </div>
+                <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">Compare</div>
+              </div>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                Compare two players' performance statistics side-by-side
+              </p>
+            </div>
+            <!-- Arrow -->
+            <div class="absolute left-full top-1/2 -translate-y-1/2 border-l-8 border-l-slate-800 border-y-8 border-y-transparent"></div>
+          </div>
+        </router-link>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Mobile Top Navigation -->
+  <div class="fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-xl border-b border-slate-700/50 z-50 flex md:hidden">
+    <!-- Animated background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-purple-500/5 opacity-60"></div>
+    
+    <div class="relative z-10 flex items-center w-full px-4">
+      <!-- Auth Section -->
+      <div class="flex-shrink-0">
+        <LoginButton />
+      </div>
+      
+      <!-- Navigation Menu -->
+      <nav class="flex-1 flex items-center justify-center gap-4 ml-4">
+        <!-- Dashboard Link -->
+        <router-link
+          v-if="isAuthenticated"
+          to="/dashboard"
+          class="group flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
+          active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
+        >
+          <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+               :style="{ backgroundImage: 'url(/src/assets/achievements/dashboard-sidemenu.png)' }"></div>
+        </router-link>
+
+        <!-- Servers Link -->
+        <router-link
+          to="/servers"
+          class="group flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
+          active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
+        >
+          <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+               :style="{ backgroundImage: 'url(/src/assets/servers.jpg)' }"></div>
+        </router-link>
+
+        <!-- Players Link -->
+        <router-link
+          to="/players"
+          class="group flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
+          active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
+        >
+          <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+               :style="{ backgroundImage: 'url(/src/assets/players.jpg)' }"></div>
+        </router-link>
+
+        <!-- Player Comparison Link -->
+        <router-link
+          to="/players/compare"
+          class="group flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
+          active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
+        >
+          <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+               :style="{ backgroundImage: 'url(/src/assets/player_vs_player.png)' }"></div>
+        </router-link>
+      </nav>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
-import { inject, type Ref } from 'vue';
 import LoginButton from './LoginButton.vue';
 import { useAuth } from '@/composables/useAuth';
 
 const route = useRoute();
-const isDarkMode = inject<Ref<boolean>>('isDarkMode')!;
-const toggleDarkMode = inject<() => void>('toggleDarkMode')!;
 const { isAuthenticated } = useAuth();
 </script>
 
-<style scoped>
-.sidebar {
-  width: 120px;
-  background-color: var(--sidebar-bg);
-  color: var(--sidebar-text);
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  position: fixed;
-  right: 0;
-  top: 0;
-  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.4);
-  border-left: 1px solid var(--sidebar-border);
-  z-index: 100;
-}
-
-.auth-section {
-  padding: 15px 10px;
-  border-bottom: 1px solid var(--sidebar-border);
-  display: flex;
-  justify-content: center;
-}
-
-.nav-menu {
-  padding: 20px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-}
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 12px;
-  color: #cbd5e1;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  border-radius: 12px;
-  width: 68px;
-  height: 68px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  cursor: pointer;
-  position: relative;
-}
-
-.nav-item:hover, .nav-item.router-link-exact-active:hover {
-  background-color: var(--sidebar-hover);
-  color: var(--sidebar-text);
-}
-
-.nav-item.active, .nav-item.router-link-exact-active {
-  background-color: var(--sidebar-active);
-  color: #ffffff;
-  font-weight: 500;
-  border: 2px solid #06b6d4;
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
-}
-
-.icon-dashboard {
-  background-image: url('../assets/achievements/dashboard-sidemenu.png');
-  display: inline-block;
-  width: 36px;
-  height: 36px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.icon-servers {
-  background-image: url('../assets/servers.jpg');
-  display: inline-block;
-  width: 36px;
-  height: 36px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.icon-players {
-  background-image: url('../assets/players.jpg');
-  display: inline-block;
-  width: 36px;
-  height: 36px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.icon-tk-livewire {
-  background-image: url('../assets/team_killers.jpg');
-  display: inline-block;
-  width: 36px;
-  height: 36px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  border-radius: 50%;
-  overflow: hidden;
-}
-
-.icon-player-comparison {
-  background-image: url('../assets/player_vs_player.png');
-  display: inline-block;
-  width: 36px;
-  height: 36px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.icon-online-players {
-  background-image: url('../assets/players.jpg');
-  display: inline-block;
-  width: 36px;
-  height: 36px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  position: relative;
-}
-
-.icon-online-players::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 12px;
-  height: 12px;
-  background-color: #4CAF50;
-  border-radius: 50%;
-  border: 2px solid var(--sidebar-bg);
-}
-
-/* Round icons */
-.icon-dashboard,
-.icon-players,
-.icon-servers,
-.icon-player-comparison,
-.icon-online-players {
-  border-radius: 50%;
-  overflow: hidden;
-}
-
-/* Desktop-specific styles */
-@media (min-width: 769px) {
-  .theme-toggle-item {
-    margin-top: auto;
-  }
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100vw;
-    height: 60px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: auto;
-    flex-direction: row;
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
-    border-left: none;
-    border-bottom: 1px solid var(--sidebar-border);
-    align-items: center;
-  }
-  
-  .auth-section {
-    padding: 8px;
-    border-bottom: none;
-    border-right: 1px solid var(--sidebar-border);
-    height: 100%;
-    display: flex;
-    align-items: center;
-  }
-  
-  .nav-menu {
-    padding: 0 20px;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    height: 100%;
-    width: 100%;
-    gap: 15px;
-  }
-  
-  .nav-item {
-    width: 44px;
-    height: 44px;
-    padding: 10px 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-  }
-  
-  .theme-toggle-item {
-    margin: 0 !important;
-    margin-left: auto !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 44px;
-  }
-}
-
-/* Style theme-toggle nav-item inside sidebar */
-.theme-toggle-item .toggle-icon {
-  font-size: 1.2rem;
-  user-select: none;
-}
-
-/* Tooltip styles */
-.tooltip {
-  display: none;
-  position: absolute;
-  right: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: var(--sidebar-bg);
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  width: 300px;
-  border: 1px solid var(--sidebar-border);
-  margin-right: 15px;
-  z-index: 1000;
-}
-
-/* Adjust position for first nav item to prevent cut-off */
-.nav-menu > :first-child .tooltip {
-  top: 0;
-  transform: translateY(0);
-}
-
-.nav-item[data-tooltip="true"]:hover .tooltip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.tooltip::after {
-  content: '';
-  position: absolute;
-  right: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  border-width: 10px 0 10px 10px;
-  border-style: solid;
-  border-color: transparent transparent transparent var(--sidebar-bg);
-}
-
-/* Adjust arrow for first nav item */
-.nav-menu > :first-child .tooltip::after {
-  top: 34px;
-}
-
-.tooltip-icon {
-  width: 128px !important;
-  height: 128px !important;
-  image-rendering: pixelated;
-}
-
-.tooltip-text {
-  color: var(--sidebar-text);
-  font-size: 0.95rem;
-  text-align: center;
-  line-height: 1.5;
-  padding: 0 10px;
-}
-
-.tooltip-text a {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-}
-
-.tooltip-text a:hover {
-  text-decoration-style: solid;
-}
-
-/* Hide tooltips completely on mobile to prevent sticky hover behavior */
-@media (max-width: 768px) {
-  .nav-item[data-tooltip="true"]:hover .tooltip {
-    display: none !important;
-  }
-}
-</style> 
+ 
