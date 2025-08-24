@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RoundReport from './RoundReport.vue';
+import RoundReportV2 from './RoundReportV2.vue';
 
 interface Props {
   serverGuid: string;
@@ -11,8 +11,8 @@ const _props = defineProps<Props>();
 </script>
 
 <template>
-  <div class="round-report-page">
-    <RoundReport
+  <div class="round-report-page-v2">
+    <RoundReportV2
       :server-guid="serverGuid"
       :map-name="mapName"
       :start-time="startTime"
@@ -21,9 +21,7 @@ const _props = defineProps<Props>();
 </template>
 
 <style scoped>
-.round-report-page {
-  padding: 20px;
-  background-color: var(--color-background);
+.round-report-page-v2 {
   min-height: 100vh;
 }
-</style> 
+</style>

@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
-import LandingPage from '../views/LandingPage.vue'
+import LandingPageV2 from '../views/LandingPageV2.vue'
 import Players from '../views/Players.vue'
 import PlayerDetails from '../views/PlayerDetails.vue'
 import PlayerAllAchievements from '../views/PlayerAllAchievements.vue'
@@ -8,7 +8,7 @@ import ServerDetails from '../views/ServerDetails.vue'
 import ServerRankingsPage from '../components/ServerRankingsPage.vue'
 import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
 import RoundsPage from '../components/RoundsPage.vue'
-import RoundReportPage from '../components/RoundReportPage.vue'
+import RoundReportPageV2 from '../components/RoundReportPageV2.vue'
 import WorkInProgressPlaceholder from '../components/WorkInProgressPlaceholder.vue'
 import PlayerComparison from '../views/PlayerComparison.vue'
 import { useAuth } from '../composables/useAuth'
@@ -29,7 +29,7 @@ const routes: RouteRecordRaw[] = [
     {
       path: '/landing',
       name: 'landing',
-      component: LandingPage
+      component: LandingPageV2
     },
     {
       path: '/dashboard',
@@ -52,19 +52,19 @@ const routes: RouteRecordRaw[] = [
     {
       path: '/servers/bf1942',
       name: 'servers-bf1942',
-      component: LandingPage,
+      component: LandingPageV2,
       props: { initialMode: '42' }
     },
     {
       path: '/servers/fh2',
       name: 'servers-fh2',
-      component: LandingPage,
+      component: LandingPageV2,
       props: { initialMode: 'FH2' }
     },
     {
       path: '/servers/bfv',
       name: 'servers-bfv',
-      component: LandingPage,
+      component: LandingPageV2,
       props: { initialMode: 'BFV' }
     },
     {
@@ -119,7 +119,7 @@ const routes: RouteRecordRaw[] = [
     {
       path: '/servers/round-report',
       name: 'round-report',
-      component: RoundReportPage,
+      component: RoundReportPageV2,
       props: route => ({
         serverGuid: route.query.serverGuid,
         mapName: route.query.mapName,

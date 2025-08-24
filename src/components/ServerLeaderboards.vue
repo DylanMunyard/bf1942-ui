@@ -40,21 +40,23 @@ const currentTopScores = computed(() => {
           </div>
           <h3>Most Active Warriors</h3>
         </div>
-        <div class="section-time-controls">
-          <button 
-            class="enhanced-time-tab"
-            :class="{ 'active': selectedTimePeriod === 'week' }"
-            @click="toggleTimePeriod('week')"
-          >
-            7 Days
-          </button>
-          <button 
-            class="enhanced-time-tab"
-            :class="{ 'active': selectedTimePeriod === 'month' }"
-            @click="toggleTimePeriod('month')"
-          >
-            30 Days
-          </button>
+        <div class="section-controls">
+          <div class="section-time-controls">
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'week' }"
+              @click="toggleTimePeriod('week')"
+            >
+              7 Days
+            </button>
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'month' }"
+              @click="toggleTimePeriod('month')"
+            >
+              30 Days
+            </button>
+          </div>
         </div>
       </div>
       
@@ -106,12 +108,6 @@ const currentTopScores = computed(() => {
               30 Days
             </button>
           </div>
-          <router-link 
-            :to="`/servers/${encodeURIComponent(serverName)}/rankings`" 
-            class="view-all-button"
-          >
-            View Rankings
-          </router-link>
         </div>
       </div>
       
@@ -137,250 +133,151 @@ const currentTopScores = computed(() => {
 </template>
 
 <style scoped>
-/* Enhanced Leaderboards Container */
+/* Modern Cyberpunk Leaderboards Container */
 .enhanced-leaderboards-container {
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
   width: 100%;
-  box-sizing: border-box;
 }
 
 /* Enhanced Leaderboard Section */
 .enhanced-leaderboard-section {
-  flex: 1;
-  min-width: 0;
-  background: var(--color-background-soft);
-  border-radius: 8px;
-  padding: 12px;
-  border: 1px solid var(--color-border);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
-  transition: all 0.2s ease;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.4) 100%);
+  backdrop-filter: blur(16px);
+  border-radius: 1rem;
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .enhanced-leaderboard-section:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 8px 32px rgba(6, 182, 212, 0.1);
+  transform: translateY(-2px);
 }
 
 .enhanced-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 1rem;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.3);
+  background: rgba(15, 23, 42, 0.6);
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .section-icon {
-  font-size: 1.2rem;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #9c27b0 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  font-size: 1.25rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .section-title h3 {
   margin: 0;
-  color: var(--color-heading);
-  font-size: 1.1rem;
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-size: 1.125rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
 }
 
 .section-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .section-time-controls {
   display: flex;
-  gap: 2px;
-  padding: 2px;
-  background: var(--color-background-mute);
-  border-radius: 6px;
-  border: 1px solid var(--color-border);
+  gap: 0.25rem;
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  padding: 0.25rem;
 }
 
 .enhanced-time-tab {
-  padding: 6px 12px;
+  padding: 0.5rem 0.75rem;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: 0.375rem;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-text-muted);
-  transition: all 0.2s ease;
+  color: rgba(148, 163, 184, 1);
+  transition: all 0.3s ease;
   text-align: center;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 
 .enhanced-time-tab:hover {
-  background: var(--color-background-soft);
-  color: var(--color-text);
+  background: rgba(30, 41, 59, 0.8);
+  color: rgba(226, 232, 240, 1);
 }
 
 .enhanced-time-tab.active {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
   color: white;
-  box-shadow: 0 1px 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
+  box-shadow: 0 4px 14px 0 rgba(6, 182, 212, 0.3);
 }
 
-.view-all-button {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: var(--color-background-mute);
-  border: 1px solid var(--color-border);
-  transition: all 0.2s ease;
-}
 
-.view-all-button:hover {
-  background: var(--color-primary);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
-}
-
-/* Leaderboard Table */
+/* Leaderboard Table Container */
 .leaderboard-table-container {
   overflow-x: auto;
-  margin-top: 8px;
+  overflow-y: hidden;
 }
 
-.leaderboard-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.leaderboard-table th,
-.leaderboard-table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-  white-space: nowrap;
-}
-
-.leaderboard-table th {
-  background-color: var(--color-background-soft);
-  font-weight: 600;
-  color: var(--color-heading);
-  text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: 0.5px;
-}
-
-.leaderboard-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.leaderboard-table tbody tr:hover {
-  background-color: var(--color-background-mute);
-}
-
-.kills {
-  color: #4caf50;
-  font-weight: 600;
-}
-
-.deaths {
-  color: #f44336;
-  font-weight: 600;
-}
-
-.score-link a {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.score-link a:hover {
-  text-decoration: underline;
-}
-
-.player-link {
-  text-decoration: none;
-  color: var(--color-primary);
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.player-link .player-name-text {
-  color: var(--color-primary);
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.2s, text-decoration 0.2s;
-}
-
-.player-link:hover .player-name-text,
-.player-link:focus .player-name-text {
-  text-decoration: underline;
-  color: var(--color-primary);
-}
-
+/* Responsive Design */
 @media (max-width: 1024px) {
   .enhanced-leaderboards-container {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .enhanced-leaderboard-section {
-    padding: 10px;
-  }
-  
-  .section-title h3 {
-    font-size: 1.05rem;
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
 
 @media (max-width: 768px) {
-  .enhanced-leaderboard-section {
-    padding: 8px;
-    border-radius: 6px;
+  .enhanced-section-header {
+    padding: 0.75rem;
   }
   
-  .enhanced-section-header {
+  .section-title {
     flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    margin-bottom: 10px;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
   
   .section-controls {
-    justify-content: space-between;
-    width: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
   }
 
   .section-time-controls {
-    flex: 1;
+    width: 100%;
   }
   
   .enhanced-time-tab {
     flex: 1;
-    padding: 5px 10px;
-    font-size: 11px;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.6875rem;
   }
+
 }
 
 @media (max-width: 480px) {
   .enhanced-leaderboards-container {
-    gap: 8px;
+    gap: 0.75rem;
   }
   
-  .enhanced-leaderboard-section {
-    padding: 6px;
+  .enhanced-section-header {
+    padding: 0.5rem;
   }
   
   .section-title h3 {
@@ -388,12 +285,8 @@ const currentTopScores = computed(() => {
   }
   
   .section-icon {
-    font-size: 1rem;
+    font-size: 1.125rem;
   }
 
-  .view-all-button {
-    padding: 5px 10px;
-    font-size: 11px;
-  }
 }
 </style> 

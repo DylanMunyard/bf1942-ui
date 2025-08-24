@@ -966,316 +966,439 @@ const formatRelativeTime = (dateString: string): string => {
 </script>
 
 <template>
-  <div class="player-comparison-container">
-    <div class="comparison-header">
-      <h1>Player Comparison</h1>
-      <div
-        class="input-form"
-        @click="hideDropdowns"
-      >
-        <!-- Player 1 Input with Search -->
-        <div
-          class="player-input-container"
-          @click.stop
+  <div class="min-h-screen bg-slate-900">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg border-b border-slate-700/50">
+      <div class="max-w-7xl mx-auto p-6">
+        <div class="text-center mb-8">
+          <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4">
+            Player Comparison
+          </h1>
+          <p class="text-slate-400 text-lg">
+            Compare two players' statistics and performance side-by-side
+          </p>
+        </div>
+        
+        <!-- Search Form -->
+        <div 
+          class="flex flex-col lg:flex-row items-center justify-center gap-6 max-w-4xl mx-auto"
+          @click="hideDropdowns"
         >
-          <input 
-            v-model="player1Input" 
-            type="text" 
-            placeholder="Player 1 Name" 
-            autocomplete="off"
-            @keyup.enter="handleCompare"
-            @input="onPlayerInput(player1Input, 1)"
-            @focus="player1Input.length >= 2 && searchPlayers(player1Input, 1)"
-          >
-          <div
-            v-if="player1SearchLoading"
-            class="search-spinner"
-          >
-            🔄
-          </div>
-          <div
-            v-if="showPlayer1Dropdown"
-            class="search-dropdown"
-          >
-            <div 
-              v-for="player in player1SearchResults" 
-              :key="player.playerName"
-              class="search-result-item"
-              @click="selectPlayer(player, 1)"
-            >
-              <div class="player-info">
-                <div class="player-name">
-                  {{ player.playerName }}
+          <!-- Player 1 Input with Search -->
+          <div class="relative flex-1 w-full lg:w-auto" @click.stop>
+            <div class="relative group">
+              <!-- Search Icon -->
+              <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                <div class="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
+                  <span class="text-slate-900 text-xs font-bold">👤</span>
                 </div>
-                <div class="player-details">
-                  <span class="play-time">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
-                  <span class="last-seen">{{ formatLastSeen(player.lastSeen) }}</span>
-                  <span
-                    v-if="player.isActive"
-                    class="active-badge"
-                  >🟢 Online</span>
-                  <span
-                    v-else
-                    class="inactive-badge"
-                  >⚫ Offline</span>
-                </div>
+              </div>
+              
+              <!-- Enhanced Search Input -->
+              <input 
+                v-model="player1Input" 
+                type="text" 
+                placeholder="Player 1 Name" 
+                autocomplete="off"
+                class="w-full pl-14 pr-14 py-4 bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-lg border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-300 font-medium shadow-lg hover:shadow-cyan-500/20 focus:shadow-cyan-500/30"
+                @keyup.enter="handleCompare"
+                @input="onPlayerInput(player1Input, 1)"
+                @focus="player1Input.length >= 2 && searchPlayers(player1Input, 1)"
+              >
+              
+              <!-- Loading Spinner -->
+              <div v-if="player1SearchLoading" class="absolute right-4 top-1/2 transform -translate-y-1/2">
+                <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>
+              </div>
+              
+              <!-- Search Glow Effect -->
+              <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              
+              <!-- Enhanced Player Dropdown -->
+              <div v-if="showPlayer1Dropdown" class="absolute top-full mt-3 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto shadow-2xl z-50">
                 <div
-                  v-if="player.currentServer && player.isActive"
-                  class="current-server"
+                  v-for="player in player1SearchResults"
+                  :key="player.playerName"
+                  class="group p-4 border-b border-slate-700/30 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-800/50 cursor-pointer transition-all duration-300 last:border-b-0 hover:shadow-lg"
+                  @mousedown.prevent="selectPlayer(player, 1)"
                 >
-                  {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
+                  <div class="space-y-2">
+                    <div class="font-bold text-slate-200 text-sm group-hover:text-cyan-400 transition-colors">{{ player.playerName }}</div>
+                    <div class="flex items-center gap-3 flex-wrap text-xs">
+                      <span class="text-slate-400 font-medium">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
+                      <span class="text-slate-500">{{ formatLastSeen(player.lastSeen) }}</span>
+                      <span v-if="player.isActive" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full">
+                        🟢 ONLINE
+                      </span>
+                      <span v-else class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 bg-slate-500/20 border border-slate-500/30 rounded-full">
+                        ⚫ OFFLINE
+                      </span>
+                    </div>
+                    <div v-if="player.currentServer && player.isActive" class="text-xs text-cyan-400 font-medium">
+                      🎮 {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
+                    </div>
+                  </div>
+                </div>
+                <div v-if="player1SearchResults.length === 0 && !player1SearchLoading" class="p-4 text-center text-slate-400 text-sm font-medium">
+                  🔍 No players found
                 </div>
               </div>
             </div>
-            <div
-              v-if="player1SearchResults.length === 0 && !player1SearchLoading"
-              class="no-results"
-            >
-              No players found
-            </div>
           </div>
-        </div>
 
-        <span class="vs-text">vs</span>
-
-        <!-- Player 2 Input with Search -->
-        <div
-          class="player-input-container"
-          @click.stop
-        >
-          <input 
-            ref="player2InputRef"
-            v-model="player2Input" 
-            type="text" 
-            placeholder="Player 2 Name" 
-            autocomplete="off"
-            @keyup.enter="handleCompare"
-            @input="onPlayerInput(player2Input, 2)"
-            @focus="player2Input.length >= 2 && searchPlayers(player2Input, 2)"
-          >
-          <div
-            v-if="player2SearchLoading"
-            class="search-spinner"
-          >
-            🔄
+          <!-- VS Text -->
+          <div class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 flex-shrink-0">
+            VS
           </div>
-          <div
-            v-if="showPlayer2Dropdown"
-            class="search-dropdown"
-          >
-            <div 
-              v-for="player in player2SearchResults" 
-              :key="player.playerName"
-              class="search-result-item"
-              @click="selectPlayer(player, 2)"
-            >
-              <div class="player-info">
-                <div class="player-name">
-                  {{ player.playerName }}
+
+          <!-- Player 2 Input with Search -->
+          <div class="relative flex-1 w-full lg:w-auto" @click.stop>
+            <div class="relative group">
+              <!-- Search Icon -->
+              <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                <div class="w-5 h-5 rounded-full bg-gradient-to-r from-orange-400 to-red-500 flex items-center justify-center">
+                  <span class="text-slate-900 text-xs font-bold">👤</span>
                 </div>
-                <div class="player-details">
-                  <span class="play-time">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
-                  <span class="last-seen">{{ formatLastSeen(player.lastSeen) }}</span>
-                  <span
-                    v-if="player.isActive"
-                    class="active-badge"
-                  >🟢 Online</span>
-                  <span
-                    v-else
-                    class="inactive-badge"
-                  >⚫ Offline</span>
-                </div>
+              </div>
+              
+              <!-- Enhanced Search Input -->
+              <input 
+                ref="player2InputRef"
+                v-model="player2Input" 
+                type="text" 
+                placeholder="Player 2 Name" 
+                autocomplete="off"
+                class="w-full pl-14 pr-14 py-4 bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-lg border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all duration-300 font-medium shadow-lg hover:shadow-orange-500/20 focus:shadow-orange-500/30"
+                @keyup.enter="handleCompare"
+                @input="onPlayerInput(player2Input, 2)"
+                @focus="player2Input.length >= 2 && searchPlayers(player2Input, 2)"
+              >
+              
+              <!-- Loading Spinner -->
+              <div v-if="player2SearchLoading" class="absolute right-4 top-1/2 transform -translate-y-1/2">
+                <div class="w-5 h-5 border-2 border-orange-500/30 border-t-orange-400 rounded-full animate-spin"></div>
+              </div>
+              
+              <!-- Search Glow Effect -->
+              <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              
+              <!-- Enhanced Player Dropdown -->
+              <div v-if="showPlayer2Dropdown" class="absolute top-full mt-3 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto shadow-2xl z-50">
                 <div
-                  v-if="player.currentServer && player.isActive"
-                  class="current-server"
+                  v-for="player in player2SearchResults"
+                  :key="player.playerName"
+                  class="group p-4 border-b border-slate-700/30 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-800/50 cursor-pointer transition-all duration-300 last:border-b-0 hover:shadow-lg"
+                  @mousedown.prevent="selectPlayer(player, 2)"
                 >
-                  {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
+                  <div class="space-y-2">
+                    <div class="font-bold text-slate-200 text-sm group-hover:text-orange-400 transition-colors">{{ player.playerName }}</div>
+                    <div class="flex items-center gap-3 flex-wrap text-xs">
+                      <span class="text-slate-400 font-medium">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
+                      <span class="text-slate-500">{{ formatLastSeen(player.lastSeen) }}</span>
+                      <span v-if="player.isActive" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full">
+                        🟢 ONLINE
+                      </span>
+                      <span v-else class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 bg-slate-500/20 border border-slate-500/30 rounded-full">
+                        ⚫ OFFLINE
+                      </span>
+                    </div>
+                    <div v-if="player.currentServer && player.isActive" class="text-xs text-orange-400 font-medium">
+                      🎮 {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
+                    </div>
+                  </div>
+                </div>
+                <div v-if="player2SearchResults.length === 0 && !player2SearchLoading" class="p-4 text-center text-slate-400 text-sm font-medium">
+                  🔍 No players found
                 </div>
               </div>
             </div>
-            <div
-              v-if="player2SearchResults.length === 0 && !player2SearchLoading"
-              class="no-results"
-            >
-              No players found
-            </div>
           </div>
-        </div>
 
-        <button
-          :disabled="isLoading || !player1Input.trim() || !player2Input.trim()"
-          @click="handleCompare"
-        >
-          {{ isLoading ? 'Comparing...' : 'Compare' }}
-        </button>
-      </div>
-    </div>
-
-    <div
-      v-if="isLoading"
-      class="loading-container"
-    >
-      <div class="loading-spinner" />
-      <p>Fetching player comparison...</p>
-    </div>
-
-    <div
-      v-else-if="error"
-      class="error-container"
-    >
-      <p>{{ error }}</p>
-    </div>
-
-    <div
-      v-else-if="!comparisonData"
-      class="intro-container"
-    >
-      <p>Enter two player names above and click "Compare" to see their stats side-by-side.</p>
-    </div>
-
-    <div
-      v-if="comparisonData"
-      class="comparison-results"
-    >
-      <!-- Server Context Banner -->
-      <div
-        v-if="comparisonData.serverDetails"
-        class="server-context-banner"
-      >
-        <div class="server-context-content">
-          <div class="server-context-text">
-            <span class="context-label">Server comparison for:</span>
-            <router-link 
-              :to="`/servers/${encodeURIComponent(comparisonData.serverDetails.name)}/rankings`"
-              class="server-name-link"
-              :title="`View rankings for ${comparisonData.serverDetails.name}`"
-            >
-              {{ comparisonData.serverDetails.name }}
-            </router-link>
-          </div>
-          <button 
-            class="clear-server-btn"
-            title="Compare across all servers"
-            @click="clearServerFilter"
+          <!-- Compare Button -->
+          <button
+            :disabled="isLoading || !player1Input.trim() || !player2Input.trim()"
+            @click="handleCompare"
+            class="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-700 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-purple-500/25 disabled:shadow-none disabled:cursor-not-allowed flex-shrink-0"
           >
-            ✕
+            <span v-if="isLoading" class="flex items-center gap-2">
+              <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Comparing...
+            </span>
+            <span v-else class="flex items-center gap-2">
+              ⚔️ Compare
+            </span>
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center py-20">
+      <div class="text-center space-y-6">
+        <div class="relative flex items-center justify-center">
+          <div class="w-20 h-20 border-4 border-slate-700 rounded-full animate-spin"></div>
+          <div class="absolute w-20 h-20 border-4 border-purple-500 rounded-full border-t-transparent animate-spin"></div>
+          <div class="absolute w-8 h-8 bg-gradient-to-r from-purple-400 to-blue-500 rounded-full animate-pulse"></div>
+        </div>
+        <div class="text-lg font-semibold text-white">
+          Fetching player comparison...
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="flex items-center justify-center py-20">
+      <div class="text-center space-y-4">
+        <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <div class="text-lg font-semibold text-red-400">{{ error }}</div>
+      </div>
+    </div>
+
+    <!-- Intro State -->
+    <div v-else-if="!comparisonData" class="max-w-4xl mx-auto p-6 text-center py-20">
+      <div class="space-y-6">
+        <div class="w-16 h-16 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full flex items-center justify-center border border-purple-500/30 mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-400">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="8.5" cy="7" r="4"/>
+            <path d="m22 8-5 5"/>
+            <path d="m17 8 5 5"/>
+          </svg>
+        </div>
+        <div class="text-xl font-medium text-slate-300">
+          Enter two player names above and click "Compare" to see their stats side-by-side.
+        </div>
+        <div class="text-sm text-slate-400">
+          Compare performance metrics, activity patterns, and head-to-head encounters between any two players.
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison Results -->
+    <div v-if="comparisonData" class="max-w-7xl mx-auto p-6 space-y-8">
 
       <!-- Common Servers Selector -->
       <div
         v-if="comparisonData.commonServers && comparisonData.commonServers.length > 0"
-        class="common-servers-section"
+        class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
       >
-        <div class="common-servers-header">
-          <span class="help-text">Compare performance on:</span>
-        </div>
-        <div class="common-servers-list">
-          <button 
-            v-for="server in comparisonData.commonServers" 
-            :key="server.guid"
-            class="server-option-btn"
-            :class="{ 'active': comparisonData.serverDetails?.guid === server.guid }"
-            :title="`Compare performance on ${server.name}`"
-            @click="selectServer(server.guid)"
-          >
-            <div class="server-option-name">
-              {{ server.name }}
+        <div class="p-6">
+          <div class="mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+              <div>
+                <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                  🎮 Compare performance on specific servers
+                  <span v-if="comparisonData.serverDetails" class="text-sm font-normal text-slate-400">(🎯 Currently: {{ comparisonData.serverDetails.name }})</span>
+                </h3>
+                <p class="text-sm text-slate-400 mt-1">Select a server to focus the comparison</p>
+              </div>
+              <button 
+                v-if="comparisonData.serverDetails"
+                class="self-start sm:self-auto px-4 py-2 bg-slate-700/60 hover:bg-slate-600/80 border border-slate-600/50 hover:border-slate-500/50 rounded-lg text-slate-300 hover:text-white text-sm font-medium transition-all duration-300 flex items-center gap-2"
+                @click="clearServerFilter"
+                title="View comparison across all common servers"
+              >
+                <span>🌍</span>
+                All Servers
+              </button>
             </div>
-            <div class="server-option-details">
-              <span class="server-game">{{ server.gameId }}</span>
-              <span
-                v-if="server.country"
-                class="server-location"
-              >{{ server.country }}</span>
-            </div>
-          </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <button 
+              v-for="server in comparisonData.commonServers" 
+              :key="server.guid"
+              class="group relative p-3 rounded-lg transition-all duration-300 text-left transform hover:scale-105"
+              :class="{ 
+                'bg-gradient-to-r from-blue-600/80 to-purple-600/80 border-2 border-blue-400/50 shadow-lg shadow-blue-500/20': comparisonData.serverDetails?.guid === server.guid,
+                'bg-slate-800/40 border-2 border-slate-700/50 hover:bg-slate-700/60 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10': comparisonData.serverDetails?.guid !== server.guid
+              }"
+              :title="`Compare performance on ${server.name}`"
+              @click="selectServer(server.guid)"
+            >
+              <!-- Selected indicator -->
+              <div v-if="comparisonData.serverDetails?.guid === server.guid" class="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-xs font-bold">
+                ✓
+              </div>
+              
+              <div class="flex items-center justify-between">
+                <div class="font-bold text-base truncate pr-2"
+                     :class="{ 
+                       'text-white': comparisonData.serverDetails?.guid === server.guid,
+                       'text-slate-200 group-hover:text-blue-400': comparisonData.serverDetails?.guid !== server.guid
+                     }">
+                  {{ server.name }}
+                </div>
+                
+                <span v-if="server.country" class="text-sm font-medium flex items-center gap-1 flex-shrink-0"
+                      :class="{ 
+                        'text-blue-100': comparisonData.serverDetails?.guid === server.guid,
+                        'text-slate-400 group-hover:text-blue-300': comparisonData.serverDetails?.guid !== server.guid
+                      }">
+                  🌍 {{ server.country }}
+                </span>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- Summary Panel -->
-      <div class="summary-panel">
-        <div
-          class="player-summary left"
-          :class="{ 'winner': parseFloat(player1KDR) > parseFloat(player2KDR) }"
-        >
-          <router-link 
-            :to="`/players/${encodeURIComponent(comparisonData.player1)}`"
-            class="player-summary-name"
-          >
-            <h2>{{ comparisonData.player1 }}</h2>
-          </router-link>
-          <div class="kdr-summary">
-            <span>{{ player1KDR }}</span>
-            <label>Overall K/D</label>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Player 1 Summary -->
+        <div class="relative bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border transition-all duration-300"
+             :class="{
+               'border-green-500/70 shadow-green-500/20 shadow-2xl transform scale-105': parseFloat(player1KDR) > parseFloat(player2KDR),
+               'border-slate-700/50': parseFloat(player1KDR) <= parseFloat(player2KDR)
+             }">
+          <!-- Winner Crown -->
+          <div v-if="parseFloat(player1KDR) > parseFloat(player2KDR)" class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+              👑 WINNER
+            </div>
+          </div>
+          
+          <div class="p-6 text-center">
+            <router-link 
+              :to="`/players/${encodeURIComponent(comparisonData.player1)}`"
+              class="group block mb-4 hover:transform hover:scale-105 transition-all duration-300"
+            >
+              <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 group-hover:from-cyan-300 group-hover:to-blue-300 transition-all duration-300">
+                {{ comparisonData.player1 }}
+              </h2>
+            </router-link>
+            
+            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
+              <div class="text-4xl font-bold text-cyan-400 mb-2">{{ player1KDR }}</div>
+              <div class="text-sm text-slate-400 uppercase tracking-wide font-medium">Overall K/D Ratio</div>
+            </div>
           </div>
         </div>
-        <div
-          class="player-summary right"
-          :class="{ 'winner': parseFloat(player2KDR) > parseFloat(player1KDR) }"
-        >
-          <router-link 
-            :to="`/players/${encodeURIComponent(comparisonData.player2)}`"
-            class="player-summary-name"
-          >
-            <h2>{{ comparisonData.player2 }}</h2>
-          </router-link>
-          <div class="kdr-summary">
-            <span>{{ player2KDR }}</span>
-            <label>Overall K/D</label>
+        
+        <!-- Player 2 Summary -->
+        <div class="relative bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border transition-all duration-300"
+             :class="{
+               'border-green-500/70 shadow-green-500/20 shadow-2xl transform scale-105': parseFloat(player2KDR) > parseFloat(player1KDR),
+               'border-slate-700/50': parseFloat(player2KDR) <= parseFloat(player1KDR)
+             }">
+          <!-- Winner Crown -->
+          <div v-if="parseFloat(player2KDR) > parseFloat(player1KDR)" class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+              👑 WINNER
+            </div>
+          </div>
+          
+          <div class="p-6 text-center">
+            <router-link 
+              :to="`/players/${encodeURIComponent(comparisonData.player2)}`"
+              class="group block mb-4 hover:transform hover:scale-105 transition-all duration-300"
+            >
+              <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 group-hover:from-orange-300 group-hover:to-red-300 transition-all duration-300">
+                {{ comparisonData.player2 }}
+              </h2>
+            </router-link>
+            
+            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
+              <div class="text-4xl font-bold text-orange-400 mb-2">{{ player2KDR }}</div>
+              <div class="text-sm text-slate-400 uppercase tracking-wide font-medium">Overall K/D Ratio</div>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Core Statistics -->
-      <div class="comparison-section">
-        <h3>Core Statistics</h3>
-        <div class="stat-comparison-grid">
-          <!-- Kill Rate -->
-          <div class="stat-label">
-            Kill Rate (per min)
-          </div>
-          <div
-            class="stat-value p1"
-            :class="{ 'better': player1KillRate > player2KillRate }"
-          >
-            {{ player1KillRate.toFixed(2) }}
-            <span
-              v-if="getHigherValue(player1KillRate, player2KillRate) === 'p1' && player1KillRate !== player2KillRate"
-              class="delta"
-            >
-              ({{ calculateDelta(player1KillRate, player2KillRate, 2) }})
-            </span>
-          </div>
-          <div
-            class="stat-value p2"
-            :class="{ 'better': player2KillRate > player1KillRate }"
-          >
-            {{ player2KillRate.toFixed(2) }}
-            <span
-              v-if="getHigherValue(player1KillRate, player2KillRate) === 'p2' && player1KillRate !== player2KillRate"
-              class="delta"
-            >
-              ({{ calculateDelta(player1KillRate, player2KillRate, 2) }})
-            </span>
-          </div>
+      <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+        <div class="p-6 border-b border-slate-700/50">
+          <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-400 flex items-center gap-3">
+            📊 Core Statistics
+          </h3>
+        </div>
+        <div class="p-6">
+          <div class="space-y-8">
+            <!-- Kill Rate -->
+            <div class="text-center">
+              <div class="text-lg font-bold text-slate-300 mb-4">🎯 Kill Rate (per minute)</div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-800/60 rounded-xl p-6 border transition-all duration-300"
+                     :class="{
+                       'border-green-500/70 shadow-green-500/20 shadow-lg': player1KillRate > player2KillRate,
+                       'border-slate-700/50': player1KillRate <= player2KillRate
+                     }">
+                  <div class="text-3xl font-bold mb-2"
+                       :class="{
+                         'text-green-400': player1KillRate > player2KillRate,
+                         'text-cyan-400': player1KillRate <= player2KillRate
+                       }">
+                    {{ player1KillRate.toFixed(2) }}
+                  </div>
+                  <div v-if="getHigherValue(player1KillRate, player2KillRate) === 'p1' && player1KillRate !== player2KillRate" 
+                       class="text-sm text-green-300 font-medium">
+                    +{{ calculateDelta(player1KillRate, player2KillRate, 2).substring(2) }} better
+                  </div>
+                  <div class="text-xs text-slate-400 uppercase tracking-wide font-medium mt-1">{{ comparisonData.player1 }}</div>
+                </div>
+                
+                <div class="bg-slate-800/60 rounded-xl p-6 border transition-all duration-300"
+                     :class="{
+                       'border-green-500/70 shadow-green-500/20 shadow-lg': player2KillRate > player1KillRate,
+                       'border-slate-700/50': player2KillRate <= player1KillRate
+                     }">
+                  <div class="text-3xl font-bold mb-2"
+                       :class="{
+                         'text-green-400': player2KillRate > player1KillRate,
+                         'text-orange-400': player2KillRate <= player1KillRate
+                       }">
+                    {{ player2KillRate.toFixed(2) }}
+                  </div>
+                  <div v-if="getHigherValue(player1KillRate, player2KillRate) === 'p2' && player1KillRate !== player2KillRate" 
+                       class="text-sm text-green-300 font-medium">
+                    +{{ calculateDelta(player1KillRate, player2KillRate, 2).substring(2) }} better
+                  </div>
+                  <div class="text-xs text-slate-400 uppercase tracking-wide font-medium mt-1">{{ comparisonData.player2 }}</div>
+                </div>
+              </div>
+            </div>
 
-          <!-- Average Ping -->
-          <div class="stat-label">
-            Average Ping
-          </div>
-          <div
-            class="stat-value p1"
-            :class="{ 'better': player1AveragePing < player2AveragePing }"
-          >
-            {{ Math.round(player1AveragePing) }}ms
-          </div>
-          <div
-            class="stat-value p2"
-            :class="{ 'better': player2AveragePing < player1AveragePing }"
-          >
-            {{ Math.round(player2AveragePing) }}ms
+            <!-- Average Ping -->
+            <div class="text-center">
+              <div class="text-lg font-bold text-slate-300 mb-4">📡 Average Ping (lower is better)</div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-800/60 rounded-xl p-6 border transition-all duration-300"
+                     :class="{
+                       'border-green-500/70 shadow-green-500/20 shadow-lg': player1AveragePing < player2AveragePing,
+                       'border-slate-700/50': player1AveragePing >= player2AveragePing
+                     }">
+                  <div class="text-3xl font-bold mb-2"
+                       :class="{
+                         'text-green-400': player1AveragePing < player2AveragePing,
+                         'text-cyan-400': player1AveragePing >= player2AveragePing
+                       }">
+                    {{ Math.round(player1AveragePing) }}ms
+                  </div>
+                  <div class="text-xs text-slate-400 uppercase tracking-wide font-medium">{{ comparisonData.player1 }}</div>
+                </div>
+                
+                <div class="bg-slate-800/60 rounded-xl p-6 border transition-all duration-300"
+                     :class="{
+                       'border-green-500/70 shadow-green-500/20 shadow-lg': player2AveragePing < player1AveragePing,
+                       'border-slate-700/50': player2AveragePing >= player1AveragePing
+                     }">
+                  <div class="text-3xl font-bold mb-2"
+                       :class="{
+                         'text-green-400': player2AveragePing < player1AveragePing,
+                         'text-orange-400': player2AveragePing >= player1AveragePing
+                       }">
+                    {{ Math.round(player2AveragePing) }}ms
+                  </div>
+                  <div class="text-xs text-slate-400 uppercase tracking-wide font-medium">{{ comparisonData.player2 }}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1283,72 +1406,70 @@ const formatRelativeTime = (dateString: string): string => {
       <!-- Typical Online Hours -->
       <div
         v-if="activityHoursData?.player1ActivityHours && activityHoursData?.player2ActivityHours"
-        class="comparison-section"
+        class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
       >
-        <div class="section-header">
-          <h3>Typical Online Hours</h3>
-          <button 
-            class="toggle-view-btn" 
-            :title="showRawActivityData ? 'Show overlap potential' : 'Show individual activity'"
-            @click="showRawActivityData = !showRawActivityData"
-          >
-            {{ showRawActivityData ? '🔀 Show Overlap' : '📊 Show Individual' }}
-          </button>
+        <div class="p-6 border-b border-slate-700/50">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
+              🕰️ Typical Online Hours
+            </h3>
+            <button 
+              class="px-4 py-2 bg-slate-700/60 hover:bg-slate-600/80 border border-slate-600/50 hover:border-purple-500/50 text-slate-300 hover:text-white rounded-lg transition-all duration-300 font-medium text-sm flex items-center gap-2" 
+              :title="showRawActivityData ? 'Show overlap potential' : 'Show individual activity'"
+              @click="showRawActivityData = !showRawActivityData"
+            >
+              <span>{{ showRawActivityData ? '🔀 Show Overlap' : '📊 Show Individual' }}</span>
+            </button>
+          </div>
         </div>
-        <div
-          v-if="activityHoursLoading"
-          class="loading-container"
-        >
-          <div class="loading-spinner" />
-          <p>Loading activity data...</p>
-        </div>
-        <div
-          v-else-if="activityHoursError"
-          class="error-container"
-        >
-          <p>{{ activityHoursError }}</p>
-        </div>
-        <div
-          v-else
-          class="activity-section"
-        >
-          <div class="activity-chart-wrapper">
-            <div class="activity-chart-container">
-              <!-- Background zones for time periods -->
-              <div class="time-period-zones">
-                <div
-                  class="time-zone early-zone"
-                  title="Early (00:00 - 08:00)"
-                />
-                <div
-                  class="time-zone day-zone"
-                  title="Day (08:00 - 16:00)"
-                />
-                <div
-                  class="time-zone night-zone"
-                  title="Night (16:00 - 24:00)"
-                />
-              </div>
-              <Line
-                :key="chartKey"
-                :data="combinedActivityChartData"
-                :options="combinedActivityChartOptions"
-              />
+        <div class="p-6">
+          <!-- Loading State -->
+          <div v-if="activityHoursLoading" class="flex items-center justify-center py-12">
+            <div class="text-center space-y-4">
+              <div class="w-8 h-8 border-2 border-purple-500/30 border-t-purple-400 rounded-full animate-spin mx-auto"></div>
+              <p class="text-slate-400">Loading activity data...</p>
             </div>
-                    
-            <!-- Time period section labels -->
-            <div class="time-period-labels">
-              <div class="period-label early-label">
-                <span class="period-name">Early</span>
-                <span class="period-hours">12AM-8AM</span>
+          </div>
+          
+          <!-- Error State -->
+          <div v-else-if="activityHoursError" class="text-center py-12">
+            <div class="text-red-400 font-medium">{{ activityHoursError }}</div>
+          </div>
+          
+          <!-- Activity Chart -->
+          <div v-else class="space-y-6">
+            <!-- Chart Container -->
+            <div class="relative">
+              <div class="h-64 relative border border-slate-700/50 rounded-xl overflow-hidden bg-gradient-to-r from-slate-800/60 to-slate-900/60">
+                <!-- Background zones for time periods -->
+                <div class="absolute inset-0 flex pointer-events-none">
+                  <div class="flex-[8] bg-gradient-to-r from-purple-500/10 to-purple-500/5" title="Early (00:00 - 08:00)"></div>
+                  <div class="flex-[8] bg-gradient-to-r from-blue-500/10 to-blue-500/5" title="Day (08:00 - 16:00)"></div>
+                  <div class="flex-[8] bg-gradient-to-r from-indigo-500/10 to-indigo-500/5" title="Night (16:00 - 24:00)"></div>
+                </div>
+                <div class="relative z-10 h-full p-2">
+                  <Line
+                    :key="chartKey"
+                    :data="combinedActivityChartData"
+                    :options="combinedActivityChartOptions"
+                  />
+                </div>
               </div>
-              <div class="period-label day-label">
-                <span class="period-name">Day</span>
-                <span class="period-hours">8AM-4PM</span>
+            </div>
+            
+            <!-- Time period labels -->
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div class="space-y-1">
+                <div class="text-sm font-bold text-purple-400">Early Hours</div>
+                <div class="text-xs text-slate-400 font-mono">12AM - 8AM</div>
               </div>
-              <div class="period-label night-label">
-                <span class="period-name">Night</span>
-                <span class="period-hours">4PM-12AM</span>
+              <div class="space-y-1">
+                <div class="text-sm font-bold text-blue-400">Day Hours</div>
+                <div class="text-xs text-slate-400 font-mono">8AM - 4PM</div>
+              </div>
+              <div class="space-y-1">
+                <div class="text-sm font-bold text-indigo-400">Night Hours</div>
+                <div class="text-xs text-slate-400 font-mono">4PM - 12AM</div>
               </div>
             </div>
           </div>
@@ -1358,118 +1479,150 @@ const formatRelativeTime = (dateString: string): string => {
       <!-- Performance Over Time -->
       <div
         v-if="comparisonData.bucketTotals && comparisonData.bucketTotals.length > 0"
-        class="comparison-section"
+        class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
       >
-        <h3>Performance Over Time</h3>
-        <div class="tabs">
-          <button 
-            v-for="period in timePeriodOptions" 
-            :key="period.value"
-            :class="{ 'active': selectedTimePeriod === period.value }"
-            @click="selectedTimePeriod = period.value"
-          >
-            {{ period.label }}
-          </button>
+        <div class="p-6 border-b border-slate-700/50">
+          <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center gap-3">
+            📈 Performance Over Time
+          </h3>
         </div>
-        <div class="performance-details">
-          <div
-            v-if="getPerformanceData(selectedTimePeriod)"
-            class="performance-grid"
-          >
-            <div class="grid-header" />
-            <div class="grid-header p1-header">
-              {{ comparisonData.player1 }}
+        <div class="p-6">
+          <!-- Time Period Tabs -->
+          <div class="flex flex-wrap gap-2 mb-6">
+            <button 
+              v-for="period in timePeriodOptions" 
+              :key="period.value"
+              class="px-4 py-2 rounded-lg border transition-all duration-300 font-medium text-sm"
+              :class="{
+                'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-yellow-500 shadow-lg': selectedTimePeriod === period.value,
+                'bg-slate-800/60 text-slate-300 border-slate-700/50 hover:bg-slate-700/80 hover:border-yellow-500/50 hover:text-white': selectedTimePeriod !== period.value
+              }"
+              @click="selectedTimePeriod = period.value"
+            >
+              {{ period.label }}
+            </button>
+          </div>
+          
+          <!-- Performance Data Grid -->
+          <div v-if="getPerformanceData(selectedTimePeriod)" class="space-y-6">
+            <!-- Headers -->
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div class="text-sm font-bold text-slate-400 uppercase tracking-wide">Metric</div>
+              <div class="text-sm font-bold text-cyan-400 uppercase tracking-wide">{{ comparisonData.player1 }}</div>
+              <div class="text-sm font-bold text-orange-400 uppercase tracking-wide">{{ comparisonData.player2 }}</div>
             </div>
-            <div class="grid-header p2-header">
-              {{ comparisonData.player2 }}
-            </div>
-
-            <div class="grid-label">
-              Score
-            </div>
-            <div class="grid-value p1">
-              {{ getPerformanceData(selectedTimePeriod)?.player1Totals.score }}
-              <span
-                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p1'"
-                class="delta"
-              >
-                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) }})
-              </span>
-            </div>
-            <div class="grid-value p2">
-              {{ getPerformanceData(selectedTimePeriod)?.player2Totals.score }}
-              <span
-                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p2'"
-                class="delta"
-              >
-                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) }})
-              </span>
-            </div>
-                    
-            <div class="grid-label">
-              Kills
-            </div>
-            <div class="grid-value p1">
-              {{ getPerformanceData(selectedTimePeriod)?.player1Totals.kills }}
-              <span
-                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p1'"
-                class="delta"
-              >
-                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) }})
-              </span>
-            </div>
-            <div class="grid-value p2">
-              {{ getPerformanceData(selectedTimePeriod)?.player2Totals.kills }}
-              <span
-                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p2'"
-                class="delta"
-              >
-                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) }})
-              </span>
-            </div>
-
-            <div class="grid-label">
-              Deaths
-            </div>
-            <div class="grid-value p1">
-              {{ getPerformanceData(selectedTimePeriod)?.player1Totals.deaths }}
-              <span
-                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p1'"
-                class="delta"
-              >
-                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) }})
-              </span>
-            </div>
-            <div class="grid-value p2">
-              {{ getPerformanceData(selectedTimePeriod)?.player2Totals.deaths }}
-              <span
-                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p2'"
-                class="delta"
-              >
-                ({{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) }})
-              </span>
-            </div>
-
-            <div class="grid-label">
-              Play Time
-            </div>
-            <div class="grid-value p1">
-              {{ formatPlayTime(getPerformanceData(selectedTimePeriod)?.player1Totals.playTimeMinutes || 0) }}
-              <span
-                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p1'"
-                class="delta"
-              >
-                ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) }})
-              </span>
-            </div>
-            <div class="grid-value p2">
-              {{ formatPlayTime(getPerformanceData(selectedTimePeriod)?.player2Totals.playTimeMinutes || 0) }}
-              <span
-                v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p2'"
-                class="delta"
-              >
-                ({{ calculateTimeDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) }})
-              </span>
+            
+            <!-- Stats Rows -->
+            <div class="space-y-4">
+              <!-- Score -->
+              <div class="grid grid-cols-3 gap-4 items-center py-3 px-4 bg-slate-800/40 rounded-xl border border-slate-700/30">
+                <div class="text-slate-300 font-medium flex items-center gap-2">
+                  🎖️ Score
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-bold" :class="{
+                    'text-green-400': getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p1',
+                    'text-cyan-400': !(getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p1')
+                  }">
+                    {{ getPerformanceData(selectedTimePeriod)?.player1Totals.score?.toLocaleString() }}
+                  </div>
+                  <div v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p1'" class="text-xs text-green-300 font-medium">
+                    +{{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score).substring(2) }}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-bold" :class="{
+                    'text-green-400': getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p2',
+                    'text-orange-400': !(getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p2')
+                  }">
+                    {{ getPerformanceData(selectedTimePeriod)?.player2Totals.score?.toLocaleString() }}
+                  </div>
+                  <div v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score) === 'p2'" class="text-xs text-green-300 font-medium">
+                    +{{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.score, getPerformanceData(selectedTimePeriod)!.player2Totals.score).substring(2) }}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Kills -->
+              <div class="grid grid-cols-3 gap-4 items-center py-3 px-4 bg-slate-800/40 rounded-xl border border-slate-700/30">
+                <div class="text-slate-300 font-medium flex items-center gap-2">
+                  ⚔️ Kills
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-bold" :class="{
+                    'text-green-400': getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p1',
+                    'text-cyan-400': !(getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p1')
+                  }">
+                    {{ getPerformanceData(selectedTimePeriod)?.player1Totals.kills?.toLocaleString() }}
+                  </div>
+                  <div v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p1'" class="text-xs text-green-300 font-medium">
+                    +{{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills).substring(2) }}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-bold" :class="{
+                    'text-green-400': getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p2',
+                    'text-orange-400': !(getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p2')
+                  }">
+                    {{ getPerformanceData(selectedTimePeriod)?.player2Totals.kills?.toLocaleString() }}
+                  </div>
+                  <div v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills) === 'p2'" class="text-xs text-green-300 font-medium">
+                    +{{ calculateDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.kills, getPerformanceData(selectedTimePeriod)!.player2Totals.kills).substring(2) }}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Deaths (lower is better) -->
+              <div class="grid grid-cols-3 gap-4 items-center py-3 px-4 bg-slate-800/40 rounded-xl border border-slate-700/30">
+                <div class="text-slate-300 font-medium flex items-center gap-2">
+                  ☠️ Deaths
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-bold" :class="{
+                    'text-green-400': getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p2',
+                    'text-cyan-400': !(getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p2')
+                  }">
+                    {{ getPerformanceData(selectedTimePeriod)?.player1Totals.deaths?.toLocaleString() }}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-bold" :class="{
+                    'text-green-400': getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p1',
+                    'text-orange-400': !(getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.deaths, getPerformanceData(selectedTimePeriod)!.player2Totals.deaths) === 'p1')
+                  }">
+                    {{ getPerformanceData(selectedTimePeriod)?.player2Totals.deaths?.toLocaleString() }}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Play Time -->
+              <div class="grid grid-cols-3 gap-4 items-center py-3 px-4 bg-slate-800/40 rounded-xl border border-slate-700/30">
+                <div class="text-slate-300 font-medium flex items-center gap-2">
+                  ⏰ Play Time
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-bold" :class="{
+                    'text-green-400': getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p1',
+                    'text-cyan-400': !(getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p1')
+                  }">
+                    {{ formatPlayTime(getPerformanceData(selectedTimePeriod)?.player1Totals.playTimeMinutes || 0) }}
+                  </div>
+                  <div v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p1'" class="text-xs text-green-300 font-medium">
+                    {{ calculateTimeDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) }} more
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-bold" :class="{
+                    'text-green-400': getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p2',
+                    'text-orange-400': !(getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p2')
+                  }">
+                    {{ formatPlayTime(getPerformanceData(selectedTimePeriod)?.player2Totals.playTimeMinutes || 0) }}
+                  </div>
+                  <div v-if="getPerformanceData(selectedTimePeriod) && getHigherValue(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) === 'p2'" class="text-xs text-green-300 font-medium">
+                    {{ calculateTimeDelta(getPerformanceData(selectedTimePeriod)!.player1Totals.playTimeMinutes || 0, getPerformanceData(selectedTimePeriod)!.player2Totals.playTimeMinutes || 0) }} more
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1478,224 +1631,222 @@ const formatRelativeTime = (dateString: string): string => {
       <!-- Map Performance -->
       <div
         v-if="combinedMapPerformance.length > 0"
-        class="comparison-section"
+        class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
       >
-        <div class="section-header">
-          <h3>Map Performance</h3>
-          <div class="section-controls">
-            <button 
-              class="toggle-filter-btn" 
-              :title="hideNoScores ? 'Show all maps including those with no scores' : 'Hide maps where either player has no scores'"
-              @click="hideNoScores = !hideNoScores"
-            >
-              {{ hideNoScores ? '👁️' : '👁️‍🗨️' }}
-            </button>
-            <button
-              class="toggle-columns-btn"
-              @click="showExtraColumns = !showExtraColumns"
-            >
-              {{ showExtraColumns ? 'Hide' : 'Show' }} Kills/Deaths
-            </button>
+        <div class="p-6 border-b border-slate-700/50">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center gap-3">
+              🗺️ Map Performance
+            </h3>
+            <div class="flex items-center gap-3">
+              <button 
+                class="p-2 bg-slate-700/60 hover:bg-slate-600/80 border border-slate-600/50 hover:border-blue-500/50 text-slate-300 hover:text-white rounded-lg transition-all duration-300" 
+                :title="hideNoScores ? 'Show all maps including those with no scores' : 'Hide maps where either player has no scores'"
+                @click="hideNoScores = !hideNoScores"
+              >
+                {{ hideNoScores ? '👁️' : '👁️‍🗨️' }}
+              </button>
+              <button
+                class="px-4 py-2 bg-slate-700/60 hover:bg-slate-600/80 border border-slate-600/50 hover:border-blue-500/50 text-slate-300 hover:text-white rounded-lg transition-all duration-300 font-medium text-sm"
+                @click="showExtraColumns = !showExtraColumns"
+              >
+                {{ showExtraColumns ? 'Hide' : 'Show' }} Kills/Deaths
+              </button>
+            </div>
           </div>
         </div>
-        <div class="map-performance-table">
-          <div
-            class="table-header"
-            :class="{ 'expanded': showExtraColumns }"
-          >
-            <div
-              class="map-name-header sortable"
-              :class="{ 'sort-active': sortColumn === 'map' }"
-              @click="sortMapPerformance('map')"
-            >
-              Map
-              <span
-                v-if="sortColumn === 'map'"
-                class="sort-indicator"
-              >
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </div>
-            <div
-              class="player-group"
-              :class="{ 'expanded': showExtraColumns }"
-            >
-              {{ comparisonData.player1 }}
-            </div>
-            <div
-              class="player-group"
-              :class="{ 'expanded': showExtraColumns }"
-            >
-              {{ comparisonData.player2 }}
-            </div>
-          </div>
-          <div
-            class="table-subheader"
-            :class="{ 'expanded': showExtraColumns }"
-          >
-            <div />
-            <div
-              class="sortable"
-              :class="{ 'sort-active': sortColumn === 'p1-score' }"
-              @click="sortMapPerformance('p1-score')"
-            >
-              Score
-              <span
-                v-if="sortColumn === 'p1-score'"
-                class="sort-indicator"
-              >
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </div>
-            <div
-              v-show="showExtraColumns"
-              class="sortable extra-column"
-              :class="{ 'sort-active': sortColumn === 'p1-kills' }"
-              @click="sortMapPerformance('p1-kills')"
-            >
-              Kills
-              <span
-                v-if="sortColumn === 'p1-kills'"
-                class="sort-indicator"
-              >
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </div>
-            <div
-              v-show="showExtraColumns"
-              class="sortable extra-column"
-              :class="{ 'sort-active': sortColumn === 'p1-deaths' }"
-              @click="sortMapPerformance('p1-deaths')"
-            >
-              Deaths
-              <span
-                v-if="sortColumn === 'p1-deaths'"
-                class="sort-indicator"
-              >
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </div>
-            <div
-              class="sortable"
-              :class="{ 'sort-active': sortColumn === 'p1-kdr' }"
-              @click="sortMapPerformance('p1-kdr')"
-            >
-              K/D
-              <span
-                v-if="sortColumn === 'p1-kdr'"
-                class="sort-indicator"
-              >
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </div>
-            <div
-              class="sortable"
-              :class="{ 'sort-active': sortColumn === 'p2-score' }"
-              @click="sortMapPerformance('p2-score')"
-            >
-              Score
-              <span
-                v-if="sortColumn === 'p2-score'"
-                class="sort-indicator"
-              >
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </div>
-            <div
-              v-show="showExtraColumns"
-              class="sortable extra-column"
-              :class="{ 'sort-active': sortColumn === 'p2-kills' }"
-              @click="sortMapPerformance('p2-kills')"
-            >
-              Kills
-              <span
-                v-if="sortColumn === 'p2-kills'"
-                class="sort-indicator"
-              >
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </div>
-            <div
-              v-show="showExtraColumns"
-              class="sortable extra-column"
-              :class="{ 'sort-active': sortColumn === 'p2-deaths' }"
-              @click="sortMapPerformance('p2-deaths')"
-            >
-              Deaths
-              <span
-                v-if="sortColumn === 'p2-deaths'"
-                class="sort-indicator"
-              >
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </div>
-            <div
-              class="sortable"
-              :class="{ 'sort-active': sortColumn === 'p2-kdr' }"
-              @click="sortMapPerformance('p2-kdr')"
-            >
-              K/D
-              <span
-                v-if="sortColumn === 'p2-kdr'"
-                class="sort-indicator"
-              >
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </div>
-          </div>
-          <div class="table-body">
-            <div
-              v-for="map in sortedMapPerformance"
-              :key="map.mapName"
-              class="table-row"
-              :class="{ 'expanded': showExtraColumns }"
-            >
-              <div class="map-name">
-                {{ map.mapName }}
-              </div>
-              <div class="map-stat">
-                {{ map.player1Totals.score }}
-              </div>
-              <div
-                v-show="showExtraColumns"
-                class="map-stat extra-column"
-              >
-                {{ map.player1Totals.kills }}
-              </div>
-              <div
-                v-show="showExtraColumns"
-                class="map-stat extra-column"
-              >
-                {{ map.player1Totals.deaths }}
-              </div>
-              <div
-                class="map-kdr"
-                :class="{ 'winner': parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) > parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) }"
-              >
-                {{ calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) }}
-              </div>
-              <div class="map-stat">
-                {{ map.player2Totals.score }}
-              </div>
-              <div
-                v-show="showExtraColumns"
-                class="map-stat extra-column"
-              >
-                {{ map.player2Totals.kills }}
-              </div>
-              <div
-                v-show="showExtraColumns"
-                class="map-stat extra-column"
-              >
-                {{ map.player2Totals.deaths }}
-              </div>
-              <div
-                class="map-kdr"
-                :class="{ 'winner': parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) > parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) }"
-              >
-                {{ calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) }}
-              </div>
-            </div>
+        <div class="overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+              <!-- Table Header -->
+              <thead class="sticky top-0 z-10">
+                <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+                  <th 
+                    class="group p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-blue-500/50 min-w-[180px]"
+                    :class="{ 'text-blue-400': sortColumn === 'map' }"
+                    @click="sortMapPerformance('map')"
+                  >
+                    <div class="flex items-center gap-2">
+                      <span class="text-blue-400 text-xs">🗺️</span>
+                      <span class="font-mono font-bold">MAP</span>
+                      <span v-if="sortColumn === 'map'" class="text-xs transition-transform duration-200"
+                            :class="{ 'rotate-0': sortDirection === 'asc', 'rotate-180': sortDirection === 'desc' }">▲</span>
+                    </div>
+                  </th>
+                  
+                  <!-- Player 1 Headers -->
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-cyan-400 border-b border-slate-700/30 bg-cyan-500/10 border-l-4 border-l-cyan-400/60" :colspan="showExtraColumns ? 4 : 2">
+                    <div class="flex items-center justify-center gap-2">
+                      <span class="font-mono font-bold text-sm">{{ comparisonData.player1 }}</span>
+                    </div>
+                  </th>
+                  
+                  <!-- Player 2 Headers -->
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-orange-400 border-b border-slate-700/30 bg-orange-500/10 border-l-4 border-l-orange-400/60" :colspan="showExtraColumns ? 4 : 2">
+                    <div class="flex items-center justify-center gap-2">
+                      <span class="font-mono font-bold text-sm">{{ comparisonData.player2 }}</span>
+                    </div>
+                  </th>
+                </tr>
+                <tr class="bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-sm">
+                  <th class="p-2 border-b border-slate-700/30"></th>
+                  
+                  <!-- Player 1 Sub Headers -->
+                  <th 
+                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50 bg-cyan-500/5 border-l-4 border-l-cyan-400/60"
+                    :class="{ 'text-cyan-400': sortColumn === 'p1-score' }"
+                    @click="sortMapPerformance('p1-score')"
+                  >
+                    <div class="flex items-center justify-center gap-1">
+                      <span>🎖️</span>
+                      <span class="font-mono">SCORE</span>
+                      <span v-if="sortColumn === 'p1-score'" class="text-xs" :class="{ 'rotate-0': sortDirection === 'asc', 'rotate-180': sortDirection === 'desc' }">▲</span>
+                    </div>
+                  </th>
+                  <th v-if="showExtraColumns" 
+                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50 bg-cyan-500/5"
+                      :class="{ 'text-cyan-400': sortColumn === 'p1-kills' }"
+                      @click="sortMapPerformance('p1-kills')">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>⚔️</span>
+                      <span class="font-mono">K</span>
+                      <span v-if="sortColumn === 'p1-kills'" class="text-xs" :class="{ 'rotate-0': sortDirection === 'asc', 'rotate-180': sortDirection === 'desc' }">▲</span>
+                    </div>
+                  </th>
+                  <th v-if="showExtraColumns" 
+                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50 bg-cyan-500/5"
+                      :class="{ 'text-cyan-400': sortColumn === 'p1-deaths' }"
+                      @click="sortMapPerformance('p1-deaths')">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>☠️</span>
+                      <span class="font-mono">D</span>
+                      <span v-if="sortColumn === 'p1-deaths'" class="text-xs" :class="{ 'rotate-0': sortDirection === 'asc', 'rotate-180': sortDirection === 'desc' }">▲</span>
+                    </div>
+                  </th>
+                  <th 
+                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50 bg-cyan-500/5 border-r-4 border-r-cyan-400/60"
+                    :class="{ 'text-cyan-400': sortColumn === 'p1-kdr' }"
+                    @click="sortMapPerformance('p1-kdr')"
+                  >
+                    <div class="flex items-center justify-center gap-1">
+                      <span>🎯</span>
+                      <span class="font-mono">K/D</span>
+                      <span v-if="sortColumn === 'p1-kdr'" class="text-xs" :class="{ 'rotate-0': sortDirection === 'asc', 'rotate-180': sortDirection === 'desc' }">▲</span>
+                    </div>
+                  </th>
+                  
+                  <!-- Player 2 Sub Headers -->
+                  <th 
+                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50 bg-orange-500/5 border-l-4 border-l-orange-400/60"
+                    :class="{ 'text-orange-400': sortColumn === 'p2-score' }"
+                    @click="sortMapPerformance('p2-score')"
+                  >
+                    <div class="flex items-center justify-center gap-1">
+                      <span>🎖️</span>
+                      <span class="font-mono">SCORE</span>
+                      <span v-if="sortColumn === 'p2-score'" class="text-xs" :class="{ 'rotate-0': sortDirection === 'asc', 'rotate-180': sortDirection === 'desc' }">▲</span>
+                    </div>
+                  </th>
+                  <th v-if="showExtraColumns" 
+                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50 bg-orange-500/5"
+                      :class="{ 'text-orange-400': sortColumn === 'p2-kills' }"
+                      @click="sortMapPerformance('p2-kills')">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>⚔️</span>
+                      <span class="font-mono">K</span>
+                      <span v-if="sortColumn === 'p2-kills'" class="text-xs" :class="{ 'rotate-0': sortDirection === 'asc', 'rotate-180': sortDirection === 'desc' }">▲</span>
+                    </div>
+                  </th>
+                  <th v-if="showExtraColumns" 
+                      class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50 bg-orange-500/5"
+                      :class="{ 'text-orange-400': sortColumn === 'p2-deaths' }"
+                      @click="sortMapPerformance('p2-deaths')">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>☠️</span>
+                      <span class="font-mono">D</span>
+                      <span v-if="sortColumn === 'p2-deaths'" class="text-xs" :class="{ 'rotate-0': sortDirection === 'asc', 'rotate-180': sortDirection === 'desc' }">▲</span>
+                    </div>
+                  </th>
+                  <th 
+                    class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50 bg-orange-500/5"
+                    :class="{ 'text-orange-400': sortColumn === 'p2-kdr' }"
+                    @click="sortMapPerformance('p2-kdr')"
+                  >
+                    <div class="flex items-center justify-center gap-1">
+                      <span>🎯</span>
+                      <span class="font-mono">K/D</span>
+                      <span v-if="sortColumn === 'p2-kdr'" class="text-xs" :class="{ 'rotate-0': sortDirection === 'asc', 'rotate-180': sortDirection === 'desc' }">▲</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+
+              <!-- Table Body -->
+              <tbody>
+                <tr
+                  v-for="map in sortedMapPerformance"
+                  :key="map.mapName"
+                  class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/20"
+                >
+                  <!-- Map Name -->
+                  <td class="p-2">
+                    <div class="font-bold text-blue-400 text-xs truncate max-w-[180px] font-mono uppercase">
+                      {{ map.mapName }}
+                    </div>
+                  </td>
+
+                  <!-- Player 1 Stats -->
+                  <td class="p-2 text-center bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ map.player1Totals.score?.toLocaleString() }}
+                    </div>
+                  </td>
+                  <td v-if="showExtraColumns" class="p-2 text-center bg-cyan-500/5">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ map.player1Totals.kills?.toLocaleString() }}
+                    </div>
+                  </td>
+                  <td v-if="showExtraColumns" class="p-2 text-center bg-cyan-500/5">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ map.player1Totals.deaths?.toLocaleString() }}
+                    </div>
+                  </td>
+                  <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
+                    <div class="font-bold text-xs font-mono" :class="{
+                      'text-green-400': parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) > parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)),
+                      'text-cyan-400': parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)) <= parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths))
+                    }">
+                      {{ calculateKDR(map.player1Totals.kills, map.player1Totals.deaths) }}
+                    </div>
+                  </td>
+
+                  <!-- Player 2 Stats -->
+                  <td class="p-2 text-center bg-orange-500/5 border-l-2 border-l-orange-400/40">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ map.player2Totals.score?.toLocaleString() }}
+                    </div>
+                  </td>
+                  <td v-if="showExtraColumns" class="p-2 text-center bg-orange-500/5">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ map.player2Totals.kills?.toLocaleString() }}
+                    </div>
+                  </td>
+                  <td v-if="showExtraColumns" class="p-2 text-center bg-orange-500/5">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ map.player2Totals.deaths?.toLocaleString() }}
+                    </div>
+                  </td>
+                  <td class="p-2 text-center bg-orange-500/5">
+                    <div class="font-bold text-xs font-mono" :class="{
+                      'text-green-400': parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) > parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths)),
+                      'text-orange-400': parseFloat(calculateKDR(map.player2Totals.kills, map.player2Totals.deaths)) <= parseFloat(calculateKDR(map.player1Totals.kills, map.player1Totals.deaths))
+                    }">
+                      {{ calculateKDR(map.player2Totals.kills, map.player2Totals.deaths) }}
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1703,72 +1854,166 @@ const formatRelativeTime = (dateString: string): string => {
       <!-- Head-to-Head Encounters -->
       <div
         v-if="comparisonData.headToHead && comparisonData.headToHead.length > 0"
-        class="comparison-section"
+        class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
       >
-        <h3>Head-to-Head Encounters</h3>
-        <div class="h2h-table">
-          <div class="h2h-table-header">
-            <div>Date</div>
-            <div>Map</div>
-            <div
-              class="h2h-player-header"
-              colspan="3"
-            >
-              {{ comparisonData.player1 }}
-            </div>
-            <div
-              class="h2h-player-header"
-              colspan="3"
-            >
-              {{ comparisonData.player2 }}
-            </div>
-          </div>
-          <div class="h2h-table-subheader">
-            <div />
-            <div />
-            <div>Score</div>
-            <div>Kills</div>
-            <div>Deaths</div>
-            <div>Score</div>
-            <div>Kills</div>
-            <div>Deaths</div>
-          </div>
-          <div class="h2h-table-body">
-            <div
-              v-for="(encounter, index) in sortedHeadToHead"
-              :key="index"
-              class="h2h-table-row"
-            >
-              <div class="h2h-date-cell">
-                <router-link 
-                  :to="{
-                    path: '/servers/round-report',
-                    query: {
-                      serverGuid: encounter.serverGuid,
-                      mapName: encounter.mapName,
-                      startTime: new Date(new Date(encounter.timestamp).getTime() + 2 * 60 * 1000).toISOString(),
-                      players: `${player1Input},${player2Input}`
-                    }
-                  }"
-                  class="h2h-date-link"
-                  :title="`View round report for ${encounter.mapName} on ${formatDate(encounter.timestamp)} with ${player1Input} and ${player2Input} highlighted`"
+        <div class="p-6 border-b border-slate-700/50">
+          <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-pink-400 flex items-center gap-3">
+            ⚔️ Head-to-Head Encounters
+          </h3>
+        </div>
+        <div class="overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+              <!-- Table Header -->
+              <thead class="sticky top-0 z-10">
+                <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+                  <th class="p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 min-w-[120px]">
+                    <div class="flex items-center gap-2">
+                      <span class="text-slate-400 text-xs">📅</span>
+                      <span class="font-mono font-bold">DATE</span>
+                    </div>
+                  </th>
+                  <th class="p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 min-w-[140px]">
+                    <div class="flex items-center gap-2">
+                      <span class="text-blue-400 text-xs">🗺️</span>
+                      <span class="font-mono font-bold">MAP</span>
+                    </div>
+                  </th>
+                  
+                  <!-- Player 1 Headers -->
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-cyan-400 border-b border-slate-700/30 bg-cyan-500/10 border-l-4 border-l-cyan-400/60" colspan="3">
+                    <div class="flex items-center justify-center gap-2">
+                      <span class="font-mono font-bold text-sm">{{ comparisonData.player1 }}</span>
+                    </div>
+                  </th>
+                  
+                  <!-- Player 2 Headers -->
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-orange-400 border-b border-slate-700/30 bg-orange-500/10 border-l-4 border-l-orange-400/60" colspan="3">
+                    <div class="flex items-center justify-center gap-2">
+                      <span class="font-mono font-bold text-sm">{{ comparisonData.player2 }}</span>
+                    </div>
+                  </th>
+                </tr>
+                <tr class="bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-sm">
+                  <th class="p-2 border-b border-slate-700/30"></th>
+                  <th class="p-2 border-b border-slate-700/30"></th>
+                  
+                  <!-- Player 1 Sub Headers -->
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>🎖️</span>
+                      <span class="font-mono">SCORE</span>
+                    </div>
+                  </th>
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>⚔️</span>
+                      <span class="font-mono">KILLS</span>
+                    </div>
+                  </th>
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-r-4 border-r-cyan-400/60">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>☠️</span>
+                      <span class="font-mono">DEATHS</span>
+                    </div>
+                  </th>
+                  
+                  <!-- Player 2 Sub Headers -->
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>🎖️</span>
+                      <span class="font-mono">SCORE</span>
+                    </div>
+                  </th>
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>⚔️</span>
+                      <span class="font-mono">KILLS</span>
+                    </div>
+                  </th>
+                  <th class="p-2 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>☠️</span>
+                      <span class="font-mono">DEATHS</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+
+              <!-- Table Body -->
+              <tbody>
+                <tr
+                  v-for="(encounter, index) in sortedHeadToHead"
+                  :key="index"
+                  class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/20"
                 >
-                  <div class="h2h-date">
-                    {{ formatDate(encounter.timestamp) }}
-                  </div>
-                  <div class="h2h-time">
-                    {{ formatTime(encounter.timestamp) }}
-                  </div>
-                </router-link>
-              </div>
-              <div>{{ encounter.mapName }}</div>
-              <div>{{ encounter.player1Score }}</div>
-              <div>{{ encounter.player1Kills }}</div>
-              <div>{{ encounter.player1Deaths }}</div>
-              <div>{{ encounter.player2Score }}</div>
-              <div>{{ encounter.player2Kills }}</div>
-              <div>{{ encounter.player2Deaths }}</div>
-            </div>
+                  <!-- Date -->
+                  <td class="p-2">
+                    <router-link 
+                      :to="{
+                        path: '/servers/round-report',
+                        query: {
+                          serverGuid: encounter.serverGuid,
+                          mapName: encounter.mapName,
+                          startTime: new Date(new Date(encounter.timestamp).getTime() + 2 * 60 * 1000).toISOString(),
+                          players: `${player1Input},${player2Input}`
+                        }
+                      }"
+                      class="group/link flex flex-col gap-1 hover:bg-blue-600/20 hover:border-blue-500/50 border border-transparent rounded-lg p-2 transition-all duration-300 transform hover:scale-105"
+                      :title="`View round report for ${encounter.mapName} on ${formatDate(encounter.timestamp)} with ${player1Input} and ${player2Input} highlighted`"
+                    >
+                      <div class="text-slate-200 font-bold text-xs group-hover/link:text-blue-400">
+                        {{ formatDate(encounter.timestamp) }}
+                      </div>
+                      <div class="text-slate-400 text-xs font-mono group-hover/link:text-blue-300">
+                        {{ formatTime(encounter.timestamp) }}
+                      </div>
+                    </router-link>
+                  </td>
+                  
+                  <!-- Map -->
+                  <td class="p-2">
+                    <div class="font-bold text-blue-400 text-xs truncate font-mono uppercase">
+                      {{ encounter.mapName }}
+                    </div>
+                  </td>
+
+                  <!-- Player 1 Stats -->
+                  <td class="p-2 text-center bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ encounter.player1Score?.toLocaleString() }}
+                    </div>
+                  </td>
+                  <td class="p-2 text-center bg-cyan-500/5">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ encounter.player1Kills }}
+                    </div>
+                  </td>
+                  <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ encounter.player1Deaths }}
+                    </div>
+                  </td>
+
+                  <!-- Player 2 Stats -->
+                  <td class="p-2 text-center bg-orange-500/5 border-l-2 border-l-orange-400/40">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ encounter.player2Score?.toLocaleString() }}
+                    </div>
+                  </td>
+                  <td class="p-2 text-center bg-orange-500/5">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ encounter.player2Kills }}
+                    </div>
+                  </td>
+                  <td class="p-2 text-center bg-orange-500/5">
+                    <div class="text-slate-200 font-bold text-xs font-mono">
+                      {{ encounter.player2Deaths }}
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1778,90 +2023,103 @@ const formatRelativeTime = (dateString: string): string => {
       <!-- Milestone Achievements Section -->
       <div
         v-if="comparisonData && (comparisonData.player1MilestoneAchievements?.length || comparisonData.player2MilestoneAchievements?.length)"
-        class="comparison-section milestone-achievements-section"
+        class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
       >
-        <h3>Milestones</h3>
-        
-        <!-- Player 1 Milestone Achievements -->
-        <div
-          v-if="comparisonData.player1MilestoneAchievements?.length"
-          class="player-milestone-achievements"
-        >
-          <h4 class="milestone-player-name">
-            {{ comparisonData.player1 }}
-          </h4>
-          <div class="milestone-achievements-grid">
-            <div
-              v-for="achievement in comparisonData.player1MilestoneAchievements"
-              :key="'p1-achievement-' + achievement.achievementId"
-              class="milestone-achievement-card"
-              :class="[`tier-${achievement.tier.toLowerCase()}`]"
-              :style="{ boxShadow: getTierGlow(achievement.tier) }"
-              @click="handleMilestoneAchievementClick(achievement, 1)"
-            >
-              <div class="milestone-achievement-icon-container">
-                <img
-                  :src="getAchievementImage(achievement.achievementId)"
-                  :alt="achievement.achievementName"
-                  class="milestone-achievement-icon"
-                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                >
+        <div class="p-6 border-b border-slate-700/50">
+          <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center gap-3">
+            🏆 Milestone Achievements
+          </h3>
+        </div>
+        <div class="p-6 space-y-8">
+          <!-- Player 1 Milestone Achievements -->
+          <div v-if="comparisonData.player1MilestoneAchievements?.length" class="space-y-6">
+            <div class="text-center">
+              <div class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-xl">
+                <h4 class="text-2xl font-bold text-cyan-400">{{ comparisonData.player1 }}</h4>
               </div>
-              <div class="milestone-achievement-info">
-                <div class="milestone-achievement-name">
-                  {{ achievement.achievementName }}
-                </div>
-                <div class="milestone-achievement-time">
-                  {{ formatRelativeTime(achievement.achievedAt) }}
-                </div>
-                <div
-                  v-if="achievement.value"
-                  class="milestone-achievement-value"
-                >
-                  {{ achievement.value.toLocaleString() }}
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div
+                v-for="achievement in comparisonData.player1MilestoneAchievements"
+                :key="'p1-achievement-' + achievement.achievementId"
+                class="group bg-slate-800/60 hover:bg-slate-700/80 border-2 border-transparent hover:border-opacity-70 rounded-xl p-4 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:shadow-xl"
+                :class="{
+                  'hover:border-yellow-500': achievement.tier.toLowerCase() === 'legendary',
+                  'hover:border-purple-500': achievement.tier.toLowerCase() === 'epic',
+                  'hover:border-blue-500': achievement.tier.toLowerCase() === 'rare',
+                  'hover:border-green-500': achievement.tier.toLowerCase() === 'uncommon',
+                  'hover:border-gray-500': achievement.tier.toLowerCase() === 'common'
+                }"
+                :style="{ boxShadow: getTierGlow(achievement.tier) }"
+                @click="handleMilestoneAchievementClick(achievement, 1)"
+              >
+                <div class="text-center space-y-3">
+                  <div class="mx-auto w-16 h-16 rounded-lg overflow-hidden bg-slate-700/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <img
+                      :src="getAchievementImage(achievement.achievementId)"
+                      :alt="achievement.achievementName"
+                      class="w-full h-full object-contain"
+                      @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                    >
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-xs font-bold text-slate-200 line-clamp-2 leading-tight">
+                      {{ achievement.achievementName }}
+                    </div>
+                    <div class="text-xs text-slate-400 italic">
+                      {{ formatRelativeTime(achievement.achievedAt) }}
+                    </div>
+                    <div v-if="achievement.value" class="text-xs font-bold text-cyan-400">
+                      {{ achievement.value.toLocaleString() }}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Player 2 Milestone Achievements -->
-        <div
-          v-if="comparisonData.player2MilestoneAchievements?.length"
-          class="player-milestone-achievements"
-        >
-          <h4 class="milestone-player-name">
-            {{ comparisonData.player2 }}
-          </h4>
-          <div class="milestone-achievements-grid">
-            <div
-              v-for="achievement in comparisonData.player2MilestoneAchievements"
-              :key="'p2-achievement-' + achievement.achievementId"
-              class="milestone-achievement-card"
-              :class="[`tier-${achievement.tier.toLowerCase()}`]"
-              :style="{ boxShadow: getTierGlow(achievement.tier) }"
-              @click="handleMilestoneAchievementClick(achievement, 2)"
-            >
-              <div class="milestone-achievement-icon-container">
-                <img
-                  :src="getAchievementImage(achievement.achievementId)"
-                  :alt="achievement.achievementName"
-                  class="milestone-achievement-icon"
-                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                >
+          <!-- Player 2 Milestone Achievements -->
+          <div v-if="comparisonData.player2MilestoneAchievements?.length" class="space-y-6">
+            <div class="text-center">
+              <div class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-xl">
+                <h4 class="text-2xl font-bold text-orange-400">{{ comparisonData.player2 }}</h4>
               </div>
-              <div class="milestone-achievement-info">
-                <div class="milestone-achievement-name">
-                  {{ achievement.achievementName }}
-                </div>
-                <div class="milestone-achievement-time">
-                  {{ formatRelativeTime(achievement.achievedAt) }}
-                </div>
-                <div
-                  v-if="achievement.value"
-                  class="milestone-achievement-value"
-                >
-                  {{ achievement.value.toLocaleString() }}
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div
+                v-for="achievement in comparisonData.player2MilestoneAchievements"
+                :key="'p2-achievement-' + achievement.achievementId"
+                class="group bg-slate-800/60 hover:bg-slate-700/80 border-2 border-transparent hover:border-opacity-70 rounded-xl p-4 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:shadow-xl"
+                :class="{
+                  'hover:border-yellow-500': achievement.tier.toLowerCase() === 'legendary',
+                  'hover:border-purple-500': achievement.tier.toLowerCase() === 'epic',
+                  'hover:border-blue-500': achievement.tier.toLowerCase() === 'rare',
+                  'hover:border-green-500': achievement.tier.toLowerCase() === 'uncommon',
+                  'hover:border-gray-500': achievement.tier.toLowerCase() === 'common'
+                }"
+                :style="{ boxShadow: getTierGlow(achievement.tier) }"
+                @click="handleMilestoneAchievementClick(achievement, 2)"
+              >
+                <div class="text-center space-y-3">
+                  <div class="mx-auto w-16 h-16 rounded-lg overflow-hidden bg-slate-700/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <img
+                      :src="getAchievementImage(achievement.achievementId)"
+                      :alt="achievement.achievementName"
+                      class="w-full h-full object-contain"
+                      @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                    >
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-xs font-bold text-slate-200 line-clamp-2 leading-tight">
+                      {{ achievement.achievementName }}
+                    </div>
+                    <div class="text-xs text-slate-400 italic">
+                      {{ formatRelativeTime(achievement.achievedAt) }}
+                    </div>
+                    <div v-if="achievement.value" class="text-xs font-bold text-orange-400">
+                      {{ achievement.value.toLocaleString() }}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1869,1225 +2127,23 @@ const formatRelativeTime = (dateString: string): string => {
         </div>
       </div>
     </div>
+    
+    <!-- Achievement Modal -->
+    <AchievementModal
+      :is-visible="showMilestoneAchievementsModal"
+      :achievement="selectedMilestoneAchievement"
+      :player-name="selectedMilestonePlayer === 1 ? comparisonData?.player1 : selectedMilestonePlayer === 2 ? comparisonData?.player2 : undefined"
+      @close="closeMilestoneAchievementsModal"
+    />
   </div>
-  
-
-
-  <!-- Achievement Modal -->
-  <AchievementModal
-    :is-visible="showMilestoneAchievementsModal"
-    :achievement="selectedMilestoneAchievement"
-    :player-name="selectedMilestonePlayer === 1 ? comparisonData?.player1 : selectedMilestonePlayer === 2 ? comparisonData?.player2 : undefined"
-    @close="closeMilestoneAchievementsModal"
-  />
 </template>
 
 <style scoped>
-.player-comparison-container {
-  padding: 20px;
-  background-color: var(--color-background);
-  color: var(--color-text);
-  max-width: 1200px;
-  margin: 0 auto;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-.comparison-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.comparison-header h1 {
-  font-size: 2.5rem;
-  color: var(--color-heading);
-  margin-bottom: 20px;
-}
-
-.input-form {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
-  position: relative;
-}
-
-.player-input-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-form input {
-  padding: 12px 40px 12px 15px;
-  font-size: 1rem;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text);
-  width: 250px;
-}
-
-.search-spinner {
-  position: absolute;
-  right: 10px;
-  font-size: 12px;
-  animation: spin 1s linear infinite;
-}
-
-.search-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
-  border-top: none;
-  border-radius: 0 0 6px 6px;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.search-result-item {
-  padding: 12px 15px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--color-border);
-  transition: background-color 0.2s ease;
-}
-
-.search-result-item:last-child {
-  border-bottom: none;
-}
-
-.search-result-item:hover {
-  background-color: var(--color-background);
-}
-
-.player-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.player-name {
-  font-weight: bold;
-  font-size: 1rem;
-  color: var(--color-text);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.player-name:hover {
-  color: var(--color-primary);
-}
-
-.player-summary-name {
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.2s ease;
-}
-
-.player-summary-name:hover {
-  transform: translateY(-2px);
-  background-color: transparent !important;
-}
-
-.player-summary-name h2 {
-  margin: 0;
-  transition: color 0.2s ease;
-  text-overflow: initial;
-  overflow: visible;
-}
-
-.player-summary-name:hover h2 {
-  color: var(--color-primary);
-}
-
-.player-details {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-}
-
-.play-time {
-  background-color: var(--color-background);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-weight: 500;
-}
-
-.last-seen {
-  color: var(--color-text-muted);
-}
-
-.active-badge {
-  color: #4CAF50;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-
-.inactive-badge {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-}
-
-.current-server {
-  font-size: 0.8rem;
-  color: var(--color-primary);
-  font-style: italic;
-  margin-top: 2px;
-}
-
-.no-results {
-  padding: 15px;
-  text-align: center;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-.input-form .vs-text {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--color-text-muted);
-}
-
-.input-form button {
-  padding: 12px 25px;
-  font-size: 1rem;
-  font-weight: bold;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.input-form button:hover:not(:disabled) {
-  background-color: var(--color-accent);
-}
-
-.input-form button:disabled {
-  background-color: var(--color-background-mute);
-  cursor: not-allowed;
-}
-
-.loading-container, .error-container, .intro-container {
-  text-align: center;
-  padding: 50px 0;
-  color: var(--color-text-muted);
-}
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
-  border-radius: 50%;
-  border-top-color: var(--color-primary);
-  animation: spin 1s ease-in-out infinite;
-  margin: 0 auto 15px auto;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.error-container p {
-  color: #ff5252;
-  font-size: 1.1rem;
-}
-
-.comparison-results {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-}
-
-.comparison-section {
-    background-color: var(--color-background-soft);
-    border-radius: 8px;
-    padding: 20px;
-}
-
-.comparison-section h3 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.5rem;
-    color: var(--color-heading);
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 10px;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.section-header h3 {
-    margin-bottom: 0;
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.section-controls {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.toggle-filter-btn {
-    padding: 8px 12px;
-    font-size: 1.2rem;
-    background-color: var(--color-background);
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.toggle-filter-btn:hover {
-    background-color: var(--color-background-soft);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.toggle-columns-btn {
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    background-color: var(--color-primary);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.toggle-columns-btn:hover {
-    background-color: var(--color-accent);
-    transform: translateY(-1px);
-}
-
-.toggle-view-btn {
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    background-color: var(--color-background);
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.toggle-view-btn:hover {
-    background-color: var(--color-background-soft);
-    border-color: var(--color-primary);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Summary Panel */
-.summary-panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    text-align: center;
-}
-
-.player-summary {
-    background: var(--color-background-soft);
-    padding: 20px;
-    border-radius: 8px;
-    border-bottom: 4px solid var(--color-border);
-    transition: all 0.3s ease;
-}
-
-.player-summary.winner {
-    border-color: #4CAF50; /* Green for winner */
-    transform: scale(1.02);
-    box-shadow: 0 5px 20px rgba(76, 175, 80, 0.2);
-}
-
-.player-summary h2 {
-    margin-top: 0;
-    font-size: 1.8rem;
-    color: var(--color-heading);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.kdr-summary span {
-    font-size: 3rem;
-    font-weight: bold;
-    color: var(--color-primary);
-    line-height: 1;
-}
-
-.kdr-summary label {
-    display: block;
-    font-size: 1rem;
-    color: var(--color-text-muted);
-    margin-top: 5px;
-}
-
-/* Core Statistics */
-.stat-comparison-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 15px 20px;
-    align-items: center;
-}
-.stat-comparison-grid .stat-label {
-    grid-column: 1 / 3;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: var(--color-text-muted);
-    text-align: center;
-}
-.stat-comparison-grid .stat-value {
-    font-size: 2rem;
-    font-weight: bold;
-    text-align: center;
-    background: var(--color-background);
-    padding: 15px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
-.stat-comparison-grid .stat-value.better {
-    color: #4CAF50; /* Green for better */
-}
-.stat-comparison-grid .stat-value.worse {
-    color: #f44336; /* Red for worse */
-}
-
-.delta {
-    font-size: 0.7em;
-    color: var(--color-text-muted);
-    font-weight: normal;
-    margin-left: 0.3em;
-}
-
-/* Performance Over Time */
-.tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-.tabs button {
-    padding: 10px 20px;
-    font-size: 1rem;
-    background-color: transparent;
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.tabs button.active {
-    background-color: var(--color-primary);
-    color: white;
-    border-color: var(--color-primary);
-}
-.tabs button:hover:not(.active) {
-    background-color: var(--color-background-mute);
-}
-.performance-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-    text-align: center;
-}
-.grid-header { font-weight: bold; font-size: 1.2rem; color: var(--color-heading); }
-.grid-label { font-weight: bold; color: var(--color-text-muted); text-align: left; padding-left: 10px; }
-.grid-value { font-size: 1.2rem; background: var(--color-background); padding: 10px; border-radius: 4px; }
-
-/* Map Performance */
-.map-performance-table {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    background-color: var(--color-border);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    overflow: hidden;
-    overflow-x: auto;
-}
-.table-header, .table-subheader, .table-row {
-    display: grid;
-    grid-template-columns: 2fr repeat(4, 1fr);
-    background-color: var(--color-background-soft);
-    min-width: 600px;
-    transition: grid-template-columns 0.3s ease;
-}
-
-.table-header.expanded, .table-subheader.expanded, .table-row.expanded {
-    grid-template-columns: 2fr repeat(8, 1fr);
-    min-width: 900px;
-}
-.table-header {
-    font-weight: bold;
-    color: var(--color-heading);
-    background-color: var(--color-background-mute);
-}
-.table-subheader {
-    font-weight: bold;
-    color: var(--color-text-muted);
-    background-color: var(--color-background-mute);
-    font-size: 0.9rem;
-}
-.table-header > div, .table-subheader > div, .table-row > div {
-    padding: 12px 8px;
-    text-align: center;
-    border-right: 1px solid var(--color-border);
-}
-.table-header > div:last-child, .table-subheader > div:last-child, .table-row > div:last-child {
-    border-right: none;
-}
-.table-row > div.map-name {
-    text-align: left;
-    font-weight: 500;
-    padding-left: 15px;
-}
-.table-row .map-kdr.winner {
-    font-weight: bold;
-    color: #4CAF50;
-}
-.player-group {
-    grid-column: span 2;
-    text-align: center;
-    font-weight: bold;
-}
-
-.player-group.expanded {
-    grid-column: span 4;
-}
-.map-stat {
-    font-size: 0.95rem;
-}
-.sortable {
-    cursor: pointer;
-    user-select: none;
-    position: relative;
-    transition: background-color 0.2s ease;
-}
-.sortable:hover {
-    background-color: var(--color-background);
-}
-.sortable.sort-active {
-    color: var(--color-primary);
-    font-weight: bold;
-}
-.sort-indicator {
-    margin-left: 4px;
-    font-size: 0.8rem;
-    opacity: 0.8;
-}
-
-.extra-column {
-    transition: all 0.3s ease;
-    overflow: hidden;
-}
-
-.extra-column.v-enter-active,
-.extra-column.v-leave-active {
-    transition: all 0.3s ease;
-}
-
-.extra-column.v-enter-from,
-.extra-column.v-leave-to {
-    opacity: 0;
-    max-width: 0;
-    padding-left: 0;
-    padding-right: 0;
-}
-
-.extra-column.v-enter-to,
-.extra-column.v-leave-from {
-    opacity: 1;
-    max-width: 200px;
-}
-
-/* Head to Head */
-.h2h-table {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    background-color: var(--color-border);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    overflow-x: auto;
-}
-.h2h-table-header, .h2h-table-subheader, .h2h-table-row {
-    display: grid;
-    grid-template-columns: 1fr 1.5fr repeat(6, 1fr);
-    background-color: var(--color-background-soft);
-    min-width: 800px;
-}
-.h2h-table-header, .h2h-table-subheader {
-    font-weight: bold;
-    color: var(--color-heading);
-    background-color: var(--color-background-mute);
-}
-.h2h-table-header > div, .h2h-table-subheader > div, .h2h-table-row > div {
-    padding: 12px 10px;
-    text-align: center;
-    border-right: 1px solid var(--color-border);
-}
-.h2h-table-header > div:last-child, .h2h-table-subheader > div:last-child, .h2h-table-row > div:last-child {
-    border-right: none;
-}
-.h2h-player-header {
-    grid-column: span 3;
-    text-align: center;
-}
-
-.h2h-date-cell {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-}
-
-.h2h-date {
-    font-weight: 500;
-    line-height: 1.2;
-}
-
-.h2h-time {
-    font-size: 0.8rem;
-    color: var(--color-text-muted);
-    font-weight: 400;
-    line-height: 1;
-}
-
-.h2h-date-link {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.2s ease;
-    padding: 4px 8px;
-    border-radius: 6px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.h2h-date-link:hover {
-    background-color: var(--color-primary);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.h2h-date-link:hover .h2h-date {
-    color: white;
-    font-weight: 600;
-}
-
-.h2h-date-link:hover .h2h-time {
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* Server Context Banner */
-.server-context-banner {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin-bottom: 25px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Common Servers Section */
-.common-servers-section {
-    background-color: var(--color-background-soft);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 25px;
-    border: 1px solid var(--color-border);
-}
-
-.common-servers-header {
-    margin-bottom: 12px;
-}
-
-.help-text {
-    margin: 0;
-    color: var(--color-text-muted);
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-
-.common-servers-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.server-option-btn {
-    background-color: var(--color-background);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-    min-width: 200px;
-    flex: 1;
-}
-
-.server-option-btn:hover {
-    background-color: var(--color-background-mute);
-    border-color: var(--color-primary);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.server-option-btn.active {
-    background-color: var(--color-primary);
-    color: white;
-    border-color: var(--color-primary);
-}
-
-.server-option-btn.active .server-option-name {
-    color: white;
-}
-
-.server-option-btn.active .server-option-details {
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.server-option-name {
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--color-text);
-    margin-bottom: 4px;
-    line-height: 1.2;
-}
-
-.server-option-details {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-}
-
-.server-game {
-    background-color: var(--color-background-soft);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-weight: 500;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-}
-
-.server-option-btn.active .server-game {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-.server-location {
-    color: var(--color-text-muted);
-    font-weight: 500;
-}
-
-.server-context-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.server-context-text {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.context-label {
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
-    font-size: 1rem;
-}
-
-.server-name-link {
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 1.1rem;
-    padding: 4px 12px;
-    background-color: rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.server-name-link:hover {
-    background-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    text-decoration: none;
-    color: white;
-}
-
-.clear-server-btn {
-    background-color: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-}
-
-.clear-server-btn:hover {
-    background-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-
-/* Activity Chart Styles */
-.activity-section {
-  margin-top: 12px;
-}
-
-.activity-chart-wrapper {
-  margin: 10px 0;
-}
-
-.activity-chart-container {
-  height: 200px;
-  position: relative;
-  border-radius: 8px;
+/* Utilities for line clamping */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-background-soft) 100%);
-  border: 1px solid rgba(156, 39, 176, 0.1);
-  padding: 5px;
-}
-
-/* Time period background zones */
-.time-period-zones {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.time-zone {
-  flex: 1;
-  transition: opacity 0.2s ease;
-}
-
-.early-zone {
-  background: linear-gradient(135deg, rgba(103, 58, 183, 0.25) 0%, rgba(103, 58, 183, 0.15) 100%);
-  flex: 8; /* 8 hours: 00-08 */
-}
-
-.day-zone {
-  background: linear-gradient(135deg, rgba(156, 39, 176, 0.3) 0%, rgba(156, 39, 176, 0.2) 100%);
-  flex: 8; /* 8 hours: 08-16 */
-}
-
-.night-zone {
-  background: linear-gradient(135deg, rgba(74, 20, 140, 0.35) 0%, rgba(74, 20, 140, 0.25) 100%);
-  flex: 8; /* 8 hours: 16-24 */
-}
-
-/* Time period labels */
-.time-period-labels {
-  display: flex;
-  margin: 8px 0 5px 0;
-  padding: 0 5px;
-}
-
-.period-label {
-  flex: 1;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.period-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.period-hours {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-  font-family: monospace;
-}
-
-.early-label .period-name {
-  color: rgba(103, 58, 183, 0.9);
-}
-
-.day-label .period-name {
-  color: rgba(156, 39, 176, 0.9);
-}
-
-.night-label .period-name {
-  color: rgba(74, 20, 140, 0.9);
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  .early-label .period-name {
-    color: rgba(159, 126, 219, 0.9); /* Lighter purple for dark mode */
-  }
-  
-  .night-label .period-name {
-    color: rgba(149, 117, 205, 0.9); /* Lighter purple for dark mode */
-  }
-}
-
-/* Also handle explicit dark mode class if used */
-.dark-mode .early-label .period-name,
-:root.dark-mode .early-label .period-name {
-  color: rgba(159, 126, 219, 0.9); /* Lighter purple for dark mode */
-}
-
-.dark-mode .night-label .period-name,
-:root.dark-mode .night-label .period-name {
-  color: rgba(149, 117, 205, 0.9); /* Lighter purple for dark mode */
-}
-
-@media (max-width: 768px) {
-    .player-comparison-container {
-        padding: 10px;
-    }
-    
-    .activity-chart-container {
-        height: 150px;
-        margin: 6px 0;
-    }
-    
-    .time-period-labels {
-        margin: 4px 0 2px 0;
-    }
-    
-    .period-name {
-        font-size: 0.75rem;
-    }
-    
-    .period-hours {
-        font-size: 0.65rem;
-    }
-    
-    .server-context-banner {
-        padding: 12px 16px;
-        margin-bottom: 20px;
-    }
-    
-    .server-context-content {
-        flex-direction: column;
-        gap: 10px;
-        align-items: center;
-    }
-    
-    .server-context-text {
-        flex-direction: column;
-        gap: 4px;
-        text-align: center;
-    }
-    
-    .context-label {
-        font-size: 0.9rem;
-    }
-    
-    .server-name-link {
-        font-size: 1rem;
-        padding: 6px 12px;
-    }
-    
-    .clear-server-btn {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
-    }
-    .input-form {
-        flex-direction: column;
-    }
-    .input-form input {
-        width: 100%;
-    }
-    .player-input-container {
-        width: 100%;
-    }
-    .search-dropdown {
-        left: 0;
-        right: 0;
-    }
-    .summary-panel {
-        grid-template-columns: 1fr;
-    }
-    .performance-grid, .stat-comparison-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-    .grid-label { grid-column: 1/3; text-align: center; }
-    .stat-comparison-grid .stat-label { grid-column: 1/3; }
-    .p1-header, .p2-header { display: none; }
-    .grid-value.p1 { grid-column: 1/2; }
-    .grid-value.p2 { grid-column: 2/3; }
-    
-    .section-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-    
-    .section-controls {
-        align-self: center;
-        justify-content: center;
-    }
-    
-    .toggle-columns-btn {
-        width: fit-content;
-    }
-    
-    .common-servers-section {
-        padding: 16px;
-        margin-bottom: 20px;
-    }
-    
-    
-    .help-text {
-        font-size: 0.9rem;
-    }
-    
-    .common-servers-list {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .server-option-btn {
-        min-width: unset;
-        width: 100%;
-        padding: 10px 12px;
-    }
-    
-    .server-option-name {
-        font-size: 0.95rem;
-    }
-    
-    .server-option-details {
-        font-size: 0.8rem;
-    }
-}
-
-.milestone-table {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    background-color: var(--color-border);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    overflow: hidden;
-    overflow-x: auto;
-}
-
-.milestone-section {
-    order: -1; /* Make milestones the first section */
-    overflow: visible;
-    padding: 20px 15px;
-}
-
-
-
-/* Milestone Achievements Styles */
-.milestone-achievements-section {
-  order: -1; /* Make milestone achievements the first section */
-  overflow: visible;
-  padding: 20px 15px;
-}
-
-.player-milestone-achievements {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.milestone-achievements-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 18px 0 10px 0;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 0 10px;
-  max-width: 100%;
-}
-
-.milestone-achievement-card {
-  background-color: var(--color-background-soft);
-  border-radius: 8px;
-  padding: 12px;
-  text-align: center;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  width: 120px;
-  min-width: 120px;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.milestone-achievement-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, transparent 0%, var(--tier-color, transparent) 100%);
-  opacity: 0.05;
-  pointer-events: none;
-}
-
-.milestone-achievement-card.tier-legendary {
-  --tier-color: #FF6B35;
-}
-
-.milestone-achievement-card.tier-epic {
-  --tier-color: #9D4EDD;
-}
-
-.milestone-achievement-card.tier-rare {
-  --tier-color: #3A86FF;
-}
-
-.milestone-achievement-card.tier-uncommon {
-  --tier-color: #06FFA5;
-}
-
-.milestone-achievement-card.tier-common {
-  --tier-color: #8D99AE;
-}
-
-.milestone-achievement-card:hover {
-  border-color: var(--tier-color);
-  cursor: pointer;
-  transform: translateY(-2px);
-}
-
-.milestone-achievement-icon-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: transform 0.2s ease;
-}
-
-.milestone-achievement-icon-container:hover {
-  transform: scale(1.05);
-}
-
-.milestone-achievement-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 4px;
-  object-fit: contain;
-}
-
-.milestone-achievement-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
-}
-
-.milestone-achievement-name {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.milestone-achievement-time {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-.milestone-achievement-value {
-  font-size: 0.7rem;
-  color: var(--color-text);
-  font-weight: 500;
-  background-color: var(--color-background-mute);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-/* Mobile responsive styles for milestone achievements */
-@media (max-width: 768px) {
-  .milestone-achievements-grid {
-    gap: 8px;
-    padding: 0 5px;
-    margin: 12px 0 8px 0;
-  }
-  
-  .milestone-achievement-card {
-    width: 100px;
-    padding: 10px;
-    gap: 6px;
-  }
-  
-  .milestone-achievement-icon {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .milestone-achievement-name {
-    font-size: 0.7rem;
-  }
-  
-  .milestone-achievement-time {
-    font-size: 0.65rem;
-  }
-  
-  .milestone-achievement-value {
-    font-size: 0.65rem;
-  }
 }
 </style> 

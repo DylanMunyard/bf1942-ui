@@ -1,54 +1,154 @@
 <template>
   <div
     v-if="show"
-    class="players-panel-overlay"
+    class="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] flex items-center justify-end"
     @click="$emit('close')"
   >
-    <div class="players-panel" @click.stop>
-      <div class="players-panel-header">
-        <h2>{{ server?.name || 'Players' }}</h2>
-        <button class="close-btn" @click="$emit('close')">&times;</button>
+    <div 
+      class="bg-slate-900 w-full max-w-6xl h-full shadow-2xl animate-slide-in-right overflow-hidden flex flex-col border-l border-slate-700/50" 
+      @click.stop
+    >
+      <!-- Header -->
+      <div class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-4 flex justify-between items-center">
+        <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 truncate max-w-md">
+          {{ server?.name || 'Players' }}
+        </h2>
+        <button 
+          class="group p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all duration-300 flex items-center justify-center w-8 h-8"
+          @click="$emit('close')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
-      <div class="players-panel-content">
-        <div v-if="server?.teams" class="teams-container">
-          <div v-for="team in server.teams" :key="team.index" class="team-section">
-            <div class="team-header">
-              <span class="team-name">{{ team.label }}</span>
-              <span class="team-tickets">{{ team.tickets }} tickets</span>
+
+      <!-- Content -->
+      <div class="flex-1 overflow-y-auto">
+        <div v-if="server?.teams" class="p-4 space-y-6">
+          <div v-for="team in server.teams" :key="team.index" class="bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-xl border border-slate-700/50 overflow-hidden">
+            <!-- Team Header -->
+            <div class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm p-4 border-b border-slate-700/50">
+              <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-200">{{ team.label }}</h3>
+                <div class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50 font-mono">
+                  {{ team.tickets }} tickets
+                </div>
+              </div>
             </div>
-            <div class="team-table-container">
-              <table class="players-table">
-                <thead>
-                  <tr>
-                    <th @click="sortPlayersBy('name')" class="sortable">
-                      Player
+
+            <!-- Team Table -->
+            <div class="overflow-hidden">
+              <table class="w-full border-collapse">
+                <!-- Table Header -->
+                <thead class="sticky top-0 z-10">
+                  <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+                    <th @click="sortPlayersBy('name')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-cyan-400 text-xs">👤</span>
+                        <span class="font-mono font-bold">PLAYER</span>
+                        <span class="text-xs transition-transform duration-200" :class="{
+                          'text-cyan-400 opacity-100': playerSortField === 'name',
+                          'opacity-50': playerSortField !== 'name',
+                          'rotate-0': playerSortField === 'name' && playerSortDirection === 'asc',
+                          'rotate-180': playerSortField === 'name' && playerSortDirection === 'desc'
+                        }">▲</span>
+                      </div>
                     </th>
-                    <th @click="sortPlayersBy('score')" class="sortable">
-                      Score
+                    <th @click="sortPlayersBy('score')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-green-400 text-xs">🏆</span>
+                        <span class="font-mono font-bold">SCORE</span>
+                        <span class="text-xs transition-transform duration-200" :class="{
+                          'text-green-400 opacity-100': playerSortField === 'score',
+                          'opacity-50': playerSortField !== 'score',
+                          'rotate-0': playerSortField === 'score' && playerSortDirection === 'asc',
+                          'rotate-180': playerSortField === 'score' && playerSortDirection === 'desc'
+                        }">▲</span>
+                      </div>
                     </th>
-                    <th @click="sortPlayersBy('kills')" class="sortable">
-                      Kills
+                    <th @click="sortPlayersBy('kills')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-red-500/50">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-red-400 text-xs">⚔️</span>
+                        <span class="font-mono font-bold">KILLS</span>
+                        <span class="text-xs transition-transform duration-200" :class="{
+                          'text-red-400 opacity-100': playerSortField === 'kills',
+                          'opacity-50': playerSortField !== 'kills',
+                          'rotate-0': playerSortField === 'kills' && playerSortDirection === 'asc',
+                          'rotate-180': playerSortField === 'kills' && playerSortDirection === 'desc'
+                        }">▲</span>
+                      </div>
                     </th>
-                    <th @click="sortPlayersBy('deaths')" class="sortable">
-                      Deaths
+                    <th @click="sortPlayersBy('deaths')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-orange-400 text-xs">💀</span>
+                        <span class="font-mono font-bold">DEATHS</span>
+                        <span class="text-xs transition-transform duration-200" :class="{
+                          'text-orange-400 opacity-100': playerSortField === 'deaths',
+                          'opacity-50': playerSortField !== 'deaths',
+                          'rotate-0': playerSortField === 'deaths' && playerSortDirection === 'asc',
+                          'rotate-180': playerSortField === 'deaths' && playerSortDirection === 'desc'
+                        }">▲</span>
+                      </div>
                     </th>
-                    <th @click="sortPlayersBy('ping')" class="sortable">
-                      Ping
+                    <th @click="sortPlayersBy('ping')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-blue-500/50">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-blue-400 text-xs">📡</span>
+                        <span class="font-mono font-bold">PING</span>
+                        <span class="text-xs transition-transform duration-200" :class="{
+                          'text-blue-400 opacity-100': playerSortField === 'ping',
+                          'opacity-50': playerSortField !== 'ping',
+                          'rotate-0': playerSortField === 'ping' && playerSortDirection === 'asc',
+                          'rotate-180': playerSortField === 'ping' && playerSortDirection === 'desc'
+                        }">▲</span>
+                      </div>
                     </th>
                   </tr>
                 </thead>
+
+                <!-- Table Body -->
                 <tbody>
                   <tr
                     v-for="player in getSortedTeamPlayers(team.index)"
                     :key="player.name"
-                    class="player-table-row"
+                    class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/30 cursor-pointer"
                     @click="navigateToPlayerProfile(player.name)"
                   >
-                    <td class="player-name-cell">{{ player.name }}</td>
-                    <td class="score-cell" :class="getScoreClass(player.score)">{{ player.score }}</td>
-                    <td class="kills-cell" :class="getKillsClass(player.kills)">{{ player.kills }}</td>
-                    <td class="deaths-cell" :class="getDeathsClass(player.deaths)">{{ player.deaths }}</td>
-                    <td class="ping-cell" :class="getPingClass(player.ping)">{{ player.ping }}ms</td>
+                    <!-- Player Name -->
+                    <td class="p-1.5">
+                      <div class="font-bold text-slate-200 text-sm truncate max-w-xs group-hover:text-cyan-400 transition-colors duration-300 font-mono">
+                        {{ player.name }}
+                      </div>
+                    </td>
+
+                    <!-- Score -->
+                    <td class="p-1.5">
+                      <div class="text-sm font-mono font-bold" :class="getScoreClass(player.score)">
+                        {{ player.score }}
+                      </div>
+                    </td>
+
+                    <!-- Kills -->
+                    <td class="p-1.5">
+                      <div class="text-sm font-mono font-bold" :class="getKillsClass(player.kills)">
+                        {{ player.kills }}
+                      </div>
+                    </td>
+
+                    <!-- Deaths -->
+                    <td class="p-1.5">
+                      <div class="text-sm font-mono font-bold" :class="getDeathsClass(player.deaths)">
+                        {{ player.deaths }}
+                      </div>
+                    </td>
+
+                    <!-- Ping -->
+                    <td class="p-1.5">
+                      <div class="text-sm font-mono" :class="getPingClass(player.ping)">
+                        {{ player.ping }}ms
+                      </div>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -87,31 +187,31 @@ const navigateToPlayerProfile = (playerName: string) => {
 }
 
 const getScoreClass = (score: number) => {
-  if (score >= 100) return 'score-excellent'
-  if (score >= 50) return 'score-good'
-  if (score >= 25) return 'score-average'
-  return 'score-low'
+  if (score >= 100) return 'text-green-400'
+  if (score >= 50) return 'text-blue-400'
+  if (score >= 25) return 'text-orange-400'
+  return 'text-slate-400'
 }
 
 const getKillsClass = (kills: number) => {
-  if (kills >= 30) return 'kills-excellent'
-  if (kills >= 15) return 'kills-good'
-  if (kills >= 5) return 'kills-average'
-  return 'kills-low'
+  if (kills >= 30) return 'text-red-400'
+  if (kills >= 15) return 'text-orange-400'
+  if (kills >= 5) return 'text-green-400'
+  return 'text-slate-400'
 }
 
 const getDeathsClass = (deaths: number) => {
-  if (deaths >= 20) return 'deaths-high'
-  if (deaths >= 10) return 'deaths-medium'
-  if (deaths >= 5) return 'deaths-low'
-  return 'deaths-minimal'
+  if (deaths >= 20) return 'text-red-400'
+  if (deaths >= 10) return 'text-orange-400'
+  if (deaths >= 5) return 'text-green-400'
+  return 'text-blue-400'
 }
 
 const getPingClass = (ping: number) => {
-  if (ping <= 50) return 'ping-excellent'
-  if (ping <= 100) return 'ping-good'
-  if (ping <= 150) return 'ping-average'
-  return 'ping-poor'
+  if (ping <= 50) return 'text-green-400'
+  if (ping <= 100) return 'text-blue-400'
+  if (ping <= 150) return 'text-orange-400'
+  return 'text-red-400'
 }
 
 const sortPlayersBy = (field: string) => {
@@ -167,30 +267,6 @@ const getSortedTeamPlayers = (teamIndex: number) => {
 </script>
 
 <style scoped>
-/* Players Panel */
-.players-panel-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.players-panel {
-  background: var(--color-background);
-  width: 100%;
-  max-width: 900px;
-  height: 100%;
-  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
-  animation: slideInRight 0.3s ease-out;
-  overflow-y: auto;
-}
-
 @keyframes slideInRight {
   from {
     transform: translateX(100%);
@@ -200,253 +276,7 @@ const getSortedTeamPlayers = (teamIndex: number) => {
   }
 }
 
-.players-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-background-mute);
-}
-
-.players-panel-header h2 {
-  margin: 0;
-  font-size: 18px;
-  color: var(--color-text);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--color-text);
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.close-btn:hover {
-  background: var(--color-background-soft);
-}
-
-.players-panel-content {
-  padding: 20px;
-}
-
-.teams-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-
-@media (min-width: 769px) {
-  .teams-container {
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-  }
-}
-
-.team-section {
-  background: var(--color-background-soft);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-}
-
-.team-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: var(--color-background-mute);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.team-name {
-  font-weight: 600;
-  font-size: 16px;
-  color: var(--color-text);
-}
-
-.team-tickets {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-.team-table-container {
-  background: var(--color-background-soft);
-  overflow: hidden;
-}
-
-.players-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.players-table th {
-  background: var(--color-background-mute);
-  padding: 8px 12px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.players-table th.sortable {
-  cursor: pointer;
-  transition: background-color 0.2s;
-  position: relative;
-  user-select: none;
-}
-
-.players-table th.sortable:hover {
-  background: var(--color-background);
-}
-
-.players-table td {
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--color-border);
-  vertical-align: middle;
-}
-
-.player-table-row {
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.player-table-row:hover {
-  background: var(--color-background);
-}
-
-.player-table-row:last-child td {
-  border-bottom: none;
-}
-
-.player-name-cell {
-  font-weight: 600;
-  color: var(--color-text);
-  max-width: 120px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Score color coding */
-.score-excellent {
-  color: #4caf50;
-  font-weight: 700;
-}
-
-.score-good {
-  color: #2196f3;
-  font-weight: 600;
-}
-
-.score-average {
-  color: #ff9800;
-  font-weight: 500;
-}
-
-.score-low {
-  color: var(--color-text-muted);
-}
-
-/* Kills color coding */
-.kills-excellent {
-  color: #f44336;
-  font-weight: 700;
-}
-
-.kills-good {
-  color: #ff9800;
-  font-weight: 600;
-}
-
-.kills-average {
-  color: #4caf50;
-  font-weight: 500;
-}
-
-.kills-low {
-  color: var(--color-text-muted);
-}
-
-/* Deaths color coding */
-.deaths-high {
-  color: #f44336;
-  font-weight: 600;
-}
-
-.deaths-medium {
-  color: #ff9800;
-  font-weight: 500;
-}
-
-.deaths-low {
-  color: #4caf50;
-  font-weight: 500;
-}
-
-.deaths-minimal {
-  color: #2196f3;
-  font-weight: 500;
-}
-
-/* Ping color coding */
-.ping-excellent {
-  color: #4caf50;
-  font-weight: 600;
-}
-
-.ping-good {
-  color: #2196f3;
-  font-weight: 500;
-}
-
-.ping-average {
-  color: #ff9800;
-  font-weight: 500;
-}
-
-.ping-poor {
-  color: #f44336;
-  font-weight: 600;
-}
-
-/* Mobile players panel */
-@media (max-width: 768px) {
-  .players-panel {
-    max-width: 100%;
-  }
-  
-  .players-panel-header {
-    padding: 16px;
-  }
-  
-  .players-panel-content {
-    padding: 16px;
-  }
-  
-  .teams-container {
-    gap: 15px;
-  }
-  
-  .players-table {
-    font-size: 11px;
-  }
-  
-  .players-table th,
-  .players-table td {
-    padding: 4px 8px;
-  }
-  
-  .player-name-cell {
-    max-width: 80px;
-  }
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
 }
 </style>
