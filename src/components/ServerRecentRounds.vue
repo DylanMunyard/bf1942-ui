@@ -66,65 +66,110 @@ const navigateToRoundReport = (round: RecentRoundInfo) => {
 
 <template>
   <div
-    v-if="serverDetails.lastRounds && serverDetails.lastRounds.length > 0"
-    class="overflow-hidden rounded-lg border border-slate-700/50"
+    v-if="serverDetails.recentRounds && serverDetails.recentRounds.length > 0"
+    class="relative"
   >
-    <table class="w-full text-sm">
-      <thead>
-        <tr class="border-b border-slate-700/50 bg-slate-800/50">
-          <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Map</th>
-          <th class="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">Duration</th>
-          <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">When</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-700/50">
-        <tr
-          v-for="(round, index) in serverDetails.lastRounds"
-          :key="index"
-          @click="navigateToRoundReport(round)"
-          class="hover:bg-slate-800/30 transition-colors cursor-pointer group"
-        >
-          <!-- Map Name -->
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-2">
+    <!-- Compact horizontal timeline -->
+    <div class="flex items-start gap-6 overflow-x-auto pb-2 px-2">
+      <div
+        v-for="(round, index) in serverDetails.recentRounds"
+        :key="index"
+        @click="navigateToRoundReport(round)"
+        class="flex-shrink-0 group cursor-pointer transition-all duration-300"
+      >
+        <div class="flex flex-col items-center text-center min-w-0 w-24">
+          <!-- Map name above -->
+          <div class="mb-2 px-2 py-1 bg-slate-800/50 rounded-lg border border-slate-700/50 group-hover:border-cyan-500/50 transition-colors min-h-[2.5rem] flex items-center">
+            <span class="text-xs font-medium text-slate-300 group-hover:text-cyan-300 transition-colors leading-tight truncate"
+                  :class="round.isActive && index === 0 ? 'text-emerald-300' : ''">
+              {{ round.mapName }}
+            </span>
+          </div>
+
+          <!-- Timeline dot -->
+          <div class="relative flex items-center">
+            <!-- Main dot -->
+            <div class="relative">
+              <div 
+                class="w-4 h-4 rounded-full border-2 transition-all duration-300 group-hover:scale-125"
+                :class="round.isActive && index === 0 
+                  ? 'bg-emerald-400 border-emerald-300 animate-pulse shadow-lg shadow-emerald-400/50' 
+                  : 'bg-cyan-500/80 border-cyan-400 group-hover:bg-cyan-400 group-hover:shadow-lg group-hover:shadow-cyan-400/30'"
+              ></div>
+              
+              <!-- Live indicator -->
               <div
                 v-if="round.isActive && index === 0"
-                class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse flex-shrink-0"
+                class="absolute -top-1 -right-1 w-2 h-2 bg-emerald-300 rounded-full animate-ping"
               ></div>
-              <span 
-                class="font-medium truncate group-hover:text-cyan-300 transition-colors"
-                :class="round.isActive && index === 0 ? 'text-emerald-300' : 'text-slate-200'"
-              >
-                {{ round.mapName }}
-              </span>
-              <span
-                v-if="round.isActive && index === 0"
-                class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs font-semibold rounded border border-emerald-500/30 flex-shrink-0"
-              >
-                LIVE
-              </span>
             </div>
-          </td>
+          </div>
 
-          <!-- Duration -->
-          <td class="px-4 py-3 text-center">
-            <span class="text-slate-300 font-mono">
+          <!-- Round details below -->
+          <div class="mt-2 space-y-1">
+            <!-- Duration -->
+            <div class="text-xs font-mono text-slate-300 group-hover:text-cyan-300 transition-colors">
               {{ formatPlayTime(getDurationMinutes(round.startTime, round.endTime)) }}
-            </span>
-          </td>
-
-          <!-- Time Ago -->
-          <td class="px-4 py-3 text-right">
-            <span class="text-slate-400">
+            </div>
+            <!-- Time ago -->
+            <div class="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
               {{ formatRelativeTime(round.startTime) }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- End padding -->
+      <div class="flex-shrink-0 w-4"></div>
+    </div>
+
+    <!-- Subtle scroll hint -->
+    <div class="flex justify-center mt-3">
+      <div class="text-slate-500 text-xs opacity-60">
+        {{ serverDetails.recentRounds.length }} recent rounds • Scroll to see all
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div
+    v-else
+    class="flex flex-col items-center justify-center py-8 text-slate-400"
+  >
+    <div class="text-3xl mb-2 opacity-50">🎮</div>
+    <p class="text-sm font-medium">No recent rounds</p>
   </div>
 </template>
 
 <style scoped>
-/* No custom styles needed - using Tailwind CSS */
+/* Custom scrollbar for better cross-browser support */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: rgba(71, 85, 105, 0.3);
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
+/* For Firefox */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.5) rgba(71, 85, 105, 0.3);
+}
+
+/* Smooth scroll behavior */
+.overflow-x-auto {
+  scroll-behavior: smooth;
+}
 </style> 

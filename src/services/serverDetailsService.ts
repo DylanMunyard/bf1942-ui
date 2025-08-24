@@ -126,7 +126,7 @@ export interface ServerDetails {
   startPeriod: string; // ISO date string
   topScoresWeek: TopScore[]; // Last 7 days
   topScoresMonth: TopScore[]; // Last 30 days
-  lastRounds: RecentRoundInfo[];
+  recentRounds: RecentRoundInfo[];
   region?: string;
   country?: string;
   countryCode?: string;
