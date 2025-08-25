@@ -22,7 +22,7 @@
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
           <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-               :style="{ backgroundImage: 'url(/src/assets/achievements/dashboard-sidemenu.png)' }"></div>
+               :style="{ backgroundImage: `url(${dashboardIcon})` }"></div>
           
           <!-- Enhanced Tooltip -->
           <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
@@ -30,7 +30,7 @@
               <div class="flex items-center gap-4 mb-3">
                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center">
                   <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat"
-                       :style="{ backgroundImage: 'url(/src/assets/achievements/dashboard-sidemenu.png)' }"></div>
+                       :style="{ backgroundImage: `url(${dashboardIcon})` }"></div>
                 </div>
                 <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">Dashboard</div>
               </div>
@@ -50,7 +50,7 @@
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
           <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-               :style="{ backgroundImage: 'url(/src/assets/servers.jpg)' }"></div>
+               :style="{ backgroundImage: `url(${serversIcon})` }"></div>
           
           <!-- Enhanced Tooltip -->
           <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
@@ -58,7 +58,7 @@
               <div class="flex items-center gap-4 mb-3">
                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 border border-emerald-500/30 flex items-center justify-center">
                   <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat"
-                       :style="{ backgroundImage: 'url(/src/assets/servers.jpg)' }"></div>
+                       :style="{ backgroundImage: `url(${serversIcon})` }"></div>
                 </div>
                 <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400">Servers</div>
               </div>
@@ -78,7 +78,7 @@
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
           <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-               :style="{ backgroundImage: 'url(/src/assets/players.jpg)' }"></div>
+               :style="{ backgroundImage: `url(${playersIcon})` }"></div>
           
           <!-- Enhanced Tooltip -->
           <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
@@ -86,7 +86,7 @@
               <div class="flex items-center gap-4 mb-3">
                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center">
                   <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat"
-                       :style="{ backgroundImage: 'url(/src/assets/players.jpg)' }"></div>
+                       :style="{ backgroundImage: `url(${playersIcon})` }"></div>
                 </div>
                 <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Players</div>
               </div>
@@ -106,7 +106,7 @@
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
           <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-               :style="{ backgroundImage: 'url(/src/assets/player_vs_player.png)' }"></div>
+               :style="{ backgroundImage: `url(${compareIcon})` }"></div>
           
           <!-- Enhanced Tooltip -->
           <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
@@ -114,7 +114,7 @@
               <div class="flex items-center gap-4 mb-3">
                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 flex items-center justify-center">
                   <div class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat"
-                       :style="{ backgroundImage: 'url(/src/assets/player_vs_player.png)' }"></div>
+                       :style="{ backgroundImage: `url(${compareIcon})` }"></div>
                 </div>
                 <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">Compare</div>
               </div>
@@ -151,7 +151,7 @@
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
           <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-               :style="{ backgroundImage: 'url(/src/assets/achievements/dashboard-sidemenu.png)' }"></div>
+               :style="{ backgroundImage: `url(${dashboardIcon})` }"></div>
         </router-link>
 
         <!-- Servers Link -->
@@ -161,7 +161,7 @@
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
           <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-               :style="{ backgroundImage: 'url(/src/assets/servers.jpg)' }"></div>
+               :style="{ backgroundImage: `url(${serversIcon})` }"></div>
         </router-link>
 
         <!-- Players Link -->
@@ -171,7 +171,7 @@
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
           <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-               :style="{ backgroundImage: 'url(/src/assets/players.jpg)' }"></div>
+               :style="{ backgroundImage: `url(${playersIcon})` }"></div>
         </router-link>
 
         <!-- Player Comparison Link -->
@@ -181,7 +181,7 @@
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
           <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-               :style="{ backgroundImage: 'url(/src/assets/player_vs_player.png)' }"></div>
+               :style="{ backgroundImage: `url(${compareIcon})` }"></div>
         </router-link>
       </nav>
     </div>
@@ -192,6 +192,11 @@
 import { useRoute } from 'vue-router';
 import LoginButton from './LoginButton.vue';
 import { useAuth } from '@/composables/useAuth';
+
+import dashboardIcon from '@/assets/achievements/dashboard-sidemenu.png';
+import serversIcon from '@/assets/servers.jpg';
+import playersIcon from '@/assets/players.jpg';
+import compareIcon from '@/assets/player_vs_player.png';
 
 const route = useRoute();
 const { isAuthenticated } = useAuth();
