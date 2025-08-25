@@ -79,9 +79,11 @@ const navigateToRoundReport = (round: RecentRoundInfo) => {
       >
         <div class="flex flex-col items-center text-center min-w-0 w-24">
           <!-- Map name above -->
-          <div class="mb-2 px-2 py-1 bg-slate-800/50 rounded-lg border border-slate-700/50 group-hover:border-cyan-500/50 transition-colors min-h-[2.5rem] flex items-center">
-            <span class="text-xs font-medium text-slate-300 group-hover:text-cyan-300 transition-colors leading-tight truncate"
-                  :class="round.isActive && index === 0 ? 'text-emerald-300' : ''">
+          <div class="mb-2 min-h-[2.5rem] flex items-center justify-center">
+            <span class="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r transition-all duration-300 leading-tight text-center max-w-full truncate"
+                  :class="round.isActive && index === 0 
+                    ? 'from-emerald-300 to-emerald-400 animate-pulse' 
+                    : 'from-cyan-300 to-blue-300 group-hover:from-cyan-200 group-hover:to-blue-200'">
               {{ round.mapName }}
             </span>
           </div>
