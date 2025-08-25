@@ -214,14 +214,13 @@ const formatAchievementDate = (dateString?: string): string => {
 }
 
 .milestone-modal {
-  background: var(--color-background-soft);
-  border-radius: 16px;
+  @apply bg-slate-800/95 backdrop-blur-md border border-slate-700/50;
+  border-radius: 20px;
   width: 100%;
   max-width: 400px;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--color-border);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
 }
 
 .milestone-modal-header {
@@ -350,7 +349,7 @@ const formatAchievementDate = (dateString?: string): string => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: var(--color-background);
+  @apply bg-slate-900/60;
   border-radius: 8px;
   border: 1px solid var(--color-border);
 }
@@ -426,7 +425,7 @@ const formatAchievementDate = (dateString?: string): string => {
 .progress-bar {
   flex: 1;
   height: 8px;
-  background: var(--color-background);
+  @apply bg-slate-900/60;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--color-border);

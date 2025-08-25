@@ -121,7 +121,7 @@
         </div>
 
         <!-- Server Table -->
-        <div v-else class="overflow-hidden">
+        <div v-else class="overflow-x-auto">
             <table class="w-full border-collapse border border-slate-700/30">
               <!-- Table Header -->
               <thead class="sticky top-0 z-10">
@@ -312,6 +312,10 @@ import { fetchAllServers } from '../services/serverDetailsService'
 import { ServerSummary } from '../types/server'
 import { formatLastSeen } from '@/utils/timeUtils'
 import PlayersPanel from '../components/PlayersPanel.vue'
+
+import bf1942Icon from '@/assets/bf1942.jpg'
+import fh2Icon from '@/assets/fh2.jpg'
+import bfvIcon from '@/assets/bfv.jpg'
 
 interface PlayerSearchResult {
   playerName: string
@@ -588,11 +592,11 @@ const getGameDisplayName = (gameType: string): string => {
 
 const getGameIcon = (iconClass: string): string => {
   const iconMap: Record<string, string> = {
-    'icon-bf1942': "url('/src/assets/bf1942.jpg')",
-    'icon-fh2': "url('/src/assets/fh2.jpg')",
-    'icon-bfv': "url('/src/assets/bfv.jpg')"
+    'icon-bf1942': `url('${bf1942Icon}')`,
+    'icon-fh2': `url('${fh2Icon}')`,
+    'icon-bfv': `url('${bfvIcon}')`
   }
-  return iconMap[iconClass] || "url('/src/assets/bf1942.jpg')"
+  return iconMap[iconClass] || `url('${bf1942Icon}')`
 }
 
 const joinServer = (server: ServerSummary) => {
@@ -714,18 +718,7 @@ onUnmounted(() => {
   animation: animate-spin-slow 3s linear infinite;
 }
 
-/* Game icon backgrounds */
-.icon-bf1942 {
-  background-image: url('/src/assets/bf1942.jpg');
-}
-
-.icon-fh2 {
-  background-image: url('/src/assets/fh2.jpg');
-}
-
-.icon-bfv {
-  background-image: url('/src/assets/bfv.jpg');
-}
+/* Game icon backgrounds - handled dynamically by getGameIcon() */
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -780,12 +773,25 @@ input:focus {
 
 /* Responsive table behavior */
 @media (max-width: 1024px) {
-  .min-w-0 {
-    overflow-x: auto;
+  table {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 768px) {
+  table {
+    min-width: 700px;
   }
   
-  table {
-    min-width: 1000px;
+  /* Make table cells more compact on mobile */
+  th, td {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  /* Hide less critical columns on very small screens */
+  th:nth-child(4), td:nth-child(4), /* Time column */
+  th:nth-child(6), td:nth-child(6) { /* IP column */
+    display: none;
   }
 }
 </style>

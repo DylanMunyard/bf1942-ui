@@ -199,15 +199,8 @@ const handlePeriodChange = async (period: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-    <!-- Animated background elements -->
-    <div class="absolute inset-0 overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10"></div>
-      <div class="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"></div>
-      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-    </div>
-
-    <div class="relative z-10 p-3 sm:p-6">
+  <div class="relative min-h-screen px-3 sm:px-6">
+    <div class="relative z-10">
       <!-- Back Navigation -->
       <router-link
         :to="getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string))"
@@ -232,7 +225,7 @@ const handlePeriodChange = async (period: string) => {
       </router-link>
 
       <div class="relative z-10 pb-6 sm:pb-12">
-        <div class="max-w-7xl mx-auto px-2 sm:px-0">
+        <div class="max-w-7xl mx-auto">
           <!-- Server Profile Hero -->
           <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-8">
             <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50"></div>

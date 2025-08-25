@@ -847,7 +847,7 @@ onUnmounted(() => {
 }
 
 .server-context {
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
@@ -866,7 +866,7 @@ onUnmounted(() => {
 }
 
 .rankings-section {
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border-radius: 8px;
   padding: 20px;
 }
@@ -1031,7 +1031,7 @@ th {
 }
 
 .combat-badge {
-  background-color: var(--color-background);
+  @apply bg-slate-900/60;
   padding: 4px 8px;
   border-radius: 6px;
   font-weight: 500;
@@ -1181,7 +1181,7 @@ th {
   }
 
   .mobile-stats .stat-item {
-    background-color: var(--color-background);
+    @apply bg-slate-900/60;
     padding: 4px 8px;
     border-radius: 4px;
     font-weight: 500;
@@ -1239,7 +1239,7 @@ th {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text);
@@ -1305,7 +1305,7 @@ th {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 14px;
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   color: var(--color-text);
 }
 

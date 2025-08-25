@@ -425,9 +425,9 @@ const getMinPlayers = () => {
 }
 
 .detailed-chart-popup-content {
-  background-color: var(--color-background);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  @apply bg-slate-900/95 backdrop-blur-md border border-slate-700/50;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   width: 80%;
   max-width: 1000px;
   max-height: 90vh;
@@ -495,18 +495,18 @@ const getMinPlayers = () => {
   margin-top: 5px;
   font-size: 12px;
   color: var(--color-text-muted);
-  background-color: var(--color-background-soft);
-  border-radius: 4px;
-  padding: 8px;
+  @apply bg-slate-800/40 border border-slate-700/30;
+  border-radius: 8px;
+  padding: 12px;
 }
 
 .chart-info {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  background-color: var(--color-background-soft);
-  padding: 15px;
-  border-radius: 6px;
+  @apply bg-slate-800/40 border border-slate-700/30;
+  padding: 16px;
+  border-radius: 8px;
 }
 
 .chart-info p {

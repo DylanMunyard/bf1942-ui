@@ -39,15 +39,14 @@ defineProps<Props>();
   align-items: center;
   gap: 12px;
   padding: 8px;
-  background: var(--color-background);
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
+  @apply bg-slate-900/60 border border-slate-700/50;
+  border-radius: 12px;
   transition: all 0.2s ease;
   min-height: 72px;
 }
 
 .player-card:hover {
-  background: var(--color-background-soft);
+  @apply bg-slate-800/60;
   border-color: var(--color-primary);
   transform: translateX(4px);
 }

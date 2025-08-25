@@ -2,7 +2,6 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchRoundReport, RoundReport } from '../services/serverDetailsService';
-import PlayerName from './PlayerName.vue';
 
 // Router
 const router = useRouter();
@@ -570,6 +569,10 @@ const goBack = () => {
   }
 };
 
+const navigateToPlayerProfile = (playerName: string) => {
+  router.push(`/players/${encodeURIComponent(playerName)}`);
+};
+
 // Team groups for current leaderboard
 const teamGroups = computed(() => {
   if (!currentLeaderboard.value.length) return [];
@@ -658,7 +661,7 @@ const getRankIcon = (rank: number) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+  <div class="min-h-screen">
     <!-- Animated background elements -->
     <div class="absolute inset-0 overflow-hidden">
       <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10"></div>
@@ -927,13 +930,10 @@ const getRankIcon = (rank: number) => {
                         </td>
                         
                         <!-- Player Name -->
-                        <td class="p-1 min-w-0">
-                          <PlayerName
-                            :name="player.playerName"
-                            source="round-report-v2-table"
-                            :server-guid="props.serverGuid"
-                            class="text-slate-200 group-hover:text-cyan-400 transition-colors truncate text-xs font-medium"
-                          />
+                        <td class="p-1 min-w-0 cursor-pointer" @click="navigateToPlayerProfile(player.playerName)">
+                          <div class="font-bold text-slate-200 group-hover:text-cyan-400 transition-colors truncate text-xs font-medium">
+                            {{ player.playerName }}
+                          </div>
                         </td>
                         
                         <!-- Score -->

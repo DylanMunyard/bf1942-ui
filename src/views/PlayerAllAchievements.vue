@@ -902,7 +902,7 @@ watch(
 
 <style scoped>
 .player-achievements-page {
-  background-color: var(--color-background);
+  @apply bg-slate-900/60;
   min-height: 100vh;
   padding: 16px;
 }
@@ -994,7 +994,7 @@ watch(
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text);
@@ -1037,7 +1037,7 @@ watch(
 
 /* Filters Section Styles */
 .filters-section {
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border-radius: 8px;
   padding: 16px;
   border: 1px solid var(--color-border);
@@ -1073,7 +1073,7 @@ watch(
   padding: 8px 12px;
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  background-color: var(--color-background);
+  @apply bg-slate-900/60;
   color: var(--color-text);
   font-size: 0.9rem;
   cursor: pointer;
@@ -1115,7 +1115,7 @@ watch(
 
 .achievement-select-dropdown {
   position: relative;
-  background-color: var(--color-background);
+  @apply bg-slate-900/60;
   border: 1px solid var(--color-border);
   border-radius: 6px;
   cursor: pointer;
@@ -1168,7 +1168,7 @@ watch(
   top: 100%;
   left: 0;
   right: 0;
-  background-color: var(--color-background);
+  @apply bg-slate-900/60;
   border: 1px solid var(--color-primary);
   border-top: none;
   border-bottom-left-radius: 6px;
@@ -1191,7 +1191,7 @@ watch(
 }
 
 .achievement-option:hover {
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
 }
 
 .achievement-option.selected {
@@ -1214,7 +1214,7 @@ watch(
   font-size: 0.9rem;
   color: var(--color-text-muted);
   padding: 12px 16px;
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border-radius: 8px;
 }
 
@@ -1267,7 +1267,7 @@ watch(
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  border: 2px solid var(--color-background);
+  border: 2px solid var(--color-border);
   position: relative;
   z-index: 3;
   transition: all 0.2s ease;
@@ -1283,13 +1283,13 @@ watch(
   background-color: var(--color-primary);
   width: 12px;
   height: 12px;
-  border: 3px solid var(--color-background);
+  border: 3px solid var(--color-border);
 }
 
 .achievement-node {
   width: 8px;
   height: 8px;
-  border: 2px solid var(--color-background);
+  border: 2px solid var(--color-border);
 }
 
 /* Date Header Styles */
@@ -1355,7 +1355,7 @@ watch(
 .achievement-card {
   display: flex;
   gap: 12px;
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border-radius: 12px;
   padding: 16px;
   border: 2px solid transparent;
@@ -1381,7 +1381,7 @@ watch(
   position: relative;
   width: 60px;
   height: 60px;
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border-radius: 12px;
   padding: 8px;
   border: 2px solid transparent;
@@ -1432,7 +1432,7 @@ watch(
   min-width: 14px;
   text-align: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--color-background);
+  border: 1px solid var(--color-border);
   line-height: 1.2;
 }
 
@@ -1442,7 +1442,7 @@ watch(
 .achievement-card {
   display: flex;
   gap: 12px;
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border-radius: 12px;
   padding: 16px;
   border: 2px solid transparent;
@@ -1700,7 +1700,7 @@ watch(
 }
 
 .modal-content {
-  background-color: var(--color-background);
+  @apply bg-slate-900/60;
   border-radius: 16px;
   max-width: 500px;
   width: 100%;
@@ -1966,7 +1966,7 @@ watch(
 }
 
 .achievement-instance-item {
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border-radius: 8px;
   padding: 12px;
   border: 1px solid var(--color-border);
@@ -2129,7 +2129,7 @@ watch(
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  border: 2px solid var(--color-background);
+  border: 2px solid var(--color-border);
   position: relative;
   z-index: 3;
   transition: all 0.2s ease;
@@ -2158,7 +2158,7 @@ watch(
 }
 
 .achievement-card:hover {
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   border-color: var(--color-border);
 }
 
@@ -2265,7 +2265,7 @@ watch(
 .time-gap-badge {
   font-size: 0.8rem;
   color: var(--color-text-muted);
-  background-color: var(--color-background);
+  @apply bg-slate-900/60;
   padding: 2px 8px;
   border-radius: 12px;
   border: 1px solid var(--color-border);

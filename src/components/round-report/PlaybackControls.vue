@@ -164,17 +164,16 @@ const handlePlaybackSpeedChange = (event: Event) => {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--color-background);
+  @apply bg-slate-800/60 backdrop-blur-sm border border-slate-700/50;
   padding: 4px 8px;
   border-radius: 16px;
-  border: 1px solid var(--color-border);
 }
 
 .mini-button {
   padding: 4px 6px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  background: var(--color-background);
+  @apply bg-slate-900/60;
   color: var(--color-text);
   cursor: pointer;
 }
@@ -193,7 +192,7 @@ const handlePlaybackSpeedChange = (event: Event) => {
   padding: 2px 4px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  background: var(--color-background);
+  @apply bg-slate-900/60;
   color: var(--color-text);
   font-size: 0.75rem;
   cursor: pointer;

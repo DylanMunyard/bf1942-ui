@@ -235,11 +235,9 @@ onUnmounted(() => {
 /* Desktop styles - show full widget by default */
 .full-widget {
   width: 320px;
-  background: var(--color-background-soft);
-  border: 2px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(8px);
+  @apply bg-slate-800/60 backdrop-blur-md border-2 border-slate-700/50;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
 }
 
 .mobile-compact {
@@ -293,7 +291,7 @@ onUnmounted(() => {
 }
 
 .collapse-btn:hover, .close-btn:hover {
-  background: var(--color-background);
+  @apply bg-slate-700/50;
   color: var(--color-text);
 }
 
@@ -317,7 +315,7 @@ onUnmounted(() => {
   padding: 12px;
   border: 2px dashed var(--color-border);
   border-radius: 8px;
-  background: var(--color-background);
+  @apply bg-slate-900/40;
   transition: all 0.2s ease;
   min-height: 20px;
 }
@@ -325,7 +323,7 @@ onUnmounted(() => {
 .player-slot.selected {
   border-style: solid;
   border-color: var(--color-primary);
-  background: var(--color-background-soft);
+  @apply bg-slate-700/40;
 }
 
 .player-slot.empty {
@@ -415,9 +413,8 @@ onUnmounted(() => {
 }
 
 .clear-btn {
-  background: var(--color-background);
+  @apply bg-slate-800/60 border border-slate-700/50;
   color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
 }
 
 .clear-btn:hover:not(:disabled) {

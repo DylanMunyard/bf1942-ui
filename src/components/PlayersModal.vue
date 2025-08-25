@@ -98,17 +98,17 @@ defineEmits<{
 }
 
 .modal-content {
-  background-color: var(--color-background);
-  border-radius: 8px;
+  @apply bg-slate-900/95 backdrop-blur-md border border-slate-700/50;
+  border-radius: 16px;
   width: 95%;
   max-width: 1200px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
 }
 
 .players-modal {
-  background: var(--color-background);
+  @apply bg-slate-900/60;
 }
 
 .modal-header {
@@ -154,7 +154,7 @@ defineEmits<{
 }
 
 .close-button:hover {
-  background-color: var(--color-background-soft);
+  @apply bg-slate-700/50;
 }
 
 .modal-body {
@@ -162,7 +162,7 @@ defineEmits<{
 }
 
 .leaderboard-section {
-  background: var(--color-background);
+  @apply bg-slate-900/40;
 }
 
 .no-players, .no-data {

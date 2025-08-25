@@ -220,9 +220,8 @@ const formatPlayTime = (minutes: number): string => {
 .player-search-input {
   padding: 12px 40px 12px 15px;
   font-size: 1rem;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  @apply bg-slate-800/40 backdrop-blur-sm border border-slate-700/50;
+  border-radius: 8px;
   color: var(--color-text);
   width: 100%;
   transition: all 0.2s ease;
@@ -247,14 +246,13 @@ const formatPlayTime = (minutes: number): string => {
   top: 100%;
   left: 0;
   right: 0;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
+  @apply bg-slate-800/95 backdrop-blur-md border border-slate-700/50;
   border-top: none;
-  border-radius: 0 0 6px 6px;
+  border-radius: 0 0 8px 8px;
   max-height: 300px;
   overflow-y: auto;
   z-index: 1050;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
 }
 
 .search-result-item {
@@ -269,7 +267,7 @@ const formatPlayTime = (minutes: number): string => {
 }
 
 .search-result-item:hover {
-  background-color: var(--color-background);
+  @apply bg-slate-700/40;
 }
 
 .player-info {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { usePlayerComparison } from '@/composables/usePlayerComparison';
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
   serverGuid?: string;
   clickable?: boolean;
   showCompareIcon?: boolean;
+  linkToPlayerDetails?: boolean;
   class?: string;
 }
 
@@ -15,11 +17,13 @@ const props = withDefaults(defineProps<Props>(), {
   source: '',
   clickable: true,
   showCompareIcon: true,
+  linkToPlayerDetails: false,
   class: '',
   serverGuid: undefined
 });
 
 const { selectedPlayers, canAddPlayer, addPlayer } = usePlayerComparison();
+const router = useRouter();
 
 const isSelected = computed(() => 
   selectedPlayers.value.some(p => p.name === props.name)
@@ -39,6 +43,12 @@ const handleCompareClick = (event: MouseEvent) => {
   
   if (canSelect.value) {
     addPlayer(props.name, props.source, props.serverGuid);
+  }
+};
+
+const handlePlayerNameClick = () => {
+  if (props.linkToPlayerDetails) {
+    router.push(`/players/${encodeURIComponent(props.name)}`);
   }
 };
 
@@ -69,7 +79,13 @@ const containerClass = computed(() => {
     :class="containerClass"
     :title="getTooltipText()"
   >
-    <span class="player-name-text">{{ name }}</span>
+    <span 
+      class="player-name-text"
+      :class="{ 'clickable-name': linkToPlayerDetails }"
+      @click="handlePlayerNameClick"
+    >
+      {{ name }}
+    </span>
     <span 
       v-if="showCompareIcon && clickable" 
       class="compare-icon"
@@ -102,6 +118,18 @@ const containerClass = computed(() => {
   color: inherit;
   font-weight: inherit;
   transition: all 0.2s ease;
+}
+
+.player-name-text.clickable-name {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.player-name-text.clickable-name:hover {
+  text-decoration-color: currentColor;
+  opacity: 0.8;
 }
 
 

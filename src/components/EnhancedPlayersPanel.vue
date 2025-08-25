@@ -390,11 +390,11 @@ const sortPlayersBy = (field: string) => {
 }
 
 .players-panel {
-  background: var(--color-background);
+  @apply bg-slate-900/95 backdrop-blur-md border-l border-slate-700/50;
   width: 100%;
   max-width: 900px;
   height: 100%;
-  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+  box-shadow: -4px 0 25px rgba(0, 0, 0, 0.3);
   animation: slideInRight 0.3s ease-out;
   overflow-y: auto;
 }
@@ -435,7 +435,7 @@ const sortPlayersBy = (field: string) => {
 }
 
 .close-btn:hover {
-  background: var(--color-background-soft);
+  @apply bg-slate-700/50;
 }
 
 .players-panel-content {
@@ -505,10 +505,9 @@ const sortPlayersBy = (field: string) => {
 }
 
 .team-section {
-  background: var(--color-background-soft);
-  border-radius: 8px;
+  @apply bg-slate-800/40 border border-slate-700/50;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--color-border);
 }
 
 .team-header {
@@ -548,7 +547,7 @@ const sortPlayersBy = (field: string) => {
 }
 
 .team-table-container {
-  background: var(--color-background-soft);
+  @apply bg-slate-800/30;
   overflow: hidden;
 }
 
@@ -578,7 +577,7 @@ const sortPlayersBy = (field: string) => {
 }
 
 .players-table th.sortable:hover {
-  background: var(--color-background);
+  @apply bg-slate-700/50;
 }
 
 .players-table td {
@@ -593,7 +592,7 @@ const sortPlayersBy = (field: string) => {
 }
 
 .player-table-row:hover {
-  background: var(--color-background);
+  @apply bg-slate-700/30;
 }
 
 .player-table-row:last-child td {
@@ -817,7 +816,7 @@ const sortPlayersBy = (field: string) => {
   }
 
   .tab-button:hover:not(.active) {
-    background: var(--color-background-soft);
+    @apply bg-slate-700/50;
     color: var(--color-text);
   }
 

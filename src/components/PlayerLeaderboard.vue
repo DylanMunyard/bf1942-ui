@@ -522,11 +522,10 @@ onUnmounted(() => {
 }
 
 .team-column {
-  background: var(--color-background);
-  border-radius: 8px;
+  @apply bg-slate-900/60 border border-slate-700/50;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .team-header {
@@ -596,7 +595,7 @@ onUnmounted(() => {
 }
 
 .player-row:hover {
-  background: var(--color-background-soft);
+  @apply bg-slate-700/30;
 }
 
 .player-row.top-player {
@@ -769,7 +768,7 @@ onUnmounted(() => {
 }
 
 .tab-button:hover:not(.active) {
-  background: var(--color-background-soft);
+  @apply bg-slate-700/50;
   color: var(--color-text);
 }
 

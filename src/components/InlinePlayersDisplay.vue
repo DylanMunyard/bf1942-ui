@@ -361,11 +361,10 @@ const sortPlayersBy = (field: string) => {
 
 <style scoped>
 .inline-players-display {
-  background: var(--color-background-soft);
-  border-radius: 8px;
+  @apply bg-slate-800/40 backdrop-blur-sm border border-slate-700/50;
+  border-radius: 12px;
   padding: 20px;
   margin-top: 20px;
-  border: 1px solid var(--color-border);
 }
 
 /* Performance Chart Section */
@@ -431,10 +430,9 @@ const sortPlayersBy = (field: string) => {
 }
 
 .team-section {
-  background: var(--color-background);
-  border-radius: 8px;
+  @apply bg-slate-900/60 border border-slate-700/50;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--color-border);
 }
 
 .team-header {
@@ -474,7 +472,7 @@ const sortPlayersBy = (field: string) => {
 }
 
 .team-table-container {
-  background: var(--color-background);
+  @apply bg-slate-900/40;
   overflow: hidden;
 }
 
@@ -504,7 +502,7 @@ const sortPlayersBy = (field: string) => {
 }
 
 .players-table th.sortable:hover {
-  background: var(--color-background-soft);
+  @apply bg-slate-700/50;
 }
 
 .players-table td {
@@ -519,7 +517,7 @@ const sortPlayersBy = (field: string) => {
 }
 
 .player-table-row:hover {
-  background: var(--color-background-soft);
+  @apply bg-slate-700/30;
 }
 
 .player-table-row:last-child td {
@@ -740,7 +738,7 @@ const sortPlayersBy = (field: string) => {
   }
 
   .tab-button:hover:not(.active) {
-    background: var(--color-background-soft);
+    @apply bg-slate-700/50;
     color: var(--color-text);
   }
 

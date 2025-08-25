@@ -341,10 +341,9 @@ const getElapsedTime = (timestamp: string): string => {
 }
 
 .performance-chart-container {
-  background: var(--color-background);
-  border-radius: 8px;
+  @apply bg-slate-800/40 backdrop-blur-sm border border-slate-700/50;
+  border-radius: 12px;
   padding: 12px;
-  border: 1px solid var(--color-border);
 }
 
 @media (prefers-color-scheme: dark) {

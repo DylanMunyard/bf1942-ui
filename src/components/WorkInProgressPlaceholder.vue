@@ -25,7 +25,7 @@
   justify-content: center;
   min-height: 60vh;
   padding: 32px;
-  background: var(--color-background);
+  @apply bg-slate-900/40 backdrop-blur-sm;
   color: var(--color-text);
 }
 

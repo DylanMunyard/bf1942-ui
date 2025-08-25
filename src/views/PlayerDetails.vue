@@ -761,7 +761,7 @@ watch(
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+  <div class="min-h-screen px-3 sm:px-6">
     <!-- Hero Section with Player Profile -->
     <div class="relative overflow-hidden">
       <!-- Animated Background Pattern -->
@@ -772,7 +772,7 @@ watch(
       </div>
 
       <!-- Navigation -->
-      <div class="relative z-10 p-3 sm:p-6">
+      <div class="relative z-10 py-3 sm:py-6">
         <button
           class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer"
           @click="goBack"
@@ -794,7 +794,7 @@ watch(
       </div>
 
       <!-- Player Hero Card -->
-      <div class="relative z-10 px-3 sm:px-6 pb-6 sm:pb-12">
+      <div class="relative z-10 pb-6 sm:pb-12">
         <div class="max-w-7xl mx-auto">
           <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
             <!-- Glow Effect -->

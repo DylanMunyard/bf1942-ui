@@ -277,9 +277,8 @@ const handleOverlayMouseDown = () => {
 .form-group input {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid var(--color-border);
+  @apply border border-slate-700/50 bg-slate-900/60 backdrop-blur-sm;
   border-radius: 8px;
-  background-color: var(--color-background);
   color: var(--color-text);
   font-size: 1rem;
   transition: all 0.2s ease;

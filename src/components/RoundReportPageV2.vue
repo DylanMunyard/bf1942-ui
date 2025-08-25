@@ -23,5 +23,6 @@ const _props = defineProps<Props>();
 <style scoped>
 .round-report-page-v2 {
   min-height: 100vh;
+  background: linear-gradient(to bottom right, rgb(15, 23, 42) 0%, rgb(30, 58, 138) 50%, rgb(15, 23, 42) 100%);
 }
 </style>

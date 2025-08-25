@@ -186,8 +186,8 @@ onUnmounted(() => {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: var(--color-background-soft);
-  border: 1px solid var(--color-border);
+  @apply bg-slate-800/60 backdrop-blur-sm border border-slate-700/50;
+
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -208,7 +208,7 @@ onUnmounted(() => {
   gap: 8px;
   width: 100%;
   padding: 12px 16px;
-  background: var(--color-background);
+  @apply bg-slate-900/80 backdrop-blur-sm;
   color: var(--color-text);
   border: 1px solid var(--color-border);
   border-radius: 4px;
@@ -219,7 +219,7 @@ onUnmounted(() => {
 }
 
 .google-login-btn:hover:not(:disabled) {
-  background: var(--color-background-soft);
+  @apply bg-slate-700/60;
   border-color: var(--color-border-hover);
 }
 
@@ -242,8 +242,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 4px 8px;
-  background: var(--color-background-soft);
-  border: 1px solid var(--color-border);
+  @apply bg-slate-800/60 border border-slate-700/50;
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -291,8 +290,7 @@ onUnmounted(() => {
   top: 100%;
   right: 0;
   margin-top: 4px;
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
+  @apply bg-slate-900/80 border border-slate-700/50;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 200px;
@@ -332,7 +330,7 @@ onUnmounted(() => {
 }
 
 .logout-btn:hover {
-  background: var(--color-background-soft);
+  @apply bg-slate-700/60;
   color: var(--color-text);
 }
 

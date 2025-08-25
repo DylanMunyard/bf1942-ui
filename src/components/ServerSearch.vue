@@ -233,8 +233,7 @@ const formatLastActivity = (lastActivity: string): string => {
 .server-search-input {
   padding: 12px 40px 12px 15px;
   font-size: 1rem;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
+  @apply bg-slate-800/40 backdrop-blur-sm border border-slate-700/50;
   border-radius: 6px;
   color: var(--color-text);
   width: 100%;
@@ -260,8 +259,7 @@ const formatLastActivity = (lastActivity: string): string => {
   top: 100%;
   left: 0;
   right: 0;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
+  @apply bg-slate-800/95 backdrop-blur-md border border-slate-700/50;
   border-top: none;
   border-radius: 0 0 6px 6px;
   max-height: 300px;
@@ -282,7 +280,7 @@ const formatLastActivity = (lastActivity: string): string => {
 }
 
 .search-result-item:hover {
-  background-color: var(--color-background);
+  @apply bg-slate-700/40;
 }
 
 .server-info {

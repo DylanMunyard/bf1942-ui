@@ -3,6 +3,7 @@
 
 #app {
   width: 100%;
+  height: 100vh;
   margin: 0 auto;
   font-weight: normal;
 }
@@ -29,6 +30,5 @@ a,
   #app {
     display: block;
     width: 100%;
-    padding: 0 2rem;
   }
 }

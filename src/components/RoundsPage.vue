@@ -773,7 +773,7 @@ onUnmounted(() => {
 }
 
 .back-button:hover {
-  background-color: var(--color-background-soft);
+  @apply bg-slate-700/40;
 }
 
 .refresh-button {
@@ -815,7 +815,7 @@ onUnmounted(() => {
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 14px;
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40 backdrop-blur-sm;
   color: var(--color-text);
 }
 
@@ -1075,8 +1075,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
+  @apply bg-slate-800/40 border border-slate-700/50;
   border-radius: 8px;
   color: var(--color-text);
   cursor: pointer;
@@ -1149,8 +1148,7 @@ onUnmounted(() => {
 
 .pagination-button {
   padding: 5px 10px;
-  background-color: var(--color-background-soft);
-  border: 1px solid var(--color-border);
+  @apply bg-slate-800/40 border border-slate-700/50;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
@@ -1199,7 +1197,7 @@ onUnmounted(() => {
   padding: 5px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  background-color: var(--color-background-soft);
+  @apply bg-slate-800/40;
   color: var(--color-text);
 }
 
@@ -1237,7 +1235,7 @@ onUnmounted(() => {
 .time-gap-badge {
   font-size: 0.8rem;
   color: var(--color-text-muted);
-  background-color: var(--color-background);
+  @apply bg-slate-900/60;
   padding: 2px 8px;
   border-radius: 12px;
   border: 1px solid var(--color-border);
