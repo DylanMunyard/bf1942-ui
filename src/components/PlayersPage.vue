@@ -51,15 +51,6 @@ const totalPages = ref(0);
 
 // No filters for now - just search
 
-// Format minutes to hours and minutes - simpler format
-const formatPlayTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return `${hours}h`;
-  }
-  const days = Math.floor(hours / 24);
-  return `${days}d ${hours % 24}h`;
-};
 
 // Sort players function
 const sortPlayers = (field: string) => {
@@ -393,18 +384,6 @@ onUnmounted(() => {
                   }">▲</span>
                 </div>
               </th>
-              <th @click="sortPlayers('totalPlayTimeMinutes')" class="group p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50">
-                <div class="flex items-center gap-2">
-                  <span class="text-green-400 text-xs">⏰</span>
-                  <span class="font-mono font-bold">PLAYTIME</span>
-                  <span class="text-xs transition-transform duration-200" :class="{
-                    'text-green-400 opacity-100': sortBy === 'totalPlayTimeMinutes',
-                    'opacity-50': sortBy !== 'totalPlayTimeMinutes',
-                    'rotate-0': sortBy === 'totalPlayTimeMinutes' && sortOrder === 'asc',
-                    'rotate-180': sortBy === 'totalPlayTimeMinutes' && sortOrder === 'desc'
-                  }">▲</span>
-                </div>
-              </th>
               <th @click="sortPlayers('lastSeen')" class="group p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50">
                 <div class="flex items-center gap-2">
                   <span class="text-orange-400 text-xs">📅</span>
@@ -447,12 +426,6 @@ onUnmounted(() => {
                 </router-link>
               </td>
 
-              <!-- Playtime -->
-              <td class="p-2">
-                <div class="font-mono text-sm text-green-400 font-bold">
-                  {{ formatPlayTime(player.totalPlayTimeMinutes) }}
-                </div>
-              </td>
 
               <!-- Last Seen -->
               <td class="p-2">
