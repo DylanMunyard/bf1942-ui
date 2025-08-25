@@ -207,7 +207,7 @@ const handlePeriodChange = async (period: string) => {
       <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
     </div>
 
-    <div class="relative z-10 p-6">
+    <div class="relative z-10 p-3 sm:p-6">
       <!-- Back Navigation -->
       <router-link
         :to="getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string))"
@@ -231,12 +231,12 @@ const handlePeriodChange = async (period: string) => {
         Back to Servers
       </router-link>
 
-      <div class="relative z-10 pb-12">
-        <div class="max-w-7xl mx-auto">
+      <div class="relative z-10 pb-6 sm:pb-12">
+        <div class="max-w-7xl mx-auto px-2 sm:px-0">
           <!-- Server Profile Hero -->
           <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-8">
             <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50"></div>
-            <div class="relative z-10 p-8 md:p-12">
+            <div class="relative z-10 p-4 sm:p-8 md:p-12">
               <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
                 <!-- Server Icon/Avatar -->
                 <div class="flex-shrink-0">
@@ -354,16 +354,16 @@ const handlePeriodChange = async (period: string) => {
           </div>
 
           <!-- Server Content -->
-          <div v-else-if="serverDetails" class="space-y-8">
+          <div v-else-if="serverDetails" class="space-y-4 sm:space-y-8">
 
             <!-- Recent Rounds Section -->
             <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-              <div class="p-6 border-b border-slate-700/50">
+              <div class="p-3 sm:p-6 border-b border-slate-700/50">
                 <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
                   🎯 Recent Rounds
                 </h3>
               </div>
-              <div class="p-6">
+              <div class="p-3 sm:p-6">
                 <ServerRecentRounds
                     :server-details="serverDetails"
                     :server-name="serverName"
@@ -373,12 +373,12 @@ const handlePeriodChange = async (period: string) => {
 
             <!-- Player Activity Section -->
             <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-              <div class="p-6 border-b border-slate-700/50">
+              <div class="p-3 sm:p-6 border-b border-slate-700/50">
                 <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 flex items-center gap-3">
                   📈 Player Activity Analysis
                 </h3>
               </div>
-              <div class="p-6">
+              <div class="p-3 sm:p-6">
                 <ServerPlayerActivityChart
                   :server-insights="serverInsights"
                   :is-loading="isInsightsLoading"
@@ -395,7 +395,7 @@ const handlePeriodChange = async (period: string) => {
 
             <!-- Leaderboards Section -->
             <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-              <div class="p-6 border-b border-slate-700/50 flex items-center justify-between">
+              <div class="p-3 sm:p-6 border-b border-slate-700/50 flex items-center justify-between">
                 <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
                   🏆 Server Leaderboards
                 </h3>
@@ -406,7 +406,7 @@ const handlePeriodChange = async (period: string) => {
                   View Rankings
                 </router-link>
               </div>
-              <div class="p-6">
+              <div class="p-3 sm:p-6">
                 <ServerLeaderboards
                   :server-details="serverDetails"
                   :server-name="serverName"

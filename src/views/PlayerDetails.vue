@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayersResponse, PlayerComparisonStats } from '../services/playerStatsService';
 import { Line } from 'vue-chartjs';
@@ -38,27 +38,6 @@ const timeRangeOptions = [
 const mapStatsSortField = ref('totalScore');
 const mapStatsSortDirection = ref('desc');
 
-// Recent rounds carousel state
-const carouselCurrentIndex = ref(0);
-const carouselItemsPerView = ref(3);
-const carouselContainer = ref<HTMLElement | null>(null);
-
-// Responsive carousel configuration
-const updateCarouselItemsPerView = () => {
-  if (typeof window !== 'undefined') {
-    if (window.innerWidth < 640) {
-      carouselItemsPerView.value = 1; // Mobile: 1 item
-    } else if (window.innerWidth < 1024) {
-      carouselItemsPerView.value = 2; // Tablet: 2 items
-    } else {
-      carouselItemsPerView.value = 3; // Desktop: 3 items
-    }
-    // Reset carousel position if it's out of bounds
-    if (carouselCurrentIndex.value > carouselMaxIndex.value) {
-      carouselCurrentIndex.value = carouselMaxIndex.value;
-    }
-  }
-};
 
 // --- Similar Players state & functions ---
 const similarPlayersData = ref<SimilarPlayersResponse | null>(null);
@@ -630,36 +609,7 @@ const changeMapStatsSort = (field: string) => {
   }
 };
 
-// Recent rounds carousel functions
-const carouselMaxIndex = computed(() => {
-  if (!playerStats.value?.recentSessions) return 0;
-  return Math.max(0, playerStats.value.recentSessions.length - carouselItemsPerView.value);
-});
 
-const nextSlide = () => {
-  if (carouselCurrentIndex.value < carouselMaxIndex.value) {
-    carouselCurrentIndex.value++;
-  }
-};
-
-const prevSlide = () => {
-  if (carouselCurrentIndex.value > 0) {
-    carouselCurrentIndex.value--;
-  }
-};
-
-const goToSlide = (index: number) => {
-  carouselCurrentIndex.value = Math.max(0, Math.min(index, carouselMaxIndex.value));
-};
-
-const getHighestPerformanceRound = computed(() => {
-  if (!playerStats.value?.recentSessions) return null;
-  return playerStats.value.recentSessions.reduce((best, current) => {
-    const currentScore = current.totalScore || 0;
-    const bestScore = best?.totalScore || 0;
-    return currentScore > bestScore ? current : best;
-  }, playerStats.value.recentSessions[0]);
-});
 
 // Computed property to sort map stats
 const sortedMapStats = computed(() => {
@@ -753,19 +703,8 @@ const getTimeGap = (currentSession: any, nextSession: any): string => {
   return ''; // Don't show gap for sessions close together
 };
 
-// Clean up event listeners when component is unmounted
 onMounted(() => {
   fetchData();
-  // Initialize carousel responsiveness
-  updateCarouselItemsPerView();
-  window.addEventListener('resize', updateCarouselItemsPerView);
-});
-
-// Add cleanup for resize listener
-onUnmounted(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('resize', updateCarouselItemsPerView);
-  }
 });
 
 // Add this helper function to the <script setup> section:
@@ -833,7 +772,7 @@ watch(
       </div>
 
       <!-- Navigation -->
-      <div class="relative z-10 p-6">
+      <div class="relative z-10 p-3 sm:p-6">
         <button
           class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer"
           @click="goBack"
@@ -855,14 +794,14 @@ watch(
       </div>
 
       <!-- Player Hero Card -->
-      <div class="relative z-10 px-6 pb-12">
+      <div class="relative z-10 px-3 sm:px-6 pb-6 sm:pb-12">
         <div class="max-w-7xl mx-auto">
           <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
             <!-- Glow Effect -->
             <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 opacity-50"></div>
             
             <!-- Content -->
-            <div class="relative z-10 p-8 md:p-12">
+            <div class="relative z-10 p-4 sm:p-8 md:p-12">
               <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
                 <!-- Player Avatar Section -->
                 <div class="flex-shrink-0">
@@ -1031,7 +970,7 @@ watch(
       <!-- Main Content -->
       <div
         v-else-if="playerStats"
-        class="max-w-7xl mx-auto px-6 pb-12 space-y-8"
+        class="max-w-7xl mx-auto px-3 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
       >
 
         <!-- Recent Battles Carousel -->
@@ -1044,34 +983,16 @@ watch(
           <div class="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 rounded-full blur-2xl animate-pulse"></div>
           <div class="absolute -bottom-16 -left-16 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
           
-          <div class="relative z-10 p-8">
+          <div class="relative z-10 p-4 sm:p-8">
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
               <div class="space-y-2">
                 <h3 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                   🏆 Recent Battles
                 </h3>
+                <p class="text-slate-400 text-sm">Scroll horizontally to view more battles</p>
               </div>
               <div class="flex items-center gap-2 sm:gap-3">
-                <!-- Navigation buttons -->
-                <button
-                  @click="prevSlide"
-                  :disabled="carouselCurrentIndex <= 0"
-                  class="group flex items-center justify-center w-12 h-12 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/50 hover:border-cyan-500/50 rounded-full transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 group-hover:text-cyan-400 transition-colors">
-                    <path d="m15 18-6-6 6-6"/>
-                  </svg>
-                </button>
-                <button
-                  @click="nextSlide"
-                  :disabled="carouselCurrentIndex >= carouselMaxIndex"
-                  class="group flex items-center justify-center w-12 h-12 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/50 hover:border-cyan-500/50 rounded-full transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 group-hover:text-cyan-400 transition-colors">
-                    <path d="m9 18 6-6-6-6"/>
-                  </svg>
-                </button>
                 <router-link
                   :to="`/players/${encodeURIComponent(playerName)}/sessions`"
                   class="flex items-center gap-2 px-4 py-2 text-sm font-medium !text-white hover:!text-cyan-100 bg-slate-800/80 hover:bg-slate-700/90 border border-slate-600/70 hover:border-cyan-500/70 rounded-lg transition-all duration-300"
@@ -1084,18 +1005,13 @@ watch(
               </div>
             </div>
 
-            <!-- Carousel Container -->
-            <div class="relative overflow-hidden">
-              <div 
-                ref="carouselContainer"
-                class="flex transition-transform duration-500 ease-out"
-                :style="{ transform: `translateX(-${carouselCurrentIndex * (100 / carouselItemsPerView)}%)` }"
-              >
+            <!-- Horizontal Scroll Container -->
+            <div class="overflow-x-auto scrollbar-hide pb-4">
+              <div class="flex gap-4 min-w-max">
                 <div
                   v-for="(session, index) in playerStats.recentSessions"
                   :key="`session-${index}`"
-                  class="flex-none px-2"
-                  :style="{ width: `${100 / carouselItemsPerView}%` }"
+                  class="flex-none w-80"
                 >
                   <!-- Round Card -->
                   <div 
@@ -1106,13 +1022,6 @@ watch(
                     <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div class="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     
-                    <!-- Performance Badge -->
-                    <div 
-                      v-if="session === getHighestPerformanceRound"
-                      class="absolute -top-2 -right-2 z-20 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    >
-                      🔥 Best
-                    </div>
                     
                     <div class="relative z-10 p-3 space-y-3">
                       <!-- Header: Server name only -->
@@ -1183,18 +1092,6 @@ watch(
               </div>
             </div>
 
-            <!-- Carousel Indicators -->
-            <div v-if="playerStats.recentSessions.length > carouselItemsPerView" class="flex justify-center gap-2 mt-6">
-              <button
-                v-for="index in Math.ceil(playerStats.recentSessions.length / carouselItemsPerView)"
-                :key="index"
-                @click="goToSlide(index - 1)"
-                class="w-2 h-2 rounded-full transition-all duration-300"
-                :class="carouselCurrentIndex === index - 1 
-                  ? 'bg-cyan-500 w-8' 
-                  : 'bg-slate-600 hover:bg-slate-500'"
-              ></button>
-            </div>
           </div>
         </div>
 
@@ -1207,7 +1104,7 @@ watch(
           <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5"></div>
           <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl"></div>
           
-          <div class="relative z-10 p-8 space-y-8">
+          <div class="relative z-10 p-4 sm:p-8 space-y-4 sm:space-y-8">
             <!-- Section Header -->
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div class="space-y-2">
@@ -1227,12 +1124,12 @@ watch(
             <!-- Performance Metrics Grid -->
             <div class="space-y-8">
               <!-- Trend Charts -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
                 <!-- K/D Ratio Card -->
                 <div class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-orange-500/50 transition-all duration-300">
                   <div class="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
-                  <div class="relative z-10 p-6 space-y-4">
+                  <div class="relative z-10 p-3 sm:p-6 space-y-3 sm:space-y-4">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
                         <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
@@ -1261,7 +1158,7 @@ watch(
                 <div class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-green-500/50 transition-all duration-300">
                   <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
-                  <div class="relative z-10 p-6 space-y-4">
+                  <div class="relative z-10 p-3 sm:p-6 space-y-3 sm:space-y-4">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
                         <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
@@ -1288,13 +1185,13 @@ watch(
               </div>
               
               <!-- Total Stats Cards -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
                 <!-- Total Kills -->
                 <div class="group relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-green-500/50 transition-all duration-300">
                   <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-2xl"></div>
                   
-                  <div class="relative z-10 p-6">
+                  <div class="relative z-10 p-3 sm:p-6">
                     <div class="flex items-center gap-4">
                       <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-3xl transform group-hover:scale-110 transition-transform duration-300">
                         🎯
@@ -1315,7 +1212,7 @@ watch(
                   <div class="absolute inset-0 bg-gradient-to-br from-red-500/5 to-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl"></div>
                   
-                  <div class="relative z-10 p-6">
+                  <div class="relative z-10 p-3 sm:p-6">
                     <div class="flex items-center gap-4">
                       <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center text-3xl transform group-hover:scale-110 transition-transform duration-300">
                         💀
@@ -1339,7 +1236,7 @@ watch(
               >
                 <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
-                <div class="relative z-10 p-6 space-y-4">
+                <div class="relative z-10 p-3 sm:p-6 space-y-3 sm:space-y-4">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                       <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
@@ -1405,7 +1302,7 @@ watch(
             
             <!-- Server Cards Grid -->
             <div v-if="hasServers" class="w-full">
-              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
                 <div
                   v-for="server in sortedServers"
                   :key="server.serverGuid"
@@ -1415,7 +1312,7 @@ watch(
                   <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
-                  <div class="relative z-10 p-6 space-y-4">
+                  <div class="relative z-10 p-3 sm:p-6 space-y-3 sm:space-y-4">
                     <!-- Server Header -->
                     <div class="flex items-start gap-3">
                       <div class="flex-shrink-0">
@@ -1700,7 +1597,7 @@ watch(
               v-if="expandedServerId"
               class="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden"
             >
-              <div class="p-6 border-b border-slate-700/50">
+              <div class="p-3 sm:p-6 border-b border-slate-700/50">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                   <div class="space-y-1">
                     <h5 class="text-xl font-bold text-white">Map Performance</h5>
@@ -1724,7 +1621,7 @@ watch(
                 </div>
               </div>
               
-              <div class="p-6">
+              <div class="p-3 sm:p-6">
                 <div
                   v-if="mapStats.length === 0 && mapStatsLoading"
                   class="flex flex-col items-center justify-center p-12 space-y-4"
@@ -2528,7 +2425,7 @@ watch(
                         </h5>
                       </div>
                       
-                      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
                         <!-- Common Activity Hours -->
                         <div
                           v-if="getCommonOnlineHours(targetPlayerStats, similarPlayer).length > 0"
@@ -2629,6 +2526,15 @@ watch(
 
 <style scoped>
 /* Custom animations and styles that cannot be achieved with standard Tailwind */
+
+/* Hide scrollbar for horizontal scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
 
 /* Slow spin animation for avatar ring */
 @keyframes spin-slow {
