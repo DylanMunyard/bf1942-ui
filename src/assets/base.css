@@ -74,12 +74,12 @@
   --color-text: var(--vt-c-text-dark-2);
   --color-text-muted: rgba(235, 235, 235, 0.45);
 
-  --color-primary: var(--vt-c-dark-accent);
-  --color-primary-hover: var(--vt-c-dark-accent-soft);
-  --color-primary-rgb: 107, 70, 193;
-  --color-accent: #7e57c2;
-  --color-accent-hover: #9575cd;
-  --color-accent-rgb: 126, 87, 194;
+  --color-primary: #06b6d4;
+  --color-primary-hover: #0891b2;
+  --color-primary-rgb: 6, 182, 212;
+  --color-accent: #10b981;
+  --color-accent-hover: #059669;
+  --color-accent-rgb: 16, 185, 129;
 
   /* Dashboard-specific dark mode variables */
   --color-card-bg: var(--vt-c-dark-purple-soft);
@@ -103,12 +103,12 @@
     --color-text: var(--vt-c-text-dark-2);
     --color-text-muted: rgba(235, 235, 235, 0.45);
 
-    --color-primary: var(--vt-c-dark-accent);
-    --color-primary-hover: var(--vt-c-dark-accent-soft);
-    --color-primary-rgb: 107, 70, 193;
-    --color-accent: #7e57c2;
-    --color-accent-hover: #9575cd;
-    --color-accent-rgb: 126, 87, 194;
+    --color-primary: #06b6d4;
+    --color-primary-hover: #0891b2;
+    --color-primary-rgb: 6, 182, 212;
+    --color-accent: #10b981;
+    --color-accent-hover: #059669;
+    --color-accent-rgb: 16, 185, 129;
 
     /* Dashboard-specific dark mode variables */
     --color-card-bg: var(--vt-c-dark-purple-soft);
@@ -132,8 +132,10 @@ body, h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd {
 
 body {
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
   color: var(--color-text);
-  background: var(--color-background-soft);
+  background: #0f172a;
   transition:
     color 0.5s,
     background-color 0.5s;
@@ -164,6 +166,6 @@ body {
 
 /* Transition for smooth theme switching */
 html {
-  background: var(--color-background-soft);
+  background: #0f172a;
   transition: background-color 0.3s ease, color 0.3s ease;
 }

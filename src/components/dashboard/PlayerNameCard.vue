@@ -1,80 +1,91 @@
 <template>
   <div
-    class="player-name-card"
-    :class="{ 'online': playerName.player?.isOnline }"
+    class="relative bg-gradient-to-r from-slate-800/30 to-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4 transition-all duration-300 hover:from-slate-800/50 hover:to-slate-900/50 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-1"
+    :class="{ 'border-l-4 border-l-green-500': playerName.player?.isOnline }"
   >
-    <div class="player-row">
-      <div class="player-info">
-        <div class="player-avatar">
-          <span class="avatar-letter">{{ playerName.playerName[0].toUpperCase() }}</span>
+    <div class="flex justify-between items-center gap-3">
+      <div class="flex items-center gap-3 flex-1 min-w-0">
+        <!-- Avatar -->
+        <div class="relative flex-shrink-0">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-slate-900 font-bold text-lg">
+            {{ playerName.playerName[0].toUpperCase() }}
+          </div>
           <div
             v-if="playerName.player?.isOnline"
-            class="online-indicator"
-          />
-        </div>
-        <div class="player-details">
-          <div class="player-name">
-            <router-link
-              :to="`/players/${playerName.playerName}`"
-              class="player-name-link"
-            >
-              {{ playerName.playerName }}
-            </router-link>
+            class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900 flex items-center justify-center"
+          >
+            <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
           </div>
-          <div class="player-status">
-            <span
+        </div>
+        
+        <!-- Player Details -->
+        <div class="flex-1 min-w-0">
+          <router-link
+            :to="`/players/${playerName.playerName}`"
+            class="block text-slate-200 font-semibold text-sm hover:text-cyan-400 transition-colors duration-200 truncate"
+          >
+            {{ playerName.playerName }}
+          </router-link>
+          
+          <!-- Status -->
+          <div class="text-xs mt-1">
+            <div
               v-if="playerName.player?.isOnline && playerName.player.currentServer"
-              class="status-info"
+              class="text-green-400 font-medium"
             >
               🎮 <router-link
                 :to="`/servers/${encodeURIComponent(playerName.player.currentServer)}`"
-                class="server-link"
-              >{{ playerName.player.currentServer }}</router-link>
+                class="text-green-400 hover:text-cyan-400 transition-colors duration-200 font-medium"
+              >{{ truncateServerName(playerName.player.currentServer) }}</router-link>
               <span
                 v-if="playerName.player.currentMap"
-                class="map-info"
-              >• {{ playerName.player.currentMap }}</span>
-            </span>
-            <span
+                class="text-slate-400 block sm:inline"
+              > • {{ playerName.player.currentMap }}</span>
+            </div>
+            <div
               v-else-if="playerName.player?.isOnline"
-              class="status-info online"
+              class="text-green-400 font-medium"
             >
               🟢 Online
-            </span>
-            <span
+            </div>
+            <div
               v-else
-              class="status-info offline"
+              class="text-slate-400"
             >
-              Last seen {{ formatLastSeen(playerName.player.lastSeenIso) }}
-            </span>
+              {{ formatLastSeen(playerName.player.lastSeenIso) }}
+            </div>
             
-            <!-- Current session stats inline -->
+            <!-- Session Stats -->
             <div
               v-if="playerName.player?.isOnline && hasSessionStats"
-              class="session-stats"
+              class="flex gap-2 mt-1 flex-wrap"
             >
               <span
                 v-if="playerName.player.currentSessionScore !== undefined"
-                class="stat-score"
+                class="px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-md text-xs font-medium"
               >
                 {{ formatScore(playerName.player.currentSessionScore) }}
               </span>
               <span
                 v-if="playerName.player.currentSessionKills !== undefined && playerName.player.currentSessionDeaths !== undefined"
-                class="stat-kd"
+                class="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded-md text-xs font-medium"
               >
-                (<span class="kills">{{ playerName.player.currentSessionKills }}</span>/<span class="deaths">{{ playerName.player.currentSessionDeaths }}</span>)
+                <span class="text-green-400">{{ playerName.player.currentSessionKills }}</span>/<span class="text-red-400">{{ playerName.player.currentSessionDeaths }}</span>
               </span>
             </div>
           </div>
         </div>
       </div>
+      
+      <!-- Remove Button -->
       <button
-        class="remove-btn"
+        class="group flex items-center justify-center w-8 h-8 rounded-full bg-slate-700/50 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all duration-200 hover:scale-110 flex-shrink-0"
         title="Remove player"
         @click="$emit('remove', playerName.id)"
       >
-        ✕
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
       </button>
     </div>
   </div>
@@ -125,7 +136,12 @@ const formatScore = (score: number): string => {
   return score.toLocaleString();
 };
 
-// Note: formatLastSeen is now imported from @/utils/timeUtils
+const truncateServerName = (serverName: string): string => {
+  if (serverName.length > 25) {
+    return `${serverName.substring(0, 25)}...`;
+  }
+  return serverName;
+};
 
 const hasSessionStats = computed(() => {
   return props.playerName.player?.currentSessionScore !== undefined ||
@@ -134,203 +150,3 @@ const hasSessionStats = computed(() => {
 });
 </script>
 
-<style scoped>
-.player-name-card {
-  background: var(--color-card-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 12px;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.player-name-card:hover {
-  border-color: rgba(var(--color-accent-rgb), 0.4);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.player-name-card.online {
-  border-left: 3px solid #22c55e;
-}
-
-.player-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.player-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-}
-
-.player-avatar {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, var(--color-accent) 0%, rgba(var(--color-accent-rgb), 0.8) 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.avatar-letter {
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.online-indicator {
-  position: absolute;
-  bottom: -1px;
-  right: -1px;
-  width: 10px;
-  height: 10px;
-  background-color: #22c55e;
-  border: 2px solid var(--color-card-bg);
-  border-radius: 50%;
-}
-
-.player-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.player-name {
-  margin: 0 0 2px 0;
-  font-size: 0.9rem;
-}
-
-.player-name-link {
-  color: var(--color-text);
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
-}
-
-.player-name-link:hover {
-  color: var(--color-accent);
-}
-
-.player-status {
-  font-size: 0.75rem;
-  line-height: 1.3;
-}
-
-.status-info {
-  display: block;
-  margin-bottom: 2px;
-}
-
-.status-info.online {
-  color: #22c55e;
-  font-weight: 500;
-}
-
-.status-info.offline {
-  color: var(--color-text-secondary);
-}
-
-.server-link {
-  color: #22c55e;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
-}
-
-.server-link:hover {
-  color: var(--color-accent);
-  text-decoration: underline;
-}
-
-.map-info {
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.session-stats {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  font-size: 0.7rem;
-}
-
-.stat-score {
-  color: var(--color-text);
-  font-weight: 600;
-}
-
-.stat-kd {
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.stat-kd .kills {
-  color: #4caf50;
-}
-
-.stat-kd .deaths {
-  color: #f44336;
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  font-size: 0.9rem;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  color: var(--color-text-secondary);
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.remove-btn:hover {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  transform: scale(1.1);
-}
-
-/* Mobile responsiveness */
-@media (max-width: 480px) {
-  .player-name-card {
-    padding: 10px;
-  }
-  
-  .player-avatar {
-    width: 28px;
-    height: 28px;
-  }
-  
-  .avatar-letter {
-    font-size: 0.8rem;
-  }
-  
-  .player-name {
-    font-size: 0.85rem;
-  }
-  
-  .player-status {
-    font-size: 0.7rem;
-  }
-  
-  .remove-btn {
-    width: 20px;
-    height: 20px;
-    font-size: 0.8rem;
-  }
-}
-</style>

@@ -1,137 +1,162 @@
 <template>
-  <div class="dashboard">
-    <!-- Header Section -->
-    <div class="dashboard-header">
-      <div class="welcome-section">
-        <h1 v-if="isAuthenticated">
-          Welcome back!
-        </h1>
-        <h1 v-else>
-          Welcome to Battlefield Command Center
-        </h1>
-        <p
-          v-if="isAuthenticated"
-          class="subtitle"
-        >
-          Ready for battle? Here's your tactical overview.
-        </p>
-        <p
-          v-else
-          class="subtitle"
-        >
-          Sign in to access your personal battlefield dashboard with player profiles, favorite servers, and squad management.
-        </p>
-      </div>
+  <div class="relative min-h-screen px-3 sm:px-6">
+    <!-- Background Effects -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
     </div>
 
-    <!-- Main Content Grid -->
-    <div class="dashboard-grid">
-      <!-- Player Profiles Section -->
-      <section class="dashboard-section player-profiles">
-        <ConfirmationModal
-          v-if="showPlayerConfirm"
-          :message="playerConfirmMessage"
-          confirm-text="Remove"
-          @confirm="handlePlayerRemove"
-          @cancel="cancelPlayerConfirm"
-        />
-        <div class="section-header">
-          <div class="header-content">
-            <h2>Your Battlefield Profiles</h2>
-            <p class="section-subtitle">
-              Link your in-game player name(s) to track stats and achievements
-            </p>
-          </div>
-          <div class="section-header-actions">
-            <button
-              v-if="isAuthenticated && userProfiles.length > 0"
-              class="add-btn"
-              title="Add Player Profile"
-              @click="showAddPlayerModal = true"
-            >
-              <span class="icon">+</span>
-            </button>
-            <span class="section-count">{{ userProfiles.length }}</span>
+    <div class="relative z-10 pb-6 sm:pb-12">
+      <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-8">
+          <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50"></div>
+          <div class="relative z-10 p-6 sm:p-8 md:p-12">
+            <div class="welcome-section">
+              <h1 
+                v-if="isAuthenticated"
+                class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4"
+              >
+                Welcome back!
+              </h1>
+              <h1 
+                v-else
+                class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4"
+              >
+                Welcome to Battlefield Command Center
+              </h1>
+              <p
+                v-if="isAuthenticated"
+                class="text-slate-300 text-lg sm:text-xl leading-relaxed"
+              >
+                Ready for battle? Here's your tactical overview.
+              </p>
+              <p
+                v-else
+                class="text-slate-300 text-lg sm:text-xl leading-relaxed"
+              >
+                Sign in to access your personal battlefield dashboard with player profiles, favorite servers, and squad management.
+              </p>
+            </div>
           </div>
         </div>
-        <div class="section-content">
-          <div
-            v-if="userProfiles.length > 0"
-            class="profiles-grid"
-          >
-            <PlayerNameCard
-              v-for="profile in userProfiles"
-              :key="profile.id"
-              :player-name="profile"
-              @view-details="goToPlayerDetails"
-              @remove="removePlayerName"
-            />
-          </div>
-          <EmptyStateCard
-            v-else
-            :title="isAuthenticated ? 'No Player Profiles Yet' : 'Player Profiles'"
-            :description="isAuthenticated ? 'Add your in-game player names to see your battlefield stats and achievements.' : 'Sign in to add your player profiles and track your battlefield performance across all servers.'"
-            :action-text="isAuthenticated ? 'Add Your First Player' : undefined"
-            icon="👤"
-            @action="showAddPlayerModal = true"
-          />
-        </div>
-      </section>
 
-      <!-- Favorite Servers Section -->
-      <section class="dashboard-section favorite-servers">
-        <ConfirmationModal
-          v-if="showServerConfirm"
-          :message="serverConfirmMessage"
-          confirm-text="Remove"
-          @confirm="handleServerRemove"
-          @cancel="cancelServerConfirm"
-        />
-        <div class="section-header">
-          <div class="header-content">
-            <h2>Favorite Servers</h2>
-            <p class="section-subtitle">
-              Save servers to quickly monitor status and join battles
-            </p>
-          </div>
-          <div class="section-header-actions">
-            <button
-              v-if="isAuthenticated && favoriteServers.length > 0"
-              class="add-btn"
-              title="Add Favorite Server"
-              @click="showAddServerModal = true"
-            >
-              <span class="icon">+</span>
-            </button>
-            <span class="section-count">{{ favoriteServers.length }}</span>
-          </div>
-        </div>
-        <div class="section-content">
-          <div
-            v-if="favoriteServers.length > 0"
-            class="servers-grid"
-          >
-            <FavoriteServerCard
-              v-for="server in favoriteServers"
-              :key="server.id"
-              :server="server"
-              @join="joinServer"
-              @remove="() => removeFavoriteServer(server.id)"
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+          <!-- Player Profiles Section -->
+          <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+            <ConfirmationModal
+              v-if="showPlayerConfirm"
+              :message="playerConfirmMessage"
+              confirm-text="Remove"
+              @confirm="handlePlayerRemove"
+              @cancel="cancelPlayerConfirm"
             />
-          </div>
-          <EmptyStateCard
-            v-else
-            :title="isAuthenticated ? 'No Favorite Servers' : 'Favorite Servers'"
-            :description="isAuthenticated ? 'Mark servers as favorites to quickly see their status and join battles.' : 'Sign in to save your favorite servers for quick access and monitoring.'"
-            :action-text="isAuthenticated ? 'Add Server' : undefined"
-            icon="🖥️"
-            @action="showAddServerModal = true"
-          />
-        </div>
-      </section>
+            <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
+              <div class="flex flex-col gap-2">
+                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 flex items-center gap-3">
+                  👤 Your Battlefield Profiles
+                </h2>
+                <p class="text-slate-400 text-sm">
+                  Link your in-game player name(s) to track stats and achievements
+                </p>
+              </div>
+              <div class="flex items-center gap-3">
+                <button
+                  v-if="isAuthenticated && userProfiles.length > 0"
+                  class="group flex items-center justify-center w-10 h-10 rounded-full border-2 border-cyan-400 bg-transparent text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 transition-all duration-300 transform hover:scale-105"
+                  title="Add Player Profile"
+                  @click="showAddPlayerModal = true"
+                >
+                  <span class="text-xl font-bold">+</span>
+                </button>
+                <span class="px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-bold rounded-full">
+                  {{ userProfiles.length }}
+                </span>
+              </div>
+            </div>
+            <div class="p-4 sm:p-6">
+              <div
+                v-if="userProfiles.length > 0"
+                class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3"
+              >
+                <PlayerNameCard
+                  v-for="profile in userProfiles"
+                  :key="profile.id"
+                  :player-name="profile"
+                  @view-details="goToPlayerDetails"
+                  @remove="removePlayerName"
+                />
+              </div>
+              <EmptyStateCard
+                v-else
+                :title="isAuthenticated ? 'No Player Profiles Yet' : 'Player Profiles'"
+                :description="isAuthenticated ? 'Add your in-game player names to see your battlefield stats and achievements.' : 'Sign in to add your player profiles and track your battlefield performance across all servers.'"
+                :action-text="isAuthenticated ? 'Add Your First Player' : undefined"
+                icon="👤"
+                @action="showAddPlayerModal = true"
+              />
+            </div>
+          </section>
 
-      <!-- Buddies Section -->
-      <section class="dashboard-section buddies">
+          <!-- Favorite Servers Section -->
+          <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+            <ConfirmationModal
+              v-if="showServerConfirm"
+              :message="serverConfirmMessage"
+              confirm-text="Remove"
+              @confirm="handleServerRemove"
+              @cancel="cancelServerConfirm"
+            />
+            <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
+              <div class="flex flex-col gap-2">
+                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
+                  🖥️ Favorite Servers
+                </h2>
+                <p class="text-slate-400 text-sm">
+                  Save servers to quickly monitor status and join battles
+                </p>
+              </div>
+              <div class="flex items-center gap-3">
+                <button
+                  v-if="isAuthenticated && favoriteServers.length > 0"
+                  class="group flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-400 bg-transparent text-emerald-400 hover:bg-emerald-400 hover:text-slate-900 transition-all duration-300 transform hover:scale-105"
+                  title="Add Favorite Server"
+                  @click="showAddServerModal = true"
+                >
+                  <span class="text-xl font-bold">+</span>
+                </button>
+                <span class="px-3 py-1 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-bold rounded-full">
+                  {{ favoriteServers.length }}
+                </span>
+              </div>
+            </div>
+            <div class="p-4 sm:p-6">
+              <div
+                v-if="favoriteServers.length > 0"
+                class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3"
+              >
+                <FavoriteServerCard
+                  v-for="server in favoriteServers"
+                  :key="server.id"
+                  :server="server"
+                  @join="joinServer"
+                  @remove="() => removeFavoriteServer(server.id)"
+                />
+              </div>
+              <EmptyStateCard
+                v-else
+                :title="isAuthenticated ? 'No Favorite Servers' : 'Favorite Servers'"
+                :description="isAuthenticated ? 'Mark servers as favorites to quickly see their status and join battles.' : 'Sign in to save your favorite servers for quick access and monitoring.'"
+                :action-text="isAuthenticated ? 'Add Server' : undefined"
+                icon="🖥️"
+                @action="showAddServerModal = true"
+              />
+            </div>
+          </section>
+
+          <!-- Buddies Section -->
+          <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
         <ConfirmationModal
           v-if="showBuddyConfirm"
           :message="buddyConfirmMessage"
@@ -139,30 +164,34 @@
           @confirm="handleBuddyRemove"
           @cancel="cancelBuddyConfirm"
         />
-        <div class="section-header">
-          <div class="header-content">
-            <h2>Your Squad</h2>
-            <p class="section-subtitle">
-              Track friends and squad mates across the battlefield
-            </p>
+          <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
+            <div class="flex flex-col gap-2">
+              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
+                👥 Your Squad
+              </h2>
+              <p class="text-slate-400 text-sm">
+                Track friends and squad mates across the battlefield
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button
+                v-if="isAuthenticated && buddies.length > 0"
+                class="group flex items-center justify-center w-10 h-10 rounded-full border-2 border-purple-400 bg-transparent text-purple-400 hover:bg-purple-400 hover:text-slate-900 transition-all duration-300 transform hover:scale-105"
+                title="Add Squad Member"
+                @click="showAddBuddyModal = true"
+              >
+                <span class="text-xl font-bold">+</span>
+              </button>
+              <span class="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-bold rounded-full">
+                {{ buddies.length }}
+              </span>
+            </div>
           </div>
-          <div class="section-header-actions">
-            <button
-              v-if="isAuthenticated && buddies.length > 0"
-              class="add-btn"
-              title="Add Squad Member"
-              @click="showAddBuddyModal = true"
+          <div class="p-4 sm:p-6">
+            <div
+              v-if="buddies.length > 0"
+              class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3"
             >
-              <span class="icon">+</span>
-            </button>
-            <span class="section-count">{{ buddies.length }}</span>
-          </div>
-        </div>
-        <div class="section-content">
-          <div
-            v-if="buddies.length > 0"
-            class="buddies-grid"
-          >
             <BuddyCard
               v-for="buddy in buddies"
               :key="buddy.id"
@@ -178,20 +207,12 @@
             icon="👥"
             @action="showAddBuddyModal = true"
           />
+          </div>
+        </section>
         </div>
-      </section>
-
-      <!-- Recent Activity Section -->
-      <section class="dashboard-section recent-activity full-width">
-        <div class="section-header">
-          <h2>Recent Battlefield Activity</h2>
-        </div>
-        <div class="section-content">
-          <RecentActivityFeed :activities="recentActivities" />
-        </div>
-      </section>
+      </div>
     </div>
-
+    
     <!-- Modals -->
     <AddPlayerModal
       v-if="showAddPlayerModal"
@@ -220,7 +241,6 @@ import PlayerNameCard from '@/components/dashboard/PlayerNameCard.vue';
 import FavoriteServerCard from '@/components/dashboard/FavoriteServerCard.vue';
 import BuddyCard from '@/components/dashboard/BuddyCard.vue';
 import EmptyStateCard from '@/components/dashboard/EmptyStateCard.vue';
-import RecentActivityFeed from '@/components/dashboard/RecentActivityFeed.vue';
 import AddPlayerModal from '@/components/dashboard/AddPlayerModal.vue';
 import AddServerModal from '@/components/dashboard/AddServerModal.vue';
 import AddBuddyModal from '@/components/dashboard/AddBuddyModal.vue';
@@ -267,13 +287,6 @@ interface Buddy {
 }
 
 
-interface RecentActivity {
-  id: string;
-  type: 'achievement' | 'session' | 'buddy_online' | 'rank_up';
-  description: string;
-  timestamp: string;
-  playerName?: string;
-}
 
 const router = useRouter();
 const { isAuthenticated } = useAuth();
@@ -282,7 +295,6 @@ const { isAuthenticated } = useAuth();
 const userProfiles = ref<UserProfile[]>([]);
 const favoriteServers = ref<FavoriteServer[]>([]);
 const buddies = ref<Buddy[]>([]);
-const recentActivities = ref<RecentActivity[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
@@ -394,14 +406,11 @@ const loadUserData = async () => {
         // Then sort by name alphabetically
         return a.buddyPlayerName.localeCompare(b.buddyPlayerName);
       });
-      // TODO: Load recent activities from a separate endpoint if available
-      recentActivities.value = [];
     } else {
       // For unauthenticated users, clear data to show empty states
       userProfiles.value = [];
       favoriteServers.value = [];
       buddies.value = [];
-      recentActivities.value = [];
     }
   } catch (err) {
     console.error('Error loading dashboard data:', err);
@@ -410,7 +419,6 @@ const loadUserData = async () => {
     userProfiles.value = [];
     favoriteServers.value = [];
     buddies.value = [];
-    recentActivities.value = [];
   } finally {
     loading.value = false;
   }
@@ -462,186 +470,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dashboard {
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
+/* Custom animations for enhanced visual effects */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding: 20px;
-  background: linear-gradient(135deg, var(--color-card-bg) 0%, rgba(var(--color-accent-rgb), 0.1) 100%);
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-}
-
-.welcome-section h1 {
-  color: var(--color-text);
-  margin: 0 0 5px 0;
-  font-size: 2rem;
-  font-weight: 700;
-}
-
-.subtitle {
-  color: var(--color-text-secondary);
-  margin: 0;
-  font-size: 1rem;
-}
-
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
-}
-
-.dashboard-section {
-  background-color: var(--color-card-bg);
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-  overflow: hidden;
-  position: relative;
-}
-
-.dashboard-section.full-width {
-  grid-column: 1 / -1;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--color-border);
-  background-color: rgba(var(--color-accent-rgb), 0.05);
-}
-
-.section-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.section-header h2 {
-  color: var(--color-text);
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.section-subtitle {
-  color: var(--color-text-secondary);
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 400;
-}
-
-.section-count {
-  background-color: var(--color-accent);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.add-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid var(--color-accent);
-  background-color: transparent;
-  color: var(--color-accent);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.add-btn:hover {
-  background-color: var(--color-accent);
-  color: white;
-  transform: scale(1.05);
-}
-
-.add-btn .icon {
-  line-height: 1;
-}
-
-.section-content {
-  padding: 24px;
-}
-
-.profiles-grid,
-.servers-grid,
-.buddies-grid {
-  display: grid;
-  gap: 16px;
-}
-
-.profiles-grid {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 8px;
-}
-
-.servers-grid {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 8px;
-}
-
-.buddies-grid {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 8px;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 1024px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard {
-    padding: 16px;
-  }
-
-  .dashboard-header {
-    text-align: center;
-  }
-
-  .section-content {
-    padding: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard {
-    padding: 12px;
-  }
-
-  .welcome-section h1 {
-    font-size: 1.5rem;
-  }
-
-  .profiles-grid,
-  .servers-grid,
-  .buddies-grid {
-    grid-template-columns: 1fr;
-  }
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }
 </style>

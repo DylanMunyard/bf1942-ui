@@ -1,53 +1,74 @@
 <template>
   <div
-    class="favorite-server-card"
+    class="group relative bg-gradient-to-r from-slate-800/30 to-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4 transition-all duration-300 hover:from-slate-800/50 hover:to-slate-900/50 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-1 cursor-pointer"
     @click="$emit('join', server)"
   >
-    <div class="server-row">
-      <div class="server-info">
+    <div class="flex justify-between items-start gap-3">
+      <div class="flex-1 min-w-0">
+        <!-- Server Name -->
         <router-link
           :to="`/servers/${encodeURIComponent(server.serverName)}`"
-          class="server-name-link"
+          class="block text-slate-200 font-semibold text-sm hover:text-emerald-400 transition-colors duration-200 truncate group-hover:text-emerald-300"
           @click.stop
         >
-          <span class="server-name">{{ server.serverName }}</span>
+          {{ server.serverName }}
         </router-link>
-        <div class="server-details">
-          <span
-            v-if="server.currentMap"
-            class="current-map"
-          >{{ server.currentMap }}</span>
+        
+        <!-- Server Status -->
+        <div class="mt-2 flex items-center justify-between gap-2">
+          <div class="flex-1 min-w-0">
+            <div
+              v-if="server.currentMap"
+              class="text-xs text-slate-400 truncate"
+            >
+              🗺️ {{ server.currentMap }}
+            </div>
+            <div
+              v-else
+              class="text-xs text-red-400 font-medium"
+            >
+              🔴 Server Offline
+            </div>
+          </div>
+          
+          <!-- Player Count Badge -->
           <div
-            class="player-count-badge"
-            :class="getStatusClass()"
+            class="px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 flex-shrink-0"
+            :class="getStatusBadgeClass()"
           >
             <template v-if="server.currentMap">
-              <span class="count">{{ server.activeSessions }}</span>
-              <span class="max">/{{ server.maxPlayers }}</span>
+              <span class="text-xs">{{ server.activeSessions }}</span>
+              <span class="text-xs opacity-75">/{{ server.maxPlayers }}</span>
             </template>
             <span
               v-else
-              class="offline-text"
+              class="text-xs tracking-wide"
             >OFFLINE</span>
           </div>
         </div>
       </div>
-      <div class="server-stats">
+      
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 flex-shrink-0">
         <a 
           v-if="server.joinLink" 
           :href="server.joinLink" 
-          class="join-btn" 
+          class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-all duration-200 hover:scale-110" 
           title="Join Server" 
           @click.stop
         >
-          🚀
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+          </svg>
         </a>
         <button
-          class="remove-btn"
+          class="group flex items-center justify-center w-8 h-8 rounded-full bg-slate-700/50 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200 hover:scale-110"
           title="Remove from favorites"
           @click.stop="$emit('remove', server.id)"
         >
-          ❤️
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
         </button>
       </div>
     </div>
@@ -76,237 +97,19 @@ defineEmits<{
   remove: [serverId: number];
 }>();
 
-const getStatusClass = () => {
+const getStatusBadgeClass = () => {
   // If no current map, server is offline
-  if (!props.server.currentMap) return 'offline';
+  if (!props.server.currentMap) return 'bg-red-500/20 text-red-400';
   
   const maxPlayers = props.server.maxPlayers;
   const sessions = props.server.activeSessions;
   
-  // Server is online, use green-based colors for online servers with players
-  if (sessions === 0) return 'online-empty';
-  if (sessions >= maxPlayers) return 'online-full';
-  if (sessions >= maxPlayers * 0.75) return 'online-hot';
-  if (sessions >= maxPlayers * 0.5) return 'online-active';
-  return 'online-low';
+  // Server is online, use emerald-based colors for online servers with players
+  if (sessions === 0) return 'bg-emerald-500/10 text-emerald-400';
+  if (sessions >= maxPlayers) return 'bg-emerald-500/40 text-emerald-100';
+  if (sessions >= maxPlayers * 0.75) return 'bg-emerald-500/30 text-emerald-200';
+  if (sessions >= maxPlayers * 0.5) return 'bg-emerald-500/20 text-emerald-300';
+  return 'bg-emerald-500/15 text-emerald-400';
 };
 </script>
 
-<style scoped>
-.favorite-server-card {
-  background: var(--color-card-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.favorite-server-card:hover {
-  border-color: rgba(var(--color-accent-rgb), 0.4);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.server-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.server-info {
-  flex: 1;
-  min-width: 0;
-  margin-right: 12px;
-}
-
-.server-name-link {
-  text-decoration: none;
-  display: block;
-  margin-bottom: 2px;
-}
-
-.server-name {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color 0.2s ease;
-}
-
-.server-name-link:hover .server-name {
-  color: var(--color-accent);
-}
-
-.server-details {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.current-map {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.idle-text {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
-
-.server-stats {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  min-width: fit-content;
-}
-
-.player-count-badge {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  min-width: 50px;
-  justify-content: center;
-  white-space: nowrap;
-}
-
-/* Offline server - red styling */
-.player-count-badge.offline {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-}
-
-.offline-text {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-/* Online server with no players - light green */
-.player-count-badge.online-empty {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
-}
-
-/* Online server with low players - medium green */
-.player-count-badge.online-low {
-  background-color: rgba(34, 197, 94, 0.2);
-  color: #22c55e;
-}
-
-/* Online server with active players - bright green */
-.player-count-badge.online-active {
-  background-color: rgba(34, 197, 94, 0.3);
-  color: #15803d;
-}
-
-/* Online server with hot activity - vibrant green */
-.player-count-badge.online-hot {
-  background-color: rgba(34, 197, 94, 0.4);
-  color: #166534;
-}
-
-/* Online server that's full - dark green */
-.player-count-badge.online-full {
-  background-color: rgba(34, 197, 94, 0.5);
-  color: #14532d;
-}
-
-.count {
-  font-size: 0.8rem;
-}
-
-.max {
-  font-size: 0.7rem;
-  opacity: 0.7;
-}
-
-.join-btn {
-  background: none;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  color: var(--color-text-secondary);
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  text-decoration: none;
-}
-
-.join-btn:hover {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-  transform: scale(1.1);
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  color: var(--color-text-secondary);
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.remove-btn:hover {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  transform: scale(1.1);
-}
-
-/* Mobile responsiveness */
-@media (max-width: 480px) {
-  .favorite-server-card {
-    padding: 10px;
-  }
-  
-  .server-name {
-    font-size: 0.85rem;
-  }
-  
-  .current-map, .idle-text {
-    font-size: 0.7rem;
-  }
-  
-  .player-count-badge {
-    padding: 3px 6px;
-    min-width: 40px;
-  }
-  
-  .join-btn,
-  .remove-btn {
-    width: 20px;
-    height: 20px;
-    font-size: 0.9rem;
-  }
-}
-</style>
