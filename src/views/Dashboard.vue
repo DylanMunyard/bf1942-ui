@@ -45,13 +45,6 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
           <!-- Player Profiles Section -->
           <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-            <ConfirmationModal
-              v-if="showPlayerConfirm"
-              :message="playerConfirmMessage"
-              confirm-text="Remove"
-              @confirm="handlePlayerRemove"
-              @cancel="cancelPlayerConfirm"
-            />
             <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
               <div class="flex flex-col gap-2">
                 <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 flex items-center gap-3">
@@ -101,13 +94,6 @@
 
           <!-- Favorite Servers Section -->
           <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-            <ConfirmationModal
-              v-if="showServerConfirm"
-              :message="serverConfirmMessage"
-              confirm-text="Remove"
-              @confirm="handleServerRemove"
-              @cancel="cancelServerConfirm"
-            />
             <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
               <div class="flex flex-col gap-2">
                 <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
@@ -157,13 +143,6 @@
 
           <!-- Buddies Section -->
           <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-        <ConfirmationModal
-          v-if="showBuddyConfirm"
-          :message="buddyConfirmMessage"
-          confirm-text="Remove"
-          @confirm="handleBuddyRemove"
-          @cancel="cancelBuddyConfirm"
-        />
           <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
             <div class="flex flex-col gap-2">
               <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
@@ -228,6 +207,29 @@
       v-if="showAddBuddyModal"
       @close="showAddBuddyModal = false"
       @added="onBuddyAdded"
+    />
+
+    <!-- Confirmation Modals -->
+    <ConfirmationModal
+      v-if="showPlayerConfirm"
+      :message="playerConfirmMessage"
+      confirm-text="Remove"
+      @confirm="handlePlayerRemove"
+      @cancel="cancelPlayerConfirm"
+    />
+    <ConfirmationModal
+      v-if="showServerConfirm"
+      :message="serverConfirmMessage"
+      confirm-text="Remove"
+      @confirm="handleServerRemove"
+      @cancel="cancelServerConfirm"
+    />
+    <ConfirmationModal
+      v-if="showBuddyConfirm"
+      :message="buddyConfirmMessage"
+      confirm-text="Remove"
+      @confirm="handleBuddyRemove"
+      @cancel="cancelBuddyConfirm"
     />
   </div>
 </template>
