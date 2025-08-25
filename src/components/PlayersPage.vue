@@ -222,326 +222,354 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-900">
-    <!-- Enhanced Search Section -->
-    <div class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-3 sm:p-6">
-      <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-4 sm:mb-6">
-          <h1 class="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">Find Players</h1>
-          <p class="text-slate-400 text-xs sm:text-sm">Search for players and view their stats, activity, and current server status</p>
-        </div>
-        
-        <div class="relative group max-w-2xl mx-auto">
-          <!-- Enhanced Search Icon with Glow -->
-          <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-            <div class="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
-              <span class="text-slate-900 text-xs font-bold">🔍</span>
-            </div>
-          </div>
-          
-          <!-- Premium Search Input -->
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search for any player..."
-            class="w-full pl-12 sm:pl-14 pr-16 sm:pr-20 py-3 sm:py-4 bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-lg border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-300 font-medium shadow-lg hover:shadow-cyan-500/20 focus:shadow-cyan-500/30 text-base sm:text-lg"
-            @input="onSearchInput"
-            @keyup.enter="onSearchEnter"
-          >
-          
-          <!-- Loading Spinner -->
-          <div v-if="isSearchLoading" class="absolute right-12 sm:right-16 top-1/2 transform -translate-y-1/2">
-            <div class="w-4 h-4 sm:w-5 sm:h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>
-          </div>
-          
-          <!-- Clear Button -->
-          <button 
-            v-if="searchQuery" 
-            @click="clearSearch" 
-            class="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-7 h-7 sm:w-8 sm:h-8 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 rounded-lg text-slate-400 hover:text-white transition-all duration-200 flex items-center justify-center font-bold text-base sm:text-lg hover:scale-105"
-          >
-            ×
-          </button>
-          
-          <!-- Search Glow Effect -->
-          <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-        </div>
-      </div>
-    </div>
+  <div class="relative min-h-screen px-3 sm:px-6">
+    <div class="relative z-10">
+      <!-- Back Navigation -->
+      <router-link
+        to="/servers"
+        class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer mb-8"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="group-hover:-translate-x-1 transition-transform duration-300"
+        >
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+        Back to Servers
+      </router-link>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="flex items-center justify-center py-20">
-      <div class="text-center space-y-6">
-        <div class="relative flex items-center justify-center">
-          <div class="w-20 h-20 border-4 border-slate-700 rounded-full animate-spin"></div>
-          <div class="absolute w-20 h-20 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin"></div>
-          <div class="absolute w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full animate-pulse"></div>
-        </div>
-        <div class="text-lg font-semibold text-white">
-          Loading players...
-        </div>
-      </div>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="error" class="flex items-center justify-center py-20">
-      <div class="text-center space-y-4">
-        <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="15" y1="9" x2="9" y2="15"/>
-            <line x1="9" y1="9" x2="15" y2="15"/>
-          </svg>
-        </div>
-        <div class="text-lg font-semibold text-red-400">{{ error }}</div>
-      </div>
-    </div>
-
-    <!-- Hero Section -->
-    <div v-else-if="!searchQuery.trim() && players.length === 0" class="max-w-4xl mx-auto px-6 py-16">
-      <div class="text-center space-y-8">
-        <div class="space-y-4">
-          <div class="w-24 h-24 mx-auto bg-gradient-to-br from-slate-700/50 to-slate-800/50 rounded-full flex items-center justify-center border border-slate-600/50">
-            <span class="text-4xl">🎯</span>
-          </div>
-          <p class="text-xl text-slate-300 font-medium">Start typing a player name above to find their stats and recent activity.</p>
-        </div>
-        
-        <div class="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 max-w-lg mx-auto">
-          <h3 class="text-lg font-bold text-cyan-400 mb-4 flex items-center gap-2">
-            <span>💡</span> Search Tips
-          </h3>
-          <div class="space-y-3 text-left">
-            <div class="flex items-start gap-3 text-sm text-slate-300">
-              <span class="text-green-400 font-bold">•</span>
-              <span>You can search by <strong class="text-white">partial names</strong></span>
-            </div>
-            <div class="flex items-start gap-3 text-sm text-slate-300">
-              <span class="text-cyan-400 font-bold">•</span>
-              <span>Press <strong class="text-white">Enter</strong> to go to the first result</span>
-            </div>
-            <div class="flex items-start gap-3 text-sm text-slate-300">
-              <span class="text-purple-400 font-bold">•</span>
-              <span>See <strong class="text-white">live server activity</strong> and stats</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- No Results Section -->
-    <div v-else-if="searchQuery.trim() && players.length === 0" class="max-w-2xl mx-auto px-6 py-16">
-      <div class="text-center space-y-6">
-        <div class="w-20 h-20 mx-auto bg-gradient-to-br from-slate-700/50 to-slate-800/50 rounded-full flex items-center justify-center border border-slate-600/50">
-          <span class="text-3xl">🔍</span>
-        </div>
-        <div class="space-y-2">
-          <h3 class="text-2xl font-bold text-slate-200">No players found</h3>
-          <p class="text-slate-400">No players match "<strong class="text-white">{{ searchQuery }}</strong>"</p>
-          <p class="text-sm text-slate-500 italic">Try a different spelling or partial name.</p>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Players Table Section -->
-    <div v-else class="max-w-7xl mx-auto px-3 sm:px-6 pt-6">
-      <!-- Table Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6">
-        <div class="flex items-center gap-4">
-          <div class="text-sm font-bold text-slate-300">
-            <span class="text-cyan-400">{{ totalItems }}</span> players found
-          </div>
-        </div>
-        <div class="flex items-center gap-2 text-sm">
-          <label class="text-slate-400 font-medium">Show:</label>
-          <select 
-            :value="pageSize" 
-            @change="changePageSize(Number(($event.target as HTMLSelectElement).value))"
-            class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
-          >
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Compact Players Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse border border-slate-700/30 min-w-[800px] lg:min-w-full">
-          <!-- Table Header -->
-          <thead class="sticky top-0 z-10">
-            <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
-              <th @click="sortPlayers('playerName')" class="group p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50">
-                <div class="flex items-center gap-2">
-                  <span class="text-cyan-400 text-xs">👤</span>
-                  <span class="font-mono font-bold">PLAYER</span>
-                  <span class="text-xs transition-transform duration-200" :class="{
-                    'text-cyan-400 opacity-100': sortBy === 'playerName',
-                    'opacity-50': sortBy !== 'playerName',
-                    'rotate-0': sortBy === 'playerName' && sortOrder === 'asc',
-                    'rotate-180': sortBy === 'playerName' && sortOrder === 'desc'
-                  }">▲</span>
-                </div>
-              </th>
-              <th @click="sortPlayers('lastSeen')" class="group p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50">
-                <div class="flex items-center gap-2">
-                  <span class="text-orange-400 text-xs">📅</span>
-                  <span class="font-mono font-bold">LAST SEEN</span>
-                  <span class="text-xs transition-transform duration-200" :class="{
-                    'text-orange-400 opacity-100': sortBy === 'lastSeen',
-                    'opacity-50': sortBy !== 'lastSeen',
-                    'rotate-0': sortBy === 'lastSeen' && sortOrder === 'asc',
-                    'rotate-180': sortBy === 'lastSeen' && sortOrder === 'desc'
-                  }">▲</span>
-                </div>
-              </th>
-              <th class="p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
-                <div class="flex items-center gap-2">
-                  <span class="text-purple-400 text-xs">📡</span>
-                  <span class="font-mono font-bold">STATUS</span>
-                </div>
-              </th>
-            </tr>
-          </thead>
-
-          <!-- Table Body -->
-          <tbody>
-            <tr
-              v-for="player in players"
-              :key="player.playerName"
-              class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/30"
-              :class="{
-                'bg-green-500/5': player.isActive,
-                'bg-slate-500/5': !player.isActive
-              }"
-            >
-              <!-- Player Name -->
-              <td class="p-2">
-                <router-link 
-                  :to="`/players/${encodeURIComponent(player.playerName)}`" 
-                  class="font-bold text-slate-200 hover:text-cyan-400 transition-colors duration-300 no-underline block max-w-[200px] truncate text-sm"
-                >
-                  {{ player.playerName }}
-                </router-link>
-              </td>
-
-
-              <!-- Last Seen -->
-              <td class="p-2">
-                <div class="font-mono text-sm text-orange-400 font-medium">
-                  {{ formatLastSeen(player.lastSeen) }}
-                </div>
-              </td>
-
-              <!-- Status -->
-              <td class="p-2">
-                <div v-if="player.isActive" class="flex items-start gap-2">
-                  <span class="text-green-400 text-xs mt-0.5">🟢</span>
-                  <div v-if="player.currentServer" class="space-y-1">
-                    <router-link 
-                      :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" 
-                      class="text-cyan-400 hover:text-cyan-300 font-medium text-xs block max-w-[160px] truncate no-underline transition-colors duration-300"
-                    >
-                      {{ player.currentServer.serverName }}
-                    </router-link>
-                    <div class="flex items-center gap-1 text-xs font-mono">
-                      <span class="font-bold" :class="{
-                        'text-emerald-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 100,
-                        'text-blue-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 50,
-                        'text-orange-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 25,
-                        'text-slate-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) < 25
-                      }">
-                        {{ (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) }}
-                      </span>
-                      <span class="text-slate-500">/</span>
-                      <span class="font-bold" :class="{
-                        'text-red-400': (player.currentServer.sessionKills || 0) >= 30,
-                        'text-orange-400': (player.currentServer.sessionKills || 0) >= 15,
-                        'text-green-400': (player.currentServer.sessionKills || 0) >= 5,
-                        'text-slate-400': (player.currentServer.sessionKills || 0) < 5
-                      }">
-                        {{ player.currentServer.sessionKills || 0 }}
-                      </span>
-                      <span class="text-slate-500">/</span>
-                      <span class="font-bold" :class="{
-                        'text-red-400': (player.currentServer.sessionDeaths || 0) >= 20,
-                        'text-orange-400': (player.currentServer.sessionDeaths || 0) >= 10,
-                        'text-green-400': (player.currentServer.sessionDeaths || 0) >= 5,
-                        'text-blue-400': (player.currentServer.sessionDeaths || 0) < 5
-                      }">
-                        {{ player.currentServer.sessionDeaths || 0 }}
-                      </span>
-                    </div>
+      <div class="relative z-10 pb-6 sm:pb-12">
+        <div class="max-w-7xl mx-auto">
+          <!-- Player Search Hero -->
+          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-8">
+            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 opacity-50"></div>
+            <div class="relative z-10 p-4 sm:p-8 md:p-12">
+              <div class="text-center mb-6 sm:mb-8">
+                <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 mb-4">Find Players</h1>
+                <p class="text-slate-400 text-lg">Search for players and view their stats, activity, and current server status</p>
+              </div>
+              
+              <div class="relative group max-w-3xl mx-auto">
+                <!-- Search Icon -->
+                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                  <div class="w-6 h-6 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
+                    <span class="text-slate-900 text-sm font-bold">🔍</span>
                   </div>
                 </div>
-                <div v-else class="flex items-center gap-2">
-                  <span class="text-slate-500 text-xs">⚫</span>
-                  <span class="text-slate-500 font-medium text-xs uppercase">OFFLINE</span>
+                
+                <!-- Search Input -->
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Search for any player..."
+                  class="w-full pl-14 pr-20 py-4 sm:py-5 bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-lg border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-300 font-medium shadow-lg hover:shadow-cyan-500/20 focus:shadow-cyan-500/30 text-lg"
+                  @input="onSearchInput"
+                  @keyup.enter="onSearchEnter"
+                >
+                
+                <!-- Loading Spinner -->
+                <div v-if="isSearchLoading" class="absolute right-16 top-1/2 transform -translate-y-1/2">
+                  <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                
+                <!-- Clear Button -->
+                <button 
+                  v-if="searchQuery" 
+                  @click="clearSearch" 
+                  class="absolute right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 rounded-lg text-slate-400 hover:text-white transition-all duration-200 flex items-center justify-center font-bold text-lg hover:scale-105"
+                >
+                  ×
+                </button>
+                
+                <!-- Search Glow Effect -->
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              </div>
+            </div>
+          </div>
 
-      <!-- Enhanced Pagination -->
-      <div v-if="totalPages > 1" class="flex flex-wrap items-center justify-center gap-1 sm:gap-2 mt-4 sm:mt-6 pb-4 sm:pb-6">
-        <!-- First Page -->
-        <button 
-          class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold bg-slate-800/60 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="currentPage === 1" 
-          @click="goToPage(1)"
-        >
-          ««
-        </button>
-        
-        <!-- Previous Page -->
-        <button 
-          class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold bg-slate-800/60 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="currentPage === 1" 
-          @click="goToPage(currentPage - 1)"
-        >
-          ‹
-        </button>
-        
-        <!-- Page Numbers -->
-        <button 
-          v-for="page in paginationRange" 
-          :key="page" 
-          class="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold rounded-lg transition-all duration-200 min-w-[32px] sm:min-w-[40px]"
-          :class="{
-            'bg-gradient-to-r from-cyan-600 to-purple-600 border border-cyan-500/50 text-white shadow-lg shadow-cyan-500/30': page === currentPage,
-            'bg-slate-800/60 border border-slate-700/50 text-slate-400 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-white': page !== currentPage
-          }"
-          @click="goToPage(page)"
-        >
-          {{ page }}
-        </button>
-        
-        <!-- Next Page -->
-        <button 
-          class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold bg-slate-800/60 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="currentPage === totalPages" 
-          @click="goToPage(currentPage + 1)"
-        >
-          ›
-        </button>
-        
-        <!-- Last Page -->
-        <button 
-          class="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold bg-slate-800/60 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/50 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="currentPage === totalPages" 
-          @click="goToPage(totalPages)"
-        >
-          ››
-        </button>
+          <!-- Loading State -->
+          <div
+            v-if="loading"
+            class="flex flex-col items-center justify-center py-20 text-slate-400"
+          >
+            <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+            <p class="text-lg">Loading players...</p>
+          </div>
+
+          <!-- Error State -->
+          <div
+            v-else-if="error"
+            class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center"
+          >
+            <div class="text-6xl mb-4">⚠️</div>
+            <p class="text-red-400 text-lg font-semibold">{{ error }}</p>
+          </div>
+
+          <!-- Welcome State -->
+          <div
+            v-else-if="!searchQuery.trim() && players.length === 0"
+            class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
+          >
+            <div class="p-3 sm:p-6 border-b border-slate-700/50">
+              <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-3">
+                🎯 Player Search
+              </h3>
+            </div>
+            <div class="p-3 sm:p-6">
+              <div class="text-center space-y-6">
+                <p class="text-xl text-slate-300 font-medium">Start typing a player name above to find their stats and recent activity.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                  <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-2">🔍</div>
+                    <div class="text-sm text-slate-300">Search by <span class="text-cyan-400 font-semibold">partial names</span></div>
+                  </div>
+                  <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-2">⚡</div>
+                    <div class="text-sm text-slate-300">Press <span class="text-cyan-400 font-semibold">Enter</span> for first result</div>
+                  </div>
+                  <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-2">📊</div>
+                    <div class="text-sm text-slate-300">View <span class="text-cyan-400 font-semibold">live stats</span> and activity</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- No Results State -->
+          <div
+            v-else-if="searchQuery.trim() && players.length === 0"
+            class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center"
+          >
+            <div class="text-6xl mb-4 opacity-50">🔍</div>
+            <h3 class="text-2xl font-bold text-slate-200 mb-2">No players found</h3>
+            <p class="text-slate-400">No players match "<span class="text-white font-semibold">{{ searchQuery }}</span>"</p>
+            <p class="text-sm text-slate-500 mt-2 italic">Try a different spelling or partial name.</p>
+          </div>
+          
+          <!-- Players Results Section -->
+          <div v-else class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+            <div class="p-3 sm:p-6 border-b border-slate-700/50">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
+                  👥 Player Results
+                  <span class="text-sm font-normal text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded-full">{{ totalItems }} found</span>
+                </h3>
+                <div class="flex items-center gap-2 text-sm">
+                  <label class="text-slate-400 font-medium">Show:</label>
+                  <select 
+                    :value="pageSize" 
+                    @change="changePageSize(Number(($event.target as HTMLSelectElement).value))"
+                    class="bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 backdrop-blur-sm"
+                  >
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="p-3 sm:p-6">
+              <!-- Players Table -->
+              <div class="overflow-x-auto">
+                <table class="w-full border-collapse min-w-[800px] lg:min-w-full">
+                  <!-- Table Header -->
+                  <thead>
+                    <tr class="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700/50">
+                      <th @click="sortPlayers('playerName')" class="group p-4 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/30 transition-all duration-300">
+                        <div class="flex items-center gap-2">
+                          <span class="text-cyan-400 text-sm">👤</span>
+                          <span class="font-mono font-bold">PLAYER</span>
+                          <span class="text-xs transition-transform duration-200" :class="{
+                            'text-cyan-400 opacity-100': sortBy === 'playerName',
+                            'opacity-50': sortBy !== 'playerName',
+                            'rotate-0': sortBy === 'playerName' && sortOrder === 'asc',
+                            'rotate-180': sortBy === 'playerName' && sortOrder === 'desc'
+                          }">▲</span>
+                        </div>
+                      </th>
+                      <th @click="sortPlayers('lastSeen')" class="group p-4 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/30 transition-all duration-300">
+                        <div class="flex items-center gap-2">
+                          <span class="text-orange-400 text-sm">📅</span>
+                          <span class="font-mono font-bold">LAST SEEN</span>
+                          <span class="text-xs transition-transform duration-200" :class="{
+                            'text-orange-400 opacity-100': sortBy === 'lastSeen',
+                            'opacity-50': sortBy !== 'lastSeen',
+                            'rotate-0': sortBy === 'lastSeen' && sortOrder === 'asc',
+                            'rotate-180': sortBy === 'lastSeen' && sortOrder === 'desc'
+                          }">▲</span>
+                        </div>
+                      </th>
+                      <th class="p-4 text-left font-bold text-xs uppercase tracking-wide text-slate-300">
+                        <div class="flex items-center gap-2">
+                          <span class="text-purple-400 text-sm">📡</span>
+                          <span class="font-mono font-bold">STATUS</span>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <!-- Table Body -->
+                  <tbody>
+                    <tr
+                      v-for="player in players"
+                      :key="player.playerName"
+                      class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/20"
+                      :class="{
+                        'bg-green-500/5': player.isActive,
+                        'bg-slate-800/10': !player.isActive
+                      }"
+                    >
+                      <!-- Player Name -->
+                      <td class="p-4">
+                        <router-link 
+                          :to="`/players/${encodeURIComponent(player.playerName)}`" 
+                          class="font-bold text-slate-200 hover:text-cyan-400 transition-colors duration-300 no-underline block max-w-[200px] truncate text-sm"
+                        >
+                          {{ player.playerName }}
+                        </router-link>
+                      </td>
+
+                      <!-- Last Seen -->
+                      <td class="p-4">
+                        <div class="font-mono text-sm text-orange-400 font-medium">
+                          {{ formatLastSeen(player.lastSeen) }}
+                        </div>
+                      </td>
+
+                      <!-- Status -->
+                      <td class="p-4">
+                        <div v-if="player.isActive" class="flex items-start gap-2">
+                          <span class="text-green-400 text-xs mt-0.5">🟢</span>
+                          <div v-if="player.currentServer" class="space-y-1">
+                            <router-link 
+                              :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" 
+                              class="text-cyan-400 hover:text-cyan-300 font-medium text-xs block max-w-[160px] truncate no-underline transition-colors duration-300"
+                            >
+                              {{ player.currentServer.serverName }}
+                            </router-link>
+                            <div class="flex items-center gap-1 text-xs font-mono">
+                              <span class="font-bold" :class="{
+                                'text-emerald-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 100,
+                                'text-blue-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 50,
+                                'text-orange-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 25,
+                                'text-slate-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) < 25
+                              }">
+                                {{ (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) }}
+                              </span>
+                              <span class="text-slate-500">/</span>
+                              <span class="font-bold" :class="{
+                                'text-red-400': (player.currentServer.sessionKills || 0) >= 30,
+                                'text-orange-400': (player.currentServer.sessionKills || 0) >= 15,
+                                'text-green-400': (player.currentServer.sessionKills || 0) >= 5,
+                                'text-slate-400': (player.currentServer.sessionKills || 0) < 5
+                              }">
+                                {{ player.currentServer.sessionKills || 0 }}
+                              </span>
+                              <span class="text-slate-500">/</span>
+                              <span class="font-bold" :class="{
+                                'text-red-400': (player.currentServer.sessionDeaths || 0) >= 20,
+                                'text-orange-400': (player.currentServer.sessionDeaths || 0) >= 10,
+                                'text-green-400': (player.currentServer.sessionDeaths || 0) >= 5,
+                                'text-blue-400': (player.currentServer.sessionDeaths || 0) < 5
+                              }">
+                                {{ player.currentServer.sessionDeaths || 0 }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-else class="flex items-center gap-2">
+                          <span class="text-slate-500 text-xs">⚫</span>
+                          <span class="text-slate-500 font-medium text-xs uppercase">OFFLINE</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              
+              <!-- Pagination -->
+              <div v-if="totalPages > 1" class="flex flex-wrap items-center justify-center gap-1 sm:gap-2 mt-6 px-3 sm:px-6 pb-3 sm:pb-6">
+                <!-- First Page -->
+                <button 
+                  class="px-3 py-2 text-sm font-mono font-bold bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/30 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="currentPage === 1" 
+                  @click="goToPage(1)"
+                >
+                  ««
+                </button>
+                
+                <!-- Previous Page -->
+                <button 
+                  class="px-3 py-2 text-sm font-mono font-bold bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/30 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="currentPage === 1" 
+                  @click="goToPage(currentPage - 1)"
+                >
+                  ‹
+                </button>
+                
+                <!-- Page Numbers -->
+                <button 
+                  v-for="page in paginationRange" 
+                  :key="page" 
+                  class="px-4 py-2 text-sm font-mono font-bold rounded-lg transition-all duration-200 min-w-[40px]"
+                  :class="{
+                    'bg-gradient-to-r from-cyan-600 to-purple-600 border border-cyan-500/50 text-white shadow-lg shadow-cyan-500/20': page === currentPage,
+                    'bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:bg-slate-700/30 hover:border-slate-600/50 hover:text-white': page !== currentPage
+                  }"
+                  @click="goToPage(page)"
+                >
+                  {{ page }}
+                </button>
+                
+                <!-- Next Page -->
+                <button 
+                  class="px-3 py-2 text-sm font-mono font-bold bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/30 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="currentPage === totalPages" 
+                  @click="goToPage(currentPage + 1)"
+                >
+                  ›
+                </button>
+                
+                <!-- Last Page -->
+                <button 
+                  class="px-3 py-2 text-sm font-mono font-bold bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-700/30 hover:border-slate-600/50 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="currentPage === totalPages" 
+                  @click="goToPage(totalPages)"
+                >
+                  ››
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* Custom animations for enhanced visual effects */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
 /* Custom scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
