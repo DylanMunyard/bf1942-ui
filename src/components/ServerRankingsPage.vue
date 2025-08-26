@@ -450,22 +450,22 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="server-rankings-container">
+  <div class="min-h-screen bg-slate-900 px-3 sm:px-6">
     <!-- Server Context Header -->
     <div
       v-if="serverContext"
-      class="server-context"
+      class="bg-slate-800/40 rounded-xl p-6 mb-6"
     >
-      <div class="server-context-header">
-        <h1>{{ serverContext.serverName }}</h1>
+      <div class="flex items-center gap-3 mb-6">
+        <h1 class="text-2xl font-bold text-white">{{ serverContext.serverName }}</h1>
       </div>
     </div>
 
     <!-- Filter controls -->
-    <div class="filter-section">
-      <div class="filter-toggle">
+    <div class="mb-6">
+      <div class="lg:hidden mb-4">
         <button
-          class="filter-toggle-button"
+          class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-800/40 border border-slate-700/50 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:border-cyan-500/50 transition-all duration-200 font-medium"
           @click="showFilters = !showFilters"
         >
           <svg
@@ -478,14 +478,14 @@ onUnmounted(() => {
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="filter-icon"
+            class="text-cyan-400"
           >
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
           </svg>
           Filters
           <span
             v-if="playerNameFilter || minScoreFilter !== '' || minKillsFilter !== '' || minDeathsFilter !== '' || minKdRatioFilter !== '' || minPlayTimeMinutesFilter !== ''"
-            class="active-filter-indicator"
+            class="text-cyan-400 text-sm ml-auto mr-2"
           >●</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -497,8 +497,8 @@ onUnmounted(() => {
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="chevron-icon"
-            :class="{ 'rotated': showFilters }"
+            class="transition-transform duration-200"
+            :class="{ 'rotate-180': showFilters }"
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
@@ -506,140 +506,143 @@ onUnmounted(() => {
       </div>
       
       <div
-        class="filter-container"
-        :class="{ 'filters-visible': showFilters }"
+        class="transition-all duration-300 overflow-hidden lg:max-h-none lg:opacity-100"
+        :class="showFilters ? 'max-h-96 opacity-100 mb-6' : 'max-h-0 opacity-0 lg:max-h-none lg:opacity-100'"
       >
-        <div class="filter-group">
-          <label for="playerNameFilter">Filter by Player Name:</label>
-          <div class="input-with-clear">
-            <input 
-              id="playerNameFilter" 
-              v-model="playerNameInputValue" 
-              type="text"
-              placeholder="Enter player name" 
-              class="filter-input"
-              @input="handlePlayerNameFilterChange(playerNameInputValue)"
-            >
-            <span
-              v-if="isSearching"
-              class="search-indicator"
-            >🔍</span>
-            <span 
-              v-if="playerNameInputValue && !isSearching" 
-              class="clear-input" 
-              title="Clear filter"
-              @click="clearPlayerNameFilter"
-            >×</span>
+        <div class="flex flex-wrap gap-4 items-end">
+          <div class="flex flex-col min-w-48">
+            <label for="playerNameFilter" class="mb-2 text-sm font-medium text-slate-300">Filter by Player Name:</label>
+            <div class="relative">
+              <input 
+                id="playerNameFilter" 
+                v-model="playerNameInputValue" 
+                type="text"
+                placeholder="Enter player name" 
+                class="w-full px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
+                @input="handlePlayerNameFilterChange(playerNameInputValue)"
+              >
+              <span
+                v-if="isSearching"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+              >🔍</span>
+              <button 
+                v-if="playerNameInputValue && !isSearching" 
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 rounded-full transition-all duration-200" 
+                title="Clear filter"
+                @click="clearPlayerNameFilter"
+              >×</button>
+            </div>
           </div>
-        </div>
 
-        <div class="filter-group">
-          <label for="minScoreFilter">Min Score:</label>
-          <input 
-            id="minScoreFilter" 
-            v-model="minScoreInputValue" 
-            type="number"
-            placeholder="e.g. 1000"
-            class="filter-input"
-            min="0"
-            @input="handleMinScoreChange(minScoreInputValue)"
+          <div class="flex flex-col min-w-32">
+            <label for="minScoreFilter" class="mb-2 text-sm font-medium text-slate-300">Min Score:</label>
+            <input 
+              id="minScoreFilter" 
+              v-model="minScoreInputValue" 
+              type="number"
+              placeholder="e.g. 1000"
+              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
+              min="0"
+              @input="handleMinScoreChange(minScoreInputValue)"
+            >
+          </div>
+
+          <div class="flex flex-col min-w-32">
+            <label for="minKillsFilter" class="mb-2 text-sm font-medium text-slate-300">Min Kills:</label>
+            <input 
+              id="minKillsFilter" 
+              v-model="minKillsInputValue" 
+              type="number"
+              placeholder="e.g. 100"
+              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
+              min="0"
+              @input="handleMinKillsChange(minKillsInputValue)"
+            >
+          </div>
+
+          <div class="flex flex-col min-w-32">
+            <label for="minDeathsFilter" class="mb-2 text-sm font-medium text-slate-300">Min Deaths:</label>
+            <input 
+              id="minDeathsFilter" 
+              v-model="minDeathsInputValue" 
+              type="number"
+              placeholder="e.g. 50"
+              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
+              min="0"
+              @input="handleMinDeathsChange(minDeathsInputValue)"
+            >
+          </div>
+
+          <div class="flex flex-col min-w-32">
+            <label for="minKdRatioFilter" class="mb-2 text-sm font-medium text-slate-300">Min K/D Ratio:</label>
+            <input 
+              id="minKdRatioFilter" 
+              v-model="minKdRatioInputValue" 
+              type="number"
+              placeholder="e.g. 1.5"
+              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
+              min="0"
+              step="0.1"
+              @input="handleMinKdRatioChange(minKdRatioInputValue)"
+            >
+          </div>
+
+          <div class="flex flex-col min-w-40">
+            <label for="minPlayTimeFilter" class="mb-2 text-sm font-medium text-slate-300">Min Play Time (minutes):</label>
+            <input 
+              id="minPlayTimeFilter" 
+              v-model="minPlayTimeInputValue" 
+              type="number"
+              placeholder="e.g. 60"
+              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
+              min="0"
+              @input="handleMinPlayTimeChange(minPlayTimeInputValue)"
+            >
+          </div>
+
+          <button
+            class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-all duration-200 font-medium"
+            @click="resetFilters"
           >
+            Reset Filters
+          </button>
         </div>
-
-        <div class="filter-group">
-          <label for="minKillsFilter">Min Kills:</label>
-          <input 
-            id="minKillsFilter" 
-            v-model="minKillsInputValue" 
-            type="number"
-            placeholder="e.g. 100"
-            class="filter-input"
-            min="0"
-            @input="handleMinKillsChange(minKillsInputValue)"
-          >
-        </div>
-
-        <div class="filter-group">
-          <label for="minDeathsFilter">Min Deaths:</label>
-          <input 
-            id="minDeathsFilter" 
-            v-model="minDeathsInputValue" 
-            type="number"
-            placeholder="e.g. 50"
-            class="filter-input"
-            min="0"
-            @input="handleMinDeathsChange(minDeathsInputValue)"
-          >
-        </div>
-
-        <div class="filter-group">
-          <label for="minKdRatioFilter">Min K/D Ratio:</label>
-          <input 
-            id="minKdRatioFilter" 
-            v-model="minKdRatioInputValue" 
-            type="number"
-            placeholder="e.g. 1.5"
-            class="filter-input"
-            min="0"
-            step="0.1"
-            @input="handleMinKdRatioChange(minKdRatioInputValue)"
-          >
-        </div>
-
-        <div class="filter-group">
-          <label for="minPlayTimeFilter">Min Play Time (minutes):</label>
-          <input 
-            id="minPlayTimeFilter" 
-            v-model="minPlayTimeInputValue" 
-            type="number"
-            placeholder="e.g. 60"
-            class="filter-input"
-            min="0"
-            @input="handleMinPlayTimeChange(minPlayTimeInputValue)"
-          >
-        </div>
-
-        <button
-          class="reset-filters-button"
-          @click="resetFilters"
-        >
-          Reset Filters
-        </button>
       </div>
     </div>
 
     <!-- Rankings Table -->
-    <div class="rankings-section">
-      <h2>Player Rankings</h2>
+    <div class="bg-slate-800/40 rounded-xl p-6">
+      <h2 class="text-xl font-bold text-white mb-6">Player Rankings</h2>
       <div
         v-if="loading"
-        class="loading-container"
+        class="flex flex-col items-center justify-center py-20"
       >
-        <div class="loading-spinner" />
-        <p>Loading rankings...</p>
+        <div class="w-12 h-12 border-4 border-slate-700/50 border-t-cyan-500 rounded-full animate-spin mb-4" />
+        <p class="text-slate-300">Loading rankings...</p>
       </div>
       <div
         v-else-if="error"
-        class="error-container"
+        class="flex items-center justify-center py-20"
       >
-        <p class="error-message">
+        <p class="text-red-400 font-semibold">
           {{ error }}
         </p>
       </div>
       <div
         v-else-if="rankings.length > 0"
-        class="rankings-table-container"
+        class="overflow-x-auto"
       >
         <!-- Table header info -->
-        <div class="table-header">
-          <div class="rankings-count">
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-4">
+          <div class="font-semibold text-slate-300">
             Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} players
           </div>
-          <div class="page-size-selector">
-            <label for="pageSize">Items per page:</label>
+          <div class="flex items-center gap-3">
+            <label for="pageSize" class="text-sm text-slate-400">Items per page:</label>
             <select
               id="pageSize"
               v-model="pageSize"
+              class="px-3 py-1 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
               @change="handlePageSizeChange"
             >
               <option value="10">
@@ -658,47 +661,47 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Player</th>
+        <table class="w-full border-collapse border border-slate-700/30">
+          <thead class="sticky top-0 z-10">
+            <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+              <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">Rank</th>
+              <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">Player</th>
               <th
-                class="desktop-only sortable"
-                :class="{ 'sorted': orderBy === 'TotalScore' }"
+                class="hidden lg:table-cell p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30"
+                :class="{ 'bg-cyan-500/20 text-cyan-400': orderBy === 'TotalScore' }"
                 @click="handleSort('TotalScore')"
               >
                 Score {{ getSortIcon('TotalScore') }}
               </th>
               <th
-                class="desktop-only sortable"
-                :class="{ 'sorted': orderBy === 'TotalKills' }"
+                class="hidden lg:table-cell p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30"
+                :class="{ 'bg-cyan-500/20 text-cyan-400': orderBy === 'TotalKills' }"
                 @click="handleSort('TotalKills')"
               >
                 Kills {{ getSortIcon('TotalKills') }}
               </th>
               <th
-                class="desktop-only sortable"
-                :class="{ 'sorted': orderBy === 'TotalDeaths' }"
+                class="hidden lg:table-cell p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30"
+                :class="{ 'bg-cyan-500/20 text-cyan-400': orderBy === 'TotalDeaths' }"
                 @click="handleSort('TotalDeaths')"
               >
                 Deaths {{ getSortIcon('TotalDeaths') }}
               </th>
               <th
-                class="desktop-only sortable"
-                :class="{ 'sorted': orderBy === 'KDRatio' }"
+                class="hidden lg:table-cell p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30"
+                :class="{ 'bg-cyan-500/20 text-cyan-400': orderBy === 'KDRatio' }"
                 @click="handleSort('KDRatio')"
               >
                 K/D {{ getSortIcon('KDRatio') }}
               </th>
               <th
-                class="desktop-only sortable"
-                :class="{ 'sorted': orderBy === 'TotalPlayTimeMinutes' }"
+                class="hidden lg:table-cell p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30"
+                :class="{ 'bg-cyan-500/20 text-cyan-400': orderBy === 'TotalPlayTimeMinutes' }"
                 @click="handleSort('TotalPlayTimeMinutes')"
               >
                 Play Time {{ getSortIcon('TotalPlayTimeMinutes') }}
               </th>
-              <th class="mobile-only">
+              <th class="lg:hidden p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
                 Stats
               </th>
             </tr>
@@ -707,15 +710,17 @@ onUnmounted(() => {
             <tr
               v-for="ranking in rankings"
               :key="ranking.playerName"
-              class="ranking-row"
+              class="lg:table-row flex flex-col lg:hover:bg-slate-800/20 border-b border-slate-700/30 transition-all duration-300"
             >
-              <td class="rank-cell">
-                #{{ ranking.rank }}
+              <td class="lg:table-cell lg:p-3 lg:font-bold lg:text-white flex justify-between lg:justify-start items-center p-4 lg:border-0 border-b border-slate-700/20">
+                <span class="lg:hidden text-slate-400 text-sm font-medium">Rank:</span>
+                <span class="text-lg lg:text-base font-bold text-white">#{{ ranking.rank }}</span>
               </td>
-              <td class="player-cell">
+              <td class="lg:table-cell lg:p-3 flex justify-between lg:justify-start items-center p-4 pb-2 lg:pb-3 lg:border-0">
+                <span class="lg:hidden text-slate-400 text-sm font-medium">Player:</span>
                 <router-link
                   :to="`/players/${encodeURIComponent(ranking.playerName)}`"
-                  class="player-link"
+                  class="text-cyan-400 hover:text-cyan-300 font-medium no-underline hover:underline transition-colors"
                 >
                   <PlayerName 
                     :name="ranking.playerName" 
@@ -726,51 +731,55 @@ onUnmounted(() => {
                   />
                 </router-link>
               </td>
-              <td class="desktop-only score-cell">
+              <td class="hidden lg:table-cell p-3 text-white font-semibold">
                 🏆 {{ ranking.totalScore }}
               </td>
-              <td class="desktop-only kills-cell">
-                <img
-                  src="@/assets/kills.png"
-                  alt="Kills"
-                  class="kills-icon"
-                > {{ ranking.totalKills }}
+              <td class="hidden lg:table-cell p-3 text-white">
+                <div class="flex items-center gap-1">
+                  <img
+                    src="@/assets/kills.png"
+                    alt="Kills"
+                    class="w-5 h-5"
+                  > {{ ranking.totalKills }}
+                </div>
               </td>
-              <td class="desktop-only deaths-cell">
-                <img
-                  src="@/assets/deaths.png"
-                  alt="Deaths"
-                  class="deaths-icon"
-                > {{ ranking.totalDeaths }}
+              <td class="hidden lg:table-cell p-3 text-white">
+                <div class="flex items-center gap-1">
+                  <img
+                    src="@/assets/deaths.png"
+                    alt="Deaths"
+                    class="w-5 h-5"
+                  > {{ ranking.totalDeaths }}
+                </div>
               </td>
-              <td class="desktop-only kd-cell">
+              <td class="hidden lg:table-cell p-3 text-white font-semibold">
                 📊 {{ ranking.kdRatio.toFixed(2) }}
               </td>
-              <td class="desktop-only playtime-cell">
+              <td class="hidden lg:table-cell p-3 text-white">
                 ⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}
               </td>
-              <td class="mobile-only stats-cell">
-                <div class="mobile-stats">
+              <td class="lg:hidden p-4 pt-2">
+                <div class="flex flex-wrap gap-3">
                   <span
-                    class="stat-item"
+                    class="inline-flex items-center gap-1 px-3 py-1 bg-slate-900/60 rounded-lg text-sm font-medium text-slate-200"
                     title="Score"
                   >🏆 {{ ranking.totalScore }}</span>
                   <span
-                    class="stat-item combat-badge"
+                    class="inline-flex items-center gap-1 px-3 py-1 bg-slate-900/60 rounded-lg text-sm font-medium text-slate-200"
                     title="Kills • Deaths • K/D Ratio"
                   >
                     <img
                       src="@/assets/kills.png"
                       alt="Kills"
-                      class="kills-icon"
+                      class="w-4 h-4"
                     > {{ ranking.totalKills }} • <img
                       src="@/assets/deaths.png"
                       alt="Deaths"
-                      class="deaths-icon"
+                      class="w-4 h-4"
                     > {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
                   </span>
                   <span
-                    class="stat-item"
+                    class="inline-flex items-center gap-1 px-3 py-1 bg-slate-900/60 rounded-lg text-sm font-medium text-slate-200"
                     title="Play Time"
                   >⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
                 </div>
@@ -782,11 +791,11 @@ onUnmounted(() => {
         <!-- Pagination -->
         <div
           v-if="totalPages > 1"
-          class="pagination-container"
+          class="flex justify-center mt-6"
         >
-          <div class="pagination-controls">
+          <div class="flex items-center gap-2">
             <button 
-              class="pagination-button" 
+              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
               :disabled="currentPage === 1" 
               title="First Page"
               @click="changePage(1)"
@@ -794,7 +803,7 @@ onUnmounted(() => {
               &laquo;
             </button>
             <button 
-              class="pagination-button" 
+              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
               :disabled="currentPage === 1" 
               title="Previous Page"
               @click="changePage(currentPage - 1)"
@@ -804,14 +813,14 @@ onUnmounted(() => {
             <button 
               v-for="page in paginationRange" 
               :key="page" 
-              class="pagination-button" 
-              :class="{ active: page === currentPage }" 
+              class="px-3 py-2 border rounded-lg transition-all duration-200 font-medium" 
+              :class="page === currentPage ? 'bg-cyan-500 border-cyan-500 text-white' : 'bg-slate-800/40 border-slate-700/50 text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50'" 
               @click="changePage(page)"
             >
               {{ page }}
             </button>
             <button 
-              class="pagination-button" 
+              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
               :disabled="currentPage === totalPages" 
               title="Next Page"
               @click="changePage(currentPage + 1)"
@@ -819,7 +828,7 @@ onUnmounted(() => {
               &rsaquo;
             </button>
             <button 
-              class="pagination-button" 
+              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
               :disabled="currentPage === totalPages" 
               title="Last Page"
               @click="changePage(totalPages)"
@@ -831,557 +840,12 @@ onUnmounted(() => {
       </div>
       <div
         v-else
-        class="no-data-container"
+        class="flex items-center justify-center py-20"
       >
-        <p>No rankings available for this server.</p>
+        <p class="text-slate-400">No rankings available for this server.</p>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-.server-rankings-container {
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 40px;
-}
-
-.server-context {
-  @apply bg-slate-800/40;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.server-context-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.server-context-header h1 {
-  margin: 0;
-  color: var(--color-heading);
-}
-
-.rankings-section {
-  @apply bg-slate-800/40;
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.rankings-section h2 {
-  margin: 0 0 20px 0;
-  color: var(--color-heading);
-}
-
-.rankings-table-container {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-}
-
-th, td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-}
-
-th {
-  background-color: var(--color-background-mute);
-  font-weight: bold;
-  color: var(--color-heading);
-}
-
-/* Row hover highlight removed */
-
-.rank-cell {
-  font-weight: bold;
-  color: var(--color-heading);
-}
-
-.player-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.player-link:hover {
-  text-decoration: underline;
-}
-
-.loading-container, .error-container, .no-data-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(var(--color-primary-rgb), 0.3);
-  border-radius: 50%;
-  border-top-color: var(--color-primary);
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 15px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.error-message {
-  color: #ff5252;
-  font-weight: bold;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.pagination-info {
-  color: var(--color-text-muted);
-  font-size: 14px;
-}
-
-.pagination-controls {
-  display: flex;
-  gap: 5px;
-}
-
-.pagination-button {
-  padding: 8px 16px;
-  background-color: var(--color-background-mute);
-  border: none;
-  border-radius: 4px;
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.active {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.rankings-count {
-  font-weight: bold;
-  color: var(--color-text);
-}
-
-.page-size-selector {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.page-size-selector label {
-  color: var(--color-text-muted);
-  font-size: 14px;
-}
-
-.page-size-selector select {
-  padding: 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background-color: var(--color-background-mute);
-  color: var(--color-text);
-}
-
-/* Desktop column styling */
-.desktop-only {
-  display: table-cell;
-}
-
-.mobile-only {
-  display: none;
-}
-
-.score-cell {
-  font-weight: bold;
-  color: var(--color-heading);
-}
-
-.combat-badge {
-  @apply bg-slate-900/60;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-weight: 500;
-  border: 1px solid var(--color-border);
-}
-
-/* Hide mobile stats on desktop */
-.mobile-stats {
-  display: none;
-}
-
-/* Mobile styles */
-@media (max-width: 768px) {
-  .server-rankings-container {
-    padding: 0 20px;
-  }
-
-
-
-  /* Hide filters by default on mobile */
-  .filter-container {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    margin-bottom: 0;
-    transition: all 0.3s ease;
-  }
-
-  /* Show filters when toggled */
-  .filter-container.filters-visible {
-    max-height: 800px;
-    opacity: 1;
-    margin-bottom: 20px;
-  }
-
-  .filter-group {
-    min-width: 100%;
-    margin-bottom: 15px;
-  }
-
-  .reset-filters-button {
-    width: 100%;
-    align-self: stretch;
-  }
-
-  .table-header {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-  }
-
-  .page-size-selector {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  /* Hide desktop columns on mobile */
-  .desktop-only {
-    display: none !important;
-  }
-
-  .mobile-only {
-    display: table-cell;
-  }
-
-  /* Mobile table layout: Use grid to create a compact layout per ranking */
-  table {
-    border-collapse: collapse;
-    border-spacing: 0;
-  }
-
-  thead th {
-    display: none;
-  }
-
-  .ranking-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "player rank"
-      "stats stats";
-    gap: 4px 10px;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    margin-bottom: 0;
-    padding: 12px 0;
-    box-shadow: none;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  /* Mobile row hover highlight removed */
-
-  .ranking-row td {
-    display: block;
-    width: 100%;
-    border: none;
-    padding: 0;
-    background: transparent;
-  }
-
-  /* Explicitly hide desktop column cells on mobile */
-  .ranking-row .desktop-only {
-    display: none !important;
-  }
-
-  /* Grid cell placement and styling */
-  .rank-cell {
-    grid-area: rank;
-    align-self: center;
-    text-align: right;
-    font-weight: bold;
-    color: var(--color-heading);
-    font-size: 1.1rem;
-  }
-
-  .player-cell {
-    grid-area: player;
-    align-self: center;
-    text-align: left;
-    word-break: break-word;
-    min-width: 0;
-  }
-
-  .player-link {
-    font-size: 1.1rem;
-    font-weight: 600;
-  }
-
-  /* Hide desktop stats on mobile */
-  .desktop-stats {
-    display: none;
-  }
-
-  /* Show mobile stats cell */
-  .stats-cell {
-    grid-area: stats;
-  }
-
-  .mobile-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 8px;
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-  }
-
-  .mobile-stats .stat-item {
-    @apply bg-slate-900/60;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
-  }
-
-  .pagination-container {
-    justify-content: center;
-    margin-top: 20px;
-  }
-
-  .pagination-controls {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .pagination-button {
-    padding: 6px 12px;
-    font-size: 0.9rem;
-  }
-}
-
-.kills-icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 4px;
-}
-
-.deaths-icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 4px;
-}
-
-/* Filter section styles - matching PlayersPage.vue */
-.filter-section {
-  margin-bottom: 20px;
-}
-
-.filter-toggle {
-  display: none;
-  margin-bottom: 15px;
-}
-
-/* Show filter toggle only on mobile */
-@media (max-width: 768px) {
-  .filter-toggle {
-    display: block;
-  }
-}
-
-.filter-toggle-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  @apply bg-slate-800/40;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  width: 100%;
-  justify-content: center;
-}
-
-.filter-toggle-button:hover {
-  background-color: var(--color-background-mute);
-  border-color: var(--color-accent);
-}
-
-.filter-toggle-button:active {
-  transform: translateY(1px);
-}
-
-.filter-icon {
-  color: var(--color-accent);
-}
-
-.active-filter-indicator {
-  color: var(--color-accent);
-  font-size: 12px;
-  margin-left: auto;
-  margin-right: -4px;
-}
-
-.chevron-icon {
-  transition: transform 0.2s ease;
-  margin-left: auto;
-}
-
-.chevron-icon.rotated {
-  transform: rotate(180deg);
-}
-
-.filter-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  align-items: flex-end;
-  transition: all 0.3s ease;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  min-width: 180px;
-}
-
-.filter-group label {
-  margin-bottom: 5px;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.filter-input {
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 14px;
-  @apply bg-slate-800/40;
-  color: var(--color-text);
-}
-
-.filter-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.input-with-clear {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-indicator {
-  position: absolute;
-  right: 10px;
-  font-size: 18px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
-
-.clear-input {
-  position: absolute;
-  right: 10px;
-  font-size: 18px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
-
-.clear-input:hover {
-  color: var(--color-text-muted);
-  background-color: var(--color-background-mute);
-}
-
-.reset-filters-button {
-  padding: 8px 16px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  height: 36px;
-  align-self: flex-end;
-}
-
-.reset-filters-button:hover {
-  background-color: #5a6268;
-}
-
-/* Sortable column styles */
-.sortable {
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.2s ease;
-}
-
-.sortable:hover {
-  background-color: var(--color-background-mute);
-}
-
-.sortable.sorted {
-  background-color: var(--color-accent);
-  color: white;
-}
-</style> 
+ 
