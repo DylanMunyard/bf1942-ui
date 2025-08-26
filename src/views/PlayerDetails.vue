@@ -900,7 +900,7 @@ watch(
                   <div class="flex items-center gap-4 pt-4">
                     <router-link 
                       :to="{ path: '/players/compare', query: { player1: playerName } }"
-                      class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25"
+                      class="group inline-flex items-center gap-3 px-6 py-3 text-base font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-blue-500/25"
                       title="Compare this player with another"
                     >
                       <svg
