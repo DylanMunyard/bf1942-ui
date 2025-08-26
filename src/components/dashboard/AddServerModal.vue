@@ -1,32 +1,34 @@
 <template>
   <div
-    class="modal-overlay"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000]"
     @click="handleOverlayClick"
     @mousedown="handleOverlayMouseDown"
   >
     <div
-      class="modal-content"
+      class="bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-lg rounded-2xl border border-slate-700/50 shadow-2xl w-[90%] max-w-lg max-h-[90vh] overflow-visible"
       @click.stop
       @mousedown="handleModalMouseDown"
     >
-      <div class="modal-header">
-        <div class="header-content">
-          <h3>Add Favorite Server</h3>
-          <p class="subtitle">
+      <div class="flex justify-between items-center p-6 border-b border-slate-700/50 bg-slate-800/20">
+        <div class="flex flex-col gap-1">
+          <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 m-0">
+            Add Favorite Server
+          </h3>
+          <p class="text-slate-400 text-sm font-normal m-0">
             Save servers to quickly monitor status and join battles
           </p>
         </div>
         <button
-          class="close-btn"
+          class="bg-transparent border-0 text-slate-400 cursor-pointer text-2xl w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-red-500/10 hover:text-red-400"
           @click="$emit('close')"
         >
           ✕
         </button>
       </div>
       
-      <div class="modal-body">
-        <div class="form-group">
-          <label for="serverSearch">Search Servers</label>
+      <div class="p-6 overflow-visible max-h-[calc(90vh-140px)]">
+        <div class="mb-5">
+          <label for="serverSearch" class="block text-white font-semibold mb-2">Search Servers</label>
           <ServerSearch
             v-model="serverName"
             placeholder="Search for server name..."
@@ -34,54 +36,54 @@
             @select="onServerSelected"
             @enter="handleSubmit"
           />
-          <small class="help-text">
+          <small class="block text-slate-400 text-sm mt-1.5">
             Start typing to search for a server name
           </small>
         </div>
 
         <div
           v-if="error"
-          class="error-message"
+          class="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg border border-red-500/20"
         >
           {{ error }}
         </div>
 
         <div
           v-if="selectedServer"
-          class="selected-server"
+          class="mb-5"
         >
-          <h4>Selected Server</h4>
-          <div class="server-preview">
-            <div class="preview-content">
-              <h5 class="server-title">
+          <h4 class="text-white m-0 mb-3 text-base font-semibold">Selected Server</h4>
+          <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
+            <div class="flex flex-col gap-2">
+              <h5 class="text-white m-0 text-base font-semibold">
                 {{ selectedServer.serverName }}
               </h5>
-              <div class="server-meta">
-                <span class="game-badge">{{ selectedServer.gameId.toUpperCase() }}</span>
-                <span class="map-info">{{ selectedServer.currentMap }}</span>
+              <div class="flex flex-wrap gap-2 items-center mb-2">
+                <span class="bg-emerald-500 text-white px-2 py-0.5 rounded-full text-xs font-semibold">{{ selectedServer.gameId.toUpperCase() }}</span>
+                <span class="text-slate-400 text-sm font-medium">{{ selectedServer.currentMap }}</span>
                 <span
                   v-if="!selectedServer.hasActivePlayers"
-                  class="offline-status"
+                  class="text-slate-400 text-sm"
                 >
                   Offline {{ formatLastActivity(selectedServer.lastActivity) }}
                 </span>
                 <span
                   v-else
-                  class="online-status"
+                  class="text-green-400 text-sm font-semibold"
                 >Online</span>
               </div>
-              <div class="server-details">
-                <span class="players">{{ selectedServer.totalActivePlayersLast24h }} active players (24h)</span>
-                <span class="location">{{ selectedServer.city }}, {{ selectedServer.country }}</span>
+              <div class="flex flex-wrap gap-3 text-sm text-slate-400">
+                <span>{{ selectedServer.totalActivePlayersLast24h }} active players (24h)</span>
+                <span>{{ selectedServer.city }}, {{ selectedServer.country }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="form-actions">
+        <div class="flex gap-3 justify-end mt-6 pt-5 border-t border-slate-700/50">
           <button
             type="button"
-            class="cancel-btn"
+            class="px-5 py-2.5 rounded-lg border border-slate-700/50 bg-transparent text-slate-400 cursor-pointer font-semibold text-sm transition-all duration-200 hover:bg-slate-800/50 hover:text-white"
             @click="$emit('close')"
           >
             Cancel
@@ -89,12 +91,12 @@
           <button 
             type="button" 
             :disabled="!selectedServer || isSubmitting" 
-            class="submit-btn" 
+            class="px-5 py-2.5 rounded-lg border-0 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white cursor-pointer font-semibold text-sm transition-all duration-200 flex items-center gap-2 hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-70 disabled:cursor-not-allowed hover:disabled:shadow-none"
             @click="handleAddServer"
           >
             <span
               v-if="isSubmitting"
-              class="spinner"
+              class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"
             />
             {{ isSubmitting ? 'Adding...' : 'Add to Favorites' }}
           </button>
@@ -217,298 +219,29 @@ const formatLastActivity = (lastActivity: string): string => {
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-}
-
-.modal-content {
-  background-color: var(--color-card-bg);
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow: visible;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--color-border);
-  background-color: rgba(var(--color-accent-rgb), 0.05);
-}
-
-.header-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.modal-header h3 {
-  color: var(--color-text);
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.subtitle {
-  color: var(--color-text-secondary);
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 400;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font-size: 1.5rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.modal-body {
-  padding: 24px;
-  overflow: visible;
-  max-height: calc(90vh - 140px);
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  color: var(--color-text);
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px 16px;
-  @apply border border-slate-700/50 bg-slate-900/60 backdrop-blur-sm;
-  border-radius: 8px;
-  color: var(--color-text);
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.1);
-}
-
-.help-text {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-  margin-top: 6px;
-  display: block;
-}
-
-
-
-.selected-server {
-  margin-bottom: 20px;
-}
-
-.selected-server h4 {
-  color: var(--color-text);
-  margin: 0 0 12px 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.server-preview {
-  background-color: rgba(var(--color-accent-rgb), 0.05);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.2);
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.preview-content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.server-title {
-  color: var(--color-text);
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.server-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.server-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-}
-
-.game-badge {
-  background-color: var(--color-accent);
-  color: white;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.map-info {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.online-status {
-  color: #22c55e;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.offline-status {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-}
-
-.error-message {
-  color: #ef4444;
-  font-size: 0.875rem;
-  margin-bottom: 16px;
-  padding: 8px 12px;
-  background-color: rgba(239, 68, 68, 0.1);
-  border-radius: 6px;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--color-border);
-}
-
-.cancel-btn,
-.submit-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.cancel-btn {
-  background-color: var(--color-card-bg);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-}
-
-.cancel-btn:hover {
-  background-color: var(--color-card-bg-hover);
-  color: var(--color-text);
-}
-
-.submit-btn {
-  background: linear-gradient(135deg, var(--color-accent) 0%, rgba(var(--color-accent-rgb), 0.8) 100%);
-  color: white;
-}
-
-.submit-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.3);
-}
-
-.submit-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 /* Mobile responsiveness */
 @media (max-width: 480px) {
-  .modal-content {
-    width: 95%;
+  .bg-gradient-to-r.from-slate-800\/90.to-slate-900\/90 {
+    width: 95% !important;
     margin: 20px;
   }
   
-  .modal-header,
-  .modal-body {
-    padding: 16px;
+  .p-6 {
+    padding: 16px !important;
   }
   
-  .server-details {
-    flex-direction: column;
-    gap: 4px;
+  .flex.flex-wrap.gap-3 {
+    flex-direction: column !important;
+    gap: 4px !important;
   }
   
-  .preview-details {
-    grid-template-columns: 1fr;
+  .flex.gap-3.justify-end {
+    flex-direction: column !important;
   }
   
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .cancel-btn,
-  .submit-btn {
-    width: 100%;
-    justify-content: center;
+  .px-5.py-2\.5 {
+    width: 100% !important;
+    justify-content: center !important;
   }
 }
 </style>

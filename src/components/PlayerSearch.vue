@@ -1,6 +1,6 @@
 <template>
   <div
-    class="player-search-container"
+    class="relative flex items-center"
     @click.stop
   >
     <input 
@@ -9,7 +9,7 @@
       type="text" 
       :placeholder="placeholder"
       autocomplete="off"
-      class="player-search-input"
+      class="w-full px-5 py-4 pr-12 text-base bg-slate-800/60 backdrop-blur-lg border border-slate-600/50 rounded-xl text-white placeholder-slate-400 font-normal transition-all duration-300 shadow-md focus:outline-none focus:border-cyan-500 focus:shadow-cyan-500/15 focus:shadow-lg focus:-translate-y-0.5 focus:bg-slate-800/80"
       @keyup.enter="$emit('enter', searchInput)"
       @input="onInput"
       @focus="onFocus"
@@ -17,39 +17,42 @@
     >
     <div
       v-if="isLoading"
-      class="search-spinner"
+      class="absolute right-4 text-base text-cyan-500 animate-spin pointer-events-none"
     >
       🔄
     </div>
     <div
       v-if="showDropdown && (searchResults.length > 0 || (!isLoading && searchInput.length >= 2))"
-      class="search-dropdown"
+      class="absolute top-full mt-1 left-0 right-0 bg-slate-800/95 backdrop-blur-xl border border-slate-600/50 rounded-xl max-h-80 overflow-y-auto z-[1050] shadow-2xl"
     >
       <div 
-        v-for="player in searchResults" 
+        v-for="(player, index) in searchResults" 
         :key="player.playerName"
-        class="search-result-item"
+        class="p-4 px-5 cursor-pointer border-b border-slate-600/20 last:border-b-0 transition-all duration-200 hover:bg-slate-700/60 hover:shadow-[inset_3px_0_0_#06b6d4] first:rounded-t-xl last:rounded-b-xl relative before:absolute before:inset-0 before:bg-cyan-500/5 before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-200"
+        :class="{
+          'rounded-xl': searchResults.length === 1
+        }"
         @mousedown.prevent="selectPlayer(player)"
       >
-        <div class="player-info">
-          <div class="player-name">
+        <div class="flex flex-col gap-1.5">
+          <div class="font-semibold text-lg text-white mb-0.5">
             {{ player.playerName }}
           </div>
-          <div class="player-details">
-            <span class="play-time">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
-            <span class="last-seen">{{ formatLastSeen(player.lastSeen) }}</span>
+          <div class="flex gap-3 items-center flex-wrap">
+            <span class="text-slate-400 text-sm font-medium">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
+            <span class="text-slate-400 text-sm font-medium">{{ formatLastSeen(player.lastSeen) }}</span>
             <span
               v-if="player.isActive"
-              class="active-badge"
+              class="text-green-500 text-xs font-semibold px-2 py-1 bg-green-500/15 border border-green-500/20 rounded-xl inline-flex items-center gap-1"
             >🟢 Online</span>
             <span
               v-else
-              class="inactive-badge"
+              class="text-gray-400 text-xs font-semibold px-2 py-1 bg-gray-500/15 border border-gray-500/20 rounded-xl inline-flex items-center gap-1"
             >⚫ Offline</span>
           </div>
           <div
             v-if="player.currentServer && player.isActive"
-            class="current-server"
+            class="text-sm text-cyan-400 italic px-2 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded mt-1"
           >
             {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
           </div>
@@ -57,7 +60,7 @@
       </div>
       <div
         v-if="searchResults.length === 0 && !isLoading && searchInput.length >= 2"
-        class="no-results"
+        class="p-5 text-slate-400 text-center italic text-sm"
       >
         No players found
       </div>
@@ -211,129 +214,9 @@ const formatPlayTime = (minutes: number): string => {
 </script>
 
 <style scoped>
-.player-search-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.player-search-input {
-  padding: 12px 40px 12px 15px;
-  font-size: 1rem;
-  @apply bg-slate-800/40 backdrop-blur-sm border border-slate-700/50;
-  border-radius: 8px;
-  color: var(--color-text);
-  width: 100%;
-  transition: all 0.2s ease;
-}
-
-.player-search-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.1);
-}
-
-.search-spinner {
-  position: absolute;
-  right: 10px;
-  font-size: 12px;
-  animation: spin 1s linear infinite;
-  pointer-events: none;
-}
-
-.search-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  @apply bg-slate-800/95 backdrop-blur-md border border-slate-700/50;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 1050;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-}
-
-.search-result-item {
-  padding: 12px 15px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--color-border);
-  transition: background-color 0.2s ease;
-}
-
-.search-result-item:last-child {
-  border-bottom: none;
-}
-
-.search-result-item:hover {
-  @apply bg-slate-700/40;
-}
-
-.player-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.player-name {
-  font-weight: bold;
-  font-size: 1rem;
-  color: var(--color-text);
-}
-
-.player-details {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.play-time,
-.last-seen {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-}
-
-.active-badge,
-.inactive-badge {
-  font-size: 0.75rem;
-  padding: 2px 6px;
-  border-radius: 12px;
-  font-weight: 600;
-}
-
-.active-badge {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-}
-
-.inactive-badge {
-  background-color: rgba(107, 114, 128, 0.1);
-  color: #6b7280;
-}
-
-.current-server {
-  font-size: 0.8rem;
-  color: var(--color-accent);
-  font-style: italic;
-}
-
-.no-results {
-  padding: 12px 15px;
-  color: var(--color-text-secondary);
-  text-align: center;
-  font-style: italic;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 /* Mobile responsiveness */
 @media (max-width: 480px) {
-  .search-dropdown {
+  .max-h-80 {
     max-height: 200px;
   }
 }

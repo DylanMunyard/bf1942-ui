@@ -16,6 +16,7 @@ const _props = defineProps<Props>();
       :server-guid="serverGuid"
       :map-name="mapName"
       :start-time="startTime"
+      class="mb-8"
     />
   </div>
 </template>

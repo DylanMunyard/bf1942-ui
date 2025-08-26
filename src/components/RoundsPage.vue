@@ -360,37 +360,73 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="player-sessions-page-container">
-    <div class="header">
-      <div class="header-left">
-        <h1>Game Rounds</h1>
-        <div
-          v-if="serverContext"
-          class="player-info"
-        >
-          <div class="info-item">
-            <span class="info-label">Total Rounds:</span>
-            <span class="info-value">{{ totalItems }}</span>
-          </div>
-        </div>
+  <div class="min-h-screen px-3 sm:px-6">
+    <!-- Hero Section with Page Header -->
+    <div class="relative overflow-hidden">
+      <!-- Animated Background Pattern -->
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20"></div>
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
-      <div class="header-right">
+
+      <!-- Navigation -->
+      <div class="relative z-10 py-3 sm:py-6">
         <router-link
           :to="getServersRoute(rounds[0]?.gameType)"
-          class="back-button"
+          class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer"
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="group-hover:-translate-x-1 transition-transform duration-300"
+          ><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
           Back to Servers
         </router-link>
-        <button
-          class="refresh-button"
-          @click="fetchData"
-        >
-          <span v-if="!loading">Refresh</span>
-          <span
-            v-else
-            class="spinner"
-          />
-        </button>
+      </div>
+
+      <!-- Page Header -->
+      <div class="relative z-10 pb-6 sm:pb-12">
+        <div class="max-w-7xl mx-auto">
+          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-8">
+            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 opacity-50"></div>
+            <div class="relative z-10 p-4 sm:p-8 md:p-12">
+              <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+                <div class="flex-1">
+                  <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 mb-4">Game Rounds</h1>
+                  <div
+                    v-if="serverContext"
+                    class="flex gap-6 text-slate-300"
+                  >
+                    <div class="flex gap-2">
+                      <span class="text-sm font-medium text-slate-400">Total Rounds:</span>
+                      <span class="text-sm font-bold text-cyan-400">{{ totalItems }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex gap-3 items-center">
+                  <button
+                    class="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors duration-200"
+                    @click="fetchData"
+                  >
+                    <span v-if="!loading">Refresh</span>
+                    <span
+                      v-else
+                      class="animate-spin inline-block w-4 h-4 border-2 border-white/20 border-l-white rounded-full"
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -704,91 +740,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.player-sessions-page-container {
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-}
-
-.header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.header-right {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.header h1 {
-  margin: 0;
-  color: var(--color-heading);
-}
-
-.player-info {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.info-item {
-  display: flex;
-  gap: 5px;
-}
-
-.info-label {
-  font-weight: 500;
-  color: var(--color-text-muted);
-}
-
-.info-value {
-  font-weight: bold;
-  color: var(--color-text);
-}
-
-.back-button {
-  padding: 8px 16px;
-  background-color: var(--color-background-mute);
-  color: var(--color-text);
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  transition: background-color 0.2s;
-}
-
-.back-button:hover {
-  @apply bg-slate-700/40;
-}
-
-.refresh-button {
-  padding: 8px 16px;
-  background-color: var(--color-accent);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.refresh-button:hover {
-  background-color: var(--color-accent-hover);
-}
 
 .filter-container {
   display: flex;
@@ -840,19 +791,6 @@ onUnmounted(() => {
   background-color: #5a6268;
 }
 
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 
 .loading, .error, .no-data {
   padding: 20px;
@@ -1246,24 +1184,6 @@ onUnmounted(() => {
 
 /* Mobile responsive styles */
 @media (max-width: 768px) {
-  .player-sessions-page-container {
-    padding: 0 20px;
-  }
-
-  .header {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .header-right {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .player-info {
-    flex-direction: column;
-    gap: 5px;
-  }
 
   .filter-toggle {
     display: block;

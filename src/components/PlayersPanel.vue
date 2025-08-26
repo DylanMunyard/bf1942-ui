@@ -1,11 +1,12 @@
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] flex items-center justify-end"
+    class="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100] flex items-center"
     @click="$emit('close')"
   >
     <div 
-      class="bg-slate-900 w-full max-w-6xl h-full shadow-2xl animate-slide-in-right overflow-hidden flex flex-col border-l border-slate-700/50" 
+      class="bg-slate-900 w-full max-w-6xl shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-slate-700/50 ml-0 mr-0 md:mr-20" 
+      :class="{ 'h-[calc(100vh-4rem)]': true, 'md:h-full': true, 'mt-16': true, 'md:mt-0': true }"
       @click.stop
     >
       <!-- Header -->
@@ -14,10 +15,11 @@
           {{ server?.name || 'Players' }}
         </h2>
         <button 
-          class="group p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all duration-300 flex items-center justify-center w-8 h-8"
+          class="group p-2 text-slate-400 hover:text-white hover:bg-red-500/20 border border-slate-600/50 hover:border-red-500/50 rounded-lg transition-all duration-300 flex items-center justify-center w-10 h-10 flex-shrink-0"
           @click="$emit('close')"
+          title="Close panel"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-red-400">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -267,16 +269,16 @@ const getSortedTeamPlayers = (teamIndex: number) => {
 </script>
 
 <style scoped>
-@keyframes slideInRight {
+@keyframes slideInLeft {
   from {
-    transform: translateX(100%);
+    transform: translateX(-100%);
   }
   to {
     transform: translateX(0);
   }
 }
 
-.animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out;
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
 }
 </style>

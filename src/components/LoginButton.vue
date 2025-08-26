@@ -1,14 +1,14 @@
 <template>
-  <div class="login-container">
+  <div class="flex items-center gap-3">
     <div
       v-if="!isAuthenticated"
       ref="dropdownRef"
-      class="auth-dropdown"
+      class="relative inline-block"
       @click="toggleDropdown"
     >
-      <button class="profile-icon-btn">
+      <button class="flex items-center justify-center w-9 h-9 bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-full cursor-pointer transition-all duration-200 hover:bg-slate-700/70 hover:border-slate-600/50">
         <svg
-          class="profile-icon"
+          class="text-slate-300 flex items-center justify-center"
           viewBox="0 0 24 24"
           width="24"
           height="24"
@@ -22,15 +22,16 @@
       
       <div
         v-if="isDropdownOpen"
-        class="dropdown-menu"
+        class="absolute top-full right-0 md:right-0 left-0 md:left-auto mt-2 bg-slate-900/95 backdrop-blur-lg border border-slate-700/50 rounded-xl shadow-xl min-w-[220px] z-[1000] overflow-hidden"
+        style="box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(6, 182, 212, 0.1)"
       >
         <button 
-          class="google-login-btn"
+          class="flex items-center gap-2 w-full px-4 py-3 bg-slate-900/80 backdrop-blur-sm text-white border border-slate-700 rounded text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-slate-700/60 hover:border-slate-600 disabled:opacity-60 disabled:cursor-not-allowed"
           :disabled="isLoading"
           @click="handleLogin"
         >
           <svg
-            class="google-icon"
+            class="flex-shrink-0"
             viewBox="0 0 24 24"
             width="20"
             height="20"
@@ -60,40 +61,33 @@
     <div
       v-else
       ref="dropdownRef"
-      class="user-dropdown"
+      class="relative inline-block"
       @click="toggleDropdown"
     >
-      <button class="user-avatar-btn">
-        <div class="user-avatar-container">
-          <div class="user-avatar-placeholder">
-            {{ getUserInitial() }}
+      <button class="flex items-center justify-center w-11 h-11 bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-full cursor-pointer transition-all duration-300 hover:bg-slate-700/70 hover:border-cyan-500/50 hover:-translate-y-0.5" style="box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15)">
+        <div class="flex-shrink-0 relative w-9 h-9 flex items-center justify-center">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 via-purple-500 to-pink-500 p-0.5 transition-all duration-300 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 hover:scale-105">
+            <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+              <div class="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 text-slate-900 flex items-center justify-center text-xs font-bold" style="text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1)">
+                {{ getUserInitial() }}
+              </div>
+            </div>
           </div>
         </div>
-        <svg
-          class="dropdown-arrow"
-          :class="{ 'open': isDropdownOpen }"
-          viewBox="0 0 24 24"
-          width="16"
-          height="16"
-        >
-          <path
-            fill="currentColor"
-            d="M7 10l5 5 5-5z"
-          />
-        </svg>
       </button>
       
       <div
         v-if="isDropdownOpen"
-        class="dropdown-menu"
+        class="absolute top-full right-0 md:right-0 left-0 md:left-auto mt-2 bg-slate-900/95 backdrop-blur-lg border border-slate-700/50 rounded-xl min-w-[220px] z-[1000] overflow-hidden"
+        style="box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(6, 182, 212, 0.1)"
       >
-        <div class="user-info">
-          <div class="user-email">
+        <div class="px-4 py-4 border-b border-slate-700/30 bg-gradient-to-br from-cyan-500/5 to-purple-500/5">
+          <div class="text-xs text-slate-400 font-medium break-all">
             {{ user?.email || 'Authenticated' }}
           </div>
         </div>
         <button
-          class="logout-btn"
+          class="w-full px-4 py-3.5 bg-transparent text-slate-300 border-none text-left text-sm font-medium cursor-pointer transition-all duration-300 relative overflow-hidden hover:bg-slate-800/70 hover:text-cyan-400 hover:translate-x-1 before:content-[''] before:absolute before:top-0 before:-left-full before:w-full before:h-full before:bg-gradient-to-r before:from-transparent before:via-cyan-500/10 before:to-transparent before:transition-all before:duration-300 hover:before:left-full"
           @click="handleLogout"
         >
           Sign Out
@@ -168,203 +162,3 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
-.login-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.auth-dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.profile-icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  @apply bg-slate-800/60 backdrop-blur-sm border border-slate-700/50;
-
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.profile-icon-btn:hover {
-  background: var(--color-background-mute);
-  border-color: var(--color-border-hover);
-}
-
-.profile-icon {
-  color: var(--color-text-2);
-}
-
-.google-login-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 16px;
-  @apply bg-slate-900/80 backdrop-blur-sm;
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.google-login-btn:hover:not(:disabled) {
-  @apply bg-slate-700/60;
-  border-color: var(--color-border-hover);
-}
-
-.google-login-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.google-icon {
-  flex-shrink: 0;
-}
-
-.user-dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.user-avatar-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  @apply bg-slate-800/60 border border-slate-700/50;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.user-avatar-btn:hover {
-  background: var(--color-background-mute);
-  border-color: var(--color-border-hover);
-}
-
-.user-avatar-container {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  position: relative;
-}
-
-
-.user-avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: var(--color-primary);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.dropdown-arrow {
-  transition: transform 0.2s ease;
-  color: var(--color-text-2);
-}
-
-.dropdown-arrow.open {
-  transform: rotate(180deg);
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
-  @apply bg-slate-900/80 border border-slate-700/50;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 200px;
-  z-index: 1000;
-  overflow: hidden;
-}
-
-.user-info {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.user-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 2px;
-}
-
-.user-email {
-  font-size: 12px;
-  color: var(--color-text);
-  opacity: 0.8;
-  word-break: break-all;
-}
-
-.logout-btn {
-  width: 100%;
-  padding: 12px 16px;
-  background: transparent;
-  color: var(--color-text);
-  border: none;
-  text-align: left;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.logout-btn:hover {
-  @apply bg-slate-700/60;
-  color: var(--color-text);
-}
-
-@media (max-width: 768px) {
-  .profile-icon-btn {
-    width: 32px;
-    height: 32px;
-  }
-  
-  .auth-dropdown .dropdown-menu {
-    min-width: 200px;
-    left: 0;
-    right: auto;
-  }
-  
-  .google-login-btn {
-    font-size: 13px;
-    padding: 10px 12px;
-  }
-  
-  .user-dropdown .dropdown-menu {
-    min-width: 180px;
-    left: 0;
-    right: auto;
-  }
-  
-  .user-email {
-    font-size: 13px;
-    padding: 10px 12px;
-  }
-  
-  .logout-btn {
-    font-size: 13px;
-    padding: 10px 12px;
-  }
-}
-</style>

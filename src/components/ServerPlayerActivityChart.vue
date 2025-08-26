@@ -407,7 +407,7 @@ const handlePeriodChange = (period: string) => {
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div class="space-y-2">
             <h4 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-              {{ serverInsights?.pingByHour?.data?.length > 0 ? '📊 Player Activity & Connection Analysis' : '📊 Player Activity Timeline' }}
+              {{ serverInsights?.pingByHour?.data?.length > 0 ? '📈 Player Activity & Connection Analysis' : '📈 Player Activity Analysis' }}
             </h4>
             <p class="text-slate-400 text-sm">
               Real-time server population trends{{ serverInsights?.pingByHour?.data?.length > 0 ? ' with connection quality zones' : '' }}

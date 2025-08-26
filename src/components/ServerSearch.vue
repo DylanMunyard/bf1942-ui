@@ -1,6 +1,6 @@
 <template>
   <div
-    class="server-search-container"
+    class="relative flex items-center"
     @click.stop
   >
     <input 
@@ -9,7 +9,7 @@
       type="text" 
       :placeholder="placeholder"
       autocomplete="off"
-      class="server-search-input"
+      class="w-full px-5 py-4 pr-12 text-base bg-slate-800/60 backdrop-blur-lg border border-slate-600/50 rounded-xl text-white placeholder-slate-400 font-normal transition-all duration-300 shadow-md focus:outline-none focus:border-emerald-500 focus:shadow-emerald-500/15 focus:shadow-lg focus:-translate-y-0.5 focus:bg-slate-800/80"
       @keyup.enter="$emit('enter', searchInput)"
       @input="onInput"
       @focus="onFocus"
@@ -17,49 +17,52 @@
     >
     <div
       v-if="isLoading"
-      class="search-spinner"
+      class="absolute right-4 text-base text-emerald-500 animate-spin pointer-events-none"
     >
       🔄
     </div>
     <div
       v-if="showDropdown && (searchResults.length > 0 || (!isLoading && searchInput.length >= 2))"
-      class="search-dropdown"
+      class="absolute top-full mt-1 left-0 right-0 bg-slate-800/95 backdrop-blur-xl border border-slate-600/50 rounded-xl max-h-80 overflow-y-auto z-[1050] shadow-2xl"
     >
       <div 
-        v-for="server in searchResults" 
+        v-for="(server, index) in searchResults" 
         :key="server.serverGuid"
-        class="search-result-item"
+        class="p-4 px-5 cursor-pointer border-b border-slate-600/20 last:border-b-0 transition-all duration-200 hover:bg-slate-700/60 hover:shadow-[inset_3px_0_0_#10b981] first:rounded-t-xl last:rounded-b-xl relative before:absolute before:inset-0 before:bg-emerald-500/5 before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-200"
+        :class="{
+          'rounded-xl': searchResults.length === 1
+        }"
         @mousedown.prevent="selectServer(server)"
       >
-        <div class="server-info">
-          <div class="server-name">
+        <div class="flex flex-col gap-1.5">
+          <div class="font-semibold text-lg text-white mb-0.5">
             {{ server.serverName }}
           </div>
-          <div class="server-details">
-            <span class="game-mode">{{ server.gameId.toUpperCase() }}</span>
-            <span class="map">{{ server.currentMap }}</span>
-            <span class="players">{{ server.totalActivePlayersLast24h }} active (24h)</span>
-            <span class="location">{{ server.city }}, {{ server.country }}</span>
+          <div class="flex gap-3 items-center flex-wrap">
+            <span class="text-emerald-500 font-bold text-xs px-2 py-0.5 bg-emerald-500/15 rounded-xl border border-emerald-500/20 uppercase">{{ server.gameId.toUpperCase() }}</span>
+            <span class="text-slate-400 text-sm font-medium">{{ server.currentMap }}</span>
+            <span class="text-slate-400 text-sm font-medium">{{ server.totalActivePlayersLast24h }} active (24h)</span>
+            <span class="text-slate-400 italic text-xs">{{ server.city }}, {{ server.country }}</span>
           </div>
-          <div class="server-status">
+          <div class="flex items-center gap-2 mt-1.5">
             <span
-              class="status-indicator"
-              :class="{ 'online': server.hasActivePlayers }"
+              class="w-2.5 h-2.5 rounded-full"
+              :class="server.hasActivePlayers ? 'bg-green-500 shadow-green-500/40 shadow-sm' : 'bg-red-500 shadow-red-500/40 shadow-sm'"
             />
             <span
               v-if="!server.hasActivePlayers"
-              class="last-activity"
+              class="text-slate-400 text-xs font-medium"
             >{{ formatLastActivity(server.lastActivity) }}</span>
             <span
               v-else
-              class="online-status"
+              class="text-green-500 text-xs font-semibold px-1.5 py-0.5 bg-green-500/10 rounded border border-green-500/20"
             >Online</span>
           </div>
         </div>
       </div>
       <div
         v-if="searchResults.length === 0 && !isLoading && searchInput.length >= 2"
-        class="no-results"
+        class="p-5 text-slate-400 text-center italic text-sm"
       >
         No servers found
       </div>
@@ -224,154 +227,13 @@ const formatLastActivity = (lastActivity: string): string => {
 </script>
 
 <style scoped>
-.server-search-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.server-search-input {
-  padding: 12px 40px 12px 15px;
-  font-size: 1rem;
-  @apply bg-slate-800/40 backdrop-blur-sm border border-slate-700/50;
-  border-radius: 6px;
-  color: var(--color-text);
-  width: 100%;
-  transition: all 0.2s ease;
-}
-
-.server-search-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.1);
-}
-
-.search-spinner {
-  position: absolute;
-  right: 10px;
-  font-size: 12px;
-  animation: spin 1s linear infinite;
-  pointer-events: none;
-}
-
-.search-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  @apply bg-slate-800/95 backdrop-blur-md border border-slate-700/50;
-  border-top: none;
-  border-radius: 0 0 6px 6px;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 1050;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.search-result-item {
-  padding: 12px 15px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--color-border);
-  transition: background-color 0.2s ease;
-}
-
-.search-result-item:last-child {
-  border-bottom: none;
-}
-
-.search-result-item:hover {
-  @apply bg-slate-700/40;
-}
-
-.server-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.server-name {
-  font-weight: bold;
-  font-size: 1rem;
-  color: var(--color-text);
-}
-
-.server-details {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.game-mode {
-  color: var(--color-accent);
-  font-weight: 600;
-  font-size: 0.75rem;
-}
-
-.map {
-  color: var(--color-text-secondary);
-  font-size: 0.75rem;
-}
-
-.players {
-  color: var(--color-text-secondary);
-  font-size: 0.75rem;
-}
-
-.location {
-  color: var(--color-text-secondary);
-  font-style: italic;
-  font-size: 0.75rem;
-}
-
-.server-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #ef4444;
-}
-
-.status-indicator.online {
-  background-color: #22c55e;
-}
-
-.last-activity {
-  color: var(--color-text-secondary);
-  font-size: 0.75rem;
-}
-
-.online-status {
-  color: #22c55e;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.no-results {
-  padding: 12px 15px;
-  color: var(--color-text-secondary);
-  text-align: center;
-  font-style: italic;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 /* Mobile responsiveness */
 @media (max-width: 480px) {
-  .search-dropdown {
+  .max-h-80 {
     max-height: 200px;
   }
   
-  .server-details {
+  .flex-wrap {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;

@@ -451,6 +451,53 @@ const visibleEventsReversed = computed(() => {
   return [...visibleEvents.value].reverse();
 });
 
+// Group events by time periods (every minute) for mobile display
+const groupedEvents = computed(() => {
+  if (!visibleEvents.value.length || !roundReport.value) return [];
+  
+  const groups = [];
+  const startTime = new Date(roundReport.value.round.startTime).getTime();
+  let currentGroup = null;
+  
+  // Reverse the events so newest are first
+  const reversedEvents = [...visibleEvents.value].reverse();
+  
+  reversedEvents.forEach((event, index) => {
+    const eventTime = new Date(event.timestamp).getTime();
+    const offsetMs = eventTime - startTime;
+    const offsetMinutes = Math.floor(offsetMs / (1000 * 60));
+    
+    // Create time display
+    let timeDisplay;
+    if (offsetMinutes === 0) {
+      timeDisplay = 'Start';
+    } else if (offsetMinutes < 60) {
+      timeDisplay = `+${offsetMinutes}m`;
+    } else {
+      const hours = Math.floor(offsetMinutes / 60);
+      const mins = offsetMinutes % 60;
+      timeDisplay = `+${hours}h${mins > 0 ? mins + 'm' : ''}`;
+    }
+    
+    // Check if we need to create a new group
+    if (!currentGroup || currentGroup.timeDisplay !== timeDisplay) {
+      currentGroup = {
+        timeDisplay,
+        offsetMinutes,
+        events: []
+      };
+      groups.push(currentGroup);
+    }
+    
+    currentGroup.events.push({
+      ...event,
+      originalIndex: visibleEvents.value.length - index - 1
+    });
+  });
+  
+  return groups;
+});
+
 // Current leaderboard (live or final)
 const currentLeaderboard = computed(() => {
   if (!roundReport.value || !roundReport.value.leaderboardSnapshots.length) return [];
@@ -841,19 +888,49 @@ const getRankIcon = (rank: number) => {
                 <p>Press Play to witness the battle unfold...</p>
               </div>
               
-              <div
-                v-for="(event, index) in visibleEventsReversed"
-                :key="visibleEvents.length - index - 1"
-                :class="getEventStyling(event, index)"
-              >
-                <div class="flex items-start gap-3">
-                  <div class="text-xs font-mono min-w-16 mt-0.5 transition-colors duration-300"
-                       :class="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'text-slate-600' : 'text-slate-500'">
-                    {{ formatTimeOffset(event.timestamp) }}
+              <!-- Desktop: Traditional layout with time gutters -->
+              <div class="hidden md:block">
+                <div
+                  v-for="(event, index) in visibleEventsReversed"
+                  :key="visibleEvents.length - index - 1"
+                  :class="getEventStyling(event, index)"
+                >
+                  <div class="flex items-start gap-3">
+                    <div class="text-xs font-mono min-w-16 mt-0.5 transition-colors duration-300"
+                         :class="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'text-slate-600' : 'text-slate-500'">
+                      {{ formatTimeOffset(event.timestamp) }}
+                    </div>
+                    <div :class="[event.color, 'flex-1 transition-colors duration-300']" 
+                         :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''">
+                      {{ event.message }}
+                    </div>
                   </div>
-                  <div :class="[event.color, 'flex-1 transition-colors duration-300']" 
-                       :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''">
-                    {{ event.message }}
+                </div>
+              </div>
+              
+              <!-- Mobile: Grouped by time periods -->
+              <div class="block md:hidden">
+                <div v-for="group in groupedEvents" :key="group.timeDisplay" class="mb-4">
+                  <!-- Time Header -->
+                  <div class="sticky top-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/30 px-2 py-1 mb-2 -mx-2">
+                    <div class="text-xs font-mono font-bold text-cyan-400 flex items-center gap-2">
+                      <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full"></div>
+                      {{ group.timeDisplay }}
+                    </div>
+                  </div>
+                  
+                  <!-- Events in this time period -->
+                  <div class="space-y-1 pl-4">
+                    <div
+                      v-for="event in group.events"
+                      :key="event.originalIndex"
+                      :class="getEventStyling(event, event.originalIndex)"
+                    >
+                      <div :class="[event.color, 'transition-colors duration-300']" 
+                           :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''">
+                        {{ event.message }}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

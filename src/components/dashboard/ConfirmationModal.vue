@@ -1,24 +1,24 @@
 <template>
   <div
-    class="modal-overlay"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1001]"
     @click="$emit('cancel')"
   >
     <div
-      class="confirmation-modal"
+      class="bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-lg border border-slate-700/50 rounded-2xl shadow-2xl max-w-sm w-[90%] overflow-hidden"
       @click.stop
     >
-      <div class="modal-body">
-        <p>{{ message }}?</p>
+      <div class="p-6 pb-4">
+        <p class="text-white m-0 text-base font-medium text-center">{{ message }}?</p>
       </div>
-      <div class="modal-actions">
+      <div class="flex justify-center gap-3 px-6 py-4 bg-slate-800/20 border-t border-slate-700/50">
         <button
-          class="cancel-btn"
+          class="px-5 py-2 rounded-lg bg-transparent text-slate-400 border border-slate-700/50 font-medium text-sm cursor-pointer transition-all duration-200 hover:bg-slate-700/50 hover:text-white"
           @click="$emit('cancel')"
         >
           Cancel
         </button>
         <button
-          class="confirm-btn"
+          class="px-5 py-2 rounded-lg bg-red-600 text-white border border-red-600 font-medium text-sm cursor-pointer transition-all duration-200 hover:bg-red-700 hover:border-red-700"
           @click="$emit('confirm')"
         >
           {{ confirmText }}
@@ -45,102 +45,23 @@ defineEmits<{
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
-
-.confirmation-modal {
-  background-color: var(--color-card-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-width: 320px;
-  width: 90%;
-  overflow: hidden;
-}
-
-.modal-body {
-  padding: 20px 24px 16px;
-}
-
-.modal-body p {
-  color: var(--color-text);
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 500;
-  text-align: center;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  padding: 16px 24px 20px;
-  background-color: rgba(var(--color-accent-rgb), 0.05);
-  border-top: 1px solid var(--color-border);
-}
-
-.cancel-btn,
-.confirm-btn {
-  padding: 8px 20px;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
-}
-
-.cancel-btn {
-  background-color: transparent;
-  color: var(--color-text-secondary);
-  border-color: var(--color-border);
-}
-
-.cancel-btn:hover {
-  background-color: var(--color-border);
-  color: var(--color-text);
-}
-
-.confirm-btn {
-  background-color: #dc3545;
-  color: white;
-  border-color: #dc3545;
-}
-
-.confirm-btn:hover {
-  background-color: #c82333;
-  border-color: #c82333;
-}
-
 @media (max-width: 480px) {
-  .confirmation-modal {
-    max-width: 280px;
-    width: 95%;
+  .max-w-sm {
+    max-width: 280px !important;
+    width: 95% !important;
   }
   
-  .modal-body {
-    padding: 16px 20px 12px;
+  .p-6.pb-4 {
+    padding: 16px 20px 12px !important;
   }
   
-  .modal-actions {
-    padding: 12px 20px 16px;
+  .px-6.py-4 {
+    padding: 12px 20px 16px !important;
   }
   
-  .cancel-btn,
-  .confirm-btn {
-    padding: 8px 16px;
-    font-size: 0.8rem;
+  .px-5.py-2 {
+    padding: 8px 16px !important;
+    font-size: 0.8rem !important;
   }
 }
 </style>

@@ -202,27 +202,26 @@ const handlePeriodChange = async (period: string) => {
   <div class="relative min-h-screen px-3 sm:px-6">
     <div class="relative z-10">
       <!-- Back Navigation -->
-      <router-link
-        :to="getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string))"
-        class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer mb-8"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="group-hover:-translate-x-1 transition-transform duration-300"
+      <div class="pt-4 mb-8">
+        <button
+          class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer"
+          @click="$router.push(getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string)))"
         >
-          <line x1="19" y1="12" x2="5" y2="12" />
-          <polyline points="12 19 5 12 12 5" />
-        </svg>
-        Back to Servers
-      </router-link>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="group-hover:-translate-x-1 transition-transform duration-300"
+          ><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+          Back to Servers
+        </button>
+      </div>
 
       <div class="relative z-10 pb-6 sm:pb-12">
         <div class="max-w-7xl mx-auto">
@@ -282,12 +281,16 @@ const handlePeriodChange = async (period: string) => {
                   <button
                     v-if="liveServerInfo && liveServerInfo.players.length > 0"
                     @click="openPlayersModal"
-                    class="group bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white px-6 py-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-emerald-500/25"
+                    class="group bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-emerald-500/25"
+                    :class="{
+                      'px-4 py-3': true, // Mobile: smaller padding
+                      'md:px-6 md:py-4': true // Desktop: larger padding
+                    }"
                   >
                     <div class="flex flex-col items-center">
-                      <div class="text-2xl font-bold">{{ liveServerInfo.numPlayers }}</div>
-                      <div class="text-sm opacity-90">Players Online</div>
-                      <div v-if="liveServerInfo.mapName" class="text-xs opacity-75 mt-1">
+                      <div class="font-bold" :class="{ 'text-lg': true, 'md:text-2xl': true }">{{ liveServerInfo.numPlayers }}</div>
+                      <div class="opacity-90" :class="{ 'text-xs': true, 'md:text-sm': true }">Players Online</div>
+                      <div v-if="liveServerInfo.mapName" class="opacity-75 mt-1" :class="{ 'text-xs': true, 'md:text-xs': true }">
                         Playing {{ liveServerInfo.mapName }}
                       </div>
                     </div>
@@ -295,12 +298,16 @@ const handlePeriodChange = async (period: string) => {
                   
                   <div
                     v-else-if="liveServerInfo && liveServerInfo.players.length === 0"
-                    class="bg-slate-700/50 backdrop-blur-sm text-slate-400 px-6 py-4 rounded-xl border border-slate-600/50"
+                    class="bg-slate-700/50 backdrop-blur-sm text-slate-400 rounded-xl border border-slate-600/50"
+                    :class="{
+                      'px-4 py-3': true, // Mobile: smaller padding
+                      'md:px-6 md:py-4': true // Desktop: larger padding
+                    }"
                   >
                     <div class="flex flex-col items-center">
-                      <div class="text-2xl font-bold">0</div>
-                      <div class="text-sm">Players Online</div>
-                      <div v-if="liveServerInfo.mapName" class="text-xs opacity-75 mt-1">
+                      <div class="font-bold" :class="{ 'text-lg': true, 'md:text-2xl': true }">0</div>
+                      <div class="" :class="{ 'text-xs': true, 'md:text-sm': true }">Players Online</div>
+                      <div v-if="liveServerInfo.mapName" class="opacity-75 mt-1" :class="{ 'text-xs': true, 'md:text-xs': true }">
                         Playing {{ liveServerInfo.mapName }}
                       </div>
                     </div>
@@ -308,17 +315,21 @@ const handlePeriodChange = async (period: string) => {
 
                   <div
                     v-else-if="isLiveServerLoading"
-                    class="bg-slate-700/50 backdrop-blur-sm text-slate-400 px-6 py-4 rounded-xl border border-slate-600/50 flex items-center gap-3"
+                    class="bg-slate-700/50 backdrop-blur-sm text-slate-400 rounded-xl border border-slate-600/50 flex items-center gap-3"
+                    :class="{
+                      'px-4 py-3': true, // Mobile: smaller padding
+                      'md:px-6 md:py-4': true // Desktop: larger padding
+                    }"
                   >
-                    <div class="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                    <span class="text-sm">Loading...</span>
+                    <div class="w-4 h-4 md:w-5 md:h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-xs md:text-sm">Loading...</span>
                   </div>
 
-                  <!-- Join Server Button -->
+                  <!-- Join Server Button - Hidden on mobile -->
                   <button
                     v-if="liveServerInfo?.joinLink"
                     @click="joinServer"
-                    class="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 flex items-center gap-2"
+                    class="hidden md:flex group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 items-center gap-2"
                   >
                     <span class="text-xl">🎮</span>
                     <span class="font-semibold">Join Server</span>
@@ -365,25 +376,16 @@ const handlePeriodChange = async (period: string) => {
             </div>
 
             <!-- Player Activity Section -->
-            <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-              <div class="p-3 sm:p-6 border-b border-slate-700/50">
-                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 flex items-center gap-3">
-                  📈 Player Activity Analysis
-                </h3>
-              </div>
-              <div class="p-3 sm:p-6">
-                <ServerPlayerActivityChart
-                  :server-insights="serverInsights"
-                  :is-loading="isInsightsLoading"
-                  @period-change="handlePeriodChange"
-                />
-                <div
-                  v-if="insightsError"
-                  class="mt-4 bg-red-900/20 border border-red-700/50 rounded-lg p-4"
-                >
-                  <p class="text-red-400 text-sm">{{ insightsError }}</p>
-                </div>
-              </div>
+            <ServerPlayerActivityChart
+              :server-insights="serverInsights"
+              :is-loading="isInsightsLoading"
+              @period-change="handlePeriodChange"
+            />
+            <div
+              v-if="insightsError"
+              class="mt-4 bg-red-900/20 border border-red-700/50 rounded-lg p-4"
+            >
+              <p class="text-red-400 text-sm">{{ insightsError }}</p>
             </div>
 
             <!-- Leaderboards Section -->

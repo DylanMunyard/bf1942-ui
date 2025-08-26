@@ -1,33 +1,35 @@
 <template>
   <div
-    class="modal-overlay"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000]"
     @click="handleOverlayClick"
     @mousedown="handleOverlayMouseDown"
   >
     <div
-      class="modal-content"
+      class="bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-lg rounded-2xl border border-slate-700/50 shadow-2xl w-[90%] max-w-2xl max-h-[90vh] overflow-visible"
       @click.stop
       @mousedown="handleModalMouseDown"
     >
-      <div class="modal-header">
-        <div class="header-content">
-          <h3>Add Squad Member</h3>
-          <p class="subtitle">
+      <div class="flex justify-between items-center p-6 border-b border-slate-700/50 bg-slate-800/20">
+        <div class="flex flex-col gap-1">
+          <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 m-0">
+            Add Squad Member
+          </h3>
+          <p class="text-slate-400 text-sm font-normal m-0">
             Track friends and squad mates across the battlefield
           </p>
         </div>
         <button
-          class="close-btn"
+          class="bg-transparent border-0 text-slate-400 cursor-pointer text-2xl w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-red-500/10 hover:text-red-400"
           @click="$emit('close')"
         >
           ✕
         </button>
       </div>
       
-      <div class="modal-body">
+      <div class="p-6 overflow-visible max-h-[calc(90vh-140px)]">
         <form @submit.prevent="handleSubmit">
-          <div class="form-group">
-            <label for="playerName">Player Name</label>
+          <div class="mb-5">
+            <label for="playerName" class="block text-white font-semibold mb-2">Player Name</label>
             <PlayerSearch
               v-model="playerName"
               placeholder="Search for a player to add to your squad..."
@@ -35,56 +37,56 @@
               @select="onPlayerSelected"
               @enter="handleSubmit"
             />
-            <small class="help-text">
+            <small class="block text-slate-400 text-sm mt-1.5">
               Start typing to search for players to add to your squad and track their online status
             </small>
           </div>
 
           <div
             v-if="error"
-            class="error-message"
+            class="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg border border-red-500/20"
           >
             {{ error }}
           </div>
 
           <div
             v-if="selectedPlayer"
-            class="validation-result"
+            class="mb-5"
           >
-            <div class="player-preview">
-              <h4>{{ selectedPlayer.playerName }}</h4>
-              <div class="preview-stats">
-                <div class="stat">
-                  <span class="value">{{ Math.floor(selectedPlayer.totalPlayTimeMinutes / 60) }}h</span>
-                  <span class="label">Play Time</span>
+            <div class="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+              <h4 class="text-green-400 m-0 mb-3 text-base font-semibold">{{ selectedPlayer.playerName }}</h4>
+              <div class="grid grid-cols-3 gap-3">
+                <div class="text-center">
+                  <span class="block text-white font-bold text-lg">{{ Math.floor(selectedPlayer.totalPlayTimeMinutes / 60) }}h</span>
+                  <span class="block text-slate-400 text-xs mt-0.5 uppercase tracking-wider">Play Time</span>
                 </div>
-                <div class="stat">
-                  <span class="value">{{ formatLastSeen(selectedPlayer.lastSeen) }}</span>
-                  <span class="label">Last Seen</span>
+                <div class="text-center">
+                  <span class="block text-white font-bold text-lg">{{ formatLastSeen(selectedPlayer.lastSeen) }}</span>
+                  <span class="block text-slate-400 text-xs mt-0.5 uppercase tracking-wider">Last Seen</span>
                 </div>
-                <div class="stat">
+                <div class="text-center">
                   <span
-                    class="value"
-                    :class="selectedPlayer.isActive ? 'online' : 'offline'"
+                    class="block font-bold text-lg"
+                    :class="selectedPlayer.isActive ? 'text-green-400' : 'text-gray-500'"
                   >
                     {{ selectedPlayer.isActive ? '🟢 Online' : '⚫ Offline' }}
                   </span>
-                  <span class="label">Status</span>
+                  <span class="block text-slate-400 text-xs mt-0.5 uppercase tracking-wider">Status</span>
                 </div>
               </div>
               <div
                 v-if="selectedPlayer.currentServer && selectedPlayer.isActive"
-                class="current-server"
+                class="mt-3 p-3 bg-purple-500/10 rounded-md text-purple-400 text-sm italic"
               >
                 Currently playing on {{ selectedPlayer.currentServer.serverName }}
               </div>
             </div>
           </div>
 
-          <div class="form-actions">
+          <div class="flex gap-3 justify-end mt-6 pt-5 border-t border-slate-700/50">
             <button
               type="button"
-              class="cancel-btn"
+              class="px-5 py-2.5 rounded-lg border border-slate-700/50 bg-transparent text-slate-400 cursor-pointer font-semibold text-sm transition-all duration-200 hover:bg-slate-800/50 hover:text-white"
               @click="$emit('close')"
             >
               Cancel
@@ -92,11 +94,11 @@
             <button
               type="submit"
               :disabled="!playerName.trim() || isSubmitting"
-              class="submit-btn"
+              class="px-5 py-2.5 rounded-lg border-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white cursor-pointer font-semibold text-sm transition-all duration-200 flex items-center gap-2 hover:shadow-lg hover:shadow-purple-500/25 disabled:opacity-70 disabled:cursor-not-allowed hover:disabled:shadow-none"
             >
               <span
                 v-if="isSubmitting"
-                class="spinner"
+                class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"
               />
               {{ isSubmitting ? 'Adding...' : 'Add to Squad' }}
             </button>
@@ -183,287 +185,35 @@ const handleOverlayMouseDown = () => {
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-}
-
-.modal-content {
-  background-color: var(--color-card-bg);
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow: visible;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--color-border);
-  background-color: rgba(var(--color-accent-rgb), 0.05);
-}
-
-.header-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.modal-header h3 {
-  color: var(--color-text);
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.subtitle {
-  color: var(--color-text-secondary);
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 400;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font-size: 1.5rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.modal-body {
-  padding: 24px;
-  overflow: visible;
-  max-height: calc(90vh - 140px);
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  color: var(--color-text);
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px 16px;
-  @apply border border-slate-700/50 bg-slate-900/60 backdrop-blur-sm;
-  border-radius: 8px;
-  color: var(--color-text);
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.1);
-}
-
-.help-text {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-  margin-top: 6px;
-  display: block;
-}
-
-.validation-result {
-  margin-bottom: 20px;
-}
-
-.player-preview {
-  background-color: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.player-preview h4 {
-  color: #22c55e;
-  margin: 0 0 12px 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.preview-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.stat {
-  text-align: center;
-}
-
-.stat .value {
-  display: block;
-  color: var(--color-text);
-  font-weight: 700;
-  font-size: 1.125rem;
-}
-
-.stat .label {
-  display: block;
-  color: var(--color-text-secondary);
-  font-size: 0.75rem;
-  margin-top: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.stat .value.online {
-  color: #22c55e;
-}
-
-.stat .value.offline {
-  color: #6b7280;
-}
-
-.current-server {
-  margin-top: 12px;
-  padding: 8px 12px;
-  background-color: rgba(var(--color-accent-rgb), 0.1);
-  border-radius: 6px;
-  color: var(--color-accent);
-  font-size: 0.875rem;
-  font-style: italic;
-}
-
-.error-message {
-  color: #ef4444;
-  font-size: 0.875rem;
-  margin-bottom: 16px;
-  padding: 8px 12px;
-  background-color: rgba(239, 68, 68, 0.1);
-  border-radius: 6px;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--color-border);
-}
-
-.cancel-btn,
-.submit-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.cancel-btn {
-  background-color: var(--color-card-bg);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-}
-
-.cancel-btn:hover {
-  background-color: var(--color-card-bg-hover);
-  color: var(--color-text);
-}
-
-.submit-btn {
-  background: linear-gradient(135deg, var(--color-accent) 0%, rgba(var(--color-accent-rgb), 0.8) 100%);
-  color: white;
-}
-
-.submit-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.3);
-}
-
-.submit-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 /* Mobile responsiveness */
 @media (max-width: 480px) {
-  .modal-content {
-    width: 95%;
+  .bg-gradient-to-r.from-slate-800\/90.to-slate-900\/90 {
+    width: 95% !important;
     margin: 20px;
-    max-height: 95vh;
+    max-height: 95vh !important;
     overflow: hidden;
   }
   
-  .modal-header,
-  .modal-body {
-    padding: 16px;
+  .p-6 {
+    padding: 16px !important;
   }
   
-  .modal-body {
-    overflow-y: auto;
+  .overflow-visible {
+    overflow-y: auto !important;
   }
   
-  .preview-stats {
-    grid-template-columns: 1fr;
-    gap: 8px;
+  .grid-cols-3 {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
   
-  .form-actions {
-    flex-direction: column;
+  .flex.gap-3.justify-end {
+    flex-direction: column !important;
   }
   
-  .cancel-btn,
-  .submit-btn {
-    width: 100%;
-    justify-content: center;
+  .px-5.py-2\.5 {
+    width: 100% !important;
+    justify-content: center !important;
   }
 }
 </style>

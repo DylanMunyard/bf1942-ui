@@ -1,13 +1,74 @@
 <template>
-  <div class="min-h-screen bg-slate-900">
+  <div class="min-h-screen bg-slate-900 px-3 sm:px-6">
 
-    <div class="min-h-screen">
+    <div class="min-h-screen pt-4">
       <!-- Main Server Table -->
       <div class="w-full">
         <!-- Header -->
         <div class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-3">
-          <!-- Game Filters and Player Search -->
-          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <!-- Mobile: Player Search Full Width -->
+          <div class="block lg:hidden w-full mb-4">
+            <div class="relative group">
+              <!-- Search Icon with Glow -->
+              <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                <div class="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
+                  <span class="text-slate-900 text-xs font-bold">🔍</span>
+                </div>
+              </div>
+              
+              <!-- Enhanced Search Input -->
+              <input
+                v-model="playerSearchQuery"
+                type="text"
+                placeholder="Search players..."
+                class="w-full pl-14 pr-14 py-3 bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-lg border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-300 font-medium shadow-lg hover:shadow-cyan-500/20 focus:shadow-cyan-500/30"
+                @input="onPlayerSearchInput"
+                @keyup.enter="navigateToPlayer"
+                @focus="onSearchFocus"
+                @blur="onSearchBlur"
+              >
+              
+              <!-- Loading Spinner -->
+              <div v-if="isSearchLoading" class="absolute right-4 top-1/2 transform -translate-y-1/2">
+                <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>
+              </div>
+              
+              <!-- Search Glow Effect -->
+              <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              
+              <!-- Enhanced Player Dropdown -->
+              <div v-if="showPlayerDropdown" class="absolute top-full mt-3 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto shadow-2xl z-50">
+                <div
+                  v-for="player in playerSuggestions"
+                  :key="player.playerName"
+                  class="group p-4 border-b border-slate-700/30 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-800/50 cursor-pointer transition-all duration-300 last:border-b-0 hover:shadow-lg"
+                  @mousedown.prevent="selectPlayer(player)"
+                >
+                  <div class="space-y-2">
+                    <div class="font-bold text-slate-200 text-sm group-hover:text-cyan-400 transition-colors">{{ player.playerName }}</div>
+                    <div class="flex items-center gap-3 flex-wrap text-xs">
+                      <span class="text-slate-400 font-medium">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
+                      <span v-if="player.isActive" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full">
+                        🟢 ONLINE
+                      </span>
+                      <span v-else class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 bg-slate-500/20 border border-slate-500/30 rounded-full">
+                        ⚫ OFFLINE
+                      </span>
+                    </div>
+                    <div v-if="player.currentServer && player.isActive" class="text-xs text-cyan-400 font-medium">
+                      🎮 {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
+                    </div>
+                  </div>
+                </div>
+                <div v-if="playerSuggestions.length === 0 && !isSearchLoading && playerSearchQuery.length >= 2" class="p-4 text-center text-slate-400 text-sm font-medium">
+                  🔍 No players found
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop: Original Layout -->
+          <div class="hidden lg:flex lg:items-center lg:justify-between gap-4">
             <!-- Game Filter Buttons -->
             <div class="flex items-center gap-2 flex-wrap">
               <button
@@ -89,6 +150,29 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Mobile: Game Filter Buttons (Above Table) -->
+        <div class="block lg:hidden p-3 border-b border-slate-700/30">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              v-for="game in gameTypes.filter(g => g.id !== 'all')"
+              :key="game.id"
+              :class="[
+                'group relative flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200',
+                activeFilter === game.id
+                  ? 'bg-slate-700 border-slate-600 text-white shadow-md'
+                  : 'bg-slate-800/60 border-slate-700/50 hover:border-slate-600 text-slate-300 hover:bg-slate-800'
+              ]"
+              @click="setActiveFilter(game.id)"
+            >
+              <div
+                class="w-6 h-6 rounded bg-cover bg-center"
+                :style="{ backgroundImage: getGameIcon(game.iconClass) }"
+              ></div>
+              <div class="text-sm font-medium">{{ game.name }}</div>
+            </button>
           </div>
         </div>
 
