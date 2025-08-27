@@ -10,6 +10,7 @@ import ServerPlayerActivityChart from '../components/ServerPlayerActivityChart.v
 import ServerLeaderboards from '../components/ServerLeaderboards.vue';
 import ServerRecentRounds from '../components/ServerRecentRounds.vue';
 import { formatDate } from '../utils/date';
+import HeroBackButton from '../components/HeroBackButton.vue';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
@@ -201,33 +202,14 @@ const handlePeriodChange = async (period: string) => {
 <template>
   <div class="relative min-h-screen px-3 sm:px-6">
     <div class="relative z-10">
-      <!-- Back Navigation -->
-      <div class="pt-4 mb-8">
-        <button
-          class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer"
-          @click="$router.push(getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string)))"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="group-hover:-translate-x-1 transition-transform duration-300"
-          ><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
-          Back to Servers
-        </button>
-      </div>
 
-      <div class="relative z-10 pb-6 sm:pb-12">
+      <div class="relative z-10 py-6 sm:py-12">
         <div class="max-w-7xl mx-auto">
           <!-- Server Profile Hero -->
           <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-8">
             <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50"></div>
+            
+            <HeroBackButton :on-click="() => $router.push(getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string)))" />
             <div class="relative z-10 p-4 sm:p-8 md:p-12">
               <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
                 <!-- Server Icon/Avatar -->

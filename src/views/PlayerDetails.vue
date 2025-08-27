@@ -5,6 +5,7 @@ import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPla
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import PlayerAchievements from '../components/PlayerAchievements.vue';
+import HeroBackButton from '../components/HeroBackButton.vue';
 
 import bf1942Icon from '@/assets/bf1942.jpg';
 import fh2Icon from '@/assets/fh2.jpg';
@@ -653,16 +654,6 @@ const expandedServerName = computed(() => {
   return server?.serverName || null;
 });
 
-// Handle back button navigation
-const goBack = () => {
-  // Check if there's history to go back to
-  if (window.history.length > 1) {
-    window.history.back();
-  } else {
-    // Fallback to players page if no history
-    router.push('/players');
-  }
-};
 
 // Timeline helper functions
 const getPerformanceClass = (session: any): string => {
@@ -771,37 +762,18 @@ watch(
         <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <!-- Navigation -->
-      <div class="relative z-10 py-3 sm:py-6">
-        <button
-          class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer"
-          @click="goBack"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="group-hover:-translate-x-1 transition-transform duration-300"
-          ><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
-          Back to Players
-        </button>
-      </div>
 
       <!-- Player Hero Card -->
-      <div class="relative z-10 pb-6 sm:pb-12">
+      <div class="relative z-10 py-6 sm:py-12">
         <div class="max-w-7xl mx-auto">
           <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
             <!-- Glow Effect -->
             <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 opacity-50"></div>
             
+            <HeroBackButton fallback-route="/players" />
+
             <!-- Content -->
-            <div class="relative z-10 p-4 sm:p-8 md:p-12">
+            <div class="relative z-10 p-4 sm:p-8 md:p-12" style="pointer-events: auto;">
               <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
                 <!-- Player Avatar Section -->
                 <div class="flex-shrink-0">

@@ -3,6 +3,7 @@ import { ref, watch, computed, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import PlayerName from '@/components/PlayerName.vue';
+import HeroBackButton from './HeroBackButton.vue';
 
 // Router
 const route = useRoute();
@@ -42,7 +43,7 @@ const error = ref<string | null>(null);
 const currentPage = ref(1);
 const totalPages = ref(1);
 const totalItems = ref(0);
-const pageSize = ref(20);
+const pageSize = ref(100);
 
 // Mobile filters state
 const showFilters = ref(false);
@@ -252,7 +253,7 @@ const updateQueryParams = () => {
   
   // Add pagination to query
   if (currentPage.value !== 1) query.page = currentPage.value.toString();
-  if (pageSize.value !== 20) query.pageSize = pageSize.value.toString();
+  if (pageSize.value !== 100) query.pageSize = pageSize.value.toString();
   
   // Update URL without triggering navigation
   router.replace({ query });
@@ -450,399 +451,511 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-900 px-3 sm:px-6">
-    <!-- Server Context Header -->
-    <div
-      v-if="serverContext"
-      class="bg-slate-800/40 rounded-xl p-6 mb-6"
-    >
-      <div class="flex items-center gap-3 mb-6">
-        <h1 class="text-2xl font-bold text-white">{{ serverContext.serverName }}</h1>
-      </div>
+  <div class="relative min-h-screen px-3 sm:px-6">
+    <!-- Animated Background Pattern -->
+    <div class="fixed inset-0 opacity-10 pointer-events-none">
+      <div class="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-red-500/20"></div>
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl animate-pulse"></div>
+      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-amber-500/5 to-orange-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
     </div>
 
-    <!-- Filter controls -->
-    <div class="mb-6">
-      <div class="lg:hidden mb-4">
-        <button
-          class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-800/40 border border-slate-700/50 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:border-cyan-500/50 transition-all duration-200 font-medium"
-          @click="showFilters = !showFilters"
+
+    <!-- Compact Hero Section -->
+    <div class="relative z-10 py-6">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6">
+        <div
+          v-if="serverContext"
+          class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="text-cyan-400"
-          >
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-          </svg>
-          Filters
-          <span
-            v-if="playerNameFilter || minScoreFilter !== '' || minKillsFilter !== '' || minDeathsFilter !== '' || minKdRatioFilter !== '' || minPlayTimeMinutesFilter !== ''"
-            class="text-cyan-400 text-sm ml-auto mr-2"
-          >●</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="transition-transform duration-200"
-            :class="{ 'rotate-180': showFilters }"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
-      </div>
-      
-      <div
-        class="transition-all duration-300 overflow-hidden lg:max-h-none lg:opacity-100"
-        :class="showFilters ? 'max-h-96 opacity-100 mb-6' : 'max-h-0 opacity-0 lg:max-h-none lg:opacity-100'"
-      >
-        <div class="flex flex-wrap gap-4 items-end">
-          <div class="flex flex-col min-w-48">
-            <label for="playerNameFilter" class="mb-2 text-sm font-medium text-slate-300">Filter by Player Name:</label>
-            <div class="relative">
-              <input 
-                id="playerNameFilter" 
-                v-model="playerNameInputValue" 
-                type="text"
-                placeholder="Enter player name" 
-                class="w-full px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
-                @input="handlePlayerNameFilterChange(playerNameInputValue)"
-              >
-              <span
-                v-if="isSearching"
-                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400"
-              >🔍</span>
-              <button 
-                v-if="playerNameInputValue && !isSearching" 
-                class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 rounded-full transition-all duration-200" 
-                title="Clear filter"
-                @click="clearPlayerNameFilter"
-              >×</button>
+          <div class="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 opacity-50"></div>
+          
+          <HeroBackButton positioning="left-of-icon" />
+          <div class="relative z-10 p-4 sm:p-6">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+              <!-- Server Leaderboard Icon -->
+              <div class="flex-shrink-0">
+                <div class="relative">
+                  <div class="w-16 h-16 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 p-1">
+                    <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                      <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xl font-bold text-slate-900">
+                        🏆
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Live indicator -->
+                  <div class="absolute -bottom-1 -right-1">
+                    <div class="w-4 h-4 bg-emerald-500 rounded-full border-2 border-slate-900 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Server Info -->
+              <div class="flex-grow">
+                <h1 class="text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 mb-2">
+                  {{ serverContext.serverName }} Leaderboard
+                </h1>
+                <p class="text-slate-400 text-sm">
+                  Elite soldiers ranked by battlefield supremacy • {{ totalItems.toLocaleString() }} warriors
+                </p>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-3">
+                <button
+                  @click="fetchRankings(currentPage)"
+                  :disabled="loading"
+                  class="group bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 disabled:from-slate-600 disabled:to-slate-500 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-amber-500/25 disabled:shadow-none flex items-center gap-2"
+                >
+                  <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-300">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                    <path d="M21 3v5h-5" />
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                    <path d="M3 21v-5h5" />
+                  </svg>
+                  <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span class="font-medium text-sm">{{ loading ? 'Loading...' : 'Refresh' }}</span>
+                </button>
+              </div>
             </div>
           </div>
-
-          <div class="flex flex-col min-w-32">
-            <label for="minScoreFilter" class="mb-2 text-sm font-medium text-slate-300">Min Score:</label>
-            <input 
-              id="minScoreFilter" 
-              v-model="minScoreInputValue" 
-              type="number"
-              placeholder="e.g. 1000"
-              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
-              min="0"
-              @input="handleMinScoreChange(minScoreInputValue)"
-            >
-          </div>
-
-          <div class="flex flex-col min-w-32">
-            <label for="minKillsFilter" class="mb-2 text-sm font-medium text-slate-300">Min Kills:</label>
-            <input 
-              id="minKillsFilter" 
-              v-model="minKillsInputValue" 
-              type="number"
-              placeholder="e.g. 100"
-              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
-              min="0"
-              @input="handleMinKillsChange(minKillsInputValue)"
-            >
-          </div>
-
-          <div class="flex flex-col min-w-32">
-            <label for="minDeathsFilter" class="mb-2 text-sm font-medium text-slate-300">Min Deaths:</label>
-            <input 
-              id="minDeathsFilter" 
-              v-model="minDeathsInputValue" 
-              type="number"
-              placeholder="e.g. 50"
-              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
-              min="0"
-              @input="handleMinDeathsChange(minDeathsInputValue)"
-            >
-          </div>
-
-          <div class="flex flex-col min-w-32">
-            <label for="minKdRatioFilter" class="mb-2 text-sm font-medium text-slate-300">Min K/D Ratio:</label>
-            <input 
-              id="minKdRatioFilter" 
-              v-model="minKdRatioInputValue" 
-              type="number"
-              placeholder="e.g. 1.5"
-              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
-              min="0"
-              step="0.1"
-              @input="handleMinKdRatioChange(minKdRatioInputValue)"
-            >
-          </div>
-
-          <div class="flex flex-col min-w-40">
-            <label for="minPlayTimeFilter" class="mb-2 text-sm font-medium text-slate-300">Min Play Time (minutes):</label>
-            <input 
-              id="minPlayTimeFilter" 
-              v-model="minPlayTimeInputValue" 
-              type="number"
-              placeholder="e.g. 60"
-              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
-              min="0"
-              @input="handleMinPlayTimeChange(minPlayTimeInputValue)"
-            >
-          </div>
-
-          <button
-            class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-all duration-200 font-medium"
-            @click="resetFilters"
-          >
-            Reset Filters
-          </button>
         </div>
       </div>
     </div>
 
-    <!-- Rankings Table -->
-    <div class="bg-slate-800/40 rounded-xl p-6">
-      <h2 class="text-xl font-bold text-white mb-6">Player Rankings</h2>
-      <div
-        v-if="loading"
-        class="flex flex-col items-center justify-center py-20"
-      >
-        <div class="w-12 h-12 border-4 border-slate-700/50 border-t-cyan-500 rounded-full animate-spin mb-4" />
-        <p class="text-slate-300">Loading rankings...</p>
-      </div>
-      <div
-        v-else-if="error"
-        class="flex items-center justify-center py-20"
-      >
-        <p class="text-red-400 font-semibold">
-          {{ error }}
-        </p>
-      </div>
-      <div
-        v-else-if="rankings.length > 0"
-        class="overflow-x-auto"
-      >
-        <!-- Table header info -->
-        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-4">
-          <div class="font-semibold text-slate-300">
-            Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} players
-          </div>
-          <div class="flex items-center gap-3">
-            <label for="pageSize" class="text-sm text-slate-400">Items per page:</label>
-            <select
-              id="pageSize"
-              v-model="pageSize"
-              class="px-3 py-1 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-              @change="handlePageSizeChange"
+    <!-- Main Content -->
+    <div
+      v-if="!loading || rankings.length > 0"
+      class="max-w-7xl mx-auto px-3 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
+    >
+      <!-- Compact Filters and Sort -->
+      <div class="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 p-4 mb-4">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <!-- Sort Controls (moved from below) -->
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="sortOption in [
+                { key: 'TotalScore', label: 'Score', icon: '🏆' },
+                { key: 'TotalKills', label: 'Kills', icon: '⚔️' },
+                { key: 'KDRatio', label: 'K/D', icon: '📊' },
+                { key: 'TotalPlayTimeMinutes', label: 'Time', icon: '⏱️' }
+              ]"
+              :key="sortOption.key"
+              @click="handleSort(sortOption.key)"
+              class="group flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-300 text-xs font-medium"
+              :class="orderBy === sortOption.key 
+                ? 'bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-sm' 
+                : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 hover:text-white border border-slate-600/50 hover:border-amber-500/50'"
             >
-              <option value="10">
-                10
-              </option>
-              <option value="20">
-                20
-              </option>
-              <option value="50">
-                50
-              </option>
-              <option value="100">
-                100
-              </option>
-            </select>
+              <span>{{ sortOption.icon }}</span>
+              <span>{{ sortOption.label }}</span>
+              <span v-if="orderBy === sortOption.key" class="text-xs opacity-75">
+                {{ orderDirection === 'desc' ? '↓' : '↑' }}
+              </span>
+            </button>
           </div>
+
+          <!-- Filter Button -->
+          <button
+            @click="showFilters = !showFilters"
+            class="group bg-slate-700/50 hover:bg-slate-600/70 border border-slate-600/50 hover:border-amber-500/50 rounded-lg px-4 py-2 transition-all duration-300 flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            <span class="text-amber-400 font-medium text-sm">Filters</span>
+            <span v-if="playerNameFilter || minScoreFilter !== '' || minKillsFilter !== '' || minDeathsFilter !== '' || minKdRatioFilter !== '' || minPlayTimeMinutesFilter !== ''" class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+          </button>
         </div>
-
-        <table class="w-full border-collapse border border-slate-700/30">
-          <thead class="sticky top-0 z-10">
-            <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
-              <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">Rank</th>
-              <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">Player</th>
-              <th
-                class="hidden lg:table-cell p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30"
-                :class="{ 'bg-cyan-500/20 text-cyan-400': orderBy === 'TotalScore' }"
-                @click="handleSort('TotalScore')"
-              >
-                Score {{ getSortIcon('TotalScore') }}
-              </th>
-              <th
-                class="hidden lg:table-cell p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30"
-                :class="{ 'bg-cyan-500/20 text-cyan-400': orderBy === 'TotalKills' }"
-                @click="handleSort('TotalKills')"
-              >
-                Kills {{ getSortIcon('TotalKills') }}
-              </th>
-              <th
-                class="hidden lg:table-cell p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30"
-                :class="{ 'bg-cyan-500/20 text-cyan-400': orderBy === 'TotalDeaths' }"
-                @click="handleSort('TotalDeaths')"
-              >
-                Deaths {{ getSortIcon('TotalDeaths') }}
-              </th>
-              <th
-                class="hidden lg:table-cell p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30"
-                :class="{ 'bg-cyan-500/20 text-cyan-400': orderBy === 'KDRatio' }"
-                @click="handleSort('KDRatio')"
-              >
-                K/D {{ getSortIcon('KDRatio') }}
-              </th>
-              <th
-                class="hidden lg:table-cell p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30"
-                :class="{ 'bg-cyan-500/20 text-cyan-400': orderBy === 'TotalPlayTimeMinutes' }"
-                @click="handleSort('TotalPlayTimeMinutes')"
-              >
-                Play Time {{ getSortIcon('TotalPlayTimeMinutes') }}
-              </th>
-              <th class="lg:hidden p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
-                Stats
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="ranking in rankings"
-              :key="ranking.playerName"
-              class="lg:table-row flex flex-col lg:hover:bg-slate-800/20 border-b border-slate-700/30 transition-all duration-300"
-            >
-              <td class="lg:table-cell lg:p-3 lg:font-bold lg:text-white flex justify-between lg:justify-start items-center p-4 lg:border-0 border-b border-slate-700/20">
-                <span class="lg:hidden text-slate-400 text-sm font-medium">Rank:</span>
-                <span class="text-lg lg:text-base font-bold text-white">#{{ ranking.rank }}</span>
-              </td>
-              <td class="lg:table-cell lg:p-3 flex justify-between lg:justify-start items-center p-4 pb-2 lg:pb-3 lg:border-0">
-                <span class="lg:hidden text-slate-400 text-sm font-medium">Player:</span>
-                <router-link
-                  :to="`/players/${encodeURIComponent(ranking.playerName)}`"
-                  class="text-cyan-400 hover:text-cyan-300 font-medium no-underline hover:underline transition-colors"
-                >
-                  <PlayerName 
-                    :name="ranking.playerName" 
-                    source="server-rankings"
-                    :server-guid="serverContext?.serverGuid"
-                    :clickable="true"
-                    :show-compare-icon="true"
-                  />
-                </router-link>
-              </td>
-              <td class="hidden lg:table-cell p-3 text-white font-semibold">
-                🏆 {{ ranking.totalScore }}
-              </td>
-              <td class="hidden lg:table-cell p-3 text-white">
-                <div class="flex items-center gap-1">
-                  <img
-                    src="@/assets/kills.png"
-                    alt="Kills"
-                    class="w-5 h-5"
-                  > {{ ranking.totalKills }}
-                </div>
-              </td>
-              <td class="hidden lg:table-cell p-3 text-white">
-                <div class="flex items-center gap-1">
-                  <img
-                    src="@/assets/deaths.png"
-                    alt="Deaths"
-                    class="w-5 h-5"
-                  > {{ ranking.totalDeaths }}
-                </div>
-              </td>
-              <td class="hidden lg:table-cell p-3 text-white font-semibold">
-                📊 {{ ranking.kdRatio.toFixed(2) }}
-              </td>
-              <td class="hidden lg:table-cell p-3 text-white">
-                ⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}
-              </td>
-              <td class="lg:hidden p-4 pt-2">
-                <div class="flex flex-wrap gap-3">
-                  <span
-                    class="inline-flex items-center gap-1 px-3 py-1 bg-slate-900/60 rounded-lg text-sm font-medium text-slate-200"
-                    title="Score"
-                  >🏆 {{ ranking.totalScore }}</span>
-                  <span
-                    class="inline-flex items-center gap-1 px-3 py-1 bg-slate-900/60 rounded-lg text-sm font-medium text-slate-200"
-                    title="Kills • Deaths • K/D Ratio"
-                  >
-                    <img
-                      src="@/assets/kills.png"
-                      alt="Kills"
-                      class="w-4 h-4"
-                    > {{ ranking.totalKills }} • <img
-                      src="@/assets/deaths.png"
-                      alt="Deaths"
-                      class="w-4 h-4"
-                    > {{ ranking.totalDeaths }} • 📊 {{ ranking.kdRatio.toFixed(2) }}
-                  </span>
-                  <span
-                    class="inline-flex items-center gap-1 px-3 py-1 bg-slate-900/60 rounded-lg text-sm font-medium text-slate-200"
-                    title="Play Time"
-                  >⏱️ {{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Pagination -->
+        
+        <!-- Collapsible Filter Panel -->
         <div
-          v-if="totalPages > 1"
-          class="flex justify-center mt-6"
+          class="transition-all duration-300 ease-in-out overflow-hidden"
+          :class="showFilters ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'"
         >
-          <div class="flex items-center gap-2">
-            <button 
-              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
-              :disabled="currentPage === 1" 
-              title="First Page"
-              @click="changePage(1)"
-            >
-              &laquo;
-            </button>
-            <button 
-              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
-              :disabled="currentPage === 1" 
-              title="Previous Page"
-              @click="changePage(currentPage - 1)"
-            >
-              &lsaquo;
-            </button>
-            <button 
-              v-for="page in paginationRange" 
-              :key="page" 
-              class="px-3 py-2 border rounded-lg transition-all duration-200 font-medium" 
-              :class="page === currentPage ? 'bg-cyan-500 border-cyan-500 text-white' : 'bg-slate-800/40 border-slate-700/50 text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50'" 
-              @click="changePage(page)"
-            >
-              {{ page }}
-            </button>
-            <button 
-              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
-              :disabled="currentPage === totalPages" 
-              title="Next Page"
-              @click="changePage(currentPage + 1)"
-            >
-              &rsaquo;
-            </button>
-            <button 
-              class="px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
-              :disabled="currentPage === totalPages" 
-              title="Last Page"
-              @click="changePage(totalPages)"
-            >
-              &raquo;
-            </button>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t border-slate-700/50">
+            <!-- Soldier Name Filter -->
+            <div class="space-y-2">
+              <label for="playerNameFilter" class="block text-xs font-medium text-slate-400">Soldier Name</label>
+              <div class="relative">
+                <input 
+                  id="playerNameFilter" 
+                  v-model="playerNameInputValue" 
+                  type="text"
+                  placeholder="Search..." 
+                  class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
+                  @input="handlePlayerNameFilterChange(playerNameInputValue)"
+                >
+                <button 
+                  v-if="playerNameInputValue" 
+                  @click="clearPlayerNameFilter"
+                  class="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                >×</button>
+              </div>
+            </div>
+
+            <!-- Min Score -->
+            <div class="space-y-2">
+              <label for="minScoreFilter" class="block text-xs font-medium text-slate-400">Min Score</label>
+              <input 
+                id="minScoreFilter" 
+                v-model="minScoreInputValue" 
+                type="number"
+                placeholder="1000"
+                class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
+                @input="handleMinScoreChange(minScoreInputValue)"
+              >
+            </div>
+
+            <!-- Min Kills -->
+            <div class="space-y-2">
+              <label for="minKillsFilter" class="block text-xs font-medium text-slate-400">Min Kills</label>
+              <input 
+                id="minKillsFilter" 
+                v-model="minKillsInputValue" 
+                type="number"
+                placeholder="100"
+                class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
+                @input="handleMinKillsChange(minKillsInputValue)"
+              >
+            </div>
+
+            <!-- Min Play Time -->
+            <div class="space-y-2">
+              <label for="minPlayTimeFilter" class="block text-xs font-medium text-slate-400">Min Play Time (min)</label>
+              <input 
+                id="minPlayTimeFilter" 
+                v-model="minPlayTimeInputValue" 
+                type="number"
+                placeholder="60"
+                class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-sm"
+                @input="handleMinPlayTimeChange(minPlayTimeInputValue)"
+              >
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-2">
+              <label class="block text-xs font-medium text-slate-400">Actions</label>
+              <button
+                @click="resetFilters"
+                class="w-full px-3 py-2 bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 hover:text-white rounded-lg transition-all duration-200 text-sm"
+              >
+                Reset Filters
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- Elite Leaderboard -->
+      <div v-if="rankings.length > 0" class="space-y-6">
+        
+        <!-- Results Summary -->
+        <div class="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 p-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-slate-400">
+                Showing <span class="text-amber-400 font-medium">{{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, totalItems) }}</span> 
+                of <span class="text-amber-400 font-medium">{{ totalItems.toLocaleString() }}</span> warriors
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <label for="pageSize" class="text-xs text-slate-500">Per page:</label>
+              <select
+                id="pageSize"
+                v-model="pageSize"
+                @change="handlePageSizeChange"
+                class="px-2 py-1 bg-slate-700/50 border border-slate-600/50 rounded text-white text-xs focus:ring-1 focus:ring-amber-400 focus:border-transparent"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rankings Grid -->
+        <div class="space-y-4">
+          <div
+            v-for="(ranking, index) in rankings"
+            :key="ranking.playerName"
+            class="group relative"
+          >
+            <!-- Special Treatment for Top 3 -->
+            <div
+              v-if="ranking.rank <= 3"
+              class="relative bg-gradient-to-r backdrop-blur-lg rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-2xl"
+              :class="{
+                'from-yellow-900/40 to-amber-900/40 border-yellow-500/30 hover:border-yellow-500/60 shadow-yellow-500/10': ranking.rank === 1,
+                'from-slate-600/40 to-slate-700/40 border-slate-400/30 hover:border-slate-400/60 shadow-slate-500/10': ranking.rank === 2,
+                'from-orange-900/40 to-amber-900/40 border-amber-600/30 hover:border-amber-600/60 shadow-amber-600/10': ranking.rank === 3
+              }"
+            >
+              <!-- Rank Crown/Medal -->
+              <div class="absolute top-4 left-4">
+                <div class="relative">
+                  <div
+                    class="w-16 h-16 rounded-full flex items-center justify-center border-4 relative"
+                    :class="{
+                      'bg-gradient-to-br from-yellow-400 to-yellow-600 border-yellow-300': ranking.rank === 1,
+                      'bg-gradient-to-br from-slate-300 to-slate-500 border-slate-200': ranking.rank === 2,
+                      'bg-gradient-to-br from-amber-600 to-amber-800 border-amber-400': ranking.rank === 3
+                    }"
+                  >
+                    <div class="text-2xl">{{ ranking.rank === 1 ? '👑' : ranking.rank === 2 ? '🥈' : '🥉' }}</div>
+                  </div>
+                  <div
+                    class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    :class="{
+                      'bg-yellow-500 text-yellow-900': ranking.rank === 1,
+                      'bg-slate-500 text-white': ranking.rank === 2,
+                      'bg-amber-600 text-white': ranking.rank === 3
+                    }"
+                  >
+                    {{ ranking.rank }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Player Card Content -->
+              <div class="pl-24 pr-6 py-4">
+                <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+                  <!-- Player Info -->
+                  <div class="flex-grow">
+                    <router-link
+                      :to="`/players/${encodeURIComponent(ranking.playerName)}`"
+                      class="block transition-colors duration-300"
+                    >
+                      <h3 class="text-xl font-bold mb-1 hover:text-amber-300 transition-colors"
+                          :class="{
+                            'text-yellow-400': ranking.rank === 1,
+                            'text-slate-300': ranking.rank === 2,
+                            'text-amber-400': ranking.rank === 3
+                          }"
+                      >
+                        <PlayerName 
+                          :name="ranking.playerName" 
+                          source="server-rankings"
+                          :server-guid="serverContext?.serverGuid"
+                          :clickable="true"
+                          :show-compare-icon="false"
+                        />
+                      </h3>
+                    </router-link>
+                  </div>
+
+                  <!-- Elite Stats -->
+                  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="text-center">
+                      <div class="text-lg mb-1">🏆</div>
+                      <div class="text-xs text-slate-400 mb-1">Battle Score</div>
+                      <div class="font-bold text-amber-400">{{ ranking.totalScore.toLocaleString() }}</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-lg mb-1">⚔️</div>
+                      <div class="text-xs text-slate-400 mb-1">K/D</div>
+                      <div class="font-bold text-emerald-400">{{ ranking.kdRatio.toFixed(2) }}</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-lg mb-1">🎯</div>
+                      <div class="text-xs text-slate-400 mb-1">Kills</div>
+                      <div class="font-bold text-red-400">{{ ranking.totalKills.toLocaleString() }}</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-lg mb-1">⏱️</div>
+                      <div class="text-xs text-slate-400 mb-1">Campaign</div>
+                      <div class="font-bold text-cyan-400 text-sm">{{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Standard Ranking Card (Rank 4+) -->
+            <div
+              v-else
+              class="group relative"
+            >
+              <!-- Performance indicator line -->
+              <div class="absolute left-0 top-0 bottom-0 w-1 rounded-full"
+                   :class="{
+                     'bg-gradient-to-b from-purple-500 to-pink-500': ranking.rank <= 10,
+                     'bg-gradient-to-b from-blue-500 to-cyan-500': ranking.rank <= 25 && ranking.rank > 10,
+                     'bg-gradient-to-b from-emerald-500 to-green-500': ranking.rank <= 50 && ranking.rank > 25,
+                     'bg-slate-500': ranking.rank > 50
+                   }"
+              ></div>
+              
+              <!-- Main Ranking Card -->
+              <div class="ml-4 bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700/50 hover:border-amber-500/30 overflow-hidden transition-all duration-200 cursor-pointer group-hover:bg-slate-800/60">
+                <div class="p-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <!-- Rank and Player Info -->
+                    <div class="flex items-center gap-4 flex-grow min-w-0">
+                      <div class="relative flex-shrink-0">
+                        <div class="w-10 h-10 bg-slate-700/50 rounded-full flex items-center justify-center border-2 border-slate-600/50 group-hover:border-amber-500/50 transition-colors">
+                          <span class="text-sm font-bold text-slate-300 group-hover:text-amber-400">{{ ranking.rank }}</span>
+                        </div>
+                        <!-- Rank tier indicator -->
+                        <div class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full"
+                             :class="{
+                               'bg-gradient-to-r from-purple-500 to-pink-500': ranking.rank <= 10,
+                               'bg-gradient-to-r from-blue-500 to-cyan-500': ranking.rank <= 25 && ranking.rank > 10,
+                               'bg-gradient-to-r from-emerald-500 to-green-500': ranking.rank <= 50 && ranking.rank > 25,
+                               'bg-slate-500': ranking.rank > 50
+                             }"
+                        ></div>
+                      </div>
+                      
+                      <div class="min-w-0">
+                        <router-link
+                          :to="`/players/${encodeURIComponent(ranking.playerName)}`"
+                          class="font-semibold text-white hover:text-amber-300 transition-colors truncate block"
+                        >
+                          <PlayerName 
+                            :name="ranking.playerName" 
+                            source="server-rankings"
+                            :server-guid="serverContext?.serverGuid"
+                            :clickable="true"
+                            :show-compare-icon="false"
+                          />
+                        </router-link>
+                      </div>
+                    </div>
+
+                    <!-- Compact Stats -->
+                    <div class="flex items-center gap-4 text-sm flex-shrink-0">
+                      <div class="text-center">
+                        <div class="font-semibold text-amber-400">{{ ranking.totalScore.toLocaleString() }}</div>
+                        <div class="text-xs text-slate-500">Score</div>
+                      </div>
+                      <div class="text-center">
+                        <div class="font-semibold text-emerald-400">{{ ranking.kdRatio.toFixed(2) }}</div>
+                        <div class="text-xs text-slate-500">K/D</div>
+                      </div>
+                      <div class="text-center">
+                        <div class="font-semibold text-red-400">{{ ranking.totalKills.toLocaleString() }}</div>
+                        <div class="text-xs text-slate-500">Kills</div>
+                      </div>
+                      <div class="text-center hidden sm:block">
+                        <div class="text-cyan-400 font-semibold text-xs">{{ formatPlayTime(ranking.totalPlayTimeMinutes) }}</div>
+                        <div class="text-xs text-slate-500">Time</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Enhanced Pagination -->
+        <div v-if="totalPages > 1" class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div class="text-slate-400 text-sm">
+              <span class="font-semibold text-amber-400">Page {{ currentPage }}</span> of {{ totalPages }} 
+              • <span class="font-semibold text-amber-400">{{ totalItems.toLocaleString() }}</span> total warriors
+            </div>
+            
+            <div class="flex items-center gap-2 justify-center lg:justify-end">
+              <button 
+                @click="changePage(1)"
+                :disabled="currentPage === 1" 
+                class="px-3 py-2 bg-slate-700/50 hover:bg-slate-600/70 border border-slate-600/50 hover:border-amber-500/50 rounded-lg text-slate-300 hover:text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                title="First Page"
+              >
+                ⟨⟨
+              </button>
+              <button 
+                @click="changePage(currentPage - 1)"
+                :disabled="currentPage === 1" 
+                class="px-3 py-2 bg-slate-700/50 hover:bg-slate-600/70 border border-slate-600/50 hover:border-amber-500/50 rounded-lg text-slate-300 hover:text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                title="Previous Page"
+              >
+                ⟨
+              </button>
+              
+              <!-- Page Numbers -->
+              <div class="hidden sm:flex items-center gap-2 mx-2">
+                <button 
+                  v-for="page in paginationRange" 
+                  :key="page" 
+                  @click="changePage(page)"
+                  class="px-4 py-2 rounded-lg font-semibold transition-all duration-300"
+                  :class="page === currentPage 
+                    ? 'bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-lg shadow-amber-500/25' 
+                    : 'bg-slate-700/50 hover:bg-slate-600/70 border border-slate-600/50 hover:border-amber-500/50 text-slate-300 hover:text-white'"
+                >
+                  {{ page }}
+                </button>
+              </div>
+              
+              <!-- Current Page (Mobile) -->
+              <div class="sm:hidden px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-500 text-white rounded-lg font-semibold mx-2">
+                {{ currentPage }}
+              </div>
+              
+              <button 
+                @click="changePage(currentPage + 1)"
+                :disabled="currentPage === totalPages" 
+                class="px-3 py-2 bg-slate-700/50 hover:bg-slate-600/70 border border-slate-600/50 hover:border-amber-500/50 rounded-lg text-slate-300 hover:text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                title="Next Page"
+              >
+                ⟩
+              </button>
+              <button 
+                @click="changePage(totalPages)"
+                :disabled="currentPage === totalPages" 
+                class="px-3 py-2 bg-slate-700/50 hover:bg-slate-600/70 border border-slate-600/50 hover:border-amber-500/50 rounded-lg text-slate-300 hover:text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                title="Last Page"
+              >
+                ⟩⟩
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Rankings State -->
       <div
         v-else
-        class="flex items-center justify-center py-20"
+        class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center"
       >
-        <p class="text-slate-400">No rankings available for this server.</p>
+        <div class="text-6xl mb-4 opacity-50">🏆</div>
+        <h3 class="text-2xl font-bold text-slate-400 mb-2">No Warriors Found</h3>
+        <p class="text-slate-500 mb-6">This battlefield awaits its first legends, or they're still earning their stripes.</p>
+        <button 
+          @click="fetchRankings(currentPage)" 
+          class="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-amber-500/25 font-semibold"
+        >
+          🔄 Refresh Leaderboard
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-else-if="loading && rankings.length === 0" class="max-w-7xl mx-auto px-3 sm:px-6 flex flex-col items-center justify-center py-20 text-slate-400">
+      <div class="relative">
+        <div class="w-16 h-16 border-4 border-slate-600 border-t-amber-400 rounded-full animate-spin mb-4"></div>
+        <div class="absolute inset-0 w-16 h-16 border-4 border-transparent border-b-orange-400 rounded-full animate-spin animate-reverse" style="animation-duration: 1.5s;"></div>
+      </div>
+      <p class="text-lg font-semibold">🏆 Loading Elite Warriors...</p>
+      <p class="text-sm text-slate-500 mt-2">Calculating battlefield dominance</p>
+    </div>
+    
+    <!-- Error State -->
+    <div v-else-if="error" class="max-w-7xl mx-auto px-3 sm:px-6">
+      <div class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center">
+        <div class="text-6xl mb-4">⚠️</div>
+        <p class="text-red-400 text-lg font-semibold mb-4">{{ error }}</p>
+        <button 
+          @click="fetchRankings(currentPage)"
+          class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg font-semibold"
+        >
+          🔄 Retry Mission
+        </button>
       </div>
     </div>
   </div>

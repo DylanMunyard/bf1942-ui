@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { fetchPlayerSessions, SessionListItem, PlayerContextInfo } from '../services/playerStatsService';
+import HeroBackButton from './HeroBackButton.vue';
 
 // Router
 const router = useRouter();
@@ -359,25 +360,14 @@ onUnmounted(() => {
         <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <!-- Navigation -->
-      <div class="relative z-10 py-3 sm:py-6">
-        <router-link
-          :to="`/players/${encodeURIComponent(playerName)}`"
-          class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-1 transition-transform duration-300">
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
-          Back to Player Profile
-        </router-link>
-      </div>
 
       <!-- Hero Section -->
-      <div class="relative z-10 pb-6 sm:pb-12">
+      <div class="relative z-10 py-6 sm:py-12">
         <div class="max-w-7xl mx-auto">
           <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 opacity-50"></div>
+            
+            <HeroBackButton :on-click="() => $router.push(`/players/${encodeURIComponent(playerName)}`)" />
             <div class="relative z-10 p-4 sm:p-8 md:p-12">
               <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
                 <!-- Player Avatar -->
