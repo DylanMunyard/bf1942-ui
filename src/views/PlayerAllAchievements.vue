@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { getBadgeDescription } from '@/services/badgeService';
 import AchievementModal from '../components/AchievementModal.vue';
+import StreakModal from '../components/StreakModal.vue';
 
 interface Achievement {
   playerName: string;
@@ -51,6 +52,11 @@ const selectedAchievement = ref<Achievement | null>(null);
 const showModal = ref(false);
 const selectedAchievementGroup = ref<{ achievement: Achievement, count: number, allAchievements: Achievement[] } | null>(null);
 const showGroupModal = ref(false);
+const selectedStreakGroup = ref<{ streak: any, count: number, allStreaks: any[] } | null>(null);
+const showStreakModal = ref(false);
+
+// Template refs
+const dropdownTrigger = ref<HTMLElement | null>(null);
 
 // Filter states
 const selectedMapName = ref<string>('');
@@ -98,8 +104,8 @@ const fetchAchievements = async (page: number = 1) => {
     hasNextPage.value = data.page < data.totalPages;
     hasPreviousPage.value = data.page > 1;
     
-    // Update filter options if not already set or if no filters applied
-    if (data.playerAchievementLabels) {
+    // Update filter options from API response
+    if (data.playerAchievementLabels && data.playerAchievementLabels.length > 0) {
       achievementLabels.value = data.playerAchievementLabels;
     }
     
@@ -165,10 +171,6 @@ const getTierColor = (tier: string): string => {
   }
 };
 
-const getTierGlow = (tier: string): string => {
-  const color = getTierColor(tier);
-  return `0 0 20px ${color}40, 0 0 40px ${color}20`;
-};
 
 const groupedAchievements = computed(() => {
   const grouped: { [key: string]: Array<{ achievement: Achievement, count: number, allAchievements: Achievement[] }> } = {};
@@ -249,13 +251,40 @@ const closeModal = () => {
 };
 
 const openGroupModal = (group: { achievement: Achievement, count: number, allAchievements: Achievement[] }) => {
-  selectedAchievementGroup.value = group;
-  showGroupModal.value = true;
+  // Check if this is a streak achievement
+  if (group.achievement.achievementId.startsWith('kill_streak_')) {
+    // Convert achievements to streak format
+    const streaks = group.allAchievements.map(achievement => ({
+      playerName: achievement.playerName,
+      streakCount: parseInt(achievement.achievementId.replace('kill_streak_', '')),
+      streakStart: achievement.achievedAt,
+      streakEnd: achievement.achievedAt,
+      serverGuid: achievement.serverGuid,
+      mapName: achievement.mapName,
+      roundId: achievement.roundId,
+      isActive: false
+    }));
+    
+    selectedStreakGroup.value = {
+      streak: streaks[0],
+      count: group.count,
+      allStreaks: streaks
+    };
+    showStreakModal.value = true;
+  } else {
+    selectedAchievementGroup.value = group;
+    showGroupModal.value = true;
+  }
 };
 
 const closeGroupModal = () => {
   showGroupModal.value = false;
   selectedAchievementGroup.value = null;
+};
+
+const closeStreakModal = () => {
+  showStreakModal.value = false;
+  selectedStreakGroup.value = null;
 };
 
 const goToPage = (page: number) => {
@@ -299,6 +328,7 @@ const getAchievementTooltip = (achievement: Achievement): string => {
 const hasActiveFilters = computed(() => {
   return !!(selectedMapName.value || selectedAchievementId.value);
 });
+
 
 // Timeline helper function
 const getTimeGap = (currentAchievement: Achievement, nextAchievement: Achievement): string => {
@@ -438,357 +468,445 @@ watch(
     }
   }
 );
+
+// Helper methods for tier styling - updated to match API tier names
+const getTierBorderClass = (tier: string): string => {
+  switch (tier.toLowerCase()) {
+    case 'legend': 
+    case 'legendary': return 'hover:border-orange-500/50'
+    case 'gold': return 'hover:border-yellow-500/50'
+    case 'silver': return 'hover:border-blue-500/50'
+    case 'bronze': return 'hover:border-orange-600/50'
+    default: return 'hover:border-slate-500/50'
+  }
+}
+
+const getTierGlowClass = (tier: string): string => {
+  switch (tier.toLowerCase()) {
+    case 'legend':
+    case 'legendary': return 'bg-gradient-to-br from-orange-500/20 to-red-500/20'
+    case 'gold': return 'bg-gradient-to-br from-yellow-500/20 to-orange-500/20'
+    case 'silver': return 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20'
+    case 'bronze': return 'bg-gradient-to-br from-orange-600/20 to-orange-700/20'
+    default: return 'bg-gradient-to-br from-slate-500/20 to-slate-600/20'
+  }
+}
+
+const getTierDotClass = (tier: string): string => {
+  switch (tier.toLowerCase()) {
+    case 'legend':
+    case 'legendary': return 'bg-gradient-to-r from-orange-400 to-red-500'
+    case 'gold': return 'bg-gradient-to-r from-yellow-400 to-orange-500'
+    case 'silver': return 'bg-gradient-to-r from-blue-400 to-cyan-500'
+    case 'bronze': return 'bg-gradient-to-r from-orange-500 to-orange-600'
+    default: return 'bg-gradient-to-r from-slate-400 to-slate-500'
+  }
+}
 </script>
 
 <template>
-  <div class="player-achievements-page">
-    <div class="page-header">
-      <button
-        class="back-button"
-        @click="goBack"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="feather feather-arrow-left"
-        >
-          <line
-            x1="19"
-            y1="12"
-            x2="5"
-            y2="12"
-          />
-          <polyline points="12 19 5 12 12 5" />
-        </svg>
-        Back to {{ playerName }}
-      </button>
-      <div class="page-title">
-        <h1>All Achievements</h1>
-        <p class="page-subtitle">
-          {{ playerName }}'s complete achievement history
-        </p>
+  <div class="min-h-screen px-3 sm:px-6">
+    <!-- Hero Section with Background -->
+    <div class="relative overflow-hidden">
+      <!-- Animated Background Pattern -->
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20"></div>
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
-    </div>
 
-    <!-- Mobile filter toggle -->
-    <div class="filter-toggle">
-      <button
-        class="filter-toggle-button"
-        @click="showFilters = !showFilters"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="filter-icon"
+      <!-- Navigation -->
+      <div class="relative z-10 py-3 sm:py-6">
+        <button
+          @click="goBack"
+          class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer"
         >
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-        </svg>
-        Filters
-        <span
-          v-if="hasActiveFilters"
-          class="active-filter-indicator"
-        >●</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="chevron-icon"
-          :class="{ 'rotated': showFilters }"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-    </div>
-
-    <!-- Filters Section -->
-    <div
-      class="filters-section"
-      :class="{ 'filters-visible': showFilters }"
-    >
-      <h4>Filters</h4>
-      <div class="filters-grid">
-        <!-- Map Name Filter -->
-        <div class="filter-group">
-          <label
-            for="map-filter"
-            class="filter-label"
-          >Map:</label>
-          <select 
-            id="map-filter"
-            v-model="selectedMapName" 
-            class="filter-select"
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="group-hover:-translate-x-1 transition-transform duration-300"
           >
-            <option value="">
-              All Maps
-            </option>
-            <option 
-              v-for="mapName in availableMaps" 
-              :key="mapName" 
-              :value="mapName"
-            >
-              {{ mapName }}
-            </option>
-          </select>
-        </div>
-        
-        <!-- Achievement ID Filter -->
-        <div class="filter-group">
-          <label
-            for="achievement-filter"
-            class="filter-label"
-          >Achievement:</label>
-          <div class="achievement-select-wrapper">
-            <div 
-              class="achievement-select-dropdown" 
-              :class="{ open: achievementDropdownOpen }"
-              @click="achievementDropdownOpen = !achievementDropdownOpen"
-            >
-              <div class="selected-achievement">
-                <img 
-                  v-if="selectedAchievementId"
-                  :src="getAchievementImage(selectedAchievementId)" 
-                  :alt="getAchievementDisplayName(selectedAchievementId)"
-                  class="achievement-select-icon"
-                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                >
-                <span>{{ selectedAchievementId ? getAchievementDisplayName(selectedAchievementId) : 'All Achievements' }}</span>
-                <span class="dropdown-arrow">▼</span>
-              </div>
-              <div
-                v-if="achievementDropdownOpen"
-                class="achievement-options"
-              >
-                <div 
-                  class="achievement-option" 
-                  :class="{ selected: selectedAchievementId === '' }"
-                  @click.stop="selectAchievement('')"
-                >
-                  <span>All Achievements</span>
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          Back to {{ playerName }}
+        </button>
+      </div>
+
+      <!-- Hero Section -->
+      <div class="relative z-10 pb-6 sm:pb-12">
+        <div class="max-w-7xl mx-auto">
+          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 opacity-50"></div>
+            <div class="relative z-10 p-4 sm:p-8 md:p-12">
+              <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+                <!-- Achievement Trophy Avatar -->
+                <div class="flex-shrink-0">
+                  <div class="relative">
+                    <div class="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 p-1">
+                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                        <div class="w-16 h-16 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl lg:text-3xl font-bold text-slate-900">
+                          🏆
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Achievement Status indicator -->
+                    <div class="absolute -bottom-2 -right-2">
+                      <div class="w-6 h-6 lg:w-8 lg:h-8 bg-amber-500 rounded-full border-4 border-slate-900 animate-pulse"></div>
+                    </div>
+                  </div>
                 </div>
-                <div 
-                  v-for="label in achievementLabels" 
-                  :key="label.achievementId"
-                  class="achievement-option"
-                  :class="{ selected: selectedAchievementId === label.achievementId }"
-                  @click.stop="selectAchievement(label.achievementId)"
-                >
-                  <img 
-                    :src="getAchievementImage(label.achievementId)" 
-                    :alt="label.displayName"
-                    class="achievement-option-icon"
-                    @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+
+                <!-- Achievement Info -->
+                <div class="flex-grow">
+                  <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 mb-4">
+                    {{ playerName }}'s Hall of Fame
+                  </h1>
+                  <p class="text-slate-400 text-lg mb-6">
+                    Complete achievement history and legendary moments
+                  </p>
+                  
+                  <!-- Stats Summary -->
+                  <div class="flex flex-wrap gap-4" v-if="!isLoading && achievements.length > 0">
+                    <div class="px-4 py-2 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
+                      🎯 {{ totalCount }} Total Achievements
+                    </div>
+                    <div v-if="achievementLabels.length > 0" class="px-4 py-2 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
+                      🏅 {{ achievementLabels.length }} Unique Types
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col gap-3">
+                  <button
+                    @click="fetchAchievements(currentPage)"
+                    :disabled="isLoading"
+                    class="group bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 disabled:from-slate-600 disabled:to-slate-500 text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-amber-500/25 disabled:hover:scale-100 disabled:shadow-none flex items-center gap-2"
                   >
-                  <span>{{ label.displayName }}</span>
+                    <svg v-if="!isLoading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-300">
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                      <path d="M21 3v5h-5" />
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                      <path d="M3 21v-5h5" />
+                    </svg>
+                    <div v-else class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span class="font-semibold">{{ isLoading ? 'Loading...' : 'Refresh Data' }}</span>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
-        <!-- Clear Filters Button -->
-        <div class="filter-group">
-          <button 
-            class="clear-filters-btn" 
-            :disabled="!selectedMapName && !selectedAchievementId"
-            @click="clearFilters"
-          >
-            Clear Filters
-          </button>
-        </div>
       </div>
     </div>
 
+    <!-- Main Content -->
     <div
-      v-if="isLoading"
-      class="loading-container"
+      v-if="(!isLoading && achievements.length > 0) || (isLoading && achievements.length > 0)"
+      class="max-w-7xl mx-auto px-3 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
     >
-      <div class="loading-spinner" />
-      <p>Loading achievements...</p>
-    </div>
-    
-    <div
-      v-else-if="error"
-      class="error-container"
-    >
-      <p class="error-message">
-        {{ error }}
-      </p>
-    </div>
-    
-    <div
-      v-else-if="achievements.length > 0"
-      class="achievements-content"
-    >
-      <!-- Pagination info -->
-      <div class="pagination-info">
-        <span>Showing {{ achievements.length }} of {{ totalCount }} achievements</span>
-        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
-      </div>
-
-      <!-- Achievement Timeline -->
-      <div class="timeline-container">
-        <template
-          v-for="dateKey in sortedDateKeys"
-          :key="dateKey"
+      <!-- Filter Controls -->
+      <div class="mb-6">
+        <button
+          @click="showFilters = !showFilters"
+          class="lg:hidden group bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-xl px-6 py-3 w-full transition-all duration-300 flex items-center justify-center gap-3"
         >
-          <!-- Date Header Timeline Item -->
-          <div class="timeline-item date-header-item">
-            <div class="timeline-node-container">
-              <div class="timeline-node date-node" />
-            </div>
-            <div class="date-header-content">
-              <div class="date-header-line-1">
-                <span class="date-header-text">{{ formatDateHeader(dateKey) }}</span>
-                <span class="achievement-count-badge">{{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+          <span class="text-amber-400 font-medium">Achievement Filters</span>
+          <span v-if="hasActiveFilters" class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 transition-transform duration-300" :class="{ 'rotate-180': showFilters }">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+
+        <!-- Filter Panel -->
+        <div class="mt-4 transition-all duration-300 ease-in-out" :class="showFilters ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 lg:max-h-96 lg:opacity-100'">
+          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="space-y-2">
+                <label for="mapFilter" class="block text-sm font-medium text-slate-300">🗺️ Battlefield</label>
+                <select 
+                  id="mapFilter" 
+                  v-model="selectedMapName" 
+                  class="w-full px-4 py-3 bg-slate-800 border border-slate-600/50 rounded-lg text-white focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all duration-200"
+                >
+                  <option value="">All Maps</option>
+                  <option v-for="mapName in availableMaps" :key="mapName" :value="mapName">{{ mapName }}</option>
+                </select>
               </div>
-            </div>
-          </div>
-          
-          <!-- Achievement Items -->
-          <div class="achievements-grid">
-            <div 
-              v-for="(group, index) in groupedAchievements[dateKey]" 
-              :key="index"
-              class="achievement-card"
-              :class="[`tier-${group.achievement.tier.toLowerCase()}`, group.achievement.achievementType]"
-              :style="{ boxShadow: getTierGlow(group.achievement.tier) }"
-              :title="getAchievementTooltip(group.achievement)"
-              @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
-            >
-              <div class="achievement-image-container">
-                <img 
-                  :src="getAchievementImage(group.achievement.achievementId)" 
-                  :alt="group.achievement.achievementName"
-                  class="achievement-image"
-                  @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                >
-                <div
-                  v-if="group.count > 1"
-                  class="achievement-count-badge"
-                >
-                  {{ group.count }}
+              
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-slate-300">🏆 Achievement Type</label>
+                <div class="relative achievement-select-wrapper" style="z-index: 100000; transform: translateZ(0);">
+                  <div 
+                    ref="dropdownTrigger"
+                    class="w-full px-4 py-3 bg-slate-800 border border-slate-600/50 rounded-lg text-white cursor-pointer transition-all duration-200 hover:border-amber-400/50 focus:ring-2 focus:ring-amber-400 focus:border-transparent flex items-center justify-between"
+                    @click="achievementDropdownOpen = !achievementDropdownOpen"
+                  >
+                    <div class="flex items-center gap-2">
+                      <img 
+                        v-if="selectedAchievementId"
+                        :src="getAchievementImage(selectedAchievementId)" 
+                        :alt="getAchievementDisplayName(selectedAchievementId)"
+                        class="w-5 h-5 rounded object-contain"
+                        @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                      >
+                      <span class="text-sm">{{ selectedAchievementId ? getAchievementDisplayName(selectedAchievementId) : 'All Achievements' }}</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': achievementDropdownOpen }">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
                 </div>
               </div>
               
-              <div class="achievement-details">
-                <div class="achievement-name">
-                  {{ group.achievement.achievementName }}
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-slate-300">📊 Showing</label>
+                <div class="text-sm text-slate-400 px-4 py-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                  {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, totalCount) }} of {{ totalCount }}
                 </div>
-                <div class="achievement-meta">
-                  <span class="achievement-time">{{ formatRelativeTime(group.achievement.achievedAt) }}</span>
-                  <span
-                    v-if="group.achievement.value"
-                    class="achievement-value"
-                  >{{ group.achievement.value.toLocaleString() }}</span>
-                </div>
-                <div
-                  v-if="group.achievement.mapName && group.count === 1"
-                  class="achievement-location"
+              </div>
+              
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-slate-300">Actions</label>
+                <button
+                  @click="clearFilters"
+                  :disabled="!hasActiveFilters"
+                  class="w-full px-4 py-3 bg-slate-700/50 hover:bg-slate-600/70 disabled:bg-slate-800/50 border border-slate-600/50 hover:border-slate-500/70 disabled:border-slate-700/50 text-slate-300 hover:text-white disabled:text-slate-500 rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2 disabled:cursor-not-allowed"
                 >
-                  <span v-if="group.achievement.serverGuid && group.achievement.mapName && group.achievement.achievedAt">
-                    on <router-link 
-                      :to="{
-                        path: '/servers/round-report',
-                        query: {
-                          serverGuid: group.achievement.serverGuid,
-                          mapName: group.achievement.mapName,
-                          startTime: group.achievement.achievedAt,
-                          players: playerName
-                        }
-                      }"
-                      class="map-link"
-                    >
-                      {{ group.achievement.mapName }}
-                    </router-link>
-                  </span>
-                  <span v-else>
-                    on {{ group.achievement.mapName }}
-                  </span>
-                </div>
-                <div
-                  v-else-if="group.count > 1"
-                  class="achievement-location"
-                >
-                  Click to see all {{ group.count }} achievements
-                </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-70">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                    <path d="M21 3v5h-5" />
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                    <path d="M3 21v-5h5" />
+                  </svg>
+                  Reset Filters
+                </button>
               </div>
             </div>
           </div>
-        </template>
+        </div>
       </div>
-
-      <!-- Pagination Controls -->
-      <div
-        v-if="totalPages > 1"
-        class="pagination-controls"
-      >
-        <button 
-          :disabled="!hasPreviousPage" 
-          class="pagination-button"
-          @click="goToPage(currentPage - 1)"
-        >
-          Previous
-        </button>
+      
+      <!-- Achievements Data Display -->
+      <div v-if="achievements.length > 0" class="space-y-6">
         
-        <div class="pagination-numbers">
+        <!-- Achievement Timeline -->
+        <div class="space-y-8">
           <template
-            v-for="page in getPaginationRange()"
-            :key="page"
+            v-for="dateKey in sortedDateKeys"
+            :key="dateKey"
           >
-            <button 
-              v-if="typeof page === 'number'"
-              :class="['pagination-number', { active: page === currentPage }]"
-              @click="goToPage(page)"
-            >
-              {{ page }}
-            </button>
-            <span
-              v-else
-              class="pagination-dots"
-            >{{ page }}</span>
+            <!-- Date Header -->
+            <div class="relative">
+              <div class="flex items-center gap-4 mb-6">
+                <div class="flex items-center gap-3">
+                  <div class="w-3 h-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse"></div>
+                  <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+                    {{ formatDateHeader(dateKey) }}
+                  </h2>
+                </div>
+                <div class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-400 border border-slate-600/50">
+                  {{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}
+                </div>
+                <div class="flex-1 h-px bg-gradient-to-r from-slate-600/50 to-transparent"></div>
+              </div>
+              
+              <!-- Achievement Cards Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div 
+                  v-for="(group, index) in groupedAchievements[dateKey]" 
+                  :key="index"
+                  class="group relative bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-amber-500/30 overflow-hidden transition-all duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-xl"
+                  :class="getTierBorderClass(group.achievement.tier)"
+                  :title="getAchievementTooltip(group.achievement)"
+                  @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
+                >
+                  <!-- Tier Glow Effect -->
+                  <div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity duration-300" :class="getTierGlowClass(group.achievement.tier)"></div>
+                  
+                  <!-- Achievement Image -->
+                  <div class="relative p-4 flex justify-center">
+                    <div class="relative">
+                      <img 
+                        :src="getAchievementImage(group.achievement.achievementId)" 
+                        :alt="group.achievement.achievementName"
+                        class="w-16 h-16 object-contain rounded-lg group-hover:scale-110 transition-transform duration-300"
+                        @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                      >
+                      <!-- Count Badge -->
+                      <div
+                        v-if="group.count > 1"
+                        class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg"
+                      >
+                        {{ group.count }}
+                      </div>
+                      <!-- Tier Indicator -->
+                      <div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full" :class="getTierDotClass(group.achievement.tier)"></div>
+                    </div>
+                  </div>
+                  
+                  <!-- Achievement Details -->
+                  <div class="px-4 pb-4 space-y-2">
+                    <h3 class="font-semibold text-white text-sm line-clamp-2 group-hover:text-amber-200 transition-colors duration-300">
+                      {{ group.achievement.achievementName }}
+                    </h3>
+                    
+                    <!-- Meta Info -->
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-amber-400 font-medium">{{ formatRelativeTime(group.achievement.achievedAt) }}</span>
+                      <span
+                        v-if="group.achievement.value"
+                        class="px-2 py-1 bg-slate-700/50 text-slate-300 rounded font-mono"
+                      >{{ group.achievement.value.toLocaleString() }}</span>
+                    </div>
+                    
+                    <!-- Location Info -->
+                    <div class="text-xs text-slate-400 truncate" v-if="group.achievement.mapName && group.count === 1">
+                      <span v-if="group.achievement.serverGuid && group.achievement.mapName && group.achievement.achievedAt">
+                        📍 <router-link 
+                          :to="{
+                            path: '/servers/round-report',
+                            query: {
+                              serverGuid: group.achievement.serverGuid,
+                              mapName: group.achievement.mapName,
+                              startTime: group.achievement.achievedAt,
+                              players: playerName
+                            }
+                          }"
+                          class="text-amber-400 hover:text-amber-300 transition-colors"
+                          @click.stop
+                        >
+                          {{ group.achievement.mapName }}
+                        </router-link>
+                      </span>
+                      <span v-else>📍 {{ group.achievement.mapName }}</span>
+                    </div>
+                    <div class="text-xs text-slate-500 italic" v-else-if="group.count > 1">
+                      Click to see all {{ group.count }} achievements
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </template>
         </div>
         
-        <button 
-          :disabled="!hasNextPage" 
-          class="pagination-button"
-          @click="goToPage(currentPage + 1)"
-        >
-          Next
+        <!-- Pagination Controls -->
+        <div v-if="totalPages > 1" class="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 p-4">
+          <div class="flex items-center justify-between gap-4">
+            <!-- Pagination Info -->
+            <div class="text-slate-400 text-sm">
+              Page {{ currentPage }} of {{ totalPages }}
+            </div>
+            
+            <!-- Pagination Buttons -->
+            <div class="flex items-center gap-1">
+              <button 
+                @click="goToPage(1)"
+                :disabled="currentPage === 1" 
+                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                title="First"
+              >
+                ⟨⟨
+              </button>
+              
+              <button 
+                @click="goToPage(currentPage - 1)"
+                :disabled="!hasPreviousPage" 
+                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                title="Previous"
+              >
+                ⟨
+              </button>
+              
+              <!-- Page Numbers -->
+              <div class="hidden sm:flex items-center gap-1 mx-2">
+                <template v-for="page in getPaginationRange()" :key="page">
+                  <button 
+                    v-if="typeof page === 'number'"
+                    @click="goToPage(page)"
+                    class="px-2 py-1 rounded text-xs transition-all"
+                    :class="page === currentPage 
+                      ? 'bg-amber-600 text-white' 
+                      : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/70'"
+                  >
+                    {{ page }}
+                  </button>
+                  <span
+                    v-else
+                    class="px-1 py-1 text-slate-500 text-xs"
+                  >{{ page }}</span>
+                </template>
+              </div>
+              
+              <!-- Current Page (Mobile) -->
+              <div class="sm:hidden px-2 py-1 bg-amber-600 text-white rounded text-xs mx-2">
+                {{ currentPage }}
+              </div>
+              
+              <button 
+                @click="goToPage(currentPage + 1)"
+                :disabled="!hasNextPage" 
+                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                title="Next"
+              >
+                ⟩
+              </button>
+              
+              <button 
+                @click="goToPage(totalPages)"
+                :disabled="currentPage === totalPages" 
+                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                title="Last"
+              >
+                ⟩⟩
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Loading State -->
+    <div v-else-if="isLoading && achievements.length === 0" class="max-w-7xl mx-auto px-3 sm:px-6 flex flex-col items-center justify-center py-20 text-slate-400">
+      <div class="w-12 h-12 border-4 border-slate-600 border-t-amber-400 rounded-full animate-spin mb-4"></div>
+      <p class="text-lg">🏆 Loading achievement hall...</p>
+      <p class="text-sm text-slate-500 mt-2">Scanning legendary moments</p>
+    </div>
+    
+    <!-- Error State -->
+    <div v-else-if="error" class="max-w-7xl mx-auto px-3 sm:px-6">
+      <div class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center">
+        <div class="text-6xl mb-4">⚠️</div>
+        <p class="text-red-400 text-lg font-semibold">{{ error }}</p>
+        <button @click="fetchAchievements(currentPage)" class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors">
+          Try Again
         </button>
       </div>
     </div>
 
     <!-- No Achievements State -->
-    <div
-      v-else
-      class="no-achievements"
-    >
-      <div class="no-achievements-icon">
-        🏆
+    <div v-else class="max-w-7xl mx-auto px-3 sm:px-6">
+      <div class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center">
+        <div class="text-6xl mb-4 opacity-50">🏆</div>
+        <h3 class="text-2xl font-bold text-slate-400 mb-2">No Achievements Found</h3>
+        <p class="text-slate-500 mb-6">This soldier hasn't unlocked any achievements yet, or they're still being processed.</p>
+        <button @click="fetchAchievements(currentPage)" class="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-amber-500/25 font-medium">
+          🔄 Refresh Achievements
+        </button>
       </div>
-      <h2>No Achievements Yet</h2>
-      <p>Start playing to unlock achievements and build your legacy!</p>
     </div>
 
     <!-- Achievement Modal -->
@@ -799,1544 +917,158 @@ watch(
       @close="closeModal"
     />
 
+    <!-- Streak Modal -->
+    <StreakModal
+      :is-visible="showStreakModal"
+      :streak-group="selectedStreakGroup"
+      :player-name="playerName"
+      @close="closeStreakModal"
+    />
+
     <!-- Grouped Achievement Modal -->
     <div
       v-if="showGroupModal && selectedAchievementGroup"
-      class="modal-overlay"
+      class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       @click="closeGroupModal"
     >
       <div
-        class="modal-content"
+        class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-lg rounded-2xl border border-slate-700/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         @click.stop
       >
-        <div class="modal-header">
-          <div class="achievement-title-info">
-            <h3 class="modal-achievement-name">
-              {{ selectedAchievementGroup.achievement.achievementName }}
-            </h3>
-            <div class="modal-achievement-date">
-              <span class="date-label">Achieved {{ selectedAchievementGroup.count }} time{{ selectedAchievementGroup.count !== 1 ? 's' : '' }}</span>
-            </div>
-          </div>
-          <button
-            class="close-button"
-            @click="closeGroupModal"
-          >
-            &times;
-          </button>
-        </div>
-        
-        <div class="modal-body">
-          <div class="modal-achievement-image-container">
+        <!-- Modal Header -->
+        <div class="flex items-start justify-between p-6 border-b border-slate-700/50">
+          <div class="flex items-center gap-4">
             <img 
               :src="getAchievementImage(selectedAchievementGroup.achievement.achievementId)" 
               :alt="selectedAchievementGroup.achievement.achievementName"
-              class="modal-achievement-image"
+              class="w-16 h-16 rounded-lg object-contain"
             >
+            <div>
+              <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+                {{ selectedAchievementGroup.achievement.achievementName }}
+              </h3>
+              <p class="text-slate-400 mt-1">
+                Achieved {{ selectedAchievementGroup.count }} time{{ selectedAchievementGroup.count !== 1 ? 's' : '' }}
+              </p>
+            </div>
           </div>
-
+          <button
+            @click="closeGroupModal"
+            class="p-2 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-400 hover:text-white"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="p-6">
           <!-- Badge Description -->
           <div
             v-if="getBadgeDescription(selectedAchievementGroup.achievement.achievementId)"
-            class="achievement-description"
+            class="mb-6 p-4 bg-slate-700/30 rounded-lg border border-slate-600/30"
           >
-            <h4>Description</h4>
-            <p>{{ getBadgeDescription(selectedAchievementGroup.achievement.achievementId) }}</p>
+            <h4 class="text-sm font-semibold text-slate-300 mb-2">Description</h4>
+            <p class="text-slate-400 text-sm">{{ getBadgeDescription(selectedAchievementGroup.achievement.achievementId) }}</p>
           </div>
           
-          <div class="timeline-container">
+          <!-- Achievement Instances Timeline -->
+          <div class="space-y-3">
+            <h4 class="text-sm font-semibold text-slate-300 mb-4">Achievement History</h4>
             <template
               v-for="(achievement, index) in selectedAchievementGroup.allAchievements.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())"
               :key="index"
             >
-              <!-- Achievement timeline item -->
-              <div class="timeline-item">
-                <!-- Timeline node -->
-                <div class="timeline-node-container">
-                  <div class="timeline-node achievement-node" />
+              <!-- Achievement Instance -->
+              <div class="flex items-start gap-3">
+                <!-- Timeline Dot -->
+                <div class="flex-shrink-0 mt-2">
+                  <div class="w-2 h-2 bg-amber-400 rounded-full"></div>
                 </div>
                 
-                <!-- Achievement card -->
+                <!-- Achievement Card -->
                 <div 
-                  v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt"
-                  class="achievement-card" 
-                  title="View round report" 
-                  @click="navigateToRoundReport(achievement)"
+                  class="flex-1 bg-slate-800/50 rounded-lg p-4 border border-slate-700/50 hover:border-amber-500/30 transition-colors cursor-pointer"
+                  :class="achievement.serverGuid && achievement.mapName && achievement.achievedAt ? 'hover:bg-slate-700/50' : ''"
+                  @click="achievement.serverGuid && achievement.mapName && achievement.achievedAt ? navigateToRoundReport(achievement) : null"
                 >
-                  <div class="achievement-line-1">
-                    <span class="achievement-time-text">{{ formatRelativeTime(achievement.achievedAt) }}</span>
-                    <span class="achievement-separator">-</span>
-                    <div
-                      v-if="achievement.mapName"
-                      class="achievement-map-container"
-                    >
-                      <span class="achievement-map">{{ achievement.mapName }}</span>
-                      <span class="achievement-detail-time">
-                        {{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleString() }}
-                      </span>
-                    </div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-amber-400 font-medium text-sm">{{ formatRelativeTime(achievement.achievedAt) }}</span>
+                    <span class="text-slate-500 text-xs">{{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleString() }}</span>
+                  </div>
+                  <div v-if="achievement.mapName" class="flex items-center gap-2 text-sm">
+                    <span class="text-slate-400">📍</span>
+                    <span class="text-white font-medium">{{ achievement.mapName }}</span>
+                    <span v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt" class="text-xs text-slate-500">(Click to view round report)</span>
+                  </div>
+                  <div v-if="achievement.value" class="mt-2">
+                    <span class="text-xs text-slate-400">Value: </span>
+                    <span class="text-xs font-mono bg-slate-700/50 px-2 py-1 rounded text-slate-300">{{ achievement.value.toLocaleString() }}</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Time gap as a separate timeline item -->
-              <div 
-                v-if="index < selectedAchievementGroup.allAchievements.length - 1 && getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1])" 
-                class="timeline-gap-item"
-              >
-                <div class="time-gap-separator">
-                  <div class="time-gap-line" />
-                  <div class="time-gap-badge">
-                    {{ getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1]) }}
-                  </div>
-                  <div class="time-gap-line" />
+              <!-- Time Gap Indicator -->
+              <div v-if="index < selectedAchievementGroup.allAchievements.length - 1 && getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1])" class="flex items-center gap-2 py-2 text-xs text-slate-500">
+                <div class="w-2 flex justify-center">
+                  <div class="w-px h-4 bg-slate-600"></div>
                 </div>
+                <div class="flex-1 border-t border-dashed border-slate-600"></div>
+                <span class="px-2 py-1 bg-slate-800/50 rounded text-slate-500">{{ getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1]) }}</span>
+                <div class="flex-1 border-t border-dashed border-slate-600"></div>
               </div>
             </template>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Achievement Dropdown Portal (positioned outside main content to avoid z-index issues) -->
+    <div
+      v-if="achievementDropdownOpen && dropdownTrigger"
+      class="fixed bg-slate-800 border border-slate-600/50 rounded-lg max-h-48 overflow-y-auto shadow-xl"
+      style="z-index: 99999;"
+      :style="{ 
+        top: (dropdownTrigger.getBoundingClientRect().bottom + window.scrollY + 4) + 'px',
+        left: dropdownTrigger.getBoundingClientRect().left + 'px',
+        width: dropdownTrigger.getBoundingClientRect().width + 'px'
+      }"
+    >
+      <div 
+        class="px-4 py-3 text-sm text-slate-300 hover:bg-slate-700/50 cursor-pointer transition-colors duration-200 border-b border-slate-600/30" 
+        :class="{ 'bg-amber-600 text-white': selectedAchievementId === '' }"
+        @click="selectAchievement('')"
+      >
+        All Achievements
+      </div>
+      <div 
+        v-for="label in achievementLabels" 
+        :key="label.achievementId"
+        class="px-4 py-3 text-sm text-slate-300 hover:bg-slate-700/50 cursor-pointer transition-colors duration-200 flex items-center gap-2 border-b border-slate-600/30 last:border-b-0"
+        :class="{ 'bg-amber-600 text-white': selectedAchievementId === label.achievementId }"
+        @click="selectAchievement(label.achievementId)"
+      >
+        <img 
+          :src="getAchievementImage(label.achievementId)" 
+          :alt="label.displayName"
+          class="w-5 h-5 rounded object-contain flex-shrink-0"
+          @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+        >
+        <span>{{ label.displayName }}</span>
+      </div>
+    </div>
   </div>
 </template>
 
+
 <style scoped>
-.player-achievements-page {
-  @apply bg-slate-900/60;
-  min-height: 100vh;
-  padding: 16px;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background-color: var(--color-background-mute);
-  border-radius: 6px;
-  color: var(--color-text);
-  text-decoration: none;
-  font-weight: 500;
-  transition: background-color 0.2s, color 0.2s;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: inherit;
-}
-
-.back-button:hover {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.page-title h1 {
-  margin: 0;
-  font-size: 2rem;
-  color: var(--color-heading);
-}
-
-.page-subtitle {
-  margin: 4px 0 0 0;
-  color: var(--color-text-muted);
-  font-size: 1rem;
-}
-
-.loading-container, .error-container, .no-achievements {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(var(--color-primary-rgb, 33, 150, 243), 0.3);
-  border-radius: 50%;
-  border-top-color: var(--color-primary);
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 15px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.error-message {
-  color: #ff5252;
-  font-weight: bold;
-}
-
-.achievements-content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-/* Mobile filter toggle styles */
-.filter-toggle {
-  display: none;
-  margin-bottom: 15px;
-}
-
-.filter-toggle-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  @apply bg-slate-800/40;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  width: 100%;
-  justify-content: center;
-}
-
-.filter-toggle-button:hover {
-  background-color: var(--color-background-mute);
-  border-color: var(--color-primary);
-}
-
-.filter-toggle-button:active {
-  transform: translateY(1px);
-}
-
-.filter-icon {
-  color: var(--color-primary);
-}
-
-.active-filter-indicator {
-  color: var(--color-primary);
-  font-size: 12px;
-  margin-left: auto;
-  margin-right: -4px;
-}
-
-.chevron-icon {
-  transition: transform 0.2s ease;
-  margin-left: auto;
-}
-
-.chevron-icon.rotated {
-  transform: rotate(180deg);
-}
-
-/* Filters Section Styles */
-.filters-section {
-  @apply bg-slate-800/40;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid var(--color-border);
-  margin-bottom: 24px;
-}
-
-.filters-section h4 {
-  margin: 0 0 16px 0;
-  color: var(--color-heading);
-  font-size: 1rem;
-}
-
-.filters-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 16px;
-  align-items: end;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.filter-label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.filter-select {
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  @apply bg-slate-900/60;
-  color: var(--color-text);
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.clear-filters-btn {
-  padding: 8px 16px;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.clear-filters-btn:hover:not(:disabled) {
-  background-color: var(--color-primary-dark, var(--color-primary));
-  transform: translateY(-1px);
-}
-
-.clear-filters-btn:disabled {
-  background-color: var(--color-text-muted);
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-/* Custom Achievement Dropdown Styles */
-.achievement-select-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.achievement-select-dropdown {
-  position: relative;
-  @apply bg-slate-900/60;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-
-.achievement-select-dropdown:hover {
-  border-color: var(--color-primary);
-}
-
-.achievement-select-dropdown.open {
-  border-color: var(--color-primary);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.selected-achievement {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  font-size: 0.9rem;
-}
-
-.selected-achievement span:nth-child(2) {
-  flex: 1;
-  color: var(--color-text);
-}
-
-.dropdown-arrow {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  transform: rotate(0deg);
-  transition: transform 0.2s ease;
-}
-
-.achievement-select-dropdown.open .dropdown-arrow {
-  transform: rotate(180deg);
-}
-
-.achievement-select-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 3px;
-  object-fit: contain;
-}
-
-.achievement-options {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  @apply bg-slate-900/60;
-  border: 1px solid var(--color-primary);
-  border-top: none;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.achievement-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  font-size: 0.9rem;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.achievement-option:hover {
-  @apply bg-slate-800/40;
-}
-
-.achievement-option.selected {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.achievement-option-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 3px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.pagination-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  padding: 12px 16px;
-  @apply bg-slate-800/40;
-  border-radius: 8px;
-}
-
-/* Timeline Styles */
-.timeline-container {
-  position: relative;
-  padding: 0;
-  margin: 12px 0;
-}
-
-.timeline-item {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.timeline-item:last-child {
-  margin-bottom: 0;
-}
-
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--color-border);
-  z-index: 1;
-}
-
-.timeline-item:last-child::before {
-  height: 24px;
-}
-
-.timeline-node-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 12px;
-  min-width: 16px;
-  z-index: 2;
-  align-self: flex-start;
-  margin-top: 1.8em;
-}
-
-.timeline-node {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 2px solid var(--color-border);
-  position: relative;
-  z-index: 3;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.timeline-node:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
-}
-
-.date-node {
-  background-color: var(--color-primary);
-  width: 12px;
-  height: 12px;
-  border: 3px solid var(--color-border);
-}
-
-.achievement-node {
-  width: 8px;
-  height: 8px;
-  border: 2px solid var(--color-border);
-}
-
-/* Date Header Styles */
-.date-header-item {
-  margin-bottom: 16px;
-}
-
-.date-header-item .timeline-node-container {
-  margin-top: 0.5em;
-}
-
-.date-header-content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.date-header-line-1 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.date-header-text {
-  font-weight: 500;
-  color: var(--color-text);
-  font-size: 0.9rem;
-}
-
-.achievement-count-badge {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  background-color: var(--color-background-mute);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 500;
-}
-
-/* Achievement Grid Layout */
-.achievements-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
-  margin-top: 8px;
-  position: relative;
-  margin-left: 28px; /* Account for timeline node space */
-}
-
-.achievements-grid::before {
-  content: '';
-  position: absolute;
-  left: -22px; /* Position to align with timeline line */
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--color-border);
-  z-index: 1;
-}
-
-.achievement-card {
-  display: flex;
-  gap: 12px;
-  @apply bg-slate-800/40;
-  border-radius: 12px;
-  padding: 16px;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  position: relative;
+/* Utility class for text truncation */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  cursor: pointer;
-}
-
-.achievement-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, transparent 0%, var(--tier-color, transparent) 100%);
-  opacity: 0.05;
-  pointer-events: none;
-}
-
-.achievement-square {
-  position: relative;
-  width: 60px;
-  height: 60px;
-  @apply bg-slate-800/40;
-  border-radius: 12px;
-  padding: 8px;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.achievement-square::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, transparent 0%, var(--tier-color, transparent) 100%);
-  opacity: 0.1;
-  pointer-events: none;
-}
-
-.achievement-square:hover {
-  transform: translateY(-2px) scale(1.05);
-  border-color: var(--tier-color);
-  z-index: 10;
-}
-
-.achievement-details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.achievement-count-badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  background: linear-gradient(135deg, #FF6B35, #FF9F1C);
-  color: white;
-  font-size: 0.6rem;
-  font-weight: bold;
-  padding: 1px 4px;
-  border-radius: 8px;
-  min-width: 14px;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--color-border);
-  line-height: 1.2;
-}
-
-/* Remove old grid styles */
-/* Replaced by new .achievements-grid above */
-
-.achievement-card {
-  display: flex;
-  gap: 12px;
-  @apply bg-slate-800/40;
-  border-radius: 12px;
-  padding: 16px;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.achievement-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, transparent 0%, var(--tier-color, transparent) 100%);
-  opacity: 0.05;
-  pointer-events: none;
-}
-
-.achievement-card.tier-legendary {
-  --tier-color: #FF6B35;
-}
-
-.achievement-card.tier-epic {
-  --tier-color: #9D4EDD;
-}
-
-.achievement-card.tier-rare {
-  --tier-color: #3A86FF;
-}
-
-.achievement-card.tier-uncommon {
-  --tier-color: #06FFA5;
-}
-
-.achievement-card.tier-common {
-  --tier-color: #8D99AE;
-}
-
-.achievement-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--tier-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.achievement-image-container {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.achievement-square .achievement-image {
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  object-fit: contain;
-  max-width: 44px;
-  max-height: 44px;
-}
-
-.achievement-image {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.achievement-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.achievement-details .achievement-name {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-heading);
-  line-height: 1.2;
-}
-
-.achievement-name {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-heading);
-  line-height: 1.2;
-}
-
-.achievement-details .achievement-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 0.8rem;
-}
-
-.achievement-details .achievement-value {
-  background-color: var(--color-background-mute);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.achievement-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 0.8rem;
-}
-
-.achievement-type {
-  color: var(--color-text-muted);
-  text-transform: capitalize;
-}
-
-.achievement-value {
-  background-color: var(--color-background-mute);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.achievement-details .achievement-time {
-  color: var(--color-primary);
-  font-weight: 500;
-}
-
-.achievement-time {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
-.achievement-details .achievement-location {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-.achievement-location {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-.map-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: opacity 0.2s;
-}
-
-.map-link:hover {
-  opacity: 0.8;
-  text-decoration: underline;
-}
-
-.pagination-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin-top: 24px;
-}
-
-.pagination-button {
-  padding: 8px 16px;
-  background-color: var(--color-background-mute);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-numbers {
-  display: flex;
-  gap: 4px;
-}
-
-.pagination-number {
-  padding: 8px 12px;
-  background-color: var(--color-background-mute);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 40px;
-}
-
-.pagination-number:hover {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.pagination-number.active {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.pagination-dots {
-  padding: 8px 4px;
-  color: var(--color-text-muted);
-}
-
-.no-achievements {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--color-text-muted);
-}
-
-.no-achievements-icon {
-  font-size: 4rem;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-achievements h2 {
-  margin: 0 0 8px 0;
-  color: var(--color-heading);
-}
-
-.no-achievements p {
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-content {
-  @apply bg-slate-900/60;
-  border-radius: 16px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  border: 2px solid var(--color-border);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 24px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.achievement-title-info {
-  flex: 1;
-}
-
-.modal-achievement-name {
-  margin: 0 0 8px 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  line-height: 1.2;
-}
-
-.modal-achievement-date {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-}
-
-.date-label {
-  font-weight: 500;
-  color: var(--color-text);
-  margin-right: 4px;
-}
-
-.relative-time {
-  font-style: italic;
-  opacity: 0.8;
-  margin-left: 8px;
-}
-
-.modal-achievement-image-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 24px;
-  padding: 8px;
-}
-
-.modal-achievement-image {
-  width: 180px;
-  height: 240px;
-  border-radius: 16px;
-  object-fit: contain;
-  background-color: var(--color-background-mute);
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.close-button:hover {
-  background-color: var(--color-background-mute);
-  color: var(--color-text);
-}
-
-.modal-body {
-  padding: 24px;
-  overflow: visible;
-}
-
-
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .player-achievements-page {
-    padding: 12px;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
-  }
-  
-  .filter-toggle {
-    display: block;
-  }
-  
-  /* Hide filters by default on mobile */
-  .filters-section {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    margin-bottom: 0;
-    padding: 0 16px;
-    transition: all 0.3s ease;
-  }
-  
-  /* Show filters when toggled */
-  .filters-section.filters-visible {
-    max-height: 500px;
-    opacity: 1;
-    margin-bottom: 24px;
-    padding: 16px;
-  }
-  
-  .filters-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .filter-group:last-child {
-    justify-self: start;
-  }
-  
-  .clear-filters-btn {
-    width: 100%;
-    margin-top: 10px;
-  }
-  
-  .timeline-container {
-    margin: 8px 0;
-  }
-  
-  .timeline-item {
-    margin-bottom: 12px;
-  }
-  
-  .timeline-item::before {
-    left: 5px;
-  }
-  
-  .timeline-node-container {
-    margin-right: 10px;
-    min-width: 12px;
-    margin-top: 1.5em;
-  }
-  
-  .date-header-item .timeline-node-container {
-    margin-top: 0.3em;
-  }
-  
-  .achievements-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 8px;
-    margin-left: 24px; /* Slightly less margin on mobile */
-  }
-  
-  .achievements-grid::before {
-    left: -18px; /* Adjust for mobile */
-  }
-  
-  .achievement-card {
-    padding: 12px;
-    gap: 8px;
-  }
-  
-  .achievement-image {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .date-header-text {
-    font-size: 0.85rem;
-  }
-  
-  .achievement-count-badge {
-    font-size: 0.75rem;
-    padding: 1px 6px;
-  }
-  
-  .achievement-details .achievement-name {
-    font-size: 0.9rem;
-  }
-  
-  .achievement-details .achievement-meta {
-    font-size: 0.75rem;
-  }
-  
-  .achievement-details .achievement-location {
-    font-size: 0.7rem;
-  }
-  
-  .achievement-card {
-    padding: 12px;
-  }
-  
-  .achievement-image {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .date-header {
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-  }
-  
-  .pagination-controls {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .pagination-numbers {
-    order: 2;
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .modal-overlay {
-    padding: 10px;
-  }
-  
-  .modal-content {
-    max-height: 95vh;
-  }
-  
-  .modal-header {
-    padding: 16px;
-  }
-  
-  .modal-achievement-image {
-    width: 150px;
-    height: 200px;
-  }
-  
-  .modal-achievement-name {
-    font-size: 1.2rem;
-  }
-  
-  .modal-body {
-    padding: 16px;
-  }
-  
-  .achievement-details-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-}
-
-/* Grouped Achievement Modal Styles */
-.achievement-instances-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.achievement-instance-item {
-  @apply bg-slate-800/40;
-  border-radius: 8px;
-  padding: 12px;
-  border: 1px solid var(--color-border);
-}
-
-.achievement-instance-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.achievement-instance-map {
-  font-weight: 600;
-  color: var(--color-text);
-  font-size: 0.95rem;
-}
-
-.achievement-instance-date {
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.achievement-instance-time {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-style: italic;
-  margin-bottom: 8px;
-}
-
-.round-report-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-}
-
-.round-report-btn:hover {
-  background: var(--color-primary-dark, var(--color-primary));
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  color: white;
-  text-decoration: none;
-}
-
-@media (max-width: 480px) {
-  .achievements-grid {
-    grid-template-columns: 1fr;
-    gap: 6px;
-    margin-left: 20px; /* Even less margin on small mobile */
-  }
-  
-  .achievements-grid::before {
-    left: -14px; /* Adjust for small mobile */
-  }
-  
-  .achievement-card {
-    padding: 10px;
-    gap: 6px;
-  }
-  
-  .achievement-image {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .achievement-count-badge {
-    font-size: 0.5rem;
-    padding: 1px 3px;
-    min-width: 12px;
-    top: -1px;
-    right: -1px;
-  }
-  
-  .date-header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-  
-  .date-header-line-1 {
-    gap: 6px;
-  }
-  
-  .date-header-text {
-    font-size: 0.8rem;
-  }
-  
-  .achievement-count-badge {
-    font-size: 0.7rem;
-    padding: 1px 4px;
-  }
-  
-  .achievement-details .achievement-name {
-    font-size: 0.85rem;
-  }
-  
-  .achievement-details .achievement-meta {
-    font-size: 0.7rem;
-    gap: 6px;
-  }
-  
-  .achievement-details .achievement-location {
-    font-size: 0.65rem;
-  }
-}
-
-/* Timeline Styles for Achievement Group Modal */
-.timeline-container {
-  position: relative;
-  padding: 0;
-  margin: 12px 0;
-}
-
-.timeline-item {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.timeline-item:last-child {
-  margin-bottom: 0;
-}
-
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--color-border);
-  z-index: 1;
-}
-
-.timeline-node-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 12px;
-  min-width: 16px;
-  z-index: 2;
-  align-self: flex-start;
-  margin-top: 1.8em;
-}
-
-.timeline-node {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 2px solid var(--color-border);
-  position: relative;
-  z-index: 3;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.timeline-node:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
-}
-
-.achievement-node {
-  background-color: #9C27B0;
-  border-color: #7B1FA2;
-}
-
-.achievement-card {
-  flex: 1;
-  background-color: transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  line-height: 1.4;
-  border-radius: 4px;
-  padding: 8px;
-  border: 1px solid transparent;
-}
-
-.achievement-card:hover {
-  @apply bg-slate-800/40;
-  border-color: var(--color-border);
-}
-
-.timeline-item:hover::before {
-  background: var(--color-primary);
-}
-
-.achievement-line-1 {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 3px;
-  flex-wrap: wrap;
-}
-
-.achievement-time-text {
-  color: var(--color-text-muted);
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.achievement-separator {
-  color: var(--color-text-muted);
-  font-weight: normal;
-  margin: 0 4px;
-}
-
-.achievement-map {
-  color: var(--color-text);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: normal;
-  transition: color 0.2s;
-}
-
-.achievement-map:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
-}
-
-.achievement-map-container {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.achievement-map {
-  font-weight: 500;
-  color: var(--color-text);
-  margin-right: 4px;
-  font-size: 0.9rem;
-}
-
-.achievement-detail-time {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-style: italic;
-}
-
-.achievement-line-2 {
-  margin-bottom: 3px;
-}
-
-.achievement-line-3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  font-size: 0.85rem;
-  color: var(--color-text);
-}
-
-.timeline-gap-item {
-  position: relative;
-  padding: 8px 0;
-  margin-left: 28px;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: flex-start;
-}
-
-.time-gap-separator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: fit-content;
-  min-width: 200px;
-  max-width: 400px;
-}
-
-.time-gap-line {
-  flex: 1;
-  height: 2px;
-  min-width: 40px;
-  max-width: 100px;
-  background-image: repeating-linear-gradient(-45deg,
-    var(--color-border) 0px,
-    var(--color-border) 4px,
-    transparent 4px,
-    transparent 8px);
-  background-size: 8px 2px;
-}
-
-.time-gap-badge {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  @apply bg-slate-900/60;
-  padding: 2px 8px;
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-  font-style: italic;
-  white-space: nowrap;
-  z-index: 2;
-}
-
-/* Mobile responsive styles for timeline */
-@media (max-width: 768px) {
-  .timeline-container {
-    margin: 8px 0;
-  }
-  
-  .timeline-item {
-    margin-bottom: 12px;
-  }
-  
-  .timeline-item::before {
-    left: 5px;
-  }
-  
-  .timeline-node-container {
-    margin-right: 10px;
-    min-width: 12px;
-    margin-top: 1.5em;
-  }
-  
-  .timeline-node {
-    width: 6px;
-    height: 6px;
-  }
-  
-  .achievement-card {
-    padding: 4px 6px;
-  }
-  
-  .achievement-line-1 .achievement-time-link,
-  .achievement-line-1 .achievement-map {
-    font-size: 0.85rem;
-  }
-  
-  .achievement-detail-time {
-    font-size: 0.8rem;
-  }
-  
-  .achievement-line-3 {
-    font-size: 0.8rem;
-    gap: 6px;
-  }
-  
-  .timeline-gap-item {
-    margin-left: 24px;
-    padding: 6px 0;
-    margin-bottom: 12px;
-  }
-  
-  .time-gap-separator {
-    min-width: 160px;
-    max-width: 300px;
-  }
-  
-  .time-gap-line {
-    min-width: 30px;
-    max-width: 80px;
-    height: 1px;
-  }
-  
-  .time-gap-badge {
-    font-size: 0.75rem;
-    padding: 1px 6px;
-  }
 }
 </style>
