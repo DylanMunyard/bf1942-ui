@@ -272,7 +272,7 @@ const currentTopScores = computed(() => {
 
 @media (max-width: 768px) {
   .enhanced-section-header {
-    padding: 0.75rem;
+    padding: 0.5rem;
   }
   
   .section-title {
@@ -301,11 +301,11 @@ const currentTopScores = computed(() => {
 
 @media (max-width: 480px) {
   .enhanced-leaderboards-container {
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
   
   .enhanced-section-header {
-    padding: 0.5rem;
+    padding: 0.375rem;
   }
   
   .section-title h3 {

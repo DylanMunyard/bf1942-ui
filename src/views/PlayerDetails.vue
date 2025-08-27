@@ -489,8 +489,9 @@ const navigateToRoundReport = (roundId: string) => {
   const scoreEntry = currentBestScores.value.find(score => score.roundId === roundId);
   
   if (scoreEntry) {
-    // Subtract 1 minute from the timestamp for round report lookup
-    const originalTime = new Date(scoreEntry.timestamp);
+    // Subtract 1 minute from the raw UTC timestamp for round report lookup
+    // Work with the timestamp as UTC to avoid timezone conversion issues
+    const originalTime = new Date(scoreEntry.timestamp + (scoreEntry.timestamp.endsWith('Z') ? '' : 'Z'));
     const adjustedTime = new Date(originalTime.getTime() - 60000); // subtract 60,000ms (1 minute)
     
     router.push({
@@ -1194,6 +1195,18 @@ watch(
                     {{ index + 1 }}
                   </div>
                   
+                  <!-- Hover overlay -->
+                  <div class="absolute inset-0 bg-gradient-to-t from-amber-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"></div>
+                  
+                  <!-- Click indicator -->
+                  <div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                    <div class="w-8 h-8 bg-amber-500/20 rounded-full flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400">
+                        <path d="m9 18 6-6-6-6"/>
+                      </svg>
+                    </div>
+                  </div>
+
                   <div class="relative z-10 p-6 space-y-4">
                     <!-- Score Header -->
                     <div class="flex items-center justify-between">
@@ -1241,18 +1254,6 @@ watch(
                           <polyline points="12,6 12,12 16,14"/>
                         </svg>
                         <span>{{ formatRelativeTime(score.timestamp) }}</span>
-                      </div>
-                    </div>
-
-                    <!-- Hover overlay -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-amber-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
-                    
-                    <!-- Click indicator -->
-                    <div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div class="w-8 h-8 bg-amber-500/20 rounded-full flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400">
-                          <path d="m9 18 6-6-6-6"/>
-                        </svg>
                       </div>
                     </div>
                   </div>

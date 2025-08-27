@@ -200,18 +200,18 @@ const handlePeriodChange = async (period: string) => {
 </script>
 
 <template>
-  <div class="relative min-h-screen px-3 sm:px-6">
+  <div class="relative min-h-screen px-2 sm:px-6">
     <div class="relative z-10">
 
-      <div class="relative z-10 py-6 sm:py-12">
+      <div class="relative z-10 py-3 sm:py-12">
         <div class="max-w-7xl mx-auto">
           <!-- Server Profile Hero -->
-          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-8">
+          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-4 sm:mb-8">
             <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50"></div>
             
             <HeroBackButton :on-click="() => $router.push(getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string)))" />
-            <div class="relative z-10 p-4 sm:p-8 md:p-12">
-              <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+            <div class="relative z-10 p-3 sm:p-8 md:p-12">
+              <div class="flex flex-col lg:flex-row items-start lg:items-center gap-4 lg:gap-8">
                 <!-- Server Icon/Avatar -->
                 <div class="flex-shrink-0">
                   <div class="relative">
@@ -238,7 +238,7 @@ const handlePeriodChange = async (period: string) => {
                   <!-- Server Metadata -->
                   <div 
                     v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone)"
-                    class="flex flex-wrap gap-4 mb-6"
+                    class="flex flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-6"
                   >
                     <div v-if="serverDetails.region" class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
                       📍 {{ serverDetails.region }}
@@ -252,7 +252,7 @@ const handlePeriodChange = async (period: string) => {
                   </div>
 
                   <!-- Period Info -->
-                  <div v-if="serverDetails" class="text-slate-400 text-sm mb-6">
+                  <div v-if="serverDetails" class="text-slate-400 text-sm mb-4 sm:mb-6">
                     📊 Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
                   </div>
                 </div>
@@ -340,7 +340,7 @@ const handlePeriodChange = async (period: string) => {
           </div>
 
           <!-- Server Content -->
-          <div v-else-if="serverDetails" class="space-y-4 sm:space-y-8">
+          <div v-else-if="serverDetails" class="space-y-3 sm:space-y-8">
 
             <!-- Recent Rounds Section -->
             <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
@@ -372,7 +372,7 @@ const handlePeriodChange = async (period: string) => {
 
             <!-- Leaderboards Section -->
             <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-              <div class="p-3 sm:p-6 border-b border-slate-700/50 flex items-center justify-between">
+              <div class="p-2 sm:p-6 border-b border-slate-700/50 flex items-center justify-between">
                 <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
                   🏆 Server Leaderboards
                 </h3>
@@ -383,7 +383,7 @@ const handlePeriodChange = async (period: string) => {
                   View Rankings
                 </router-link>
               </div>
-              <div class="p-3 sm:p-6">
+              <div class="p-2 sm:p-6">
                 <ServerLeaderboards
                   :server-details="serverDetails"
                   :server-name="serverName"

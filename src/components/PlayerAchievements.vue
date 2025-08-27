@@ -389,62 +389,49 @@ onMounted(async () => {
       </button>
     </div>
     
-    <!-- Main Content -->
-    <div v-else-if="gamificationData" class="space-y-8">
-      
-      <!-- Achievement Hero Section -->
-      <div class="relative bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 opacity-50"></div>
-        <div class="relative z-10 p-6 sm:p-8">
-          <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
-            <!-- Trophy Icon -->
-            <div class="flex-shrink-0">
-              <div class="relative">
-                <div class="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 p-1">
-                  <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                    <div class="text-3xl lg:text-4xl">🏆</div>
-                  </div>
-                </div>
-                <div class="absolute -bottom-1 -right-1">
-                  <div class="w-6 h-6 lg:w-8 lg:h-8 bg-yellow-500 rounded-full border-4 border-slate-900 animate-pulse"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Achievement Summary -->
-            <div class="flex-grow">
-              <h2 class="text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 mb-4">
-                Combat Achievements
-              </h2>
-              
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                  <div class="text-lg font-bold text-yellow-400">{{ flattenedAchievements.length }}</div>
-                  <div class="text-xs text-slate-400">Total Earned</div>
-                </div>
-                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                  <div class="text-lg font-bold text-orange-400">{{ gamificationData.bestStreaks.bestSingleRoundStreak || 0 }}</div>
-                  <div class="text-xs text-slate-400">Best Streak</div>
-                </div>
-                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                  <div class="text-lg font-bold text-purple-400">{{ nonStreakAchievements }}</div>
-                  <div class="text-xs text-slate-400">Milestones</div>
-                </div>
-                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                  <div class="text-lg font-bold text-cyan-400">{{ combinedStreaks.length }}</div>
-                  <div class="text-xs text-slate-400">Kill Streaks</div>
-                </div>
-              </div>
-            </div>
+    <!-- Combat Achievements Header -->
+    <div v-if="gamificationData" class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6">
+      <!-- Trophy Icon -->
+      <div class="flex-shrink-0">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 p-1">
+          <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+            <div class="text-2xl">🏆</div>
           </div>
         </div>
       </div>
 
-      <!-- Featured Achievements Section -->
-      <div v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0 || nextMilestone" class="space-y-6">
-        <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-3">
-          ⭐ Featured Achievements
-        </h3>
+      <!-- Header Content -->
+      <div class="flex-grow">
+        <h2 class="text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 mb-3">
+          Combat Achievements
+        </h2>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+            <div class="text-lg font-bold text-yellow-400">{{ flattenedAchievements.length }}</div>
+            <div class="text-xs text-slate-400">Total Earned</div>
+          </div>
+          <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+            <div class="text-lg font-bold text-orange-400">{{ gamificationData.bestStreaks.bestSingleRoundStreak || 0 }}</div>
+            <div class="text-xs text-slate-400">Best Streak</div>
+          </div>
+          <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+            <div class="text-lg font-bold text-purple-400">{{ nonStreakAchievements }}</div>
+            <div class="text-xs text-slate-400">Milestones</div>
+          </div>
+          <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+            <div class="text-lg font-bold text-cyan-400">{{ combinedStreaks.length }}</div>
+            <div class="text-xs text-slate-400">Kill Streaks</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Featured Achievements Section -->
+    <div v-if="gamificationData && (gamificationData.bestStreaks.bestSingleRoundStreak > 0 || nextMilestone)" class="mb-6">
+      <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-3 mb-4">
+        ⭐ Featured Achievements
+      </h3>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <!-- Best Streak Showcase -->
@@ -554,13 +541,13 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-      </div>
+    </div>
 
-      <!-- Kill Streaks Gallery -->
-      <div v-if="combinedStreaks.length > 0" class="space-y-6">
-        <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 flex items-center gap-3">
-          🔥 Kill Streak Records
-        </h3>
+    <!-- Kill Streaks Gallery -->
+    <div v-if="gamificationData && combinedStreaks.length > 0" class="mb-6">
+      <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 flex items-center gap-3 mb-4">
+        🔥 Kill Streak Records
+      </h3>
         
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
           <div 
@@ -599,13 +586,13 @@ onMounted(async () => {
             View All {{ combinedStreaks.length }} Kill Streaks
           </button>
         </div>
-      </div>
+    </div>
 
-      <!-- All Achievements Grid -->
-      <div v-if="flattenedAchievements.length > 0" class="space-y-6">
-        <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
-          🏅 Achievement Collection
-        </h3>
+    <!-- All Achievements Grid -->
+    <div v-if="gamificationData && flattenedAchievements.length > 0" class="mb-6">
+      <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3 mb-4">
+        🏅 Achievement Collection
+      </h3>
         
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-3">
           <div 
@@ -646,13 +633,13 @@ onMounted(async () => {
             View All {{ flattenedAchievements.length }} Achievements
           </button>
         </div>
-      </div>
+    </div>
 
-      <!-- Empty State -->
-      <div
-        v-if="flattenedAchievements.length === 0 && !gamificationData.bestStreaks.bestSingleRoundStreak && !nextMilestone"
-        class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center"
-      >
+    <!-- Empty State -->
+    <div
+      v-if="gamificationData && flattenedAchievements.length === 0 && !gamificationData.bestStreaks.bestSingleRoundStreak && !nextMilestone"
+      class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center"
+    >
         <div class="relative mb-8">
           <div class="text-8xl opacity-20 animate-pulse">🏆</div>
           <div class="absolute inset-0 flex items-center justify-center">
@@ -675,7 +662,6 @@ onMounted(async () => {
             <span class="text-slate-300 font-medium">Ready to make history?</span>
           </div>
         </div>
-      </div>
     </div>
 
     <!-- Streak Modal -->
