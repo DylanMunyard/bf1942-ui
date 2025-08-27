@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayersResponse, PlayerComparisonStats } from '../services/playerStatsService';
+import { BestScores, BestScoreEntry } from '../types/playerStatsTypes';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import PlayerAchievements from '../components/PlayerAchievements.vue';
@@ -38,6 +39,14 @@ const timeRangeOptions = [
 // New state for map stats sorting
 const mapStatsSortField = ref('totalScore');
 const mapStatsSortDirection = ref('desc');
+
+// Best Scores state
+const selectedBestScoresTab = ref<'allTime' | 'last30Days' | 'thisWeek'>('allTime');
+const bestScoresTabOptions = [
+  { key: 'allTime' as const, label: 'All Time' },
+  { key: 'last30Days' as const, label: '30 Days' },
+  { key: 'thisWeek' as const, label: 'This Week' }
+] as const;
 
 
 // --- Similar Players state & functions ---
@@ -474,6 +483,36 @@ const getRoundReportRoute = (session: any) => {
   return `/players/${encodeURIComponent(playerName.value)}`;
 };
 
+// Function to navigate to round report using best score data
+const navigateToRoundReport = (roundId: string) => {
+  // Find the score entry that matches this roundId
+  const scoreEntry = currentBestScores.value.find(score => score.roundId === roundId);
+  
+  if (scoreEntry) {
+    // Subtract 1 minute from the timestamp for round report lookup
+    const originalTime = new Date(scoreEntry.timestamp);
+    const adjustedTime = new Date(originalTime.getTime() - 60000); // subtract 60,000ms (1 minute)
+    
+    router.push({
+      path: '/servers/round-report',
+      query: {
+        serverGuid: scoreEntry.serverGuid,
+        mapName: scoreEntry.mapName,
+        startTime: adjustedTime.toISOString(),
+        players: playerName.value
+      }
+    });
+  } else {
+    // Fallback if score entry not found
+    router.push({
+      path: '/servers/round-report',
+      query: {
+        roundId: roundId,
+        players: playerName.value
+      }
+    });
+  }
+};
 
 // Computed property to sort activity hours chronologically by local hour (0-23)
 const sortedLocalActivityHours = computed(() => {
@@ -652,6 +691,12 @@ const expandedServerName = computed(() => {
   );
   
   return server?.serverName || null;
+});
+
+// Computed property for current best scores
+const currentBestScores = computed(() => {
+  if (!playerStats.value?.bestScores) return [];
+  return playerStats.value.bestScores[selectedBestScoresTab.value] || [];
 });
 
 
@@ -1064,6 +1109,156 @@ watch(
               </div>
             </div>
 
+          </div>
+        </div>
+
+        <!-- Best Scores Section -->
+        <div 
+          v-if="playerStats?.bestScores && (playerStats.bestScores.allTime?.length > 0 || playerStats.bestScores.last30Days?.length > 0 || playerStats.bestScores.thisWeek?.length > 0)"
+          class="relative bg-gradient-to-br from-amber-900/20 via-slate-800/80 to-slate-900/80 backdrop-blur-lg rounded-2xl border border-amber-500/30 shadow-2xl"
+        >
+          <!-- Spectacular Background Effects -->
+          <div class="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-orange-500/10"></div>
+          <div class="absolute top-0 left-1/3 w-96 h-96 bg-gradient-to-br from-amber-500/20 to-transparent rounded-full blur-3xl animate-pulse"></div>
+          <div class="absolute bottom-0 right-1/4 w-64 h-64 bg-gradient-to-br from-yellow-500/15 to-orange-500/15 rounded-full blur-2xl animate-pulse delay-700"></div>
+          <div class="absolute top-1/2 left-0 w-32 h-32 bg-amber-400/20 rounded-full blur-xl animate-ping delay-300"></div>
+          
+          <!-- Crown decoration -->
+          <div class="absolute top-4 right-8 text-6xl opacity-20 animate-bounce">👑</div>
+          
+          <div class="relative z-10 p-4 sm:p-8 space-y-6">
+            <!-- Header with dramatic styling -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div class="space-y-3">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-2xl animate-spin-slow">
+                    🏆
+                  </div>
+                  <h3 class="text-4xl sm:text-5xl font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400 bg-clip-text text-transparent drop-shadow-lg">
+                    Best Scores
+                  </h3>
+                </div>
+                <p class="text-amber-200/90 text-lg font-medium">Your greatest battlefield achievements</p>
+              </div>
+              
+              <!-- Tab Controls with premium styling -->
+              <div class="flex items-center bg-slate-900/70 backdrop-blur-sm rounded-2xl p-2 border border-amber-500/20 shadow-xl">
+                <div
+                  v-for="tab in bestScoresTabOptions"
+                  :key="tab.key"
+                  class="relative flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl font-bold text-sm sm:text-base cursor-pointer transition-all duration-300 group"
+                  :class="{
+                    'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 shadow-lg transform scale-105': selectedBestScoresTab === tab.key,
+                    'text-amber-300 hover:text-amber-200 hover:bg-amber-500/10': selectedBestScoresTab !== tab.key
+                  }"
+                  @click="selectedBestScoresTab = tab.key"
+                >
+                  <span>{{ tab.label }}</span>
+                  <div 
+                    v-if="selectedBestScoresTab === tab.key"
+                    class="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-400/20 rounded-xl animate-pulse"
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Best Scores Content -->
+            <div class="space-y-4">
+              <!-- No scores message -->
+              <div
+                v-if="currentBestScores.length === 0"
+                class="flex flex-col items-center justify-center py-16 text-center space-y-4"
+              >
+                <div class="text-8xl opacity-30">🎯</div>
+                <p class="text-xl font-semibold text-amber-300">No scores recorded yet</p>
+                <p class="text-amber-200/70">Start playing to build your legendary scores!</p>
+              </div>
+
+              <!-- Scores Grid -->
+              <div 
+                v-else
+                class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 p-6"
+              >
+                <div
+                  v-for="(score, index) in currentBestScores"
+                  :key="`${score.roundId}-${index}`"
+                  class="group relative bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-2xl border border-amber-500/20 hover:border-amber-400/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer"
+                  @click="navigateToRoundReport(score.roundId)"
+                >
+                  <!-- Card background effects -->
+                  <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div class="absolute top-0 right-0 w-24 h-24 bg-amber-400/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  <!-- Rank badge -->
+                  <div class="absolute -top-5 -right-5 w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center font-black text-slate-900 text-base shadow-xl z-20">
+                    {{ index + 1 }}
+                  </div>
+                  
+                  <div class="relative z-10 p-6 space-y-4">
+                    <!-- Score Header -->
+                    <div class="flex items-center justify-between">
+                      <div class="space-y-1">
+                        <div class="text-3xl font-black text-amber-300">
+                          {{ score.score.toLocaleString() }}
+                        </div>
+                        <div class="text-sm text-amber-200/70">SCORE</div>
+                      </div>
+                      <div class="text-right space-y-1">
+                        <div class="text-lg font-bold text-emerald-400">
+                          {{ calculateKDR(score.kills, score.deaths) }}
+                        </div>
+                        <div class="text-sm text-slate-400">K/D</div>
+                      </div>
+                    </div>
+
+                    <!-- Stats Row -->
+                    <div class="flex items-center justify-between py-3 px-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                      <div class="flex items-center gap-4">
+                        <div class="text-center">
+                          <div class="text-lg font-bold text-emerald-400">{{ score.kills }}</div>
+                          <div class="text-xs text-slate-500">KILLS</div>
+                        </div>
+                        <div class="w-px h-8 bg-slate-600"></div>
+                        <div class="text-center">
+                          <div class="text-lg font-bold text-red-400">{{ score.deaths }}</div>
+                          <div class="text-xs text-slate-500">DEATHS</div>
+                        </div>
+                      </div>
+                      <div class="text-2xl opacity-50">⚔️</div>
+                    </div>
+
+                    <!-- Map & Server Info -->
+                    <div class="space-y-3">
+                      <div class="space-y-1">
+                        <div class="text-sm text-amber-300 font-semibold">{{ score.mapName }}</div>
+                        <div class="text-xs text-slate-400 truncate">{{ score.serverName }}</div>
+                      </div>
+                      
+                      <!-- Timestamp -->
+                      <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"/>
+                          <polyline points="12,6 12,12 16,14"/>
+                        </svg>
+                        <span>{{ formatRelativeTime(score.timestamp) }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Hover overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-amber-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                    
+                    <!-- Click indicator -->
+                    <div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div class="w-8 h-8 bg-amber-500/20 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400">
+                          <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

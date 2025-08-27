@@ -165,6 +165,7 @@ export interface PlayerTimeStatistics {
   insights?: PlayerInsights;
   killMilestones: KillMilestone[];
   recentStats?: RecentStats;
+  bestScores?: BestScores;
 }
 
 // New interface for server stats in PlayerTimeStatistics
@@ -283,6 +284,23 @@ export interface BadgeDefinition {
   tier: string;
   category: string;
   description: string;
+}
+
+export interface BestScoreEntry {
+  score: number;
+  kills: number;
+  deaths: number;
+  mapName: string;
+  serverName: string;
+  serverGuid: string;
+  timestamp: string;
+  roundId: string;
+}
+
+export interface BestScores {
+  thisWeek: BestScoreEntry[];
+  last30Days: BestScoreEntry[];
+  allTime: BestScoreEntry[];
 }
 
 export interface InitialData {
