@@ -18,11 +18,19 @@ const routes: RouteRecordRaw[] = [
       path: '/',
       name: 'home',
       beforeEnter: (to, from, next) => {
-        const { isAuthenticated } = useAuth()
-        if (isAuthenticated.value) {
-          next('/dashboard')
+        // Check for stored auth token synchronously first to avoid slow auth validation
+        const storedToken = localStorage.getItem('auth_token')
+        if (storedToken) {
+          // Only do expensive auth validation if we have a stored token
+          const { isAuthenticated } = useAuth()
+          if (isAuthenticated.value) {
+            next('/dashboard')
+          } else {
+            next('/servers/bf1942')
+          }
         } else {
-          next('/landing')
+          // No stored token - skip auth validation and go straight to servers
+          next('/servers/bf1942')
         }
       }
     },
