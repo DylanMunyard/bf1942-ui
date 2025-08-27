@@ -355,184 +355,313 @@ onMounted(async () => {
 
 <template>
   <div class="relative">
+    <!-- Loading State -->
     <div
       v-if="isLoading"
-      class="flex flex-col items-center justify-center min-h-[200px] space-y-4"
+      class="flex flex-col items-center justify-center py-20 text-slate-400"
     >
-      <div class="w-10 h-10 border-4 border-slate-600/30 border-t-yellow-500 rounded-full animate-spin"></div>
-      <p class="text-slate-400 font-medium">Loading achievements...</p>
+      <div class="w-12 h-12 border-4 border-slate-600/30 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+      <p class="text-lg font-medium">Loading achievements...</p>
+      <p class="text-sm text-slate-500 mt-2">Scanning battlefield records</p>
     </div>
     
+    <!-- Error State -->
     <div
       v-else-if="error"
-      class="flex flex-col items-center justify-center min-h-[200px] space-y-4"
+      class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center"
     >
-      <div class="text-6xl opacity-50">⚠️</div>
-      <p class="text-red-400 font-bold text-center">
-        {{ error }}
-      </p>
+      <div class="text-6xl mb-4 opacity-50">⚠️</div>
+      <p class="text-red-400 text-lg font-semibold mb-4">{{ error }}</p>
+      <button 
+        @click="fetchGamificationData"
+        class="px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+      >
+        Try Again
+      </button>
     </div>
     
-    <div
-      v-else-if="gamificationData"
-      class="space-y-10"
-    >
-      <!-- Unified Badge Grid: Best Streak → Recent Streaks → Next Milestone → Achievements -->
-        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2">
-          <!-- Best Streak (first position) -->
-          <div
+    <!-- Main Content -->
+    <div v-else-if="gamificationData" class="space-y-8">
+      
+      <!-- Achievement Hero Section -->
+      <div class="relative bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 opacity-50"></div>
+        <div class="relative z-10 p-6 sm:p-8">
+          <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+            <!-- Trophy Icon -->
+            <div class="flex-shrink-0">
+              <div class="relative">
+                <div class="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 p-1">
+                  <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                    <div class="text-3xl lg:text-4xl">🏆</div>
+                  </div>
+                </div>
+                <div class="absolute -bottom-1 -right-1">
+                  <div class="w-6 h-6 lg:w-8 lg:h-8 bg-yellow-500 rounded-full border-4 border-slate-900 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Achievement Summary -->
+            <div class="flex-grow">
+              <h2 class="text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 mb-4">
+                Combat Achievements
+              </h2>
+              
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <div class="text-lg font-bold text-yellow-400">{{ flattenedAchievements.length }}</div>
+                  <div class="text-xs text-slate-400">Total Earned</div>
+                </div>
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <div class="text-lg font-bold text-orange-400">{{ gamificationData.bestStreaks.bestSingleRoundStreak || 0 }}</div>
+                  <div class="text-xs text-slate-400">Best Streak</div>
+                </div>
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <div class="text-lg font-bold text-purple-400">{{ gamificationData.milestones.length }}</div>
+                  <div class="text-xs text-slate-400">Milestones</div>
+                </div>
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <div class="text-lg font-bold text-cyan-400">{{ combinedStreaks.length }}</div>
+                  <div class="text-xs text-slate-400">Kill Streaks</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Featured Achievements Section -->
+      <div v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0 || nextMilestone" class="space-y-6">
+        <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-3">
+          ⭐ Featured Achievements
+        </h3>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Best Streak Showcase -->
+          <div 
             v-if="gamificationData.bestStreaks.bestSingleRoundStreak > 0"
-            class="group relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-yellow-500/70 hover:border-yellow-400 transition-all duration-300 cursor-pointer hover:scale-105 p-1 aspect-square hover:shadow-xl hover:shadow-yellow-500/30"
+            class="group relative bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-2xl border border-yellow-500/50 hover:border-yellow-400 transition-all duration-300 cursor-pointer hover:scale-[1.02] overflow-hidden"
             @click="openBestStreakModal"
-            :title="`BEST: ${gamificationData.bestStreaks.bestSingleRoundStreak} Kill Streak - ${gamificationData.bestStreaks.bestStreakMap}`"
           >
-            <!-- Best streak background glow -->
-            <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-yellow-500/15 to-orange-500/15"></div>
+            <!-- Animated background -->
+            <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             
             <!-- Crown badge -->
-            <div class="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-yellow-900 text-xs font-bold px-1 py-0.5 rounded-lg shadow-lg border border-yellow-300 z-20">
-              👑
+            <div class="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-yellow-900 text-sm font-bold px-3 py-1.5 rounded-xl shadow-lg border border-yellow-300 z-10">
+              👑 LEGENDARY
             </div>
             
-            <div class="relative z-10 flex items-center justify-center h-full p-0.5">
-              <img 
-                :src="getAchievementImage('kill_streak_' + gamificationData.bestStreaks.bestSingleRoundStreak)" 
-                :alt="'Kill streak ' + gamificationData.bestStreaks.bestSingleRoundStreak"
-                class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 rounded-lg"
-                @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-              />
+            <div class="relative z-10 p-6">
+              <div class="flex flex-col items-center text-center space-y-4">
+                <div class="relative">
+                  <img 
+                    :src="getAchievementImage('kill_streak_' + gamificationData.bestStreaks.bestSingleRoundStreak)" 
+                    :alt="'Best Kill Streak: ' + gamificationData.bestStreaks.bestSingleRoundStreak"
+                    class="w-24 h-32 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg"
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                
+                <div class="space-y-2">
+                  <h4 class="text-lg font-bold text-yellow-400">Best Kill Streak</h4>
+                  <div class="text-2xl font-extrabold text-white">{{ gamificationData.bestStreaks.bestSingleRoundStreak }}</div>
+                  <p class="text-sm text-slate-400">{{ gamificationData.bestStreaks.bestStreakMap }}</p>
+                  <p class="text-xs text-slate-500">{{ formatRelativeTime(gamificationData.bestStreaks.bestStreakDate) }}</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Recent Streaks -->
+          <!-- Next Milestone -->
           <div 
-            v-for="(item, index) in combinedStreaks.slice(0, 8)" 
-            :key="`streak-${index}`"
-            class="group relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-orange-500/50 hover:border-orange-400 transition-all duration-300 cursor-pointer hover:scale-105 p-1 aspect-square hover:shadow-xl hover:shadow-orange-500/25"
-            @click="openStreakModal(item)"
-            :title="`${item.streak.streakCount} Kill Streak - ${item.streak.mapName}`"
+            v-if="nextMilestone"
+            class="group relative bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-2xl border border-blue-500/50 hover:border-blue-400 transition-all duration-300 cursor-pointer hover:scale-[1.02] overflow-hidden"
+            @click="openNextMilestoneModal"
           >
-            <!-- Tier background glow -->
-            <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-orange-500/10 to-red-500/10"></div>
+            <!-- Progress bar background -->
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-700/50">
+              <div 
+                class="h-full bg-gradient-to-r from-blue-400 via-purple-500 to-indigo-500 transition-all duration-1000 ease-out"
+                :style="{ width: nextMilestone.progress * 100 + '%' }"
+              ></div>
+            </div>
+            
+            <!-- Target badge -->
+            <div class="absolute -top-2 -right-2 bg-gradient-to-r from-blue-400 to-purple-500 text-white text-sm font-bold px-3 py-1.5 rounded-xl shadow-lg border border-blue-300 z-10">
+              🎯 NEXT GOAL
+            </div>
+            
+            <div class="relative z-10 p-6">
+              <div class="flex flex-col items-center text-center space-y-4">
+                <div class="relative">
+                  <img 
+                    :src="getMilestoneImage(nextMilestone.milestone)" 
+                    :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
+                    class="w-24 h-32 object-contain filter brightness-110 saturate-75 transition-transform duration-300 group-hover:scale-110 drop-shadow-lg"
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-blue-500/20 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                
+                <div class="space-y-2">
+                  <h4 class="text-lg font-bold text-blue-400">Next Milestone</h4>
+                  <div class="text-2xl font-extrabold text-white">{{ nextMilestone.milestone.toLocaleString() }}</div>
+                  <p class="text-sm text-slate-400">{{ Math.floor(nextMilestone.progress * 100) }}% Complete</p>
+                  <p class="text-xs text-slate-500">{{ nextMilestone.killsRemaining.toLocaleString() }} kills remaining</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Achievement Highlight -->
+          <div 
+            v-if="gamificationData.recentAchievements.length > 0"
+            class="group relative bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-2xl border border-emerald-500/50 hover:border-emerald-400 transition-all duration-300 cursor-pointer hover:scale-[1.02] overflow-hidden"
+            @click="openAchievementModal(gamificationData.recentAchievements[0])"
+          >
+            <!-- Fresh badge -->
+            <div class="absolute -top-2 -right-2 bg-gradient-to-r from-emerald-400 to-green-500 text-emerald-900 text-sm font-bold px-3 py-1.5 rounded-xl shadow-lg border border-emerald-300 z-10">
+              ✨ RECENT
+            </div>
+            
+            <div class="relative z-10 p-6">
+              <div class="flex flex-col items-center text-center space-y-4">
+                <div class="relative">
+                  <img 
+                    :src="getAchievementImage(gamificationData.recentAchievements[0].achievementId)" 
+                    :alt="gamificationData.recentAchievements[0].achievementName"
+                    class="w-24 h-32 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg"
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-emerald-500/20 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                
+                <div class="space-y-2">
+                  <h4 class="text-lg font-bold text-emerald-400">Latest Achievement</h4>
+                  <div class="text-lg font-bold text-white">{{ gamificationData.recentAchievements[0].achievementName }}</div>
+                  <p class="text-sm text-slate-400 capitalize">{{ gamificationData.recentAchievements[0].tier }} Tier</p>
+                  <p class="text-xs text-slate-500">{{ formatRelativeTime(gamificationData.recentAchievements[0].achievedAt) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kill Streaks Gallery -->
+      <div v-if="combinedStreaks.length > 0" class="space-y-6">
+        <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 flex items-center gap-3">
+          🔥 Kill Streak Records
+        </h3>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+          <div 
+            v-for="(item, index) in combinedStreaks.slice(0, 16)" 
+            :key="`streak-${index}`"
+            class="group relative bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-xl border border-orange-500/30 hover:border-orange-400 transition-all duration-300 cursor-pointer hover:scale-105 aspect-square overflow-hidden"
+            @click="openStreakModal(item)"
+          >
+            <!-- Streak glow effect -->
+            <div class="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             
             <!-- Count badge -->
             <div
               v-if="item.count > 1"
-              class="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold px-1 py-0.5 rounded-lg shadow-lg border border-orange-400 z-20"
+              class="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-lg border border-orange-400 z-10"
             >
               ×{{ item.count }}
             </div>
             
-            <div class="relative z-10 flex items-center justify-center h-full p-0.5">
+            <div class="relative z-10 p-3 flex flex-col items-center justify-center h-full">
               <img 
                 :src="getAchievementImage('kill_streak_' + item.streak.streakCount)" 
-                :alt="'Kill streak ' + item.streak.streakCount"
-                class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 rounded-lg"
-                @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                :alt="`${item.streak.streakCount} Kill Streak`"
+                class="w-12 h-16 object-contain transition-transform duration-300 group-hover:scale-110 mb-2"
               />
+              <div class="text-center">
+                <div class="text-lg font-bold text-orange-400">{{ item.streak.streakCount }}</div>
+                <div class="text-xs text-slate-400">Kills</div>
+              </div>
             </div>
           </div>
-          
-          <!-- Next Milestone -->
+        </div>
+        
+        <div v-if="combinedStreaks.length > 16" class="text-center">
+          <button class="text-orange-400 hover:text-orange-300 text-sm font-medium px-4 py-2 bg-slate-700/30 hover:bg-slate-600/50 rounded-lg border border-orange-500/20 hover:border-orange-500/40 transition-all duration-200">
+            View All {{ combinedStreaks.length }} Kill Streaks
+          </button>
+        </div>
+      </div>
+
+      <!-- All Achievements Grid -->
+      <div v-if="flattenedAchievements.length > 0" class="space-y-6">
+        <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
+          🏅 Achievement Collection
+        </h3>
+        
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-3">
           <div 
-            v-if="nextMilestone"
-            class="group relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-blue-500/70 hover:border-blue-400 transition-all duration-300 cursor-pointer hover:scale-105 p-1 aspect-square hover:shadow-xl hover:shadow-blue-500/30 overflow-hidden"
-            @click="openNextMilestoneModal"
-            :title="`Next Milestone: ${nextMilestone.milestone.toLocaleString()} Kills (${Math.floor(nextMilestone.progress * 100)}% complete)`"
-          >
-            <!-- Progress bar at bottom -->
-            <div 
-              class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-400 via-purple-500 to-indigo-500 transition-all duration-1000 ease-out"
-              :style="{ width: nextMilestone.progress * 100 + '%' }"
-            ></div>
-            
-            <!-- Milestone background glow -->
-            <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10"></div>
-            
-            <!-- Target badge -->
-            <div class="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-blue-400 to-purple-500 text-white text-xs font-bold px-1 py-0.5 rounded-lg shadow-lg border border-blue-300 z-20">
-              🎯
-            </div>
-            
-            <div class="relative z-10 flex items-center justify-center h-full p-0.5">
-              <img 
-                :src="getMilestoneImage(nextMilestone.milestone)" 
-                :alt="`${nextMilestone.milestone.toLocaleString()} Kills Milestone`"
-                class="w-full h-full object-contain filter grayscale-[0.3] brightness-110 transition-transform duration-300 group-hover:scale-110 rounded-lg"
-              />
-            </div>
-          </div>
-          
-          <!-- Regular Achievements -->
-          <div 
-            v-for="(achievement, index) in flattenedAchievements.slice(0, 24)" 
+            v-for="(achievement, index) in flattenedAchievements.slice(0, 36)" 
             :key="`achievement-${index}`"
-            class="group relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border transition-all duration-300 cursor-pointer hover:scale-105 p-1 aspect-square"
+            class="group relative bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-xl border transition-all duration-300 cursor-pointer hover:scale-105 aspect-square overflow-hidden"
             :class="[
-              achievement.tier.toLowerCase() === 'legendary' ? 'border-orange-500/50 hover:border-orange-400 hover:shadow-xl hover:shadow-orange-500/25' :
-              achievement.tier.toLowerCase() === 'epic' ? 'border-purple-500/50 hover:border-purple-400 hover:shadow-xl hover:shadow-purple-500/25' :
-              achievement.tier.toLowerCase() === 'rare' ? 'border-blue-500/50 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/25' :
-              achievement.tier.toLowerCase() === 'uncommon' ? 'border-emerald-500/50 hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-500/25' :
-              'border-slate-600/50 hover:border-slate-500 hover:shadow-lg hover:shadow-slate-500/20'
+              achievement.tier.toLowerCase() === 'legendary' ? 'border-orange-500/40 hover:border-orange-400 hover:shadow-lg hover:shadow-orange-500/20' :
+              achievement.tier.toLowerCase() === 'epic' ? 'border-purple-500/40 hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/20' :
+              achievement.tier.toLowerCase() === 'rare' ? 'border-blue-500/40 hover:border-blue-400 hover:shadow-lg hover:shadow-blue-500/20' :
+              achievement.tier.toLowerCase() === 'uncommon' ? 'border-emerald-500/40 hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-500/20' :
+              'border-slate-600/40 hover:border-slate-500 hover:shadow-lg hover:shadow-slate-500/20'
             ]"
             :title="getAchievementTooltip(achievement)"
             @click="openAchievementModal(achievement)"
           >
-            <!-- Tier background glow (no more tier indicator dots) -->
-            <div class="absolute inset-0 rounded-xl opacity-10" :class="[
-              achievement.tier.toLowerCase() === 'legendary' ? 'bg-gradient-to-br from-orange-500 to-red-500' :
-              achievement.tier.toLowerCase() === 'epic' ? 'bg-gradient-to-br from-purple-500 to-pink-500' :
-              achievement.tier.toLowerCase() === 'rare' ? 'bg-gradient-to-br from-blue-500 to-cyan-500' :
-              achievement.tier.toLowerCase() === 'uncommon' ? 'bg-gradient-to-br from-emerald-500 to-green-500' :
-              'bg-gradient-to-br from-slate-500 to-slate-600'
+            <!-- Tier background glow -->
+            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" :class="[
+              achievement.tier.toLowerCase() === 'legendary' ? 'bg-gradient-to-br from-orange-500/10 to-red-500/10' :
+              achievement.tier.toLowerCase() === 'epic' ? 'bg-gradient-to-br from-purple-500/10 to-pink-500/10' :
+              achievement.tier.toLowerCase() === 'rare' ? 'bg-gradient-to-br from-blue-500/10 to-cyan-500/10' :
+              achievement.tier.toLowerCase() === 'uncommon' ? 'bg-gradient-to-br from-emerald-500/10 to-green-500/10' :
+              'bg-gradient-to-br from-slate-500/10 to-slate-600/10'
             ]"></div>
             
-            <div class="relative z-10 flex items-center justify-center h-full p-0.5">
+            <div class="relative z-10 p-2 flex items-center justify-center h-full">
               <img 
                 :src="getAchievementImage(achievement.achievementId)" 
                 :alt="achievement.achievementName"
-                class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 rounded-lg"
-                @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
               />
             </div>
           </div>
         </div>
         
-        <!-- View All Button -->
-        <div
-          v-if="(flattenedAchievements.length > 24) || (combinedStreaks.length > 8)"
-          class="flex justify-center pt-6"
-        >
-          <button class="bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 border border-slate-600 hover:border-slate-500">
-            View All {{ (gamificationData.bestStreaks.bestSingleRoundStreak > 0 ? 1 : 0) + combinedStreaks.length + (nextMilestone ? 1 : 0) + flattenedAchievements.length }} Items
+        <div v-if="flattenedAchievements.length > 36" class="text-center">
+          <button class="text-purple-400 hover:text-purple-300 text-sm font-medium px-6 py-3 bg-slate-700/30 hover:bg-slate-600/50 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-200">
+            View All {{ flattenedAchievements.length }} Achievements
           </button>
         </div>
+      </div>
 
-      <!-- No Achievements State -->
+      <!-- Empty State -->
       <div
         v-if="flattenedAchievements.length === 0 && !gamificationData.bestStreaks.bestSingleRoundStreak && !nextMilestone"
-        class="text-center py-20 space-y-8"
+        class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center"
       >
-        <div class="relative">
-          <div class="text-9xl opacity-30 animate-bounce">
-            🏆
-          </div>
+        <div class="relative mb-8">
+          <div class="text-8xl opacity-20 animate-pulse">🏆</div>
           <div class="absolute inset-0 flex items-center justify-center">
-            <div class="w-32 h-32 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full animate-pulse"></div>
+            <div class="w-32 h-32 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full blur-xl"></div>
           </div>
         </div>
         
         <div class="space-y-4 max-w-lg mx-auto">
-          <h3 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+          <h3 class="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
             Your Legend Awaits
           </h3>
-          <p class="text-slate-300 text-lg leading-relaxed">
+          <p class="text-slate-400 text-lg leading-relaxed">
             Every battlefield hero starts somewhere. Begin your journey to unlock achievements, build epic kill streaks, and establish your legendary reputation.
           </p>
         </div>
         
-        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <div class="bg-gradient-to-r from-slate-700 to-slate-800 px-6 py-4 rounded-xl border border-slate-600 flex items-center gap-3">
+        <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div class="bg-gradient-to-r from-slate-700/50 to-slate-800/50 backdrop-blur-sm px-6 py-4 rounded-xl border border-slate-600/50 flex items-center gap-3">
             <span class="text-2xl">🎮</span>
             <span class="text-slate-300 font-medium">Ready to make history?</span>
           </div>
@@ -726,63 +855,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* Custom animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Responsive adjustments for new grid system */
-@media (max-width: 1536px) {
-  .\\32 xl\\:grid-cols-10 {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1280px) {
-  .xl\\:grid-cols-8 {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1024px) {
-  .lg\\:grid-cols-6 {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .md\\:grid-cols-5 {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  
-  .text-3xl {
-    font-size: 1.5rem;
-    line-height: 2rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .sm\\:grid-cols-4 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  
-  .gap-2 {
-    gap: 0.25rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .grid-cols-3 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Custom scrollbar styling for streak timeline */
+/* Custom scrollbar styling for modal timeline */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }

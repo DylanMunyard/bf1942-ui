@@ -834,7 +834,7 @@ watch(
                         class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse"
                       >
                         <div class="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
-                        🎮 LIVE
+                          Online
                       </div>
                     </div>
                     
@@ -1006,7 +1006,7 @@ watch(
             </div>
 
             <!-- Horizontal Scroll Container -->
-            <div class="overflow-x-auto scrollbar-hide pb-4">
+            <div class="overflow-x-auto pb-4">
               <div class="flex gap-4 min-w-max">
                 <div
                   v-for="(session, index) in playerStats.recentSessions"
@@ -1039,7 +1039,7 @@ watch(
                           class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse shrink-0 ml-2"
                         >
                           <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                          Live
+                          Online
                         </span>
                       </div>
 
