@@ -8,24 +8,38 @@ const props = defineProps<{
   serverName: string;
 }>();
 
-const selectedTimePeriod = ref<'week' | 'month'>('week');
+const selectedTimePeriod = ref<'week' | 'month' | 'alltime'>('week');
 
-const toggleTimePeriod = (period: 'week' | 'month') => {
+const toggleTimePeriod = (period: 'week' | 'month' | 'alltime') => {
   selectedTimePeriod.value = period;
 };
 
 const currentMostActivePlayers = computed(() => {
   if (!props.serverDetails) return [];
-  return selectedTimePeriod.value === 'week' 
-    ? props.serverDetails.mostActivePlayersByTimeWeek 
-    : props.serverDetails.mostActivePlayersByTimeMonth;
+  switch (selectedTimePeriod.value) {
+    case 'week':
+      return props.serverDetails.mostActivePlayersByTimeWeek;
+    case 'month':
+      return props.serverDetails.mostActivePlayersByTimeMonth;
+    case 'alltime':
+      return props.serverDetails.mostActivePlayersByTimeAllTime;
+    default:
+      return props.serverDetails.mostActivePlayersByTimeWeek;
+  }
 });
 
 const currentTopScores = computed(() => {
   if (!props.serverDetails) return [];
-  return selectedTimePeriod.value === 'week' 
-    ? props.serverDetails.topScoresWeek 
-    : props.serverDetails.topScoresMonth;
+  switch (selectedTimePeriod.value) {
+    case 'week':
+      return props.serverDetails.topScoresWeek;
+    case 'month':
+      return props.serverDetails.topScoresMonth;
+    case 'alltime':
+      return props.serverDetails.topScoresAllTime;
+    default:
+      return props.serverDetails.topScoresWeek;
+  }
 });
 </script>
 
@@ -55,6 +69,13 @@ const currentTopScores = computed(() => {
               @click="toggleTimePeriod('month')"
             >
               30 Days
+            </button>
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'alltime' }"
+              @click="toggleTimePeriod('alltime')"
+            >
+              All Time
             </button>
           </div>
         </div>
@@ -106,6 +127,13 @@ const currentTopScores = computed(() => {
               @click="toggleTimePeriod('month')"
             >
               30 Days
+            </button>
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'alltime' }"
+              @click="toggleTimePeriod('alltime')"
+            >
+              All Time
             </button>
           </div>
         </div>

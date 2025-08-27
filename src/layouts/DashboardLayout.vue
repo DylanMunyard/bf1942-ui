@@ -11,7 +11,6 @@
       <router-view />
     </main>
     <Sidebar />
-    <PlayerComparisonWidget />
     <OnlinePlayersSidebar v-if="isAuthenticated" />
     <ToastNotifications />
   </div>
@@ -19,7 +18,6 @@
 
 <script setup lang="ts">
 import Sidebar from '../components/Sidebar.vue';
-import PlayerComparisonWidget from '../components/PlayerComparisonWidget.vue';
 import OnlinePlayersSidebar from '../components/OnlinePlayersSidebar.vue';
 import ToastNotifications from '../components/ToastNotifications.vue';
 import { useAuth } from '@/composables/useAuth';

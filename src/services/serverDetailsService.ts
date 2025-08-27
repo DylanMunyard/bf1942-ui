@@ -120,12 +120,14 @@ export interface ServerDetails {
   endPeriod: string; // ISO date string
   mostActivePlayersByTimeWeek: MostActivePlayer[]; // Last 7 days
   mostActivePlayersByTimeMonth: MostActivePlayer[]; // Last 30 days
+  mostActivePlayersByTimeAllTime: MostActivePlayer[]; // All time
   popularMaps: PopularMap[];
   serverGuid: string;
   serverName: string;
   startPeriod: string; // ISO date string
   topScoresWeek: TopScore[]; // Last 7 days
   topScoresMonth: TopScore[]; // Last 30 days
+  topScoresAllTime: TopScore[]; // All time
   recentRounds: RecentRoundInfo[];
   region?: string;
   country?: string;
@@ -210,7 +212,6 @@ export async function fetchRoundReport(serverGuid: string, mapName: string, star
 interface ServersResponse {
   servers: ServerSummary[];
   lastUpdated: string;
-  cacheHit: boolean;
 }
 
 /**
