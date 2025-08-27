@@ -304,32 +304,23 @@ const updateQueryParams = () => {
   router.replace({ query });
 };
 
-// Fetch data when component is mounted
+// Initialize from query when component is mounted
 onMounted(() => {
   initializeFromQuery();
-  fetchData();
 });
 
-// Timeline helper functions
-const getPerformanceClass = (session: SessionListItem): string => {
+// Performance styling helper functions
+const getPerformanceGradient = (session: SessionListItem): string => {
   const kdr = session.deaths === 0 ? session.kills : session.kills / session.deaths;
   
-  if (kdr >= 2.0) return 'performance-excellent';
-  if (kdr >= 1.5) return 'performance-good';
-  if (kdr >= 1.0) return 'performance-average';
-  if (kdr >= 0.5) return 'performance-poor';
-  return 'performance-bad';
+  if (kdr >= 3.0) return 'bg-gradient-to-b from-purple-500 via-pink-500 to-purple-600';
+  if (kdr >= 2.0) return 'bg-gradient-to-b from-emerald-500 via-green-500 to-emerald-600';
+  if (kdr >= 1.5) return 'bg-gradient-to-b from-blue-500 via-cyan-500 to-blue-600';
+  if (kdr >= 1.0) return 'bg-gradient-to-b from-yellow-500 via-orange-500 to-yellow-600';
+  if (kdr >= 0.5) return 'bg-gradient-to-b from-orange-500 via-red-500 to-orange-600';
+  return 'bg-gradient-to-b from-red-500 via-red-600 to-red-700';
 };
 
-const getPerformanceLabel = (session: SessionListItem): string => {
-  const kdr = session.deaths === 0 ? session.kills : session.kills / session.deaths;
-  
-  if (kdr >= 2.0) return 'Excellent performance';
-  if (kdr >= 1.5) return 'Good performance';
-  if (kdr >= 1.0) return 'Average performance';
-  if (kdr >= 0.5) return 'Challenging round';
-  return 'Tough round';
-};
 
 const getTimeGap = (currentSession: SessionListItem, nextSession: SessionListItem): string => {
   const current = new Date(currentSession.startTime.endsWith('Z') ? currentSession.startTime : currentSession.startTime + 'Z');
@@ -358,1151 +349,388 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="player-sessions-page-container">
-    <div class="header">
-      <div class="header-left">
-        <h1>{{ playerName }}'s Sessions</h1>
-        <div
-          v-if="playerInfo"
-          class="player-info"
+  <div class="min-h-screen px-3 sm:px-6">
+    <!-- Hero Section with Background -->
+    <div class="relative overflow-hidden">
+      <!-- Animated Background Pattern -->
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20"></div>
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="relative z-10 py-3 sm:py-6">
+        <router-link
+          :to="`/players/${encodeURIComponent(playerName)}`"
+          class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer"
         >
-          <div class="info-item">
-            <span class="info-label">Total Play Time:</span>
-            <span class="info-value">{{ formatPlayTime(playerInfo.totalPlayTimeMinutes) }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Total Sessions:</span>
-            <span class="info-value">{{ playerInfo.totalSessions }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">KDR:</span>
-            <span class="info-value">{{ calculateKDR(playerInfo.totalKills, playerInfo.totalDeaths) }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-1 transition-transform duration-300">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          Back to Player Profile
+        </router-link>
+      </div>
+
+      <!-- Hero Section -->
+      <div class="relative z-10 pb-6 sm:pb-12">
+        <div class="max-w-7xl mx-auto">
+          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 opacity-50"></div>
+            <div class="relative z-10 p-4 sm:p-8 md:p-12">
+              <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+                <!-- Player Avatar -->
+                <div class="flex-shrink-0">
+                  <div class="relative">
+                    <div class="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 p-1">
+                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                        <div class="w-16 h-16 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-2xl lg:text-3xl font-bold text-slate-900">
+                          🎮
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Gaming Status indicator -->
+                    <div class="absolute -bottom-2 -right-2">
+                      <div class="w-6 h-6 lg:w-8 lg:h-8 bg-emerald-500 rounded-full border-4 border-slate-900 animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Player Info -->
+                <div class="flex-grow">
+                  <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4">
+                    {{ playerName }}'s Combat History
+                  </h1>
+                  
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col gap-3">
+                  <button
+                    @click="fetchData"
+                    class="group bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-emerald-500/25 flex items-center gap-2"
+                  >
+                    <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-300">
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                      <path d="M21 3v5h-5" />
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                      <path d="M3 21v-5h5" />
+                    </svg>
+                    <div v-else class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span class="font-semibold">{{ loading ? 'Loading...' : 'Refresh Data' }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="header-right">
-        <router-link
-          :to="`/players/${encodeURIComponent(playerName)}`"
-          class="back-button"
-        >
-          Back to Player Details
-        </router-link>
+    </div>
+
+    <!-- Main Content -->
+    <div
+      v-if="!loading || sessions.length > 0"
+      class="max-w-7xl mx-auto px-3 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
+    >
+      <!-- Filter Controls -->
+      <div class="mb-6">
         <button
-          class="refresh-button"
-          @click="fetchData"
+          @click="showFilters = !showFilters"
+          class="lg:hidden group bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-xl px-6 py-3 w-full transition-all duration-300 flex items-center justify-center gap-3"
         >
-          <span v-if="!loading">Refresh</span>
-          <span
-            v-else
-            class="spinner"
-          />
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+          <span class="text-cyan-400 font-medium">Combat Filters</span>
+          <span v-if="mapFilter || serverFilter || gameTypeFilter" class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 transition-transform duration-300" :class="{ 'rotate-180': showFilters }">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+
+        <!-- Filter Panel -->
+        <div class="mt-4 transition-all duration-300 ease-in-out" :class="showFilters ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 lg:max-h-96 lg:opacity-100 overflow-hidden'">
+          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="space-y-2">
+                <label for="mapFilter" class="block text-sm font-medium text-slate-300">🗺️ Battlefield</label>
+                <select 
+                  id="mapFilter" 
+                  v-model="mapFilter" 
+                  @change="handleMapFilterChange"
+                  class="w-full px-4 py-3 bg-slate-800 border border-slate-600/50 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200"
+                >
+                  <option value="">All Maps</option>
+                  <option v-for="map in uniqueMaps" :key="map" :value="map">{{ map }}</option>
+                </select>
+              </div>
+              
+              <div class="space-y-2">
+                <label for="serverFilter" class="block text-sm font-medium text-slate-300">🖥️ Server</label>
+                <select 
+                  id="serverFilter" 
+                  v-model="serverFilter" 
+                  @change="handleServerFilterChange"
+                  class="w-full px-4 py-3 bg-slate-800 border border-slate-600/50 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200"
+                >
+                  <option value="">All Servers</option>
+                  <option v-for="server in uniqueServers" :key="server" :value="server">{{ server }}</option>
+                </select>
+              </div>
+              
+              <div class="space-y-2">
+                <label for="gameTypeFilter" class="block text-sm font-medium text-slate-300">🎮 Game Mode</label>
+                <select 
+                  id="gameTypeFilter" 
+                  v-model="gameTypeFilter" 
+                  @change="handleGameTypeFilterChange"
+                  class="w-full px-4 py-3 bg-slate-800 border border-slate-600/50 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200"
+                >
+                  <option value="">All Game Types</option>
+                  <option v-for="gameType in uniqueGameTypes" :key="gameType" :value="gameType">{{ gameType }}</option>
+                </select>
+              </div>
+              
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-slate-300">Actions</label>
+                <button
+                  @click="resetFilters"
+                  class="w-full px-4 py-3 bg-slate-700/50 hover:bg-slate-600/70 border border-slate-600/50 hover:border-slate-500/70 text-slate-300 hover:text-white rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-70">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                    <path d="M21 3v5h-5" />
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                    <path d="M3 21v-5h5" />
+                  </svg>
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sessions Data -->
+      <div v-if="sessions.length > 0" class="space-y-6">
+        <!-- Stats Summary -->
+        <div class="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 p-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-slate-400">
+                Showing <span class="text-cyan-400 font-medium">{{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, totalItems) }}</span> 
+                of <span class="text-cyan-400 font-medium">{{ totalItems }}</span> sessions
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <label for="pageSize" class="text-xs text-slate-500">Per page:</label>
+              <select
+                id="pageSize"
+                v-model="pageSize"
+                @change="currentPage = 1; updateQueryParams(); fetchData()"
+                class="px-2 py-1 bg-slate-700/50 border border-slate-600/50 rounded text-white text-xs focus:ring-1 focus:ring-cyan-400 focus:border-transparent"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Combat Sessions Timeline -->
+        <div class="space-y-3">
+          <template v-for="(session, index) in sessions" :key="session.sessionId">
+            <!-- Session Card -->
+            <div class="group relative" @click="(event) => navigateToRoundReport(session.sessionId, event)">
+              <!-- Performance indicator line -->
+              <div class="absolute left-0 top-0 bottom-0 w-1 rounded-full" :class="getPerformanceGradient(session)"></div>
+              
+              <!-- Main Session Card -->
+              <div class="ml-4 bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700/50 hover:border-cyan-500/30 overflow-hidden transition-all duration-200 cursor-pointer group-hover:bg-slate-800/60">
+                <div class="p-4">
+                  <!-- Two Row Layout -->
+                  <div class="space-y-2">
+                    <!-- Top Row: Time & Map Info with Stats -->
+                    <div class="flex items-center justify-between gap-4">
+                      <!-- Time & Map Info -->
+                      <div class="flex items-center gap-4 flex-grow min-w-0">
+                        <div class="text-cyan-400 font-medium text-sm whitespace-nowrap">
+                          {{ formatRelativeTime(session.startTime) }}
+                        </div>
+                        <div class="hidden sm:block w-px h-4 bg-slate-600"></div>
+                        <div class="flex items-center gap-2 min-w-0">
+                          <span class="font-semibold text-white truncate">{{ session.mapName }}</span>
+                          <span class="text-xs text-slate-400 hidden sm:inline">({{ session.gameType }})</span>
+                        </div>
+                        <div class="hidden lg:block w-px h-4 bg-slate-600"></div>
+                        <router-link 
+                          :to="`/servers/${encodeURIComponent(session.serverName)}`" 
+                          class="text-slate-400 hover:text-cyan-400 transition-colors text-xs truncate hidden lg:block max-w-[200px]"
+                          @click.stop
+                        >
+                          {{ session.serverName }}
+                        </router-link>
+                      </div>
+                      
+                      <!-- Compact Stats -->
+                      <div class="flex items-center gap-4 text-sm flex-shrink-0">
+                        <div class="text-center">
+                          <div class="font-semibold text-emerald-400">{{ session.kills }}</div>
+                          <div class="text-xs text-slate-500">K</div>
+                        </div>
+                        <div class="text-center">
+                          <div class="font-semibold text-red-400">{{ session.deaths }}</div>
+                          <div class="text-xs text-slate-500">D</div>
+                        </div>
+                        <div class="text-center">
+                          <div class="font-semibold text-yellow-400">{{ session.score }}</div>
+                          <div class="text-xs text-slate-500">S</div>
+                        </div>
+                        <div class="text-center hidden sm:block">
+                          <div class="text-blue-400 font-semibold">{{ formatPlayTime(session.durationMinutes) }}</div>
+                          <div class="text-xs text-slate-500">Time</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Bottom Row: K/D Ratio -->
+                    <div class="flex items-center">
+                      <div class="text-sm">
+                        <span class="text-slate-400">K/D Ratio:</span>
+                        <span class="ml-2 font-semibold" :class="session.kills > session.deaths ? 'text-green-400' : session.kills === session.deaths ? 'text-yellow-400' : 'text-red-400'">
+                          {{ calculateKDR(session.kills, session.deaths) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Time Gap Separator -->
+            <div v-if="index < sessions.length - 1 && getTimeGap(session, sessions[index + 1])" class="flex items-center justify-center py-2">
+              <div class="flex items-center gap-2 px-3 py-1 bg-slate-800/20 rounded text-xs text-slate-500">
+                <span>{{ getTimeGap(session, sessions[index + 1]) }}</span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="totalPages > 1" class="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 p-4">
+          <div class="flex items-center justify-between gap-4">
+            <!-- Pagination Info -->
+            <div class="text-slate-400 text-sm">
+              Page {{ currentPage }} of {{ totalPages }}
+            </div>
+            
+            <!-- Pagination Buttons -->
+            <div class="flex items-center gap-1">
+              <button 
+                @click="goToPage(1)"
+                :disabled="currentPage === 1" 
+                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                title="First"
+              >
+                ⟨⟨
+              </button>
+              
+              <button 
+                @click="goToPage(currentPage - 1)"
+                :disabled="currentPage === 1" 
+                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                title="Previous"
+              >
+                ⟨
+              </button>
+              
+              <!-- Page Numbers -->
+              <div class="hidden sm:flex items-center gap-1 mx-2">
+                <button 
+                  v-for="page in paginationRange" 
+                  :key="page" 
+                  @click="goToPage(page)"
+                  class="px-2 py-1 rounded text-xs transition-all"
+                  :class="page === currentPage 
+                    ? 'bg-cyan-600 text-white' 
+                    : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/70'"
+                >
+                  {{ page }}
+                </button>
+              </div>
+              
+              <!-- Current Page (Mobile) -->
+              <div class="sm:hidden px-2 py-1 bg-cyan-600 text-white rounded text-xs mx-2">
+                {{ currentPage }}
+              </div>
+              
+              <button 
+                @click="goToPage(currentPage + 1)"
+                :disabled="currentPage === totalPages" 
+                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                title="Next"
+              >
+                ⟩
+              </button>
+              
+              <button 
+                @click="goToPage(totalPages)"
+                :disabled="currentPage === totalPages" 
+                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                title="Last"
+              >
+                ⟩⟩
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-else-if="loading && sessions.length === 0" class="max-w-7xl mx-auto px-3 sm:px-6 flex flex-col items-center justify-center py-20 text-slate-400">
+      <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+      <p class="text-lg">🔍 Scanning combat records...</p>
+      <p class="text-sm text-slate-500 mt-2">Loading battlefield history</p>
+    </div>
+    
+    <!-- Error State -->
+    <div v-else-if="error" class="max-w-7xl mx-auto px-3 sm:px-6">
+      <div class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center">
+        <div class="text-6xl mb-4">⚠️</div>
+        <p class="text-red-400 text-lg font-semibold">{{ error }}</p>
+        <button @click="fetchData" class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors">
+          Try Again
         </button>
       </div>
     </div>
-
-    <!-- Mobile filter toggle -->
-    <div class="filter-toggle">
-      <button
-        class="filter-toggle-button"
-        @click="showFilters = !showFilters"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="filter-icon"
-        >
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-        </svg>
-        Filters
-        <span
-          v-if="mapFilter || serverFilter || gameTypeFilter"
-          class="active-filter-indicator"
-        >●</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="chevron-icon"
-          :class="{ 'rotated': showFilters }"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-    </div>
-
-    <!-- Filter controls -->
-    <div
-      class="filter-container"
-      :class="{ 'filters-visible': showFilters }"
-    >
-      <div class="filter-group">
-        <label for="mapFilter">Map:</label>
-        <select 
-          id="mapFilter" 
-          v-model="mapFilter" 
-          class="filter-select"
-          @change="handleMapFilterChange"
-        >
-          <option value="">
-            All Maps
-          </option>
-          <option
-            v-for="map in uniqueMaps"
-            :key="map"
-            :value="map"
-          >
-            {{ map }}
-          </option>
-        </select>
+    
+    <!-- No Data State -->
+    <div v-else class="max-w-7xl mx-auto px-3 sm:px-6">
+      <div class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center">
+        <div class="text-6xl mb-4 opacity-50">🎯</div>
+        <h3 class="text-2xl font-bold text-slate-400 mb-2">No Combat Records Found</h3>
+        <p class="text-slate-500 mb-6">This soldier hasn't entered any battles yet, or the records are still being processed.</p>
+        <button @click="fetchData" class="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25 font-medium">
+          🔄 Refresh Records
+        </button>
       </div>
-
-      <div class="filter-group">
-        <label for="serverFilter">Server:</label>
-        <select 
-          id="serverFilter" 
-          v-model="serverFilter" 
-          class="filter-select"
-          @change="handleServerFilterChange"
-        >
-          <option value="">
-            All Servers
-          </option>
-          <option
-            v-for="server in uniqueServers"
-            :key="server"
-            :value="server"
-          >
-            {{ server }}
-          </option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label for="gameTypeFilter">Game Type:</label>
-        <select 
-          id="gameTypeFilter" 
-          v-model="gameTypeFilter" 
-          class="filter-select"
-          @change="handleGameTypeFilterChange"
-        >
-          <option value="">
-            All Game Types
-          </option>
-          <option
-            v-for="gameType in uniqueGameTypes"
-            :key="gameType"
-            :value="gameType"
-          >
-            {{ gameType }}
-          </option>
-        </select>
-      </div>
-
-      <button
-        class="reset-filters-button"
-        @click="resetFilters"
-      >
-        Reset Filters
-      </button>
-    </div>
-
-    <div
-      v-if="loading && sessions.length === 0"
-      class="loading"
-    >
-      Loading sessions data...
-    </div>
-    <div
-      v-else-if="error"
-      class="error"
-    >
-      {{ error }}
-    </div>
-    <div
-      v-else-if="sessions.length > 0"
-      class="sessions-table-container"
-    >
-      <!-- Sessions count and pagination info -->
-      <div class="table-header">
-        <div class="sessions-count">
-          Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} sessions
-        </div>
-        <div class="page-size-selector">
-          <label for="pageSize">Sessions per page:</label>
-          <select
-            id="pageSize"
-            v-model="pageSize"
-            @change="currentPage = 1; updateQueryParams(); fetchData()"
-          >
-            <option value="10">
-              10
-            </option>
-            <option value="20">
-              20
-            </option>
-            <option value="50">
-              50
-            </option>
-            <option value="100">
-              100
-            </option>
-          </select>
-        </div>
-      </div>
-
-      <div class="timeline-container">
-        <template
-          v-for="(session, index) in sessions"
-          :key="session.sessionId"
-        >
-          <!-- Session timeline item -->
-          <div class="timeline-item">
-            <!-- Timeline node -->
-            <div class="timeline-node-container">
-              <div 
-                class="timeline-node" 
-                :class="getPerformanceClass(session)"
-                :title="getPerformanceLabel(session)"
-              />
-            </div>
-            
-            <!-- Session card -->
-            <div 
-              class="session-card"
-              @click="(event) => navigateToRoundReport(session.sessionId, event)"
-            >
-              <div class="session-line-1">
-                <span class="time-link">{{ formatRelativeTime(session.startTime) }}</span>
-                <span class="session-separator">-</span>
-                <router-link 
-                  :to="`/servers/${encodeURIComponent(session.serverName)}`" 
-                  class="server-link"
-                >
-                  {{ session.serverName }}
-                </router-link>
-              </div>
-              
-              <div class="session-line-2">
-                <span class="map-name">{{ session.mapName }}</span>
-                <span class="game-type">({{ session.gameType }})</span>
-              </div>
-              
-              <div class="session-line-3">
-                <span class="session-score">{{ session.score }} pts</span>
-                <span class="stat-separator">•</span>
-                <span class="stat-item">
-                  {{ calculateKDR(session.kills, session.deaths) }} KDR (<span class="kills-count">{{ session.kills }}</span> / <span class="deaths-count">{{ session.deaths }}</span>)
-                </span>
-                <span class="stat-separator">•</span>
-                <span class="duration-text">{{ formatPlayTime(session.durationMinutes) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Time gap as a separate timeline item -->
-          <div 
-            v-if="index < sessions.length - 1 && getTimeGap(session, sessions[index + 1])" 
-            class="timeline-gap-item"
-          >
-            <div class="time-gap-separator">
-              <div class="time-gap-line" />
-              <div class="time-gap-badge">
-                {{ getTimeGap(session, sessions[index + 1]) }}
-              </div>
-              <div class="time-gap-line" />
-            </div>
-          </div>
-        </template>
-      </div>
-
-      <!-- Pagination controls -->
-      <div
-        v-if="totalPages > 1"
-        class="pagination-container"
-      >
-        <div class="pagination-info">
-          Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} sessions
-        </div>
-        <div class="pagination-controls">
-          <button 
-            class="pagination-button" 
-            :disabled="currentPage === 1" 
-            title="First Page"
-            @click="goToPage(1)"
-          >
-            &laquo;
-          </button>
-          <button 
-            class="pagination-button" 
-            :disabled="currentPage === 1" 
-            title="Previous Page"
-            @click="goToPage(currentPage - 1)"
-          >
-            &lsaquo;
-          </button>
-          <button 
-            v-for="page in paginationRange" 
-            :key="page" 
-            class="pagination-button" 
-            :class="{ active: page === currentPage }" 
-            @click="goToPage(page)"
-          >
-            {{ page }}
-          </button>
-          <button 
-            class="pagination-button" 
-            :disabled="currentPage === totalPages" 
-            title="Next Page"
-            @click="goToPage(currentPage + 1)"
-          >
-            &rsaquo;
-          </button>
-          <button 
-            class="pagination-button" 
-            :disabled="currentPage === totalPages" 
-            title="Last Page"
-            @click="goToPage(totalPages)"
-          >
-            &raquo;
-          </button>
-        </div>
-        <div class="page-size-selector">
-          <label for="pageSize">Items per page:</label>
-          <select
-            id="pageSize"
-            v-model="pageSize"
-          >
-            <option value="10">
-              10
-            </option>
-            <option value="25">
-              25
-            </option>
-            <option value="50">
-              50
-            </option>
-            <option value="100">
-              100
-            </option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div
-      v-else
-      class="no-data"
-    >
-      No sessions found for this player.
     </div>
   </div>
 </template>
 
 <style scoped>
-.player-sessions-page-container {
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-}
-
-.header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.header-right {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.header h1 {
-  margin: 0;
-  color: var(--color-heading);
-}
-
-.player-info {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.info-item {
-  display: flex;
-  gap: 5px;
-}
-
-.info-label {
-  font-weight: 500;
-  color: var(--color-text-muted);
-}
-
-.info-value {
-  font-weight: bold;
-  color: var(--color-text);
-}
-
-.back-button {
-  padding: 8px 16px;
-  background-color: var(--color-background-mute);
-  color: var(--color-text);
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  transition: background-color 0.2s;
-}
-
-.back-button:hover {
-  @apply bg-slate-700/40;
-}
-
-.refresh-button {
-  padding: 8px 16px;
-  background-color: var(--color-accent);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.refresh-button:hover {
-  background-color: var(--color-accent-hover);
-}
-
-.filter-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
-  align-items: flex-end;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  min-width: 200px;
-}
-
-.filter-group label {
-  margin-bottom: 5px;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.filter-select {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  @apply bg-slate-800/40;
-  color: var(--color-text);
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.reset-filters-button {
-  padding: 8px 16px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  height: 36px;
-  align-self: flex-end;
-}
-
-.reset-filters-button:hover {
-  background-color: #5a6268;
-}
-
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
+/* Custom animations for enhanced visual effects */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-.loading, .error, .no-data {
-  padding: 20px;
-  text-align: center;
-}
-
-.error {
-  color: #ff5252;
-}
-
-.sessions-table-container {
-  width: 100%;
-}
-
-/* Timeline Styles */
-.timeline-container {
-  position: relative;
-  padding: 0;
-  margin: 12px 0;
-}
-
-.timeline-item {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.timeline-item:last-child {
-  margin-bottom: 0;
-}
-
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--color-border);
-  z-index: 1;
-}
-
-.timeline-node-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 12px;
-  min-width: 16px;
-  z-index: 2;
-  align-self: flex-start;
-  margin-top: 1.8em;
-}
-
-.timeline-node {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 2px solid var(--color-background);
-  position: relative;
-  z-index: 3;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.timeline-node:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 33, 150, 243), 0.2);
-}
-
-/* Performance-based node colors */
-.performance-excellent {
-  background-color: #4CAF50;
-  border-color: #2E7D32;
-}
-
-.performance-good {
-  background-color: #8BC34A;
-  border-color: #558B2F;
-}
-
-.performance-average {
-  background-color: #FFC107;
-  border-color: #F57F17;
-}
-
-.performance-poor {
-  background-color: #FF9800;
-  border-color: #E65100;
-}
-
-.performance-bad {
-  background-color: #F44336;
-  border-color: #C62828;
-}
-
-.session-card {
-  flex: 1;
-  background-color: transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  line-height: 1.4;
-  border-radius: 4px;
-}
-
-.timeline-item:hover::before {
-  background: var(--color-primary);
-}
-
-.session-line-1 {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 3px;
-  flex-wrap: wrap;
-}
-
-.session-line-1 .time-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: color 0.2s;
-}
-
-.session-line-1 .time-link:hover {
-  color: var(--color-accent);
-  text-decoration: underline;
-}
-
-.session-separator {
-  color: var(--color-text-muted);
-  font-weight: normal;
-  margin: 0 4px;
-}
-
-.session-line-1 .server-link {
-  color: var(--color-text);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: normal;
-  transition: color 0.2s;
-}
-
-.session-line-1 .server-link:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
-}
-
-.session-line-2 {
-  margin-bottom: 3px;
-}
-
-.map-name {
-  font-weight: 500;
-  color: var(--color-text);
-  margin-right: 4px;
-  font-size: 0.9rem;
-}
-
-.game-type {
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  font-weight: normal;
-}
-
-.session-line-3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  font-size: 0.85rem;
-  color: var(--color-text);
-}
-
-.session-score {
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.session-line-3 .stat-item {
-  display: inline;
-}
-
-.duration-text {
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-.kills-count {
-  color: #4CAF50;
-  font-weight: 500;
-}
-
-.deaths-count {
-  color: #F44336;
-  font-weight: 500;
-}
-
-.time-gap {
-  display: none;
-}
-
-.active-session-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: white;
-  background-color: #4CAF50;
-}
-
-.completed-session-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: white;
-  background-color: #9e9e9e;
-}
-
-/* Mobile filter toggle styles */
-.filter-toggle {
-  display: none;
-  margin-bottom: 15px;
-}
-
-.filter-toggle-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  @apply bg-slate-800/40;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  width: 100%;
-  justify-content: center;
-}
-
-.filter-toggle-button:hover {
-  background-color: var(--color-background-mute);
-  border-color: var(--color-accent);
-}
-
-.filter-toggle-button:active {
-  transform: translateY(1px);
-}
-
-.filter-icon {
-  color: var(--color-accent);
-}
-
-.active-filter-indicator {
-  color: var(--color-accent);
-  font-size: 12px;
-  margin-left: auto;
-  margin-right: -4px;
-}
-
-.chevron-icon {
-  transition: transform 0.2s ease;
-  margin-left: auto;
-}
-
-.chevron-icon.rotated {
-  transform: rotate(180deg);
-}
-
-.server-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.server-link:hover {
-  color: var(--color-accent);
-  text-decoration: underline;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.pagination-info {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-}
-
-.pagination-controls {
-  display: flex;
-  gap: 5px;
-}
-
-.pagination-button {
-  padding: 5px 10px;
-  @apply bg-slate-800/40;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--color-text);
-  transition: background-color 0.2s;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: var(--color-background-mute);
-}
-
-.pagination-button.active {
-  background-color: var(--color-accent);
-  color: white;
-  border-color: var(--color-accent);
-}
-
-.pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.sessions-count {
-  font-weight: bold;
-}
-
-.page-size-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.page-size-selector label {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-}
-
-.page-size-selector select {
-  padding: 5px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  @apply bg-slate-800/40;
-  color: var(--color-text);
-}
-
-/* Mobile responsive styles for timeline */
-@media (max-width: 768px) {
-  .player-sessions-page-container {
-    padding: 0 20px;
-  }
-
-  .header {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .header-right {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .player-info {
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  /* Show filter toggle on mobile */
-  .filter-toggle {
-    display: block;
-  }
-
-  /* Hide filters by default on mobile */
-  .filter-container {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    margin-bottom: 0;
-    flex-direction: column;
-    gap: 10px;
-    transition: all 0.3s ease;
-  }
-
-  /* Show filters when toggled */
-  .filter-container.filters-visible {
-    max-height: 500px;
-    opacity: 1;
-    margin-bottom: 20px;
-  }
-
-  .filter-group {
-    min-width: 0;
-  }
-
-  .reset-filters-button {
-    align-self: stretch;
-    margin-top: 10px;
-  }
-
-  .table-header {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-  }
-
-  .timeline-container {
-    margin: 8px 0;
-  }
-  
-  .timeline-item {
-    margin-bottom: 12px;
-  }
-  
-  .timeline-item::before {
-    left: 5px;
-  }
-  
-  .timeline-node-container {
-    margin-right: 10px;
-    min-width: 12px;
-    margin-top: 1.5em;
-  }
-  
-  .timeline-node {
-    width: 6px;
-    height: 6px;
-  }
-  
-  .session-card {
-    padding: 4px 6px;
-  }
-  
-  .session-line-1 .time-link,
-  .session-line-1 .server-link {
-    font-size: 0.85rem;
-  }
-  
-  .map-name {
-    font-size: 0.85rem;
-  }
-  
-  .game-type {
-    font-size: 0.8rem;
-  }
-  
-  .session-line-3 {
-    font-size: 0.8rem;
-    gap: 6px;
-  }
-  
-  .time-gap {
-    left: 15px;
-    bottom: -5px;
-    font-size: 0.7rem;
-    padding: 1px 6px;
-  }
-
-  .pagination-container {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .pagination-controls {
-    order: 2;
-    margin-top: 10px;
-  }
-
-  .pagination-info {
-    order: 1;
-  }
-
-  .page-size-selector {
-    order: 3;
-    margin-top: 10px;
-  }
-}
-
-/* Small mobile styles */
-@media (max-width: 480px) {
-  .timeline-item::before {
-    left: 4px;
-  }
-  
-  .timeline-node-container {
-    margin-right: 8px;
-    min-width: 10px;
-    margin-top: 1.3em;
-  }
-  
-  .timeline-node {
-    width: 5px;
-    height: 5px;
-  }
-  
-  .session-card {
-    padding: 3px 5px;
-  }
-  
-  .session-line-1 {
-    gap: 4px;
-    margin-bottom: 2px;
-  }
-  
-  .session-line-2 {
-    margin-bottom: 2px;
-  }
-  
-  .session-line-1 .time-link,
-  .session-line-1 .server-link {
-    font-size: 0.8rem;
-  }
-  
-  .map-name {
-    font-size: 0.8rem;
-  }
-  
-  .game-type {
-    font-size: 0.75rem;
-  }
-  
-  .session-line-3 {
-    font-size: 0.75rem;
-    gap: 4px;
-  }
-  
-  .time-gap {
-    left: 12px;
-    bottom: -4px;
-    font-size: 0.65rem;
-  }
-}
-
-.timeline-gap-item {
-  position: relative;
-  padding: 8px 0;
-  margin-left: 28px; /* Align with the timeline content */
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: flex-start;
-}
-
-.time-gap-separator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: fit-content;
-  min-width: 200px;
-  max-width: 400px;
-}
-
-.time-gap-line {
-  flex: 1;
-  height: 2px;
-  min-width: 40px;
-  max-width: 100px;
-  background-image: repeating-linear-gradient(-45deg,
-    var(--color-border) 0px,
-    var(--color-border) 4px,
-    transparent 4px,
-    transparent 8px);
-  background-size: 8px 2px;
-}
-
-.time-gap-badge {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  @apply bg-slate-900/60;
-  padding: 2px 8px;
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-  font-style: italic;
-  white-space: nowrap;
-  z-index: 2;
-}
-
-/* Mobile responsive styles for time gap */
-@media (max-width: 768px) {
-  .timeline-gap-item {
-    margin-left: 24px;
-    padding: 6px 0;
-    margin-bottom: 12px;
-  }
-  
-  .time-gap-separator {
-    min-width: 160px;
-    max-width: 300px;
-  }
-
-  .time-gap-line {
-    min-width: 30px;
-    max-width: 80px;
-    height: 1px;
-  }
-  
-  .time-gap-badge {
-    font-size: 0.75rem;
-    padding: 1px 6px;
-  }
-}
-
-@media (max-width: 480px) {
-  .timeline-gap-item {
-    margin-left: 20px;
-    padding: 4px 0;
-    margin-bottom: 10px;
-  }
-  
-  .time-gap-separator {
-    min-width: 120px;
-    max-width: 240px;
-  }
-
-  .time-gap-line {
-    min-width: 20px;
-    max-width: 60px;
-  }
-  
-  .time-gap-badge {
-    font-size: 0.7rem;
-    padding: 1px 4px;
-  }
-}
-
-/* Remove the old time-gap styles */
-.time-gap {
-  display: none;
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }
 
 </style>
