@@ -233,6 +233,21 @@ const flattenedAchievements = computed(() => {
   );
 });
 
+// Count achievements that are NOT kill streaks (i.e., milestones and other badges)
+const nonStreakAchievements = computed(() => {
+  if (!gamificationData.value) return 0;
+  
+  const allAchievements = [
+    ...gamificationData.value.milestones,
+    ...gamificationData.value.allBadges
+  ];
+  
+  // Filter out kill streak achievements
+  return allAchievements.filter(achievement => 
+    !achievement.achievementId.startsWith('kill_streak_')
+  ).length;
+});
+
 
 const openAchievementModal = (achievement: Achievement) => {
   selectedAchievement.value = achievement;
@@ -418,7 +433,7 @@ onMounted(async () => {
                   <div class="text-xs text-slate-400">Best Streak</div>
                 </div>
                 <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                  <div class="text-lg font-bold text-purple-400">{{ gamificationData.milestones.length }}</div>
+                  <div class="text-lg font-bold text-purple-400">{{ nonStreakAchievements }}</div>
                   <div class="text-xs text-slate-400">Milestones</div>
                 </div>
                 <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
