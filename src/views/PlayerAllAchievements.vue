@@ -58,6 +58,20 @@ const showStreakModal = ref(false);
 // Template refs
 const dropdownTrigger = ref<HTMLElement | null>(null);
 
+// Dropdown positioning
+const dropdownStyle = computed(() => {
+  if (!dropdownTrigger.value || !achievementDropdownOpen.value) {
+    return { display: 'none' };
+  }
+  
+  const rect = dropdownTrigger.value.getBoundingClientRect();
+  return {
+    top: rect.bottom + window.scrollY + 4 + 'px',
+    left: rect.left + 'px',
+    width: rect.width + 'px'
+  };
+});
+
 // Filter states
 const selectedMapName = ref<string>('');
 const selectedAchievementId = ref<string>('');
@@ -1027,14 +1041,10 @@ const getTierDotClass = (tier: string): string => {
 
     <!-- Achievement Dropdown Portal (positioned outside main content to avoid z-index issues) -->
     <div
-      v-if="achievementDropdownOpen && dropdownTrigger"
+      v-show="achievementDropdownOpen"
       class="fixed bg-slate-800 border border-slate-600/50 rounded-lg max-h-48 overflow-y-auto shadow-xl"
       style="z-index: 99999;"
-      :style="{ 
-        top: (dropdownTrigger.getBoundingClientRect().bottom + window.scrollY + 4) + 'px',
-        left: dropdownTrigger.getBoundingClientRect().left + 'px',
-        width: dropdownTrigger.getBoundingClientRect().width + 'px'
-      }"
+      :style="dropdownStyle"
     >
       <div 
         class="px-4 py-3 text-sm text-slate-300 hover:bg-slate-700/50 cursor-pointer transition-colors duration-200 border-b border-slate-600/30" 
