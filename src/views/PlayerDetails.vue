@@ -1538,8 +1538,30 @@ watch(
                   </div>
 
 
-                  <!-- Action Button - VIEW MAPS functionality -->
-                  <div class="mt-auto pt-6">
+                  <!-- Action Buttons - VIEW MAPS and VIEW RANKINGS -->
+                  <div class="mt-auto pt-6 space-y-3">
+                    <!-- View Rankings Link -->
+                    <router-link
+                      :to="`/servers/${encodeURIComponent(ranking.serverName)}/rankings`"
+                      class="block w-full px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-all duration-300 transform hover:scale-105 active:scale-95 text-center"
+                      :class="{
+                        'bg-gradient-to-r from-yellow-600/30 to-yellow-700/30 border border-yellow-500/50 text-yellow-200 hover:from-yellow-600/40 hover:to-yellow-700/40 hover:border-yellow-400/60 shadow-lg shadow-yellow-500/15': ranking.rank === 1,
+                        'bg-gradient-to-r from-slate-600/30 to-slate-700/30 border border-slate-500/50 text-slate-200 hover:from-slate-600/40 hover:to-slate-700/40 hover:border-slate-400/60 shadow-lg shadow-slate-500/15': ranking.rank === 2,
+                        'bg-gradient-to-r from-orange-600/30 to-orange-700/30 border border-orange-500/50 text-orange-200 hover:from-orange-600/40 hover:to-orange-700/40 hover:border-orange-400/60 shadow-lg shadow-orange-500/15': ranking.rank === 3,
+                        'bg-gradient-to-r from-slate-800/60 to-slate-900/60 border border-slate-600/50 text-slate-200 hover:from-slate-700/70 hover:to-slate-800/70 hover:border-slate-500/60 shadow-lg shadow-slate-900/30': ranking.rank > 3
+                      }"
+                    >
+                      <div class="flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:rotate-12">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                          <path d="m9 14 2 2 4-4"/>
+                        </svg>
+                        View Rankings
+                      </div>
+                    </router-link>
+                    
+                    <!-- View Maps Button -->
                     <button
                       @click="toggleServerExpansion(ranking.serverGuid)"
                       class="w-full px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-all duration-300 transform hover:scale-105 active:scale-95"
