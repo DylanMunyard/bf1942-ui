@@ -84,4 +84,6 @@ export interface ServerSummary {
   tickets2: number;
   players: PlayerInfo[];
   teams: TeamInfo[];
+  country?: string;
+  timezone?: string;
 }

@@ -301,7 +301,12 @@
                     >
                       <div class="flex items-center gap-2">
                         <span v-if="server.country" class="text-lg">{{ getCountryFlag(server.country) }}</span>
-                        <div class="font-bold text-slate-200 truncate max-w-xs text-sm">{{ server.name }}</div>
+                        <div class="flex-1 min-w-0">
+                          <div class="font-bold text-slate-200 truncate max-w-xs text-sm">{{ server.name }}</div>
+                          <div v-if="getTimezoneDisplay(server.timezone)" class="text-xs text-slate-400 font-mono">
+                            {{ getTimezoneDisplay(server.timezone) }}
+                          </div>
+                        </div>
                       </div>
                     </router-link>
                   </td>
@@ -759,6 +764,28 @@ const getCountryFlag = (countryCode: string): string => {
     .map(char => 127397 + char.charCodeAt(0))
   
   return String.fromCodePoint(...codePoints)
+}
+
+const getTimezoneDisplay = (timezone: string | undefined): string | null => {
+  if (!timezone) return null
+  try {
+    const now = new Date()
+    const time = new Intl.DateTimeFormat(undefined, {
+      hour: '2-digit', minute: '2-digit', timeZone: timezone
+    }).format(now)
+    const tzDate = new Date(now.toLocaleString('en-US', { timeZone: timezone }))
+    const offsetMinutes = (tzDate.getTime() - now.getTime()) / 60000
+    const offsetHours = Math.round(offsetMinutes / 60)
+    
+    if (offsetHours === 0) {
+      return `${time} (Same as you)`
+    }
+    
+    const sign = offsetHours > 0 ? '+' : '-'
+    return `${time} (${sign}${Math.abs(offsetHours)} hours)`
+  } catch {
+    return timezone
+  }
 }
 
 const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isInitialLoad = false) => {
