@@ -299,7 +299,10 @@
                       :to="`/servers/${encodeURIComponent(server.name)}`" 
                       class="block group-hover:text-cyan-400 transition-all duration-300 no-underline"
                     >
-                      <div class="font-bold text-slate-200 truncate max-w-xs text-sm">{{ server.name }}</div>
+                      <div class="flex items-center gap-2">
+                        <span v-if="server.country" class="text-lg">{{ getCountryFlag(server.country) }}</span>
+                        <div class="font-bold text-slate-200 truncate max-w-xs text-sm">{{ server.name }}</div>
+                      </div>
                     </router-link>
                   </td>
 
@@ -745,6 +748,17 @@ const getGameTypeClass = (gameType: string) => {
   if (type.includes('fh2')) return 'bg-green-500/20 text-green-400 border border-green-500/30'
   if (type.includes('vietnam')) return 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
   return 'bg-slate-500/20 text-slate-400 border border-slate-500/30'
+}
+
+const getCountryFlag = (countryCode: string): string => {
+  if (!countryCode || countryCode.length !== 2) return ''
+  
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0))
+  
+  return String.fromCodePoint(...codePoints)
 }
 
 const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isInitialLoad = false) => {
