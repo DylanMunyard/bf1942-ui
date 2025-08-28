@@ -210,16 +210,28 @@
               <!-- Table Header -->
               <thead class="sticky top-0 z-10">
                 <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
-                  <th @click="sortBy('name')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50">
-                    <div class="flex items-center gap-1.5">
-                      <span class="text-slate-400 text-xs">🏷️</span>
-                      <span class="font-mono font-bold">SERVER</span>
-                      <span class="text-xs transition-transform duration-200" :class="{
-                        'text-cyan-400 opacity-100': sortField === 'name',
-                        'opacity-50': sortField !== 'name',
-                        'rotate-0': sortField === 'name' && sortDirection === 'asc',
-                        'rotate-180': sortField === 'name' && sortDirection === 'desc'
-                      }">▲</span>
+                  <th class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                    <div class="flex items-center justify-between gap-2">
+                      <div @click="sortBy('name')" class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50">
+                        <span class="text-slate-400 text-xs">🏷️</span>
+                        <span class="font-mono font-bold">NAME</span>
+                        <span class="text-xs transition-transform duration-200" :class="{
+                          'text-cyan-400 opacity-100': sortField === 'name',
+                          'opacity-50': sortField !== 'name',
+                          'rotate-0': sortField === 'name' && sortDirection === 'asc',
+                          'rotate-180': sortField === 'name' && sortDirection === 'desc'
+                        }">▲</span>
+                      </div>
+                      <div @click="sortBy('timezone')" class="flex items-center gap-1 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-yellow-500/50">
+                        <span class="text-yellow-400 text-xs">🌍</span>
+                        <span class="font-mono font-bold text-xs">TIME</span>
+                        <span class="text-xs transition-transform duration-200" :class="{
+                          'text-yellow-400 opacity-100': sortField === 'timezone',
+                          'opacity-50': sortField !== 'timezone',
+                          'rotate-0': sortField === 'timezone' && sortDirection === 'asc',
+                          'rotate-180': sortField === 'timezone' && sortDirection === 'desc'
+                        }">▲</span>
+                      </div>
                     </div>
                   </th>
                   <th @click="sortBy('numPlayers')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50">
@@ -487,6 +499,18 @@ const filteredServers = computed(() => {
   return servers.value
 })
 
+const getTimezoneOffset = (timezone: string | undefined): number => {
+  if (!timezone) return 999 // Sort servers without timezone to the end
+  try {
+    const now = new Date()
+    const tzDate = new Date(now.toLocaleString('en-US', { timeZone: timezone }))
+    const offsetMinutes = (tzDate.getTime() - now.getTime()) / 60000
+    return Math.round(offsetMinutes / 60)
+  } catch {
+    return 999
+  }
+}
+
 const sortedServers = computed(() => {
   const filtered = [...filteredServers.value]
   
@@ -513,6 +537,11 @@ const sortedServers = computed(() => {
       case 'roundTimeRemain':
         aVal = a.roundTimeRemain || 0
         bVal = b.roundTimeRemain || 0
+        break
+      case 'timezone':
+        // Sort by absolute timezone offset (closest to user's time first)
+        aVal = Math.abs(getTimezoneOffset(a.timezone))
+        bVal = Math.abs(getTimezoneOffset(b.timezone))
         break
       default:
         aVal = a.numPlayers
@@ -715,7 +744,14 @@ const sortBy = (field: string) => {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
     sortField.value = field
-    sortDirection.value = field === 'numPlayers' ? 'desc' : 'asc'
+    // Default sorting directions
+    if (field === 'numPlayers') {
+      sortDirection.value = 'desc'
+    } else if (field === 'timezone') {
+      sortDirection.value = 'asc' // Closest timezone first
+    } else {
+      sortDirection.value = 'asc'
+    }
   }
 }
 
