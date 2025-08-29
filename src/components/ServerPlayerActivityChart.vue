@@ -451,10 +451,10 @@ const handlePeriodChange = (period: string) => {
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div class="space-y-2">
             <h4 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-              {{ serverInsights?.pingByHour?.data?.length > 0 ? '📈 Player Activity & Connection Analysis' : '📈 Player Activity Analysis' }}
+              {{ serverInsights?.pingByHour?.data?.length > 0 ? '📈 Player Activity & Connection Analysis' : '📈 Player Activity Analysis' }}{{ serverInsights?.popularMaps && serverInsights.popularMaps.length > 0 ? ' • Popular Maps' : '' }}
             </h4>
             <p class="text-slate-400 text-sm">
-              Real-time server population trends{{ serverInsights?.playerCountHistoryComparison?.length > 0 ? ' with previous period comparison' : '' }}{{ serverInsights?.pingByHour?.data?.length > 0 ? ' and connection quality zones' : '' }}
+              Real-time server population trends{{ serverInsights?.playerCountHistoryComparison?.length > 0 ? ' with previous period comparison' : '' }}{{ serverInsights?.pingByHour?.data?.length > 0 ? ' and connection quality zones' : '' }}{{ serverInsights?.popularMaps && serverInsights.popularMaps.length > 0 ? ' • Most played maps for the selected time period' : '' }}
             </p>
           </div>
           
@@ -690,6 +690,100 @@ const handlePeriodChange = (period: string) => {
                 <p class="text-slate-300 text-sm leading-relaxed">
                   <strong class="text-purple-400">Pro Tip:</strong> If you're playing from outside the host country, look for orange/red zones to find when players with similar connections are online for more balanced gameplay. Expand the chart and hover over data points to see exact ping values.
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Popular Maps Section -->
+      <div
+        v-if="serverInsights?.popularMaps && serverInsights.popularMaps.length > 0"
+        class="mx-8 mb-8"
+      >
+        <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-xl border border-slate-700/50 overflow-hidden">
+          <div class="p-4 border-b border-slate-700/50">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center text-lg">
+                🗺️
+              </div>
+              <h5 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400">
+                Popular Maps
+              </h5>
+            </div>
+            <p class="text-slate-400 text-sm">Most played maps during the selected time period</p>
+          </div>
+          <div class="p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div
+                v-for="(map, index) in serverInsights.popularMaps"
+                :key="map.mapName"
+                class="group relative bg-gradient-to-br from-slate-700/20 to-slate-800/20 backdrop-blur-sm rounded-lg border border-slate-600/30 hover:border-orange-500/40 transition-all duration-300 overflow-hidden"
+              >
+                <!-- Background gradient effect -->
+                <div class="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <!-- Percentage badge -->
+                <div class="absolute top-3 right-3 z-10">
+                  <div class="px-2 py-1 bg-orange-500/90 backdrop-blur-sm rounded-md text-xs font-bold text-white">
+                    {{ map.playTimePercentage.toFixed(1) }}%
+                  </div>
+                </div>
+                
+                <div class="relative z-10 p-4 space-y-4">
+                  <!-- Map Name -->
+                  <div class="pr-16">
+                    <h6 class="text-lg font-bold text-white capitalize leading-tight">
+                      {{ map.mapName.replace(/_/g, ' ') }}
+                    </h6>
+                  </div>
+                  
+                  <!-- Stats in professional dashboard style -->
+                  <div class="space-y-3">
+                    <!-- Player metrics row -->
+                    <div class="flex justify-between items-center py-2 border-b border-slate-600/30">
+                      <div class="flex items-center gap-2">
+                        <span class="text-cyan-400 text-sm">👥</span>
+                        <span class="text-slate-400 text-sm font-medium">Avg Players</span>
+                      </div>
+                      <span class="text-white font-bold">{{ Math.round(map.averagePlayerCount) }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-2 border-b border-slate-600/30">
+                      <div class="flex items-center gap-2">
+                        <span class="text-green-400 text-sm">🔥</span>
+                        <span class="text-slate-400 text-sm font-medium">Peak Players</span>
+                      </div>
+                      <span class="text-white font-bold">{{ map.peakPlayerCount }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-2 border-b border-slate-600/30">
+                      <div class="flex items-center gap-2">
+                        <span class="text-purple-400 text-sm">⏱️</span>
+                        <span class="text-slate-400 text-sm font-medium">Total Hours</span>
+                      </div>
+                      <span class="text-white font-bold">{{ Math.round(map.totalPlayTime / 60) }}h</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-2">
+                      <div class="flex items-center gap-2">
+                        <span class="text-orange-400 text-sm">📊</span>
+                        <span class="text-slate-400 text-sm font-medium">Play Share</span>
+                      </div>
+                      <span class="text-white font-bold">{{ map.playTimePercentage.toFixed(1) }}%</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Progress bar for play time percentage -->
+                  <div class="space-y-2">
+                    <div class="w-full bg-slate-600/20 rounded-full h-2">
+                      <div 
+                        class="h-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-1000 ease-out"
+                        :style="{ width: `${Math.min(map.playTimePercentage, 100)}%` }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
