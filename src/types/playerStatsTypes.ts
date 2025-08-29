@@ -309,3 +309,15 @@ export interface InitialData {
   tiers: string[];
   generatedAt: string;
 }
+
+export interface PlayerHistoryDataPoint {
+  timestamp: string; // ISO date string
+  totalPlayers: number;
+}
+
+export interface PlayerOnlineHistoryResponse {
+  dataPoints: PlayerHistoryDataPoint[];
+  period: string;
+  game: string;
+  lastUpdated: string; // ISO date string
+}

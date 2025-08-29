@@ -21,6 +21,10 @@ const pingMetric = ref<'median' | 'p95'>('median');
 const isPingExplainerCollapsed = ref(true);
 const selectedPeriod = ref('7d');
 
+// Maps table sorting
+const mapsSortField = ref('totalPlayTime');
+const mapsSortDirection = ref('desc');
+
 // Period options for the filter
 const periodOptions = [
   { value: '7d', label: '7 Days' },
@@ -167,9 +171,32 @@ const chartData = computed(() => {
     }
   }
 
+  // Add comparison period data if available
+  if (insights.playerCountHistoryComparison && insights.playerCountHistoryComparison.length > 0) {
+    const comparisonData = insights.playerCountHistoryComparison.map(metric => metric.playerCount);
+    
+    datasets.push({
+      label: 'Previous Period',
+      backgroundColor: 'rgba(156, 39, 176, 0.10)',
+      borderColor: 'rgba(156, 39, 176, 0.6)',
+      borderWidth: 2,
+      borderDash: [5, 5],
+      fill: false,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2,
+      data: comparisonData,
+      yAxisID: 'y',
+      order: 1, // Below current period
+    });
+  }
+
   // Add the main player count line (drawn on top)
   datasets.push({
-    label: 'Player Count',
+    label: 'Current Period',
     backgroundColor: 'rgba(33, 150, 243, 0.15)',
     borderColor: 'rgba(33, 150, 243, 0.8)',
     borderWidth: 2,
@@ -308,7 +335,23 @@ const chartOptions = computed(() => {
     },
     plugins: {
       legend: {
-        display: false // Disabled - background zones make legend unnecessary
+        display: isChartExpanded.value && (props.serverInsights?.playerCountHistoryComparison?.length > 0 || props.serverInsights?.pingByHour?.data?.length > 0),
+        position: 'top' as const,
+        align: 'end' as const,
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'line',
+          color: textColor,
+          font: {
+            size: 12,
+            weight: 'normal' as const
+          },
+          filter: function(legendItem: any, chartData: any) {
+            // Show only the main datasets and comparison data, hide ping zone datasets from legend
+            const label = legendItem.text || '';
+            return label === 'Current Period' || label === 'Previous Period';
+          }
+        }
       },
       tooltip: {
         enabled: isChartExpanded.value,
@@ -335,9 +378,9 @@ const chartOptions = computed(() => {
               return datasetLabel; // Just return the zone name, no value
             }
             
-            // Handle player count dataset
-            if (datasetLabel === 'Player Count') {
-              let label = 'Player Count: ' + Math.round(context.parsed.y) + ' players';
+            // Handle current period dataset
+            if (datasetLabel === 'Current Period') {
+              let label = 'Current Period: ' + Math.round(context.parsed.y) + ' players';
               
               // Add ping info if available
               if (context.dataset.pingData) {
@@ -348,6 +391,11 @@ const chartOptions = computed(() => {
               }
               
               return label;
+            }
+            
+            // Handle previous period dataset
+            if (datasetLabel === 'Previous Period') {
+              return 'Previous Period: ' + Math.round(context.parsed.y) + ' players';
             }
             
             return datasetLabel;
@@ -389,6 +437,69 @@ const handlePeriodChange = (period: string) => {
   selectedPeriod.value = period;
   emit('period-change', period);
 };
+
+// Maps table sorting
+const sortMapsBy = (field: string) => {
+  if (mapsSortField.value === field) {
+    mapsSortDirection.value = mapsSortDirection.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    mapsSortField.value = field;
+    // Default sorting directions
+    if (field === 'totalPlayTime') {
+      mapsSortDirection.value = 'desc';
+    } else {
+      mapsSortDirection.value = 'asc';
+    }
+  }
+};
+
+// Sorted maps for the table
+const sortedMaps = computed(() => {
+  const maps = props.serverInsights?.maps || [];
+  if (maps.length === 0) return [];
+  
+  return [...maps].sort((a, b) => {
+    let aVal, bVal;
+    
+    switch (mapsSortField.value) {
+      case 'mapName':
+        aVal = a.mapName.toLowerCase();
+        bVal = b.mapName.toLowerCase();
+        break;
+      case 'averagePlayerCount':
+        aVal = a.averagePlayerCount;
+        bVal = b.averagePlayerCount;
+        break;
+      case 'peakPlayerCount':
+        aVal = a.peakPlayerCount;
+        bVal = b.peakPlayerCount;
+        break;
+      case 'totalPlayTime':
+        aVal = a.totalPlayTime;
+        bVal = b.totalPlayTime;
+        break;
+      case 'playTimePercentage':
+        aVal = a.playTimePercentage;
+        bVal = b.playTimePercentage;
+        break;
+      default:
+        aVal = a.totalPlayTime;
+        bVal = b.totalPlayTime;
+    }
+    
+    if (mapsSortDirection.value === 'asc') {
+      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+    } else {
+      return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+    }
+  });
+});
+
+// Helper function to format play time in hours
+const formatPlayTimeHours = (minutes: number): string => {
+  const hours = Math.round(minutes / 60);
+  return `${hours}h`;
+};
 </script>
 
 <template>
@@ -407,10 +518,10 @@ const handlePeriodChange = (period: string) => {
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div class="space-y-2">
             <h4 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-              {{ serverInsights?.pingByHour?.data?.length > 0 ? '📈 Player Activity & Connection Analysis' : '📈 Player Activity Analysis' }}
+              {{ serverInsights?.pingByHour?.data?.length > 0 ? '📈 Player Activity & Connection Analysis' : '📈 Player Activity Analysis' }}{{ (serverInsights?.maps && serverInsights.maps.length > 0) ? ' • Map Analytics' : '' }}
             </h4>
             <p class="text-slate-400 text-sm">
-              Real-time server population trends{{ serverInsights?.pingByHour?.data?.length > 0 ? ' with connection quality zones' : '' }}
+              Real-time server population trends{{ serverInsights?.playerCountHistoryComparison?.length > 0 ? ' with previous period comparison' : '' }}{{ serverInsights?.pingByHour?.data?.length > 0 ? ' and connection quality zones' : '' }}{{ (serverInsights?.maps && serverInsights.maps.length > 0) ? ' • Map analytics for the selected time period' : '' }}
             </p>
           </div>
           
@@ -648,6 +759,150 @@ const handlePeriodChange = (period: string) => {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Maps Analytics Table Section -->
+      <div
+        v-if="sortedMaps.length > 0"
+        class="mx-8 mb-8"
+      >
+        <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-xl border border-slate-700/50 overflow-hidden">
+          <div class="p-4 border-b border-slate-700/50">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center text-lg">
+                🗺️
+              </div>
+              <h5 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400">
+                Map Analytics
+              </h5>
+              <div class="text-xs text-slate-500 bg-slate-700/30 px-2 py-1 rounded-md">
+                {{ sortedMaps.length }} maps
+              </div>
+            </div>
+            <p class="text-slate-400 text-sm">
+              All maps played during the selected time period - click column headers to sort
+            </p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+              <!-- Table Header -->
+              <thead class="sticky top-0 z-10">
+                <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+                  <th @click="sortMapsBy('mapName')" class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50">
+                    <div class="flex items-center gap-2">
+                      <span class="text-orange-400 text-xs">🗺️</span>
+                      <span class="font-mono font-bold">MAP NAME</span>
+                      <span class="text-xs transition-transform duration-200" :class="{
+                        'text-orange-400 opacity-100': mapsSortField === 'mapName',
+                        'opacity-50': mapsSortField !== 'mapName',
+                        'rotate-0': mapsSortField === 'mapName' && mapsSortDirection === 'asc',
+                        'rotate-180': mapsSortField === 'mapName' && mapsSortDirection === 'desc'
+                      }">▲</span>
+                    </div>
+                  </th>
+                  <th @click="sortMapsBy('totalPlayTime')" class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50">
+                    <div class="flex items-center gap-2">
+                      <span class="text-cyan-400 text-xs">⏱️</span>
+                      <span class="font-mono font-bold">TOTAL HOURS</span>
+                      <span class="text-xs transition-transform duration-200" :class="{
+                        'text-cyan-400 opacity-100': mapsSortField === 'totalPlayTime',
+                        'opacity-50': mapsSortField !== 'totalPlayTime',
+                        'rotate-0': mapsSortField === 'totalPlayTime' && mapsSortDirection === 'asc',
+                        'rotate-180': mapsSortField === 'totalPlayTime' && mapsSortDirection === 'desc'
+                      }">▲</span>
+                    </div>
+                  </th>
+                  <th @click="sortMapsBy('playTimePercentage')" class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-purple-500/50">
+                    <div class="flex items-center gap-2">
+                      <span class="text-purple-400 text-xs">📊</span>
+                      <span class="font-mono font-bold">% PLAYTIME</span>
+                      <span class="text-xs transition-transform duration-200" :class="{
+                        'text-purple-400 opacity-100': mapsSortField === 'playTimePercentage',
+                        'opacity-50': mapsSortField !== 'playTimePercentage',
+                        'rotate-0': mapsSortField === 'playTimePercentage' && mapsSortDirection === 'asc',
+                        'rotate-180': mapsSortField === 'playTimePercentage' && mapsSortDirection === 'desc'
+                      }">▲</span>
+                    </div>
+                  </th>
+                  <th @click="sortMapsBy('averagePlayerCount')" class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50">
+                    <div class="flex items-center gap-2">
+                      <span class="text-green-400 text-xs">👥</span>
+                      <span class="font-mono font-bold">AVG PLAYERS</span>
+                      <span class="text-xs transition-transform duration-200" :class="{
+                        'text-green-400 opacity-100': mapsSortField === 'averagePlayerCount',
+                        'opacity-50': mapsSortField !== 'averagePlayerCount',
+                        'rotate-0': mapsSortField === 'averagePlayerCount' && mapsSortDirection === 'asc',
+                        'rotate-180': mapsSortField === 'averagePlayerCount' && mapsSortDirection === 'desc'
+                      }">▲</span>
+                    </div>
+                  </th>
+                  <th @click="sortMapsBy('peakPlayerCount')" class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-yellow-500/50">
+                    <div class="flex items-center gap-2">
+                      <span class="text-yellow-400 text-xs">🔥</span>
+                      <span class="font-mono font-bold">PEAK PLAYERS</span>
+                      <span class="text-xs transition-transform duration-200" :class="{
+                        'text-yellow-400 opacity-100': mapsSortField === 'peakPlayerCount',
+                        'opacity-50': mapsSortField !== 'peakPlayerCount',
+                        'rotate-0': mapsSortField === 'peakPlayerCount' && mapsSortDirection === 'asc',
+                        'rotate-180': mapsSortField === 'peakPlayerCount' && mapsSortDirection === 'desc'
+                      }">▲</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              
+              <!-- Table Body -->
+              <tbody>
+                <tr
+                  v-for="(map, index) in sortedMaps"
+                  :key="map.mapName"
+                  class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
+                >
+                  <!-- Map Name -->
+                  <td class="p-3">
+                    <div class="font-bold text-slate-200 text-sm capitalize">
+                      {{ map.mapName.replace(/_/g, ' ') }}
+                    </div>
+                  </td>
+                  
+                  <!-- Total Hours -->
+                  <td class="p-3">
+                    <div class="font-bold text-cyan-400 text-sm font-mono">{{ formatPlayTimeHours(map.totalPlayTime) }}</div>
+                  </td>
+                  
+                  <!-- Percentage with Progress Bar -->
+                  <td class="p-3">
+                    <div class="flex items-center gap-3">
+                      <div class="font-bold text-purple-400 text-sm font-mono min-w-0">{{ map.playTimePercentage.toFixed(1) }}%</div>
+                      <div class="flex-1 max-w-[100px]">
+                        <div class="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                          <div 
+                            class="h-full transition-all duration-500 rounded-full" 
+                            :style="{ 
+                              width: map.playTimePercentage + '%', 
+                              backgroundColor: '#a855f7',
+                              boxShadow: '0 0 6px #a855f760'
+                            }"
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  
+                  <!-- Average Players -->
+                  <td class="p-3">
+                    <div class="font-bold text-green-400 text-sm font-mono">{{ Math.round(map.averagePlayerCount) }}</div>
+                  </td>
+                  
+                  <!-- Peak Players -->
+                  <td class="p-3">
+                    <div class="font-bold text-yellow-400 text-sm font-mono">{{ map.peakPlayerCount }}</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
