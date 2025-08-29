@@ -13,9 +13,10 @@ export interface MostActivePlayer {
 
 export interface PopularMap {
   mapName: string;
-  playerCount: number;
-  totalMinutesPlayed: number;
-  totalSessions: number;
+  averagePlayerCount: number;
+  peakPlayerCount: number;
+  totalPlayTime: number;
+  playTimePercentage: number;
 }
 
 export interface TopScore {
@@ -71,6 +72,8 @@ export interface ServerInsights {
   pingByHour: PingByHour;
   playerCountHistory: PlayerCountHistoryData[];
   playerCountSummary: PlayerCountSummary;
+  popularMaps: PopularMap[];
+  playerCountHistoryComparison?: PlayerCountHistoryData[];
 }
 
 export interface LeaderboardEntry {

@@ -357,6 +357,92 @@ const handlePeriodChange = async (period: string) => {
               </div>
             </div>
 
+            <!-- Popular Maps Section -->
+            <div 
+              v-if="serverInsights?.popularMaps && serverInsights.popularMaps.length > 0"
+              class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
+            >
+              <div class="p-3 sm:p-6 border-b border-slate-700/50">
+                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 flex items-center gap-3">
+                  🗺️ Popular Maps
+                </h3>
+                <p class="text-slate-400 text-sm mt-2">Most played maps during the selected period</p>
+              </div>
+              <div class="p-3 sm:p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div
+                    v-for="(map, index) in serverInsights.popularMaps"
+                    :key="map.mapName"
+                    class="group relative bg-gradient-to-br from-slate-700/30 to-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-600/50 hover:border-orange-500/50 transition-all duration-300 overflow-hidden"
+                  >
+                    <!-- Background gradient effect -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    <!-- Rank indicator -->
+                    <div class="absolute top-3 right-3 z-10">
+                      <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center text-sm font-bold text-white">
+                        {{ index + 1 }}
+                      </div>
+                    </div>
+                    
+                    <div class="relative z-10 p-4 space-y-3">
+                      <!-- Map Name -->
+                      <div class="pr-10">
+                        <h4 class="text-lg font-bold text-white capitalize">
+                          {{ map.mapName.replace(/_/g, ' ') }}
+                        </h4>
+                      </div>
+                      
+                      <!-- Stats Grid -->
+                      <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="space-y-1">
+                          <div class="flex items-center gap-2 text-cyan-400">
+                            <span class="text-xs">👥</span>
+                            <span class="text-slate-300">Avg Players</span>
+                          </div>
+                          <div class="font-bold text-white">{{ Math.round(map.averagePlayerCount) }}</div>
+                        </div>
+                        
+                        <div class="space-y-1">
+                          <div class="flex items-center gap-2 text-green-400">
+                            <span class="text-xs">🔥</span>
+                            <span class="text-slate-300">Peak Players</span>
+                          </div>
+                          <div class="font-bold text-white">{{ map.peakPlayerCount }}</div>
+                        </div>
+                        
+                        <div class="space-y-1">
+                          <div class="flex items-center gap-2 text-purple-400">
+                            <span class="text-xs">⏱️</span>
+                            <span class="text-slate-300">Play Time</span>
+                          </div>
+                          <div class="font-bold text-white">{{ Math.round(map.totalPlayTime / 60) }}h</div>
+                        </div>
+                        
+                        <div class="space-y-1">
+                          <div class="flex items-center gap-2 text-orange-400">
+                            <span class="text-xs">📊</span>
+                            <span class="text-slate-300">% of Total</span>
+                          </div>
+                          <div class="font-bold text-white">{{ map.playTimePercentage.toFixed(1) }}%</div>
+                        </div>
+                      </div>
+                      
+                      <!-- Progress bar for play time percentage -->
+                      <div class="space-y-1">
+                        <div class="w-full bg-slate-600/30 rounded-full h-2">
+                          <div 
+                            class="h-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-1000 ease-out"
+                            :style="{ width: `${Math.min(map.playTimePercentage, 100)}%` }"
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Player Activity Section -->
             <ServerPlayerActivityChart
               :server-insights="serverInsights"

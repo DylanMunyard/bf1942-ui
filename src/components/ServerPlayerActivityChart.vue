@@ -167,9 +167,32 @@ const chartData = computed(() => {
     }
   }
 
+  // Add comparison period data if available
+  if (insights.playerCountHistoryComparison && insights.playerCountHistoryComparison.length > 0) {
+    const comparisonData = insights.playerCountHistoryComparison.map(metric => metric.playerCount);
+    
+    datasets.push({
+      label: 'Previous Period',
+      backgroundColor: 'rgba(156, 39, 176, 0.10)',
+      borderColor: 'rgba(156, 39, 176, 0.6)',
+      borderWidth: 2,
+      borderDash: [5, 5],
+      fill: false,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2,
+      data: comparisonData,
+      yAxisID: 'y',
+      order: 1, // Below current period
+    });
+  }
+
   // Add the main player count line (drawn on top)
   datasets.push({
-    label: 'Player Count',
+    label: 'Current Period',
     backgroundColor: 'rgba(33, 150, 243, 0.15)',
     borderColor: 'rgba(33, 150, 243, 0.8)',
     borderWidth: 2,
@@ -308,7 +331,23 @@ const chartOptions = computed(() => {
     },
     plugins: {
       legend: {
-        display: false // Disabled - background zones make legend unnecessary
+        display: isChartExpanded.value && (props.serverInsights?.playerCountHistoryComparison?.length > 0 || props.serverInsights?.pingByHour?.data?.length > 0),
+        position: 'top' as const,
+        align: 'end' as const,
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'line',
+          color: textColor,
+          font: {
+            size: 12,
+            weight: 'normal' as const
+          },
+          filter: function(legendItem: any, chartData: any) {
+            // Show only the main datasets and comparison data, hide ping zone datasets from legend
+            const label = legendItem.text || '';
+            return label === 'Current Period' || label === 'Previous Period';
+          }
+        }
       },
       tooltip: {
         enabled: isChartExpanded.value,
@@ -335,9 +374,9 @@ const chartOptions = computed(() => {
               return datasetLabel; // Just return the zone name, no value
             }
             
-            // Handle player count dataset
-            if (datasetLabel === 'Player Count') {
-              let label = 'Player Count: ' + Math.round(context.parsed.y) + ' players';
+            // Handle current period dataset
+            if (datasetLabel === 'Current Period') {
+              let label = 'Current Period: ' + Math.round(context.parsed.y) + ' players';
               
               // Add ping info if available
               if (context.dataset.pingData) {
@@ -348,6 +387,11 @@ const chartOptions = computed(() => {
               }
               
               return label;
+            }
+            
+            // Handle previous period dataset
+            if (datasetLabel === 'Previous Period') {
+              return 'Previous Period: ' + Math.round(context.parsed.y) + ' players';
             }
             
             return datasetLabel;
@@ -410,7 +454,7 @@ const handlePeriodChange = (period: string) => {
               {{ serverInsights?.pingByHour?.data?.length > 0 ? '📈 Player Activity & Connection Analysis' : '📈 Player Activity Analysis' }}
             </h4>
             <p class="text-slate-400 text-sm">
-              Real-time server population trends{{ serverInsights?.pingByHour?.data?.length > 0 ? ' with connection quality zones' : '' }}
+              Real-time server population trends{{ serverInsights?.playerCountHistoryComparison?.length > 0 ? ' with previous period comparison' : '' }}{{ serverInsights?.pingByHour?.data?.length > 0 ? ' and connection quality zones' : '' }}
             </p>
           </div>
           
