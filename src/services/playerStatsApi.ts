@@ -7,7 +7,8 @@ import {
   SessionListItem,
   TeamKillerMetric,
   SimilarPlayersResponse,
-  InitialData
+  InitialData,
+  PlayerOnlineHistoryResponse
 } from '../types/playerStatsTypes';
 
 /**
@@ -206,4 +207,28 @@ export async function fetchInitialData(): Promise<InitialData> {
 export function clearInitialDataCache(): void {
   initialDataCache = null;
   initialDataCacheTimestamp = null;
+}
+
+/**
+ * Fetches historical player count data for a specific game
+ * @param game The game type ('bf1942', 'fh2', 'bfvietnam')
+ * @param period The time period ('1d', '3d', '7d') - defaults to '7d'
+ * @returns Historical player count data
+ */
+export async function fetchPlayerOnlineHistory(
+  game: 'bf1942' | 'fh2' | 'bfvietnam',
+  period: '1d' | '3d' | '7d' = '7d'
+): Promise<PlayerOnlineHistoryResponse> {
+  try {
+    const response = await axios.get<PlayerOnlineHistoryResponse>(
+      `/stats/LiveServers/${game}/players-online-history`,
+      {
+        params: { period }
+      }
+    );
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching player online history:', err);
+    throw new Error('Failed to get player online history');
+  }
 }

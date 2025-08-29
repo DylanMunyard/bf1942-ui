@@ -176,6 +176,67 @@
           </div>
         </div>
 
+        <!-- Player History Section -->
+        <div class="border-b border-slate-700/30">
+          <!-- Toggle Button -->
+          <div class="p-3">
+            <button
+              @click="togglePlayerHistory"
+              class="w-full flex items-center justify-between p-3 bg-slate-800/30 hover:bg-slate-700/50 rounded-lg border border-slate-700/50 transition-all duration-300 group"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center">
+                  <span class="text-slate-900 text-sm font-bold">📈</span>
+                </div>
+                <div class="text-left">
+                  <div class="text-sm font-medium text-slate-200">Player Activity History</div>
+                  <div class="text-xs text-slate-400">{{ getActiveGameName() }} population trends</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 hidden sm:block">{{ showPlayerHistory ? 'Hide' : 'Show' }}</span>
+                <div class="transform transition-transform duration-300" :class="{ 'rotate-180': showPlayerHistory }">
+                  <svg class="w-5 h-5 text-slate-400 group-hover:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <!-- Collapsible History Content -->
+          <div 
+            v-if="showPlayerHistory" 
+            class="px-3 pb-3 space-y-3 animate-in slide-in-from-top duration-300"
+          >
+            <!-- Period Selector -->
+            <div class="flex justify-center gap-1 bg-slate-800/30 rounded-lg p-1">
+              <button
+                v-for="period in ['1d', '3d', '7d']"
+                :key="period"
+                @click="changePeriod(period as '1d' | '3d' | '7d')"
+                :class="[
+                  'px-3 py-1 text-xs font-medium rounded-md transition-all duration-200',
+                  historyPeriod === period
+                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                ]"
+              >
+                {{ period === '1d' ? '24h' : period === '3d' ? '3 days' : '7 days' }}
+              </button>
+            </div>
+
+            <!-- Chart Container -->
+            <div class="bg-slate-800/20 rounded-lg p-4">
+              <PlayerHistoryChart
+                :chartData="playerHistoryData"
+                :loading="historyLoading"
+                :error="historyError"
+              />
+            </div>
+          </div>
+        </div>
+
         <!-- Loading State -->
         <div v-if="loading" class="flex items-center justify-center py-20">
           <div class="text-center space-y-6">
@@ -414,8 +475,10 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchAllServers } from '../services/serverDetailsService'
 import { ServerSummary } from '../types/server'
-import { formatLastSeen } from '@/utils/timeUtils'
+import { PlayerHistoryDataPoint } from '../types/playerStatsTypes'
 import PlayersPanel from '../components/PlayersPanel.vue'
+import PlayerHistoryChart from '../components/PlayerHistoryChart.vue'
+import { fetchPlayerOnlineHistory } from '../services/playerStatsService'
 
 import bf1942Icon from '@/assets/bf1942.jpg'
 import fh2Icon from '@/assets/fh2.jpg'
@@ -493,6 +556,13 @@ let blurTimeout: number | null = null
 // Players panel state
 const showPlayersPanel = ref(false)
 const selectedServer = ref<ServerSummary | null>(null)
+
+// Player history state
+const showPlayerHistory = ref(false)
+const playerHistoryData = ref<PlayerHistoryDataPoint[]>([])
+const historyPeriod = ref<'1d' | '3d' | '7d'>('7d')
+const historyLoading = ref(false)
+const historyError = ref<string | null>(null)
 
 // Computed properties
 const filteredServers = computed(() => {
@@ -843,9 +913,48 @@ const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isI
   }
 }
 
+const fetchPlayerHistory = async () => {
+  historyLoading.value = true
+  historyError.value = null
+  
+  try {
+    const response = await fetchPlayerOnlineHistory(
+      activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam',
+      historyPeriod.value
+    )
+    playerHistoryData.value = response.dataPoints
+  } catch (err) {
+    historyError.value = 'Failed to load player history'
+    console.error('Error fetching player history:', err)
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+const togglePlayerHistory = () => {
+  showPlayerHistory.value = !showPlayerHistory.value
+  if (showPlayerHistory.value && playerHistoryData.value.length === 0) {
+    fetchPlayerHistory()
+  }
+}
+
+const changePeriod = (period: '1d' | '3d' | '7d') => {
+  historyPeriod.value = period
+  fetchPlayerHistory()
+}
+
+const getActiveGameName = () => {
+  const gameType = gameTypes.find(g => g.id === activeFilter.value)
+  return gameType?.name || 'Game'
+}
+
 // Watch for game filter changes and fetch new data
 watch(activeFilter, (newFilter) => {
   fetchServersForGame(newFilter as 'bf1942' | 'fh2' | 'bfvietnam', true)
+  // Also refresh player history if it's visible
+  if (showPlayerHistory.value) {
+    fetchPlayerHistory()
+  }
 })
 
 // Lifecycle
