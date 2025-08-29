@@ -72,7 +72,7 @@ export interface ServerInsights {
   pingByHour: PingByHour;
   playerCountHistory: PlayerCountHistoryData[];
   playerCountSummary: PlayerCountSummary;
-  popularMaps: PopularMap[];
+  maps: PopularMap[];
   playerCountHistoryComparison?: PlayerCountHistoryData[];
 }
 
