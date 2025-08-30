@@ -131,56 +131,56 @@
   </div>
 
   <!-- Mobile Top Navigation -->
-  <div class="fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-xl border-b border-slate-700/50 z-50 flex md:hidden">
+  <div class="fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-xl border-b border-slate-700/50 z-50 flex md:hidden overflow-hidden">
     <!-- Animated background gradient -->
     <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-purple-500/5 opacity-60"></div>
     
-    <div class="relative z-10 flex items-center w-full px-4">
+    <div class="relative z-10 flex items-center w-full px-2 sm:px-4 max-w-full overflow-hidden">
       <!-- Auth Section -->
       <div class="flex-shrink-0">
         <LoginButton />
       </div>
       
       <!-- Navigation Menu -->
-      <nav class="flex-1 flex items-center justify-center gap-4 ml-4">
+      <nav class="flex-1 flex items-center justify-center gap-2 sm:gap-4 ml-2 sm:ml-4 min-w-0 overflow-hidden">
         <!-- Dashboard Link -->
         <router-link
           v-if="isAuthenticated"
           to="/dashboard"
-          class="group flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
+          class="group flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
-          <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+          <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
                :style="{ backgroundImage: `url(${dashboardIcon})` }"></div>
         </router-link>
 
         <!-- Servers Link -->
         <router-link
           to="/servers"
-          class="group flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
+          class="group flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
-          <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+          <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
                :style="{ backgroundImage: `url(${serversIcon})` }"></div>
         </router-link>
 
         <!-- Players Link -->
         <router-link
           to="/players"
-          class="group flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
+          class="group flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
-          <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+          <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
                :style="{ backgroundImage: `url(${playersIcon})` }"></div>
         </router-link>
 
         <!-- Player Comparison Link -->
         <router-link
           to="/players/compare"
-          class="group flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
+          class="group flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
           active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
         >
-          <div class="w-6 h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+          <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
                :style="{ backgroundImage: `url(${compareIcon})` }"></div>
         </router-link>
       </nav>

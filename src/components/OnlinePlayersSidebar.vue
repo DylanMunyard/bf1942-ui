@@ -1260,24 +1260,7 @@ onUnmounted(() => {
   margin: 0;
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-  .social-panel {
-    width: 100vw;
-  }
-  
-  .buddy-item, .server-item {
-    padding: 12px 8px;
-  }
-  
-  .buddy-name, .server-name {
-    font-size: 16px;
-  }
-  
-  .activity-text, .server-map {
-    font-size: 14px;
-  }
-}
+/* Mobile Responsiveness - Component is hidden on mobile via display: none */
 
 /* Notifications Content */
 .notifications-content {

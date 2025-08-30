@@ -11,18 +11,35 @@
       <router-view />
     </main>
     <Sidebar />
-    <OnlinePlayersSidebar v-if="isAuthenticated" />
+    <OnlinePlayersSidebar v-if="isAuthenticated && isDesktop" />
     <ToastNotifications />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
 import Sidebar from '../components/Sidebar.vue';
 import OnlinePlayersSidebar from '../components/OnlinePlayersSidebar.vue';
 import ToastNotifications from '../components/ToastNotifications.vue';
 import { useAuth } from '@/composables/useAuth';
 
 const { isAuthenticated } = useAuth();
+
+// Reactive screen size tracking
+const isDesktop = ref(false);
+
+const updateScreenSize = () => {
+  isDesktop.value = window.innerWidth > 768;
+};
+
+onMounted(() => {
+  updateScreenSize();
+  window.addEventListener('resize', updateScreenSize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateScreenSize);
+});
 </script>
 
 <style scoped>
