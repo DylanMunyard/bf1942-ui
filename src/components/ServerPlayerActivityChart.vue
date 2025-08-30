@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import type { ServerInsights } from '../services/serverDetailsService';
+
+const $route = useRoute();
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -862,9 +865,13 @@ const formatPlayTimeHours = (minutes: number): string => {
                 >
                   <!-- Map Name -->
                   <td class="p-3">
-                    <div class="font-bold text-slate-200 text-sm capitalize">
+                    <router-link 
+                      :to="`/servers/${encodeURIComponent($route.params.serverName)}/sessions?mapName=${encodeURIComponent(map.mapName)}`"
+                      class="font-bold text-slate-200 hover:text-cyan-400 text-sm capitalize transition-colors duration-200 cursor-pointer hover:underline"
+                      :title="`View all sessions for ${map.mapName.replace(/_/g, ' ')}`"
+                    >
                       {{ map.mapName.replace(/_/g, ' ') }}
-                    </div>
+                    </router-link>
                   </td>
                   
                   <!-- Total Hours -->

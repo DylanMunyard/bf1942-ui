@@ -345,9 +345,29 @@ const groupedSessions = computed(() => {
     // Sort rounds by start time (newest first)
     rounds.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
 
+    // Transform rounds to include leaderboard data
+    const roundsWithLeaderboard = rounds.map(round => {
+      // Sort players by score (descending), then by K/D ratio as tiebreaker
+      const sortedPlayers = [...round.sessions].sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const aKDR = a.deaths === 0 ? a.kills : a.kills / a.deaths;
+        const bKDR = b.deaths === 0 ? b.kills : b.kills / b.deaths;
+        return bKDR - aKDR;
+      });
+
+      return {
+        ...round,
+        leaderboard: sortedPlayers.map((session, index) => ({
+          ...session,
+          rank: index + 1,
+          kdr: session.deaths === 0 ? session.kills : +(session.kills / session.deaths).toFixed(2)
+        }))
+      };
+    });
+
     return {
       mapName,
-      rounds,
+      rounds: roundsWithLeaderboard,
       totalSessions: mapSessions.length,
       roundCount: rounds.length
     };
@@ -476,6 +496,19 @@ const getPerformanceGradient = (session: SessionListItem): string => {
   if (kdr >= 1.0) return 'bg-gradient-to-b from-yellow-500 via-orange-500 to-yellow-600';
   if (kdr >= 0.5) return 'bg-gradient-to-b from-orange-500 via-red-500 to-orange-600';
   return 'bg-gradient-to-b from-red-500 via-red-600 to-red-700';
+};
+
+const getRankBadge = (rank: number): { emoji: string; classes: string } => {
+  switch (rank) {
+    case 1:
+      return { emoji: '🥇', classes: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-amber-900' };
+    case 2:
+      return { emoji: '🥈', classes: 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800' };
+    case 3:
+      return { emoji: '🥉', classes: 'bg-gradient-to-r from-amber-600 to-orange-600 text-orange-100' };
+    default:
+      return { emoji: `#${rank}`, classes: 'bg-slate-600/50 text-slate-300' };
+  }
 };
 
 
@@ -755,84 +788,102 @@ onUnmounted(() => {
                     </span>
                   </div>
                   
-                  <!-- Sessions in this round -->
-                  <div v-show="!isRoundCollapsed(group.mapName, roundIndex)" class="space-y-3 ml-6">
-                    <div 
-                      v-for="session in round.sessions" 
-                      :key="session.sessionId"
-                      class="group relative" 
-                      @click="(event) => navigateToRoundReport(session.sessionId, event)"
-                    >
-                  <!-- Performance indicator line -->
-                  <div class="absolute left-0 top-0 bottom-0 w-1 rounded-full" :class="getPerformanceGradient(session)"></div>
-                  
-                  <!-- Main Session Card -->
-                  <div class="ml-4 bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700/50 hover:border-cyan-500/30 overflow-hidden transition-all duration-200 cursor-pointer group-hover:bg-slate-800/60">
-                    <div class="p-4">
-                      <!-- Multi-Row Layout -->
-                      <div class="space-y-2">
-                        <!-- Top Row: Time & Game Info with Stats -->
-                        <div class="flex items-center justify-between gap-4">
-                          <!-- Time & Game Info (no map name since it's in header) -->
-                          <div class="flex items-center gap-4 flex-grow min-w-0">
-                            <div class="text-cyan-400 font-medium text-sm whitespace-nowrap">
-                              {{ formatRelativeTime(session.startTime) }}
-                            </div>
-                            <div class="hidden sm:block w-px h-4 bg-slate-600"></div>
-                            <div class="flex items-center gap-2 min-w-0">
-                              <span class="text-xs text-slate-400">({{ session.gameType }})</span>
-                            </div>
-                          </div>
-                          
-                          <!-- Compact Stats -->
-                          <div class="flex items-center gap-4 text-sm flex-shrink-0">
-                            <div class="text-center">
-                              <div class="font-semibold text-emerald-400">{{ session.kills }}</div>
-                              <div class="text-xs text-slate-500">K</div>
-                            </div>
-                            <div class="text-center">
-                              <div class="font-semibold text-red-400">{{ session.deaths }}</div>
-                              <div class="text-xs text-slate-500">D</div>
-                            </div>
-                            <div class="text-center">
-                              <div class="font-semibold text-yellow-400">{{ session.score }}</div>
-                              <div class="text-xs text-slate-500">S</div>
-                            </div>
-                            <div class="text-center hidden sm:block">
-                              <div class="text-blue-400 font-semibold">{{ formatPlayTime(session.durationMinutes) }}</div>
-                              <div class="text-xs text-slate-500">Time</div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <!-- Player Name Row -->
-                        <div class="flex items-center">
-                          <div class="flex items-center gap-2">
-                            <span class="text-slate-400 text-sm">Player:</span>
-                            <router-link 
-                              :to="`/players/${encodeURIComponent(session.playerName)}`" 
-                              class="text-yellow-400 hover:text-yellow-300 transition-colors font-semibold text-base"
-                              @click.stop
-                            >
-                              {{ session.playerName }}
-                            </router-link>
-                          </div>
-                        </div>
-                        
-                        <!-- Bottom Row: K/D Ratio -->
-                        <div class="flex items-center">
-                          <div class="text-sm">
-                            <span class="text-slate-400">K/D Ratio:</span>
-                            <span class="ml-2 font-semibold" :class="session.kills > session.deaths ? 'text-green-400' : session.kills === session.deaths ? 'text-yellow-400' : 'text-red-400'">
-                              {{ calculateKDR(session.kills, session.deaths) }}
-                            </span>
-                          </div>
+                  <!-- Round Leaderboard -->
+                  <div v-show="!isRoundCollapsed(group.mapName, roundIndex)" class="ml-6">
+                    <div class="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700/50 overflow-hidden">
+                      <!-- Leaderboard Header -->
+                      <div class="bg-slate-700/50 px-4 py-3 border-b border-slate-600/50">
+                        <div class="flex items-center justify-between">
+                          <h4 class="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400">
+                            🏆 Round Leaderboard
+                          </h4>
+                          <button
+                            @click="(event) => navigateToRoundReport(round.leaderboard[0].sessionId, event)"
+                            class="text-xs bg-cyan-600/80 hover:bg-cyan-500 text-white px-3 py-1 rounded-md transition-colors font-medium"
+                          >
+                            View Round Report
+                          </button>
                         </div>
                       </div>
+                      
+                      <!-- Leaderboard Table -->
+                      <div class="overflow-x-auto">
+                        <table class="w-full">
+                          <thead class="bg-slate-700/30">
+                            <tr class="text-left text-xs text-slate-400 uppercase tracking-wider">
+                              <th class="px-4 py-3 w-16">Rank</th>
+                              <th class="px-4 py-3">Player</th>
+                              <th class="px-4 py-3 text-center w-20">Score</th>
+                              <th class="px-4 py-3 text-center w-16">K</th>
+                              <th class="px-4 py-3 text-center w-16">D</th>
+                              <th class="px-4 py-3 text-center w-20">K/D</th>
+                              <th class="px-4 py-3 text-center w-20 hidden sm:table-cell">Time</th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y divide-slate-700/50">
+                            <tr 
+                              v-for="player in round.leaderboard" 
+                              :key="player.sessionId"
+                              class="hover:bg-slate-700/20 transition-colors"
+                            >
+                              <!-- Rank -->
+                              <td class="px-4 py-3">
+                                <div class="flex items-center justify-center">
+                                  <span 
+                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold"
+                                    :class="getRankBadge(player.rank).classes"
+                                  >
+                                    {{ getRankBadge(player.rank).emoji }}
+                                  </span>
+                                </div>
+                              </td>
+                              
+                              <!-- Player -->
+                              <td class="px-4 py-3">
+                                <router-link 
+                                  :to="`/players/${encodeURIComponent(player.playerName)}`" 
+                                  class="text-yellow-400 hover:text-yellow-300 transition-colors font-semibold"
+                                  @click.stop
+                                >
+                                  {{ player.playerName }}
+                                </router-link>
+                              </td>
+                              
+                              <!-- Score -->
+                              <td class="px-4 py-3 text-center">
+                                <span class="font-semibold text-yellow-400">{{ player.score }}</span>
+                              </td>
+                              
+                              <!-- Kills -->
+                              <td class="px-4 py-3 text-center">
+                                <span class="font-semibold text-emerald-400">{{ player.kills }}</span>
+                              </td>
+                              
+                              <!-- Deaths -->
+                              <td class="px-4 py-3 text-center">
+                                <span class="font-semibold text-red-400">{{ player.deaths }}</span>
+                              </td>
+                              
+                              <!-- K/D Ratio -->
+                              <td class="px-4 py-3 text-center">
+                                <span 
+                                  class="font-semibold" 
+                                  :class="player.kdr > 1 ? 'text-green-400' : player.kdr === 1 ? 'text-yellow-400' : 'text-red-400'"
+                                >
+                                  {{ player.kdr }}
+                                </span>
+                              </td>
+                              
+                              <!-- Play Time -->
+                              <td class="px-4 py-3 text-center text-sm text-slate-300 hidden sm:table-cell">
+                                {{ formatPlayTime(player.durationMinutes) }}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                    </div> <!-- End session card -->
-                  </div> <!-- End sessions in this round -->
+                  </div> <!-- End round leaderboard -->
                 </div> <!-- End round -->
               </div> <!-- End rounds in this map group -->
             </div> <!-- End map group -->
