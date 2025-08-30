@@ -7,7 +7,7 @@ import PlayerAllAchievements from '../views/PlayerAllAchievements.vue'
 import ServerDetails from '../views/ServerDetails.vue'
 import ServerRankingsPage from '../components/ServerRankingsPage.vue'
 import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
-import RoundsPage from '../components/RoundsPage.vue'
+import ServerSessionsPage from '../components/ServerSessionsPage.vue'
 import RoundReportPageV2 from '../components/RoundReportPageV2.vue'
 import WorkInProgressPlaceholder from '../components/WorkInProgressPlaceholder.vue'
 import PlayerComparison from '../views/PlayerComparison.vue'
@@ -88,6 +88,12 @@ const routes: RouteRecordRaw[] = [
       props: true
     },
     {
+      path: '/servers/:serverName/sessions',
+      name: 'server-sessions',
+      component: ServerSessionsPage,
+      props: true
+    },
+    {
       path: '/players',
       name: 'players',
       component: Players
@@ -118,11 +124,6 @@ const routes: RouteRecordRaw[] = [
       name: 'player-achievements',
       component: PlayerAllAchievements,
       props: true
-    },
-    {
-      path: '/rounds',
-      name: 'rounds',
-      component: RoundsPage
     },
     {
       path: '/servers/round-report',
