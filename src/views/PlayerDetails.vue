@@ -811,156 +811,138 @@ watch(
 </script>
 
 <template>
-  <div class="min-h-screen px-3 sm:px-6">
-    <!-- Hero Section with Player Profile -->
-    <div class="relative overflow-hidden">
-      <!-- Animated Background Pattern -->
-      <div class="absolute inset-0 opacity-10">
-        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20"></div>
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+  <!-- Full-width Hero Section -->
+  <div class="w-full bg-slate-800 border-b border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between mb-6">
+        <HeroBackButton fallback-route="/players" />
       </div>
-
-
-      <!-- Player Hero Card -->
-      <div class="relative z-10 py-6 sm:py-12">
-        <div class="max-w-7xl mx-auto">
-          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-            <!-- Glow Effect -->
-            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 opacity-50"></div>
-            
-            <HeroBackButton fallback-route="/players" />
-
-            <!-- Content -->
-            <div class="relative z-10 p-4 sm:p-8 md:p-12" style="pointer-events: auto;">
-              <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
-                <!-- Player Avatar Section -->
-                <div class="flex-shrink-0">
-                  <div class="relative">
-                    <!-- Avatar Ring -->
-                    <div class="w-32 h-32 rounded-full bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 p-1 animate-spin-slow">
-                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-3xl font-bold text-slate-900">
-                          {{ playerName?.charAt(0)?.toUpperCase() || '?' }}
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Online Status Indicator -->
-                    <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-slate-900 flex items-center justify-center">
-                      <div class="w-3 h-3 bg-white rounded-full animate-ping"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Player Info -->
-                <div class="flex-grow space-y-4">
-                  <div class="space-y-2">
-                    <div class="flex items-center gap-4 flex-wrap">
-                      <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                        {{ playerName }}
-                      </h1>
-                      <!-- Currently in game badge -->
-                      <div
-                        v-if="playerStats?.isActive && playerStats?.currentServer"
-                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse"
-                      >
-                        <div class="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
-                          Online
-                      </div>
-                    </div>
-                    
-                    <!-- Player Stats Summary -->
-                    <div class="flex flex-col gap-4">
-                      <div class="flex items-center gap-6 text-slate-300 text-lg flex-wrap">
-                        <div class="flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
-                          <span class="font-medium">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
-                          <span>{{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
-                        </div>
-                      </div>
-                      
-                      <!-- Current session info -->
-                      <div
-                        v-if="playerStats?.isActive && playerStats?.currentServer"
-                        class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg"
-                      >
-                        <div class="flex-1">
-                          <router-link
-                            :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}`"
-                            class="font-semibold !text-white hover:!text-green-300 transition-colors"
-                          >
-                            {{ playerStats.currentServer.serverName }}
-                          </router-link>
-                          <p class="text-sm text-slate-400">{{ playerStats.currentServer.gameId?.toUpperCase() }}</p>
-                        </div>
-                        <div
-                          v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined"
-                          class="flex items-center gap-4 text-sm font-medium"
-                        >
-                          <!-- K/D Ratio -->
-                          <div class="text-center">
-                            <div class="text-lg font-bold text-cyan-400">
-                              {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }}
-                            </div>
-                            <div class="text-xs text-slate-400">K/D</div>
-                          </div>
-                          <!-- Kills -->
-                          <div class="text-center">
-                            <div class="text-lg font-bold text-green-400">{{ playerStats.currentServer.sessionKills }}</div>
-                            <div class="text-xs text-slate-400">K</div>
-                          </div>
-                          <!-- Deaths -->
-                          <div class="text-center">
-                            <div class="text-lg font-bold text-red-400">{{ playerStats.currentServer.sessionDeaths }}</div>
-                            <div class="text-xs text-slate-400">D</div>
-                          </div>
-                          <!-- Score (if available) -->
-                          <div v-if="(playerStats.currentServer as any).sessionScore !== undefined || (playerStats.currentServer as any).score !== undefined" class="text-center">
-                            <div class="text-lg font-bold text-yellow-400">{{ (playerStats.currentServer as any).sessionScore || (playerStats.currentServer as any).score }}</div>
-                            <div class="text-xs text-slate-400">S</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Quick Actions -->
-                  <div class="flex items-center gap-4 pt-4">
-                    <router-link 
-                      :to="{ path: '/players/compare', query: { player1: playerName } }"
-                      class="group inline-flex items-center gap-3 px-6 py-3 text-base font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-blue-500/25"
-                      title="Compare this player with another"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="group-hover:rotate-12 transition-transform duration-300"
-                      >
-                        <path d="M6 3h12l4 6-10 13L2 9l4-6z" />
-                        <path d="M11 3 8 9l4 13 4-13-3-6" />
-                      </svg>
-                      Compare Player
-                    </router-link>
-                  </div>
+      
+      <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8">
+        <!-- Player Avatar Section -->
+        <div class="flex-shrink-0">
+          <div class="relative">
+            <!-- Avatar -->
+            <div class="w-20 h-20 rounded-full bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 p-1 animate-spin-slow">
+              <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-xl font-bold text-slate-900">
+                  {{ playerName?.charAt(0)?.toUpperCase() || '?' }}
                 </div>
               </div>
             </div>
+            <!-- Online Status Indicator -->
+            <div v-if="playerStats?.isActive" class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-800"></div>
+          </div>
+        </div>
+
+        <!-- Player Info -->
+        <div class="flex-grow min-w-0">
+          <div class="flex items-center gap-4 flex-wrap mb-3">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400">
+              {{ playerName }}
+            </h1>
+            <!-- Currently in game badge -->
+            <div
+              v-if="playerStats?.isActive && playerStats?.currentServer"
+              class="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse"
+            >
+              <div class="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+              Online
+            </div>
+          </div>
+          
+          <!-- Player Stats Summary -->
+          <div class="flex items-center gap-6 text-slate-300 flex-wrap">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+              <span class="font-medium">{{ formatPlayTime(playerStats?.totalPlayTimeMinutes || 0) }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+              <span>{{ formatRelativeTime(playerStats?.lastPlayed || '') }}</span>
+            </div>
+          </div>
+                      
+        </div>
+
+        <!-- Actions Section -->
+        <div class="flex flex-col gap-4 items-end">
+          <!-- Current session info -->
+          <div
+            v-if="playerStats?.isActive && playerStats?.currentServer"
+            class="bg-green-500/10 border border-green-500/20 rounded-xl p-4 min-w-[250px]"
+          >
+            <div class="mb-2">
+              <router-link
+                :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}`"
+                class="font-semibold text-green-300 hover:text-green-200 transition-colors"
+              >
+                {{ playerStats.currentServer.serverName }}
+              </router-link>
+              <p class="text-sm text-slate-400">{{ playerStats.currentServer.gameId?.toUpperCase() }}</p>
+            </div>
+            <div
+              v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined"
+              class="flex items-center justify-between text-sm font-medium"
+            >
+              <!-- K/D Ratio -->
+              <div class="text-center">
+                <div class="text-lg font-bold text-cyan-400">
+                  {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }}
+                </div>
+                <div class="text-xs text-slate-400">K/D</div>
+              </div>
+              <!-- Kills -->
+              <div class="text-center">
+                <div class="text-lg font-bold text-green-400">{{ playerStats.currentServer.sessionKills }}</div>
+                <div class="text-xs text-slate-400">K</div>
+              </div>
+              <!-- Deaths -->
+              <div class="text-center">
+                <div class="text-lg font-bold text-red-400">{{ playerStats.currentServer.sessionDeaths }}</div>
+                <div class="text-xs text-slate-400">D</div>
+              </div>
+              <!-- Score (if available) -->
+              <div v-if="(playerStats.currentServer as any).sessionScore !== undefined || (playerStats.currentServer as any).score !== undefined" class="text-center">
+                <div class="text-lg font-bold text-yellow-400">{{ (playerStats.currentServer as any).sessionScore || (playerStats.currentServer as any).score }}</div>
+                <div class="text-xs text-slate-400">S</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="flex flex-col sm:flex-row gap-3">
+            <router-link 
+              :to="{ path: '/players/compare', query: { player1: playerName } }"
+              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg transition-all duration-200"
+              title="Compare this player with another"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M6 3h12l4 6-10 13L2 9l4-6z" />
+                <path d="M11 3 8 9l4 13 4-13-3-6" />
+              </svg>
+              Compare Player
+            </router-link>
           </div>
         </div>
       </div>
     </div>
-    <!-- Main Content Area -->
-    <div class="relative min-h-screen">
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="min-h-screen bg-slate-900">
+    <div class="relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <!-- Loading State -->
       <div
         v-if="isLoading"
@@ -2807,6 +2789,7 @@ watch(
         class="flex items-center justify-center p-8"
       >
         <p class="text-bf-text-muted">No player statistics available.</p>
+      </div>
       </div>
     </div>
   </div>

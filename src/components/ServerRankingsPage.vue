@@ -451,83 +451,68 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative min-h-screen px-3 sm:px-6">
-    <!-- Animated Background Pattern -->
-    <div class="fixed inset-0 opacity-10 pointer-events-none">
-      <div class="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-red-500/20"></div>
-      <div class="absolute top-0 left-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl animate-pulse"></div>
-      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-amber-500/5 to-orange-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
-    </div>
-
-
-    <!-- Compact Hero Section -->
-    <div class="relative z-10 py-6">
-      <div class="max-w-7xl mx-auto px-3 sm:px-6">
-        <div
-          v-if="serverContext"
-          class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
-        >
-          <div class="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 opacity-50"></div>
-          
-          <HeroBackButton positioning="left-of-icon" />
-          <div class="relative z-10 p-4 sm:p-6">
-            <div class="flex flex-col lg:flex-row items-start lg:items-center gap-4">
-              <!-- Server Leaderboard Icon -->
-              <div class="flex-shrink-0">
-                <div class="relative">
-                  <div class="w-16 h-16 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 p-1">
-                    <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                      <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xl font-bold text-slate-900">
-                        🏆
-                      </div>
-                    </div>
-                  </div>
-                  <!-- Live indicator -->
-                  <div class="absolute -bottom-1 -right-1">
-                    <div class="w-4 h-4 bg-emerald-500 rounded-full border-2 border-slate-900 animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Server Info -->
-              <div class="flex-grow">
-                <h1 class="text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 mb-2">
-                  {{ serverContext.serverName }} Leaderboard
-                </h1>
-                <p class="text-slate-400 text-sm">
-                  Elite soldiers ranked by battlefield supremacy • {{ totalItems.toLocaleString() }} warriors
-                </p>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="flex gap-3">
-                <button
-                  @click="fetchRankings(currentPage)"
-                  :disabled="loading"
-                  class="group bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 disabled:from-slate-600 disabled:to-slate-500 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-amber-500/25 disabled:shadow-none flex items-center gap-2"
-                >
-                  <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-300">
-                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                    <path d="M21 3v5h-5" />
-                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                    <path d="M3 21v-5h5" />
-                  </svg>
-                  <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span class="font-medium text-sm">{{ loading ? 'Loading...' : 'Refresh' }}</span>
-                </button>
-              </div>
+  <!-- Full-width Hero Section -->
+  <div class="w-full bg-slate-800 border-b border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between">
+        <HeroBackButton />
+      </div>
+      
+      <div v-if="serverContext" class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8 mt-6">
+        <!-- Server Leaderboard Icon -->
+        <div class="flex-shrink-0">
+          <div class="relative">
+            <div class="w-20 h-20 rounded-xl bg-slate-700 border border-slate-600 flex items-center justify-center">
+              <span class="text-2xl">🏆</span>
+            </div>
+            <!-- Status indicator -->
+            <div class="absolute -bottom-1 -right-1">
+              <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-slate-800"></div>
             </div>
           </div>
         </div>
+
+        <!-- Server Info -->
+        <div class="flex-grow min-w-0">
+          <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 mb-3">
+            {{ serverContext.serverName }} Leaderboard
+          </h1>
+          
+          <div class="text-slate-400 text-sm">
+            🏆 Elite soldiers ranked by battlefield supremacy • {{ totalItems.toLocaleString() }} warriors
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+          <button
+            @click="fetchRankings(currentPage)"
+            :disabled="loading"
+            class="group bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 disabled:from-slate-600 disabled:to-slate-500 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-amber-500/25 disabled:shadow-none flex items-center gap-2"
+          >
+            <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-300">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+              <path d="M3 21v-5h5" />
+            </svg>
+            <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <span class="font-medium text-sm">{{ loading ? 'Loading...' : 'Refresh' }}</span>
+          </button>
+        </div>
       </div>
     </div>
+  </div>
 
-    <!-- Main Content -->
-    <div
-      v-if="!loading || rankings.length > 0"
-      class="max-w-7xl mx-auto px-3 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
-    >
+  <!-- Main Content Area -->
+  <div class="min-h-screen bg-slate-900">
+
+    <div class="relative">
+      <div class="relative py-6 sm:py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          <!-- Rankings Content -->
+          <div v-if="!loading || rankings.length > 0" class="space-y-6">
       <!-- Compact Filters and Sort -->
       <div class="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 p-4 mb-4">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -852,7 +837,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Enhanced Pagination -->
-        <div v-if="totalPages > 1" class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6">
+        <div v-if="totalPages > 1" class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div class="text-slate-400 text-sm">
               <span class="font-semibold text-amber-400">Page {{ currentPage }}</span> of {{ totalPages }} 
@@ -917,45 +902,48 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
+          </div>
 
-      <!-- No Rankings State -->
-      <div
-        v-else
-        class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center"
-      >
-        <div class="text-6xl mb-4 opacity-50">🏆</div>
-        <h3 class="text-2xl font-bold text-slate-400 mb-2">No Warriors Found</h3>
-        <p class="text-slate-500 mb-6">This battlefield awaits its first legends, or they're still earning their stripes.</p>
-        <button 
-          @click="fetchRankings(currentPage)" 
-          class="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-amber-500/25 font-semibold"
-        >
-          🔄 Refresh Leaderboard
-        </button>
-      </div>
-    </div>
+          <!-- Loading State -->
+          <div
+            v-else-if="loading && rankings.length === 0"
+            class="flex flex-col items-center justify-center py-20 text-slate-400"
+          >
+            <div class="w-12 h-12 border-4 border-slate-600 border-t-amber-400 rounded-full animate-spin mb-4"></div>
+            <p class="text-lg text-slate-300">Loading elite warriors...</p>
+          </div>
 
-    <!-- Loading State -->
-    <div v-else-if="loading && rankings.length === 0" class="max-w-7xl mx-auto px-3 sm:px-6 flex flex-col items-center justify-center py-20 text-slate-400">
-      <div class="relative">
-        <div class="w-16 h-16 border-4 border-slate-600 border-t-amber-400 rounded-full animate-spin mb-4"></div>
-        <div class="absolute inset-0 w-16 h-16 border-4 border-transparent border-b-orange-400 rounded-full animate-spin animate-reverse" style="animation-duration: 1.5s;"></div>
-      </div>
-      <p class="text-lg font-semibold">🏆 Loading Elite Warriors...</p>
-      <p class="text-sm text-slate-500 mt-2">Calculating battlefield dominance</p>
-    </div>
-    
-    <!-- Error State -->
-    <div v-else-if="error" class="max-w-7xl mx-auto px-3 sm:px-6">
-      <div class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center">
-        <div class="text-6xl mb-4">⚠️</div>
-        <p class="text-red-400 text-lg font-semibold mb-4">{{ error }}</p>
-        <button 
-          @click="fetchRankings(currentPage)"
-          class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg font-semibold"
-        >
-          🔄 Retry Mission
-        </button>
+          <!-- Error State -->
+          <div
+            v-else-if="error"
+            class="bg-slate-800/70 backdrop-blur-sm border border-red-800/50 rounded-xl p-8 text-center"
+          >
+            <div class="text-6xl mb-4">⚠️</div>
+            <p class="text-red-400 text-lg font-medium mb-4">{{ error }}</p>
+            <button 
+              @click="fetchRankings(currentPage)"
+              class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg font-semibold"
+            >
+              🔄 Retry Mission
+            </button>
+          </div>
+
+          <!-- No Rankings State -->
+          <div
+            v-else
+            class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center"
+          >
+            <div class="text-6xl mb-4 opacity-50">🏆</div>
+            <h3 class="text-2xl font-bold text-slate-400 mb-2">No Warriors Found</h3>
+            <p class="text-slate-500 mb-6">This battlefield awaits its first legends, or they're still earning their stripes.</p>
+            <button 
+              @click="fetchRankings(currentPage)" 
+              class="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-amber-500/25 font-semibold"
+            >
+              🔄 Refresh Leaderboard
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

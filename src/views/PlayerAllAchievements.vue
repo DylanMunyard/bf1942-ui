@@ -517,81 +517,66 @@ const getTierDotClass = (tier: string): string => {
 </script>
 
 <template>
-  <div class="min-h-screen px-3 sm:px-6">
-    <!-- Hero Section with Background -->
-    <div class="relative overflow-hidden">
-      <!-- Animated Background Pattern -->
-      <div class="absolute inset-0 opacity-10">
-        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20"></div>
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-
-      <!-- Hero Section -->
-      <div class="relative z-10 py-6 sm:py-12">
-        <div class="max-w-7xl mx-auto">
-          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 opacity-50"></div>
-            
-            <HeroBackButton :fallback-route="`/players/${encodeURIComponent(playerName)}`" />
-            <div class="relative z-10 p-4 sm:p-8 md:p-12">
-              <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
-                <!-- Achievement Trophy Avatar -->
-                <div class="flex-shrink-0">
-                  <div class="relative">
-                    <div class="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 p-1">
-                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                        <div class="w-16 h-16 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl lg:text-3xl font-bold text-slate-900">
-                          🏆
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Achievement Status indicator -->
-                    <div class="absolute -bottom-2 -right-2">
-                      <div class="w-6 h-6 lg:w-8 lg:h-8 bg-amber-500 rounded-full border-4 border-slate-900 animate-pulse"></div>
+  <div class="min-h-screen">
+    <!-- Hero Section -->
+    <div class="w-full bg-slate-800 border-b border-slate-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <HeroBackButton :fallback-route="`/players/${encodeURIComponent(playerName)}`" />
+        <div class="py-6 sm:py-8">
+          <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+            <!-- Achievement Trophy Avatar -->
+            <div class="flex-shrink-0">
+              <div class="relative">
+                <div class="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 p-1">
+                  <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                    <div class="w-16 h-16 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl lg:text-3xl font-bold text-slate-900">
+                      🏆
                     </div>
                   </div>
                 </div>
-
-                <!-- Achievement Info -->
-                <div class="flex-grow">
-                  <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 mb-4">
-                    {{ playerName }}'s Hall of Fame
-                  </h1>
-                  <p class="text-slate-400 text-lg mb-6">
-                    Complete achievement history and legendary moments
-                  </p>
-                  
-                  <!-- Stats Summary -->
-                  <div class="flex flex-wrap gap-4" v-if="!isLoading && achievements.length > 0">
-                    <div class="px-4 py-2 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
-                      🎯 {{ totalCount }} Total Achievements
-                    </div>
-                    <div v-if="achievementLabels.length > 0" class="px-4 py-2 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
-                      🏅 {{ achievementLabels.length }} Unique Types
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="flex flex-col gap-3">
-                  <button
-                    @click="fetchAchievements(currentPage)"
-                    :disabled="isLoading"
-                    class="group bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 disabled:from-slate-600 disabled:to-slate-500 text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-amber-500/25 disabled:hover:scale-100 disabled:shadow-none flex items-center gap-2"
-                  >
-                    <svg v-if="!isLoading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-300">
-                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                      <path d="M21 3v5h-5" />
-                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                      <path d="M3 21v-5h5" />
-                    </svg>
-                    <div v-else class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span class="font-semibold">{{ isLoading ? 'Loading...' : 'Refresh Data' }}</span>
-                  </button>
+                <!-- Achievement Status indicator -->
+                <div class="absolute -bottom-2 -right-2">
+                  <div class="w-6 h-6 lg:w-8 lg:h-8 bg-amber-500 rounded-full border-4 border-slate-900 animate-pulse"></div>
                 </div>
               </div>
+            </div>
+
+            <!-- Achievement Info -->
+            <div class="flex-grow">
+              <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-yellow-400 mb-4">
+                {{ playerName }}'s Hall of Fame
+              </h1>
+              <p class="text-slate-300 text-lg mb-6">
+                Complete achievement history and legendary moments
+              </p>
+              
+              <!-- Stats Summary -->
+              <div class="flex flex-wrap gap-4" v-if="!isLoading && achievements.length > 0">
+                <div class="px-4 py-2 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
+                  🎯 {{ totalCount }} Total Achievements
+                </div>
+                <div v-if="achievementLabels.length > 0" class="px-4 py-2 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
+                  🏅 {{ achievementLabels.length }} Unique Types
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-col gap-3">
+              <button
+                @click="fetchAchievements(currentPage)"
+                :disabled="isLoading"
+                class="group bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 disabled:from-slate-600 disabled:to-slate-500 text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-amber-500/25 disabled:hover:scale-100 disabled:shadow-none flex items-center gap-2"
+              >
+                <svg v-if="!isLoading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-300">
+                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                  <path d="M21 3v5h-5" />
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                  <path d="M3 21v-5h5" />
+                </svg>
+                <div v-else class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span class="font-semibold">{{ isLoading ? 'Loading...' : 'Refresh Data' }}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -599,303 +584,307 @@ const getTierDotClass = (tier: string): string => {
     </div>
 
     <!-- Main Content -->
-    <div
-      v-if="(!isLoading && achievements.length > 0) || (isLoading && achievements.length > 0)"
-      class="max-w-7xl mx-auto px-3 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
-    >
-      <!-- Filter Controls -->
-      <div class="mb-6">
-        <button
-          @click="showFilters = !showFilters"
-          class="lg:hidden group bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-xl px-6 py-3 w-full transition-all duration-300 flex items-center justify-center gap-3"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-          </svg>
-          <span class="text-amber-400 font-medium">Achievement Filters</span>
-          <span v-if="hasActiveFilters" class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 transition-transform duration-300" :class="{ 'rotate-180': showFilters }">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
+    <div class="relative py-6 sm:py-8">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div v-if="(!isLoading && achievements.length > 0) || (isLoading && achievements.length > 0)" class="bg-slate-900 rounded-lg border border-slate-700 p-6">
+          <div class="space-y-4 sm:space-y-8">
+            <!-- Filter Controls -->
+            <div class="mb-6">
+              <button
+                @click="showFilters = !showFilters"
+                class="lg:hidden group bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-xl px-6 py-3 w-full transition-all duration-300 flex items-center justify-center gap-3"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
+                <span class="text-amber-400 font-medium">Achievement Filters</span>
+                <span v-if="hasActiveFilters" class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 transition-transform duration-300" :class="{ 'rotate-180': showFilters }">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
 
-        <!-- Filter Panel -->
-        <div class="mt-4 transition-all duration-300 ease-in-out" :class="showFilters ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 lg:max-h-96 lg:opacity-100'">
-          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div class="space-y-2">
-                <label for="mapFilter" class="block text-sm font-medium text-slate-300">🗺️ Battlefield</label>
-                <select 
-                  id="mapFilter" 
-                  v-model="selectedMapName" 
-                  class="w-full px-4 py-3 bg-slate-800 border border-slate-600/50 rounded-lg text-white focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all duration-200"
-                >
-                  <option value="">All Maps</option>
-                  <option v-for="mapName in availableMaps" :key="mapName" :value="mapName">{{ mapName }}</option>
-                </select>
-              </div>
-              
-              <div class="space-y-2">
-                <label class="block text-sm font-medium text-slate-300">🏆 Achievement Type</label>
-                <div class="relative achievement-select-wrapper" style="z-index: 100000; transform: translateZ(0);">
-                  <div 
-                    ref="dropdownTrigger"
-                    class="w-full px-4 py-3 bg-slate-800 border border-slate-600/50 rounded-lg text-white cursor-pointer transition-all duration-200 hover:border-amber-400/50 focus:ring-2 focus:ring-amber-400 focus:border-transparent flex items-center justify-between"
-                    @click="achievementDropdownOpen = !achievementDropdownOpen"
-                  >
-                    <div class="flex items-center gap-2">
-                      <img 
-                        v-if="selectedAchievementId"
-                        :src="getAchievementImage(selectedAchievementId)" 
-                        :alt="getAchievementDisplayName(selectedAchievementId)"
-                        class="w-5 h-5 rounded object-contain"
-                        @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+              <!-- Filter Panel -->
+              <div class="mt-4 transition-all duration-300 ease-in-out" :class="showFilters ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 lg:max-h-96 lg:opacity-100'">
+                <div class="bg-slate-800/70 backdrop-blur-sm rounded-lg border border-slate-700 p-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="space-y-2">
+                      <label for="mapFilter" class="block text-sm font-medium text-slate-300">🗺️ Battlefield</label>
+                      <select 
+                        id="mapFilter" 
+                        v-model="selectedMapName" 
+                        class="w-full px-4 py-3 bg-slate-800 border border-slate-600/50 rounded-lg text-white focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all duration-200"
                       >
-                      <span class="text-sm">{{ selectedAchievementId ? getAchievementDisplayName(selectedAchievementId) : 'All Achievements' }}</span>
-                    </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': achievementDropdownOpen }">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="space-y-2">
-                <label class="block text-sm font-medium text-slate-300">📊 Showing</label>
-                <div class="text-sm text-slate-400 px-4 py-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
-                  {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, totalCount) }} of {{ totalCount }}
-                </div>
-              </div>
-              
-              <div class="space-y-2">
-                <label class="block text-sm font-medium text-slate-300">Actions</label>
-                <button
-                  @click="clearFilters"
-                  :disabled="!hasActiveFilters"
-                  class="w-full px-4 py-3 bg-slate-700/50 hover:bg-slate-600/70 disabled:bg-slate-800/50 border border-slate-600/50 hover:border-slate-500/70 disabled:border-slate-700/50 text-slate-300 hover:text-white disabled:text-slate-500 rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2 disabled:cursor-not-allowed"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-70">
-                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                    <path d="M21 3v5h-5" />
-                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                    <path d="M3 21v-5h5" />
-                  </svg>
-                  Reset Filters
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Achievements Data Display -->
-      <div v-if="achievements.length > 0" class="space-y-6">
-        
-        <!-- Achievement Timeline -->
-        <div class="space-y-8">
-          <template
-            v-for="dateKey in sortedDateKeys"
-            :key="dateKey"
-          >
-            <!-- Date Header -->
-            <div class="relative">
-              <div class="flex items-center gap-4 mb-6">
-                <div class="flex items-center gap-3">
-                  <div class="w-3 h-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse"></div>
-                  <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
-                    {{ formatDateHeader(dateKey) }}
-                  </h2>
-                </div>
-                <div class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-400 border border-slate-600/50">
-                  {{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}
-                </div>
-                <div class="flex-1 h-px bg-gradient-to-r from-slate-600/50 to-transparent"></div>
-              </div>
-              
-              <!-- Achievement Cards Grid -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                <div 
-                  v-for="(group, index) in groupedAchievements[dateKey]" 
-                  :key="index"
-                  class="group relative bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-amber-500/30 overflow-hidden transition-all duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-xl"
-                  :class="getTierBorderClass(group.achievement.tier)"
-                  :title="getAchievementTooltip(group.achievement)"
-                  @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
-                >
-                  <!-- Tier Glow Effect -->
-                  <div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity duration-300" :class="getTierGlowClass(group.achievement.tier)"></div>
-                  
-                  <!-- Achievement Image -->
-                  <div class="relative p-4 flex justify-center">
-                    <div class="relative">
-                      <img 
-                        :src="getAchievementImage(group.achievement.achievementId)" 
-                        :alt="group.achievement.achievementName"
-                        class="w-16 h-16 object-contain rounded-lg group-hover:scale-110 transition-transform duration-300"
-                        @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
-                      >
-                      <!-- Count Badge -->
-                      <div
-                        v-if="group.count > 1"
-                        class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg"
-                      >
-                        {{ group.count }}
-                      </div>
-                      <!-- Tier Indicator -->
-                      <div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full" :class="getTierDotClass(group.achievement.tier)"></div>
-                    </div>
-                  </div>
-                  
-                  <!-- Achievement Details -->
-                  <div class="px-4 pb-4 space-y-2">
-                    <h3 class="font-semibold text-white text-sm line-clamp-2 group-hover:text-amber-200 transition-colors duration-300">
-                      {{ group.achievement.achievementName }}
-                    </h3>
-                    
-                    <!-- Meta Info -->
-                    <div class="flex items-center justify-between text-xs">
-                      <span class="text-amber-400 font-medium">{{ formatRelativeTime(group.achievement.achievedAt) }}</span>
-                      <span
-                        v-if="group.achievement.value"
-                        class="px-2 py-1 bg-slate-700/50 text-slate-300 rounded font-mono"
-                      >{{ group.achievement.value.toLocaleString() }}</span>
+                        <option value="">All Maps</option>
+                        <option v-for="mapName in availableMaps" :key="mapName" :value="mapName">{{ mapName }}</option>
+                      </select>
                     </div>
                     
-                    <!-- Location Info -->
-                    <div class="text-xs text-slate-400 truncate" v-if="group.achievement.mapName && group.count === 1">
-                      <span v-if="group.achievement.serverGuid && group.achievement.mapName && group.achievement.achievedAt">
-                        📍 <router-link 
-                          :to="{
-                            path: '/servers/round-report',
-                            query: {
-                              serverGuid: group.achievement.serverGuid,
-                              mapName: group.achievement.mapName,
-                              startTime: group.achievement.achievedAt,
-                              players: playerName
-                            }
-                          }"
-                          class="text-amber-400 hover:text-amber-300 transition-colors"
-                          @click.stop
+                    <div class="space-y-2">
+                      <label class="block text-sm font-medium text-slate-300">🏆 Achievement Type</label>
+                      <div class="relative achievement-select-wrapper" style="z-index: 100000; transform: translateZ(0);">
+                        <div 
+                          ref="dropdownTrigger"
+                          class="w-full px-4 py-3 bg-slate-800 border border-slate-600/50 rounded-lg text-white cursor-pointer transition-all duration-200 hover:border-amber-400/50 focus:ring-2 focus:ring-amber-400 focus:border-transparent flex items-center justify-between"
+                          @click="achievementDropdownOpen = !achievementDropdownOpen"
                         >
-                          {{ group.achievement.mapName }}
-                        </router-link>
-                      </span>
-                      <span v-else>📍 {{ group.achievement.mapName }}</span>
+                          <div class="flex items-center gap-2">
+                            <img 
+                              v-if="selectedAchievementId"
+                              :src="getAchievementImage(selectedAchievementId)" 
+                              :alt="getAchievementDisplayName(selectedAchievementId)"
+                              class="w-5 h-5 rounded object-contain"
+                              @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                            >
+                            <span class="text-sm">{{ selectedAchievementId ? getAchievementDisplayName(selectedAchievementId) : 'All Achievements' }}</span>
+                          </div>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': achievementDropdownOpen }">
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
-                    <div class="text-xs text-slate-500 italic" v-else-if="group.count > 1">
-                      Click to see all {{ group.count }} achievements
+                    
+                    <div class="space-y-2">
+                      <label class="block text-sm font-medium text-slate-300">📊 Showing</label>
+                      <div class="text-sm text-slate-400 px-4 py-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                        {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, totalCount) }} of {{ totalCount }}
+                      </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                      <label class="block text-sm font-medium text-slate-300">Actions</label>
+                      <button
+                        @click="clearFilters"
+                        :disabled="!hasActiveFilters"
+                        class="w-full px-4 py-3 bg-slate-700/50 hover:bg-slate-600/70 disabled:bg-slate-800/50 border border-slate-600/50 hover:border-slate-500/70 disabled:border-slate-700/50 text-slate-300 hover:text-white disabled:text-slate-500 rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-70">
+                          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                          <path d="M21 3v5h-5" />
+                          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                          <path d="M3 21v-5h5" />
+                        </svg>
+                        Reset Filters
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </template>
-        </div>
-        
-        <!-- Pagination Controls -->
-        <div v-if="totalPages > 1" class="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 p-4">
-          <div class="flex items-center justify-between gap-4">
-            <!-- Pagination Info -->
-            <div class="text-slate-400 text-sm">
-              Page {{ currentPage }} of {{ totalPages }}
             </div>
             
-            <!-- Pagination Buttons -->
-            <div class="flex items-center gap-1">
-              <button 
-                @click="goToPage(1)"
-                :disabled="currentPage === 1" 
-                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
-                title="First"
-              >
-                ⟨⟨
-              </button>
+            <!-- Achievements Data Display -->
+            <div v-if="achievements.length > 0" class="space-y-6">
               
-              <button 
-                @click="goToPage(currentPage - 1)"
-                :disabled="!hasPreviousPage" 
-                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
-                title="Previous"
-              >
-                ⟨
-              </button>
-              
-              <!-- Page Numbers -->
-              <div class="hidden sm:flex items-center gap-1 mx-2">
-                <template v-for="page in getPaginationRange()" :key="page">
-                  <button 
-                    v-if="typeof page === 'number'"
-                    @click="goToPage(page)"
-                    class="px-2 py-1 rounded text-xs transition-all"
-                    :class="page === currentPage 
-                      ? 'bg-amber-600 text-white' 
-                      : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/70'"
-                  >
-                    {{ page }}
-                  </button>
-                  <span
-                    v-else
-                    class="px-1 py-1 text-slate-500 text-xs"
-                  >{{ page }}</span>
+              <!-- Achievement Timeline -->
+              <div class="space-y-8">
+                <template
+                  v-for="dateKey in sortedDateKeys"
+                  :key="dateKey"
+                >
+                  <!-- Date Header -->
+                  <div class="relative">
+                    <div class="flex items-center gap-4 mb-6">
+                      <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse"></div>
+                        <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+                          {{ formatDateHeader(dateKey) }}
+                        </h2>
+                      </div>
+                      <div class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-400 border border-slate-600/50">
+                        {{ groupedAchievements[dateKey].length }} achievement{{ groupedAchievements[dateKey].length !== 1 ? 's' : '' }}
+                      </div>
+                      <div class="flex-1 h-px bg-gradient-to-r from-slate-600/50 to-transparent"></div>
+                    </div>
+                    
+                    <!-- Achievement Cards Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      <div 
+                        v-for="(group, index) in groupedAchievements[dateKey]" 
+                        :key="index"
+                        class="group relative bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-amber-500/30 overflow-hidden transition-all duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-xl"
+                        :class="getTierBorderClass(group.achievement.tier)"
+                        :title="getAchievementTooltip(group.achievement)"
+                        @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
+                      >
+                        <!-- Tier Glow Effect -->
+                        <div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity duration-300" :class="getTierGlowClass(group.achievement.tier)"></div>
+                        
+                        <!-- Achievement Image -->
+                        <div class="relative p-4 flex justify-center">
+                          <div class="relative">
+                            <img 
+                              :src="getAchievementImage(group.achievement.achievementId)" 
+                              :alt="group.achievement.achievementName"
+                              class="w-16 h-16 object-contain rounded-lg group-hover:scale-110 transition-transform duration-300"
+                              @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
+                            >
+                            <!-- Count Badge -->
+                            <div
+                              v-if="group.count > 1"
+                              class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg"
+                            >
+                              {{ group.count }}
+                            </div>
+                            <!-- Tier Indicator -->
+                            <div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full" :class="getTierDotClass(group.achievement.tier)"></div>
+                          </div>
+                        </div>
+                        
+                        <!-- Achievement Details -->
+                        <div class="px-4 pb-4 space-y-2">
+                          <h3 class="font-semibold text-white text-sm line-clamp-2 group-hover:text-amber-200 transition-colors duration-300">
+                            {{ group.achievement.achievementName }}
+                          </h3>
+                          
+                          <!-- Meta Info -->
+                          <div class="flex items-center justify-between text-xs">
+                            <span class="text-amber-400 font-medium">{{ formatRelativeTime(group.achievement.achievedAt) }}</span>
+                            <span
+                              v-if="group.achievement.value"
+                              class="px-2 py-1 bg-slate-700/50 text-slate-300 rounded font-mono"
+                            >{{ group.achievement.value.toLocaleString() }}</span>
+                          </div>
+                          
+                          <!-- Location Info -->
+                          <div class="text-xs text-slate-400 truncate" v-if="group.achievement.mapName && group.count === 1">
+                            <span v-if="group.achievement.serverGuid && group.achievement.mapName && group.achievement.achievedAt">
+                              📍 <router-link 
+                                :to="{
+                                  path: '/servers/round-report',
+                                  query: {
+                                    serverGuid: group.achievement.serverGuid,
+                                    mapName: group.achievement.mapName,
+                                    startTime: group.achievement.achievedAt,
+                                    players: playerName
+                                  }
+                                }"
+                                class="text-amber-400 hover:text-amber-300 transition-colors"
+                                @click.stop
+                              >
+                                {{ group.achievement.mapName }}
+                              </router-link>
+                            </span>
+                            <span v-else>📍 {{ group.achievement.mapName }}</span>
+                          </div>
+                          <div class="text-xs text-slate-500 italic" v-else-if="group.count > 1">
+                            Click to see all {{ group.count }} achievements
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </template>
               </div>
               
-              <!-- Current Page (Mobile) -->
-              <div class="sm:hidden px-2 py-1 bg-amber-600 text-white rounded text-xs mx-2">
-                {{ currentPage }}
+              <!-- Pagination Controls -->
+              <div v-if="totalPages > 1" class="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 p-4">
+                <div class="flex items-center justify-between gap-4">
+                  <!-- Pagination Info -->
+                  <div class="text-slate-400 text-sm">
+                    Page {{ currentPage }} of {{ totalPages }}
+                  </div>
+                  
+                  <!-- Pagination Buttons -->
+                  <div class="flex items-center gap-1">
+                    <button 
+                      @click="goToPage(1)"
+                      :disabled="currentPage === 1" 
+                      class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                      title="First"
+                    >
+                      ⟨⟨
+                    </button>
+                    
+                    <button 
+                      @click="goToPage(currentPage - 1)"
+                      :disabled="!hasPreviousPage" 
+                      class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                      title="Previous"
+                    >
+                      ⟨
+                    </button>
+                    
+                    <!-- Page Numbers -->
+                    <div class="hidden sm:flex items-center gap-1 mx-2">
+                      <template v-for="page in getPaginationRange()" :key="page">
+                        <button 
+                          v-if="typeof page === 'number'"
+                          @click="goToPage(page)"
+                          class="px-2 py-1 rounded text-xs transition-all"
+                          :class="page === currentPage 
+                            ? 'bg-amber-600 text-white' 
+                            : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/70'"
+                        >
+                          {{ page }}
+                        </button>
+                        <span
+                          v-else
+                          class="px-1 py-1 text-slate-500 text-xs"
+                        >{{ page }}</span>
+                      </template>
+                    </div>
+                    
+                    <!-- Current Page (Mobile) -->
+                    <div class="sm:hidden px-2 py-1 bg-amber-600 text-white rounded text-xs mx-2">
+                      {{ currentPage }}
+                    </div>
+                    
+                    <button 
+                      @click="goToPage(currentPage + 1)"
+                      :disabled="!hasNextPage" 
+                      class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                      title="Next"
+                    >
+                      ⟩
+                    </button>
+                    
+                    <button 
+                      @click="goToPage(totalPages)"
+                      :disabled="currentPage === totalPages" 
+                      class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
+                      title="Last"
+                    >
+                      ⟩⟩
+                    </button>
+                  </div>
+                </div>
               </div>
-              
-              <button 
-                @click="goToPage(currentPage + 1)"
-                :disabled="!hasNextPage" 
-                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
-                title="Next"
-              >
-                ⟩
-              </button>
-              
-              <button 
-                @click="goToPage(totalPages)"
-                :disabled="currentPage === totalPages" 
-                class="p-1.5 rounded bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs"
-                title="Last"
-              >
-                ⟩⟩
-              </button>
             </div>
           </div>
         </div>
-      </div>
-
-    </div>
-
-    <!-- Loading State -->
-    <div v-else-if="isLoading && achievements.length === 0" class="max-w-7xl mx-auto px-3 sm:px-6 flex flex-col items-center justify-center py-20 text-slate-400">
-      <div class="w-12 h-12 border-4 border-slate-600 border-t-amber-400 rounded-full animate-spin mb-4"></div>
-      <p class="text-lg">🏆 Loading achievement hall...</p>
-      <p class="text-sm text-slate-500 mt-2">Scanning legendary moments</p>
-    </div>
-    
-    <!-- Error State -->
-    <div v-else-if="error" class="max-w-7xl mx-auto px-3 sm:px-6">
-      <div class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center">
-        <div class="text-6xl mb-4">⚠️</div>
-        <p class="text-red-400 text-lg font-semibold">{{ error }}</p>
-        <button @click="fetchAchievements(currentPage)" class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors">
-          Try Again
-        </button>
-      </div>
-    </div>
-
-    <!-- No Achievements State -->
-    <div v-else class="max-w-7xl mx-auto px-3 sm:px-6">
-      <div class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center">
-        <div class="text-6xl mb-4 opacity-50">🏆</div>
-        <h3 class="text-2xl font-bold text-slate-400 mb-2">No Achievements Found</h3>
-        <p class="text-slate-500 mb-6">This soldier hasn't unlocked any achievements yet, or they're still being processed.</p>
-        <button @click="fetchAchievements(currentPage)" class="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-amber-500/25 font-medium">
-          🔄 Refresh Achievements
-        </button>
+        
+        <!-- Loading State -->
+        <div v-else-if="isLoading && achievements.length === 0" class="bg-slate-900 rounded-lg border border-slate-700 p-6">
+          <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+            <div class="w-12 h-12 border-4 border-slate-600 border-t-amber-400 rounded-full animate-spin mb-4"></div>
+            <p class="text-lg">🏆 Loading achievement hall...</p>
+            <p class="text-sm text-slate-500 mt-2">Scanning legendary moments</p>
+          </div>
+        </div>
+        
+        <!-- Error State -->
+        <div v-else-if="error" class="bg-slate-900 rounded-lg border border-slate-700 p-6">
+          <div class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center">
+            <div class="text-6xl mb-4">⚠️</div>
+            <p class="text-red-400 text-lg font-semibold">{{ error }}</p>
+            <button @click="fetchAchievements(currentPage)" class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors">
+              Try Again
+            </button>
+          </div>
+        </div>
+        
+        <!-- No Achievements State -->
+        <div v-else class="bg-slate-900 rounded-lg border border-slate-700 p-6">
+          <div class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center">
+            <div class="text-6xl mb-4 opacity-50">🏆</div>
+            <h3 class="text-2xl font-bold text-slate-400 mb-2">No Achievements Found</h3>
+            <p class="text-slate-500 mb-6">This soldier hasn't unlocked any achievements yet, or they're still being processed.</p>
+            <button @click="fetchAchievements(currentPage)" class="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-amber-500/25 font-medium">
+              🔄 Refresh Achievements
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -922,7 +911,7 @@ const getTierDotClass = (tier: string): string => {
       @click="closeGroupModal"
     >
       <div
-        class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-lg rounded-2xl border border-slate-700/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        class="bg-slate-800/90 backdrop-blur-sm rounded-lg border border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         @click.stop
       >
         <!-- Modal Header -->
@@ -1046,6 +1035,7 @@ const getTierDotClass = (tier: string): string => {
       </div>
     </div>
   </div>
+        
 </template>
 
 

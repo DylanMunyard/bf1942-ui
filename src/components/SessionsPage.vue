@@ -539,91 +539,80 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen px-3 sm:px-6">
-    <!-- Hero Section with Background -->
-    <div class="relative overflow-hidden">
-      <!-- Animated Background Pattern -->
-      <div class="absolute inset-0 opacity-10">
-        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20"></div>
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+  <!-- Full-width Hero Section -->
+  <div class="w-full bg-slate-800 border-b border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between">
+        <HeroBackButton :on-click="() => {
+          if (props.playerName) {
+            $router.push(`/players/${encodeURIComponent(props.playerName)}`);
+          } else if (props.serverName) {
+            $router.push(`/servers/${encodeURIComponent(props.serverName)}`);
+          } else {
+            $router.push('/servers/bf1942');
+          }
+        }" />
       </div>
-
-
-      <!-- Hero Section -->
-      <div class="relative z-10 py-6 sm:py-12">
-        <div class="max-w-7xl mx-auto">
-          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 opacity-50"></div>
-            
-            <HeroBackButton :on-click="() => {
-              if (props.playerName) {
-                $router.push(`/players/${encodeURIComponent(props.playerName)}`);
-              } else if (props.serverName) {
-                $router.push(`/servers/${encodeURIComponent(props.serverName)}`);
-              } else {
-                $router.push('/servers/bf1942');
-              }
-            }" />
-            <div class="relative z-10 p-4 sm:p-8 md:p-12">
-              <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
-                <!-- Player Avatar -->
-                <div class="flex-shrink-0">
-                  <div class="relative">
-                    <div class="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 p-1">
-                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                        <div class="w-16 h-16 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-2xl lg:text-3xl font-bold text-slate-900">
-                          🎮
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Gaming Status indicator -->
-                    <div class="absolute -bottom-2 -right-2">
-                      <div class="w-6 h-6 lg:w-8 lg:h-8 bg-emerald-500 rounded-full border-4 border-slate-900 animate-pulse"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Player Info -->
-                <div class="flex-grow">
-                  <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4">
-                    <template v-if="props.playerName">{{ props.playerName }}'s Combat History</template>
-                    <template v-else-if="props.serverName && props.mapName">{{ props.serverName }} - {{ props.mapName }} Sessions</template>
-                    <template v-else-if="props.serverName">{{ props.serverName }} Player Sessions</template>
-                    <template v-else-if="props.mapName">{{ props.mapName }} Sessions</template>
-                    <template v-else>Combat History</template>
-                  </h1>
-                  
-                </div>
-
-                <!-- Actions -->
-                <div class="flex flex-col gap-3">
-                  <button
-                    @click="fetchData"
-                    class="group bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-emerald-500/25 flex items-center gap-2"
-                  >
-                    <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-300">
-                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                      <path d="M21 3v5h-5" />
-                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                      <path d="M3 21v-5h5" />
-                    </svg>
-                    <div v-else class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span class="font-semibold">{{ loading ? 'Loading...' : 'Refresh Data' }}</span>
-                  </button>
-                </div>
-              </div>
+      
+      <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8 mt-6">
+        <!-- Session Icon -->
+        <div class="flex-shrink-0">
+          <div class="relative">
+            <div class="w-20 h-20 rounded-xl bg-slate-700 border border-slate-600 flex items-center justify-center">
+              <span class="text-2xl">🎮</span>
+            </div>
+            <!-- Status indicator -->
+            <div class="absolute -bottom-1 -right-1">
+              <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-slate-800"></div>
             </div>
           </div>
         </div>
+
+        <!-- Session Info -->
+        <div class="flex-grow min-w-0">
+          <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-3">
+            <template v-if="props.playerName">{{ props.playerName }}'s Combat History</template>
+            <template v-else-if="props.serverName && props.mapName">{{ props.serverName }} - {{ props.mapName }} Sessions</template>
+            <template v-else-if="props.serverName">{{ props.serverName }} Player Sessions</template>
+            <template v-else-if="props.mapName">{{ props.mapName }} Sessions</template>
+            <template v-else>Combat History</template>
+          </h1>
+          
+          <div class="text-slate-400 text-sm">
+            📊 Battlefield session history and performance data
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+          <button
+            @click="fetchData"
+            :disabled="loading"
+            class="group bg-gradient-to-r from-cyan-600 to-blue-500 hover:from-cyan-500 hover:to-blue-400 disabled:from-slate-600 disabled:to-slate-500 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-cyan-500/25 disabled:shadow-none flex items-center gap-2"
+          >
+            <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-300">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+              <path d="M3 21v-5h5" />
+            </svg>
+            <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <span class="font-medium text-sm">{{ loading ? 'Loading...' : 'Refresh' }}</span>
+          </button>
+        </div>
       </div>
     </div>
+  </div>
 
-    <!-- Main Content -->
-    <div
-      v-if="!loading || sessions.length > 0"
-      class="max-w-7xl mx-auto px-3 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
-    >
+  <!-- Main Content Area -->
+  <div class="min-h-screen bg-slate-900">
+
+    <div class="relative">
+      <div class="relative py-6 sm:py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          <!-- Sessions Content -->
+          <div v-if="!loading || sessions.length > 0" class="space-y-6">
       <!-- Filter Controls -->
       <div class="mb-6">
         <button
@@ -740,7 +729,7 @@ onUnmounted(() => {
               <!-- Map Group Header -->
               <div 
                 @click.stop="toggleMapCollapse(group.mapName)"
-                class="sticky top-4 z-20 bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-lg rounded-xl border border-slate-600/50 p-4 shadow-lg cursor-pointer hover:from-slate-800/95 hover:to-slate-900/95 transition-all duration-200"
+                class="sticky top-4 z-20 bg-slate-800/70 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4 shadow-lg cursor-pointer hover:bg-slate-800/90 transition-all duration-200"
               >
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
@@ -789,7 +778,7 @@ onUnmounted(() => {
                   </div>
                   
                   <!-- Round Leaderboard -->
-                  <div v-show="!isRoundCollapsed(group.mapName, roundIndex)" class="ml-6">
+                  <div v-show="!isRoundCollapsed(group.mapName, roundIndex)">
                     <div class="bg-slate-800/40 backdrop-blur-sm rounded-lg border border-slate-700/50 overflow-hidden">
                       <!-- Leaderboard Header -->
                       <div class="bg-slate-700/50 px-4 py-3 border-b border-slate-600/50">
@@ -1054,35 +1043,42 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-    </div>
+          </div>
 
-    <!-- Loading State -->
-    <div v-else-if="loading && sessions.length === 0" class="max-w-7xl mx-auto px-3 sm:px-6 flex flex-col items-center justify-center py-20 text-slate-400">
-      <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
-      <p class="text-lg">🔍 Scanning combat records...</p>
-      <p class="text-sm text-slate-500 mt-2">Loading battlefield history</p>
-    </div>
-    
-    <!-- Error State -->
-    <div v-else-if="error" class="max-w-7xl mx-auto px-3 sm:px-6">
-      <div class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center">
-        <div class="text-6xl mb-4">⚠️</div>
-        <p class="text-red-400 text-lg font-semibold">{{ error }}</p>
-        <button @click="fetchData" class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors">
-          Try Again
-        </button>
-      </div>
-    </div>
-    
-    <!-- No Data State -->
-    <div v-else class="max-w-7xl mx-auto px-3 sm:px-6">
-      <div class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center">
-        <div class="text-6xl mb-4 opacity-50">🎯</div>
-        <h3 class="text-2xl font-bold text-slate-400 mb-2">No Combat Records Found</h3>
-        <p class="text-slate-500 mb-6">This soldier hasn't entered any battles yet, or the records are still being processed.</p>
-        <button @click="fetchData" class="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25 font-medium">
-          🔄 Refresh Records
-        </button>
+          <!-- Loading State -->
+          <div
+            v-else-if="loading && sessions.length === 0"
+            class="flex flex-col items-center justify-center py-20 text-slate-400"
+          >
+            <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+            <p class="text-lg text-slate-300">Loading session history...</p>
+          </div>
+
+          <!-- Error State -->
+          <div
+            v-else-if="error"
+            class="bg-slate-800/70 backdrop-blur-sm border border-red-800/50 rounded-xl p-8 text-center"
+          >
+            <div class="text-6xl mb-4">⚠️</div>
+            <p class="text-red-400 text-lg font-medium">{{ error }}</p>
+            <button @click="fetchData" class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors">
+              Try Again
+            </button>
+          </div>
+
+          <!-- No Data State -->
+          <div
+            v-else
+            class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center"
+          >
+            <div class="text-6xl mb-4 opacity-50">🎯</div>
+            <h3 class="text-2xl font-bold text-slate-400 mb-2">No Combat Records Found</h3>
+            <p class="text-slate-500 mb-6">This soldier hasn't entered any battles yet, or the records are still being processed.</p>
+            <button @click="fetchData" class="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25 font-medium">
+              🔄 Refresh Records
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

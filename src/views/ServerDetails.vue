@@ -200,126 +200,112 @@ const handlePeriodChange = async (period: string) => {
 </script>
 
 <template>
-  <div class="relative min-h-screen px-2 sm:px-6">
-    <div class="relative z-10">
+  <!-- Full-width Hero Section -->
+  <div class="w-full bg-slate-800 border-b border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between">
+        <HeroBackButton :on-click="() => $router.push(getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string)))" />
+      </div>
+      
+      <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8 mt-6">
+        <!-- Server Icon/Avatar -->
+        <div class="flex-shrink-0">
+          <div class="relative">
+            <div class="w-20 h-20 rounded-xl bg-slate-700 border border-slate-600 flex items-center justify-center">
+              <span class="text-2xl">🖥️</span>
+            </div>
+            <!-- Status indicator -->
+            <div class="absolute -bottom-1 -right-1">
+              <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-slate-800"></div>
+            </div>
+          </div>
+        </div>
 
-      <div class="relative z-10 py-3 sm:py-12">
-        <div class="max-w-7xl mx-auto">
-          <!-- Server Profile Hero -->
-          <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-4 sm:mb-8">
-            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50"></div>
-            
-            <HeroBackButton :on-click="() => $router.push(getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string)))" />
-            <div class="relative z-10 p-3 sm:p-8 md:p-12">
-              <div class="flex flex-col lg:flex-row items-start lg:items-center gap-4 lg:gap-8">
-                <!-- Server Icon/Avatar -->
-                <div class="flex-shrink-0">
-                  <div class="relative">
-                    <div class="w-32 h-32 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 p-1">
-                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-3xl font-bold text-slate-900">
-                          🖥️
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Status indicator -->
-                    <div class="absolute -bottom-2 -right-2">
-                      <div class="w-8 h-8 bg-green-500 rounded-full border-4 border-slate-900 animate-pulse"></div>
-                    </div>
-                  </div>
-                </div>
+        <!-- Server Info -->
+        <div class="flex-grow min-w-0">
+          <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-3">
+            {{ serverName }}
+          </h1>
+          
+          <!-- Server Metadata -->
+          <div 
+            v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone)"
+            class="flex flex-wrap gap-3 mb-4"
+          >
+            <div v-if="serverDetails.region" class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600">
+              📍 {{ serverDetails.region }}
+            </div>
+            <div v-if="serverDetails.country || serverDetails.countryCode" class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600">
+              🌍 {{ getCountryName(serverDetails.countryCode, serverDetails.country) }}
+            </div>
+            <div v-if="serverDetails.timezone && getTimezoneDisplay(serverDetails.timezone)" class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600">
+              🕒 {{ getTimezoneDisplay(serverDetails.timezone) }}
+            </div>
+          </div>
 
-                <!-- Server Info -->
-                <div class="flex-grow">
-                  <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4">
-                    {{ serverName }}
-                  </h1>
-                  
-                  <!-- Server Metadata -->
-                  <div 
-                    v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone)"
-                    class="flex flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-6"
-                  >
-                    <div v-if="serverDetails.region" class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
-                      📍 {{ serverDetails.region }}
-                    </div>
-                    <div v-if="serverDetails.country || serverDetails.countryCode" class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
-                      🌍 {{ getCountryName(serverDetails.countryCode, serverDetails.country) }}
-                    </div>
-                    <div v-if="serverDetails.timezone && getTimezoneDisplay(serverDetails.timezone)" class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-300 border border-slate-600/50">
-                      🕒 {{ getTimezoneDisplay(serverDetails.timezone) }}
-                    </div>
-                  </div>
+          <!-- Period Info -->
+          <div v-if="serverDetails" class="text-slate-400 text-sm">
+            📊 Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
+          </div>
+        </div>
 
-                  <!-- Period Info -->
-                  <div v-if="serverDetails" class="text-slate-400 text-sm mb-4 sm:mb-6">
-                    📊 Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
-                  </div>
-                </div>
-
-                <!-- Live Server Status & Actions -->
-                <div class="flex flex-col gap-4 items-end">
-                  <!-- Current Players -->
-                  <button
-                    v-if="liveServerInfo && liveServerInfo.players.length > 0"
-                    @click="openPlayersModal"
-                    class="group bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-emerald-500/25"
-                    :class="{
-                      'px-4 py-3': true, // Mobile: smaller padding
-                      'md:px-6 md:py-4': true // Desktop: larger padding
-                    }"
-                  >
-                    <div class="flex flex-col items-center">
-                      <div class="font-bold" :class="{ 'text-lg': true, 'md:text-2xl': true }">{{ liveServerInfo.numPlayers }}</div>
-                      <div class="opacity-90" :class="{ 'text-xs': true, 'md:text-sm': true }">Players Online</div>
-                      <div v-if="liveServerInfo.mapName" class="opacity-75 mt-1" :class="{ 'text-xs': true, 'md:text-xs': true }">
-                        Playing {{ liveServerInfo.mapName }}
-                      </div>
-                    </div>
-                  </button>
-                  
-                  <div
-                    v-else-if="liveServerInfo && liveServerInfo.players.length === 0"
-                    class="bg-slate-700/50 backdrop-blur-sm text-slate-400 rounded-xl border border-slate-600/50"
-                    :class="{
-                      'px-4 py-3': true, // Mobile: smaller padding
-                      'md:px-6 md:py-4': true // Desktop: larger padding
-                    }"
-                  >
-                    <div class="flex flex-col items-center">
-                      <div class="font-bold" :class="{ 'text-lg': true, 'md:text-2xl': true }">0</div>
-                      <div class="" :class="{ 'text-xs': true, 'md:text-sm': true }">Players Online</div>
-                      <div v-if="liveServerInfo.mapName" class="opacity-75 mt-1" :class="{ 'text-xs': true, 'md:text-xs': true }">
-                        Playing {{ liveServerInfo.mapName }}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    v-else-if="isLiveServerLoading"
-                    class="bg-slate-700/50 backdrop-blur-sm text-slate-400 rounded-xl border border-slate-600/50 flex items-center gap-3"
-                    :class="{
-                      'px-4 py-3': true, // Mobile: smaller padding
-                      'md:px-6 md:py-4': true // Desktop: larger padding
-                    }"
-                  >
-                    <div class="w-4 h-4 md:w-5 md:h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                    <span class="text-xs md:text-sm">Loading...</span>
-                  </div>
-
-                  <!-- Join Server Button - Hidden on mobile -->
-                  <button
-                    v-if="liveServerInfo?.joinLink"
-                    @click="joinServer"
-                    class="hidden md:flex group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 items-center gap-2"
-                  >
-                    <span class="text-xl">🎮</span>
-                    <span class="font-semibold">Join Server</span>
-                  </button>
-                </div>
+        <!-- Live Server Status & Actions -->
+        <div class="flex flex-col sm:flex-row lg:flex-col gap-3 lg:items-end">
+          <!-- Current Players -->
+          <button
+            v-if="liveServerInfo && liveServerInfo.players.length > 0"
+            @click="openPlayersModal"
+            class="group bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all duration-200 px-4 py-3 min-w-[140px]"
+          >
+            <div class="flex flex-col items-center">
+              <div class="font-bold text-xl">{{ liveServerInfo.numPlayers }}</div>
+              <div class="text-xs opacity-90">Players Online</div>
+              <div v-if="liveServerInfo.mapName" class="text-xs opacity-75 mt-1 truncate max-w-[120px]">
+                {{ liveServerInfo.mapName }}
+              </div>
+            </div>
+          </button>
+          
+          <div
+            v-else-if="liveServerInfo && liveServerInfo.players.length === 0"
+            class="bg-slate-700 text-slate-400 rounded-xl border border-slate-600 px-4 py-3 min-w-[140px]"
+          >
+            <div class="flex flex-col items-center">
+              <div class="font-bold text-xl">0</div>
+              <div class="text-xs">Players Online</div>
+              <div v-if="liveServerInfo.mapName" class="text-xs opacity-75 mt-1 truncate max-w-[120px]">
+                {{ liveServerInfo.mapName }}
               </div>
             </div>
           </div>
+
+          <div
+            v-else-if="isLiveServerLoading"
+            class="bg-slate-700 text-slate-400 rounded-xl border border-slate-600 flex items-center justify-center gap-3 px-4 py-3 min-w-[140px]"
+          >
+            <div class="w-4 h-4 border-2 border-slate-500 border-t-slate-300 rounded-full animate-spin"></div>
+            <span class="text-sm">Loading...</span>
+          </div>
+
+          <!-- Join Server Button -->
+          <button
+            v-if="liveServerInfo?.joinLink"
+            @click="joinServer"
+            class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+          >
+            <span class="text-base">🎮</span>
+            <span>Join Server</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="min-h-screen bg-slate-900">
+    <div class="relative">
+      <div class="relative py-6 sm:py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <!-- Loading State -->
           <div
@@ -327,35 +313,35 @@ const handlePeriodChange = async (period: string) => {
             class="flex flex-col items-center justify-center py-20 text-slate-400"
           >
             <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
-            <p class="text-lg">Loading server profile...</p>
+            <p class="text-lg text-slate-300">Loading server profile...</p>
           </div>
 
           <!-- Error State -->
           <div
             v-else-if="error"
-            class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center"
+            class="bg-slate-800/70 backdrop-blur-sm border border-red-800/50 rounded-xl p-8 text-center"
           >
             <div class="text-6xl mb-4">⚠️</div>
-            <p class="text-red-400 text-lg font-semibold">{{ error }}</p>
+            <p class="text-red-400 text-lg font-medium">{{ error }}</p>
           </div>
 
           <!-- Server Content -->
-          <div v-else-if="serverDetails" class="space-y-3 sm:space-y-8">
+          <div v-else-if="serverDetails" class="space-y-6">
 
             <!-- Recent Rounds Section -->
-            <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-              <div class="p-3 sm:p-6 border-b border-slate-700/50 flex items-center justify-between">
-                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
+            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+              <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
                   🎯 Recent Rounds
                 </h3>
                 <router-link 
                   :to="`/servers/${encodeURIComponent(serverName)}/sessions`" 
-                  class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70 rounded-lg border border-slate-600/50 hover:border-cyan-500/50 backdrop-blur-sm"
+                  class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70 rounded-lg border border-slate-600/50"
                 >
                   View All Sessions
                 </router-link>
               </div>
-              <div class="p-3 sm:p-6">
+              <div class="p-6">
                 <ServerRecentRounds
                     :server-details="serverDetails"
                     :server-name="serverName"
@@ -364,32 +350,34 @@ const handlePeriodChange = async (period: string) => {
             </div>
 
             <!-- Player Activity Section -->
-            <ServerPlayerActivityChart
-              :server-insights="serverInsights"
-              :is-loading="isInsightsLoading"
-              @period-change="handlePeriodChange"
-            />
+            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+              <ServerPlayerActivityChart
+                :server-insights="serverInsights"
+                :is-loading="isInsightsLoading"
+                @period-change="handlePeriodChange"
+              />
+            </div>
             <div
               v-if="insightsError"
-              class="mt-4 bg-red-900/20 border border-red-700/50 rounded-lg p-4"
+              class="bg-red-900/20 border border-red-700/50 rounded-xl p-4"
             >
               <p class="text-red-400 text-sm">{{ insightsError }}</p>
             </div>
 
             <!-- Leaderboards Section -->
-            <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-              <div class="p-2 sm:p-6 border-b border-slate-700/50 flex items-center justify-between">
-                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
+            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+              <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
                   🏆 Server Leaderboards
                 </h3>
                 <router-link 
                   :to="`/servers/${encodeURIComponent(serverName)}/rankings`" 
-                  class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70 rounded-lg border border-slate-600/50 hover:border-cyan-500/50 backdrop-blur-sm"
+                  class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70 rounded-lg border border-slate-600/50"
                 >
                   View Rankings
                 </router-link>
               </div>
-              <div class="p-2 sm:p-6">
+              <div class="p-6">
                 <ServerLeaderboards
                   :server-details="serverDetails"
                   :server-name="serverName"
@@ -401,7 +389,7 @@ const handlePeriodChange = async (period: string) => {
           <!-- No Data State -->
           <div
             v-else
-            class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center"
+            class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center"
           >
             <div class="text-6xl mb-4 opacity-50">📊</div>
             <p class="text-slate-400 text-lg">No server data available</p>
@@ -409,14 +397,14 @@ const handlePeriodChange = async (period: string) => {
         </div>
       </div>
     </div>
-    
-    <!-- Players Panel -->
-    <PlayersPanel 
-      :show="showPlayersModal" 
-      :server="liveServerInfo" 
-      @close="closePlayersModal" 
-    />
   </div>
+    
+  <!-- Players Panel -->
+  <PlayersPanel 
+    :show="showPlayersModal" 
+    :server="liveServerInfo" 
+    @close="closePlayersModal" 
+  />
 </template>
 
 <style scoped>

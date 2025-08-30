@@ -6,13 +6,13 @@
       @click="closeModal"
     >
       <div
-        class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        class="relative bg-slate-800/90 backdrop-blur-sm rounded-2xl border border-slate-700/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         @click.stop
       >
         <!-- Header with achievement title -->
         <div class="flex justify-between items-start p-6 border-b border-slate-700/50">
           <div class="flex-1">
-            <h3 class="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
+            <h3 class="text-2xl font-bold text-yellow-400 mb-2">
               {{ achievement.achievementName }}
             </h3>
             <div class="text-slate-400 text-sm">
@@ -43,7 +43,7 @@
               <!-- Badge Description Overlay -->
               <div
                 v-if="badgeDescription"
-                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent backdrop-blur-md rounded-b-2xl p-4"
+                class="absolute bottom-0 left-0 right-0 bg-slate-900/70 backdrop-blur-sm rounded-b-2xl p-4"
               >
                 <p class="text-white text-sm leading-relaxed font-medium text-center drop-shadow-lg">{{ badgeDescription }}</p>
               </div>
