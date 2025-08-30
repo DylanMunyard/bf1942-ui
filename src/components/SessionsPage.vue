@@ -28,7 +28,7 @@ const totalItems = ref(0);
 const totalPages = ref(0);
 
 // Sorting state
-const sortBy = ref<string>('startTime');
+const sortBy = ref<string>('endTime');
 const sortOrder = ref<'asc' | 'desc'>('desc');
 
 // Filter variables
@@ -268,83 +268,90 @@ const groupedSessions = computed(() => {
     return null; // Return null for non-server mode, use regular sessions list
   }
 
-  const mapGroups = new Map<string, SessionListItem[]>();
+  // Group consecutive sessions by map name while preserving chronological order
+  const consecutiveGroups: { mapName: string; sessions: SessionListItem[] }[] = [];
+  let currentGroup: { mapName: string; sessions: SessionListItem[] } | null = null;
   
-  // First, group by map name
   sessions.value.forEach(session => {
     const mapName = session.mapName;
-    if (!mapGroups.has(mapName)) {
-      mapGroups.set(mapName, []);
+    
+    if (!currentGroup || currentGroup.mapName !== mapName) {
+      // Start a new group for this map
+      currentGroup = { mapName, sessions: [session] };
+      consecutiveGroups.push(currentGroup);
+    } else {
+      // Add to current group
+      currentGroup.sessions.push(session);
     }
-    mapGroups.get(mapName)!.push(session);
   });
 
-  // Then, within each map, detect rounds based on 30+ minute gaps
-  return Array.from(mapGroups.entries())
-    .map(([mapName, mapSessions]) => {
-      // Sort sessions by start time (newest first, matching the overall order)
-      const sortedSessions = [...mapSessions].sort((a, b) => 
-        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-      );
+  // Then, within each consecutive map group, detect rounds based on 30+ minute gaps
+  return consecutiveGroups.map(group => {
+    const mapName = group.mapName;
+    const mapSessions = group.sessions;
+    
+    // Sort sessions by start time (newest first, matching the overall order)
+    const sortedSessions = [...mapSessions].sort((a, b) => 
+      new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    );
 
-      const rounds: { sessions: SessionListItem[]; startTime: Date; endTime: Date }[] = [];
-      let currentRound: SessionListItem[] = [];
+    const rounds: { sessions: SessionListItem[]; startTime: Date; endTime: Date }[] = [];
+    let currentRound: SessionListItem[] = [];
 
-      sortedSessions.forEach((session, index) => {
-        const sessionTime = new Date(session.startTime.endsWith('Z') ? session.startTime : session.startTime + 'Z');
+    sortedSessions.forEach((session, index) => {
+      const sessionTime = new Date(session.startTime.endsWith('Z') ? session.startTime : session.startTime + 'Z');
+      
+      if (currentRound.length === 0) {
+        // First session of the round
+        currentRound = [session];
+      } else {
+        // Check time gap from the most recent session in current round
+        const lastSessionTime = new Date(currentRound[currentRound.length - 1].startTime.endsWith('Z') 
+          ? currentRound[currentRound.length - 1].startTime 
+          : currentRound[currentRound.length - 1].startTime + 'Z');
         
-        if (currentRound.length === 0) {
-          // First session of the round
+        const timeDiffMinutes = Math.abs(lastSessionTime.getTime() - sessionTime.getTime()) / (1000 * 60);
+        
+        if (timeDiffMinutes > 30) {
+          // Gap > 30 minutes, start a new round
+          const roundStart = new Date(Math.max(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
+          const roundEnd = new Date(Math.min(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
+          
+          rounds.push({
+            sessions: [...currentRound],
+            startTime: roundStart,
+            endTime: roundEnd
+          });
           currentRound = [session];
         } else {
-          // Check time gap from the most recent session in current round
-          const lastSessionTime = new Date(currentRound[currentRound.length - 1].startTime.endsWith('Z') 
-            ? currentRound[currentRound.length - 1].startTime 
-            : currentRound[currentRound.length - 1].startTime + 'Z');
-          
-          const timeDiffMinutes = Math.abs(lastSessionTime.getTime() - sessionTime.getTime()) / (1000 * 60);
-          
-          if (timeDiffMinutes > 30) {
-            // Gap > 30 minutes, start a new round
-            const roundStart = new Date(Math.max(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
-            const roundEnd = new Date(Math.min(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
-            
-            rounds.push({
-              sessions: [...currentRound],
-              startTime: roundStart,
-              endTime: roundEnd
-            });
-            currentRound = [session];
-          } else {
-            // Same round, add session
-            currentRound.push(session);
-          }
+          // Same round, add session
+          currentRound.push(session);
         }
-      });
-
-      // Don't forget the last round
-      if (currentRound.length > 0) {
-        const roundStart = new Date(Math.max(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
-        const roundEnd = new Date(Math.min(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
-        
-        rounds.push({
-          sessions: [...currentRound],
-          startTime: roundStart,
-          endTime: roundEnd
-        });
       }
+    });
 
-      // Sort rounds by start time (newest first)
-      rounds.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+    // Don't forget the last round
+    if (currentRound.length > 0) {
+      const roundStart = new Date(Math.max(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
+      const roundEnd = new Date(Math.min(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
+      
+      rounds.push({
+        sessions: [...currentRound],
+        startTime: roundStart,
+        endTime: roundEnd
+      });
+    }
 
-      return {
-        mapName,
-        rounds,
-        totalSessions: mapSessions.length,
-        roundCount: rounds.length
-      };
-    })
-    .sort((a, b) => a.mapName.localeCompare(b.mapName));
+    // Sort rounds by start time (newest first)
+    rounds.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+
+    return {
+      mapName,
+      rounds,
+      totalSessions: mapSessions.length,
+      roundCount: rounds.length
+    };
+  });
 });
 
 // Computed property for pagination range
@@ -443,7 +450,7 @@ const updateQueryParams = () => {
   if (gameTypeFilter.value) query.gameType = gameTypeFilter.value;
   
   // Add sorting to query
-  if (sortBy.value !== 'startTime') query.sortBy = sortBy.value;
+  if (sortBy.value !== 'endTime') query.sortBy = sortBy.value;
   if (sortOrder.value !== 'desc') query.sortOrder = sortOrder.value;
   
   // Add pagination to query
