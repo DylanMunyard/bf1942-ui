@@ -88,17 +88,15 @@ export async function fetchSessionDetails(playerName: string, sessionId: number)
 }
 
 /**
- * Fetches all sessions for a player with pagination support, filtering, and sorting
- * @param playerName The name of the player
+ * Fetches sessions with pagination support, filtering, and sorting
  * @param page The page number (1-based)
  * @param pageSize The number of items per page
- * @param filters Object containing filter parameters (e.g. { mapName: 'Berlin', serverName: 'Server 1' })
+ * @param filters Object containing filter parameters (e.g. { playerName: 'john', mapName: 'Berlin', serverName: 'Server 1' })
  * @param sortBy The field to sort by (default: 'startTime')
  * @param sortOrder The sort order ('asc' or 'desc', default: 'desc')
  * @returns Paged result of session list items
  */
-export async function fetchPlayerSessions(
-  playerName: string,
+export async function fetchSessions(
   page: number = 1,
   pageSize: number = 10,
   filters: Record<string, string> = {},
@@ -117,7 +115,7 @@ export async function fetchPlayerSessions(
 
     // Make the request to the API endpoint
     const response = await axios.get<PagedResult<SessionListItem>>(
-      `/stats/players/${encodeURIComponent(playerName)}/sessions`,
+      '/stats/sessions',
       {
         params
       }
@@ -126,10 +124,34 @@ export async function fetchPlayerSessions(
     // Return the response data
     return response.data;
   } catch (err) {
-    console.error('Error fetching player sessions:', err);
-    throw new Error('Failed to get player sessions');
+    console.error('Error fetching sessions:', err);
+    throw new Error('Failed to get sessions');
   }
 }
+
+/**
+ * Fetches all sessions for a player with pagination support, filtering, and sorting
+ * @param playerName The name of the player
+ * @param page The page number (1-based)
+ * @param pageSize The number of items per page
+ * @param filters Object containing filter parameters (e.g. { mapName: 'Berlin', serverName: 'Server 1' })
+ * @param sortBy The field to sort by (default: 'startTime')
+ * @param sortOrder The sort order ('asc' or 'desc', default: 'desc')
+ * @returns Paged result of session list items
+ */
+export async function fetchPlayerSessions(
+  playerName: string,
+  page: number = 1,
+  pageSize: number = 10,
+  filters: Record<string, string> = {},
+  sortBy: string = 'startTime',
+  sortOrder: 'asc' | 'desc' = 'desc'
+): Promise<PagedResult<SessionListItem>> {
+  // Add playerName to filters and call the generic fetchSessions function
+  const filtersWithPlayer = { ...filters, playerName };
+  return fetchSessions(page, pageSize, filtersWithPlayer, sortBy, sortOrder);
+}
+
 
 /**
  * Fetches team killer metrics from the analytics API

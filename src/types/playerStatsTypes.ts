@@ -23,6 +23,7 @@ export interface PlayerContextInfo {
 
 export interface SessionListItem {
   sessionId: number;
+  playerName: string;
   serverName: string;
   serverGuid: string;
   mapName: string;
