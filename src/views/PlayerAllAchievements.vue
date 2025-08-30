@@ -543,7 +543,7 @@ const getTierDotClass = (tier: string): string => {
 
             <!-- Achievement Info -->
             <div class="flex-grow">
-              <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-yellow-400 mb-4">
+              <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 mb-4">
                 {{ playerName }}'s Hall of Fame
               </h1>
               <p class="text-slate-300 text-lg mb-6">
@@ -583,8 +583,9 @@ const getTierDotClass = (tier: string): string => {
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="relative py-6 sm:py-8">
+    <!-- Main Content Area -->
+    <div class="min-h-screen bg-slate-900">
+      <div class="relative py-6 sm:py-8">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div v-if="(!isLoading && achievements.length > 0) || (isLoading && achievements.length > 0)" class="bg-slate-900 rounded-lg border border-slate-700 p-6">
           <div class="space-y-4 sm:space-y-8">
@@ -702,7 +703,7 @@ const getTierDotClass = (tier: string): string => {
                       <div 
                         v-for="(group, index) in groupedAchievements[dateKey]" 
                         :key="index"
-                        class="group relative bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-amber-500/30 overflow-hidden transition-all duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-xl"
+                        class="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-amber-500/30 overflow-hidden transition-all duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-xl"
                         :class="getTierBorderClass(group.achievement.tier)"
                         :title="getAchievementTooltip(group.achievement)"
                         @click="group.count > 1 ? openGroupModal(group) : openAchievementModal(group.achievement)"
@@ -876,7 +877,7 @@ const getTierDotClass = (tier: string): string => {
         
         <!-- No Achievements State -->
         <div v-else class="bg-slate-900 rounded-lg border border-slate-700 p-6">
-          <div class="bg-slate-800/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center">
+          <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-12 text-center">
             <div class="text-6xl mb-4 opacity-50">🏆</div>
             <h3 class="text-2xl font-bold text-slate-400 mb-2">No Achievements Found</h3>
             <p class="text-slate-500 mb-6">This soldier hasn't unlocked any achievements yet, or they're still being processed.</p>
@@ -1001,6 +1002,7 @@ const getTierDotClass = (tier: string): string => {
             </template>
           </div>
         </div>
+      </div>
       </div>
     </div>
 
