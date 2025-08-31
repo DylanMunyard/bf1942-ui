@@ -560,7 +560,7 @@ const selectedServer = ref<ServerSummary | null>(null)
 // Player history state
 const showPlayerHistory = ref(false)
 const playerHistoryData = ref<PlayerHistoryDataPoint[]>([])
-const historyPeriod = ref<'1d' | '3d' | '7d'>('7d')
+const historyPeriod = ref<'1d' | '3d' | '7d'>('1d')
 const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
 
