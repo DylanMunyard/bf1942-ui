@@ -819,8 +819,8 @@ watch(
       </div>
       
       <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8">
-        <!-- Player Avatar Section -->
-        <div class="flex-shrink-0">
+        <!-- Player Avatar Section (hidden on mobile) -->
+        <div class="hidden lg:block flex-shrink-0">
           <div class="relative">
             <!-- Avatar -->
             <div class="w-20 h-20 rounded-full bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 p-1 animate-spin-slow">
