@@ -136,8 +136,11 @@ const getRoundReportLink = (player: PlayerWithRank): string | null => {
     return null;
   }
   
+  // Ensure timestamp is treated as UTC by adding 'Z' suffix if missing
+  const utcTimestamp = player.timestamp.endsWith('Z') ? player.timestamp : player.timestamp + 'Z';
+  
   // Subtract a minute from the timestamp due to sync peculiarities
-  const originalTime = new Date(player.timestamp);
+  const originalTime = new Date(utcTimestamp);
   const adjustedTime = new Date(originalTime.getTime() - 60000); // Subtract 60000ms (1 minute)
   const startTime = adjustedTime.toISOString();
   
