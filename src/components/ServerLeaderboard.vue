@@ -7,6 +7,7 @@
           <th class="player-col">Player</th>
           <th class="score-col">{{ scoreLabel }}</th>
           <th class="kd-col">K/D</th>
+          <th v-if="showTotalRounds" class="rounds-col">Rounds</th>
           <th v-if="showRoundLinks" class="round-col">Round</th>
         </tr>
       </thead>
@@ -58,6 +59,9 @@
               <span class="deaths">{{ player.deaths }}</span>
             </div>
           </td>
+          <td v-if="showTotalRounds" class="rounds-cell">
+            <span class="rounds-value">{{ player.totalRounds || 0 }}</span>
+          </td>
           <td v-if="showRoundLinks" class="round-cell">
             <router-link
               v-if="getRoundReportLink(player)"
@@ -87,6 +91,7 @@ interface Player {
   deaths: number;
   mapName?: string;
   timestamp?: string;
+  totalRounds?: number;
 }
 
 interface PlayerWithRank extends Player {
@@ -101,13 +106,15 @@ interface Props {
   timePeriod?: 'week' | 'month';
   serverGuid?: string;
   showRoundLinks?: boolean;
+  showTotalRounds?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   source: 'server-leaderboard',
   scoreLabel: 'Score',
   timePeriod: 'week',
-  showRoundLinks: false
+  showRoundLinks: false,
+  showTotalRounds: false
 });
 
 // Sort players by score and assign ranks
@@ -195,6 +202,11 @@ const getRoundReportLink = (player: PlayerWithRank): string | null => {
 
 .compact-leaderboard-table th.kd-col {
   width: 3.5rem;
+  text-align: center;
+}
+
+.compact-leaderboard-table th.rounds-col {
+  width: 3rem;
   text-align: center;
 }
 
@@ -305,6 +317,19 @@ const getRoundReportLink = (player: PlayerWithRank): string | null => {
   width: 3.5rem;
 }
 
+/* Rounds Cell */
+.rounds-cell {
+  text-align: center;
+  width: 3rem;
+}
+
+.rounds-value {
+  font-weight: 600;
+  color: #a78bfa;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.75rem;
+}
+
 .kd-stats {
   display: flex;
   align-items: center;
@@ -399,6 +424,10 @@ const getRoundReportLink = (player: PlayerWithRank): string | null => {
     width: 3rem;
   }
   
+  .compact-leaderboard-table th.rounds-col {
+    width: 2.5rem;
+  }
+  
   .compact-leaderboard-table th.round-col {
     width: 2rem;
   }
@@ -421,6 +450,10 @@ const getRoundReportLink = (player: PlayerWithRank): string | null => {
   
   .kd-stats {
     font-size: 0.625rem;
+  }
+  
+  .rounds-value {
+    font-size: 0.6875rem;
   }
 }
 
@@ -446,6 +479,10 @@ const getRoundReportLink = (player: PlayerWithRank): string | null => {
     width: 2.5rem;
   }
   
+  .compact-leaderboard-table th.rounds-col {
+    width: 2rem;
+  }
+  
   .compact-leaderboard-table th.round-col {
     width: 1.75rem;
   }
@@ -468,6 +505,10 @@ const getRoundReportLink = (player: PlayerWithRank): string | null => {
   
   .kd-stats {
     font-size: 0.5625rem;
+  }
+  
+  .rounds-value {
+    font-size: 0.625rem;
   }
 }
 </style> 

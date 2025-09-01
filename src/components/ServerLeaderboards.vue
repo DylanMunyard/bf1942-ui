@@ -185,7 +185,7 @@ const currentTopKillRates = computed(() => {
           score-label="Score"
           :time-period="selectedTimePeriod"
           :server-guid="serverDetails?.serverGuid"
-          :show-round-links="true"
+          :show-round-links="false"
         />
       </div>
     </div>
@@ -244,13 +244,15 @@ const currentTopKillRates = computed(() => {
             kills: player.kills,
             deaths: player.deaths,
             mapName: player.mapName,
-            timestamp: player.timestamp
+            timestamp: player.timestamp,
+            totalRounds: player.totalRounds
           }))"
           source="server-leaderboards"
           score-label="K/D Ratio"
           :time-period="selectedTimePeriod"
           :server-guid="serverDetails?.serverGuid"
-          :show-round-links="true"
+          :show-round-links="false"
+          :show-total-rounds="true"
         />
       </div>
     </div>
@@ -309,13 +311,15 @@ const currentTopKillRates = computed(() => {
             kills: player.kills,
             deaths: player.deaths,
             mapName: player.mapName,
-            timestamp: player.timestamp
+            timestamp: player.timestamp,
+            totalRounds: player.totalRounds
           }))"
           source="server-leaderboards"
           score-label="Kills/Min"
           :time-period="selectedTimePeriod"
           :server-guid="serverDetails?.serverGuid"
-          :show-round-links="true"
+          :show-round-links="false"
+          :show-total-rounds="true"
         />
       </div>
     </div>
