@@ -202,7 +202,7 @@ const currentTopKillRates = computed(() => {
           </div>
           <div>
             <h3>Elite K/D Masters</h3>
-            <p class="section-subtitle">Best K/D ratio in a round</p>
+            <p class="section-subtitle">Highest sustained K/D ratio</p>
           </div>
         </div>
         <div class="section-controls">
@@ -267,7 +267,7 @@ const currentTopKillRates = computed(() => {
           </div>
           <div>
             <h3>Killing Machine</h3>
-            <p class="section-subtitle">Fastest kill rate in a round</p>
+            <p class="section-subtitle">Fastest sustained kill rate</p>
           </div>
         </div>
         <div class="section-controls">
