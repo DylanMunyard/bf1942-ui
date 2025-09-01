@@ -103,7 +103,7 @@ interface Props {
   players: Player[];
   source?: string;
   scoreLabel?: string;
-  timePeriod?: 'week' | 'month';
+  timePeriod?: 'alltime' |'week' | 'month';
   serverGuid?: string;
   showRoundLinks?: boolean;
   showTotalRounds?: boolean;

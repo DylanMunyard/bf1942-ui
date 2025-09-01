@@ -25,6 +25,9 @@ export interface TopScore {
   mapName: string;
   playerName: string;
   score: number;
+  killRate?: number;
+  kdRatio?: number;
+  totalRounds?: number;
   sessionId: number;
   timestamp: string; // ISO date string
 }
