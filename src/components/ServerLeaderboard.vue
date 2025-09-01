@@ -7,6 +7,7 @@
           <th class="player-col">Player</th>
           <th class="score-col">{{ scoreLabel }}</th>
           <th class="kd-col">K/D</th>
+          <th v-if="showRoundLinks" class="round-col">Round</th>
         </tr>
       </thead>
       <tbody>
@@ -57,6 +58,17 @@
               <span class="deaths">{{ player.deaths }}</span>
             </div>
           </td>
+          <td v-if="showRoundLinks" class="round-cell">
+            <router-link
+              v-if="getRoundReportLink(player)"
+              :to="getRoundReportLink(player)!"
+              class="round-link"
+              :title="`View round report for ${player.mapName}`"
+            >
+              <span class="round-icon">📊</span>
+            </router-link>
+            <span v-else class="no-round">-</span>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -73,6 +85,8 @@ interface Player {
   score: number;
   kills: number;
   deaths: number;
+  mapName?: string;
+  timestamp?: string;
 }
 
 interface PlayerWithRank extends Player {
@@ -85,12 +99,15 @@ interface Props {
   source?: string;
   scoreLabel?: string;
   timePeriod?: 'week' | 'month';
+  serverGuid?: string;
+  showRoundLinks?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   source: 'server-leaderboard',
   scoreLabel: 'Score',
-  timePeriod: 'week'
+  timePeriod: 'week',
+  showRoundLinks: false
 });
 
 // Sort players by score and assign ranks
@@ -111,6 +128,20 @@ const getRankClass = (rank: number): string => {
   if (rank === 2) return 'rank-second';
   if (rank === 3) return 'rank-third';
   return '';
+};
+
+// Generate round report link
+const getRoundReportLink = (player: PlayerWithRank): string | null => {
+  if (!props.showRoundLinks || !props.serverGuid || !player.mapName || !player.timestamp) {
+    return null;
+  }
+  
+  // Subtract a minute from the timestamp due to sync peculiarities
+  const originalTime = new Date(player.timestamp);
+  const adjustedTime = new Date(originalTime.getTime() - 60000); // Subtract 60000ms (1 minute)
+  const startTime = adjustedTime.toISOString();
+  
+  return `/servers/round-report?serverGuid=${encodeURIComponent(props.serverGuid)}&mapName=${encodeURIComponent(player.mapName)}&startTime=${encodeURIComponent(startTime)}`;
 };
 </script>
 
@@ -161,6 +192,11 @@ const getRankClass = (rank: number): string => {
 
 .compact-leaderboard-table th.kd-col {
   width: 3.5rem;
+  text-align: center;
+}
+
+.compact-leaderboard-table th.round-col {
+  width: 2.5rem;
   text-align: center;
 }
 
@@ -288,6 +324,33 @@ const getRankClass = (rank: number): string => {
   color: #ef4444;
 }
 
+/* Round Cell */
+.round-cell {
+  text-align: center;
+  width: 2.5rem;
+}
+
+.round-link {
+  text-decoration: none;
+  color: rgba(148, 163, 184, 0.8);
+  transition: color 0.3s ease, transform 0.2s ease;
+  display: inline-block;
+}
+
+.round-link:hover {
+  color: #06b6d4;
+  transform: scale(1.1);
+}
+
+.round-icon {
+  font-size: 0.875rem;
+}
+
+.no-round {
+  color: rgba(148, 163, 184, 0.4);
+  font-size: 0.75rem;
+}
+
 /* Custom scrollbar for table container */
 .compact-leaderboard-container::-webkit-scrollbar {
   width: 6px;
@@ -333,6 +396,10 @@ const getRankClass = (rank: number): string => {
     width: 3rem;
   }
   
+  .compact-leaderboard-table th.round-col {
+    width: 2rem;
+  }
+  
   .rank-medal {
     font-size: 0.75rem;
   }
@@ -374,6 +441,10 @@ const getRankClass = (rank: number): string => {
   
   .compact-leaderboard-table th.kd-col {
     width: 2.5rem;
+  }
+  
+  .compact-leaderboard-table th.round-col {
+    width: 1.75rem;
   }
   
   .rank-medal {

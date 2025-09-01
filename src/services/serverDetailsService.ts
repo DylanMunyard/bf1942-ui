@@ -131,6 +131,12 @@ export interface ServerDetails {
   topScoresWeek: TopScore[]; // Last 7 days
   topScoresMonth: TopScore[]; // Last 30 days
   topScoresAllTime: TopScore[]; // All time
+  topKDRatiosWeek: TopScore[]; // Top KD ratios last 7 days
+  topKDRatiosMonth: TopScore[]; // Top KD ratios last 30 days
+  topKDRatiosAllTime: TopScore[]; // Top KD ratios all time
+  topKillRatesWeek: TopScore[]; // Top kill rates last 7 days
+  topKillRatesMonth: TopScore[]; // Top kill rates last 30 days
+  topKillRatesAllTime: TopScore[]; // Top kill rates all time
   recentRounds: RecentRoundInfo[];
   region?: string;
   country?: string;

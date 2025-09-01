@@ -41,6 +41,34 @@ const currentTopScores = computed(() => {
       return props.serverDetails.topScoresWeek;
   }
 });
+
+const currentTopKDRatios = computed(() => {
+  if (!props.serverDetails) return [];
+  switch (selectedTimePeriod.value) {
+    case 'week':
+      return props.serverDetails.topKDRatiosWeek;
+    case 'month':
+      return props.serverDetails.topKDRatiosMonth;
+    case 'alltime':
+      return props.serverDetails.topKDRatiosAllTime;
+    default:
+      return props.serverDetails.topKDRatiosWeek;
+  }
+});
+
+const currentTopKillRates = computed(() => {
+  if (!props.serverDetails) return [];
+  switch (selectedTimePeriod.value) {
+    case 'week':
+      return props.serverDetails.topKillRatesWeek;
+    case 'month':
+      return props.serverDetails.topKillRatesMonth;
+    case 'alltime':
+      return props.serverDetails.topKillRatesAllTime;
+    default:
+      return props.serverDetails.topKillRatesWeek;
+  }
+});
 </script>
 
 <template>
@@ -149,11 +177,145 @@ const currentTopScores = computed(() => {
             playerName: score.playerName,
             score: score.score,
             kills: score.kills,
-            deaths: score.deaths
+            deaths: score.deaths,
+            mapName: score.mapName,
+            timestamp: score.timestamp
           }))"
           source="server-leaderboards"
           score-label="Score"
           :time-period="selectedTimePeriod"
+          :server-guid="serverDetails?.serverGuid"
+          :show-round-links="true"
+        />
+      </div>
+    </div>
+
+    <!-- Top K/D Ratios -->
+    <div
+      v-if="serverDetails"
+      class="enhanced-leaderboard-section"
+    >
+      <div class="enhanced-section-header">
+        <div class="section-title">
+          <div class="section-icon">
+            ⚔️
+          </div>
+          <div>
+            <h3>Elite K/D Masters</h3>
+            <p class="section-subtitle">Best K/D ratio in a round</p>
+          </div>
+        </div>
+        <div class="section-controls">
+          <div class="section-time-controls">
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'week' }"
+              @click="toggleTimePeriod('week')"
+            >
+              7 Days
+            </button>
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'month' }"
+              @click="toggleTimePeriod('month')"
+            >
+              30 Days
+            </button>
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'alltime' }"
+              @click="toggleTimePeriod('alltime')"
+            >
+              All Time
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Top K/D Ratios -->
+      <div
+        v-if="currentTopKDRatios.length > 0"
+        class="leaderboard-table-container"
+      >
+        <ServerLeaderboard 
+          :players="currentTopKDRatios.map(player => ({
+            playerName: player.playerName,
+            score: player.kdRatio,
+            kills: player.kills,
+            deaths: player.deaths,
+            mapName: player.mapName,
+            timestamp: player.timestamp
+          }))"
+          source="server-leaderboards"
+          score-label="K/D Ratio"
+          :time-period="selectedTimePeriod"
+          :server-guid="serverDetails?.serverGuid"
+          :show-round-links="true"
+        />
+      </div>
+    </div>
+
+    <!-- Top Kill Rates -->
+    <div
+      v-if="serverDetails"
+      class="enhanced-leaderboard-section"
+    >
+      <div class="enhanced-section-header">
+        <div class="section-title">
+          <div class="section-icon">
+            🔥
+          </div>
+          <div>
+            <h3>Killing Machine</h3>
+            <p class="section-subtitle">Fastest kill rate in a round</p>
+          </div>
+        </div>
+        <div class="section-controls">
+          <div class="section-time-controls">
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'week' }"
+              @click="toggleTimePeriod('week')"
+            >
+              7 Days
+            </button>
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'month' }"
+              @click="toggleTimePeriod('month')"
+            >
+              30 Days
+            </button>
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'alltime' }"
+              @click="toggleTimePeriod('alltime')"
+            >
+              All Time
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Top Kill Rates -->
+      <div
+        v-if="currentTopKillRates.length > 0"
+        class="leaderboard-table-container"
+      >
+        <ServerLeaderboard 
+          :players="currentTopKillRates.map(player => ({
+            playerName: player.playerName,
+            score: player.killRate,
+            kills: player.kills,
+            deaths: player.deaths,
+            mapName: player.mapName,
+            timestamp: player.timestamp
+          }))"
+          source="server-leaderboards"
+          score-label="Kills/Min"
+          :time-period="selectedTimePeriod"
+          :server-guid="serverDetails?.serverGuid"
+          :show-round-links="true"
         />
       </div>
     </div>
@@ -212,6 +374,15 @@ const currentTopScores = computed(() => {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: none;
+}
+
+.section-subtitle {
+  margin: 0;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.8);
+  font-weight: 400;
+  font-style: italic;
 }
 
 .section-controls {
