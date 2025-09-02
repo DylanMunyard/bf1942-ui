@@ -1,7 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, onUnmounted, watch, defineProps, defineEmits } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { formatLastSeen } from '@/utils/timeUtils';
+
+// Props from parent
+interface Props {
+  searchQuery?: string;
+}
+
+const props = defineProps<Props>();
+
+// Emits
+const emit = defineEmits<{
+  updateSearch: [query: string];
+}>();
 
 // Interface for player search results - matching what's used in other parts of the app
 interface PlayerSearchResult {
@@ -38,10 +50,6 @@ const error = ref<string | null>(null);
 const sortBy = ref<string>('lastSeen');
 const sortOrder = ref<'asc' | 'desc'>('desc');
 
-// Search functionality
-const searchQuery = ref('');
-const isSearchLoading = ref(false);
-const searchTimeout = ref<number | null>(null);
 
 // Pagination state - start with reasonable defaults
 const currentPage = ref(1);
@@ -94,23 +102,6 @@ const getDeathsClass = (deaths: number) => {
 
 
 
-// Handle search input with debouncing
-const onSearchInput = () => {
-  if (searchTimeout.value) {
-    clearTimeout(searchTimeout.value);
-  }
-
-  searchTimeout.value = setTimeout(() => {
-    currentPage.value = 1; // Reset to first page when searching
-    fetchPlayers();
-  }, 300) as unknown as number;
-};
-
-// Navigate to player profile
-const navigateToPlayer = (playerName: string) => {
-  router.push(`/players/${encodeURIComponent(playerName)}`);
-};
-
 // Fetch players list for main table
 const fetchPlayers = async () => {
   loading.value = true;
@@ -129,9 +120,10 @@ const fetchPlayers = async () => {
       sortOrder: sortOrder.value
     });
 
-    // Add search query if provided - use playerName parameter
-    if (searchQuery.value.trim()) {
-      params.append('playerName', searchQuery.value.trim());
+    // Add search query if provided - use playerName parameter  
+    const query = String(props.searchQuery || '');
+    if (query.trim()) {
+      params.append('playerName', query.trim());
       // Don't filter by isActive when searching to include offline players
     } else {
       // Only show active players when not searching
@@ -170,23 +162,6 @@ const changePageSize = (newPageSize: number) => {
   fetchPlayers();
 };
 
-// Handle enter key in search
-const onSearchEnter = () => {
-  if (searchQuery.value.trim() && players.value.length === 1) {
-    // If there's exactly one result, navigate to that player
-    navigateToPlayer(players.value[0].playerName);
-  } else if (searchQuery.value.trim() && players.value.length > 0) {
-    // If there are multiple results, navigate to the first one
-    navigateToPlayer(players.value[0].playerName);
-  }
-};
-
-// Clear search
-const clearSearch = () => {
-  searchQuery.value = '';
-  currentPage.value = 1;
-  fetchPlayers();
-};
 
 // Computed property for pagination range display
 const paginationRange = computed(() => {
@@ -208,6 +183,14 @@ const paginationRange = computed(() => {
   return range;
 });
 
+// Watch for external search query changes
+watch(() => props.searchQuery, (newQuery) => {
+  if (newQuery !== undefined) {
+    currentPage.value = 1;
+    fetchPlayers();
+  }
+});
+
 // Lifecycle hooks
 onMounted(() => {
   // Load active players by default on page load
@@ -215,50 +198,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (searchTimeout.value) {
-    clearTimeout(searchTimeout.value);
-  }
+  // Cleanup handled by parent component
 });
 </script>
 
 <template>
   <div>
-    <!-- Search Section -->
-    <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl mb-6">
-      <div class="p-6">
-        <div class="relative group max-w-2xl mx-auto">
-          <!-- Search Icon -->
-          <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-            <span class="text-slate-400 text-lg">🔍</span>
-          </div>
-          
-          <!-- Search Input -->
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search for any player..."
-            class="w-full pl-12 pr-20 py-4 bg-slate-700 border border-slate-600 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-lg"
-            @input="onSearchInput"
-            @keyup.enter="onSearchEnter"
-          >
-          
-          <!-- Loading Spinner -->
-          <div v-if="isSearchLoading" class="absolute right-16 top-1/2 transform -translate-y-1/2">
-            <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>
-          </div>
-          
-          <!-- Clear Button -->
-          <button 
-            v-if="searchQuery" 
-            @click="clearSearch" 
-            class="absolute right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-slate-600 hover:bg-slate-500 border border-slate-500 rounded-lg text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center justify-center font-bold text-lg"
-          >
-            ×
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Loading State -->
     <div
       v-if="loading"
@@ -279,7 +224,7 @@ onUnmounted(() => {
 
     <!-- Welcome State -->
     <div
-      v-else-if="!searchQuery.trim() && players.length === 0"
+      v-else-if="!props.searchQuery && players.length === 0"
       class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden"
     >
       <div class="px-6 py-4 border-b border-slate-700/50">
@@ -311,229 +256,207 @@ onUnmounted(() => {
 
     <!-- No Results State -->
     <div
-      v-else-if="searchQuery.trim() && players.length === 0"
+      v-else-if="props.searchQuery && players.length === 0"
       class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center"
     >
       <div class="text-6xl mb-4 opacity-50">🔍</div>
       <h3 class="text-2xl font-bold text-slate-200 mb-2">No players found</h3>
-      <p class="text-slate-400">No players match "<span class="text-slate-200 font-semibold">{{ searchQuery }}</span>"</p>
+      <p class="text-slate-400">No players match "<span class="text-slate-200 font-semibold">{{ props.searchQuery || '' }}</span>"</p>
       <p class="text-sm text-slate-500 mt-2 italic">Try a different spelling or partial name.</p>
     </div>
           
     <!-- Players Results Section -->
-    <div v-else class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-700/50">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
-            👥 Player Results
-            <span class="text-sm font-normal text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded-full">{{ totalItems }} found</span>
-          </h3>
-          <div class="flex items-center gap-2 text-sm">
-            <label class="text-slate-400 font-medium">Show:</label>
-            <select 
-              :value="pageSize" 
-              @change="changePageSize(Number(($event.target as HTMLSelectElement).value))"
-              class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
-            >
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="p-6">
-              <!-- Players Table -->
-              <div class="overflow-x-auto">
-                <table class="w-full border-collapse min-w-[800px] lg:min-w-full">
-                  <!-- Table Header -->
-                  <thead>
-                    <tr class="bg-slate-700/50 border-b border-slate-600/50">
-                      <th @click="sortPlayers('playerName')" class="group p-4 text-left font-medium text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-600/50 transition-all duration-200">
-                        <div class="flex items-center gap-2">
-                          <span class="text-cyan-400 text-sm">👤</span>
-                          <span class="font-semibold">PLAYER</span>
-                          <span class="text-xs transition-transform duration-200" :class="{
-                            'text-cyan-400 opacity-100': sortBy === 'playerName',
-                            'opacity-50': sortBy !== 'playerName',
-                            'rotate-0': sortBy === 'playerName' && sortOrder === 'asc',
-                            'rotate-180': sortBy === 'playerName' && sortOrder === 'desc'
-                          }">▲</span>
-                        </div>
-                      </th>
-                      <th @click="sortPlayers('lastSeen')" class="group p-4 text-left font-medium text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-600/50 transition-all duration-200">
-                        <div class="flex items-center gap-2">
-                          <span class="text-orange-400 text-sm">📅</span>
-                          <span class="font-semibold">LAST SEEN</span>
-                          <span class="text-xs transition-transform duration-200" :class="{
-                            'text-orange-400 opacity-100': sortBy === 'lastSeen',
-                            'opacity-50': sortBy !== 'lastSeen',
-                            'rotate-0': sortBy === 'lastSeen' && sortOrder === 'asc',
-                            'rotate-180': sortBy === 'lastSeen' && sortOrder === 'desc'
-                          }">▲</span>
-                        </div>
-                      </th>
-                      <th class="p-4 text-left font-medium text-xs uppercase tracking-wide text-slate-300">
-                        <div class="flex items-center gap-2">
-                          <span class="text-purple-400 text-sm">📡</span>
-                          <span class="font-semibold">STATUS</span>
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <!-- Table Body -->
-                  <tbody class="bg-slate-800/50">
-                    <tr
-                      v-for="player in players"
-                      :key="player.playerName"
-                      class="group transition-all duration-200 hover:bg-slate-700/30 border-b border-slate-600/30"
-                      :class="{
-                        'bg-green-500/5': player.isActive,
-                        'bg-slate-800/30': !player.isActive
-                      }"
-                    >
-                      <!-- Player Name -->
-                      <td class="p-4">
-                        <router-link 
-                          :to="`/players/${encodeURIComponent(player.playerName)}`" 
-                          class="font-semibold text-slate-200 hover:text-cyan-400 transition-colors duration-200 no-underline block max-w-[200px] truncate text-sm"
-                        >
-                          {{ player.playerName }}
-                        </router-link>
-                      </td>
-
-                      <!-- Last Seen -->
-                      <td class="p-4">
-                        <div class="font-mono text-sm text-orange-400 font-medium">
-                          {{ formatLastSeen(player.lastSeen) }}
-                        </div>
-                      </td>
-
-                      <!-- Status -->
-                      <td class="p-4">
-                        <div v-if="player.isActive" class="flex items-start gap-2">
-                          <span class="text-green-400 text-xs mt-0.5">🟢</span>
-                          <div v-if="player.currentServer" class="space-y-1">
-                            <router-link 
-                              :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" 
-                              class="text-cyan-400 hover:text-cyan-300 font-medium text-xs block max-w-[160px] truncate no-underline transition-colors duration-200"
-                            >
-                              {{ player.currentServer.serverName }}
-                            </router-link>
-                            <div class="flex items-center gap-1 text-xs font-mono">
-                              <span class="font-bold" :class="{
-                                'text-emerald-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 100,
-                                'text-blue-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 50,
-                                'text-orange-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 25,
-                                'text-slate-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) < 25
-                              }">
-                                {{ (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) }}
-                              </span>
-                              <span class="text-slate-500">/</span>
-                              <span class="font-bold" :class="{
-                                'text-red-400': (player.currentServer.sessionKills || 0) >= 30,
-                                'text-orange-400': (player.currentServer.sessionKills || 0) >= 15,
-                                'text-green-400': (player.currentServer.sessionKills || 0) >= 5,
-                                'text-slate-400': (player.currentServer.sessionKills || 0) < 5
-                              }">
-                                {{ player.currentServer.sessionKills || 0 }}
-                              </span>
-                              <span class="text-slate-500">/</span>
-                              <span class="font-bold" :class="{
-                                'text-red-400': (player.currentServer.sessionDeaths || 0) >= 20,
-                                'text-orange-400': (player.currentServer.sessionDeaths || 0) >= 10,
-                                'text-green-400': (player.currentServer.sessionDeaths || 0) >= 5,
-                                'text-blue-400': (player.currentServer.sessionDeaths || 0) < 5
-                              }">
-                                {{ player.currentServer.sessionDeaths || 0 }}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div v-else class="flex items-center gap-2">
-                          <span class="text-slate-500 text-xs">⚫</span>
-                          <span class="text-slate-500 font-medium text-xs uppercase">OFFLINE</span>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+    <div v-else class="overflow-x-auto">
+      <table class="w-full border-collapse border border-slate-700/30">
+        <!-- Table Header -->
+        <thead class="sticky top-0 z-10">
+          <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+            <th @click="sortPlayers('playerName')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50">
+              <div class="flex items-center gap-1.5">
+                <span class="text-cyan-400 text-xs">👤</span>
+                <span class="font-mono font-bold">PLAYER</span>
+                <span class="text-xs transition-transform duration-200" :class="{
+                  'text-cyan-400 opacity-100': sortBy === 'playerName',
+                  'opacity-50': sortBy !== 'playerName',
+                  'rotate-0': sortBy === 'playerName' && sortOrder === 'asc',
+                  'rotate-180': sortBy === 'playerName' && sortOrder === 'desc'
+                }">▲</span>
               </div>
+            </th>
+            <th @click="sortPlayers('lastSeen')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50">
+              <div class="flex items-center gap-1.5">
+                <span class="text-orange-400 text-xs">📅</span>
+                <span class="font-mono font-bold">LAST SEEN</span>
+                <span class="text-xs transition-transform duration-200" :class="{
+                  'text-orange-400 opacity-100': sortBy === 'lastSeen',
+                  'opacity-50': sortBy !== 'lastSeen',
+                  'rotate-0': sortBy === 'lastSeen' && sortOrder === 'asc',
+                  'rotate-180': sortBy === 'lastSeen' && sortOrder === 'desc'
+                }">▲</span>
+              </div>
+            </th>
+            <th class="p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+              <div class="flex items-center gap-1.5">
+                <span class="text-purple-400 text-xs">📡</span>
+                <span class="font-mono font-bold">STATUS</span>
+              </div>
+            </th>
+          </tr>
+        </thead>
 
-        
-        <!-- Pagination -->
-        <div v-if="totalPages > 1" class="flex flex-wrap items-center justify-center gap-1 sm:gap-2 mt-6 border-t border-slate-600/50 pt-6">
-          <!-- First Page -->
-          <button 
-            class="px-3 py-2 text-sm font-medium bg-slate-700 border border-slate-600 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="currentPage === 1" 
-            @click="goToPage(1)"
-          >
-            ««
-          </button>
-          
-          <!-- Previous Page -->
-          <button 
-            class="px-3 py-2 text-sm font-medium bg-slate-700 border border-slate-600 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="currentPage === 1" 
-            @click="goToPage(currentPage - 1)"
-          >
-            ‹
-          </button>
-          
-          <!-- Page Numbers -->
-          <button 
-            v-for="page in paginationRange" 
-            :key="page" 
-            class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 min-w-[40px]"
+        <!-- Table Body -->
+        <tbody>
+          <tr
+            v-for="player in players"
+            :key="player.playerName"
+            class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
             :class="{
-              'bg-gradient-to-r from-cyan-600 to-purple-600 border border-cyan-500/50 text-white shadow-lg shadow-cyan-500/20': page === currentPage,
-              'bg-slate-700 border border-slate-600 text-slate-400 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200': page !== currentPage
+              'bg-green-500/5': player.isActive,
+              'bg-slate-800/30': !player.isActive
             }"
-            @click="goToPage(page)"
           >
-            {{ page }}
-          </button>
-          
-          <!-- Next Page -->
-          <button 
-            class="px-3 py-2 text-sm font-medium bg-slate-700 border border-slate-600 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="currentPage === totalPages" 
-            @click="goToPage(currentPage + 1)"
-          >
-            ›
-          </button>
-          
-          <!-- Last Page -->
-          <button 
-            class="px-3 py-2 text-sm font-medium bg-slate-700 border border-slate-600 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="currentPage === totalPages" 
-            @click="goToPage(totalPages)"
-          >
-            ››
-          </button>
-        </div>
+            <!-- Player Name -->
+            <td class="p-1.5">
+              <router-link 
+                :to="`/players/${encodeURIComponent(player.playerName)}`" 
+                class="block group-hover:text-cyan-400 transition-all duration-300 no-underline"
+              >
+                <div class="font-bold text-slate-200 truncate max-w-xs text-sm">{{ player.playerName }}</div>
+              </router-link>
+            </td>
+
+            <!-- Last Seen -->
+            <td class="p-1.5">
+              <div class="font-mono text-sm text-orange-400 font-medium">
+                {{ formatLastSeen(player.lastSeen) }}
+              </div>
+            </td>
+
+            <!-- Status -->
+            <td class="p-1.5">
+              <div v-if="player.isActive" class="flex items-start gap-2">
+                <span class="text-green-400 text-xs mt-0.5">🟢</span>
+                <div v-if="player.currentServer" class="space-y-1">
+                  <router-link 
+                    :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" 
+                    class="text-cyan-400 hover:text-cyan-300 font-medium text-xs block max-w-[160px] truncate no-underline transition-colors duration-200"
+                  >
+                    {{ player.currentServer.serverName }}
+                  </router-link>
+                  <div class="flex items-center gap-1 text-xs font-mono">
+                    <span class="font-bold" :class="{
+                      'text-emerald-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 100,
+                      'text-blue-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 50,
+                      'text-orange-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 25,
+                      'text-slate-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) < 25
+                    }">
+                      {{ (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) }}
+                    </span>
+                    <span class="text-slate-500">/</span>
+                    <span class="font-bold" :class="{
+                      'text-red-400': (player.currentServer.sessionKills || 0) >= 30,
+                      'text-orange-400': (player.currentServer.sessionKills || 0) >= 15,
+                      'text-green-400': (player.currentServer.sessionKills || 0) >= 5,
+                      'text-slate-400': (player.currentServer.sessionKills || 0) < 5
+                    }">
+                      {{ player.currentServer.sessionKills || 0 }}
+                    </span>
+                    <span class="text-slate-500">/</span>
+                    <span class="font-bold" :class="{
+                      'text-red-400': (player.currentServer.sessionDeaths || 0) >= 20,
+                      'text-orange-400': (player.currentServer.sessionDeaths || 0) >= 10,
+                      'text-green-400': (player.currentServer.sessionDeaths || 0) >= 5,
+                      'text-blue-400': (player.currentServer.sessionDeaths || 0) < 5
+                    }">
+                      {{ player.currentServer.sessionDeaths || 0 }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="flex items-center gap-2">
+                <span class="text-slate-500 text-xs">⚫</span>
+                <span class="text-slate-500 font-medium text-xs uppercase">OFFLINE</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="flex flex-wrap items-center justify-center gap-1 sm:gap-2 mt-6 border-t border-slate-700/30 pt-6">
+        <!-- First Page -->
+        <button 
+          class="px-3 py-2 text-sm font-medium bg-slate-700 border border-slate-600 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="currentPage === 1" 
+          @click="goToPage(1)"
+        >
+          ««
+        </button>
+        
+        <!-- Previous Page -->
+        <button 
+          class="px-3 py-2 text-sm font-medium bg-slate-700 border border-slate-600 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="currentPage === 1" 
+          @click="goToPage(currentPage - 1)"
+        >
+          ‹
+        </button>
+        
+        <!-- Page Numbers -->
+        <button 
+          v-for="page in paginationRange" 
+          :key="page" 
+          class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 min-w-[40px]"
+          :class="{
+            'bg-gradient-to-r from-cyan-600 to-purple-600 border border-cyan-500/50 text-white shadow-lg shadow-cyan-500/20': page === currentPage,
+            'bg-slate-700 border border-slate-600 text-slate-400 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200': page !== currentPage
+          }"
+          @click="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+        
+        <!-- Next Page -->
+        <button 
+          class="px-3 py-2 text-sm font-medium bg-slate-700 border border-slate-600 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="currentPage === totalPages" 
+          @click="goToPage(currentPage + 1)"
+        >
+          ›
+        </button>
+        
+        <!-- Last Page -->
+        <button 
+          class="px-3 py-2 text-sm font-medium bg-slate-700 border border-slate-600 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="currentPage === totalPages" 
+          @click="goToPage(totalPages)"
+        >
+          ››
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Custom animations for enhanced visual effects */
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* Custom animations for enhanced gaming feel */
+@keyframes animate-spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-spin-slow {
-  animation: spin-slow 3s linear infinite;
+  animation: animate-spin-slow 3s linear infinite;
 }
 
-/* Custom scrollbar styling */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
-  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -549,10 +472,49 @@ onUnmounted(() => {
   background: rgba(6, 182, 212, 0.7);
 }
 
-/* Ensure table has proper scrolling on mobile */
+/* Enhanced table row hover effects */
+tbody tr:hover {
+  /* Removed transform and box-shadow to prevent wobbling */
+}
+
+/* Clean typography for the entire table */
+table {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Compact row spacing with better typography */
+tbody tr {
+  height: 32px;
+}
+
+/* Gaming-style glow effects */
+.glow-cyan {
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+
+.glow-green {
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+}
+
+.glow-orange {
+  box-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
+}
+
+/* Responsive table behavior */
 @media (max-width: 1024px) {
   table {
     min-width: 800px;
+  }
+}
+
+@media (max-width: 768px) {
+  table {
+    min-width: 700px;
+  }
+  
+  /* Make table cells more compact on mobile */
+  th, td {
+    padding: 0.5rem 0.25rem;
   }
 }
 </style>
