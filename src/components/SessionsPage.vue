@@ -18,7 +18,7 @@ interface Props {
 const props = defineProps<Props>();
 
 // State variables
-const sessions = ref<SessionListItem[]>([]);
+const rounds = ref<any[]>([]);
 const playerInfo = ref<PlayerContextInfo | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -139,10 +139,10 @@ const updateUniqueValues = () => {
   const servers = new Set<string>();
   const gameTypes = new Set<string>();
 
-  sessions.value.forEach(session => {
-    if (session.mapName) maps.add(session.mapName);
-    if (session.serverName) servers.add(session.serverName);
-    if (session.gameType) gameTypes.add(session.gameType);
+  rounds.value.forEach(round => {
+    if (round.mapName) maps.add(round.mapName);
+    if (round.serverName) servers.add(round.serverName);
+    if (round.gameType) gameTypes.add(round.gameType);
   });
 
   uniqueMaps.value = Array.from(maps).sort();
@@ -163,7 +163,7 @@ const fetchData = async () => {
     if (gameTypeFilter.value) filters.gameType = gameTypeFilter.value;
 
     // Add props as filter overrides
-    if (props.playerName) filters.playerName = props.playerName;
+    if (props.playerName) filters.playerNames = props.playerName;
     if (props.serverName) filters.serverName = props.serverName;
     if (props.mapName) filters.mapName = props.mapName;
 
@@ -177,7 +177,7 @@ const fetchData = async () => {
     );
 
     // Update state with the fetched data
-    sessions.value = result.items;
+    rounds.value = result.items;
     playerInfo.value = result.playerInfo || null;
     totalItems.value = result.totalItems;
     totalPages.value = result.totalPages;
@@ -199,16 +199,43 @@ const navigateToRoundReport = (sessionId: number, event?: Event) => {
     event.stopPropagation();
   }
 
-  // Find the session to get the required data for the round report
-  const session = sessions.value.find(s => s.sessionId === sessionId);
-  if (session) {
+  let foundData = null;
+
+  if (isServerMode.value) {
+    // In server mode, search through rounds
+    for (const round of rounds.value) {
+      if (round.players) {
+        const player = round.players.find((p: any) => p.sessionId === sessionId);
+        if (player) {
+          foundData = {
+            serverGuid: round.serverGuid,
+            mapName: round.mapName,
+            startTime: round.startTime,
+          };
+          break;
+        }
+      }
+    }
+  } else {
+    // In player mode, search through flattened sessions
+    const session = sessions.value.find(s => s.sessionId === sessionId);
+    if (session) {
+      foundData = {
+        serverGuid: session.serverGuid,
+        mapName: session.mapName,
+        startTime: session.startTime,
+      };
+    }
+  }
+
+  if (foundData) {
     // Navigate to the round report page with the required parameters
     router.push({
       path: '/servers/round-report',
       query: {
-        serverGuid: session.serverGuid,
-        mapName: session.mapName,
-        startTime: session.startTime,
+        serverGuid: foundData.serverGuid,
+        mapName: foundData.mapName,
+        startTime: foundData.startTime,
         players: props.playerName // Include the player name to pin them
       }
     });
@@ -266,93 +293,70 @@ const isServerMode = computed(() => {
   return !props.playerName && (props.serverName || props.mapName);
 });
 
-// Computed property to group sessions by map name and rounds (only in server mode)
-const groupedSessions = computed(() => {
-  if (!isServerMode.value) {
-    return null; // Return null for non-server mode, use regular sessions list
+// Computed property to flatten rounds into sessions for player/non-server mode
+const sessions = computed(() => {
+  if (isServerMode.value) {
+    return []; // Not used in server mode
   }
-
-  // Group consecutive sessions by map name while preserving chronological order
-  const consecutiveGroups: { mapName: string; sessions: SessionListItem[] }[] = [];
-  let currentGroup: { mapName: string; sessions: SessionListItem[] } | null = null;
   
-  sessions.value.forEach(session => {
-    const mapName = session.mapName;
-    
-    if (!currentGroup || currentGroup.mapName !== mapName) {
-      // Start a new group for this map
-      currentGroup = { mapName, sessions: [session] };
-      consecutiveGroups.push(currentGroup);
-    } else {
-      // Add to current group
-      currentGroup.sessions.push(session);
+  // Flatten rounds into sessions by merging player data with parent round details
+  const allSessions: any[] = [];
+  rounds.value.forEach(round => {
+    if (round.players) {
+      round.players.forEach((player: any) => {
+        allSessions.push({
+          // Player-specific data
+          sessionId: player.sessionId,
+          playerName: player.playerName,
+          startTime: player.startTime || round.startTime,
+          endTime: player.endTime || round.endTime,
+          durationMinutes: player.durationMinutes || round.durationMinutes,
+          score: player.score,
+          kills: player.kills,
+          deaths: player.deaths,
+          isActive: player.isActive,
+          // Parent round details
+          serverName: round.serverName,
+          serverGuid: round.serverGuid,
+          mapName: round.mapName,
+          gameType: round.gameType,
+        });
+      });
     }
   });
+  
+  return allSessions;
+});
 
-  // Then, within each consecutive map group, detect rounds based on 30+ minute gaps
-  return consecutiveGroups.map(group => {
-    const mapName = group.mapName;
-    const mapSessions = group.sessions;
-    
-    // Sort sessions by start time (newest first, matching the overall order)
-    const sortedSessions = [...mapSessions].sort((a, b) => 
+
+// Computed property to group rounds by map name (only in server mode)
+const groupedSessions = computed(() => {
+  if (!isServerMode.value) {
+    return null; // Return null for non-server mode
+  }
+
+  // Group rounds by map name
+  const mapGroups = new Map<string, any[]>();
+  
+  rounds.value.forEach(round => {
+    const mapName = round.mapName;
+    if (!mapGroups.has(mapName)) {
+      mapGroups.set(mapName, []);
+    }
+    mapGroups.get(mapName)!.push(round);
+  });
+
+  // Convert to the expected format
+  return Array.from(mapGroups.entries()).map(([mapName, mapRounds]) => {
+    // Sort rounds by start time (newest first)
+    const sortedRounds = mapRounds.sort((a, b) => 
       new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
     );
 
-    const rounds: { sessions: SessionListItem[]; startTime: Date; endTime: Date }[] = [];
-    let currentRound: SessionListItem[] = [];
-
-    sortedSessions.forEach((session, index) => {
-      const sessionTime = new Date(session.startTime.endsWith('Z') ? session.startTime : session.startTime + 'Z');
-      
-      if (currentRound.length === 0) {
-        // First session of the round
-        currentRound = [session];
-      } else {
-        // Check time gap from the most recent session in current round
-        const lastSessionTime = new Date(currentRound[currentRound.length - 1].startTime.endsWith('Z') 
-          ? currentRound[currentRound.length - 1].startTime 
-          : currentRound[currentRound.length - 1].startTime + 'Z');
-        
-        const timeDiffMinutes = Math.abs(lastSessionTime.getTime() - sessionTime.getTime()) / (1000 * 60);
-        
-        if (timeDiffMinutes > 30) {
-          // Gap > 30 minutes, start a new round
-          const roundStart = new Date(Math.max(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
-          const roundEnd = new Date(Math.min(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
-          
-          rounds.push({
-            sessions: [...currentRound],
-            startTime: roundStart,
-            endTime: roundEnd
-          });
-          currentRound = [session];
-        } else {
-          // Same round, add session
-          currentRound.push(session);
-        }
-      }
-    });
-
-    // Don't forget the last round
-    if (currentRound.length > 0) {
-      const roundStart = new Date(Math.max(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
-      const roundEnd = new Date(Math.min(...currentRound.map(s => new Date(s.startTime.endsWith('Z') ? s.startTime : s.startTime + 'Z').getTime())));
-      
-      rounds.push({
-        sessions: [...currentRound],
-        startTime: roundStart,
-        endTime: roundEnd
-      });
-    }
-
-    // Sort rounds by start time (newest first)
-    rounds.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
-
     // Transform rounds to include leaderboard data
-    const roundsWithLeaderboard = rounds.map(round => {
+    const roundsWithLeaderboard = sortedRounds.map(round => {
       // Sort players by score (descending), then by K/D ratio as tiebreaker
-      const sortedPlayers = [...round.sessions].sort((a, b) => {
+      const sortedPlayers = [...(round.players || [])].sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         const aKDR = a.deaths === 0 ? a.kills : a.kills / a.deaths;
         const bKDR = b.deaths === 0 ? b.kills : b.kills / b.deaths;
@@ -361,10 +365,12 @@ const groupedSessions = computed(() => {
 
       return {
         ...round,
-        leaderboard: sortedPlayers.map((session, index) => ({
-          ...session,
+        startTime: new Date(round.startTime),
+        endTime: new Date(round.endTime),
+        leaderboard: sortedPlayers.map((player, index) => ({
+          ...player,
           rank: index + 1,
-          kdr: session.deaths === 0 ? session.kills : +(session.kills / session.deaths).toFixed(2)
+          kdr: player.deaths === 0 ? player.kills : +(player.kills / player.deaths).toFixed(2)
         }))
       };
     });
@@ -372,8 +378,8 @@ const groupedSessions = computed(() => {
     return {
       mapName,
       rounds: roundsWithLeaderboard,
-      totalSessions: mapSessions.length,
-      roundCount: rounds.length
+      totalSessions: mapRounds.reduce((sum, round) => sum + (round.players?.length || 0), 0),
+      roundCount: mapRounds.length
     };
   });
 });
@@ -619,7 +625,7 @@ onUnmounted(() => {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <!-- Sessions Content -->
-          <div v-if="!loading || sessions.length > 0" class="space-y-6">
+          <div v-if="!loading || rounds.length > 0" class="space-y-6">
       <!-- Filter Controls -->
       <div class="mb-6">
         <button
@@ -700,7 +706,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Sessions Data -->
-      <div v-if="sessions.length > 0" class="space-y-6">
+      <div v-if="rounds.length > 0" class="space-y-6">
         <!-- Stats Summary -->
         <div class="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 p-4">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -770,11 +776,11 @@ onUnmounted(() => {
                     </svg>
                     <div class="w-2 h-2 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full"></div>
                     <span class="text-sm font-medium text-slate-300">
-                      {{ calculateRoundDuration(round.startTime, round.endTime) }} min
+                      {{ round.durationMinutes }} min
                     </span>
                     <span class="text-xs text-slate-500">•</span>
                     <span class="text-sm font-medium text-slate-300">
-                      {{ round.sessions.length }} player{{ round.sessions.length !== 1 ? 's' : '' }}
+                      {{ round.participantCount }} player{{ round.participantCount !== 1 ? 's' : '' }}
                     </span>
                     <span class="text-xs text-slate-500">•</span>
                     <span class="text-xs text-slate-500">
@@ -1052,7 +1058,7 @@ onUnmounted(() => {
 
           <!-- Loading State -->
           <div
-            v-else-if="loading && sessions.length === 0"
+            v-else-if="loading && rounds.length === 0"
             class="flex flex-col items-center justify-center py-20 text-slate-400"
           >
             <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
