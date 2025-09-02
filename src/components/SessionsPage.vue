@@ -23,7 +23,7 @@ const playerInfo = ref<PlayerContextInfo | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const currentPage = ref(1);
-const pageSize = ref(200); // Increased default page size for better browsing
+const pageSize = ref(10);
 const totalItems = ref(0);
 const totalPages = ref(0);
 
@@ -219,6 +219,7 @@ const navigateToRoundReport = (sessionId: number, event?: Event) => {
 const handleMapFilterChange = (event: Event) => {
   mapFilter.value = (event.target as HTMLSelectElement).value;
   currentPage.value = 1; // Reset to first page when filtering
+  totalPages.value = 1; // Reset to prevent stale pagination display
   updateQueryParams();
   fetchData();
 };
@@ -226,6 +227,7 @@ const handleMapFilterChange = (event: Event) => {
 const handleServerFilterChange = (event: Event) => {
   serverFilter.value = (event.target as HTMLSelectElement).value;
   currentPage.value = 1; // Reset to first page when filtering
+  totalPages.value = 1; // Reset to prevent stale pagination display
   updateQueryParams();
   fetchData();
 };
@@ -233,6 +235,7 @@ const handleServerFilterChange = (event: Event) => {
 const handleGameTypeFilterChange = (event: Event) => {
   gameTypeFilter.value = (event.target as HTMLSelectElement).value;
   currentPage.value = 1; // Reset to first page when filtering
+  totalPages.value = 1; // Reset to prevent stale pagination display
   updateQueryParams();
   fetchData();
 };
@@ -243,6 +246,7 @@ const resetFilters = () => {
   serverFilter.value = '';
   gameTypeFilter.value = '';
   currentPage.value = 1; // Reset to first page when resetting filters
+  totalPages.value = 1; // Reset to prevent stale pagination display
   updateQueryParams();
   fetchData();
 };
@@ -394,26 +398,26 @@ const paginationRange = computed(() => {
   return range;
 });
 
-// Watch for route props changes
+// Watch for route props changes (after initial load)
 watch(() => props.playerName, (newPlayerName) => {
   if (newPlayerName) {
     fetchData();
   }
-}, { immediate: true });
+});
 
-// Watch for server name changes
+// Watch for server name changes (after initial load)
 watch(() => props.serverName, (newServerName) => {
   if (newServerName) {
     fetchData();
   }
-}, { immediate: true });
+});
 
-// Watch for map name changes
+// Watch for map name changes (after initial load)
 watch(() => props.mapName, (newMapName) => {
   if (newMapName) {
     fetchData();
   }
-}, { immediate: true });
+});
 
 // Watch for page size changes
 watch(() => pageSize.value, () => {
@@ -454,10 +458,13 @@ const initializeFromQuery = () => {
   }
   if (query.pageSize && typeof query.pageSize === 'string') {
     const size = parseInt(query.pageSize);
-    if (!isNaN(size) && [10, 20, 50, 100, 200].includes(size)) {
+    if (!isNaN(size) && [10, 20, 50].includes(size)) {
       pageSize.value = size;
     }
   }
+  
+  // Fetch data after initializing from URL
+  fetchData();
 };
 
 // Update URL query parameters
@@ -475,7 +482,7 @@ const updateQueryParams = () => {
   
   // Add pagination to query
   if (currentPage.value !== 1) query.page = currentPage.value.toString();
-  if (pageSize.value !== 200) query.pageSize = pageSize.value.toString();
+  if (pageSize.value !== 10) query.pageSize = pageSize.value.toString();
   
   // Update URL without triggering navigation
   router.replace({ query });
@@ -714,8 +721,6 @@ onUnmounted(() => {
                 <option value="10">10</option>
                 <option value="20">20</option>
                 <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="200">200</option>
               </select>
             </div>
           </div>

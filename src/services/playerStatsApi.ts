@@ -96,6 +96,37 @@ export async function fetchSessionDetails(playerName: string, sessionId: number)
  * @param sortOrder The sort order ('asc' or 'desc', default: 'desc')
  * @returns Paged result of session list items
  */
+// Import types from rounds service
+import { RoundPagedResult } from './roundsService';
+
+// Interface for rounds response with nested player data
+interface RoundWithPlayers {
+  roundId: string;
+  serverName: string;
+  serverGuid: string;
+  mapName: string;
+  gameType: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  participantCount: number;
+  isActive: boolean;
+  team1Label?: string;
+  team2Label?: string;
+  players?: {
+    sessionId: number;
+    roundId: string;
+    playerName: string;
+    startTime: string;
+    endTime: string;
+    durationMinutes: number;
+    score: number;
+    kills: number;
+    deaths: number;
+    isActive: boolean;
+  }[];
+}
+
 export async function fetchSessions(
   page: number = 1,
   pageSize: number = 10,
@@ -104,25 +135,117 @@ export async function fetchSessions(
   sortOrder: 'asc' | 'desc' = 'desc'
 ): Promise<PagedResult<SessionListItem>> {
   try {
+    // Handle parameter mapping for the rounds API
+    const roundFilters: Record<string, any> = { ...filters };
+    
+    // Map old parameter names to new ones
+    if (filters.lastSeenFrom) {
+      roundFilters.endTimeFrom = filters.lastSeenFrom;
+      delete roundFilters.lastSeenFrom;
+    }
+    if (filters.lastSeenTo) {
+      roundFilters.endTimeTo = filters.lastSeenTo;
+      delete roundFilters.lastSeenTo;
+    }
+    if (filters.minPlayTime) {
+      roundFilters.minDuration = filters.minPlayTime;
+      delete roundFilters.minPlayTime;
+    }
+    if (filters.maxPlayTime) {
+      roundFilters.maxDuration = filters.maxPlayTime;
+      delete roundFilters.maxPlayTime;
+    }
+
     // Build query parameters
     const params: Record<string, any> = {
       page,
       pageSize,
       sortBy,
       sortOrder,
-      ...filters // Spread filter parameters into the query
+      includePlayers: true, // We need player data for session compatibility
+      ...roundFilters
     };
 
-    // Make the request to the API endpoint
-    const response = await axios.get<PagedResult<SessionListItem>>(
-      '/stats/sessions',
+    // Make the request to the new rounds API endpoint
+    const response = await axios.get<RoundPagedResult<RoundWithPlayers>>(
+      '/stats/rounds',
       {
         params
       }
     );
 
-    // Return the response data
-    return response.data;
+    // Transform the rounds response back to sessions format for backward compatibility
+    const sessions: SessionListItem[] = [];
+    response.data.items.forEach(round => {
+      if (round.players) {
+        round.players.forEach(player => {
+          sessions.push({
+            sessionId: player.sessionId,
+            playerName: player.playerName,
+            serverName: round.serverName,
+            serverGuid: round.serverGuid,
+            mapName: round.mapName,
+            gameType: round.gameType,
+            startTime: player.startTime || round.startTime,
+            endTime: player.endTime || round.endTime,
+            durationMinutes: player.durationMinutes || 0,
+            score: player.score || 0,
+            kills: player.kills || 0,
+            deaths: player.deaths || 0,
+            isActive: player.isActive || false
+          });
+        });
+      }
+    });
+
+    // Apply client-side filtering for removed server-side filters
+    let filteredSessions = sessions;
+    
+    if (filters.playerName) {
+      filteredSessions = sessions.filter(session => 
+        session.playerName.toLowerCase().includes(filters.playerName.toLowerCase())
+      );
+    }
+
+    if (filters.minScore) {
+      const minScore = parseInt(filters.minScore);
+      filteredSessions = filteredSessions.filter(session => session.score >= minScore);
+    }
+
+    if (filters.maxScore) {
+      const maxScore = parseInt(filters.maxScore);
+      filteredSessions = filteredSessions.filter(session => session.score <= maxScore);
+    }
+
+    if (filters.minKills) {
+      const minKills = parseInt(filters.minKills);
+      filteredSessions = filteredSessions.filter(session => session.kills >= minKills);
+    }
+
+    if (filters.maxKills) {
+      const maxKills = parseInt(filters.maxKills);
+      filteredSessions = filteredSessions.filter(session => session.kills <= maxKills);
+    }
+
+    if (filters.minDeaths) {
+      const minDeaths = parseInt(filters.minDeaths);
+      filteredSessions = filteredSessions.filter(session => session.deaths >= minDeaths);
+    }
+
+    if (filters.maxDeaths) {
+      const maxDeaths = parseInt(filters.maxDeaths);
+      filteredSessions = filteredSessions.filter(session => session.deaths <= maxDeaths);
+    }
+
+    // Return in the expected PagedResult format, respecting API pagination
+    return {
+      items: filteredSessions,
+      page: response.data.currentPage,
+      pageSize: pageSize,
+      totalItems: response.data.totalItems,
+      totalPages: response.data.totalPages
+    };
+
   } catch (err) {
     console.error('Error fetching sessions:', err);
     throw new Error('Failed to get sessions');
