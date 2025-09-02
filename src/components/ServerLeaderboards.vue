@@ -248,7 +248,7 @@ const currentTopKillRates = computed(() => {
             totalRounds: player.totalRounds
           }))"
           source="server-leaderboards"
-          score-label="K/D Ratio"
+          score-label="Ratio"
           :time-period="selectedTimePeriod"
           :server-guid="serverDetails?.serverGuid"
           :show-round-links="false"

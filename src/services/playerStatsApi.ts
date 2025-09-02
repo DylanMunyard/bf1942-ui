@@ -174,72 +174,9 @@ export async function fetchSessions(
       }
     );
 
-    // Transform the rounds response back to sessions format for backward compatibility
-    const sessions: SessionListItem[] = [];
-    response.data.items.forEach(round => {
-      if (round.players) {
-        round.players.forEach(player => {
-          sessions.push({
-            sessionId: player.sessionId,
-            playerName: player.playerName,
-            serverName: round.serverName,
-            serverGuid: round.serverGuid,
-            mapName: round.mapName,
-            gameType: round.gameType,
-            startTime: player.startTime || round.startTime,
-            endTime: player.endTime || round.endTime,
-            durationMinutes: player.durationMinutes || 0,
-            score: player.score || 0,
-            kills: player.kills || 0,
-            deaths: player.deaths || 0,
-            isActive: player.isActive || false
-          });
-        });
-      }
-    });
-
-    // Apply client-side filtering for removed server-side filters
-    let filteredSessions = sessions;
-    
-    if (filters.playerName) {
-      filteredSessions = sessions.filter(session => 
-        session.playerName.toLowerCase().includes(filters.playerName.toLowerCase())
-      );
-    }
-
-    if (filters.minScore) {
-      const minScore = parseInt(filters.minScore);
-      filteredSessions = filteredSessions.filter(session => session.score >= minScore);
-    }
-
-    if (filters.maxScore) {
-      const maxScore = parseInt(filters.maxScore);
-      filteredSessions = filteredSessions.filter(session => session.score <= maxScore);
-    }
-
-    if (filters.minKills) {
-      const minKills = parseInt(filters.minKills);
-      filteredSessions = filteredSessions.filter(session => session.kills >= minKills);
-    }
-
-    if (filters.maxKills) {
-      const maxKills = parseInt(filters.maxKills);
-      filteredSessions = filteredSessions.filter(session => session.kills <= maxKills);
-    }
-
-    if (filters.minDeaths) {
-      const minDeaths = parseInt(filters.minDeaths);
-      filteredSessions = filteredSessions.filter(session => session.deaths >= minDeaths);
-    }
-
-    if (filters.maxDeaths) {
-      const maxDeaths = parseInt(filters.maxDeaths);
-      filteredSessions = filteredSessions.filter(session => session.deaths <= maxDeaths);
-    }
-
-    // Return in the expected PagedResult format, respecting API pagination
+    // Return the API response directly
     return {
-      items: filteredSessions,
+      items: response.data.items,
       page: response.data.currentPage,
       pageSize: pageSize,
       totalItems: response.data.totalItems,
