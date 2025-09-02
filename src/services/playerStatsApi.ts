@@ -130,9 +130,10 @@ interface RoundWithPlayers {
 export async function fetchSessions(
   page: number = 1,
   pageSize: number = 10,
-  filters: Record<string, string> = {},
+  filters: Record<string, string | string[]> = {},
   sortBy: string = 'startTime',
-  sortOrder: 'asc' | 'desc' = 'desc'
+  sortOrder: 'asc' | 'desc' = 'desc',
+  onlySpecifiedPlayers: boolean = false
 ): Promise<PagedResult<SessionListItem>> {
   try {
     // Handle parameter mapping for the rounds API
@@ -163,6 +164,7 @@ export async function fetchSessions(
       sortBy,
       sortOrder,
       includePlayers: true, // We need player data for session compatibility
+      onlySpecifiedPlayers,
       ...roundFilters
     };
 
@@ -170,7 +172,10 @@ export async function fetchSessions(
     const response = await axios.get<RoundPagedResult<RoundWithPlayers>>(
       '/stats/rounds',
       {
-        params
+        params,
+        paramsSerializer: {
+          indexes: null // This prevents axios from adding [] to array parameters
+        }
       }
     );
 

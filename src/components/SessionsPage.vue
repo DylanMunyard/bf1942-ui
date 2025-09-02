@@ -4,9 +4,28 @@ import { useRouter, useRoute } from 'vue-router';
 import { fetchSessions, SessionListItem, PlayerContextInfo } from '../services/playerStatsService';
 import HeroBackButton from './HeroBackButton.vue';
 
+interface PlayerSearchResult {
+  playerName: string;
+  totalPlayTimeMinutes: number;
+  lastSeen: string;
+  isActive: boolean;
+  currentServer?: {
+    serverGuid: string;
+    serverName: string;
+    sessionKills: number;
+    sessionDeaths: number;
+    mapName: string;
+    gameId: string;
+  };
+}
+
 // Router
 const router = useRouter();
 const route = useRoute();
+
+// Determine context based on route path
+const isServerRoute = computed(() => route.path.startsWith('/servers/'));
+const isPlayerRoute = computed(() => route.path.startsWith('/players/'));
 
 // Props from router
 interface Props {
@@ -38,6 +57,14 @@ const gameTypeFilter = ref('');
 const uniqueMaps = ref<string[]>([]);
 const uniqueServers = ref<string[]>([]);
 const uniqueGameTypes = ref<string[]>([]);
+
+// Player search and filter variables
+const playerSearchQuery = ref('');
+const showOnlyFilteredPlayers = ref(false);
+const playerSuggestions = ref<PlayerSearchResult[]>([]);
+const isSearchLoading = ref(false);
+const showPlayerDropdown = ref(false);
+const selectedPlayers = ref<string[]>([]);
 
 // Mobile filters state
 const showFilters = ref(false);
@@ -154,6 +181,12 @@ const updateUniqueValues = () => {
 const fetchData = async () => {
   loading.value = true;
   error.value = null;
+  
+  // Clear existing results immediately when starting a new fetch
+  rounds.value = [];
+  playerInfo.value = null;
+  totalItems.value = 0;
+  totalPages.value = 0;
 
   try {
     // Build filter object from current filter values
@@ -162,8 +195,17 @@ const fetchData = async () => {
     if (serverFilter.value) filters.serverName = serverFilter.value;
     if (gameTypeFilter.value) filters.gameType = gameTypeFilter.value;
 
-    // Add props as filter overrides
-    if (props.playerName) filters.playerNames = props.playerName;
+    // Add player names from UI filters first, then fallback to props
+    if (selectedPlayers.value.length > 0) {
+      filters.playerNames = selectedPlayers.value;
+    } else if (props.playerName) {
+      // If playerName is a comma-delimited string, split it into an array
+      if (typeof props.playerName === 'string' && props.playerName.includes(',')) {
+        filters.playerNames = props.playerName.split(',').map(name => name.trim()).filter(name => name.length > 0);
+      } else {
+        filters.playerNames = props.playerName;
+      }
+    }
     if (props.serverName) filters.serverName = props.serverName;
     if (props.mapName) filters.mapName = props.mapName;
 
@@ -173,7 +215,8 @@ const fetchData = async () => {
       pageSize.value,
       filters,
       sortBy.value,
-      sortOrder.value
+      sortOrder.value,
+      isPlayerRoute.value || showOnlyFilteredPlayers.value  // onlySpecifiedPlayers=true when viewing a specific player or when toggled on
     );
 
     // Update state with the fetched data
@@ -187,6 +230,11 @@ const fetchData = async () => {
   } catch (err) {
     console.error('Error fetching player sessions:', err);
     error.value = 'Failed to fetch player sessions. Please try again.';
+    // Clear results when there's an error
+    rounds.value = [];
+    playerInfo.value = null;
+    totalItems.value = 0;
+    totalPages.value = 0;
   } finally {
     loading.value = false;
   }
@@ -272,8 +320,86 @@ const resetFilters = () => {
   mapFilter.value = '';
   serverFilter.value = '';
   gameTypeFilter.value = '';
+  selectedPlayers.value = [];
+  showOnlyFilteredPlayers.value = false;
   currentPage.value = 1; // Reset to first page when resetting filters
   totalPages.value = 1; // Reset to prevent stale pagination display
+  updateQueryParams();
+  fetchData();
+};
+
+// Player search methods
+const searchPlayers = async (query: string) => {
+  if (!query || query.length < 2) {
+    playerSuggestions.value = [];
+    showPlayerDropdown.value = false;
+    return;
+  }
+
+  isSearchLoading.value = true;
+  
+  try {
+    const response = await fetch(`/stats/Players/search?query=${encodeURIComponent(query)}&pageSize=10`);
+    if (!response.ok) {
+      throw new Error('Failed to search players');
+    }
+
+    const data = await response.json();
+    playerSuggestions.value = data.items.filter((player: PlayerSearchResult) => 
+      !selectedPlayers.value.includes(player.playerName)
+    );
+    showPlayerDropdown.value = playerSuggestions.value.length > 0;
+  } catch (error) {
+    console.error('Error searching players:', error);
+    playerSuggestions.value = [];
+    showPlayerDropdown.value = false;
+  } finally {
+    isSearchLoading.value = false;
+  }
+};
+
+let blurTimeout: number | null = null;
+
+const onPlayerSearchInput = () => {
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+
+  searchTimeout.value = setTimeout(() => {
+    searchPlayers(playerSearchQuery.value);
+  }, 300) as unknown as number;
+};
+
+const onSearchFocus = () => {
+  if (blurTimeout) {
+    clearTimeout(blurTimeout);
+  }
+  if (playerSearchQuery.value.length >= 2) {
+    searchPlayers(playerSearchQuery.value);
+  }
+};
+
+const onSearchBlur = () => {
+  blurTimeout = setTimeout(() => {
+    showPlayerDropdown.value = false;
+  }, 200) as unknown as number;
+};
+
+const selectPlayer = (player: PlayerSearchResult) => {
+  if (!selectedPlayers.value.includes(player.playerName)) {
+    selectedPlayers.value.push(player.playerName);
+    playerSearchQuery.value = '';
+    playerSuggestions.value = [];
+    showPlayerDropdown.value = false;
+    currentPage.value = 1; // Reset to first page when adding filter
+    updateQueryParams();
+    fetchData();
+  }
+};
+
+const removePlayer = (playerName: string) => {
+  selectedPlayers.value = selectedPlayers.value.filter(name => name !== playerName);
+  currentPage.value = 1; // Reset to first page when removing filter
   updateQueryParams();
   fetchData();
 };
@@ -290,7 +416,7 @@ const goToPage = (page: number) => {
 
 // Computed property to determine if we're in server mode (showing sessions from multiple players)
 const isServerMode = computed(() => {
-  return !props.playerName && (props.serverName || props.mapName);
+  return isServerRoute.value;
 });
 
 // Computed property to flatten rounds into sessions for player/non-server mode
@@ -446,6 +572,13 @@ const initializeFromQuery = () => {
   if (query.gameType && typeof query.gameType === 'string') {
     gameTypeFilter.value = query.gameType;
   }
+  if (query.playerNames) {
+    if (Array.isArray(query.playerNames)) {
+      selectedPlayers.value = query.playerNames.filter(name => typeof name === 'string') as string[];
+    } else if (typeof query.playerNames === 'string') {
+      selectedPlayers.value = query.playerNames.split(',').filter(name => name.trim().length > 0);
+    }
+  }
   
   // Set sorting from query params
   if (query.sortBy && typeof query.sortBy === 'string') {
@@ -475,12 +608,16 @@ const initializeFromQuery = () => {
 
 // Update URL query parameters
 const updateQueryParams = () => {
-  const query: Record<string, string> = {};
+  const query: Record<string, string | string[]> = {};
   
   // Add filters to query
   if (mapFilter.value) query.map = mapFilter.value;
   if (serverFilter.value) query.server = serverFilter.value;
   if (gameTypeFilter.value) query.gameType = gameTypeFilter.value;
+  if (selectedPlayers.value.length > 0) {
+    // Create separate playerNames parameters for each player
+    query.playerNames = selectedPlayers.value;
+  }
   
   // Add sorting to query
   if (sortBy.value !== 'endTime') query.sortBy = sortBy.value;
@@ -544,9 +681,12 @@ const getTimeGap = (currentSession: SessionListItem, nextSession: SessionListIte
 
 // Cleanup when component is unmounted
 onUnmounted(() => {
-  // Clear any pending search timeout
+  // Clear any pending search timeouts
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value);
+  }
+  if (blurTimeout) {
+    clearTimeout(blurTimeout);
   }
 });
 </script>
@@ -557,7 +697,7 @@ onUnmounted(() => {
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div class="flex items-center justify-between">
         <HeroBackButton :on-click="() => {
-          if (props.playerName) {
+          if (isPlayerRoute && props.playerName) {
             $router.push(`/players/${encodeURIComponent(props.playerName)}`);
           } else if (props.serverName) {
             $router.push(`/servers/${encodeURIComponent(props.serverName)}`);
@@ -584,9 +724,9 @@ onUnmounted(() => {
         <!-- Session Info -->
         <div class="flex-grow min-w-0">
           <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-3">
-            <template v-if="props.playerName">{{ props.playerName }}'s Combat History</template>
-            <template v-else-if="props.serverName && props.mapName">{{ props.serverName }} - {{ props.mapName }} Sessions</template>
-            <template v-else-if="props.serverName">{{ props.serverName }} Player Sessions</template>
+            <template v-if="isPlayerRoute">{{ props.playerName }}'s Combat History</template>
+            <template v-else-if="isServerRoute && props.serverName && props.mapName">{{ props.serverName }} - {{ props.mapName }} Sessions</template>
+            <template v-else-if="isServerRoute && props.serverName">{{ props.serverName }} Player Sessions</template>
             <template v-else-if="props.mapName">{{ props.mapName }} Sessions</template>
             <template v-else>Combat History</template>
           </h1>
@@ -645,7 +785,86 @@ onUnmounted(() => {
         <!-- Filter Panel -->
         <div class="mt-4 transition-all duration-300 ease-in-out" :class="showFilters ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 lg:max-h-96 lg:opacity-100 overflow-hidden'">
           <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" :class="props.serverName ? 'lg:grid-cols-3' : 'lg:grid-cols-4'">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" :class="props.serverName ? 'lg:grid-cols-2' : 'lg:grid-cols-3'">
+              <!-- Player Filter -->
+              <div v-if="isServerRoute" class="space-y-2">
+                <label class="block text-sm font-medium text-slate-300">👥 Players</label>
+                <div class="space-y-2">
+                  <!-- Selected Players -->
+                  <div v-if="selectedPlayers.length > 0" class="flex flex-wrap gap-2">
+                    <div
+                      v-for="player in selectedPlayers"
+                      :key="player"
+                      class="inline-flex items-center gap-1 px-2 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-md text-xs text-cyan-400"
+                    >
+                      <span>{{ player }}</span>
+                      <button
+                        @click="removePlayer(player)"
+                        class="hover:text-red-400 transition-colors"
+                        title="Remove player"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Player Search Input -->
+                  <div class="relative">
+                    <input
+                      v-model="playerSearchQuery"
+                      type="text"
+                      placeholder="Search players to add..."
+                      class="w-full px-4 py-3 bg-slate-800 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200"
+                      @input="onPlayerSearchInput"
+                      @focus="onSearchFocus"
+                      @blur="onSearchBlur"
+                    />
+                    
+                    <!-- Loading Spinner -->
+                    <div v-if="isSearchLoading" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div class="w-4 h-4 border-2 border-slate-400/30 border-t-cyan-400 rounded-full animate-spin"></div>
+                    </div>
+                    
+                    <!-- Player Dropdown -->
+                    <div v-if="showPlayerDropdown && playerSuggestions.length > 0" class="absolute top-full mt-1 left-0 right-0 bg-slate-800/95 backdrop-blur-lg rounded-lg border border-slate-600/50 max-h-48 overflow-y-auto shadow-xl z-50">
+                      <div
+                        v-for="player in playerSuggestions"
+                        :key="player.playerName"
+                        class="p-3 hover:bg-slate-700/50 cursor-pointer transition-colors border-b border-slate-700/30 last:border-b-0"
+                        @mousedown.prevent="selectPlayer(player)"
+                      >
+                        <div class="flex items-center justify-between">
+                          <div>
+                            <div class="font-medium text-slate-200">{{ player.playerName }}</div>
+                            <div class="text-xs text-slate-400">{{ formatPlayTime(player.totalPlayTimeMinutes) }} playtime</div>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <span v-if="player.isActive" class="text-xs text-green-400 font-medium">ONLINE</span>
+                            <span v-else class="text-xs text-slate-500">OFFLINE</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Show Only Filtered Players Toggle -->
+                <div v-if="selectedPlayers.length > 0 || (props.playerName && props.playerName.includes(','))" class="mt-3 pt-2 border-t border-slate-700/30">
+                  <label class="flex items-center gap-2 text-sm text-slate-300">
+                    <input 
+                      v-model="showOnlyFilteredPlayers"
+                      type="checkbox"
+                      class="rounded border-slate-600 bg-slate-700 text-cyan-500 focus:ring-cyan-400 focus:ring-offset-0"
+                      @change="currentPage = 1; updateQueryParams(); fetchData()"
+                    />
+                    <span>Show only filtered players in results</span>
+                  </label>
+                  <div class="text-xs text-slate-500 mt-1">
+                    When unchecked, shows all players in rounds where filtered players participated
+                  </div>
+                </div>
+              </div>
+              
               <div class="space-y-2">
                 <label for="mapFilter" class="block text-sm font-medium text-slate-300">🗺️ Battlefield</label>
                 <select 
@@ -824,7 +1043,9 @@ onUnmounted(() => {
                             <tr 
                               v-for="player in round.leaderboard" 
                               :key="player.sessionId"
-                              class="hover:bg-slate-700/20 transition-colors"
+                              :class="selectedPlayers.includes(player.playerName) ? 
+                                'bg-emerald-900/40 border-l-4 border-emerald-400 hover:bg-emerald-900/60 transition-colors' : 
+                                'hover:bg-slate-700/20 transition-colors'"
                             >
                               <!-- Rank -->
                               <td class="px-4 py-3">
@@ -842,7 +1063,9 @@ onUnmounted(() => {
                               <td class="px-4 py-3">
                                 <router-link 
                                   :to="`/players/${encodeURIComponent(player.playerName)}`" 
-                                  class="text-yellow-400 hover:text-yellow-300 transition-colors font-semibold"
+                                  :class="selectedPlayers.includes(player.playerName) ? 
+                                    'text-emerald-300 hover:text-emerald-200 transition-colors font-bold' : 
+                                    'text-yellow-400 hover:text-yellow-300 transition-colors font-semibold'"
                                   @click.stop
                                 >
                                   {{ player.playerName }}
