@@ -746,8 +746,8 @@ const formatPlayTime = (minutes: number): string => {
 const formatTimeRemaining = (timeValue: number): string => {
   if (!timeValue || timeValue < 0) return '-'
   
-  const minutes = Math.floor(timeValue / 100)
-  const seconds = timeValue % 100
+  const minutes = Math.floor(timeValue / 60)
+  const seconds = timeValue % 60
   
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
