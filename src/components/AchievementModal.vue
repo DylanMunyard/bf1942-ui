@@ -296,13 +296,6 @@ const getPlacementSuffix = (place: number): string => {
   return 'th';
 };
 
-const getPlacementEmoji = (place: number): string => {
-  if (place === 1) return '🥇';
-  if (place === 2) return '🥈';
-  if (place === 3) return '🥉';
-  return '🏆';
-};
-
 const getPlacementColor = (place: number): string => {
   if (place === 1) return 'from-yellow-400 to-amber-500';
   if (place === 2) return 'from-gray-300 to-slate-400';

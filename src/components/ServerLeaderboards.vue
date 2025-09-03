@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import type { ServerDetails } from '../services/serverDetailsService';
 import ServerLeaderboard from './ServerLeaderboard.vue';
+import OlympicLeaderboard from './OlympicLeaderboard.vue';
 
 const props = defineProps<{
   serverDetails: ServerDetails | null;
@@ -69,10 +70,74 @@ const currentTopKillRates = computed(() => {
       return props.serverDetails.topKillRatesWeek;
   }
 });
+
+const currentTopPlacements = computed(() => {
+  if (!props.serverDetails) return [];
+  switch (selectedTimePeriod.value) {
+    case 'week':
+      return props.serverDetails.topPlacementsWeek || [];
+    case 'month':
+      return props.serverDetails.topPlacementsMonth || [];
+    case 'alltime':
+      return props.serverDetails.topPlacementsAllTime || [];
+    default:
+      return props.serverDetails.topPlacementsWeek || [];
+  }
+});
 </script>
 
 <template>
   <div class="enhanced-leaderboards-container">
+    <!-- Olympic Placements Leaderboard -->
+    <div 
+      v-if="currentTopPlacements.length > 0" 
+      class="olympic-section"
+    >
+      <div class="olympic-section-header">
+        <div class="section-title">
+          <div class="section-icon">
+            🏆
+          </div>
+          <div>
+            <h3>Olympic Champions</h3>
+            <p class="section-subtitle">Top finishers by placement points</p>
+          </div>
+        </div>
+        <div class="section-controls">
+          <div class="section-time-controls">
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'week' }"
+              @click="toggleTimePeriod('week')"
+            >
+              7 Days
+            </button>
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'month' }"
+              @click="toggleTimePeriod('month')"
+            >
+              30 Days
+            </button>
+            <button 
+              class="enhanced-time-tab"
+              :class="{ 'active': selectedTimePeriod === 'alltime' }"
+              @click="toggleTimePeriod('alltime')"
+            >
+              All Time
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="olympic-content">
+        <OlympicLeaderboard 
+          :players="currentTopPlacements"
+          source="server-olympic-leaderboard"
+        />
+      </div>
+    </div>
+
     <!-- Most Active Players -->
     <div class="enhanced-leaderboard-section">
       <div class="enhanced-section-header">
@@ -333,6 +398,42 @@ const currentTopKillRates = computed(() => {
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   width: 100%;
+}
+
+/* Olympic Section Styles */
+.olympic-section {
+  grid-column: 1 / -1; /* Full width */
+  background: linear-gradient(135deg, 
+    rgba(255, 215, 0, 0.1) 0%,
+    rgba(30, 41, 59, 0.4) 50%,
+    rgba(15, 23, 42, 0.4) 100%
+  );
+  backdrop-filter: blur(16px);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.olympic-section:hover {
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.olympic-section-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.olympic-content {
+  padding: 0;
 }
 
 /* Enhanced Leaderboard Section */

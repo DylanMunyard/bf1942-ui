@@ -32,6 +32,16 @@ export interface TopScore {
   timestamp: string; // ISO date string
 }
 
+export interface TopPlacement {
+  rank: number;
+  playerName: string;
+  firstPlaces: number;
+  secondPlaces: number;
+  thirdPlaces: number;
+  totalPlacements: number;
+  placementPoints: number;
+}
+
 export interface RecentRoundInfo {
   mapName: string;
   startTime: string; // ISO date string  
@@ -140,6 +150,9 @@ export interface ServerDetails {
   topKillRatesWeek: TopScore[]; // Top kill rates last 7 days
   topKillRatesMonth: TopScore[]; // Top kill rates last 30 days
   topKillRatesAllTime: TopScore[]; // Top kill rates all time
+  topPlacementsWeek: TopPlacement[]; // Top placements last 7 days
+  topPlacementsMonth: TopPlacement[]; // Top placements last 30 days
+  topPlacementsAllTime: TopPlacement[]; // Top placements all time
   recentRounds: RecentRoundInfo[];
   region?: string;
   country?: string;
