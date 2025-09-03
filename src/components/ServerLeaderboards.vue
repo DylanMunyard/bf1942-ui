@@ -138,7 +138,7 @@ const currentTopKillRates = computed(() => {
           <div class="section-icon">
             🎯
           </div>
-          <h3>Legendary Performances</h3>
+          <h3>Top Scorers</h3>
         </div>
         <div class="section-controls">
           <div class="section-time-controls">

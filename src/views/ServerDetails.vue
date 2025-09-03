@@ -328,7 +328,7 @@ const handlePeriodChange = async (period: string) => {
           <!-- Server Content -->
           <div v-else-if="serverDetails" class="space-y-6">
 
-            <!-- Server Rankings & Leaderboards - Combined Section -->
+            <!-- Server Rankings & Leaderboards Section -->
             <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
               <div class="px-6 py-4 border-b border-slate-700/50">
                 <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
@@ -336,55 +336,32 @@ const handlePeriodChange = async (period: string) => {
                 </h3>
               </div>
 
-              <!-- Combined Content Layout -->
-              <div class="p-6">
-                <!-- Responsive Grid Layout -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Prominent Full-Width Rankings Button -->
+              <div class="px-6 pt-6 pb-4">
+                <div class="relative group">
+                  <!-- Background Glow Effect -->
+                  <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
                   
-                  <!-- Leaderboard Content (2/3 on desktop, full width on mobile) -->
-                  <div class="lg:col-span-2 order-2 lg:order-1">
-                    <ServerLeaderboards
-                      :server-details="serverDetails"
-                      :server-name="serverName"
-                    />
-                  </div>
-
-                  <!-- Prominent Rankings CTA (1/3 on desktop, full width on mobile) -->
-                  <div class="lg:col-span-1 order-1 lg:order-2">
-                    <div class="sticky top-6">
-                      <!-- Prominent Card Design -->
-                      <div class="relative group">
-                        <!-- Background Glow Effect -->
-                        <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-                        
-                        <!-- Main Card -->
-                        <div class="relative bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-lg p-6 shadow-xl">
-                          <!-- Icon -->
-                          <div class="flex items-center justify-center mb-4">
-                            <div class="text-4xl">🏆</div>
-                          </div>
-
-                          <!-- Content -->
-                          <div class="text-center space-y-4">
-                            <h4 class="text-lg font-bold text-white">
-                              Rankings
-                            </h4>
-
-                            <!-- CTA Button -->
-                            <router-link 
-                              :to="`/servers/${encodeURIComponent(serverName)}/rankings`" 
-                              class="group/btn relative inline-flex items-center justify-center w-full gap-2 overflow-hidden rounded-lg bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 text-white px-4 py-3 font-semibold transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
-                            >
-                              <!-- Button Content -->
-                              <span class="text-sm font-bold">VIEW FULL RANKINGS</span>
-                              <span class="text-lg group-hover/btn:translate-x-1 transition-transform duration-200">→</span>
-                            </router-link>
-                          </div>
-                        </div>
-                      </div>
+                  <!-- Main Button -->
+                  <router-link 
+                    :to="`/servers/${encodeURIComponent(serverName)}/rankings`" 
+                    class="relative group/btn block w-full bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-lg p-4 shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5"
+                  >
+                    <div class="flex items-center justify-center gap-3 text-white">
+                      <span class="text-2xl">🏆</span>
+                      <span class="text-lg font-bold">VIEW FULL RANKINGS</span>
+                      <span class="text-xl group-hover/btn:translate-x-1 transition-transform duration-200">→</span>
                     </div>
-                  </div>
+                  </router-link>
                 </div>
+              </div>
+
+              <!-- Leaderboards Content -->
+              <div class="px-6 pb-6">
+                <ServerLeaderboards
+                  :server-details="serverDetails"
+                  :server-name="serverName"
+                />
               </div>
             </div>
 
