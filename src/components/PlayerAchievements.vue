@@ -629,9 +629,15 @@ onMounted(async () => {
         </div>
         
         <div v-if="flattenedAchievements.length > 36" class="text-center">
-          <button class="text-purple-400 hover:text-purple-300 text-sm font-medium px-6 py-3 bg-slate-700/30 hover:bg-slate-600/50 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-200">
-            View All {{ flattenedAchievements.length }} Achievements
-          </button>
+          <router-link
+            :to="`/players/${encodeURIComponent(props.playerName)}/achievements`"
+            class="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 text-sm font-medium px-6 py-3 bg-slate-700/30 hover:bg-slate-600/50 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-200"
+          >
+            <span>View All {{ flattenedAchievements.length }} Achievements</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </router-link>
         </div>
     </div>
 
