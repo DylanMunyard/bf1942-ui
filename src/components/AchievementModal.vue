@@ -63,7 +63,7 @@
                       <!-- Map Info integrated -->
                       <div class="space-y-2">
                         <p class="text-lg text-slate-300 font-medium">
-                          Achieved in a {{ parsedMetadata.kills }}-kill performance!
+                          Achieved in a {{ parsedMetadata.Kills }}-kill performance!
                         </p>
                         <div v-if="achievement.mapName" class="flex items-center justify-center lg:justify-start gap-2 text-sm">
                           <span class="text-purple-400">🗺️</span>
@@ -90,17 +90,17 @@
                     <!-- Performance Stats -->
                     <div class="flex items-center justify-center lg:justify-start gap-6">
                       <div class="text-center">
-                        <div class="text-2xl font-bold text-green-400">{{ parsedMetadata.kills }}</div>
+                        <div class="text-2xl font-bold text-green-400">{{ parsedMetadata.Kills }}</div>
                         <div class="text-xs text-slate-400 uppercase tracking-wide">Kills</div>
                       </div>
                       <div class="w-px h-8 bg-slate-600"></div>
                       <div class="text-center">
-                        <div class="text-2xl font-bold text-yellow-400">{{ parsedMetadata.score }}</div>
+                        <div class="text-2xl font-bold text-yellow-400">{{ parsedMetadata.Score }}</div>
                         <div class="text-xs text-slate-400 uppercase tracking-wide">Score</div>
                       </div>
                       <div class="w-px h-8 bg-slate-600"></div>
                       <div class="text-center">
-                        <div class="text-lg font-bold text-cyan-400">{{ parsedMetadata.team_label }}</div>
+                        <div class="text-lg font-bold text-cyan-400">{{ parsedMetadata.TeamLabel }}</div>
                         <div class="text-xs text-slate-400 uppercase tracking-wide">Team</div>
                       </div>
                     </div>
@@ -121,7 +121,7 @@
                     <span class="text-blue-400 text-xs">•</span>
                     <span class="text-blue-400 text-xs">Where glory was earned</span>
                   </div>
-                  <p class="text-slate-200 font-medium leading-tight break-words">{{ parsedMetadata.server_name }}</p>
+                  <p class="text-slate-200 font-medium leading-tight break-words">{{ parsedMetadata.ServerName }}</p>
                 </div>
               </div>
             </div>
@@ -133,7 +133,7 @@
                 <div class="flex items-center gap-2">
                   <span class="text-cyan-400 text-sm">⚔️</span>
                   <span class="text-xs text-slate-400 uppercase tracking-wide">Fighting for</span>
-                  <span class="text-cyan-400 font-bold">{{ parsedMetadata.team_label }}</span>
+                  <span class="text-cyan-400 font-bold">{{ parsedMetadata.TeamLabel }}</span>
                 </div>
               </div>
               
@@ -144,7 +144,7 @@
                     <span class="text-green-400 text-sm">🎯</span>
                     <span class="text-xs text-slate-400 uppercase tracking-wide">K/D Ratio</span>
                   </div>
-                  <span class="text-green-400 font-bold">{{ (parsedMetadata.kills / Math.max(1, (parsedMetadata.deaths || 1))).toFixed(2) }}</span>
+                  <span class="text-green-400 font-bold">{{ (parsedMetadata.Kills / Math.max(1, (parsedMetadata.Deaths || 1))).toFixed(2) }}</span>
                 </div>
               </div>
             </div>
