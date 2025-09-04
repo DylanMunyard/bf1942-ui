@@ -30,6 +30,7 @@ const insightsError = ref<string | null>(null);
 const liveServerError = ref<string | null>(null);
 const showPlayersModal = ref(false);
 const currentPeriod = ref('7d');
+const minPlayersForWeighting = ref(15);
 
 // Fetch live server data asynchronously (non-blocking)
 const fetchLiveServerDataAsync = async () => {
@@ -69,7 +70,7 @@ const fetchData = async () => {
   try {
     // Fetch both server details and insights in parallel
     const [detailsResult, insightsResult] = await Promise.allSettled([
-      fetchServerDetails(serverName.value),
+      fetchServerDetails(serverName.value, minPlayersForWeighting.value),
       fetchServerInsights(serverName.value, currentPeriod.value)
     ]);
 
@@ -195,6 +196,28 @@ const handlePeriodChange = async (period: string) => {
     insightsError.value = 'Failed to load server insights for selected period.';
   } finally {
     isInsightsLoading.value = false;
+  }
+};
+
+// Handle min players for weighting update
+const handleMinPlayersUpdate = (value: number) => {
+  minPlayersForWeighting.value = value;
+};
+
+// Refresh server details with current settings
+const refreshServerDetails = async () => {
+  if (!serverName.value) return;
+  
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    serverDetails.value = await fetchServerDetails(serverName.value, minPlayersForWeighting.value);
+  } catch (err) {
+    console.error('Error refreshing server details:', err);
+    error.value = 'Failed to refresh server details. Please try again later.';
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>
@@ -361,6 +384,9 @@ const handlePeriodChange = async (period: string) => {
                 <ServerLeaderboards
                   :server-details="serverDetails"
                   :server-name="serverName"
+                  :min-players-for-weighting="minPlayersForWeighting"
+                  @update-min-players-for-weighting="handleMinPlayersUpdate"
+                  @refresh-data="refreshServerDetails"
                 />
               </div>
             </div>

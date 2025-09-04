@@ -1,7 +1,7 @@
 <template>
-  <div class="olympic-leaderboard">
-    <!-- Olympic Podium for Top 3 -->
-    <div v-if="topThree.length > 0" class="olympic-podium">
+  <div class="placement-leaderboard">
+    <!-- Placement Podium for Top 3 -->
+    <div v-if="topThree.length > 0" class="placement-podium">
       <div class="podium-container">
         <!-- Second Place (Silver) -->
         <div 
@@ -11,7 +11,7 @@
         >
           <div class="podium-player">
             <div class="medal-container">
-              <div class="olympic-medal silver">
+              <div class="podium-medal silver">
                 <span class="medal-emoji">🥈</span>
               </div>
             </div>
@@ -38,7 +38,7 @@
         >
           <div class="podium-player">
             <div class="medal-container">
-              <div class="olympic-medal gold">
+              <div class="podium-medal gold">
                 <span class="medal-emoji">🥇</span>
                 <div class="crown">👑</div>
               </div>
@@ -66,7 +66,7 @@
         >
           <div class="podium-player">
             <div class="medal-container">
-              <div class="olympic-medal bronze">
+              <div class="podium-medal bronze">
                 <span class="medal-emoji">🥉</span>
               </div>
             </div>
@@ -88,11 +88,11 @@
     </div>
 
     <!-- Remaining Players Table -->
-    <div v-if="remainingPlayers.length > 0" class="olympic-table">
+    <div v-if="remainingPlayers.length > 0" class="placement-table">
       <div class="table-header">
         <div class="header-title">
-          <span class="olympic-rings">🏅</span>
-          <span>Olympic Standings</span>
+          <span class="leaderboard-icon">🏅</span>
+          <span>Placement Standings</span>
         </div>
       </div>
       
@@ -137,7 +137,7 @@
     <!-- Empty State -->
     <div v-if="players.length === 0" class="empty-state">
       <div class="empty-icon">🏆</div>
-      <div class="empty-text">No Olympic standings available</div>
+      <div class="empty-text">No placement standings available</div>
     </div>
   </div>
 </template>
@@ -154,7 +154,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  source: 'olympic-leaderboard'
+  source: 'podium-leaderboard'
 });
 
 const router = useRouter();
@@ -176,7 +176,7 @@ const navigateToPlayer = (playerName: string) => {
 </script>
 
 <style scoped>
-.olympic-leaderboard {
+.placement-leaderboard {
   background: linear-gradient(135deg, 
     rgba(255, 215, 0, 0.1) 0%,    /* Gold */
     rgba(192, 192, 192, 0.1) 25%, /* Silver */
@@ -189,8 +189,8 @@ const navigateToPlayer = (playerName: string) => {
   backdrop-filter: blur(16px);
 }
 
-/* Olympic Podium Styles */
-.olympic-podium {
+/* Placement Podium Styles */
+.placement-podium {
   padding: 2rem 1rem 1rem;
   background: linear-gradient(180deg, 
     rgba(255, 215, 0, 0.05) 0%, 
@@ -234,7 +234,7 @@ const navigateToPlayer = (playerName: string) => {
   position: relative;
 }
 
-.olympic-medal {
+.podium-medal {
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -366,8 +366,8 @@ const navigateToPlayer = (playerName: string) => {
 .second-place { order: 1; }
 .third-place { order: 3; }
 
-/* Olympic Table Styles */
-.olympic-table {
+/* Placement Table Styles */
+.placement-table {
   margin-top: 1rem;
 }
 
@@ -387,7 +387,7 @@ const navigateToPlayer = (playerName: string) => {
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
-.olympic-rings {
+.leaderboard-icon {
   font-size: 1.3rem;
 }
 
@@ -472,14 +472,47 @@ const navigateToPlayer = (playerName: string) => {
   font-size: 1.1rem;
 }
 
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .podium-container {
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    /* Change to vertical stack on mobile to avoid confusing 2-1-3 order */
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
   }
   
-  .olympic-medal {
+  /* Reset order for mobile - show in proper 1, 2, 3 sequence */
+  .first-place { order: 1; }
+  .second-place { order: 2; }
+  .third-place { order: 3; }
+  
+  .podium-position {
+    flex-direction: row;
+    gap: 1rem;
+    width: 100%;
+    max-width: 320px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 1rem;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .podium-player {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    margin-bottom: 0;
+    flex: 1;
+  }
+  
+  .medal-container {
+    margin-bottom: 0;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+  
+  .podium-medal {
     width: 60px;
     height: 60px;
   }
@@ -488,24 +521,123 @@ const navigateToPlayer = (playerName: string) => {
     font-size: 1.5rem;
   }
   
-  .podium-base {
-    width: 80px;
+  .player-info {
+    text-align: left;
+    min-width: auto;
+    flex: 1;
   }
   
-  .gold-base { height: 100px; }
-  .silver-base { height: 75px; }
-  .bronze-base { height: 60px; }
+  .player-name {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
   
-  .table-row {
-    grid-template-columns: 50px 1fr 120px 70px;
+  .placement-stats {
+    font-size: 0.8rem;
+  }
+  
+  .medal-count {
+    justify-content: flex-start;
+    flex-wrap: wrap;
     gap: 0.5rem;
-    padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Hide podium bases on mobile */
+  .podium-base {
+    display: none;
+  }
+  
+  /* Mobile-friendly table - simple cards like the podium style */
+  .table-row {
+    display: block;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    width: 100%;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  
+  .table-row:hover {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  .table-header-row {
+    display: none; /* Hide table header on mobile */
+  }
+  
+  /* Rank badge in top right */
+  .rank-col {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: rgba(255, 215, 0, 0.2);
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    border-radius: 50%;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #FFD700;
+  }
+  
+  /* Player name - first line, prominent */
+  .player-col {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+    padding-right: 2.5rem; /* Space for rank badge */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  }
+  
+  /* Medal counts - second line, clean without emoji */
+  .medals-col {
+    margin-bottom: 0.5rem;
   }
   
   .medal-breakdown {
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.7rem;
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .medal-item.gold { color: #FFD700; }
+  .medal-item.silver { color: #C0C0C0; }
+  .medal-item.bronze { color: #CD7F32; }
+  
+  /* Points - third line */
+  .points-col {
+    text-align: left;
+  }
+  
+  .points-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #FFD700;
+  }
+  
+  .points-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-left: 0.25rem;
+  }
+  
+  .player-row {
+    position: relative;
   }
 }
 </style>
+

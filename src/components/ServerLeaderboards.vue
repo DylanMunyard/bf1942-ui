@@ -7,12 +7,30 @@ import OlympicLeaderboard from './OlympicLeaderboard.vue';
 const props = defineProps<{
   serverDetails: ServerDetails | null;
   serverName: string;
+  minPlayersForWeighting?: number;
+}>();
+
+const emit = defineEmits<{
+  updateMinPlayersForWeighting: [value: number];
+  refreshData: [];
 }>();
 
 const selectedTimePeriod = ref<'week' | 'month' | 'alltime'>('week');
+const showWeightedPlacements = ref(true);
+const localMinPlayersForWeighting = ref(props.minPlayersForWeighting || 15);
 
 const toggleTimePeriod = (period: 'week' | 'month' | 'alltime') => {
   selectedTimePeriod.value = period;
+};
+
+const togglePlacementType = () => {
+  showWeightedPlacements.value = !showWeightedPlacements.value;
+};
+
+const updateMinPlayersWeighting = (value: number) => {
+  localMinPlayersForWeighting.value = value;
+  emit('updateMinPlayersForWeighting', value);
+  emit('refreshData');
 };
 
 const currentMostActivePlayers = computed(() => {
@@ -73,16 +91,56 @@ const currentTopKillRates = computed(() => {
 
 const currentTopPlacements = computed(() => {
   if (!props.serverDetails) return [];
-  switch (selectedTimePeriod.value) {
-    case 'week':
-      return props.serverDetails.topPlacementsWeek || [];
-    case 'month':
-      return props.serverDetails.topPlacementsMonth || [];
-    case 'alltime':
-      return props.serverDetails.topPlacementsAllTime || [];
-    default:
-      return props.serverDetails.topPlacementsWeek || [];
+  
+  // Use weighted placements if available and toggle is on
+  if (showWeightedPlacements.value) {
+    switch (selectedTimePeriod.value) {
+      case 'week':
+        return props.serverDetails.weightedTopPlacementsWeek || props.serverDetails.topPlacementsWeek || [];
+      case 'month':
+        return props.serverDetails.weightedTopPlacementsMonth || props.serverDetails.topPlacementsMonth || [];
+      case 'alltime':
+        return props.serverDetails.weightedTopPlacementsAllTime || props.serverDetails.topPlacementsAllTime || [];
+      default:
+        return props.serverDetails.weightedTopPlacementsWeek || props.serverDetails.topPlacementsWeek || [];
+    }
+  } else {
+    // Use regular placements
+    switch (selectedTimePeriod.value) {
+      case 'week':
+        return props.serverDetails.topPlacementsWeek || [];
+      case 'month':
+        return props.serverDetails.topPlacementsMonth || [];
+      case 'alltime':
+        return props.serverDetails.topPlacementsAllTime || [];
+      default:
+        return props.serverDetails.topPlacementsWeek || [];
+    }
   }
+});
+
+// Check if we have any placement data at all (weighted or regular) for any time period
+const hasAnyPlacementData = computed(() => {
+  if (!props.serverDetails) return false;
+  
+  return !!(
+    props.serverDetails.topPlacementsWeek?.length ||
+    props.serverDetails.topPlacementsMonth?.length ||
+    props.serverDetails.topPlacementsAllTime?.length ||
+    props.serverDetails.weightedTopPlacementsWeek?.length ||
+    props.serverDetails.weightedTopPlacementsMonth?.length ||
+    props.serverDetails.weightedTopPlacementsAllTime?.length
+  );
+});
+
+const placementTypeLabel = computed(() => {
+  return showWeightedPlacements.value ? 'High-Stakes Champions' : 'Olympic Champions';
+});
+
+const placementTypeSubtitle = computed(() => {
+  return showWeightedPlacements.value 
+    ? `Top performers in rounds with ${localMinPlayersForWeighting.value}+ players`
+    : 'Most podium finishes';
 });
 </script>
 
@@ -90,20 +148,48 @@ const currentTopPlacements = computed(() => {
   <div class="enhanced-leaderboards-container">
     <!-- Olympic Placements Leaderboard -->
     <div 
-      v-if="currentTopPlacements.length > 0" 
+      v-if="hasAnyPlacementData" 
       class="olympic-section"
     >
       <div class="olympic-section-header">
         <div class="section-title">
           <div class="section-icon">
-            🏆
+            {{ showWeightedPlacements ? '🏅' : '🏆' }}
           </div>
           <div>
-            <h3>Olympic Champions</h3>
-            <p class="section-subtitle">Top finishers by placement points</p>
+            <h3>{{ placementTypeLabel }}</h3>
+            <p class="section-subtitle">{{ placementTypeSubtitle }}</p>
           </div>
         </div>
         <div class="section-controls">
+          <!-- Placement Type Toggle -->
+          <div class="placement-type-controls">
+            <button 
+              class="placement-toggle-btn"
+              :class="{ 'active': showWeightedPlacements }"
+              @click="togglePlacementType"
+              title="Toggle between weighted and regular placements"
+            >
+              {{ showWeightedPlacements ? 'High-Stakes' : 'All Rounds' }}
+            </button>
+            
+            <!-- Min Players Control (only show when weighted is active) -->
+            <div v-if="showWeightedPlacements" class="min-players-control">
+              <label class="min-players-label">Min Players:</label>
+              <select 
+                :value="localMinPlayersForWeighting" 
+                @change="updateMinPlayersWeighting(parseInt(($event.target as HTMLSelectElement).value))"
+                class="min-players-select"
+              >
+                <option value="10">10+</option>
+                <option value="15">15+</option>
+                <option value="20">20+</option>
+                <option value="25">25+</option>
+                <option value="30">30+</option>
+              </select>
+            </div>
+          </div>
+          
           <div class="section-time-controls">
             <button 
               class="enhanced-time-tab"
@@ -132,9 +218,27 @@ const currentTopPlacements = computed(() => {
       
       <div class="olympic-content">
         <OlympicLeaderboard 
+          v-if="currentTopPlacements.length > 0"
           :players="currentTopPlacements"
           source="server-olympic-leaderboard"
         />
+        
+        <!-- No data message for current selection -->
+        <div 
+          v-else 
+          class="no-placement-data"
+        >
+          <div class="no-data-icon">{{ showWeightedPlacements ? '🏅' : '🏆' }}</div>
+          <div class="no-data-text">
+            <h4>No {{ placementTypeLabel.toLowerCase() }} data available</h4>
+            <p v-if="showWeightedPlacements">
+              Try lowering the minimum player requirement or switch to "All Rounds" to see regular placement data.
+            </p>
+            <p v-else>
+              No placement data available for this time period.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -305,12 +409,12 @@ const currentTopPlacements = computed(() => {
         <ServerLeaderboard 
           :players="currentTopKDRatios.map(player => ({
             playerName: player.playerName,
-            score: player.kdRatio,
+            score: player.kdRatio || 0,
             kills: player.kills,
             deaths: player.deaths,
             mapName: player.mapName,
             timestamp: player.timestamp,
-            totalRounds: player.totalRounds
+            totalRounds: player.totalRounds || 0
           }))"
           source="server-leaderboards"
           score-label="Ratio"
@@ -372,12 +476,12 @@ const currentTopPlacements = computed(() => {
         <ServerLeaderboard 
           :players="currentTopKillRates.map(player => ({
             playerName: player.playerName,
-            score: player.killRate,
+            score: player.killRate || 0,
             kills: player.kills,
             deaths: player.deaths,
             mapName: player.mapName,
             timestamp: player.timestamp,
-            totalRounds: player.totalRounds
+            totalRounds: player.totalRounds || 0
           }))"
           source="server-leaderboards"
           score-label="Kills/Min"
@@ -427,13 +531,115 @@ const currentTopPlacements = computed(() => {
   border-bottom: 1px solid rgba(255, 215, 0, 0.3);
   background: rgba(0, 0, 0, 0.2);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.placement-type-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.placement-toggle-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 0.5rem;
+  color: rgba(255, 215, 0, 0.8);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.placement-toggle-btn:hover {
+  background: rgba(30, 41, 59, 1);
+  border-color: rgba(255, 215, 0, 0.5);
+  color: rgba(255, 215, 0, 1);
+}
+
+.placement-toggle-btn.active {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.2) 100%);
+  border-color: #FFD700;
+  color: #FFD700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.min-players-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.min-players-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.min-players-select {
+  padding: 0.25rem 0.5rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 0.375rem;
+  color: #FFD700;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.min-players-select:hover,
+.min-players-select:focus {
+  border-color: rgba(255, 215, 0, 0.5);
+  outline: none;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.section-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
 }
 
 .olympic-content {
   padding: 0;
+}
+
+/* No placement data styles */
+.no-placement-data {
+  padding: 3rem 2rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.no-data-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+.no-data-text h4 {
+  margin: 0 0 1rem 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.no-data-text p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 /* Enhanced Leaderboard Section */
@@ -561,6 +767,29 @@ const currentTopPlacements = computed(() => {
     flex-direction: column;
     gap: 0.5rem;
     align-items: stretch;
+    width: 100%;
+  }
+  
+  .placement-type-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+    margin-bottom: 0;
+  }
+  
+  .placement-toggle-btn {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .min-players-control {
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .min-players-select {
+    flex: 1;
+    max-width: 80px;
   }
 
   .section-time-controls {
@@ -571,6 +800,17 @@ const currentTopPlacements = computed(() => {
     flex: 1;
     padding: 0.375rem 0.5rem;
     font-size: 0.6875rem;
+  }
+  
+  /* Olympic section header mobile adjustments */
+  .olympic-section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .olympic-section-header .section-controls {
+    align-items: stretch;
   }
 
 }

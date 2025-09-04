@@ -153,6 +153,10 @@ export interface ServerDetails {
   topPlacementsWeek: TopPlacement[]; // Top placements last 7 days
   topPlacementsMonth: TopPlacement[]; // Top placements last 30 days
   topPlacementsAllTime: TopPlacement[]; // Top placements all time
+  // Weighted placement leaderboards (prioritizing performance in higher population rounds)
+  weightedTopPlacementsWeek: TopPlacement[]; // Weighted top placements last 7 days
+  weightedTopPlacementsMonth: TopPlacement[]; // Weighted top placements last 30 days
+  weightedTopPlacementsAllTime: TopPlacement[]; // Weighted top placements all time
   recentRounds: RecentRoundInfo[];
   region?: string;
   country?: string;
@@ -166,14 +170,25 @@ export interface ServerDetails {
 /**
  * Fetches server details from the API
  * @param serverName The name of the server to fetch details for
+ * @param minPlayersForWeighting Optional minimum players required for weighted placements
  * @returns Server details
  */
 export async function fetchServerDetails(
-  serverName: string
+  serverName: string,
+  minPlayersForWeighting?: number
 ): Promise<ServerDetails> {
   try {
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (minPlayersForWeighting !== undefined) {
+      params.set('minPlayersForWeighting', minPlayersForWeighting.toString());
+    }
+    
+    // Build URL with query parameters
+    const url = `/stats/servers/${encodeURIComponent(serverName)}${params.toString() ? `?${params.toString()}` : ''}`;
+    
     // Make the request to the API endpoint
-    const response = await axios.get<ServerDetails>(`/stats/servers/${encodeURIComponent(serverName)}`);
+    const response = await axios.get<ServerDetails>(url);
 
     // Return the response data
     return response.data;
