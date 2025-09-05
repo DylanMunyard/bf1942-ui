@@ -5,6 +5,7 @@ import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import AchievementModal from '../components/AchievementModal.vue';
 import { formatLastSeen } from '@/utils/timeUtils';
+import { getAchievementImageFromObject } from '@/utils/achievementImageUtils';
 
 
 // Register Chart.js components
@@ -912,12 +913,8 @@ const closeMilestoneAchievementsModal = () => {
   selectedMilestonePlayer.value = null;
 };
 
-const getAchievementImage = (achievementId: string): string => {
-  try {
-    return new URL(`../assets/achievements/${achievementId}.png`, import.meta.url).href;
-  } catch {
-    return new URL('../assets/achievements/kill_streak_10.png', import.meta.url).href;
-  }
+const getAchievementImage = (achievementId: string, tier?: string): string => {
+  return getAchievementImageFromObject({ achievementId, tier });
 };
 
 const getTierColor = (tier: string): string => {
@@ -2056,7 +2053,7 @@ const formatRelativeTime = (dateString: string): string => {
                 <div class="text-center space-y-3">
                   <div class="mx-auto w-16 h-16 rounded-lg overflow-hidden bg-slate-700/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <img
-                      :src="getAchievementImage(achievement.achievementId)"
+                      :src="getAchievementImage(achievement.achievementId, achievement.tier)"
                       :alt="achievement.achievementName"
                       class="w-full h-full object-contain"
                       @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
@@ -2103,7 +2100,7 @@ const formatRelativeTime = (dateString: string): string => {
                 <div class="text-center space-y-3">
                   <div class="mx-auto w-16 h-16 rounded-lg overflow-hidden bg-slate-700/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <img
-                      :src="getAchievementImage(achievement.achievementId)"
+                      :src="getAchievementImage(achievement.achievementId, achievement.tier)"
                       :alt="achievement.achievementName"
                       class="w-full h-full object-contain"
                       @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"

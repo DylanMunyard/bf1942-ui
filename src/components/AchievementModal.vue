@@ -44,7 +44,7 @@
                   <!-- Achievement Image -->
                   <div class="flex-shrink-0">
                     <img 
-                      :src="getAchievementImage(achievement.achievementId)" 
+                      :src="getAchievementImage(achievement.achievementId, achievement.tier)" 
                       :alt="achievement.achievementName"
                       class="w-32 h-40 object-contain drop-shadow-2xl transform hover:scale-105 transition-transform duration-300"
                     />
@@ -156,7 +156,7 @@
             <div class="flex flex-col items-center">
               <div class="relative">
                 <img 
-                  :src="getAchievementImage(achievement.achievementId)" 
+                  :src="getAchievementImage(achievement.achievementId, achievement.tier)" 
                   :alt="achievement.achievementName"
                   class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50"
                 />
@@ -203,6 +203,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { getBadgeDescription } from '@/services/badgeService';
+import { getAchievementImageFromObject } from '@/utils/achievementImageUtils';
 
 interface Achievement {
   achievementId: string;
@@ -262,12 +263,8 @@ const formatRelativeTime = (dateString: string): string => {
   }
 };
 
-const getAchievementImage = (achievementId: string): string => {
-  try {
-    return new URL(`../assets/achievements/${achievementId}.png`, import.meta.url).href;
-  } catch {
-    return new URL('../assets/achievements/kill_streak_10.png', import.meta.url).href;
-  }
+const getAchievementImage = (achievementId: string, tier?: string): string => {
+  return getAchievementImageFromObject({ achievementId, tier });
 };
 
 const badgeDescription = computed(() => {

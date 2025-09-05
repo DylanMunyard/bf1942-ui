@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { getBadgeDescription } from '@/services/badgeService';
+import { getAchievementImageFromObject } from '@/utils/achievementImageUtils';
 import AchievementModal from '../components/AchievementModal.vue';
 import StreakModal from '../components/StreakModal.vue';
 import HeroBackButton from '../components/HeroBackButton.vue';
@@ -167,12 +168,8 @@ const formatRelativeTime = (dateString: string): string => {
   }
 };
 
-const getAchievementImage = (achievementId: string): string => {
-  try {
-    return new URL(`../assets/achievements/${achievementId}.png`, import.meta.url).href;
-  } catch {
-    return new URL('../assets/achievements/kill_streak_10.png', import.meta.url).href;
-  }
+const getAchievementImage = (achievementId: string, tier?: string): string => {
+  return getAchievementImageFromObject({ achievementId, tier });
 };
 
 const getTierColor = (tier: string): string => {
@@ -715,7 +712,7 @@ const getTierDotClass = (tier: string): string => {
                         <div class="relative p-4 flex justify-center">
                           <div class="relative">
                             <img 
-                              :src="getAchievementImage(group.achievement.achievementId)" 
+                              :src="getAchievementImage(group.achievement.achievementId, group.achievement.tier)" 
                               :alt="group.achievement.achievementName"
                               class="w-16 h-16 object-contain rounded-lg group-hover:scale-110 transition-transform duration-300"
                               @error="(e) => { (e.target as HTMLImageElement).src = getAchievementImage('kill_streak_10'); }"
@@ -919,7 +916,7 @@ const getTierDotClass = (tier: string): string => {
         <div class="flex items-start justify-between p-6 border-b border-slate-700/50">
           <div class="flex items-center gap-4">
             <img 
-              :src="getAchievementImage(selectedAchievementGroup.achievement.achievementId)" 
+              :src="getAchievementImage(selectedAchievementGroup.achievement.achievementId, selectedAchievementGroup.achievement.tier)" 
               :alt="selectedAchievementGroup.achievement.achievementName"
               class="w-16 h-16 rounded-lg object-contain"
             >

@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { getBadgeDescription, isBadgeServiceInitialized } from '@/services/badgeService';
+import { getAchievementImageFromObject } from '@/utils/achievementImageUtils';
 
 interface Streak {
   playerName: string;
@@ -33,12 +34,8 @@ const emit = defineEmits<{
 const router = useRouter();
 const badgeServiceReady = computed(() => isBadgeServiceInitialized());
 
-const getAchievementImage = (achievementId: string): string => {
-  try {
-    return new URL(`../assets/achievements/${achievementId}.png`, import.meta.url).href;
-  } catch {
-    return new URL('../assets/achievements/kill_streak_10.png', import.meta.url).href;
-  }
+const getAchievementImage = (achievementId: string, tier?: string): string => {
+  return getAchievementImageFromObject({ achievementId, tier });
 };
 
 const formatRelativeTime = (dateString: string): string => {

@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { PlayerTimeStatistics } from '@/types/playerStatsTypes';
 import { getBadgeDescription, isBadgeServiceInitialized } from '@/services/badgeService';
+import { getAchievementImageFromObject } from '@/utils/achievementImageUtils';
 import AchievementModal from './AchievementModal.vue';
 import StreakModal from './StreakModal.vue';
 
@@ -52,6 +53,7 @@ interface GamificationData {
   recentAchievements: Achievement[];
   allBadges: Achievement[];
   milestones: Achievement[];
+  teamVictories: Achievement[];
   bestStreaks: BestStreaks;
   lastCalculated: string;
 }
@@ -135,12 +137,8 @@ const formatRelativeTime = (dateString: string): string => {
   }
 };
 
-const getAchievementImage = (achievementId: string): string => {
-  try {
-    return new URL(`../assets/achievements/${achievementId}.png`, import.meta.url).href;
-  } catch {
-    return new URL('../assets/achievements/kill_streak_10.png', import.meta.url).href;
-  }
+const getAchievementImage = (achievementId: string, tier?: string): string => {
+  return getAchievementImageFromObject({ achievementId, tier });
 };
 
 const getTierColor = (tier: string): string => {
@@ -223,10 +221,11 @@ const combinedStreaks = computed(() => {
 const flattenedAchievements = computed(() => {
   if (!gamificationData.value) return [];
   
-  // Show both milestones and all badges in the Achievement Timeline
+  // Show milestones, all badges, and team victories in the Achievement Timeline
   const allAchievements = [
     ...gamificationData.value.milestones,
-    ...gamificationData.value.allBadges
+    ...gamificationData.value.allBadges,
+    ...(gamificationData.value.teamVictories || [])
   ];
   
   return allAchievements.sort((a, b) => 
@@ -234,13 +233,14 @@ const flattenedAchievements = computed(() => {
   );
 });
 
-// Count achievements that are NOT kill streaks (i.e., milestones and other badges)
+// Count achievements that are NOT kill streaks (i.e., milestones, badges, and team victories)
 const nonStreakAchievements = computed(() => {
   if (!gamificationData.value) return 0;
   
   const allAchievements = [
     ...gamificationData.value.milestones,
-    ...gamificationData.value.allBadges
+    ...gamificationData.value.allBadges,
+    ...(gamificationData.value.teamVictories || [])
   ];
   
   // Filter out kill streak achievements
@@ -524,7 +524,7 @@ onMounted(async () => {
               <div class="flex flex-col items-center text-center space-y-4">
                 <div class="relative">
                   <img 
-                    :src="getAchievementImage(gamificationData.recentAchievements[0].achievementId)" 
+                    :src="getAchievementImage(gamificationData.recentAchievements[0].achievementId, gamificationData.recentAchievements[0].tier)" 
                     :alt="gamificationData.recentAchievements[0].achievementName"
                     class="w-24 h-32 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg"
                   />
@@ -620,7 +620,7 @@ onMounted(async () => {
             
             <div class="relative z-10 p-2 flex items-center justify-center h-full">
               <img 
-                :src="getAchievementImage(achievement.achievementId)" 
+                :src="getAchievementImage(achievement.achievementId, achievement.tier)" 
                 :alt="achievement.achievementName"
                 class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
               />
