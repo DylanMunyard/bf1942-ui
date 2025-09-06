@@ -97,3 +97,19 @@ export function getBadgesByTier(tier: string): BadgeDefinition[] {
 export function isBadgeServiceInitialized(): boolean {
   return isInitialized;
 }
+
+/**
+ * Get tier-specific requirement description for an achievement
+ * @param achievementId The ID of the achievement
+ * @param tier The tier to get requirements for
+ * @returns The tier requirement description or null if not found
+ */
+export function getTierRequirement(achievementId: string, tier: string): string | null {
+  const badge = getBadgeDefinition(achievementId);
+  if (!badge?.requirements?.performance_tiers) {
+    return null;
+  }
+
+  const normalizedTier = tier.toLowerCase() as keyof typeof badge.requirements.performance_tiers;
+  return badge.requirements.performance_tiers[normalizedTier] || null;
+}

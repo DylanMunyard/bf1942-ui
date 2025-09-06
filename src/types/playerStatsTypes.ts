@@ -285,6 +285,15 @@ export interface BadgeDefinition {
   tier: string;
   category: string;
   description: string;
+  requirements?: {
+    [key: string]: any;
+    performance_tiers?: {
+      legend?: string;
+      gold?: string;
+      silver?: string;
+      bronze?: string;
+    };
+  };
 }
 
 export interface BestScoreEntry {

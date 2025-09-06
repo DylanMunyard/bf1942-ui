@@ -909,97 +909,143 @@ const getTierDotClass = (tier: string): string => {
       @click="closeGroupModal"
     >
       <div
-        class="bg-slate-800/90 backdrop-blur-sm rounded-lg border border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        class="relative bg-slate-800/90 backdrop-blur-sm rounded-2xl border border-slate-700/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         @click.stop
       >
-        <!-- Modal Header -->
-        <div class="flex items-start justify-between p-6 border-b border-slate-700/50">
-          <div class="flex items-center gap-4">
-            <img 
-              :src="getAchievementImage(selectedAchievementGroup.achievement.achievementId, selectedAchievementGroup.achievement.tier)" 
-              :alt="selectedAchievementGroup.achievement.achievementName"
-              class="w-16 h-16 rounded-lg object-contain"
-            >
-            <div>
-              <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
-                {{ selectedAchievementGroup.achievement.achievementName }}
-              </h3>
-              <p class="text-slate-400 mt-1">
-                Achieved {{ selectedAchievementGroup.count }} time{{ selectedAchievementGroup.count !== 1 ? 's' : '' }}
-              </p>
+        <!-- Header with achievement title -->
+        <div class="flex justify-between items-start p-6 border-b border-slate-700/50">
+          <div class="flex-1">
+            <h3 class="text-2xl font-bold text-yellow-400 mb-2">
+              {{ selectedAchievementGroup.achievement.achievementName }}
+            </h3>
+            <div class="text-slate-400 text-sm">
+              <span class="font-medium text-slate-300 mr-1">Achieved:</span>
+              {{ selectedAchievementGroup.count }} time{{ selectedAchievementGroup.count !== 1 ? 's' : '' }}
+              <span class="text-slate-500 italic ml-2">(Multiple instances)</span>
             </div>
           </div>
           <button
+            class="text-slate-400 hover:text-white transition-colors duration-200 text-3xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-700/50"
             @click="closeGroupModal"
-            class="p-2 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-400 hover:text-white"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            &times;
           </button>
         </div>
         
-        <!-- Modal Body -->
+        <!-- Modal body -->
         <div class="p-6">
-          <!-- Badge Description -->
-          <div
-            v-if="getBadgeDescription(selectedAchievementGroup.achievement.achievementId)"
-            class="mb-6 p-4 bg-slate-700/30 rounded-lg border border-slate-600/30"
-          >
-            <h4 class="text-sm font-semibold text-slate-300 mb-2">Description</h4>
-            <p class="text-slate-400 text-sm">{{ getBadgeDescription(selectedAchievementGroup.achievement.achievementId) }}</p>
-          </div>
-          
-          <!-- Achievement Instances Timeline -->
-          <div class="space-y-3">
-            <h4 class="text-sm font-semibold text-slate-300 mb-4">Achievement History</h4>
-            <template
-              v-for="(achievement, index) in selectedAchievementGroup.allAchievements.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())"
-              :key="index"
-            >
-              <!-- Achievement Instance -->
-              <div class="flex items-start gap-3">
-                <!-- Timeline Dot -->
-                <div class="flex-shrink-0 mt-2">
-                  <div class="w-2 h-2 bg-amber-400 rounded-full"></div>
-                </div>
+          <!-- Achievement Hero Section -->
+          <div class="space-y-6">
+            <!-- Achievement image with description overlay -->
+            <div class="flex flex-col items-center">
+              <div class="relative">
+                <img 
+                  :src="getAchievementImage(selectedAchievementGroup.achievement.achievementId, selectedAchievementGroup.achievement.tier)" 
+                  :alt="selectedAchievementGroup.achievement.achievementName"
+                  class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50"
+                />
                 
-                <!-- Achievement Card -->
-                <div 
-                  class="flex-1 bg-slate-800/50 rounded-lg p-4 border border-slate-700/50 hover:border-amber-500/30 transition-colors cursor-pointer"
-                  :class="achievement.serverGuid && achievement.mapName && achievement.achievedAt ? 'hover:bg-slate-700/50' : ''"
-                  @click="achievement.serverGuid && achievement.mapName && achievement.achievedAt ? navigateToRoundReport(achievement) : null"
+                <!-- Badge Description Overlay -->
+                <div
+                  v-if="getBadgeDescription(selectedAchievementGroup.achievement.achievementId)"
+                  class="absolute bottom-0 left-0 right-0 bg-slate-900/70 backdrop-blur-sm rounded-b-2xl p-4"
                 >
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-amber-400 font-medium text-sm">{{ formatRelativeTime(achievement.achievedAt) }}</span>
-                    <span class="text-slate-500 text-xs">{{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleString() }}</span>
-                  </div>
-                  <div v-if="achievement.mapName" class="flex items-center gap-2 text-sm">
-                    <span class="text-slate-400">📍</span>
-                    <span class="text-white font-medium">{{ achievement.mapName }}</span>
-                    <span v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt" class="text-xs text-slate-500">(Click to view round report)</span>
-                  </div>
-                  <div v-if="achievement.value" class="mt-2">
-                    <span class="text-xs text-slate-400">Value: </span>
-                    <span class="text-xs font-mono bg-slate-700/50 px-2 py-1 rounded text-slate-300">{{ achievement.value.toLocaleString() }}</span>
-                  </div>
+                  <p class="text-white text-sm leading-relaxed font-medium text-center drop-shadow-lg">{{ getBadgeDescription(selectedAchievementGroup.achievement.achievementId) }}</p>
                 </div>
               </div>
+            </div>
+            
+            <!-- Achievement Timeline -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="w-3 h-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse"></div>
+                <h4 class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+                  Achievement History
+                </h4>
+                <div class="px-3 py-1 bg-slate-700/50 backdrop-blur-sm rounded-full text-sm text-slate-400 border border-slate-600/50">
+                  {{ selectedAchievementGroup.count }} instances
+                </div>
+                <div class="flex-1 h-px bg-gradient-to-r from-slate-600/50 to-transparent"></div>
+              </div>
+              
+              <div class="space-y-4">
+                <template
+                  v-for="(achievement, index) in selectedAchievementGroup.allAchievements.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())"
+                  :key="index"
+                >
+                  <!-- Achievement Instance Card -->
+                  <div class="relative">
+                    <!-- Timeline connector -->
+                    <div v-if="index < selectedAchievementGroup.allAchievements.length - 1" class="absolute left-4 top-16 w-0.5 h-8 bg-gradient-to-b from-amber-400/50 to-transparent"></div>
+                    
+                    <div class="flex items-start gap-4">
+                      <!-- Timeline Dot -->
+                      <div class="flex-shrink-0 mt-3">
+                        <div class="w-3 h-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full shadow-lg" :class="getTierDotClass(achievement.tier)"></div>
+                      </div>
+                      
+                      <!-- Achievement Card -->
+                      <div 
+                        class="flex-1 group relative bg-gradient-to-br from-slate-800/50 to-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-amber-500/30 overflow-hidden transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-xl"
+                        :class="[
+                          getTierBorderClass(achievement.tier),
+                          achievement.serverGuid && achievement.mapName && achievement.achievedAt ? 'cursor-pointer' : ''
+                        ]"
+                        @click="achievement.serverGuid && achievement.mapName && achievement.achievedAt ? navigateToRoundReport(achievement) : null"
+                      >
+                        <!-- Tier Glow Effect -->
+                        <div class="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-300" :class="getTierGlowClass(achievement.tier)"></div>
+                        
+                        <div class="relative z-10 p-4">
+                          <!-- Header with time and value -->
+                          <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                              <span class="text-amber-400 font-semibold text-sm">{{ formatRelativeTime(achievement.achievedAt) }}</span>
+                              <div class="w-1 h-1 bg-slate-500 rounded-full"></div>
+                              <span class="text-slate-500 text-xs">{{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleDateString() }}</span>
+                            </div>
+                            <div v-if="achievement.value" class="px-3 py-1 bg-slate-700/50 text-slate-300 rounded-full text-xs font-mono">
+                              {{ achievement.value.toLocaleString() }}
+                            </div>
+                          </div>
+                          
+                          <!-- Map info (if available) -->
+                          <div v-if="achievement.mapName" class="flex items-center gap-2 text-sm mb-2">
+                            <span class="text-purple-400">🗺️</span>
+                            <span class="text-slate-300 font-medium">{{ achievement.mapName }}</span>
+                            <span v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt" class="text-xs text-slate-500 italic">
+                              (Click to view round report)
+                            </span>
+                          </div>
+                          
+                          <!-- Full timestamp -->
+                          <div class="text-xs text-slate-500 mt-2 pt-2 border-t border-slate-700/50">
+                            {{ new Date(achievement.achievedAt.endsWith('Z') ? achievement.achievedAt : achievement.achievedAt + 'Z').toLocaleString() }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-              <!-- Time Gap Indicator -->
-              <div v-if="index < selectedAchievementGroup.allAchievements.length - 1 && getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1])" class="flex items-center gap-2 py-2 text-xs text-slate-500">
-                <div class="w-2 flex justify-center">
-                  <div class="w-px h-4 bg-slate-600"></div>
+                    <!-- Time Gap Indicator -->
+                    <div v-if="index < selectedAchievementGroup.allAchievements.length - 1 && getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1])" class="flex items-center gap-3 py-3 ml-4 text-xs text-slate-500">
+                      <div class="w-3 flex justify-center">
+                        <div class="w-px h-6 bg-gradient-to-b from-slate-600 to-transparent"></div>
+                      </div>
+                      <div class="flex-1 flex items-center gap-2">
+                        <div class="flex-1 border-t border-dashed border-slate-600/50"></div>
+                        <span class="px-3 py-1 bg-slate-800/70 backdrop-blur-sm rounded-full text-slate-400 border border-slate-700/50">
+                          {{ getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1]) }}
+                        </span>
+                        <div class="flex-1 border-t border-dashed border-slate-600/50"></div>
+                      </div>
+                    </div>
+                  </div>
+                  </template>
                 </div>
-                <div class="flex-1 border-t border-dashed border-slate-600"></div>
-                <span class="px-2 py-1 bg-slate-800/50 rounded text-slate-500">{{ getTimeGap(achievement, selectedAchievementGroup.allAchievements[index + 1]) }}</span>
-                <div class="flex-1 border-t border-dashed border-slate-600"></div>
               </div>
-            </template>
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </div>
 
