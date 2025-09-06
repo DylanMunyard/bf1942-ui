@@ -66,6 +66,7 @@ export interface Session {
   serverName: string;
   serverGuid: string;
   sessionId: number;
+  roundId: string; // Added for round report navigation
 }
 
 export interface ActivityByHour {
@@ -185,7 +186,7 @@ export interface PlayerServerStats {
   bestScoreDate?: string;
   mapName?: string;
   // New fields for best score round report navigation
-  highestScoreSessionId?: string;
+  highestScoreRoundId?: string;
   highestScoreMapName?: string;
   highestScoreStartTime?: string;
 }

@@ -5,12 +5,10 @@ import { fetchRoundReport, RoundReport } from '../services/serverDetailsService'
 
 // Router
 const router = useRouter();
-const route = useRoute();
 
 interface Props {
-  serverGuid: string;
-  mapName: string;
-  startTime: string;
+  roundId: string;
+  players?: string; // Optional parameter for pinning specific players
 }
 
 const props = defineProps<Props>();
@@ -238,17 +236,22 @@ const generateTimeCheckpoints = () => {
 
 // Fetch round report
 const fetchData = async () => {
-  if (!props.serverGuid || !props.mapName || !props.startTime) return;
+  if (!props.roundId) return;
 
   loading.value = true;
   error.value = null;
 
   try {
-    const data = await fetchRoundReport(props.serverGuid, props.mapName, props.startTime);
+    const data = await fetchRoundReport(props.roundId);
     roundReport.value = data;
     generateBattleEvents();
     selectedSnapshotIndex.value = data.leaderboardSnapshots.length - 1;
     visibleEventIndex.value = batchUpdateEvents.value.length - 1;
+    
+    // Handle player pinning from query parameter
+    if (props.players) {
+      trackedPlayer.value = props.players;
+    }
   } catch (err) {
     console.error('Error fetching round report:', err);
     error.value = 'Failed to fetch round report';
@@ -575,6 +578,13 @@ watch(visibleEventIndex, () => {
   updateSelectedTimeIndex();
 });
 
+// Watch for roundId changes to fetch new data
+watch(() => props.roundId, (newRoundId) => {
+  if (newRoundId) {
+    fetchData();
+  }
+}, { immediate: true });
+
 // Reversed time checkpoints (latest first to match console ordering)
 const reversedTimeCheckpoints = computed(() => {
   return [...timeCheckpoints.value].reverse();
@@ -604,7 +614,6 @@ onUnmounted(() => {
 });
 
 onMounted(() => {
-  fetchData();
   document.addEventListener('keydown', handleKeydown);
 });
 

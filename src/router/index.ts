@@ -126,13 +126,12 @@ const routes: RouteRecordRaw[] = [
       props: true
     },
     {
-      path: '/servers/round-report',
+      path: '/rounds/:roundId/report',
       name: 'round-report',
       component: RoundReportPageV2,
       props: route => ({
-        serverGuid: route.query.serverGuid,
-        mapName: route.query.mapName,
-        startTime: route.query.startTime
+        roundId: route.params.roundId,
+        players: route.query.players // Optional parameter for pinning specific players
       })
     },
     {

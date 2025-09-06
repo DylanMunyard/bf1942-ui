@@ -43,6 +43,7 @@ export interface TopPlacement {
 }
 
 export interface RecentRoundInfo {
+  roundId: string;
   mapName: string;
   startTime: string; // ISO date string  
   endTime: string; // ISO date string
@@ -224,21 +225,13 @@ export async function fetchServerInsights(
 
 /**
  * Fetches round report for a specific round
- * @param serverGuid The GUID of the server
- * @param mapName The name of the map
- * @param startTime The start time of the round
- * @returns Round report with leaderboard snapshots
+ * @param roundId The ID of the round
+ * @returns Round report with leaderboard snapshots and achievements
  */
-export async function fetchRoundReport(serverGuid: string, mapName: string, startTime: string): Promise<RoundReport> {
+export async function fetchRoundReport(roundId: string): Promise<RoundReport> {
   try {
     // Make the request to the API endpoint
-    const response = await axios.get<RoundReport>('/stats/servers/round-report', {
-      params: {
-        serverGuid,
-        mapName,
-        startTime
-      }
-    });
+    const response = await axios.get<RoundReport>(`/stats/rounds/${encodeURIComponent(roundId)}/report`);
 
     // Return the response data
     return response.data;

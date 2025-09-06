@@ -359,13 +359,13 @@ const getTimeGap = (currentAchievement: Achievement, nextAchievement: Achievemen
 
 // Function to navigate to round report
 const navigateToRoundReport = (achievement: Achievement) => {
-  if (achievement.serverGuid && achievement.mapName && achievement.achievedAt) {
+  if (achievement.roundId) {
     router.push({
-      path: '/servers/round-report',
+      name: 'round-report',
+      params: {
+        roundId: achievement.roundId
+      },
       query: {
-        serverGuid: achievement.serverGuid,
-        mapName: achievement.mapName,
-        startTime: achievement.achievedAt,
         players: props.playerName
       }
     });
@@ -746,14 +746,14 @@ const getTierDotClass = (tier: string): string => {
                           
                           <!-- Location Info -->
                           <div class="text-xs text-slate-400 truncate" v-if="group.achievement.mapName && group.count === 1">
-                            <span v-if="group.achievement.serverGuid && group.achievement.mapName && group.achievement.achievedAt">
+                            <span v-if="group.achievement.roundId">
                               📍 <router-link 
                                 :to="{
-                                  path: '/servers/round-report',
+                                  name: 'round-report',
+                                  params: {
+                                    roundId: group.achievement.roundId
+                                  },
                                   query: {
-                                    serverGuid: group.achievement.serverGuid,
-                                    mapName: group.achievement.mapName,
-                                    startTime: group.achievement.achievedAt,
                                     players: playerName
                                   }
                                 }"

@@ -1948,11 +1948,11 @@ const formatRelativeTime = (dateString: string): string => {
                   <td class="p-2">
                     <router-link 
                       :to="{
-                        path: '/servers/round-report',
+                        name: 'round-report',
+                        params: {
+                          roundId: encounter.roundId
+                        },
                         query: {
-                          serverGuid: encounter.serverGuid,
-                          mapName: encounter.mapName,
-                          startTime: new Date(new Date(encounter.timestamp).getTime() + 2 * 60 * 1000).toISOString(),
                           players: `${player1Input},${player2Input}`
                         }
                       }"

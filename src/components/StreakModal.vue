@@ -74,11 +74,11 @@ const selectedStreakDescription = computed(() => {
 
 const navigateToRoundReport = (streak: Streak) => {
   router.push({
-    path: '/servers/round-report',
+    name: 'round-report',
+    params: {
+      roundId: streak.roundId
+    },
     query: {
-      serverGuid: streak.serverGuid,
-      mapName: streak.mapName,
-      startTime: streak.streakStart,
       players: props.playerName
     }
   });

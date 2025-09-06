@@ -2,9 +2,8 @@
 import RoundReportV2 from './RoundReportV2.vue';
 
 interface Props {
-  serverGuid: string;
-  mapName: string;
-  startTime: string;
+  roundId: string;
+  players?: string; // Optional parameter for pinning specific players
 }
 
 const _props = defineProps<Props>();
@@ -13,9 +12,8 @@ const _props = defineProps<Props>();
 <template>
   <div class="round-report-page-v2">
     <RoundReportV2
-      :server-guid="serverGuid"
-      :map-name="mapName"
-      :start-time="startTime"
+      :round-id="roundId"
+      :players="players"
       class="mb-8"
     />
   </div>

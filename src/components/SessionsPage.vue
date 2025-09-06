@@ -241,52 +241,56 @@ const fetchData = async () => {
 };
 
 // Function to navigate to round report
-const navigateToRoundReport = (sessionId: number, event?: Event) => {
+const navigateToRoundReport = (sessionId: number, event?: Event, includePlayerName: boolean = true) => {
   // Prevent event propagation to stop any unwanted behavior
   if (event) {
     event.stopPropagation();
   }
 
-  let foundData = null;
+  let roundId = null;
+  let playerNames = null;
 
   if (isServerMode.value) {
     // In server mode, search through rounds
     for (const round of rounds.value) {
-      if (round.players) {
+      if (round.roundId && round.players) {
         const player = round.players.find((p: any) => p.sessionId === sessionId);
         if (player) {
-          foundData = {
-            serverGuid: round.serverGuid,
-            mapName: round.mapName,
-            startTime: round.startTime,
-          };
+          roundId = round.roundId;
+          // Only include player name if explicitly requested (e.g., from individual session clicks)
+          if (includePlayerName) {
+            playerNames = player.playerName;
+          }
           break;
         }
       }
     }
   } else {
-    // In player mode, search through flattened sessions
+    // In player mode, search through flattened sessions and always include player name from props
     const session = sessions.value.find(s => s.sessionId === sessionId);
-    if (session) {
-      foundData = {
-        serverGuid: session.serverGuid,
-        mapName: session.mapName,
-        startTime: session.startTime,
-      };
+    if (session && session.roundId) {
+      roundId = session.roundId;
+      playerNames = props.playerName;
     }
   }
 
-  if (foundData) {
-    // Navigate to the round report page with the required parameters
-    router.push({
-      path: '/servers/round-report',
-      query: {
-        serverGuid: foundData.serverGuid,
-        mapName: foundData.mapName,
-        startTime: foundData.startTime,
-        players: props.playerName // Include the player name to pin them
+  if (roundId) {
+    // Navigate to the round report page
+    const routeParams: any = {
+      name: 'round-report',
+      params: {
+        roundId: roundId
       }
-    });
+    };
+    
+    // Only include query params if we have player names
+    if (playerNames) {
+      routeParams.query = {
+        players: playerNames
+      };
+    }
+    
+    router.push(routeParams);
   }
 };
 
@@ -433,6 +437,7 @@ const sessions = computed(() => {
         allSessions.push({
           // Player-specific data
           sessionId: player.sessionId,
+          roundId: player.roundId || round.roundId, // Use player's roundId first, then round's roundId
           playerName: player.playerName,
           startTime: player.startTime || round.startTime,
           endTime: player.endTime || round.endTime,
@@ -1017,7 +1022,7 @@ onUnmounted(() => {
                             🏆 Round Leaderboard
                           </h4>
                           <button
-                            @click="(event) => navigateToRoundReport(round.leaderboard[0].sessionId, event)"
+                            @click="(event) => navigateToRoundReport(round.leaderboard[0].sessionId, event, false)"
                             class="text-xs bg-cyan-600/80 hover:bg-cyan-500 text-white px-3 py-1 rounded-md transition-colors font-medium"
                           >
                             View Round Report

@@ -365,19 +365,18 @@ const fetchData = async () => {
 };
 
 // Function to open the round report page
-const openSessionDetailsModal = (serverGuid: string, mapName: string, startTime: string, event?: Event) => {
+const openSessionDetailsModal = (session: Session, event?: Event) => {
   // Prevent event propagation to stop the modal from closing
   if (event) {
     event.stopPropagation();
   }
 
-  // Navigate to the round report page with the required parameters
   router.push({
-    path: '/servers/round-report',
+    name: 'round-report',
+    params: {
+      roundId: session.roundId,
+    },
     query: {
-      serverGuid,
-      mapName,
-      startTime,
       players: playerName.value // Include the player name to pin them
     }
   });
@@ -480,52 +479,33 @@ const getKDPerformanceLabel = (session: any): string => {
 
 // Function to get round report route for a session
 const getRoundReportRoute = (session: any) => {
-  if (session.serverGuid) {
+  if (session.roundId) {
     return {
-      path: '/servers/round-report',
+      name: 'round-report',
+      params: {
+        roundId: session.roundId,
+      },
       query: {
-        serverGuid: session.serverGuid,
-        mapName: session.mapName,
-        startTime: session.startTime,
         players: playerName.value // Include the player name to pin them
       }
     };
   }
   
-  // Fallback to player details if serverGuid not found
+  // Fallback to player details if roundId not found
   return `/players/${encodeURIComponent(playerName.value)}`;
 };
 
 // Function to navigate to round report using best score data
 const navigateToRoundReport = (roundId: string) => {
-  // Find the score entry that matches this roundId
-  const scoreEntry = currentBestScores.value.find(score => score.roundId === roundId);
-  
-  if (scoreEntry) {
-    // Subtract 1 minute from the raw UTC timestamp for round report lookup
-    // Work with the timestamp as UTC to avoid timezone conversion issues
-    const originalTime = new Date(scoreEntry.timestamp + (scoreEntry.timestamp.endsWith('Z') ? '' : 'Z'));
-    const adjustedTime = new Date(originalTime.getTime() - 60000); // subtract 60,000ms (1 minute)
-    
-    router.push({
-      path: '/servers/round-report',
-      query: {
-        serverGuid: scoreEntry.serverGuid,
-        mapName: scoreEntry.mapName,
-        startTime: adjustedTime.toISOString(),
-        players: playerName.value
-      }
-    });
-  } else {
-    // Fallback if score entry not found
-    router.push({
-      path: '/servers/round-report',
-      query: {
-        roundId: roundId,
-        players: playerName.value
-      }
-    });
-  }
+  router.push({
+    name: 'round-report',
+    params: {
+      roundId: roundId,
+    },
+    query: {
+      players: playerName.value // Include the player name to pin them
+    }
+  });
 };
 
 // Computed property to sort activity hours chronologically by local hour (0-23)
@@ -1030,7 +1010,7 @@ watch(
                   <!-- Round Card -->
                   <div 
                     class="group relative overflow-hidden bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer h-full"
-                    @click="(event) => openSessionDetailsModal(session.serverGuid, session.mapName, session.startTime, event)"
+                    @click="(event) => openSessionDetailsModal(session, event)"
                   >
                     <!-- Card Background Effects -->
                     <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1615,14 +1595,14 @@ watch(
                       <div class="space-y-1">
                         <p class="text-xs text-slate-400 font-medium">Best Score</p>
                         <router-link
-                          v-if="(server.serverGuid && server.highestScoreMapName && server.highestScoreStartTime) || (server.serverGuid && server.mapName && server.bestScoreDate)"
+                          v-if="server.highestScoreRoundId"
                           class="group/score inline-flex items-center gap-1 text-lg font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent hover:from-yellow-300 hover:to-orange-300 transition-all duration-200"
                           :to="{
-                            path: '/servers/round-report',
+                            name: 'round-report',
+                            params: {
+                              roundId: server.highestScoreRoundId
+                            },
                             query: {
-                              serverGuid: server.serverGuid,
-                              mapName: server.highestScoreMapName || server.mapName,
-                              startTime: server.highestScoreStartTime || server.bestScoreDate,
                               players: playerName
                             }
                           }"

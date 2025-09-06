@@ -68,13 +68,13 @@
                         <div v-if="achievement.mapName" class="flex items-center justify-center lg:justify-start gap-2 text-sm">
                           <span class="text-purple-400">🗺️</span>
                           <router-link 
-                            v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt && playerName"
+                            v-if="achievement.roundId && playerName"
                             :to="{
-                              path: '/servers/round-report',
+                              name: 'round-report',
+                              params: {
+                                roundId: achievement.roundId
+                              },
                               query: {
-                                serverGuid: achievement.serverGuid,
-                                mapName: achievement.mapName,
-                                startTime: achievement.achievedAt,
                                 players: playerName
                               }
                             }"
@@ -198,13 +198,13 @@
                         <div v-if="achievement.mapName" class="flex items-center justify-center lg:justify-start gap-2 text-sm">
                           <span class="text-purple-400">🗺️</span>
                           <router-link 
-                            v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt && playerName"
+                            v-if="achievement.roundId && playerName"
                             :to="{
-                              path: '/servers/round-report',
+                              name: 'round-report',
+                              params: {
+                                roundId: achievement.roundId
+                              },
                               query: {
-                                serverGuid: achievement.serverGuid,
-                                mapName: achievement.mapName,
-                                startTime: achievement.achievedAt,
                                 players: playerName
                               }
                             }"
@@ -368,13 +368,13 @@
               <div class="flex items-center justify-between">
                 <span class="text-slate-400 font-medium text-sm">Map:</span>
                 <router-link 
-                  v-if="achievement.serverGuid && achievement.mapName && achievement.achievedAt && playerName"
+                  v-if="achievement.roundId && playerName"
                   :to="{
-                    path: '/servers/round-report',
+                    name: 'round-report',
+                    params: {
+                      roundId: achievement.roundId
+                    },
                     query: {
-                      serverGuid: achievement.serverGuid,
-                      mapName: achievement.mapName,
-                      startTime: achievement.achievedAt,
                       players: playerName
                     }
                   }"

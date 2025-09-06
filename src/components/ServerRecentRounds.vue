@@ -54,11 +54,9 @@ const getDurationMinutes = (startTime: string, endTime: string): number => {
 
 const navigateToRoundReport = (round: RecentRoundInfo) => {
   router.push({
-    path: '/servers/round-report',
-    query: {
-      serverGuid: props.serverDetails.serverGuid,
-      mapName: round.mapName,
-      startTime: round.startTime,
+    name: 'round-report',
+    params: {
+      roundId: round.roundId,
     },
   });
 };
