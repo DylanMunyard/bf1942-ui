@@ -53,22 +53,12 @@
             <td>{{ metric.currentDeaths }}</td>
             <td>{{ metric.unexplainedDropsLast10Min }}</td>
             <td>
-              <router-link 
-                :to="{
-                  path: '/servers/round-report',
-                  query: {
-                    serverGuid: metric.serverGuid,
-                    mapName: metric.mapName,
-                    /* Live analytics might be fresher than the last recorded activity, so go back 2 minutes to be sure we have a session recorded */
-                    startTime: new Date(new Date(metric.lastActivity).getTime() - 2 * 60 * 1000).toISOString(),
-                    players: metric.playerName // Include the player name to pin them
-                  }
-                }"
+              <span 
                 class="penalties-link"
                 :class="penaltiesClass(metric.totalPenaltiesLast10Min)"
               >
                 {{ metric.totalPenaltiesLast10Min }}
-              </router-link>
+              </span>
             </td>
             <td>
               <span :class="tkProbClass(metric.tkProbability)">

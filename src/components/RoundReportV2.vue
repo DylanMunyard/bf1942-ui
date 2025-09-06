@@ -714,6 +714,14 @@ const getRankIcon = (rank: number) => {
   if (rank === 3) return '🥉';
   return rank.toString();
 };
+
+// Check if tickets should be displayed
+const shouldShowTickets = computed(() => {
+  if (!roundReport.value?.round) return false;
+  const { tickets1, tickets2 } = roundReport.value.round;
+  return tickets1 !== null && tickets1 !== undefined && tickets1 >= 0 &&
+         tickets2 !== null && tickets2 !== undefined && tickets2 >= 0;
+});
 </script>
 
 <template>
@@ -728,45 +736,73 @@ const getRankIcon = (rank: number) => {
     <div class="relative z-10 p-6">
       <!-- Header -->
       <div class="mb-8">
-        <div class="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
+        <div v-if="roundReport" class="max-w-6xl mx-auto flex items-start gap-6">
+          <!-- Back Button -->
           <button
             @click="goBack"
-            class="group inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-cyan-400 bg-slate-800/50 hover:bg-slate-700/70 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 cursor-pointer flex-shrink-0"
+            class="group flex-shrink-0 w-10 h-10 bg-slate-800/80 hover:bg-slate-700/90 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-400/50 rounded-full transition-all duration-300 cursor-pointer flex items-center justify-center hover:scale-110 mt-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              stroke-width="2"
+              stroke-width="2.5"
               stroke-linecap="round"
               stroke-linejoin="round"
-              class="group-hover:-translate-x-1 transition-transform duration-300"
+              class="text-slate-300 group-hover:text-cyan-400 group-hover:-translate-x-0.5 transition-all duration-300"
             >
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
-            Back to Server
           </button>
-
-          <div v-if="roundReport" class="flex-1 min-w-0">
-            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-2">
+          
+          <!-- Main Content -->
+          <div class="flex-1 min-w-0 text-center">
+            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-6">
               🗺️ {{ roundReport.round.mapName }}
             </h1>
-            <div class="flex flex-wrap items-center gap-4 text-slate-400">
-              <div class="flex items-center gap-2">
-                <div class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-                <span class="text-sm">{{ formatDate(roundReport.round.startTime) }}</span>
+            
+            <!-- Unified Round Info Section -->
+            <div class="w-full">
+              <div class="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6">
+                <!-- Basic Info Row -->
+                <div class="flex flex-wrap items-center justify-center gap-6 mb-4 text-slate-300">
+                  <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+                    <span class="text-sm font-medium">{{ formatDate(roundReport.round.startTime) }}</span>
+                  </div>
+                  <div class="text-slate-600">•</div>
+                  <router-link 
+                    :to="'/servers/' + encodeURIComponent(roundReport.round.serverName)" 
+                    class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium"
+                  >
+                    {{ roundReport.round.serverName }}
+                  </router-link>
+                </div>
+                
+                <!-- Team Tickets Display (when available) -->
+                <div v-if="shouldShowTickets" class="flex items-center justify-center gap-8 pt-4 border-t border-slate-700/50">
+                  <div class="text-center">
+                    <h3 class="text-lg font-bold text-blue-400 mb-1">{{ roundReport.round.team1Label || 'Team 1' }}</h3>
+                    <div class="text-2xl font-bold text-white">{{ roundReport.round.tickets1 }}</div>
+                    <div class="text-xs text-slate-400 uppercase tracking-wide">Tickets</div>
+                  </div>
+                  
+                  <div class="flex flex-col items-center">
+                    <div class="text-xl font-bold text-slate-300 mb-1">VS</div>
+                    <div class="w-8 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-red-400"></div>
+                  </div>
+                  
+                  <div class="text-center">
+                    <h3 class="text-lg font-bold text-red-400 mb-1">{{ roundReport.round.team2Label || 'Team 2' }}</h3>
+                    <div class="text-2xl font-bold text-white">{{ roundReport.round.tickets2 }}</div>
+                    <div class="text-xs text-slate-400 uppercase tracking-wide">Tickets</div>
+                  </div>
+                </div>
               </div>
-              <div class="text-slate-600">•</div>
-              <router-link 
-                :to="'/servers/' + encodeURIComponent(roundReport.session.serverName)" 
-                class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium truncate"
-              >
-                {{ roundReport.session.serverName }}
-              </router-link>
             </div>
           </div>
         </div>

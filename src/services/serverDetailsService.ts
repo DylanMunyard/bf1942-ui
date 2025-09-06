@@ -108,10 +108,15 @@ export interface LeaderboardSnapshot {
 export interface RoundInfo {
   mapName: string;
   gameType: string;
+  serverName: string;
   startTime: string; // ISO date string
   endTime: string; // ISO date string
   totalParticipants: number;
   isActive: boolean;
+  tickets1?: number;
+  tickets2?: number;
+  team1Label?: string;
+  team2Label?: string;
 }
 
 export interface SessionInfo {
@@ -128,7 +133,6 @@ export interface SessionInfo {
 }
 
 export interface RoundReport {
-  session: SessionInfo;
   round: RoundInfo;
   leaderboardSnapshots: LeaderboardSnapshot[];
 }

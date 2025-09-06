@@ -139,19 +139,9 @@ const getRankClass = (rank: number): string => {
 
 // Generate round report link
 const getRoundReportLink = (player: PlayerWithRank): string | null => {
-  if (!props.showRoundLinks || !props.serverGuid || !player.mapName || !player.timestamp) {
-    return null;
-  }
-  
-  // Ensure timestamp is treated as UTC by adding 'Z' suffix if missing
-  const utcTimestamp = player.timestamp.endsWith('Z') ? player.timestamp : player.timestamp + 'Z';
-  
-  // Subtract a minute from the timestamp due to sync peculiarities
-  const originalTime = new Date(utcTimestamp);
-  const adjustedTime = new Date(originalTime.getTime() - 60000); // Subtract 60000ms (1 minute)
-  const startTime = adjustedTime.toISOString();
-  
-  return `/servers/round-report?serverGuid=${encodeURIComponent(props.serverGuid)}&mapName=${encodeURIComponent(player.mapName)}&startTime=${encodeURIComponent(startTime)}`;
+  // Round report links are no longer supported with the old URL format
+  // The new format requires roundId which is not available in this context
+  return null;
 };
 </script>
 
