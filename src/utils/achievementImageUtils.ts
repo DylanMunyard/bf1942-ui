@@ -8,6 +8,30 @@ interface Achievement {
   tier?: string;
 }
 
+// Pre-import all team victory images to ensure they're processed by Vite
+import teamVictoryBronze from '../assets/achievements/team_victory_bronze.png';
+import teamVictorySilver from '../assets/achievements/team_victory_silver.png';
+import teamVictoryGold from '../assets/achievements/team_victory_gold.png';
+import teamVictoryLegendary from '../assets/achievements/team_victory_legendary.png';
+import teamVictorySwitchedBronze from '../assets/achievements/team_victory_switched_bronze.png';
+import teamVictorySwitchedSilver from '../assets/achievements/team_victory_switched_silver.png';
+import teamVictorySwitchedGold from '../assets/achievements/team_victory_switched_gold.png';
+import teamVictorySwitchedLegendary from '../assets/achievements/team_victory_switched_legendary.png';
+
+// Mapping of tier-specific images
+const TEAM_VICTORY_IMAGES: Record<string, string> = {
+  'team_victory_bronze': teamVictoryBronze,
+  'team_victory_silver': teamVictorySilver,
+  'team_victory_gold': teamVictoryGold,
+  'team_victory_legendary': teamVictoryLegendary,
+  'team_victory_legend': teamVictoryLegendary, // Map 'legend' to 'legendary'
+  'team_victory_switched_bronze': teamVictorySwitchedBronze,
+  'team_victory_switched_silver': teamVictorySwitchedSilver,
+  'team_victory_switched_gold': teamVictorySwitchedGold,
+  'team_victory_switched_legendary': teamVictorySwitchedLegendary,
+  'team_victory_switched_legend': teamVictorySwitchedLegendary, // Map 'legend' to 'legendary'
+};
+
 // List of achievement IDs that use tiered images (same achievementId, different tier images)
 const TIERED_ACHIEVEMENT_IDS = new Set([
   'team_victory',
@@ -27,13 +51,15 @@ export function getAchievementImage(achievementId: string, tier?: string): strin
   try {
     // For tiered achievements, try to load the tier-specific image first
     if (tier && TIERED_ACHIEVEMENT_IDS.has(achievementId)) {
-      const tierImagePath = `../assets/achievements/${achievementId}_${tier.toLowerCase()}.png`;
-      try {
-        return new URL(tierImagePath, import.meta.url).href;
-      } catch {
-        // If tier-specific image doesn't exist, fall back to default
-        console.warn(`Tier-specific image not found for ${achievementId}_${tier}, falling back to default`);
+      const imageKey = `${achievementId}_${tier.toLowerCase()}`;
+      
+      // Check if we have a pre-imported image for this combination
+      if (TEAM_VICTORY_IMAGES[imageKey]) {
+        return TEAM_VICTORY_IMAGES[imageKey];
       }
+      
+      // If not found, log warning and fall through to default behavior
+      console.warn(`Tier-specific image not found for ${imageKey}, falling back to default`);
     }
     
     // Default behavior: load image based on achievementId
