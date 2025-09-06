@@ -11,9 +11,19 @@
     >
       <!-- Header -->
       <div class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-4 flex justify-between items-center">
-        <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 truncate max-w-md">
-          {{ server?.name || 'Players' }}
-        </h2>
+        <div class="flex flex-col min-w-0 flex-1 mr-4">
+          <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 truncate">
+            {{ server?.name || 'Players' }}
+          </h2>
+          <div class="flex flex-col sm:flex-row sm:gap-4 mt-1">
+            <p v-if="server?.mapName" class="text-sm text-slate-400 font-mono truncate">
+              🗺️ {{ server.mapName }}
+            </p>
+            <p v-if="server?.roundTimeRemain !== undefined && server?.roundTimeRemain !== -1" class="text-sm text-slate-400 font-mono">
+              ⏱️ {{ formatTimeRemaining(server.roundTimeRemain) }}
+            </p>
+          </div>
+        </div>
         <button 
           class="group p-2 text-slate-400 hover:text-white hover:bg-red-500/20 border border-slate-600/50 hover:border-red-500/50 rounded-lg transition-all duration-300 flex items-center justify-center w-10 h-10 flex-shrink-0"
           @click="$emit('close')"
@@ -166,6 +176,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ServerSummary } from '../types/server'
+import { formatTimeRemaining } from '../utils/timeUtils'
 
 interface Props {
   show: boolean

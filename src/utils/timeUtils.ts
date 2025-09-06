@@ -62,3 +62,17 @@ export function formatShortAbsoluteTime(utcTimestamp: string): string {
     hour12: true
   }).format(date);
 }
+
+/**
+ * Format time remaining in seconds to MM:SS format
+ * e.g., 90 seconds becomes "1:30", 30 seconds becomes "0:30"
+ * Returns "-" for invalid or negative values
+ */
+export function formatTimeRemaining(timeValue: number): string {
+  if (!timeValue || timeValue < 0) return '-'
+  
+  const minutes = Math.floor(timeValue / 60)
+  const seconds = timeValue % 60
+  
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}

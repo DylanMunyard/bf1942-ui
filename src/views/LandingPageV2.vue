@@ -479,6 +479,7 @@ import { PlayerHistoryDataPoint } from '../types/playerStatsTypes'
 import PlayersPanel from '../components/PlayersPanel.vue'
 import PlayerHistoryChart from '../components/PlayerHistoryChart.vue'
 import { fetchPlayerOnlineHistory } from '../services/playerStatsService'
+import { formatTimeRemaining } from '../utils/timeUtils'
 
 import bf1942Icon from '@/assets/bf1942.jpg'
 import fh2Icon from '@/assets/fh2.jpg'
@@ -741,15 +742,6 @@ const formatPlayTime = (minutes: number): string => {
   }
   const days = Math.floor(hours / 24)
   return `${days}d ${hours % 24}h`
-}
-
-const formatTimeRemaining = (timeValue: number): string => {
-  if (!timeValue || timeValue < 0) return '-'
-  
-  const minutes = Math.floor(timeValue / 60)
-  const seconds = timeValue % 60
-  
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
 const navigateToPlayer = () => {
