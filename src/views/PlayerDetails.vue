@@ -841,13 +841,56 @@ watch(
             <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400">
               {{ playerName }}
             </h1>
-            <!-- Currently in game badge -->
+            <!-- Currently in game badge with server info -->
             <div
               v-if="playerStats?.isActive && playerStats?.currentServer"
-              class="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse"
+              class="inline-flex items-center gap-3 flex-wrap"
             >
-              <div class="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
-              Online
+              <!-- Online pill -->
+              <div class="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse">
+                <div class="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+                Online
+              </div>
+              
+              <!-- Server info pill -->
+              <router-link
+                :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}`"
+                class="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-blue-300 bg-blue-500/20 border border-blue-500/30 rounded-full hover:bg-blue-500/30 transition-all duration-200"
+              >
+                <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span class="font-medium">{{ playerStats.currentServer.serverName }}</span>
+                <span class="text-xs opacity-75">{{ playerStats.currentServer.gameId?.toUpperCase() }}</span>
+              </router-link>
+              
+              <!-- Session stats pill (if available) -->
+              <div
+                v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined"
+                class="inline-flex items-center gap-3 px-3 py-1 text-sm font-medium text-purple-300 bg-purple-500/20 border border-purple-500/30 rounded-full"
+              >
+                <!-- K/D -->
+                <div class="text-center">
+                  <div class="text-sm font-bold text-cyan-400">{{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }}</div>
+                  <div class="text-xs text-slate-400">K/D</div>
+                </div>
+                <!-- Kills -->
+                <div class="text-center">
+                  <div class="text-sm font-bold text-green-400">{{ playerStats.currentServer.sessionKills }}</div>
+                  <div class="text-xs text-slate-500">K</div>
+                </div>
+                <!-- Deaths -->
+                <div class="text-center">
+                  <div class="text-sm font-bold text-red-400">{{ playerStats.currentServer.sessionDeaths }}</div>
+                  <div class="text-xs text-slate-500">D</div>
+                </div>
+                <!-- Score (if available) -->
+                <div
+                  v-if="(playerStats.currentServer as any).sessionScore !== undefined || (playerStats.currentServer as any).score !== undefined"
+                  class="text-center"
+                >
+                  <div class="text-sm font-bold text-yellow-400">{{ (playerStats.currentServer as any).sessionScore || (playerStats.currentServer as any).score }}</div>
+                  <div class="text-xs text-slate-500">S</div>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -867,48 +910,6 @@ watch(
 
         <!-- Actions Section -->
         <div class="flex flex-col gap-4 items-end">
-          <!-- Current session info -->
-          <div
-            v-if="playerStats?.isActive && playerStats?.currentServer"
-            class="bg-green-500/10 border border-green-500/20 rounded-xl p-4 min-w-[250px]"
-          >
-            <div class="mb-2">
-              <router-link
-                :to="`/servers/${encodeURIComponent(playerStats.currentServer.serverName)}`"
-                class="font-semibold text-green-300 hover:text-green-200 transition-colors"
-              >
-                {{ playerStats.currentServer.serverName }}
-              </router-link>
-              <p class="text-sm text-slate-400">{{ playerStats.currentServer.gameId?.toUpperCase() }}</p>
-            </div>
-            <div
-              v-if="playerStats.currentServer.sessionKills !== undefined && playerStats.currentServer.sessionDeaths !== undefined"
-              class="flex items-center justify-between text-sm font-medium"
-            >
-              <!-- K/D Ratio -->
-              <div class="text-center">
-                <div class="text-lg font-bold text-cyan-400">
-                  {{ calculateKDR(playerStats.currentServer.sessionKills, playerStats.currentServer.sessionDeaths) }}
-                </div>
-                <div class="text-xs text-slate-400">K/D</div>
-              </div>
-              <!-- Kills -->
-              <div class="text-center">
-                <div class="text-lg font-bold text-green-400">{{ playerStats.currentServer.sessionKills }}</div>
-                <div class="text-xs text-slate-400">K</div>
-              </div>
-              <!-- Deaths -->
-              <div class="text-center">
-                <div class="text-lg font-bold text-red-400">{{ playerStats.currentServer.sessionDeaths }}</div>
-                <div class="text-xs text-slate-400">D</div>
-              </div>
-              <!-- Score (if available) -->
-              <div v-if="(playerStats.currentServer as any).sessionScore !== undefined || (playerStats.currentServer as any).score !== undefined" class="text-center">
-                <div class="text-lg font-bold text-yellow-400">{{ (playerStats.currentServer as any).sessionScore || (playerStats.currentServer as any).score }}</div>
-                <div class="text-xs text-slate-400">S</div>
-              </div>
-            </div>
-          </div>
 
           <!-- Quick Actions -->
           <div class="flex flex-col sm:flex-row gap-3">
