@@ -125,11 +125,16 @@ const drawChart = () => {
     if (index === 0) {
       ctx.lineTo(point.x, point.y)
     } else {
-      // Smooth curve using quadratic bezier
       const prevPoint = points[index - 1]
-      const midX = (prevPoint.x + point.x) / 2
-      ctx.quadraticCurveTo(prevPoint.x, prevPoint.y, midX, (prevPoint.y + point.y) / 2)
-      ctx.quadraticCurveTo(midX, (prevPoint.y + point.y) / 2, point.x, point.y)
+      const nextPoint = points[index + 1]
+      
+      // Calculate control points for smoother curves (same as main line)
+      const cp1x = prevPoint.x + (point.x - prevPoint.x) * 0.3
+      const cp1y = prevPoint.y + (point.y - prevPoint.y) * 0.3
+      const cp2x = point.x - (nextPoint ? (nextPoint.x - point.x) * 0.3 : (point.x - prevPoint.x) * 0.3)
+      const cp2y = point.y - (nextPoint ? (nextPoint.y - point.y) * 0.3 : (point.y - prevPoint.y) * 0.3)
+      
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, point.x, point.y)
     }
   })
   ctx.lineTo(points[points.length - 1].x, canvas.height - padding)
@@ -137,16 +142,22 @@ const drawChart = () => {
   ctx.fillStyle = gradient
   ctx.fill()
 
-  // Draw main trend line
+  // Draw main trend line with enhanced smoothness
   ctx.beginPath()
   points.forEach((point, index) => {
     if (index === 0) {
       ctx.moveTo(point.x, point.y)
     } else {
       const prevPoint = points[index - 1]
-      const midX = (prevPoint.x + point.x) / 2
-      ctx.quadraticCurveTo(prevPoint.x, prevPoint.y, midX, (prevPoint.y + point.y) / 2)
-      ctx.quadraticCurveTo(midX, (prevPoint.y + point.y) / 2, point.x, point.y)
+      const nextPoint = points[index + 1]
+      
+      // Calculate control points for smoother curves
+      const cp1x = prevPoint.x + (point.x - prevPoint.x) * 0.3
+      const cp1y = prevPoint.y + (point.y - prevPoint.y) * 0.3
+      const cp2x = point.x - (nextPoint ? (nextPoint.x - point.x) * 0.3 : (point.x - prevPoint.x) * 0.3)
+      const cp2y = point.y - (nextPoint ? (nextPoint.y - point.y) * 0.3 : (point.y - prevPoint.y) * 0.3)
+      
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, point.x, point.y)
     }
   })
   ctx.strokeStyle = getTrendLineColor()
@@ -155,19 +166,7 @@ const drawChart = () => {
   ctx.lineJoin = 'round'
   ctx.stroke()
 
-  // Draw data points
-  points.forEach(point => {
-    ctx.beginPath()
-    ctx.arc(point.x, point.y, 3, 0, Math.PI * 2)
-    ctx.fillStyle = getPointColor(point.value, point.change)
-    ctx.fill()
-    
-    // Add subtle glow to points
-    ctx.shadowColor = getPointColor(point.value, point.change)
-    ctx.shadowBlur = 6
-    ctx.fill()
-    ctx.shadowBlur = 0
-  })
+  // Data points removed for cleaner smooth line appearance
 }
 
 const getTrendGradientColor = (opacity: number) => {

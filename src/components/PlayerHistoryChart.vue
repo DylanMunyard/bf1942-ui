@@ -209,11 +209,9 @@ const mainChartData = computed(() => {
       borderColor: '#06b6d4',
       backgroundColor: 'rgba(6, 182, 212, 0.15)',
       fill: true,
-      tension: 0.3,
-      pointRadius: dataPoints.map(value => 
-        value === peakPlayers.value || value === minPlayers.value ? 7 : 3
-      ),
-      pointHoverRadius: 10,
+      tension: 0.5,
+      pointRadius: 0,
+      pointHoverRadius: 8,
       pointBackgroundColor: pointColors,
       pointBorderColor: pointColors,
       pointBorderWidth: 2,

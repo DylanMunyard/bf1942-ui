@@ -313,7 +313,7 @@ export async function fetchPlayerOnlineHistory(
     const response = await axios.get<PlayerHistoryResponse>(
       `/stats/LiveServers/${game}/players-online-history`,
       {
-        params: { period, rollingWindow }
+        params: { period, rollingWindowDays: rollingWindow }
       }
     );
     return response.data;
