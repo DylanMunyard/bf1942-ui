@@ -58,7 +58,6 @@ const canvasHeight = ref(64)
 const values = computed(() => props.rollingData.map(d => d.average))
 const minValue = computed(() => Math.min(...values.value))
 const maxValue = computed(() => Math.max(...values.value))
-const avgValue = computed(() => values.value.reduce((a, b) => a + b, 0) / values.value.length)
 
 const trendChange = computed(() => {
   if (values.value.length < 2) return 0
@@ -79,38 +78,17 @@ const normalizedData = computed(() => {
     const change = index > 0 ? ((point.average - prevValue) / prevValue) * 100 : 0
     
     return {
-      date: new Date(point.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      date: new Date(point.timestamp).toLocaleDateString(undefined, { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
       time: new Date(point.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
       value: point.average,
       change: change,
       normalized: (point.average - minValue.value) / (maxValue.value - minValue.value || 1)
     }
   })
-})
-
-// Computed positions for min/max labels
-const minPosition = computed(() => {
-  if (!normalizedData.value.length) return { x: 0, y: 0 }
-  const minIndex = normalizedData.value.findIndex(p => p.value === minValue.value)
-  const padding = 8
-  const chartWidth = canvasWidth.value - (padding * 2)
-  const chartHeight = canvasHeight.value - (padding * 2)
-  return {
-    x: padding + (minIndex / (normalizedData.value.length - 1)) * chartWidth,
-    y: padding + (1 - normalizedData.value[minIndex].normalized) * chartHeight
-  }
-})
-
-const maxPosition = computed(() => {
-  if (!normalizedData.value.length) return { x: 0, y: 0 }
-  const maxIndex = normalizedData.value.findIndex(p => p.value === maxValue.value)
-  const padding = 8
-  const chartWidth = canvasWidth.value - (padding * 2)
-  const chartHeight = canvasHeight.value - (padding * 2)
-  return {
-    x: padding + (maxIndex / (normalizedData.value.length - 1)) * chartWidth,
-    y: padding + (1 - normalizedData.value[maxIndex].normalized) * chartHeight
-  }
 })
 
 // Canvas drawing functions
@@ -277,30 +255,6 @@ const updateCanvasSize = () => {
 }
 
 // Visual helpers
-const getTrendIcon = () => {
-  switch (trendDirection.value) {
-    case 'increasing': return '📈'
-    case 'decreasing': return '📉'
-    default: return '➡️'
-  }
-}
-
-const getTrendChangeText = () => {
-  const change = trendChange.value
-  const absChange = Math.abs(change)
-  
-  if (absChange < 1) return 'No significant change'
-  
-  const direction = change > 0 ? 'busier' : 'quieter'
-  return `${absChange.toFixed(1)}% ${direction}`
-}
-
-const getTrendChangeClass = () => {
-  const change = trendChange.value
-  if (Math.abs(change) < 1) return 'text-slate-400'
-  return change > 0 ? 'text-green-400' : 'text-red-400'
-}
-
 const getPeriodLabel = () => {
   const periodLabels: Record<string, string> = {
     '1d': '24 hours',

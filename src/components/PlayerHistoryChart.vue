@@ -34,8 +34,26 @@
         v-if="props.insights?.rollingAverage && props.insights.rollingAverage.length > 0"
         class="mt-3 bg-slate-800/20 rounded-lg border border-slate-700/30 p-3"
       >
-        <div class="text-xs text-slate-400 mb-2 text-center font-medium">
-          Rolling 7-day average
+        <!-- Rolling Window Toggle -->
+        <div class="flex items-center gap-2 mb-3">
+          <div class="text-xs text-slate-400 font-medium">
+            Rolling Average:
+          </div>
+          <div class="flex gap-1">
+            <button
+              v-for="option in rollingWindowOptions"
+              :key="option.value"
+              class="px-2 py-1 text-xs font-medium transition-all duration-200 rounded border"
+              :class="{
+                'text-white bg-gradient-to-r from-purple-500 to-pink-500 border-purple-400/50 shadow-sm': props.rollingWindow === option.value,
+                'text-slate-400 bg-slate-700/30 border-slate-600/50 hover:text-purple-400 hover:bg-slate-600/50 hover:border-purple-500/50': props.rollingWindow !== option.value
+              }"
+              :disabled="props.loading"
+              @click="handleRollingWindowChange(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          </div>
         </div>
         <TrendFlow 
           :rolling-data="props.insights.rollingAverage"
@@ -80,6 +98,7 @@ interface Props {
   chartData: PlayerHistoryDataPoint[]
   insights?: PlayerHistoryInsights | null
   period?: string
+  rollingWindow?: string
   loading?: boolean
   error?: string | null
 }
@@ -87,9 +106,26 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   insights: null,
   period: '1d',
+  rollingWindow: '7d',
   loading: false,
   error: null
 })
+
+const emit = defineEmits<{
+  'rolling-window-change': [rollingWindow: string];
+}>()
+
+// Rolling window options
+const rollingWindowOptions = [
+  { value: '7d', label: '7 Days' },
+  { value: '14d', label: '14 Days' },
+  { value: '30d', label: '1 Month' }
+]
+
+// Handle rolling window change
+const handleRollingWindowChange = (rollingWindow: string) => {
+  emit('rolling-window-change', rollingWindow)
+}
 
 // Computed properties for stats - use insights when available, fallback to calculated
 const peakPlayers = computed(() => {

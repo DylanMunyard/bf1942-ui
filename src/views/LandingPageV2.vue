@@ -329,8 +329,10 @@
                 :chart-data="playerHistoryData"
                 :insights="playerHistoryInsights"
                 :period="getCurrentPeriod()"
+                :rolling-window="historyRollingWindow"
                 :loading="historyLoading"
                 :error="historyError"
+                @rolling-window-change="changeRollingWindow"
               />
             </div>
           </div>
@@ -669,7 +671,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchAllServers } from '../services/serverDetailsService'
 import { ServerSummary } from '../types/server'
-import { PlayerHistoryDataPoint, PlayerHistoryResponse } from '../types/playerStatsTypes'
+import { PlayerHistoryDataPoint, PlayerHistoryResponse, PlayerHistoryInsights } from '../types/playerStatsTypes'
 import PlayersPanel from '../components/PlayersPanel.vue'
 import PlayerHistoryChart from '../components/PlayerHistoryChart.vue'
 import { fetchPlayerOnlineHistory } from '../services/playerStatsService'
@@ -755,9 +757,10 @@ const selectedServer = ref<ServerSummary | null>(null)
 // Player history state
 const showPlayerHistory = ref(false)
 const playerHistoryData = ref<PlayerHistoryDataPoint[]>([])
-const playerHistoryInsights = ref(null)
+const playerHistoryInsights = ref<PlayerHistoryInsights | null>(null)
 const historyPeriod = ref<'1d' | '3d' | '7d' | 'longer'>('1d')
 const longerPeriod = ref<'1month' | '3months' | 'thisyear' | 'alltime'>('1month')
+const historyRollingWindow = ref('7d')
 const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
 const showLongerDropdown = ref(false)
@@ -1108,11 +1111,13 @@ const fetchPlayerHistory = async () => {
   
   try {
     const currentPeriod = getCurrentPeriod()
-    console.log('🔄 Fetching player history for period:', currentPeriod)
+    const apiPeriod = getCurrentPeriodForAPI()
+    console.log('🔄 Fetching player history for period:', currentPeriod, 'rolling window:', getRollingWindowDays(historyRollingWindow.value), 'days')
     
     const response = await fetchPlayerOnlineHistory(
       activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam',
-      currentPeriod
+      apiPeriod,
+      getRollingWindowDays(historyRollingWindow.value)
     )
     
     console.log('📊 API Response:', {
@@ -1123,21 +1128,13 @@ const fetchPlayerHistory = async () => {
       period: response.period
     })
     
-    // Handle both old and new API response formats
-    if (response.dataPoints) {
-      // New format with insights
-      playerHistoryData.value = response.dataPoints
-      playerHistoryInsights.value = response.insights || null
-      console.log('✅ Set insights data:', {
-        hasRollingAverage: !!(response.insights?.rollingAverage),
-        rollingPoints: response.insights?.rollingAverage?.length || 0
-      })
-    } else {
-      // Legacy format - just array of data points
-      playerHistoryData.value = response as PlayerHistoryDataPoint[]
-      playerHistoryInsights.value = null
-      console.log('📜 Using legacy format (no insights)')
-    }
+    // Set the response data
+    playerHistoryData.value = response.dataPoints
+    playerHistoryInsights.value = response.insights
+    console.log('✅ Set insights data:', {
+      hasRollingAverage: !!(response.insights?.rollingAverage),
+      rollingPoints: response.insights?.rollingAverage?.length || 0
+    })
   } catch (err) {
     historyError.value = 'Failed to load player history'
     console.error('Error fetching player history:', err)
@@ -1157,6 +1154,25 @@ const changePeriod = (period: '1d' | '3d' | '7d') => {
   historyPeriod.value = period
   showLongerDropdown.value = false
   fetchPlayerHistory()
+}
+
+const changeRollingWindow = (rollingWindow: string) => {
+  historyRollingWindow.value = rollingWindow
+  fetchPlayerHistory()
+}
+
+// Convert rolling window string to numerical days
+const getRollingWindowDays = (rollingWindow: string): number => {
+  switch (rollingWindow) {
+    case '7d':
+      return 7
+    case '14d':
+      return 14
+    case '30d':
+      return 30
+    default:
+      return 7
+  }
 }
 
 const toggleLongerDropdown = () => {
@@ -1183,6 +1199,15 @@ const getLongerPeriodLabel = () => {
 
 const getCurrentPeriod = () => {
   return historyPeriod.value === 'longer' ? longerPeriod.value : historyPeriod.value
+}
+
+const getCurrentPeriodForAPI = (): string => {
+  if (historyPeriod.value === 'longer') {
+    // Return the longer period value directly
+    return longerPeriod.value
+  }
+  // Return the actual period value for 1d, 3d, 7d
+  return historyPeriod.value
 }
 
 const getActiveGameName = () => {

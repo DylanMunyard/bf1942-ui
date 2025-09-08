@@ -8,7 +8,8 @@ import {
   TeamKillerMetric,
   SimilarPlayersResponse,
   InitialData,
-  PlayerOnlineHistoryResponse
+  PlayerOnlineHistoryResponse,
+  PlayerHistoryResponse
 } from '../types/playerStatsTypes';
 
 /**
@@ -299,18 +300,20 @@ export function clearInitialDataCache(): void {
 /**
  * Fetches historical player count data for a specific game
  * @param game The game type ('bf1942', 'fh2', 'bfvietnam')
- * @param period The time period ('1d', '3d', '7d') - defaults to '7d'
+ * @param period The time period ('1d', '3d', '7d', '1month', '3months', 'thisyear', 'alltime') - defaults to '7d'
+ * @param rollingWindow The rolling window for averaging in days (7, 14, 30) - defaults to 7
  * @returns Historical player count data
  */
 export async function fetchPlayerOnlineHistory(
   game: 'bf1942' | 'fh2' | 'bfvietnam',
-  period: '1d' | '3d' | '7d' = '7d'
-): Promise<PlayerOnlineHistoryResponse> {
+  period: string = '7d',
+  rollingWindow: number = 7
+): Promise<PlayerHistoryResponse> {
   try {
-    const response = await axios.get<PlayerOnlineHistoryResponse>(
+    const response = await axios.get<PlayerHistoryResponse>(
       `/stats/LiveServers/${game}/players-online-history`,
       {
-        params: { period }
+        params: { period, rollingWindow }
       }
     );
     return response.data;
