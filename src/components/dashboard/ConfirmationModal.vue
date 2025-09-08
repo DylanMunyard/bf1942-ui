@@ -8,7 +8,9 @@
       @click.stop
     >
       <div class="p-6 pb-4">
-        <p class="text-white m-0 text-base font-medium text-center">{{ message }}?</p>
+        <p class="text-white m-0 text-base font-medium text-center">
+          {{ message }}?
+        </p>
       </div>
       <div class="flex justify-center gap-3 px-6 py-4 bg-slate-800/20 border-t border-slate-700/50">
         <button

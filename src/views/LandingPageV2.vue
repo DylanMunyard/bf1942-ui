@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-900 px-3 sm:px-6">
-
     <div class="min-h-screen pt-4">
       <!-- Main Server Table -->
       <div class="w-full">
@@ -29,15 +28,21 @@
               >
               
               <!-- Loading Spinner -->
-              <div v-if="isSearchLoading" class="absolute right-4 top-1/2 transform -translate-y-1/2">
-                <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>
+              <div
+                v-if="isSearchLoading"
+                class="absolute right-4 top-1/2 transform -translate-y-1/2"
+              >
+                <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
               </div>
               
               <!-- Search Glow Effect -->
-              <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
               
               <!-- Enhanced Player Dropdown -->
-              <div v-if="showPlayerDropdown" class="absolute top-full mt-3 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto shadow-2xl z-50">
+              <div
+                v-if="showPlayerDropdown"
+                class="absolute top-full mt-3 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto shadow-2xl z-50"
+              >
                 <div
                   v-for="player in playerSuggestions"
                   :key="player.playerName"
@@ -45,22 +50,36 @@
                   @mousedown.prevent="selectPlayer(player)"
                 >
                   <div class="space-y-2">
-                    <div class="font-bold text-slate-200 text-sm group-hover:text-cyan-400 transition-colors">{{ player.playerName }}</div>
+                    <div class="font-bold text-slate-200 text-sm group-hover:text-cyan-400 transition-colors">
+                      {{ player.playerName }}
+                    </div>
                     <div class="flex items-center gap-3 flex-wrap text-xs">
                       <span class="text-slate-400 font-medium">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
-                      <span v-if="player.isActive" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full">
+                      <span
+                        v-if="player.isActive"
+                        class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full"
+                      >
                         🟢 ONLINE
                       </span>
-                      <span v-else class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 bg-slate-500/20 border border-slate-500/30 rounded-full">
+                      <span
+                        v-else
+                        class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 bg-slate-500/20 border border-slate-500/30 rounded-full"
+                      >
                         ⚫ OFFLINE
                       </span>
                     </div>
-                    <div v-if="player.currentServer && player.isActive" class="text-xs text-cyan-400 font-medium">
+                    <div
+                      v-if="player.currentServer && player.isActive"
+                      class="text-xs text-cyan-400 font-medium"
+                    >
                       🎮 {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
                     </div>
                   </div>
                 </div>
-                <div v-if="playerSuggestions.length === 0 && !isSearchLoading && playerSearchQuery.length >= 2" class="p-4 text-center text-slate-400 text-sm font-medium">
+                <div
+                  v-if="playerSuggestions.length === 0 && !isSearchLoading && playerSearchQuery.length >= 2"
+                  class="p-4 text-center text-slate-400 text-sm font-medium"
+                >
                   🔍 No players found
                 </div>
               </div>
@@ -85,8 +104,10 @@
                 <div
                   class="w-6 h-6 rounded bg-cover bg-center"
                   :style="{ backgroundImage: getGameIcon(game.iconClass) }"
-                ></div>
-                <div class="text-sm font-medium hidden sm:block">{{ game.name }}</div>
+                />
+                <div class="text-sm font-medium hidden sm:block">
+                  {{ game.name }}
+                </div>
               </button>
             </div>
             
@@ -113,15 +134,21 @@
                 >
                 
                 <!-- Loading Spinner -->
-                <div v-if="isSearchLoading" class="absolute right-4 top-1/2 transform -translate-y-1/2">
-                  <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>
+                <div
+                  v-if="isSearchLoading"
+                  class="absolute right-4 top-1/2 transform -translate-y-1/2"
+                >
+                  <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
                 </div>
                 
                 <!-- Search Glow Effect -->
-                <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                 
                 <!-- Enhanced Player Dropdown -->
-                <div v-if="showPlayerDropdown" class="absolute top-full mt-3 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto shadow-2xl z-50">
+                <div
+                  v-if="showPlayerDropdown"
+                  class="absolute top-full mt-3 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto shadow-2xl z-50"
+                >
                   <div
                     v-for="player in playerSuggestions"
                     :key="player.playerName"
@@ -129,22 +156,36 @@
                     @mousedown.prevent="selectPlayer(player)"
                   >
                     <div class="space-y-2">
-                      <div class="font-bold text-slate-200 text-sm group-hover:text-cyan-400 transition-colors">{{ player.playerName }}</div>
+                      <div class="font-bold text-slate-200 text-sm group-hover:text-cyan-400 transition-colors">
+                        {{ player.playerName }}
+                      </div>
                       <div class="flex items-center gap-3 flex-wrap text-xs">
                         <span class="text-slate-400 font-medium">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
-                        <span v-if="player.isActive" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full">
+                        <span
+                          v-if="player.isActive"
+                          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full"
+                        >
                           🟢 ONLINE
                         </span>
-                        <span v-else class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 bg-slate-500/20 border border-slate-500/30 rounded-full">
+                        <span
+                          v-else
+                          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 bg-slate-500/20 border border-slate-500/30 rounded-full"
+                        >
                           ⚫ OFFLINE
                         </span>
                       </div>
-                      <div v-if="player.currentServer && player.isActive" class="text-xs text-cyan-400 font-medium">
+                      <div
+                        v-if="player.currentServer && player.isActive"
+                        class="text-xs text-cyan-400 font-medium"
+                      >
                         🎮 {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
                       </div>
                     </div>
                   </div>
-                  <div v-if="playerSuggestions.length === 0 && !isSearchLoading && playerSearchQuery.length >= 2" class="p-4 text-center text-slate-400 text-sm font-medium">
+                  <div
+                    v-if="playerSuggestions.length === 0 && !isSearchLoading && playerSearchQuery.length >= 2"
+                    class="p-4 text-center text-slate-400 text-sm font-medium"
+                  >
                     🔍 No players found
                   </div>
                 </div>
@@ -170,8 +211,10 @@
               <div
                 class="w-6 h-6 rounded bg-cover bg-center"
                 :style="{ backgroundImage: getGameIcon(game.iconClass) }"
-              ></div>
-              <div class="text-sm font-medium">{{ game.name }}</div>
+              />
+              <div class="text-sm font-medium">
+                {{ game.name }}
+              </div>
             </button>
           </div>
         </div>
@@ -181,23 +224,40 @@
           <!-- Toggle Button -->
           <div class="p-3">
             <button
-              @click="togglePlayerHistory"
               class="w-full flex items-center justify-between p-3 bg-slate-800/30 hover:bg-slate-700/50 rounded-lg border border-slate-700/50 transition-all duration-300 group"
+              @click="togglePlayerHistory"
             >
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center">
                   <span class="text-slate-900 text-sm font-bold">📈</span>
                 </div>
                 <div class="text-left">
-                  <div class="text-sm font-medium text-slate-200">Player Activity History</div>
-                  <div class="text-xs text-slate-400">{{ getActiveGameName() }} population trends</div>
+                  <div class="text-sm font-medium text-slate-200">
+                    Player Activity History
+                  </div>
+                  <div class="text-xs text-slate-400">
+                    {{ getActiveGameName() }} population trends
+                  </div>
                 </div>
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-xs text-slate-400 hidden sm:block">{{ showPlayerHistory ? 'Hide' : 'Show' }}</span>
-                <div class="transform transition-transform duration-300" :class="{ 'rotate-180': showPlayerHistory }">
-                  <svg class="w-5 h-5 text-slate-400 group-hover:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                <div
+                  class="transform transition-transform duration-300"
+                  :class="{ 'rotate-180': showPlayerHistory }"
+                >
+                  <svg
+                    class="w-5 h-5 text-slate-400 group-hover:text-cyan-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
               </div>
@@ -209,27 +269,66 @@
             v-if="showPlayerHistory" 
             class="px-3 pb-3 space-y-3 animate-in slide-in-from-top duration-300"
           >
-            <!-- Period Selector -->
+            <!-- Enhanced Period Selector -->
             <div class="flex justify-center gap-1 bg-slate-800/30 rounded-lg p-1">
+              <!-- Short periods -->
               <button
                 v-for="period in ['1d', '3d', '7d']"
                 :key="period"
-                @click="changePeriod(period as '1d' | '3d' | '7d')"
                 :class="[
                   'px-3 py-1 text-xs font-medium rounded-md transition-all duration-200',
                   historyPeriod === period
                     ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
                 ]"
+                @click="changePeriod(period as '1d' | '3d' | '7d')"
               >
                 {{ period === '1d' ? '24h' : period === '3d' ? '3 days' : '7 days' }}
               </button>
+              
+              <!-- Longer periods dropdown -->
+              <div class="relative">
+                <button
+                  :class="[
+                    'px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1',
+                    historyPeriod === 'longer'
+                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                  ]"
+                  @click="toggleLongerDropdown"
+                >
+                  {{ getLongerPeriodLabel() }}
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <!-- Dropdown menu -->
+                <div
+                  v-if="showLongerDropdown"
+                  class="absolute top-full mt-1 right-0 bg-slate-800/95 backdrop-blur-lg rounded-lg border border-slate-700/50 shadow-xl z-50 min-w-[120px]"
+                >
+                  <button
+                    v-for="period in [{ id: '1month', label: '1 Month' }, { id: '3months', label: '3 Months' }, { id: 'thisyear', label: 'This Year' }, { id: 'alltime', label: 'All Time' }]"
+                    :key="period.id"
+                    :class="[
+                      'w-full text-left px-3 py-2 text-xs hover:bg-slate-700/50 transition-colors first:rounded-t-lg last:rounded-b-lg',
+                      longerPeriod === period.id ? 'text-cyan-400 bg-cyan-500/10' : 'text-slate-300'
+                    ]"
+                    @click="selectLongerPeriod(period.id as '1month' | '3months' | 'thisyear' | 'alltime')"
+                  >
+                    {{ period.label }}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Chart Container -->
             <div class="bg-slate-800/20 rounded-lg p-4">
               <PlayerHistoryChart
-                :chartData="playerHistoryData"
+                :chart-data="playerHistoryData"
+                :insights="playerHistoryInsights"
+                :period="getCurrentPeriod()"
                 :loading="historyLoading"
                 :error="historyError"
               />
@@ -238,12 +337,15 @@
         </div>
 
         <!-- Loading State -->
-        <div v-if="loading" class="flex items-center justify-center py-20">
+        <div
+          v-if="loading"
+          class="flex items-center justify-center py-20"
+        >
           <div class="text-center space-y-6">
             <div class="relative flex items-center justify-center">
-              <div class="w-20 h-20 border-4 border-slate-700 rounded-full animate-spin"></div>
-              <div class="absolute w-20 h-20 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin"></div>
-              <div class="absolute w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full animate-pulse"></div>
+              <div class="w-20 h-20 border-4 border-slate-700 rounded-full animate-spin" />
+              <div class="absolute w-20 h-20 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin" />
+              <div class="absolute w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full animate-pulse" />
             </div>
             <div class="text-lg font-semibold text-white">
               Loading servers...
@@ -252,211 +354,303 @@
         </div>
 
         <!-- Error State -->
-        <div v-else-if="error" class="flex items-center justify-center py-20">
+        <div
+          v-else-if="error"
+          class="flex items-center justify-center py-20"
+        >
           <div class="text-center space-y-4">
             <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="15" y1="9" x2="9" y2="15"/>
-                <line x1="9" y1="9" x2="15" y2="15"/>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="text-red-400"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <line
+                  x1="15"
+                  y1="9"
+                  x2="9"
+                  y2="15"
+                />
+                <line
+                  x1="9"
+                  y1="9"
+                  x2="15"
+                  y2="15"
+                />
               </svg>
             </div>
-            <div class="text-lg font-semibold text-red-400">{{ error }}</div>
+            <div class="text-lg font-semibold text-red-400">
+              {{ error }}
+            </div>
           </div>
         </div>
 
         <!-- Server Table -->
-        <div v-else class="overflow-x-auto">
-            <table class="w-full border-collapse border border-slate-700/30">
-              <!-- Table Header -->
-              <thead class="sticky top-0 z-10">
-                <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
-                  <th class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
-                    <div class="flex items-center justify-between gap-2">
-                      <div @click="sortBy('name')" class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50">
-                        <span class="text-slate-400 text-xs">🏷️</span>
-                        <span class="font-mono font-bold">NAME</span>
-                        <span class="text-xs transition-transform duration-200" :class="{
+        <div
+          v-else
+          class="overflow-x-auto"
+        >
+          <table class="w-full border-collapse border border-slate-700/30">
+            <!-- Table Header -->
+            <thead class="sticky top-0 z-10">
+              <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+                <th class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                  <div class="flex items-center justify-between gap-2">
+                    <div
+                      class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50"
+                      @click="sortBy('name')"
+                    >
+                      <span class="text-slate-400 text-xs">🏷️</span>
+                      <span class="font-mono font-bold">NAME</span>
+                      <span
+                        class="text-xs transition-transform duration-200"
+                        :class="{
                           'text-cyan-400 opacity-100': sortField === 'name',
                           'opacity-50': sortField !== 'name',
                           'rotate-0': sortField === 'name' && sortDirection === 'asc',
                           'rotate-180': sortField === 'name' && sortDirection === 'desc'
-                        }">▲</span>
-                      </div>
-                      <div @click="sortBy('timezone')" class="flex items-center gap-1 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-yellow-500/50">
-                        <span class="text-yellow-400 text-xs">🌍</span>
-                        <span class="font-mono font-bold text-xs">TIME</span>
-                        <span class="text-xs transition-transform duration-200" :class="{
+                        }"
+                      >▲</span>
+                    </div>
+                    <div
+                      class="flex items-center gap-1 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-yellow-500/50"
+                      @click="sortBy('timezone')"
+                    >
+                      <span class="text-yellow-400 text-xs">🌍</span>
+                      <span class="font-mono font-bold text-xs">TIME</span>
+                      <span
+                        class="text-xs transition-transform duration-200"
+                        :class="{
                           'text-yellow-400 opacity-100': sortField === 'timezone',
                           'opacity-50': sortField !== 'timezone',
                           'rotate-0': sortField === 'timezone' && sortDirection === 'asc',
                           'rotate-180': sortField === 'timezone' && sortDirection === 'desc'
-                        }">▲</span>
-                      </div>
+                        }"
+                      >▲</span>
                     </div>
-                  </th>
-                  <th @click="sortBy('numPlayers')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50">
-                    <div class="flex items-center gap-1.5">
-                      <span class="text-green-400 text-xs">👥</span>
-                      <span class="font-mono font-bold">PLAYERS</span>
-                      <span class="text-xs transition-transform duration-200" :class="{
+                  </div>
+                </th>
+                <th
+                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50"
+                  @click="sortBy('numPlayers')"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-green-400 text-xs">👥</span>
+                    <span class="font-mono font-bold">PLAYERS</span>
+                    <span
+                      class="text-xs transition-transform duration-200"
+                      :class="{
                         'text-green-400 opacity-100': sortField === 'numPlayers',
                         'opacity-50': sortField !== 'numPlayers',
                         'rotate-0': sortField === 'numPlayers' && sortDirection === 'asc',
                         'rotate-180': sortField === 'numPlayers' && sortDirection === 'desc'
-                      }">▲</span>
-                    </div>
-                  </th>
-                  <th @click="sortBy('mapName')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50">
-                    <div class="flex items-center gap-1.5">
-                      <span class="text-orange-400 text-xs">🗺️</span>
-                      <span class="font-mono font-bold">MAP</span>
-                      <span class="text-xs transition-transform duration-200" :class="{
+                      }"
+                    >▲</span>
+                  </div>
+                </th>
+                <th
+                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50"
+                  @click="sortBy('mapName')"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-orange-400 text-xs">🗺️</span>
+                    <span class="font-mono font-bold">MAP</span>
+                    <span
+                      class="text-xs transition-transform duration-200"
+                      :class="{
                         'text-orange-400 opacity-100': sortField === 'mapName',
                         'opacity-50': sortField !== 'mapName',
                         'rotate-0': sortField === 'mapName' && sortDirection === 'asc',
                         'rotate-180': sortField === 'mapName' && sortDirection === 'desc'
-                      }">▲</span>
-                    </div>
-                  </th>
-                  <th @click="sortBy('roundTimeRemain')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-yellow-500/50">
-                    <div class="flex items-center gap-1.5">
-                      <span class="text-yellow-400 text-xs">⏱️</span>
-                      <span class="font-mono font-bold">TIME</span>
-                      <span class="text-xs transition-transform duration-200" :class="{
+                      }"
+                    >▲</span>
+                  </div>
+                </th>
+                <th
+                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-yellow-500/50"
+                  @click="sortBy('roundTimeRemain')"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-yellow-400 text-xs">⏱️</span>
+                    <span class="font-mono font-bold">TIME</span>
+                    <span
+                      class="text-xs transition-transform duration-200"
+                      :class="{
                         'text-yellow-400 opacity-100': sortField === 'roundTimeRemain',
                         'opacity-50': sortField !== 'roundTimeRemain',
                         'rotate-0': sortField === 'roundTimeRemain' && sortDirection === 'asc',
                         'rotate-180': sortField === 'roundTimeRemain' && sortDirection === 'desc'
-                      }">▲</span>
-                    </div>
-                  </th>
-                  <th @click="sortBy('gameType')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-purple-500/50">
-                    <div class="flex items-center gap-1.5">
-                      <span class="text-purple-400 text-xs">🎮</span>
-                      <span class="font-mono font-bold">MODE</span>
-                      <span class="text-xs transition-transform duration-200" :class="{
+                      }"
+                    >▲</span>
+                  </div>
+                </th>
+                <th
+                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-purple-500/50"
+                  @click="sortBy('gameType')"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-purple-400 text-xs">🎮</span>
+                    <span class="font-mono font-bold">MODE</span>
+                    <span
+                      class="text-xs transition-transform duration-200"
+                      :class="{
                         'text-purple-400 opacity-100': sortField === 'gameType',
                         'opacity-50': sortField !== 'gameType',
                         'rotate-0': sortField === 'gameType' && sortDirection === 'asc',
                         'rotate-180': sortField === 'gameType' && sortDirection === 'desc'
-                      }">▲</span>
-                    </div>
-                  </th>
-                  <th class="p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
-                    <div class="flex items-center gap-1.5">
-                      <span class="text-blue-400 text-xs">🔗</span>
-                      <span class="font-mono font-bold">IP</span>
-                    </div>
-                  </th>
-                  <th class="p-1.5 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
-                    <div class="flex items-center justify-center gap-1.5">
-                      <span class="text-red-400 text-xs">⚔️</span>
-                      <span class="font-mono font-bold">JOIN</span>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
+                      }"
+                    >▲</span>
+                  </div>
+                </th>
+                <th class="p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-blue-400 text-xs">🔗</span>
+                    <span class="font-mono font-bold">IP</span>
+                  </div>
+                </th>
+                <th class="p-1.5 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <span class="text-red-400 text-xs">⚔️</span>
+                    <span class="font-mono font-bold">JOIN</span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
 
-              <!-- Table Body -->
-              <tbody>
-                <tr
-                  v-for="server in sortedServers"
-                  :key="server.guid"
-                  class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
-                  :class="getServerStatusClass(server)"
-                >
-                  <!-- Server Name -->
-                  <td class="p-1.5">
-                    <router-link 
-                      :to="`/servers/${encodeURIComponent(server.name)}`" 
-                      class="block group-hover:text-cyan-400 transition-all duration-300 no-underline"
-                    >
-                      <div class="flex items-center gap-2">
-                        <span v-if="server.country" class="text-lg">{{ getCountryFlag(server.country) }}</span>
-                        <div class="flex-1 min-w-0">
-                          <div class="font-bold text-slate-200 truncate max-w-xs text-sm">{{ server.name }}</div>
-                          <div v-if="getTimezoneDisplay(server.timezone)" class="text-xs text-slate-400 font-mono">
-                            {{ getTimezoneDisplay(server.timezone) }}
-                          </div>
-                        </div>
-                      </div>
-                    </router-link>
-                  </td>
-
-                  <!-- Players -->
-                  <td class="p-1.5 cursor-pointer" @click="showPlayers(server)">
+            <!-- Table Body -->
+            <tbody>
+              <tr
+                v-for="server in sortedServers"
+                :key="server.guid"
+                class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
+                :class="getServerStatusClass(server)"
+              >
+                <!-- Server Name -->
+                <td class="p-1.5">
+                  <router-link 
+                    :to="`/servers/${encodeURIComponent(server.name)}`" 
+                    class="block group-hover:text-cyan-400 transition-all duration-300 no-underline"
+                  >
                     <div class="flex items-center gap-2">
-                      <div class="flex items-center gap-1 font-bold" :class="getPlayerCountClass(server)">
-                        <span class="text-sm font-mono">{{ server.numPlayers }}</span>
-                        <span class="text-slate-500 text-xs font-mono">/{{ server.maxPlayers }}</span>
-                      </div>
-                      <div class="flex-1 max-w-[80px]">
-                        <div class="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                          <div 
-                            class="h-full transition-all duration-500 rounded-full" 
-                            :style="{ 
-                              width: getPlayerPercentage(server) + '%', 
-                              backgroundColor: getPlayerBarColor(server),
-                              boxShadow: `0 0 6px ${getPlayerBarColor(server)}60`
-                            }"
-                          ></div>
+                      <span
+                        v-if="server.country"
+                        class="text-lg"
+                      >{{ getCountryFlag(server.country) }}</span>
+                      <div class="flex-1 min-w-0">
+                        <div class="font-bold text-slate-200 truncate max-w-xs text-sm">
+                          {{ server.name }}
+                        </div>
+                        <div
+                          v-if="getTimezoneDisplay(server.timezone)"
+                          class="text-xs text-slate-400 font-mono"
+                        >
+                          {{ getTimezoneDisplay(server.timezone) }}
                         </div>
                       </div>
                     </div>
-                  </td>
+                  </router-link>
+                </td>
 
-                  <!-- Map -->
-                  <td class="p-1.5">
-                    <div class="font-bold text-orange-400 text-xs truncate max-w-[180px] font-mono uppercase">{{ server.mapName }}</div>
-                  </td>
-
-                  <!-- Time Remaining -->
-                  <td class="p-1.5">
-                    <div class="text-center">
-                      <div class="text-green-400 font-bold text-xs font-mono">{{ formatTimeRemaining(server.roundTimeRemain) }}</div>
+                <!-- Players -->
+                <td
+                  class="p-1.5 cursor-pointer"
+                  @click="showPlayers(server)"
+                >
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="flex items-center gap-1 font-bold"
+                      :class="getPlayerCountClass(server)"
+                    >
+                      <span class="text-sm font-mono">{{ server.numPlayers }}</span>
+                      <span class="text-slate-500 text-xs font-mono">/{{ server.maxPlayers }}</span>
                     </div>
-                  </td>
-
-                  <!-- Game Type -->
-                  <td class="p-1.5">
-                    <div class="flex items-center gap-1.5">
-                      <div 
-                        class="w-5 h-5 rounded bg-cover bg-center border border-slate-600/50"
-                        :style="{ backgroundImage: getGameIcon(getGameIconClass(server.gameType)) }"
-                      ></div>
-                      <span class="px-1.5 py-0.5 rounded text-xs font-bold uppercase font-mono" :class="getGameTypeClass(server.gameType)">
-                        {{ getGameDisplayName(server.gameType) }}
-                      </span>
+                    <div class="flex-1 max-w-[80px]">
+                      <div class="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                        <div 
+                          class="h-full transition-all duration-500 rounded-full" 
+                          :style="{ 
+                            width: getPlayerPercentage(server) + '%', 
+                            backgroundColor: getPlayerBarColor(server),
+                            boxShadow: `0 0 6px ${getPlayerBarColor(server)}60`
+                          }"
+                        />
+                      </div>
                     </div>
-                  </td>
+                  </div>
+                </td>
 
-                  <!-- Connection -->
-                  <td class="p-1.5">
-                    <div class="text-center">
-                      <div class="font-mono text-xs text-slate-400 font-medium">{{ server.ip }}:{{ server.port }}</div>
-                    </div>
-                  </td>
+                <!-- Map -->
+                <td class="p-1.5">
+                  <div class="font-bold text-orange-400 text-xs truncate max-w-[180px] font-mono uppercase">
+                    {{ server.mapName }}
+                  </div>
+                </td>
 
-                  <!-- Action -->
-                  <td class="p-1.5">
-                    <div class="flex justify-center">
-                      <button 
-                        class="px-2.5 py-1 text-xs font-bold uppercase transition-all duration-300 rounded-lg border font-mono"
-                        :class="{
-                          'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-blue-600 shadow-lg hover:shadow-blue-500/30 transform hover:scale-105': server.numPlayers < server.maxPlayers,
-                          'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60 border-slate-600': server.numPlayers >= server.maxPlayers
-                        }"
-                        @click="joinServer(server)" 
-                        :disabled="server.numPlayers >= server.maxPlayers"
-                      >
-                        {{ server.numPlayers >= server.maxPlayers ? 'FULL' : 'JOIN' }}
-                      </button>
+                <!-- Time Remaining -->
+                <td class="p-1.5">
+                  <div class="text-center">
+                    <div class="text-green-400 font-bold text-xs font-mono">
+                      {{ formatTimeRemaining(server.roundTimeRemain) }}
                     </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </div>
+                </td>
+
+                <!-- Game Type -->
+                <td class="p-1.5">
+                  <div class="flex items-center gap-1.5">
+                    <div 
+                      class="w-5 h-5 rounded bg-cover bg-center border border-slate-600/50"
+                      :style="{ backgroundImage: getGameIcon(getGameIconClass(server.gameType)) }"
+                    />
+                    <span
+                      class="px-1.5 py-0.5 rounded text-xs font-bold uppercase font-mono"
+                      :class="getGameTypeClass(server.gameType)"
+                    >
+                      {{ getGameDisplayName(server.gameType) }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Connection -->
+                <td class="p-1.5">
+                  <div class="text-center">
+                    <div class="font-mono text-xs text-slate-400 font-medium">
+                      {{ server.ip }}:{{ server.port }}
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Action -->
+                <td class="p-1.5">
+                  <div class="flex justify-center">
+                    <button 
+                      class="px-2.5 py-1 text-xs font-bold uppercase transition-all duration-300 rounded-lg border font-mono"
+                      :class="{
+                        'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-blue-600 shadow-lg hover:shadow-blue-500/30 transform hover:scale-105': server.numPlayers < server.maxPlayers,
+                        'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60 border-slate-600': server.numPlayers >= server.maxPlayers
+                      }"
+                      :disabled="server.numPlayers >= server.maxPlayers" 
+                      @click="joinServer(server)"
+                    >
+                      {{ server.numPlayers >= server.maxPlayers ? 'FULL' : 'JOIN' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -475,7 +669,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchAllServers } from '../services/serverDetailsService'
 import { ServerSummary } from '../types/server'
-import { PlayerHistoryDataPoint } from '../types/playerStatsTypes'
+import { PlayerHistoryDataPoint, PlayerHistoryResponse } from '../types/playerStatsTypes'
 import PlayersPanel from '../components/PlayersPanel.vue'
 import PlayerHistoryChart from '../components/PlayerHistoryChart.vue'
 import { fetchPlayerOnlineHistory } from '../services/playerStatsService'
@@ -561,9 +755,12 @@ const selectedServer = ref<ServerSummary | null>(null)
 // Player history state
 const showPlayerHistory = ref(false)
 const playerHistoryData = ref<PlayerHistoryDataPoint[]>([])
-const historyPeriod = ref<'1d' | '3d' | '7d'>('1d')
+const playerHistoryInsights = ref(null)
+const historyPeriod = ref<'1d' | '3d' | '7d' | 'longer'>('1d')
+const longerPeriod = ref<'1month' | '3months' | 'thisyear' | 'alltime'>('1month')
 const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
+const showLongerDropdown = ref(false)
 
 // Computed properties
 const filteredServers = computed(() => {
@@ -910,11 +1107,37 @@ const fetchPlayerHistory = async () => {
   historyError.value = null
   
   try {
+    const currentPeriod = getCurrentPeriod()
+    console.log('🔄 Fetching player history for period:', currentPeriod)
+    
     const response = await fetchPlayerOnlineHistory(
       activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam',
-      historyPeriod.value
+      currentPeriod
     )
-    playerHistoryData.value = response.dataPoints
+    
+    console.log('📊 API Response:', {
+      hasDataPoints: !!response.dataPoints,
+      dataPointsLength: response.dataPoints?.length,
+      hasInsights: !!response.insights,
+      rollingAverageLength: response.insights?.rollingAverage?.length,
+      period: response.period
+    })
+    
+    // Handle both old and new API response formats
+    if (response.dataPoints) {
+      // New format with insights
+      playerHistoryData.value = response.dataPoints
+      playerHistoryInsights.value = response.insights || null
+      console.log('✅ Set insights data:', {
+        hasRollingAverage: !!(response.insights?.rollingAverage),
+        rollingPoints: response.insights?.rollingAverage?.length || 0
+      })
+    } else {
+      // Legacy format - just array of data points
+      playerHistoryData.value = response as PlayerHistoryDataPoint[]
+      playerHistoryInsights.value = null
+      console.log('📜 Using legacy format (no insights)')
+    }
   } catch (err) {
     historyError.value = 'Failed to load player history'
     console.error('Error fetching player history:', err)
@@ -932,7 +1155,34 @@ const togglePlayerHistory = () => {
 
 const changePeriod = (period: '1d' | '3d' | '7d') => {
   historyPeriod.value = period
+  showLongerDropdown.value = false
   fetchPlayerHistory()
+}
+
+const toggleLongerDropdown = () => {
+  showLongerDropdown.value = !showLongerDropdown.value
+}
+
+const selectLongerPeriod = (period: '1month' | '3months' | 'thisyear' | 'alltime') => {
+  longerPeriod.value = period
+  historyPeriod.value = 'longer'
+  showLongerDropdown.value = false
+  fetchPlayerHistory()
+}
+
+const getLongerPeriodLabel = () => {
+  if (historyPeriod.value !== 'longer') return 'More'
+  const labels = {
+    '1month': '1 Month',
+    '3months': '3 Months', 
+    'thisyear': 'This Year',
+    'alltime': 'All Time'
+  }
+  return labels[longerPeriod.value]
+}
+
+const getCurrentPeriod = () => {
+  return historyPeriod.value === 'longer' ? longerPeriod.value : historyPeriod.value
 }
 
 const getActiveGameName = () => {
@@ -956,6 +1206,14 @@ onMounted(() => {
   refreshTimer.value = window.setInterval(() => {
     fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', false)
   }, 30000)
+  
+  // Close dropdown on outside click
+  document.addEventListener('click', (e) => {
+    const target = e.target as Element
+    if (!target.closest('.relative')) {
+      showLongerDropdown.value = false
+    }
+  })
 })
 
 onUnmounted(() => {

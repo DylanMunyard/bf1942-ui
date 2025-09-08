@@ -158,7 +158,9 @@ const placementTypeSubtitle = computed(() => {
           </div>
           <div>
             <h3>{{ placementTypeLabel }}</h3>
-            <p class="section-subtitle">{{ placementTypeSubtitle }}</p>
+            <p class="section-subtitle">
+              {{ placementTypeSubtitle }}
+            </p>
           </div>
         </div>
         <div class="section-controls">
@@ -167,25 +169,38 @@ const placementTypeSubtitle = computed(() => {
             <button 
               class="placement-toggle-btn"
               :class="{ 'active': showWeightedPlacements }"
-              @click="togglePlacementType"
               title="Toggle between weighted and regular placements"
+              @click="togglePlacementType"
             >
               {{ showWeightedPlacements ? 'High-Stakes' : 'All Rounds' }}
             </button>
             
             <!-- Min Players Control (only show when weighted is active) -->
-            <div v-if="showWeightedPlacements" class="min-players-control">
+            <div
+              v-if="showWeightedPlacements"
+              class="min-players-control"
+            >
               <label class="min-players-label">Min Players:</label>
               <select 
                 :value="localMinPlayersForWeighting" 
-                @change="updateMinPlayersWeighting(parseInt(($event.target as HTMLSelectElement).value))"
                 class="min-players-select"
+                @change="updateMinPlayersWeighting(parseInt(($event.target as HTMLSelectElement).value))"
               >
-                <option value="10">10+</option>
-                <option value="15">15+</option>
-                <option value="20">20+</option>
-                <option value="25">25+</option>
-                <option value="30">30+</option>
+                <option value="10">
+                  10+
+                </option>
+                <option value="15">
+                  15+
+                </option>
+                <option value="20">
+                  20+
+                </option>
+                <option value="25">
+                  25+
+                </option>
+                <option value="30">
+                  30+
+                </option>
               </select>
             </div>
           </div>
@@ -228,7 +243,9 @@ const placementTypeSubtitle = computed(() => {
           v-else 
           class="no-placement-data"
         >
-          <div class="no-data-icon">{{ showWeightedPlacements ? '🏅' : '🏆' }}</div>
+          <div class="no-data-icon">
+            {{ showWeightedPlacements ? '🏅' : '🏆' }}
+          </div>
           <div class="no-data-text">
             <h4>No {{ placementTypeLabel.toLowerCase() }} data available</h4>
             <p v-if="showWeightedPlacements">
@@ -371,7 +388,9 @@ const placementTypeSubtitle = computed(() => {
           </div>
           <div>
             <h3>Elite K/D Masters</h3>
-            <p class="section-subtitle">Highest sustained K/D ratio</p>
+            <p class="section-subtitle">
+              Highest sustained K/D ratio
+            </p>
           </div>
         </div>
         <div class="section-controls">
@@ -438,7 +457,9 @@ const placementTypeSubtitle = computed(() => {
           </div>
           <div>
             <h3>Killing Machine</h3>
-            <p class="section-subtitle">Fastest sustained kill rate</p>
+            <p class="section-subtitle">
+              Fastest sustained kill rate
+            </p>
           </div>
         </div>
         <div class="section-controls">

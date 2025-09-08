@@ -28,7 +28,10 @@
       
       <div class="p-6 overflow-visible max-h-[calc(90vh-140px)]">
         <div class="mb-5">
-          <label for="serverSearch" class="block text-white font-semibold mb-2">Search Servers</label>
+          <label
+            for="serverSearch"
+            class="block text-white font-semibold mb-2"
+          >Search Servers</label>
           <ServerSearch
             v-model="serverName"
             placeholder="Search for server name..."
@@ -52,7 +55,9 @@
           v-if="selectedServer"
           class="mb-5"
         >
-          <h4 class="text-white m-0 mb-3 text-base font-semibold">Selected Server</h4>
+          <h4 class="text-white m-0 mb-3 text-base font-semibold">
+            Selected Server
+          </h4>
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
             <div class="flex flex-col gap-2">
               <h5 class="text-white m-0 text-base font-semibold">

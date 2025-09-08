@@ -32,12 +32,21 @@
         <!-- Modal body -->
         <div class="p-6">
           <!-- Round Placement Achievement Layout -->
-          <div v-if="isRoundPlacementAchievement && parsedMetadata" class="space-y-6">
+          <div
+            v-if="isRoundPlacementAchievement && parsedMetadata"
+            class="space-y-6"
+          >
             <!-- Hero Section with Placement Display -->
             <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-700/50">
               <!-- Animated background effects -->
-              <div class="absolute inset-0 bg-gradient-to-br opacity-20" :class="getPlacementColor(achievement.value || 1)"></div>
-              <div class="absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl opacity-30" :class="`bg-gradient-to-br ${getPlacementColor(achievement.value || 1)}`"></div>
+              <div
+                class="absolute inset-0 bg-gradient-to-br opacity-20"
+                :class="getPlacementColor(achievement.value || 1)"
+              />
+              <div
+                class="absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl opacity-30"
+                :class="`bg-gradient-to-br ${getPlacementColor(achievement.value || 1)}`"
+              />
               
               <div class="relative z-10 p-8">
                 <div class="flex flex-col lg:flex-row items-center gap-8">
@@ -47,14 +56,17 @@
                       :src="getAchievementImage(achievement.achievementId, achievement.tier)" 
                       :alt="achievement.achievementName"
                       class="w-32 h-40 object-contain drop-shadow-2xl transform hover:scale-105 transition-transform duration-300"
-                    />
+                    >
                   </div>
                   
                   <!-- Placement Details -->
                   <div class="flex-1 text-center lg:text-left space-y-4">
                     <div class="space-y-3">
                       <div class="flex items-center justify-center lg:justify-start gap-3">
-                        <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r" :class="getPlacementColor(achievement.value || 1)">
+                        <div
+                          class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r"
+                          :class="getPlacementColor(achievement.value || 1)"
+                        >
                           {{ achievement.value || 1 }}<span class="text-2xl">{{ getPlacementSuffix(achievement.value || 1) }}</span>
                         </div>
                         <span class="text-2xl font-bold text-white">Place</span>
@@ -65,7 +77,10 @@
                         <p class="text-lg text-slate-300 font-medium">
                           Achieved in a {{ parsedMetadata.Kills }}-kill performance!
                         </p>
-                        <div v-if="achievement.mapName" class="flex items-center justify-center lg:justify-start gap-2 text-sm">
+                        <div
+                          v-if="achievement.mapName"
+                          class="flex items-center justify-center lg:justify-start gap-2 text-sm"
+                        >
                           <span class="text-purple-400">🗺️</span>
                           <router-link 
                             v-if="achievement.roundId && playerName"
@@ -82,7 +97,10 @@
                           >
                             {{ achievement.mapName }}
                           </router-link>
-                          <span v-else class="text-slate-300 font-medium">{{ achievement.mapName }}</span>
+                          <span
+                            v-else
+                            class="text-slate-300 font-medium"
+                          >{{ achievement.mapName }}</span>
                         </div>
                       </div>
                     </div>
@@ -90,18 +108,30 @@
                     <!-- Performance Stats -->
                     <div class="flex items-center justify-center lg:justify-start gap-6">
                       <div class="text-center">
-                        <div class="text-2xl font-bold text-green-400">{{ parsedMetadata.Kills }}</div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wide">Kills</div>
+                        <div class="text-2xl font-bold text-green-400">
+                          {{ parsedMetadata.Kills }}
+                        </div>
+                        <div class="text-xs text-slate-400 uppercase tracking-wide">
+                          Kills
+                        </div>
                       </div>
-                      <div class="w-px h-8 bg-slate-600"></div>
+                      <div class="w-px h-8 bg-slate-600" />
                       <div class="text-center">
-                        <div class="text-2xl font-bold text-yellow-400">{{ parsedMetadata.Score }}</div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wide">Score</div>
+                        <div class="text-2xl font-bold text-yellow-400">
+                          {{ parsedMetadata.Score }}
+                        </div>
+                        <div class="text-xs text-slate-400 uppercase tracking-wide">
+                          Score
+                        </div>
                       </div>
-                      <div class="w-px h-8 bg-slate-600"></div>
+                      <div class="w-px h-8 bg-slate-600" />
                       <div class="text-center">
-                        <div class="text-lg font-bold text-cyan-400">{{ parsedMetadata.TeamLabel }}</div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wide">Team</div>
+                        <div class="text-lg font-bold text-cyan-400">
+                          {{ parsedMetadata.TeamLabel }}
+                        </div>
+                        <div class="text-xs text-slate-400 uppercase tracking-wide">
+                          Team
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -121,7 +151,9 @@
                     <span class="text-blue-400 text-xs">•</span>
                     <span class="text-blue-400 text-xs">Where glory was earned</span>
                   </div>
-                  <p class="text-slate-200 font-medium leading-tight break-words">{{ parsedMetadata.ServerName }}</p>
+                  <p class="text-slate-200 font-medium leading-tight break-words">
+                    {{ parsedMetadata.ServerName }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -151,12 +183,15 @@
           </div>
           
           <!-- Team Victory Achievement Layout -->
-          <div v-else-if="isTeamVictoryAchievement && parsedMetadata" class="space-y-6">
+          <div
+            v-else-if="isTeamVictoryAchievement && parsedMetadata"
+            class="space-y-6"
+          >
             <!-- Hero Section with Team Matchup Display -->
             <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-700/50">
               <!-- Animated background effects -->
-              <div class="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-500/20 opacity-20"></div>
-              <div class="absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl opacity-30 bg-gradient-to-br from-green-500 to-emerald-500"></div>
+              <div class="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-500/20 opacity-20" />
+              <div class="absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl opacity-30 bg-gradient-to-br from-green-500 to-emerald-500" />
               
               <div class="relative z-10 p-8">
                 <div class="flex flex-col lg:flex-row items-center gap-8">
@@ -166,7 +201,7 @@
                       :src="getAchievementImage(achievement.achievementId, achievement.tier)" 
                       :alt="achievement.achievementName"
                       class="w-32 h-40 object-contain drop-shadow-2xl transform hover:scale-105 transition-transform duration-300"
-                    />
+                    >
                   </div>
                   
                   <!-- Victory Details -->
@@ -182,20 +217,37 @@
                       <div class="space-y-3">
                         <div class="flex items-center justify-center lg:justify-start gap-4">
                           <div class="text-center">
-                            <div class="text-lg font-bold text-green-400">{{ parsedMetadata.WinningTeamLabel }}</div>
-                            <div class="text-2xl font-black text-green-400">{{ parsedMetadata.WinningTeamTickets }}</div>
-                            <div class="text-xs text-slate-400 uppercase tracking-wide">Winner</div>
+                            <div class="text-lg font-bold text-green-400">
+                              {{ parsedMetadata.WinningTeamLabel }}
+                            </div>
+                            <div class="text-2xl font-black text-green-400">
+                              {{ parsedMetadata.WinningTeamTickets }}
+                            </div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wide">
+                              Winner
+                            </div>
                           </div>
-                          <div class="text-2xl font-bold text-slate-400">VS</div>
+                          <div class="text-2xl font-bold text-slate-400">
+                            VS
+                          </div>
                           <div class="text-center">
-                            <div class="text-lg font-bold text-red-400">{{ parsedMetadata.LosingTeamLabel }}</div>
-                            <div class="text-2xl font-black text-red-400">{{ parsedMetadata.LosingTeamTickets }}</div>
-                            <div class="text-xs text-slate-400 uppercase tracking-wide">Defeated</div>
+                            <div class="text-lg font-bold text-red-400">
+                              {{ parsedMetadata.LosingTeamLabel }}
+                            </div>
+                            <div class="text-2xl font-black text-red-400">
+                              {{ parsedMetadata.LosingTeamTickets }}
+                            </div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wide">
+                              Defeated
+                            </div>
                           </div>
                         </div>
                         
                         <!-- Map Info integrated -->
-                        <div v-if="achievement.mapName" class="flex items-center justify-center lg:justify-start gap-2 text-sm">
+                        <div
+                          v-if="achievement.mapName"
+                          class="flex items-center justify-center lg:justify-start gap-2 text-sm"
+                        >
                           <span class="text-purple-400">🗺️</span>
                           <router-link 
                             v-if="achievement.roundId && playerName"
@@ -212,7 +264,10 @@
                           >
                             {{ achievement.mapName }}
                           </router-link>
-                          <span v-else class="text-slate-300 font-medium">{{ achievement.mapName }}</span>
+                          <span
+                            v-else
+                            class="text-slate-300 font-medium"
+                          >{{ achievement.mapName }}</span>
                         </div>
                       </div>
                     </div>
@@ -220,18 +275,30 @@
                     <!-- Player Performance Stats -->
                     <div class="flex items-center justify-center lg:justify-start gap-6">
                       <div class="text-center">
-                        <div class="text-2xl font-bold text-green-400">{{ parsedMetadata.Kills || 0 }}</div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wide">Kills</div>
+                        <div class="text-2xl font-bold text-green-400">
+                          {{ parsedMetadata.Kills || 0 }}
+                        </div>
+                        <div class="text-xs text-slate-400 uppercase tracking-wide">
+                          Kills
+                        </div>
                       </div>
-                      <div class="w-px h-8 bg-slate-600"></div>
+                      <div class="w-px h-8 bg-slate-600" />
                       <div class="text-center">
-                        <div class="text-2xl font-bold text-red-400">{{ parsedMetadata.Deaths || 0 }}</div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wide">Deaths</div>
+                        <div class="text-2xl font-bold text-red-400">
+                          {{ parsedMetadata.Deaths || 0 }}
+                        </div>
+                        <div class="text-xs text-slate-400 uppercase tracking-wide">
+                          Deaths
+                        </div>
                       </div>
-                      <div class="w-px h-8 bg-slate-600"></div>
+                      <div class="w-px h-8 bg-slate-600" />
                       <div class="text-center">
-                        <div class="text-2xl font-bold text-yellow-400">{{ parsedMetadata.Score || 0 }}</div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wide">Score</div>
+                        <div class="text-2xl font-bold text-yellow-400">
+                          {{ parsedMetadata.Score || 0 }}
+                        </div>
+                        <div class="text-xs text-slate-400 uppercase tracking-wide">
+                          Score
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -251,38 +318,56 @@
                     <span class="text-blue-400 text-xs">•</span>
                     <span class="text-blue-400 text-xs">Victory battlefield</span>
                   </div>
-                  <p class="text-slate-200 font-medium leading-tight break-words">{{ parsedMetadata.ServerName }}</p>
+                  <p class="text-slate-200 font-medium leading-tight break-words">
+                    {{ parsedMetadata.ServerName }}
+                  </p>
                 </div>
               </div>
             </div>
             
             <!-- Badge Definition Explanation -->
-            <div v-if="badgeDescription" class="bg-gradient-to-br from-slate-800/50 to-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6">
+            <div
+              v-if="badgeDescription"
+              class="bg-gradient-to-br from-slate-800/50 to-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+            >
               <div class="flex items-start gap-3 mb-4">
                 <div class="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
                   <span class="text-white text-sm">ℹ️</span>
                 </div>
                 <div class="flex-1">
-                  <h4 class="text-lg font-bold text-amber-400 mb-2">Achievement Explanation</h4>
-                  <p class="text-slate-300 leading-relaxed">{{ badgeDescription }}</p>
+                  <h4 class="text-lg font-bold text-amber-400 mb-2">
+                    Achievement Explanation
+                  </h4>
+                  <p class="text-slate-300 leading-relaxed">
+                    {{ badgeDescription }}
+                  </p>
                 </div>
               </div>
               
               <!-- Tier Requirement -->
-              <div v-if="tierRequirement" class="mt-4 pt-4 border-t border-slate-700/50">
+              <div
+                v-if="tierRequirement"
+                class="mt-4 pt-4 border-t border-slate-700/50"
+              >
                 <div class="flex items-start gap-3">
-                  <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" 
-                       :class="{
-                         'bg-gradient-to-r from-orange-500 to-red-500': achievement.tier?.toLowerCase() === 'legend',
-                         'bg-gradient-to-r from-yellow-400 to-orange-500': achievement.tier?.toLowerCase() === 'gold',
-                         'bg-gradient-to-r from-blue-400 to-cyan-500': achievement.tier?.toLowerCase() === 'silver',
-                         'bg-gradient-to-r from-orange-500 to-orange-600': achievement.tier?.toLowerCase() === 'bronze'
-                       }">
+                  <div
+                    class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" 
+                    :class="{
+                      'bg-gradient-to-r from-orange-500 to-red-500': achievement.tier?.toLowerCase() === 'legend',
+                      'bg-gradient-to-r from-yellow-400 to-orange-500': achievement.tier?.toLowerCase() === 'gold',
+                      'bg-gradient-to-r from-blue-400 to-cyan-500': achievement.tier?.toLowerCase() === 'silver',
+                      'bg-gradient-to-r from-orange-500 to-orange-600': achievement.tier?.toLowerCase() === 'bronze'
+                    }"
+                  >
                     <span class="text-white text-xs font-bold">{{ achievement.tier?.charAt(0).toUpperCase() }}</span>
                   </div>
                   <div class="flex-1">
-                    <h5 class="text-sm font-semibold text-slate-300 mb-1">{{ achievement.tier ? (achievement.tier.charAt(0).toUpperCase() + achievement.tier.slice(1).toLowerCase()) : '' }} Tier Requirements</h5>
-                    <p class="text-slate-400 text-sm leading-relaxed">{{ tierRequirement }}</p>
+                    <h5 class="text-sm font-semibold text-slate-300 mb-1">
+                      {{ achievement.tier ? (achievement.tier.charAt(0).toUpperCase() + achievement.tier.slice(1).toLowerCase()) : '' }} Tier Requirements
+                    </h5>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                      {{ tierRequirement }}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -313,7 +398,10 @@
               </div>
               
               <!-- Team Switch Indicator (if applicable) -->
-              <div v-if="achievement.achievementId === 'team_victory_switched'" class="md:col-span-2 bg-gradient-to-br from-orange-500/10 to-amber-500/5 p-4 rounded-lg border border-orange-500/20">
+              <div
+                v-if="achievement.achievementId === 'team_victory_switched'"
+                class="md:col-span-2 bg-gradient-to-br from-orange-500/10 to-amber-500/5 p-4 rounded-lg border border-orange-500/20"
+              >
                 <div class="flex items-center gap-2">
                   <span class="text-orange-400 text-sm">🔄</span>
                   <span class="text-xs text-slate-400 uppercase tracking-wide">Team Switched</span>
@@ -324,7 +412,10 @@
           </div>
           
           <!-- Default Achievement Layout (for non-round-placement and non-team-victory achievements) -->
-          <div v-else class="space-y-6">
+          <div
+            v-else
+            class="space-y-6"
+          >
             <!-- Achievement image with description overlay -->
             <div class="flex flex-col items-center">
               <div class="relative">
@@ -332,39 +423,53 @@
                   :src="getAchievementImage(achievement.achievementId, achievement.tier)" 
                   :alt="achievement.achievementName"
                   class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50"
-                />
+                >
                 
                 <!-- Badge Description Overlay -->
                 <div
                   v-if="badgeDescription"
                   class="absolute bottom-0 left-0 right-0 bg-slate-900/70 backdrop-blur-sm rounded-b-2xl p-4"
                 >
-                  <p class="text-white text-sm leading-relaxed font-medium text-center drop-shadow-lg">{{ badgeDescription }}</p>
+                  <p class="text-white text-sm leading-relaxed font-medium text-center drop-shadow-lg">
+                    {{ badgeDescription }}
+                  </p>
                 </div>
               </div>
             </div>
             
             <!-- Tier Requirement (if available) -->
-            <div v-if="tierRequirement" class="bg-gradient-to-br from-slate-800/50 to-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6">
+            <div
+              v-if="tierRequirement"
+              class="bg-gradient-to-br from-slate-800/50 to-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+            >
               <div class="flex items-start gap-3">
-                <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" 
-                     :class="{
-                       'bg-gradient-to-r from-orange-500 to-red-500': achievement.tier?.toLowerCase() === 'legend',
-                       'bg-gradient-to-r from-yellow-400 to-orange-500': achievement.tier?.toLowerCase() === 'gold',
-                       'bg-gradient-to-r from-blue-400 to-cyan-500': achievement.tier?.toLowerCase() === 'silver',
-                       'bg-gradient-to-r from-orange-500 to-orange-600': achievement.tier?.toLowerCase() === 'bronze'
-                     }">
+                <div
+                  class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" 
+                  :class="{
+                    'bg-gradient-to-r from-orange-500 to-red-500': achievement.tier?.toLowerCase() === 'legend',
+                    'bg-gradient-to-r from-yellow-400 to-orange-500': achievement.tier?.toLowerCase() === 'gold',
+                    'bg-gradient-to-r from-blue-400 to-cyan-500': achievement.tier?.toLowerCase() === 'silver',
+                    'bg-gradient-to-r from-orange-500 to-orange-600': achievement.tier?.toLowerCase() === 'bronze'
+                  }"
+                >
                   <span class="text-white text-xs font-bold">{{ achievement.tier?.charAt(0).toUpperCase() }}</span>
                 </div>
                 <div class="flex-1">
-                  <h5 class="text-sm font-semibold text-slate-300 mb-1">{{ achievement.tier ? (achievement.tier.charAt(0).toUpperCase() + achievement.tier.slice(1).toLowerCase()) : '' }} Tier Requirements</h5>
-                  <p class="text-slate-400 text-sm leading-relaxed">{{ tierRequirement }}</p>
+                  <h5 class="text-sm font-semibold text-slate-300 mb-1">
+                    {{ achievement.tier ? (achievement.tier.charAt(0).toUpperCase() + achievement.tier.slice(1).toLowerCase()) : '' }} Tier Requirements
+                  </h5>
+                  <p class="text-slate-400 text-sm leading-relaxed">
+                    {{ tierRequirement }}
+                  </p>
                 </div>
               </div>
             </div>
             
             <!-- Achievement details -->
-            <div v-if="achievement.mapName" class="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4">
+            <div
+              v-if="achievement.mapName"
+              class="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4"
+            >
               <div class="flex items-center justify-between">
                 <span class="text-slate-400 font-medium text-sm">Map:</span>
                 <router-link 
@@ -382,7 +487,10 @@
                 >
                   {{ achievement.mapName }}
                 </router-link>
-                <span v-else class="text-slate-200 font-medium">{{ achievement.mapName }}</span>
+                <span
+                  v-else
+                  class="text-slate-200 font-medium"
+                >{{ achievement.mapName }}</span>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { fetchRoundReport, RoundReport } from '../services/serverDetailsService';
 
 // Router
@@ -728,19 +728,22 @@ const shouldShowTickets = computed(() => {
   <div class="min-h-screen">
     <!-- Animated background elements -->
     <div class="absolute inset-0 overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10"></div>
-      <div class="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"></div>
-      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10" />
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse" />
+      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
     </div>
 
     <div class="relative z-10 p-6">
       <!-- Header -->
       <div class="mb-8">
-        <div v-if="roundReport" class="max-w-6xl mx-auto flex items-start gap-6">
+        <div
+          v-if="roundReport"
+          class="max-w-6xl mx-auto flex items-start gap-6"
+        >
           <!-- Back Button -->
           <button
-            @click="goBack"
             class="group flex-shrink-0 w-10 h-10 bg-slate-800/80 hover:bg-slate-700/90 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-400/50 rounded-full transition-all duration-300 cursor-pointer flex items-center justify-center hover:scale-110 mt-2"
+            @click="goBack"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -754,7 +757,12 @@ const shouldShowTickets = computed(() => {
               stroke-linejoin="round"
               class="text-slate-300 group-hover:text-cyan-400 group-hover:-translate-x-0.5 transition-all duration-300"
             >
-              <line x1="19" y1="12" x2="5" y2="12" />
+              <line
+                x1="19"
+                y1="12"
+                x2="5"
+                y2="12"
+              />
               <polyline points="12 19 5 12 12 5" />
             </svg>
           </button>
@@ -771,10 +779,12 @@ const shouldShowTickets = computed(() => {
                 <!-- Basic Info Row -->
                 <div class="flex flex-wrap items-center justify-center gap-6 mb-4 text-slate-300">
                   <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+                    <div class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
                     <span class="text-sm font-medium">{{ formatDate(roundReport.round.startTime) }}</span>
                   </div>
-                  <div class="text-slate-600">•</div>
+                  <div class="text-slate-600">
+                    •
+                  </div>
                   <router-link 
                     :to="'/servers/' + encodeURIComponent(roundReport.round.serverName)" 
                     class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium"
@@ -784,22 +794,39 @@ const shouldShowTickets = computed(() => {
                 </div>
                 
                 <!-- Team Tickets Display (when available) -->
-                <div v-if="shouldShowTickets" class="flex items-center justify-center gap-8 pt-4 border-t border-slate-700/50">
+                <div
+                  v-if="shouldShowTickets"
+                  class="flex items-center justify-center gap-8 pt-4 border-t border-slate-700/50"
+                >
                   <div class="text-center">
-                    <h3 class="text-lg font-bold text-blue-400 mb-1">{{ roundReport.round.team1Label || 'Team 1' }}</h3>
-                    <div class="text-2xl font-bold text-white">{{ roundReport.round.tickets1 }}</div>
-                    <div class="text-xs text-slate-400 uppercase tracking-wide">Tickets</div>
+                    <h3 class="text-lg font-bold text-blue-400 mb-1">
+                      {{ roundReport.round.team1Label || 'Team 1' }}
+                    </h3>
+                    <div class="text-2xl font-bold text-white">
+                      {{ roundReport.round.tickets1 }}
+                    </div>
+                    <div class="text-xs text-slate-400 uppercase tracking-wide">
+                      Tickets
+                    </div>
                   </div>
                   
                   <div class="flex flex-col items-center">
-                    <div class="text-xl font-bold text-slate-300 mb-1">VS</div>
-                    <div class="w-8 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-red-400"></div>
+                    <div class="text-xl font-bold text-slate-300 mb-1">
+                      VS
+                    </div>
+                    <div class="w-8 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-red-400" />
                   </div>
                   
                   <div class="text-center">
-                    <h3 class="text-lg font-bold text-red-400 mb-1">{{ roundReport.round.team2Label || 'Team 2' }}</h3>
-                    <div class="text-2xl font-bold text-white">{{ roundReport.round.tickets2 }}</div>
-                    <div class="text-xs text-slate-400 uppercase tracking-wide">Tickets</div>
+                    <h3 class="text-lg font-bold text-red-400 mb-1">
+                      {{ roundReport.round.team2Label || 'Team 2' }}
+                    </h3>
+                    <div class="text-2xl font-bold text-white">
+                      {{ roundReport.round.tickets2 }}
+                    </div>
+                    <div class="text-xs text-slate-400 uppercase tracking-wide">
+                      Tickets
+                    </div>
                   </div>
                 </div>
               </div>
@@ -809,19 +836,34 @@ const shouldShowTickets = computed(() => {
       </div>
 
       <!-- Loading State -->
-      <div v-if="loading" class="flex flex-col items-center justify-center py-20 text-slate-400">
-        <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
-        <p class="text-lg">Loading battle report...</p>
+      <div
+        v-if="loading"
+        class="flex flex-col items-center justify-center py-20 text-slate-400"
+      >
+        <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4" />
+        <p class="text-lg">
+          Loading battle report...
+        </p>
       </div>
 
       <!-- Error State -->
-      <div v-else-if="error" class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center">
-        <div class="text-6xl mb-4">⚠️</div>
-        <p class="text-red-400 text-lg font-semibold">{{ error }}</p>
+      <div
+        v-else-if="error"
+        class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center"
+      >
+        <div class="text-6xl mb-4">
+          ⚠️
+        </div>
+        <p class="text-red-400 text-lg font-semibold">
+          {{ error }}
+        </p>
       </div>
 
       <!-- Main Content -->
-      <div v-else-if="roundReport" class="grid grid-cols-1 xl:grid-cols-3 gap-8 h-[calc(100vh-200px)]">
+      <div
+        v-else-if="roundReport"
+        class="grid grid-cols-1 xl:grid-cols-3 gap-8 h-[calc(100vh-200px)]"
+      >
         <!-- Battle Console (2/3 width) -->
         <div class="xl:col-span-2 flex flex-col gap-6 h-full relative">
           <!-- Time Navigator - Left Side -->
@@ -842,7 +884,6 @@ const shouldShowTickets = computed(() => {
               <button
                 v-for="(checkpoint, reversedIndex) in reversedTimeCheckpoints"
                 :key="reversedIndex"
-                @click="jumpToReversedCheckpoint(reversedIndex)"
                 class="w-full px-2 py-2 text-xs font-mono font-bold rounded-lg transition-all duration-300 hover:scale-105 active:scale-95"
                 :class="[
                   reversedIndex === reversedSelectedIndex 
@@ -850,6 +891,7 @@ const shouldShowTickets = computed(() => {
                     : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/30'
                 ]"
                 :title="`Jump to ${checkpoint.offset}`"
+                @click="jumpToReversedCheckpoint(reversedIndex)"
               >
                 {{ checkpoint.offset }}
               </button>
@@ -863,30 +905,30 @@ const shouldShowTickets = computed(() => {
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                   <h4 class="font-mono text-green-400 text-sm flex items-center gap-2">
-                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                     BATTLE_CONSOLE.EXE
                   </h4>
                   
                   <!-- Playback Controls in Header -->
                   <div class="flex items-center gap-1">
                     <button
-                      @click="resetPlayback"
                       class="p-1.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded transition-all duration-300 text-sm"
                       title="Reset"
+                      @click="resetPlayback"
                     >
                       ⏮️
                     </button>
                     <button
-                      @click="togglePlayback"
                       class="p-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded transition-all duration-300 font-semibold text-sm"
                       :title="isPlaying ? 'Pause' : 'Play'"
+                      @click="togglePlayback"
                     >
                       {{ isPlaying ? '⏸️' : '▶️' }}
                     </button>
                     <button
-                      @click="jumpToEnd"
                       class="p-1.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded transition-all duration-300 text-sm"
                       title="Jump to End"
+                      @click="jumpToEnd"
                     >
                       ⏭️
                     </button>
@@ -897,11 +939,21 @@ const shouldShowTickets = computed(() => {
                       class="ml-2 px-2 py-1 bg-slate-800/60 border border-slate-600 rounded text-slate-300 text-xs focus:outline-none focus:border-cyan-500"
                       title="Playback Speed"
                     >
-                      <option :value="1600">0.5x</option>
-                      <option :value="800">1x</option>
-                      <option :value="400">2x</option>
-                      <option :value="200">4x</option>
-                      <option :value="100">8x</option>
+                      <option :value="1600">
+                        0.5x
+                      </option>
+                      <option :value="800">
+                        1x
+                      </option>
+                      <option :value="400">
+                        2x
+                      </option>
+                      <option :value="200">
+                        4x
+                      </option>
+                      <option :value="100">
+                        8x
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -916,7 +968,7 @@ const shouldShowTickets = computed(() => {
                       placeholder="Player name..."
                       class="px-2 py-1 bg-slate-800/60 border border-slate-600 rounded text-slate-300 text-xs focus:outline-none focus:border-cyan-500 w-24"
                       title="Enter player name to highlight their events"
-                    />
+                    >
                   </div>
                 </div>
               </div>
@@ -928,8 +980,13 @@ const shouldShowTickets = computed(() => {
               class="battle-console p-4 pl-20 bg-black/20 font-mono text-sm space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
               style="height: calc(100vh - 280px); max-height: calc(100vh - 280px);"
             >
-              <div v-if="visibleEvents.length === 0" class="text-slate-500 text-center py-8">
-                <div class="text-2xl mb-2">⚔️</div>
+              <div
+                v-if="visibleEvents.length === 0"
+                class="text-slate-500 text-center py-8"
+              >
+                <div class="text-2xl mb-2">
+                  ⚔️
+                </div>
                 <p>Press Play to witness the battle unfold...</p>
               </div>
               
@@ -941,12 +998,16 @@ const shouldShowTickets = computed(() => {
                   :class="getEventStyling(event, index)"
                 >
                   <div class="flex items-start gap-3">
-                    <div class="text-xs font-mono min-w-16 mt-0.5 transition-colors duration-300"
-                         :class="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'text-slate-600' : 'text-slate-500'">
+                    <div
+                      class="text-xs font-mono min-w-16 mt-0.5 transition-colors duration-300"
+                      :class="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'text-slate-600' : 'text-slate-500'"
+                    >
                       {{ formatTimeOffset(event.timestamp) }}
                     </div>
-                    <div :class="[event.color, 'flex-1 transition-colors duration-300']" 
-                         :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''">
+                    <div
+                      :class="[event.color, 'flex-1 transition-colors duration-300']" 
+                      :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''"
+                    >
                       {{ event.message }}
                     </div>
                   </div>
@@ -955,11 +1016,15 @@ const shouldShowTickets = computed(() => {
               
               <!-- Mobile: Grouped by time periods -->
               <div class="block md:hidden">
-                <div v-for="group in groupedEvents" :key="group.timeDisplay" class="mb-4">
+                <div
+                  v-for="group in groupedEvents"
+                  :key="group.timeDisplay"
+                  class="mb-4"
+                >
                   <!-- Time Header -->
                   <div class="sticky top-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/30 px-2 py-1 mb-2 -mx-2">
                     <div class="text-xs font-mono font-bold text-cyan-400 flex items-center gap-2">
-                      <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full"></div>
+                      <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
                       {{ group.timeDisplay }}
                     </div>
                   </div>
@@ -971,8 +1036,10 @@ const shouldShowTickets = computed(() => {
                       :key="event.originalIndex"
                       :class="getEventStyling(event, event.originalIndex)"
                     >
-                      <div :class="[event.color, 'transition-colors duration-300']" 
-                           :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''">
+                      <div
+                        :class="[event.color, 'transition-colors duration-300']" 
+                        :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''"
+                      >
                         {{ event.message }}
                       </div>
                     </div>
@@ -1001,7 +1068,7 @@ const shouldShowTickets = computed(() => {
                     type="checkbox"
                     class="sr-only peer"
                   >
-                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600" />
                   <span class="ml-3 text-sm font-medium text-slate-300">Live Ladder</span>
                 </label>
               </div>
@@ -1017,7 +1084,9 @@ const shouldShowTickets = computed(() => {
                 <!-- Team Header -->
                 <div class="sticky top-0 bg-slate-800/90 backdrop-blur-sm px-4 py-2 border-b border-slate-700/50">
                   <div class="flex items-center justify-between">
-                    <h4 class="font-bold text-slate-200 text-sm">{{ team.teamName }}</h4>
+                    <h4 class="font-bold text-slate-200 text-sm">
+                      {{ team.teamName }}
+                    </h4>
                     <div class="text-xs text-slate-400 flex items-center gap-2">
                       <span>{{ team.totalKills }}K</span>
                       <span>{{ team.totalScore }}P</span>
@@ -1030,11 +1099,21 @@ const shouldShowTickets = computed(() => {
                   <table class="w-full text-xs">
                     <thead class="sticky top-0 bg-slate-900/95">
                       <tr class="border-b border-slate-700/30">
-                        <th class="text-left p-1 font-mono text-slate-400 w-6">#</th>
-                        <th class="text-left p-1 font-mono text-slate-400">PLAYER</th>
-                        <th class="text-center p-1 font-mono text-slate-400 w-12">PTS</th>
-                        <th class="text-center p-1 font-mono text-slate-400 w-8">K</th>
-                        <th class="text-center p-1 font-mono text-slate-400 w-8">D</th>
+                        <th class="text-left p-1 font-mono text-slate-400 w-6">
+                          #
+                        </th>
+                        <th class="text-left p-1 font-mono text-slate-400">
+                          PLAYER
+                        </th>
+                        <th class="text-center p-1 font-mono text-slate-400 w-12">
+                          PTS
+                        </th>
+                        <th class="text-center p-1 font-mono text-slate-400 w-8">
+                          K
+                        </th>
+                        <th class="text-center p-1 font-mono text-slate-400 w-8">
+                          D
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1046,13 +1125,22 @@ const shouldShowTickets = computed(() => {
                         <!-- Rank -->
                         <td class="p-1">
                           <div class="w-4 h-4 flex items-center justify-center">
-                            <span v-if="player.rank <= 3" class="text-xs">{{ getRankIcon(player.rank) }}</span>
-                            <span v-else class="text-xs text-slate-400 font-mono">{{ player.rank }}</span>
+                            <span
+                              v-if="player.rank <= 3"
+                              class="text-xs"
+                            >{{ getRankIcon(player.rank) }}</span>
+                            <span
+                              v-else
+                              class="text-xs text-slate-400 font-mono"
+                            >{{ player.rank }}</span>
                           </div>
                         </td>
                         
                         <!-- Player Name -->
-                        <td class="p-1 min-w-0 cursor-pointer" @click="navigateToPlayerProfile(player.playerName)">
+                        <td
+                          class="p-1 min-w-0 cursor-pointer"
+                          @click="navigateToPlayerProfile(player.playerName)"
+                        >
                           <div class="font-bold text-slate-200 group-hover:text-cyan-400 transition-colors truncate text-xs font-medium">
                             {{ player.playerName }}
                           </div>
@@ -1065,7 +1153,10 @@ const shouldShowTickets = computed(() => {
                         
                         <!-- Kills -->
                         <td class="p-1 text-center">
-                          <span class="font-mono font-bold" :class="getPlayerCountClass(player.kills, player.deaths)">{{ player.kills }}</span>
+                          <span
+                            class="font-mono font-bold"
+                            :class="getPlayerCountClass(player.kills, player.deaths)"
+                          >{{ player.kills }}</span>
                         </td>
                         
                         <!-- Deaths -->
@@ -1082,7 +1173,6 @@ const shouldShowTickets = computed(() => {
         </div>
       </div>
     </div>
-    
   </div>
 </template>
 

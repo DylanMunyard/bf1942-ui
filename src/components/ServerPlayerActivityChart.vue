@@ -511,8 +511,8 @@ const formatPlayTimeHours = (minutes: number): string => {
     class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300"
   >
     <!-- Background Effects -->
-    <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-    <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+    <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
     
     <div class="relative z-10 space-y-6">
       <!-- Header with Period Controls -->
@@ -547,7 +547,10 @@ const formatPlayTimeHours = (minutes: number): string => {
               :title="isChartExpanded ? 'Collapse chart' : 'Expand chart for detailed view'"
               @click="toggleChartExpansion"
             >
-              <span class="text-lg transition-transform duration-300" :class="isChartExpanded ? 'rotate-180' : 'group-hover/expand:scale-110'">{{ isChartExpanded ? '📉' : '📊' }}</span>
+              <span
+                class="text-lg transition-transform duration-300"
+                :class="isChartExpanded ? 'rotate-180' : 'group-hover/expand:scale-110'"
+              >{{ isChartExpanded ? '📉' : '📊' }}</span>
               <span>{{ isChartExpanded ? 'Collapse' : 'Expand' }}</span>
             </button>
           </div>
@@ -575,9 +578,12 @@ const formatPlayTimeHours = (minutes: number): string => {
               <div
                 v-if="selectedPeriod === option.value && props.isLoading"
                 class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"
-              ></div>
+              />
               <span :class="{ 'opacity-80': selectedPeriod === option.value && props.isLoading }">{{ option.label }}</span>
-              <div v-if="selectedPeriod === option.value" class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-lg animate-pulse"></div>
+              <div
+                v-if="selectedPeriod === option.value"
+                class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-lg animate-pulse"
+              />
             </button>
           </div>
         </div>
@@ -588,15 +594,19 @@ const formatPlayTimeHours = (minutes: number): string => {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Peak Players Card -->
           <div class="group/stat relative overflow-hidden bg-gradient-to-br from-green-500/10 to-emerald-600/10 backdrop-blur-sm rounded-xl border border-green-500/30 hover:border-green-400/50 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
             <div class="relative z-10 p-4 space-y-2">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center text-xl">
                   🔥
                 </div>
                 <div>
-                  <p class="text-green-400 text-sm font-medium">Peak Players</p>
-                  <p class="text-2xl font-bold text-white">{{ playerCountStats.max }}</p>
+                  <p class="text-green-400 text-sm font-medium">
+                    Peak Players
+                  </p>
+                  <p class="text-2xl font-bold text-white">
+                    {{ playerCountStats.max }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -604,15 +614,19 @@ const formatPlayTimeHours = (minutes: number): string => {
           
           <!-- Average Players Card -->
           <div class="group/stat relative overflow-hidden bg-gradient-to-br from-blue-500/10 to-cyan-600/10 backdrop-blur-sm rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
             <div class="relative z-10 p-4 space-y-2">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center text-xl">
                   📊
                 </div>
                 <div>
-                  <p class="text-blue-400 text-sm font-medium">Median Players</p>
-                  <p class="text-2xl font-bold text-white">{{ playerCountStats.median }}</p>
+                  <p class="text-blue-400 text-sm font-medium">
+                    Median Players
+                  </p>
+                  <p class="text-2xl font-bold text-white">
+                    {{ playerCountStats.median }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -627,7 +641,7 @@ const formatPlayTimeHours = (minutes: number): string => {
               'bg-gradient-to-br from-red-500/10 to-rose-600/10 border-red-500/30 hover:border-red-400/50': serverInsights.playerCountSummary.changePercentFromPreviousPeriod < 0
             }"
           >
-            <div class="absolute inset-0 bg-gradient-to-br from-current/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-current/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
             <div class="relative z-10 p-4 space-y-2">
               <div class="flex items-center gap-3">
                 <div 
@@ -710,16 +724,31 @@ const formatPlayTimeHours = (minutes: number): string => {
             <div class="flex items-center gap-3">
               <span class="text-xl">💡</span>
               <div>
-                <p class="text-purple-400 font-semibold">Connection Quality Guide</p>
-                <p class="text-slate-400 text-sm">Learn how to interpret ping zones</p>
+                <p class="text-purple-400 font-semibold">
+                  Connection Quality Guide
+                </p>
+                <p class="text-slate-400 text-sm">
+                  Learn how to interpret ping zones
+                </p>
               </div>
             </div>
             <div 
               class="w-8 h-8 bg-slate-700/50 rounded-lg flex items-center justify-center transition-transform duration-300"
               :class="isPingExplainerCollapsed ? '' : 'rotate-180'"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-400">
-                <polyline points="6 9 12 15 18 9"></polyline>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="text-purple-400"
+              >
+                <polyline points="6 9 12 15 18 9" />
               </svg>
             </div>
           </button>
@@ -733,24 +762,36 @@ const formatPlayTimeHours = (minutes: number): string => {
               <!-- Color Legend -->
               <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div class="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                  <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                  <div class="w-4 h-4 bg-green-500 rounded-full" />
                   <div>
-                    <p class="text-green-400 font-medium text-sm">Low Ping Zone</p>
-                    <p class="text-slate-400 text-xs">Optimal connection</p>
+                    <p class="text-green-400 font-medium text-sm">
+                      Low Ping Zone
+                    </p>
+                    <p class="text-slate-400 text-xs">
+                      Optimal connection
+                    </p>
                   </div>
                 </div>
                 <div class="flex items-center gap-3 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg">
-                  <div class="w-4 h-4 bg-orange-500 rounded-full"></div>
+                  <div class="w-4 h-4 bg-orange-500 rounded-full" />
                   <div>
-                    <p class="text-orange-400 font-medium text-sm">Medium Ping Zone</p>
-                    <p class="text-slate-400 text-xs">Moderate latency</p>
+                    <p class="text-orange-400 font-medium text-sm">
+                      Medium Ping Zone
+                    </p>
+                    <p class="text-slate-400 text-xs">
+                      Moderate latency
+                    </p>
                   </div>
                 </div>
                 <div class="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                  <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                  <div class="w-4 h-4 bg-red-500 rounded-full" />
                   <div>
-                    <p class="text-red-400 font-medium text-sm">High Ping Zone</p>
-                    <p class="text-slate-400 text-xs">Higher latency</p>
+                    <p class="text-red-400 font-medium text-sm">
+                      High Ping Zone
+                    </p>
+                    <p class="text-slate-400 text-xs">
+                      Higher latency
+                    </p>
                   </div>
                 </div>
               </div>
@@ -793,64 +834,94 @@ const formatPlayTimeHours = (minutes: number): string => {
               <!-- Table Header -->
               <thead class="sticky top-0 z-10">
                 <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
-                  <th @click="sortMapsBy('mapName')" class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50">
+                  <th
+                    class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50"
+                    @click="sortMapsBy('mapName')"
+                  >
                     <div class="flex items-center gap-2">
                       <span class="text-orange-400 text-xs">🗺️</span>
                       <span class="font-mono font-bold">MAP NAME</span>
-                      <span class="text-xs transition-transform duration-200" :class="{
-                        'text-orange-400 opacity-100': mapsSortField === 'mapName',
-                        'opacity-50': mapsSortField !== 'mapName',
-                        'rotate-0': mapsSortField === 'mapName' && mapsSortDirection === 'asc',
-                        'rotate-180': mapsSortField === 'mapName' && mapsSortDirection === 'desc'
-                      }">▲</span>
+                      <span
+                        class="text-xs transition-transform duration-200"
+                        :class="{
+                          'text-orange-400 opacity-100': mapsSortField === 'mapName',
+                          'opacity-50': mapsSortField !== 'mapName',
+                          'rotate-0': mapsSortField === 'mapName' && mapsSortDirection === 'asc',
+                          'rotate-180': mapsSortField === 'mapName' && mapsSortDirection === 'desc'
+                        }"
+                      >▲</span>
                     </div>
                   </th>
-                  <th @click="sortMapsBy('totalPlayTime')" class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50">
+                  <th
+                    class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50"
+                    @click="sortMapsBy('totalPlayTime')"
+                  >
                     <div class="flex items-center gap-2">
                       <span class="text-cyan-400 text-xs">⏱️</span>
                       <span class="font-mono font-bold">TOTAL HOURS</span>
-                      <span class="text-xs transition-transform duration-200" :class="{
-                        'text-cyan-400 opacity-100': mapsSortField === 'totalPlayTime',
-                        'opacity-50': mapsSortField !== 'totalPlayTime',
-                        'rotate-0': mapsSortField === 'totalPlayTime' && mapsSortDirection === 'asc',
-                        'rotate-180': mapsSortField === 'totalPlayTime' && mapsSortDirection === 'desc'
-                      }">▲</span>
+                      <span
+                        class="text-xs transition-transform duration-200"
+                        :class="{
+                          'text-cyan-400 opacity-100': mapsSortField === 'totalPlayTime',
+                          'opacity-50': mapsSortField !== 'totalPlayTime',
+                          'rotate-0': mapsSortField === 'totalPlayTime' && mapsSortDirection === 'asc',
+                          'rotate-180': mapsSortField === 'totalPlayTime' && mapsSortDirection === 'desc'
+                        }"
+                      >▲</span>
                     </div>
                   </th>
-                  <th @click="sortMapsBy('playTimePercentage')" class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-purple-500/50">
+                  <th
+                    class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-purple-500/50"
+                    @click="sortMapsBy('playTimePercentage')"
+                  >
                     <div class="flex items-center gap-2">
                       <span class="text-purple-400 text-xs">📊</span>
                       <span class="font-mono font-bold">% PLAYTIME</span>
-                      <span class="text-xs transition-transform duration-200" :class="{
-                        'text-purple-400 opacity-100': mapsSortField === 'playTimePercentage',
-                        'opacity-50': mapsSortField !== 'playTimePercentage',
-                        'rotate-0': mapsSortField === 'playTimePercentage' && mapsSortDirection === 'asc',
-                        'rotate-180': mapsSortField === 'playTimePercentage' && mapsSortDirection === 'desc'
-                      }">▲</span>
+                      <span
+                        class="text-xs transition-transform duration-200"
+                        :class="{
+                          'text-purple-400 opacity-100': mapsSortField === 'playTimePercentage',
+                          'opacity-50': mapsSortField !== 'playTimePercentage',
+                          'rotate-0': mapsSortField === 'playTimePercentage' && mapsSortDirection === 'asc',
+                          'rotate-180': mapsSortField === 'playTimePercentage' && mapsSortDirection === 'desc'
+                        }"
+                      >▲</span>
                     </div>
                   </th>
-                  <th @click="sortMapsBy('averagePlayerCount')" class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50">
+                  <th
+                    class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50"
+                    @click="sortMapsBy('averagePlayerCount')"
+                  >
                     <div class="flex items-center gap-2">
                       <span class="text-green-400 text-xs">👥</span>
                       <span class="font-mono font-bold">AVG PLAYERS</span>
-                      <span class="text-xs transition-transform duration-200" :class="{
-                        'text-green-400 opacity-100': mapsSortField === 'averagePlayerCount',
-                        'opacity-50': mapsSortField !== 'averagePlayerCount',
-                        'rotate-0': mapsSortField === 'averagePlayerCount' && mapsSortDirection === 'asc',
-                        'rotate-180': mapsSortField === 'averagePlayerCount' && mapsSortDirection === 'desc'
-                      }">▲</span>
+                      <span
+                        class="text-xs transition-transform duration-200"
+                        :class="{
+                          'text-green-400 opacity-100': mapsSortField === 'averagePlayerCount',
+                          'opacity-50': mapsSortField !== 'averagePlayerCount',
+                          'rotate-0': mapsSortField === 'averagePlayerCount' && mapsSortDirection === 'asc',
+                          'rotate-180': mapsSortField === 'averagePlayerCount' && mapsSortDirection === 'desc'
+                        }"
+                      >▲</span>
                     </div>
                   </th>
-                  <th @click="sortMapsBy('peakPlayerCount')" class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-yellow-500/50">
+                  <th
+                    class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-yellow-500/50"
+                    @click="sortMapsBy('peakPlayerCount')"
+                  >
                     <div class="flex items-center gap-2">
                       <span class="text-yellow-400 text-xs">🔥</span>
                       <span class="font-mono font-bold">PEAK PLAYERS</span>
-                      <span class="text-xs transition-transform duration-200" :class="{
-                        'text-yellow-400 opacity-100': mapsSortField === 'peakPlayerCount',
-                        'opacity-50': mapsSortField !== 'peakPlayerCount',
-                        'rotate-0': mapsSortField === 'peakPlayerCount' && mapsSortDirection === 'asc',
-                        'rotate-180': mapsSortField === 'peakPlayerCount' && mapsSortDirection === 'desc'
-                      }">▲</span>
+                      <span
+                        class="text-xs transition-transform duration-200"
+                        :class="{
+                          'text-yellow-400 opacity-100': mapsSortField === 'peakPlayerCount',
+                          'opacity-50': mapsSortField !== 'peakPlayerCount',
+                          'rotate-0': mapsSortField === 'peakPlayerCount' && mapsSortDirection === 'asc',
+                          'rotate-180': mapsSortField === 'peakPlayerCount' && mapsSortDirection === 'desc'
+                        }"
+                      >▲</span>
                     </div>
                   </th>
                 </tr>
@@ -876,13 +947,17 @@ const formatPlayTimeHours = (minutes: number): string => {
                   
                   <!-- Total Hours -->
                   <td class="p-3">
-                    <div class="font-bold text-cyan-400 text-sm font-mono">{{ formatPlayTimeHours(map.totalPlayTime) }}</div>
+                    <div class="font-bold text-cyan-400 text-sm font-mono">
+                      {{ formatPlayTimeHours(map.totalPlayTime) }}
+                    </div>
                   </td>
                   
                   <!-- Percentage with Progress Bar -->
                   <td class="p-3">
                     <div class="flex items-center gap-3">
-                      <div class="font-bold text-purple-400 text-sm font-mono min-w-0">{{ map.playTimePercentage.toFixed(1) }}%</div>
+                      <div class="font-bold text-purple-400 text-sm font-mono min-w-0">
+                        {{ map.playTimePercentage.toFixed(1) }}%
+                      </div>
                       <div class="flex-1 max-w-[100px]">
                         <div class="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
                           <div 
@@ -892,7 +967,7 @@ const formatPlayTimeHours = (minutes: number): string => {
                               backgroundColor: '#a855f7',
                               boxShadow: '0 0 6px #a855f760'
                             }"
-                          ></div>
+                          />
                         </div>
                       </div>
                     </div>
@@ -900,12 +975,16 @@ const formatPlayTimeHours = (minutes: number): string => {
                   
                   <!-- Average Players -->
                   <td class="p-3">
-                    <div class="font-bold text-green-400 text-sm font-mono">{{ Math.round(map.averagePlayerCount) }}</div>
+                    <div class="font-bold text-green-400 text-sm font-mono">
+                      {{ Math.round(map.averagePlayerCount) }}
+                    </div>
                   </td>
                   
                   <!-- Peak Players -->
                   <td class="p-3">
-                    <div class="font-bold text-yellow-400 text-sm font-mono">{{ map.peakPlayerCount }}</div>
+                    <div class="font-bold text-yellow-400 text-sm font-mono">
+                      {{ map.peakPlayerCount }}
+                    </div>
                   </td>
                 </tr>
               </tbody>

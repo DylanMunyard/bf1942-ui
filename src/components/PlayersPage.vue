@@ -10,10 +10,6 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// Emits
-const emit = defineEmits<{
-  updateSearch: [query: string];
-}>();
 
 // Interface for player search results - matching what's used in other parts of the app
 interface PlayerSearchResult {
@@ -40,8 +36,8 @@ interface PlayerSearchResponse {
 }
 
 // Router
-const router = useRouter();
-const route = useRoute();
+const _router = useRouter();
+const _route = useRoute();
 
 // State variables
 const players = ref<PlayerSearchResult[]>([]);
@@ -209,8 +205,10 @@ onUnmounted(() => {
       v-if="loading"
       class="flex flex-col items-center justify-center py-20 text-slate-400"
     >
-      <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
-      <p class="text-lg text-slate-300">Loading players...</p>
+      <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4" />
+      <p class="text-lg text-slate-300">
+        Loading players...
+      </p>
     </div>
 
     <!-- Error State -->
@@ -218,8 +216,12 @@ onUnmounted(() => {
       v-else-if="error"
       class="bg-slate-800/70 backdrop-blur-sm border border-red-800/50 rounded-xl p-8 text-center"
     >
-      <div class="text-6xl mb-4">⚠️</div>
-      <p class="text-red-400 text-lg font-medium">{{ error }}</p>
+      <div class="text-6xl mb-4">
+        ⚠️
+      </div>
+      <p class="text-red-400 text-lg font-medium">
+        {{ error }}
+      </p>
     </div>
 
     <!-- Welcome State -->
@@ -234,20 +236,34 @@ onUnmounted(() => {
       </div>
       <div class="p-6">
         <div class="text-center space-y-6">
-          <p class="text-lg text-slate-300 font-medium">Start typing a player name above to find their stats and recent activity.</p>
+          <p class="text-lg text-slate-300 font-medium">
+            Start typing a player name above to find their stats and recent activity.
+          </p>
           
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
             <div class="bg-slate-700/50 border border-slate-600/50 rounded-lg p-4 text-center">
-              <div class="text-2xl mb-2">🔍</div>
-              <div class="text-sm text-slate-300">Search by <span class="text-cyan-400 font-semibold">partial names</span></div>
+              <div class="text-2xl mb-2">
+                🔍
+              </div>
+              <div class="text-sm text-slate-300">
+                Search by <span class="text-cyan-400 font-semibold">partial names</span>
+              </div>
             </div>
             <div class="bg-slate-700/50 border border-slate-600/50 rounded-lg p-4 text-center">
-              <div class="text-2xl mb-2">⚡</div>
-              <div class="text-sm text-slate-300">Press <span class="text-cyan-400 font-semibold">Enter</span> for first result</div>
+              <div class="text-2xl mb-2">
+                ⚡
+              </div>
+              <div class="text-sm text-slate-300">
+                Press <span class="text-cyan-400 font-semibold">Enter</span> for first result
+              </div>
             </div>
             <div class="bg-slate-700/50 border border-slate-600/50 rounded-lg p-4 text-center">
-              <div class="text-2xl mb-2">📊</div>
-              <div class="text-sm text-slate-300">View <span class="text-cyan-400 font-semibold">live stats</span> and activity</div>
+              <div class="text-2xl mb-2">
+                📊
+              </div>
+              <div class="text-sm text-slate-300">
+                View <span class="text-cyan-400 font-semibold">live stats</span> and activity
+              </div>
             </div>
           </div>
         </div>
@@ -259,40 +275,63 @@ onUnmounted(() => {
       v-else-if="props.searchQuery && players.length === 0"
       class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center"
     >
-      <div class="text-6xl mb-4 opacity-50">🔍</div>
-      <h3 class="text-2xl font-bold text-slate-200 mb-2">No players found</h3>
-      <p class="text-slate-400">No players match "<span class="text-slate-200 font-semibold">{{ props.searchQuery || '' }}</span>"</p>
-      <p class="text-sm text-slate-500 mt-2 italic">Try a different spelling or partial name.</p>
+      <div class="text-6xl mb-4 opacity-50">
+        🔍
+      </div>
+      <h3 class="text-2xl font-bold text-slate-200 mb-2">
+        No players found
+      </h3>
+      <p class="text-slate-400">
+        No players match "<span class="text-slate-200 font-semibold">{{ props.searchQuery || '' }}</span>"
+      </p>
+      <p class="text-sm text-slate-500 mt-2 italic">
+        Try a different spelling or partial name.
+      </p>
     </div>
           
     <!-- Players Results Section -->
-    <div v-else class="overflow-x-auto">
+    <div
+      v-else
+      class="overflow-x-auto"
+    >
       <table class="w-full border-collapse border border-slate-700/30">
         <!-- Table Header -->
         <thead class="sticky top-0 z-10">
           <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
-            <th @click="sortPlayers('playerName')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50">
+            <th
+              class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50"
+              @click="sortPlayers('playerName')"
+            >
               <div class="flex items-center gap-1.5">
                 <span class="text-cyan-400 text-xs">👤</span>
                 <span class="font-mono font-bold">PLAYER</span>
-                <span class="text-xs transition-transform duration-200" :class="{
-                  'text-cyan-400 opacity-100': sortBy === 'playerName',
-                  'opacity-50': sortBy !== 'playerName',
-                  'rotate-0': sortBy === 'playerName' && sortOrder === 'asc',
-                  'rotate-180': sortBy === 'playerName' && sortOrder === 'desc'
-                }">▲</span>
+                <span
+                  class="text-xs transition-transform duration-200"
+                  :class="{
+                    'text-cyan-400 opacity-100': sortBy === 'playerName',
+                    'opacity-50': sortBy !== 'playerName',
+                    'rotate-0': sortBy === 'playerName' && sortOrder === 'asc',
+                    'rotate-180': sortBy === 'playerName' && sortOrder === 'desc'
+                  }"
+                >▲</span>
               </div>
             </th>
-            <th @click="sortPlayers('lastSeen')" class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50">
+            <th
+              class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50"
+              @click="sortPlayers('lastSeen')"
+            >
               <div class="flex items-center gap-1.5">
                 <span class="text-orange-400 text-xs">📅</span>
                 <span class="font-mono font-bold">LAST SEEN</span>
-                <span class="text-xs transition-transform duration-200" :class="{
-                  'text-orange-400 opacity-100': sortBy === 'lastSeen',
-                  'opacity-50': sortBy !== 'lastSeen',
-                  'rotate-0': sortBy === 'lastSeen' && sortOrder === 'asc',
-                  'rotate-180': sortBy === 'lastSeen' && sortOrder === 'desc'
-                }">▲</span>
+                <span
+                  class="text-xs transition-transform duration-200"
+                  :class="{
+                    'text-orange-400 opacity-100': sortBy === 'lastSeen',
+                    'opacity-50': sortBy !== 'lastSeen',
+                    'rotate-0': sortBy === 'lastSeen' && sortOrder === 'asc',
+                    'rotate-180': sortBy === 'lastSeen' && sortOrder === 'desc'
+                  }"
+                >▲</span>
               </div>
             </th>
             <th class="p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
@@ -321,7 +360,9 @@ onUnmounted(() => {
                 :to="`/players/${encodeURIComponent(player.playerName)}`" 
                 class="block group-hover:text-cyan-400 transition-all duration-300 no-underline"
               >
-                <div class="font-bold text-slate-200 truncate max-w-xs text-sm">{{ player.playerName }}</div>
+                <div class="font-bold text-slate-200 truncate max-w-xs text-sm">
+                  {{ player.playerName }}
+                </div>
               </router-link>
             </td>
 
@@ -334,9 +375,15 @@ onUnmounted(() => {
 
             <!-- Status -->
             <td class="p-1.5">
-              <div v-if="player.isActive" class="flex items-start gap-2">
+              <div
+                v-if="player.isActive"
+                class="flex items-start gap-2"
+              >
                 <span class="text-green-400 text-xs mt-0.5">🟢</span>
-                <div v-if="player.currentServer" class="space-y-1">
+                <div
+                  v-if="player.currentServer"
+                  class="space-y-1"
+                >
                   <router-link 
                     :to="`/servers/${encodeURIComponent(player.currentServer.serverName)}`" 
                     class="text-cyan-400 hover:text-cyan-300 font-medium text-xs block max-w-[160px] truncate no-underline transition-colors duration-200"
@@ -344,36 +391,48 @@ onUnmounted(() => {
                     {{ player.currentServer.serverName }}
                   </router-link>
                   <div class="flex items-center gap-1 text-xs font-mono">
-                    <span class="font-bold" :class="{
-                      'text-emerald-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 100,
-                      'text-blue-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 50,
-                      'text-orange-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 25,
-                      'text-slate-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) < 25
-                    }">
+                    <span
+                      class="font-bold"
+                      :class="{
+                        'text-emerald-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 100,
+                        'text-blue-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 50,
+                        'text-orange-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) >= 25,
+                        'text-slate-400': (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) < 25
+                      }"
+                    >
                       {{ (player.currentServer.sessionKills || 0) + (player.currentServer.sessionDeaths || 0) }}
                     </span>
                     <span class="text-slate-500">/</span>
-                    <span class="font-bold" :class="{
-                      'text-red-400': (player.currentServer.sessionKills || 0) >= 30,
-                      'text-orange-400': (player.currentServer.sessionKills || 0) >= 15,
-                      'text-green-400': (player.currentServer.sessionKills || 0) >= 5,
-                      'text-slate-400': (player.currentServer.sessionKills || 0) < 5
-                    }">
+                    <span
+                      class="font-bold"
+                      :class="{
+                        'text-red-400': (player.currentServer.sessionKills || 0) >= 30,
+                        'text-orange-400': (player.currentServer.sessionKills || 0) >= 15,
+                        'text-green-400': (player.currentServer.sessionKills || 0) >= 5,
+                        'text-slate-400': (player.currentServer.sessionKills || 0) < 5
+                      }"
+                    >
                       {{ player.currentServer.sessionKills || 0 }}
                     </span>
                     <span class="text-slate-500">/</span>
-                    <span class="font-bold" :class="{
-                      'text-red-400': (player.currentServer.sessionDeaths || 0) >= 20,
-                      'text-orange-400': (player.currentServer.sessionDeaths || 0) >= 10,
-                      'text-green-400': (player.currentServer.sessionDeaths || 0) >= 5,
-                      'text-blue-400': (player.currentServer.sessionDeaths || 0) < 5
-                    }">
+                    <span
+                      class="font-bold"
+                      :class="{
+                        'text-red-400': (player.currentServer.sessionDeaths || 0) >= 20,
+                        'text-orange-400': (player.currentServer.sessionDeaths || 0) >= 10,
+                        'text-green-400': (player.currentServer.sessionDeaths || 0) >= 5,
+                        'text-blue-400': (player.currentServer.sessionDeaths || 0) < 5
+                      }"
+                    >
                       {{ player.currentServer.sessionDeaths || 0 }}
                     </span>
                   </div>
                 </div>
               </div>
-              <div v-else class="flex items-center gap-2">
+              <div
+                v-else
+                class="flex items-center gap-2"
+              >
                 <span class="text-slate-500 text-xs">⚫</span>
                 <span class="text-slate-500 font-medium text-xs uppercase">OFFLINE</span>
               </div>
@@ -384,7 +443,10 @@ onUnmounted(() => {
 
       
       <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex flex-wrap items-center justify-center gap-1 sm:gap-2 mt-6 border-t border-slate-700/30 pt-6">
+      <div
+        v-if="totalPages > 1"
+        class="flex flex-wrap items-center justify-center gap-1 sm:gap-2 mt-6 border-t border-slate-700/30 pt-6"
+      >
         <!-- First Page -->
         <button 
           class="px-3 py-2 text-sm font-medium bg-slate-700 border border-slate-600 text-slate-400 rounded-lg transition-all duration-200 hover:bg-slate-600 hover:border-slate-500 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"

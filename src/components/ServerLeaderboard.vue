@@ -3,12 +3,30 @@
     <table class="compact-leaderboard-table">
       <thead>
         <tr>
-          <th class="rank-col">#</th>
-          <th class="player-col">Player</th>
-          <th class="score-col">{{ scoreLabel }}</th>
-          <th class="kd-col">K/D</th>
-          <th v-if="showTotalRounds" class="rounds-col">Rounds</th>
-          <th v-if="showRoundLinks" class="round-col">Round</th>
+          <th class="rank-col">
+            #
+          </th>
+          <th class="player-col">
+            Player
+          </th>
+          <th class="score-col">
+            {{ scoreLabel }}
+          </th>
+          <th class="kd-col">
+            K/D
+          </th>
+          <th
+            v-if="showTotalRounds"
+            class="rounds-col"
+          >
+            Rounds
+          </th>
+          <th
+            v-if="showRoundLinks"
+            class="round-col"
+          >
+            Round
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -59,10 +77,16 @@
               <span class="deaths">{{ player.deaths }}</span>
             </div>
           </td>
-          <td v-if="showTotalRounds" class="rounds-cell">
+          <td
+            v-if="showTotalRounds"
+            class="rounds-cell"
+          >
             <span class="rounds-value">{{ player.totalRounds || 0 }}</span>
           </td>
-          <td v-if="showRoundLinks" class="round-cell">
+          <td
+            v-if="showRoundLinks"
+            class="round-cell"
+          >
             <router-link
               v-if="getRoundReportLink(player)"
               :to="getRoundReportLink(player)!"
@@ -71,7 +95,10 @@
             >
               <span class="round-icon">📊</span>
             </router-link>
-            <span v-else class="no-round">-</span>
+            <span
+              v-else
+              class="no-round"
+            >-</span>
           </td>
         </tr>
       </tbody>

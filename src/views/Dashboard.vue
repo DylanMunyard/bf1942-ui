@@ -2,15 +2,15 @@
   <div class="relative min-h-screen px-3 sm:px-6">
     <!-- Background Effects -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
     </div>
 
     <div class="relative z-10 pb-6 sm:pb-12">
       <div class="max-w-7xl mx-auto">
         <!-- Header Section -->
         <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-8">
-          <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50"></div>
+          <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50" />
           <div class="relative z-10 p-6 sm:p-8 md:p-12">
             <div class="welcome-section">
               <h1 
@@ -143,51 +143,51 @@
 
           <!-- Buddies Section -->
           <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-          <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
-            <div class="flex flex-col gap-2">
-              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
-                👥 Your Squad
-              </h2>
-              <p class="text-slate-400 text-sm">
-                Track friends and squad mates across the battlefield
-              </p>
+            <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
+              <div class="flex flex-col gap-2">
+                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
+                  👥 Your Squad
+                </h2>
+                <p class="text-slate-400 text-sm">
+                  Track friends and squad mates across the battlefield
+                </p>
+              </div>
+              <div class="flex items-center gap-3">
+                <button
+                  v-if="isAuthenticated && buddies.length > 0"
+                  class="group flex items-center justify-center w-10 h-10 rounded-full border-2 border-purple-400 bg-transparent text-purple-400 hover:bg-purple-400 hover:text-slate-900 transition-all duration-300 transform hover:scale-105"
+                  title="Add Squad Member"
+                  @click="showAddBuddyModal = true"
+                >
+                  <span class="text-xl font-bold">+</span>
+                </button>
+                <span class="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-bold rounded-full">
+                  {{ buddies.length }}
+                </span>
+              </div>
             </div>
-            <div class="flex items-center gap-3">
-              <button
-                v-if="isAuthenticated && buddies.length > 0"
-                class="group flex items-center justify-center w-10 h-10 rounded-full border-2 border-purple-400 bg-transparent text-purple-400 hover:bg-purple-400 hover:text-slate-900 transition-all duration-300 transform hover:scale-105"
-                title="Add Squad Member"
-                @click="showAddBuddyModal = true"
+            <div class="p-4 sm:p-6">
+              <div
+                v-if="buddies.length > 0"
+                class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3"
               >
-                <span class="text-xl font-bold">+</span>
-              </button>
-              <span class="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-bold rounded-full">
-                {{ buddies.length }}
-              </span>
+                <BuddyCard
+                  v-for="buddy in buddies"
+                  :key="buddy.id"
+                  :buddy="buddy"
+                  @remove="() => removeBuddy(buddy.id)"
+                />
+              </div>
+              <EmptyStateCard
+                v-else
+                :title="isAuthenticated ? 'No Squad Members Yet' : 'Your Squad'"
+                :description="isAuthenticated ? 'Add friends to your squad to track their online status and recent activities.' : 'Sign in to build your squad and track your friends\' online status across the battlefield.'"
+                :action-text="isAuthenticated ? 'Search Players' : undefined"
+                icon="👥"
+                @action="showAddBuddyModal = true"
+              />
             </div>
-          </div>
-          <div class="p-4 sm:p-6">
-            <div
-              v-if="buddies.length > 0"
-              class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3"
-            >
-            <BuddyCard
-              v-for="buddy in buddies"
-              :key="buddy.id"
-              :buddy="buddy"
-              @remove="() => removeBuddy(buddy.id)"
-            />
-          </div>
-          <EmptyStateCard
-            v-else
-            :title="isAuthenticated ? 'No Squad Members Yet' : 'Your Squad'"
-            :description="isAuthenticated ? 'Add friends to your squad to track their online status and recent activities.' : 'Sign in to build your squad and track your friends\' online status across the battlefield.'"
-            :action-text="isAuthenticated ? 'Search Players' : undefined"
-            icon="👥"
-            @action="showAddBuddyModal = true"
-          />
-          </div>
-        </section>
+          </section>
         </div>
       </div>
     </div>

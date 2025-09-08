@@ -29,7 +29,10 @@
       <div class="p-6 overflow-visible max-h-[calc(90vh-140px)]">
         <form @submit.prevent="handleSubmit">
           <div class="mb-5">
-            <label for="playerName" class="block text-white font-semibold mb-2">Player Name</label>
+            <label
+              for="playerName"
+              class="block text-white font-semibold mb-2"
+            >Player Name</label>
             <PlayerSearch
               v-model="playerName"
               placeholder="Search for a player to add to your squad..."
@@ -54,7 +57,9 @@
             class="mb-5"
           >
             <div class="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-              <h4 class="text-green-400 m-0 mb-3 text-base font-semibold">{{ selectedPlayer.playerName }}</h4>
+              <h4 class="text-green-400 m-0 mb-3 text-base font-semibold">
+                {{ selectedPlayer.playerName }}
+              </h4>
               <div class="grid grid-cols-3 gap-3">
                 <div class="text-center">
                   <span class="block text-white font-bold text-lg">{{ Math.floor(selectedPlayer.totalPlayTimeMinutes / 60) }}h</span>

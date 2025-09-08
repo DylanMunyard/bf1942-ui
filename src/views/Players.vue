@@ -7,8 +7,12 @@
         <div class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-3">
           <!-- Title -->
           <div class="text-center mb-4">
-            <h1 class="text-2xl font-bold text-slate-200 mb-2">Find Players</h1>
-            <p class="text-slate-400 text-sm">Search for players and view their stats, activity, and current server status</p>
+            <h1 class="text-2xl font-bold text-slate-200 mb-2">
+              Find Players
+            </h1>
+            <p class="text-slate-400 text-sm">
+              Search for players and view their stats, activity, and current server status
+            </p>
           </div>
           
           <!-- Player Search -->
@@ -31,13 +35,16 @@
               >
               
               <!-- Search Glow Effect -->
-              <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
             </div>
           </div>
         </div>
 
         <!-- Players Results Section -->
-        <PlayersPage :search-query="debouncedSearchQuery" @update-search="updateSearchQuery" />
+        <PlayersPage
+          :search-query="debouncedSearchQuery"
+          @update-search="updateSearchQuery"
+        />
       </div>
     </div>
   </div>

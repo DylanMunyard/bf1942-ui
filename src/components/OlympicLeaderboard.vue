@@ -1,7 +1,10 @@
 <template>
   <div class="placement-leaderboard">
     <!-- Placement Podium for Top 3 -->
-    <div v-if="topThree.length > 0" class="placement-podium">
+    <div
+      v-if="topThree.length > 0"
+      class="placement-podium"
+    >
       <div class="podium-container">
         <!-- Second Place (Silver) -->
         <div 
@@ -16,18 +19,24 @@
               </div>
             </div>
             <div class="player-info">
-              <div class="player-name">{{ topThree[1].playerName }}</div>
+              <div class="player-name">
+                {{ topThree[1].playerName }}
+              </div>
               <div class="placement-stats">
                 <div class="medal-count">
                   <span class="gold-count">🥇{{ topThree[1].firstPlaces }}</span>
                   <span class="silver-count">🥈{{ topThree[1].secondPlaces }}</span>
                   <span class="bronze-count">🥉{{ topThree[1].thirdPlaces }}</span>
                 </div>
-                <div class="total-points">{{ topThree[1].placementPoints }} pts</div>
+                <div class="total-points">
+                  {{ topThree[1].placementPoints }} pts
+                </div>
               </div>
             </div>
           </div>
-          <div class="podium-base silver-base">2</div>
+          <div class="podium-base silver-base">
+            2
+          </div>
         </div>
 
         <!-- First Place (Gold) -->
@@ -40,22 +49,30 @@
             <div class="medal-container">
               <div class="podium-medal gold">
                 <span class="medal-emoji">🥇</span>
-                <div class="crown">👑</div>
+                <div class="crown">
+                  👑
+                </div>
               </div>
             </div>
             <div class="player-info">
-              <div class="player-name champion">{{ topThree[0].playerName }}</div>
+              <div class="player-name champion">
+                {{ topThree[0].playerName }}
+              </div>
               <div class="placement-stats">
                 <div class="medal-count">
                   <span class="gold-count">🥇{{ topThree[0].firstPlaces }}</span>
                   <span class="silver-count">🥈{{ topThree[0].secondPlaces }}</span>
                   <span class="bronze-count">🥉{{ topThree[0].thirdPlaces }}</span>
                 </div>
-                <div class="total-points champion-points">{{ topThree[0].placementPoints }} pts</div>
+                <div class="total-points champion-points">
+                  {{ topThree[0].placementPoints }} pts
+                </div>
               </div>
             </div>
           </div>
-          <div class="podium-base gold-base">1</div>
+          <div class="podium-base gold-base">
+            1
+          </div>
         </div>
 
         <!-- Third Place (Bronze) -->
@@ -71,24 +88,33 @@
               </div>
             </div>
             <div class="player-info">
-              <div class="player-name">{{ topThree[2].playerName }}</div>
+              <div class="player-name">
+                {{ topThree[2].playerName }}
+              </div>
               <div class="placement-stats">
                 <div class="medal-count">
                   <span class="gold-count">🥇{{ topThree[2].firstPlaces }}</span>
                   <span class="silver-count">🥈{{ topThree[2].secondPlaces }}</span>
                   <span class="bronze-count">🥉{{ topThree[2].thirdPlaces }}</span>
                 </div>
-                <div class="total-points">{{ topThree[2].placementPoints }} pts</div>
+                <div class="total-points">
+                  {{ topThree[2].placementPoints }} pts
+                </div>
               </div>
             </div>
           </div>
-          <div class="podium-base bronze-base">3</div>
+          <div class="podium-base bronze-base">
+            3
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Remaining Players Table -->
-    <div v-if="remainingPlayers.length > 0" class="placement-table">
+    <div
+      v-if="remainingPlayers.length > 0"
+      class="placement-table"
+    >
       <div class="table-header">
         <div class="header-title">
           <span class="leaderboard-icon">🏅</span>
@@ -98,10 +124,18 @@
       
       <div class="table-content">
         <div class="table-row table-header-row">
-          <div class="rank-col">Rank</div>
-          <div class="player-col">Player</div>
-          <div class="medals-col">Medals</div>
-          <div class="points-col">Points</div>
+          <div class="rank-col">
+            Rank
+          </div>
+          <div class="player-col">
+            Player
+          </div>
+          <div class="medals-col">
+            Medals
+          </div>
+          <div class="points-col">
+            Points
+          </div>
         </div>
         
         <div 
@@ -135,9 +169,16 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="players.length === 0" class="empty-state">
-      <div class="empty-icon">🏆</div>
-      <div class="empty-text">No placement standings available</div>
+    <div
+      v-if="players.length === 0"
+      class="empty-state"
+    >
+      <div class="empty-icon">
+        🏆
+      </div>
+      <div class="empty-text">
+        No placement standings available
+      </div>
     </div>
   </div>
 </template>

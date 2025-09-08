@@ -26,7 +26,7 @@
       class="absolute top-full mt-1 left-0 right-0 bg-slate-800/95 backdrop-blur-xl border border-slate-600/50 rounded-xl max-h-80 overflow-y-auto z-[1050] shadow-2xl"
     >
       <div 
-        v-for="(player, index) in searchResults" 
+        v-for="player in searchResults" 
         :key="player.playerName"
         class="p-4 px-5 cursor-pointer border-b border-slate-600/20 last:border-b-0 transition-all duration-200 hover:bg-slate-700/60 hover:shadow-[inset_3px_0_0_#06b6d4] first:rounded-t-xl last:rounded-b-xl relative before:absolute before:inset-0 before:bg-cyan-500/5 before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-200"
         :class="{

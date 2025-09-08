@@ -39,9 +39,9 @@ const goBack = () => {
       'top-4 left-4 sm:top-8 sm:left-8 md:top-12 md:left-12': positioning === 'standard',
       'top-1/2 left-4 -translate-y-1/2 -translate-x-4': positioning === 'left-of-icon'
     }"
-    @click="goBack"
     :title="title"
     style="pointer-events: auto;"
+    @click="goBack"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -55,7 +55,12 @@ const goBack = () => {
       stroke-linejoin="round"
       class="text-slate-300 group-hover:text-cyan-400 group-hover:-translate-x-0.5 transition-all duration-300"
     >
-      <line x1="19" y1="12" x2="5" y2="12" />
+      <line
+        x1="19"
+        y1="12"
+        x2="5"
+        y2="12"
+      />
       <polyline points="12 19 5 12 12 5" />
     </svg>
   </button>

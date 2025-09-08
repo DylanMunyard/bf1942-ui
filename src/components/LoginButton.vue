@@ -64,11 +64,17 @@
       class="relative inline-block"
       @click="toggleDropdown"
     >
-      <button class="flex items-center justify-center w-11 h-11 bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-full cursor-pointer transition-all duration-300 hover:bg-slate-700/70 hover:border-cyan-500/50 hover:-translate-y-0.5" style="box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15)">
+      <button
+        class="flex items-center justify-center w-11 h-11 bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-full cursor-pointer transition-all duration-300 hover:bg-slate-700/70 hover:border-cyan-500/50 hover:-translate-y-0.5"
+        style="box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15)"
+      >
         <div class="flex-shrink-0 relative w-9 h-9 flex items-center justify-center">
           <div class="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 via-purple-500 to-pink-500 p-0.5 transition-all duration-300 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 hover:scale-105">
             <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-              <div class="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 text-slate-900 flex items-center justify-center text-xs font-bold" style="text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1)">
+              <div
+                class="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 text-slate-900 flex items-center justify-center text-xs font-bold"
+                style="text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1)"
+              >
                 {{ getUserInitial() }}
               </div>
             </div>

@@ -5,6 +5,7 @@ import { fetchDashboardData, DashboardResponse } from '../services/dashboardServ
 import { useAuth } from '@/composables/useAuth';
 import { formatLastSeen } from '@/utils/timeUtils';
 import { useNotifications } from '@/composables/useNotifications';
+import type { BuddyNotificationMessage } from '@/types/playerStatsTypes';
 
 // Router and Auth
 const router = useRouter();
@@ -151,7 +152,7 @@ const joinServer = (joinLink: string) => {
 };
 
 // Handle notification click
-const handleNotificationClick = (notification: any) => {
+const handleNotificationClick = (notification: BuddyNotificationMessage) => {
   // Mark as interacted when clicked from sidebar
   markAsInteracted(notification.id);
   

@@ -239,7 +239,7 @@ const refreshServerDetails = async () => {
             </div>
             <!-- Status indicator -->
             <div class="absolute -bottom-1 -right-1">
-              <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-slate-800"></div>
+              <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-slate-800" />
             </div>
           </div>
         </div>
@@ -255,19 +255,31 @@ const refreshServerDetails = async () => {
             v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone)"
             class="flex flex-wrap gap-3 mb-4"
           >
-            <div v-if="serverDetails.region" class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600">
+            <div
+              v-if="serverDetails.region"
+              class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600"
+            >
               📍 {{ serverDetails.region }}
             </div>
-            <div v-if="serverDetails.country || serverDetails.countryCode" class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600">
+            <div
+              v-if="serverDetails.country || serverDetails.countryCode"
+              class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600"
+            >
               🌍 {{ getCountryName(serverDetails.countryCode, serverDetails.country) }}
             </div>
-            <div v-if="serverDetails.timezone && getTimezoneDisplay(serverDetails.timezone)" class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600">
+            <div
+              v-if="serverDetails.timezone && getTimezoneDisplay(serverDetails.timezone)"
+              class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600"
+            >
               🕒 {{ getTimezoneDisplay(serverDetails.timezone) }}
             </div>
           </div>
 
           <!-- Period Info -->
-          <div v-if="serverDetails" class="text-slate-400 text-sm">
+          <div
+            v-if="serverDetails"
+            class="text-slate-400 text-sm"
+          >
             📊 Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
           </div>
         </div>
@@ -277,13 +289,20 @@ const refreshServerDetails = async () => {
           <!-- Current Players -->
           <button
             v-if="liveServerInfo && liveServerInfo.players.length > 0"
-            @click="openPlayersModal"
             class="group bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all duration-200 px-4 py-3 min-w-[140px]"
+            @click="openPlayersModal"
           >
             <div class="flex flex-col items-center">
-              <div class="font-bold text-xl">{{ liveServerInfo.numPlayers }}</div>
-              <div class="text-xs opacity-90">Players Online</div>
-              <div v-if="liveServerInfo.mapName" class="text-xs opacity-75 mt-1 truncate max-w-[120px]">
+              <div class="font-bold text-xl">
+                {{ liveServerInfo.numPlayers }}
+              </div>
+              <div class="text-xs opacity-90">
+                Players Online
+              </div>
+              <div
+                v-if="liveServerInfo.mapName"
+                class="text-xs opacity-75 mt-1 truncate max-w-[120px]"
+              >
                 {{ liveServerInfo.mapName }}
               </div>
             </div>
@@ -294,9 +313,16 @@ const refreshServerDetails = async () => {
             class="bg-slate-700 text-slate-400 rounded-xl border border-slate-600 px-4 py-3 min-w-[140px]"
           >
             <div class="flex flex-col items-center">
-              <div class="font-bold text-xl">0</div>
-              <div class="text-xs">Players Online</div>
-              <div v-if="liveServerInfo.mapName" class="text-xs opacity-75 mt-1 truncate max-w-[120px]">
+              <div class="font-bold text-xl">
+                0
+              </div>
+              <div class="text-xs">
+                Players Online
+              </div>
+              <div
+                v-if="liveServerInfo.mapName"
+                class="text-xs opacity-75 mt-1 truncate max-w-[120px]"
+              >
                 {{ liveServerInfo.mapName }}
               </div>
             </div>
@@ -306,15 +332,15 @@ const refreshServerDetails = async () => {
             v-else-if="isLiveServerLoading"
             class="bg-slate-700 text-slate-400 rounded-xl border border-slate-600 flex items-center justify-center gap-3 px-4 py-3 min-w-[140px]"
           >
-            <div class="w-4 h-4 border-2 border-slate-500 border-t-slate-300 rounded-full animate-spin"></div>
+            <div class="w-4 h-4 border-2 border-slate-500 border-t-slate-300 rounded-full animate-spin" />
             <span class="text-sm">Loading...</span>
           </div>
 
           <!-- Join Server Button -->
           <button
             v-if="liveServerInfo?.joinLink"
-            @click="joinServer"
             class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+            @click="joinServer"
           >
             <span class="text-base">🎮</span>
             <span>Join Server</span>
@@ -329,14 +355,15 @@ const refreshServerDetails = async () => {
     <div class="relative">
       <div class="relative py-6 sm:py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
           <!-- Loading State -->
           <div
             v-if="isLoading"
             class="flex flex-col items-center justify-center py-20 text-slate-400"
           >
-            <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
-            <p class="text-lg text-slate-300">Loading server profile...</p>
+            <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4" />
+            <p class="text-lg text-slate-300">
+              Loading server profile...
+            </p>
           </div>
 
           <!-- Error State -->
@@ -344,13 +371,19 @@ const refreshServerDetails = async () => {
             v-else-if="error"
             class="bg-slate-800/70 backdrop-blur-sm border border-red-800/50 rounded-xl p-8 text-center"
           >
-            <div class="text-6xl mb-4">⚠️</div>
-            <p class="text-red-400 text-lg font-medium">{{ error }}</p>
+            <div class="text-6xl mb-4">
+              ⚠️
+            </div>
+            <p class="text-red-400 text-lg font-medium">
+              {{ error }}
+            </p>
           </div>
 
           <!-- Server Content -->
-          <div v-else-if="serverDetails" class="space-y-6">
-
+          <div
+            v-else-if="serverDetails"
+            class="space-y-6"
+          >
             <!-- Server Rankings & Leaderboards Section -->
             <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
               <div class="px-6 py-4 border-b border-slate-700/50">
@@ -363,7 +396,7 @@ const refreshServerDetails = async () => {
               <div class="px-6 pt-6 pb-4">
                 <div class="relative group">
                   <!-- Background Glow Effect -->
-                  <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+                  <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-300" />
                   
                   <!-- Main Button -->
                   <router-link 
@@ -406,8 +439,8 @@ const refreshServerDetails = async () => {
               </div>
               <div class="p-6">
                 <ServerRecentRounds
-                    :server-details="serverDetails"
-                    :server-name="serverName"
+                  :server-details="serverDetails"
+                  :server-name="serverName"
                 />
               </div>
             </div>
@@ -424,9 +457,10 @@ const refreshServerDetails = async () => {
               v-if="insightsError"
               class="bg-red-900/20 border border-red-700/50 rounded-xl p-4"
             >
-              <p class="text-red-400 text-sm">{{ insightsError }}</p>
+              <p class="text-red-400 text-sm">
+                {{ insightsError }}
+              </p>
             </div>
-
           </div>
 
           <!-- No Data State -->
@@ -434,8 +468,12 @@ const refreshServerDetails = async () => {
             v-else
             class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center"
           >
-            <div class="text-6xl mb-4 opacity-50">📊</div>
-            <p class="text-slate-400 text-lg">No server data available</p>
+            <div class="text-6xl mb-4 opacity-50">
+              📊
+            </div>
+            <p class="text-slate-400 text-lg">
+              No server data available
+            </p>
           </div>
         </div>
       </div>

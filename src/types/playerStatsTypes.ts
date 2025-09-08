@@ -297,6 +297,64 @@ export interface BadgeDefinition {
   };
 }
 
+// Achievement system interfaces
+export interface PlayerAchievementSummary {
+  playerName: string;
+  recentAchievements: Achievement[];
+  allBadges: Achievement[];
+  milestones: Achievement[];
+  teamVictories: Achievement[];
+  bestStreaks: KillStreakStats;
+  lastCalculated: string; // DateTime in ISO format
+}
+
+export interface Achievement {
+  playerName: string;
+  achievementType: string; // 'kill_streak', 'badge', 'milestone', 'ranking', 'round_placement', 'team_victory'
+  achievementId: string;   // e.g., 'kill_streak_15', 'sharpshooter_gold'
+  achievementName: string;
+  tier: string;           // 'bronze', 'silver', 'gold', 'legend'
+  value: number;
+  achievedAt: string;     // DateTime in ISO format
+  processedAt: string;    // DateTime in ISO format
+  serverGuid: string;
+  mapName: string;
+  roundId: string;
+  metadata: string;       // JSON string for additional context
+  game: string;           // 'bf1942', 'fh2', 'bfvietnam'
+  version: string;        // DateTime in ISO format for deduplication
+}
+
+export interface KillStreakStats {
+  bestSingleRoundStreak: number;
+  bestStreakMap: string;
+  bestStreakServer: string;
+  bestStreakDate: string; // DateTime in ISO format
+  recentStreaks: KillStreak[];
+}
+
+export interface KillStreak {
+  playerName: string;
+  streakCount: number;
+  streakStart: string;    // DateTime in ISO format
+  streakEnd: string;      // DateTime in ISO format
+  serverGuid: string;
+  mapName: string;
+  roundId: string;
+  isActive: boolean;
+}
+
+// Notification interfaces
+export interface BuddyNotificationMessage {
+  type: string;           // 'buddy_online' or 'server_map_change'
+  buddyName?: string;     // Present for buddy notifications
+  serverName: string;
+  mapName: string;
+  joinLink?: string;      // Present for server map change notifications
+  timestamp: string;      // DateTime in ISO format
+  message: string;        // Human-readable message
+}
+
 export interface BestScoreEntry {
   score: number;
   kills: number;
@@ -324,6 +382,31 @@ export interface InitialData {
 export interface PlayerHistoryDataPoint {
   timestamp: string; // ISO date string
   totalPlayers: number;
+}
+
+export interface RollingAverageDataPoint {
+  timestamp: string; // ISO date string
+  average: number;
+}
+
+export interface PlayerHistoryInsights {
+  overallAverage: number;
+  rollingAverage: RollingAverageDataPoint[];
+  trendDirection: 'increasing' | 'decreasing' | 'stable';
+  percentageChange: number;
+  peakPlayers: number;
+  peakTimestamp: string;
+  lowestPlayers: number;
+  lowestTimestamp: string;
+  calculationMethod?: string;
+}
+
+export interface PlayerHistoryResponse {
+  dataPoints: PlayerHistoryDataPoint[];
+  insights: PlayerHistoryInsights;
+  period: string;
+  game: string;
+  lastUpdated: string;
 }
 
 export interface PlayerOnlineHistoryResponse {

@@ -37,8 +37,12 @@
           :class="{ active: selectedTeamIndex === index }"
           @click="selectedTeamIndex = index"
         >
-          <div class="team-name">{{ team.teamName }}</div>
-          <div class="team-score-badge">{{ team.totalScore }}</div>
+          <div class="team-name">
+            {{ team.teamName }}
+          </div>
+          <div class="team-score-badge">
+            {{ team.totalScore }}
+          </div>
         </button>
       </div>
       <div class="tab-content">
@@ -68,10 +72,24 @@
               <table class="players-table">
                 <thead>
                   <tr>
-                    <th @click="sortPlayersBy('name')" class="sortable">Player</th>
-                    <th @click="sortPlayersBy('score')" class="sortable">Score</th>
-                    <th class="header-kd">K/D</th>
-                    <th class="header-ping">Ping</th>
+                    <th
+                      class="sortable"
+                      @click="sortPlayersBy('name')"
+                    >
+                      Player
+                    </th>
+                    <th
+                      class="sortable"
+                      @click="sortPlayersBy('score')"
+                    >
+                      Score
+                    </th>
+                    <th class="header-kd">
+                      K/D
+                    </th>
+                    <th class="header-ping">
+                      Ping
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -93,18 +111,32 @@
                         {{ pinnedPlayers && pinnedPlayers.has(player.playerName || player.name) ? '📌' : '📍' }}
                       </button>
                     </td>
-                    <td class="score-cell" :class="getScoreClass(player.score)">{{ player.score }}</td>
+                    <td
+                      class="score-cell"
+                      :class="getScoreClass(player.score)"
+                    >
+                      {{ player.score }}
+                    </td>
                     <td class="player-kd">
                       <div class="kd-section">
                         <span class="kd-label">K/D:</span>
                         <div class="kd-values">
-                          <span class="kills" :class="getKillsClass(player.kills)">{{ player.kills }}</span>
+                          <span
+                            class="kills"
+                            :class="getKillsClass(player.kills)"
+                          >{{ player.kills }}</span>
                           <span class="separator">/</span>
-                          <span class="deaths" :class="getDeathsClass(player.deaths)">{{ player.deaths }}</span>
+                          <span
+                            class="deaths"
+                            :class="getDeathsClass(player.deaths)"
+                          >{{ player.deaths }}</span>
                         </div>
                       </div>
                     </td>
-                    <td class="player-ping" :class="getPingClass(player.ping)">
+                    <td
+                      class="player-ping"
+                      :class="getPingClass(player.ping)"
+                    >
                       <div class="ping-section">
                         <span class="ping-label">Ping:</span>
                         {{ player.ping }}ms
@@ -121,7 +153,11 @@
 
     <!-- Desktop Team Grid -->
     <div class="teams-container">
-      <div v-for="team in teamGroups" :key="team.teamName" class="team-section">
+      <div
+        v-for="team in teamGroups"
+        :key="team.teamName"
+        class="team-section"
+      >
         <div class="team-header">
           <span class="team-name">{{ team.teamName }}</span>
           <div class="team-stats">
@@ -143,11 +179,36 @@
           <table class="players-table">
             <thead>
               <tr>
-                <th @click="sortPlayersBy('rank')" class="sortable">Rank</th>
-                <th @click="sortPlayersBy('name')" class="sortable">Player</th>
-                <th @click="sortPlayersBy('score')" class="sortable">Score</th>
-                <th @click="sortPlayersBy('kills')" class="sortable">K/D</th>
-                <th @click="sortPlayersBy('ping')" class="sortable">Ping</th>
+                <th
+                  class="sortable"
+                  @click="sortPlayersBy('rank')"
+                >
+                  Rank
+                </th>
+                <th
+                  class="sortable"
+                  @click="sortPlayersBy('name')"
+                >
+                  Player
+                </th>
+                <th
+                  class="sortable"
+                  @click="sortPlayersBy('score')"
+                >
+                  Score
+                </th>
+                <th
+                  class="sortable"
+                  @click="sortPlayersBy('kills')"
+                >
+                  K/D
+                </th>
+                <th
+                  class="sortable"
+                  @click="sortPlayersBy('ping')"
+                >
+                  Ping
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -162,10 +223,30 @@
                 @click="navigateToPlayerProfile(player.playerName || player.name)"
               >
                 <td class="player-rank">
-                  <div v-if="(player.rank || 0) === 1" class="rank-medal">🥇</div>
-                  <div v-else-if="(player.rank || 0) === 2" class="rank-medal">🥈</div>
-                  <div v-else-if="(player.rank || 0) === 3" class="rank-medal">🥉</div>
-                  <div v-else class="rank-number">{{ player.rank || '—' }}</div>
+                  <div
+                    v-if="(player.rank || 0) === 1"
+                    class="rank-medal"
+                  >
+                    🥇
+                  </div>
+                  <div
+                    v-else-if="(player.rank || 0) === 2"
+                    class="rank-medal"
+                  >
+                    🥈
+                  </div>
+                  <div
+                    v-else-if="(player.rank || 0) === 3"
+                    class="rank-medal"
+                  >
+                    🥉
+                  </div>
+                  <div
+                    v-else
+                    class="rank-number"
+                  >
+                    {{ player.rank || '—' }}
+                  </div>
                 </td>
                 <td class="player-name-cell">
                   {{ player.playerName || player.name }}
@@ -178,15 +259,31 @@
                     {{ pinnedPlayers && pinnedPlayers.has(player.playerName || player.name) ? '📌' : '📍' }}
                   </button>
                 </td>
-                <td class="score-cell" :class="getScoreClass(player.score)">{{ player.score }}</td>
+                <td
+                  class="score-cell"
+                  :class="getScoreClass(player.score)"
+                >
+                  {{ player.score }}
+                </td>
                 <td class="player-kd">
                   <div class="kd-values">
-                    <span class="kills" :class="getKillsClass(player.kills)">{{ player.kills }}</span>
+                    <span
+                      class="kills"
+                      :class="getKillsClass(player.kills)"
+                    >{{ player.kills }}</span>
                     <span class="separator">/</span>
-                    <span class="deaths" :class="getDeathsClass(player.deaths)">{{ player.deaths }}</span>
+                    <span
+                      class="deaths"
+                      :class="getDeathsClass(player.deaths)"
+                    >{{ player.deaths }}</span>
                   </div>
                 </td>
-                <td class="player-ping" :class="getPingClass(player.ping)">{{ player.ping }}ms</td>
+                <td
+                  class="player-ping"
+                  :class="getPingClass(player.ping)"
+                >
+                  {{ player.ping }}ms
+                </td>
               </tr>
             </tbody>
           </table>

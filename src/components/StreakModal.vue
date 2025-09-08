@@ -120,14 +120,16 @@ const navigateToRoundReport = (streak: Streak) => {
                 :src="getAchievementImage('kill_streak_' + streakGroup.streak.streakCount)" 
                 :alt="streakGroup.streak.streakCount + ' Kill Streak'"
                 class="w-48 h-64 rounded-2xl object-contain bg-slate-800/50 border border-slate-700/50"
-              />
+              >
               
               <!-- Badge Description Overlay -->
               <div
                 v-if="selectedStreakDescription"
                 class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent backdrop-blur-md rounded-b-2xl p-4"
               >
-                <p class="text-white text-sm leading-relaxed font-medium text-center drop-shadow-lg">{{ selectedStreakDescription }}</p>
+                <p class="text-white text-sm leading-relaxed font-medium text-center drop-shadow-lg">
+                  {{ selectedStreakDescription }}
+                </p>
               </div>
             </div>
           </div>
@@ -135,7 +137,7 @@ const navigateToRoundReport = (streak: Streak) => {
           <!-- Gaming-style timeline with compact streak records -->
           <div class="space-y-2">
             <div class="text-sm font-semibold text-orange-400 mb-4 flex items-center gap-2">
-              <span class="w-1 h-4 bg-gradient-to-b from-orange-400 to-red-400 rounded-full"></span>
+              <span class="w-1 h-4 bg-gradient-to-b from-orange-400 to-red-400 rounded-full" />
               Recent {{ streakGroup.streak.streakCount }}-Kill Streak Records
             </div>
             
@@ -149,10 +151,10 @@ const navigateToRoundReport = (streak: Streak) => {
                 @click="navigateToRoundReport(streak)"
               >
                 <!-- Animated background effect on hover -->
-                <div class="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 <!-- Timeline indicator dot -->
-                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-orange-400 to-red-400 rounded-r-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-orange-400 to-red-400 rounded-r-full opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 <div class="relative z-10 p-3 pl-5 flex items-center justify-between">
                   <div class="flex flex-col gap-1 min-w-0 flex-1">
@@ -171,8 +173,16 @@ const navigateToRoundReport = (streak: Streak) => {
                   <!-- Performance indicator -->
                   <div class="flex items-center gap-2 flex-shrink-0">
                     <div class="text-orange-400 opacity-75 group-hover:opacity-100 transition-opacity">
-                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                      <svg
+                        class="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                          clip-rule="evenodd"
+                        />
                       </svg>
                     </div>
                   </div>

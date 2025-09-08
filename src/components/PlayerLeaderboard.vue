@@ -418,7 +418,7 @@ interface Props {
   source?: string;
   serverGuid?: string;
   showPinButtons?: boolean;
-  onPinToggle?: (playerName: string) => void;
+  onPinToggle?: (_playerName: string) => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {

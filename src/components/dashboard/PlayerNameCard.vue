@@ -14,7 +14,7 @@
             v-if="playerName.player?.isOnline"
             class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900 flex items-center justify-center"
           >
-            <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div class="w-2 h-2 bg-white rounded-full animate-pulse" />
           </div>
         </div>
         
@@ -36,7 +36,9 @@
               🎮 <router-link
                 :to="`/servers/${encodeURIComponent(playerName.player.currentServer)}`"
                 class="text-green-400 hover:text-cyan-400 transition-colors duration-200 font-medium"
-              >{{ truncateServerName(playerName.player.currentServer) }}</router-link>
+              >
+                {{ truncateServerName(playerName.player.currentServer) }}
+              </router-link>
               <span
                 v-if="playerName.player.currentMap"
                 class="text-slate-400 block sm:inline"
@@ -83,8 +85,18 @@
         title="Remove player"
         @click="$emit('remove', playerName.id)"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
