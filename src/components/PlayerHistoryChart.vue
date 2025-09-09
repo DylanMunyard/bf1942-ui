@@ -1,8 +1,8 @@
 <template>
   <div class="player-history-chart">
-    <!-- Loading State -->
+    <!-- Initial Loading State (only when no data exists) -->
     <div
-      v-if="loading"
+      v-if="loading && chartData.length === 0"
       class="flex items-center justify-center py-8"
     >
       <div class="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
@@ -10,20 +10,32 @@
 
     <!-- Error State -->
     <div
-      v-else-if="error"
+      v-else-if="error && chartData.length === 0"
       class="text-red-400 text-sm text-center py-4"
     >
       {{ error }}
     </div>
 
-    <!-- Chart -->
+    <!-- Chart Container (always show when data exists, even during loading) -->
     <div
       v-else-if="chartData.length > 0"
       class="space-y-4"
     >
       <!-- Main Chart Container -->
       <div class="relative h-64 bg-slate-800/30 rounded-lg border border-slate-700/50 p-4">
+        <!-- Loading Overlay -->
+        <div
+          v-if="loading"
+          class="absolute inset-0 bg-slate-800/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10"
+        >
+          <div class="flex flex-col items-center gap-3">
+            <div class="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+            <div class="text-cyan-400 text-sm font-medium">Updating chart...</div>
+          </div>
+        </div>
+        
         <Line
+          :key="`chart-${chartData.length}-${period}-${rollingWindow}`"
           :data="mainChartData"
           :options="chartOptions"
         />
@@ -32,8 +44,19 @@
       <!-- Trend Flow Visualization (when rolling average available) -->
       <div 
         v-if="props.insights?.rollingAverage && props.insights.rollingAverage.length > 0"
-        class="mt-3 bg-slate-800/20 rounded-lg border border-slate-700/30 p-3"
+        class="mt-3 bg-slate-800/20 rounded-lg border border-slate-700/30 p-3 relative"
       >
+        <!-- Loading Overlay for Trend Flow -->
+        <div
+          v-if="loading"
+          class="absolute inset-0 bg-slate-800/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10"
+        >
+          <div class="flex flex-col items-center gap-2">
+            <div class="w-6 h-6 border-2 border-purple-500/30 border-t-purple-400 rounded-full animate-spin" />
+            <div class="text-purple-400 text-xs font-medium">Updating trend...</div>
+          </div>
+        </div>
+        
         <!-- Rolling Window Toggle -->
         <div class="flex items-center gap-2 mb-3">
           <div class="text-xs text-slate-400 font-medium">
@@ -56,6 +79,7 @@
           </div>
         </div>
         <TrendFlow 
+          :key="`trend-${props.insights?.rollingAverage?.length || 0}-${props.rollingWindow}`"
           :rolling-data="props.insights.rollingAverage"
           :period="props.period || ''"
         />
@@ -65,7 +89,7 @@
 
     <!-- No Data State -->
     <div
-      v-else
+      v-else-if="!loading && chartData.length === 0"
       class="text-slate-400 text-sm text-center py-8"
     >
       No historical data available

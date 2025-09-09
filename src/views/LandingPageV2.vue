@@ -1128,15 +1128,24 @@ const fetchPlayerHistory = async () => {
       period: response.period
     })
     
-    // Set the response data
-    playerHistoryData.value = response.dataPoints
-    playerHistoryInsights.value = response.insights
+    // Set the response data - only update if we have valid data
+    if (response.dataPoints && response.dataPoints.length > 0) {
+      playerHistoryData.value = response.dataPoints
+    }
+    if (response.insights) {
+      playerHistoryInsights.value = response.insights
+    }
     console.log('✅ Set insights data:', {
       hasRollingAverage: !!(response.insights?.rollingAverage),
       rollingPoints: response.insights?.rollingAverage?.length || 0
     })
   } catch (err) {
     historyError.value = 'Failed to load player history'
+    // Only clear data on error, not during normal updates
+    if (playerHistoryData.value.length === 0) {
+      playerHistoryData.value = []
+      playerHistoryInsights.value = null
+    }
     console.error('Error fetching player history:', err)
   } finally {
     historyLoading.value = false
