@@ -21,7 +21,8 @@
         }"
       >
         <div class="text-slate-200 font-medium">{{ hoveredPoint.value.toFixed(0) }} players</div>
-        <div class="text-slate-400">{{ hoveredPoint.date }}</div>
+        <div class="text-slate-400">{{ hoveredPoint.dayName }}</div>
+        <div class="text-slate-500 text-xs">{{ hoveredPoint.date }}</div>
       </div>
     </div>
     
@@ -50,7 +51,7 @@ const props = defineProps<Props>()
 
 // Canvas refs and state
 const chartCanvas = ref<HTMLCanvasElement | null>(null)
-const hoveredPoint = ref<{ x: number, y: number, value: number, date: string } | null>(null)
+const hoveredPoint = ref<{ x: number, y: number, value: number, date: string, dayName: string } | null>(null)
 const canvasWidth = ref(400)
 const canvasHeight = ref(64)
 
@@ -73,9 +74,11 @@ const trendDirection = computed(() => {
 
 // Enhanced data with change calculations
 const normalizedData = computed(() => {
-  return props.rollingData.map((point, index) => {
+  const result = props.rollingData.map((point, index) => {
     const prevValue = index > 0 ? props.rollingData[index - 1].average : point.average
     const change = index > 0 ? ((point.average - prevValue) / prevValue) * 100 : 0
+    
+    const dayName = new Date(point.timestamp).toLocaleDateString(undefined, { weekday: 'long' })
     
     return {
       date: new Date(point.timestamp).toLocaleDateString(undefined, { 
@@ -86,9 +89,12 @@ const normalizedData = computed(() => {
       time: new Date(point.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
       value: point.average,
       change: change,
-      normalized: (point.average - minValue.value) / (maxValue.value - minValue.value || 1)
+      normalized: (point.average - minValue.value) / (maxValue.value - minValue.value || 1),
+      dayName: dayName
     }
   })
+  
+  return result
 })
 
 // Canvas drawing functions
@@ -213,7 +219,8 @@ const handleMouseMove = (event: MouseEvent) => {
         x: x, // Relative to canvas container
         y: y,
         value: point.value,
-        date: `${point.date} ${point.time}`
+        date: `${point.date} ${point.time}`,
+        dayName: point.dayName
       }
     }
   })
@@ -267,17 +274,6 @@ const getPeriodLabel = () => {
   return `${periodLabels[props.period] || props.period} average trend`
 }
 
-const getPointColor = (value: number, change: number) => {
-  // Color based on position in range + recent change
-  const position = (value - minValue.value) / (maxValue.value - minValue.value || 1)
-  const intensity = 0.8 + (Math.abs(change) * 0.01)
-  
-  if (change > 2) return `rgba(34, 197, 94, ${intensity})` // Green for growth
-  if (change < -2) return `rgba(239, 68, 68, ${intensity})` // Red for decline  
-  if (position > 0.7) return `rgba(251, 146, 60, ${intensity})` // Orange for high
-  if (position < 0.3) return `rgba(59, 130, 246, ${intensity})` // Blue for low
-  return `rgba(139, 92, 246, ${intensity})` // Purple for normal
-}
 
 // Lifecycle hooks
 onMounted(() => {

@@ -112,7 +112,7 @@ import {
   Filler 
 } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
-import { PlayerHistoryDataPoint, PlayerHistoryInsights, RollingAverageDataPoint } from '../types/playerStatsTypes'
+import { PlayerHistoryDataPoint, PlayerHistoryInsights } from '../types/playerStatsTypes'
 import TrendFlow from './TrendFlow.vue'
 
 // Register Chart.js components
@@ -171,25 +171,81 @@ const averagePlayers = computed(() => {
   return Math.round(sum / props.chartData.length)
 })
 
-const peakTime = computed(() => {
-  const timestamp = props.insights?.peakTimestamp || props.chartData.find(d => d.totalPlayers === peakPlayers.value)?.timestamp
-  if (!timestamp) return ''
-  const utcDate = new Date(timestamp.endsWith('Z') ? timestamp : timestamp + 'Z')
-  return utcDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + 
-         utcDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-})
 
-const minTime = computed(() => {
-  const timestamp = props.insights?.lowestTimestamp || props.chartData.find(d => d.totalPlayers === minPlayers.value)?.timestamp
-  if (!timestamp) return ''
-  const utcDate = new Date(timestamp.endsWith('Z') ? timestamp : timestamp + 'Z')
-  return utcDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + 
-         utcDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-})
-
-// Basic trend info for subtle data enhancement (no alarming messages)
-const trendDirection = computed(() => props.insights?.trendDirection || 'stable')
-const percentageChange = computed(() => props.insights?.percentageChange || 0)
+// Weekend detection for highlighting
+const getWeekendAnnotations = () => {
+  if (props.chartData.length === 0) return {}
+  
+  const annotations: any = {}
+  let annotationIndex = 0
+  
+  
+  // Group consecutive weekend periods together
+  const weekendPeriods: { startIndex: number, endIndex: number }[] = []
+  let currentWeekendStart: number | null = null
+  
+  props.chartData.forEach((point, index) => {
+    const utcDate = new Date(point.timestamp.endsWith('Z') ? point.timestamp : point.timestamp + 'Z')
+    const dayOfWeek = utcDate.getDay() // 0 = Sunday, 6 = Saturday
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+    
+    if (isWeekend) {
+      // Start a new weekend period if we're not already in one
+      if (currentWeekendStart === null) {
+        currentWeekendStart = index
+      }
+    } else {
+      // End the current weekend period if we were in one
+      if (currentWeekendStart !== null) {
+        weekendPeriods.push({
+          startIndex: currentWeekendStart,
+          endIndex: index - 1
+        })
+        currentWeekendStart = null
+      }
+    }
+  })
+  
+  // Handle case where weekend extends to the end of the data
+  if (currentWeekendStart !== null) {
+    weekendPeriods.push({
+      startIndex: currentWeekendStart,
+      endIndex: props.chartData.length - 1
+    })
+  }
+  
+  // Create weekend annotations for each continuous weekend period
+  weekendPeriods.forEach((period) => {
+    annotations[`weekend-${annotationIndex}`] = {
+      type: 'box' as const,
+      xMin: period.startIndex,
+      xMax: period.endIndex,
+      yMin: 'min',
+      yMax: 'max',
+      backgroundColor: 'rgba(255, 193, 7, 0.08)', // Very subtle amber shading
+      borderColor: 'transparent', // No border for softer look
+      borderWidth: 0,
+      label: {
+        content: 'Weekend',
+        enabled: true,
+        position: 'top' as const,
+        backgroundColor: 'rgba(255, 193, 7, 0.7)',
+        color: '#ffffff',
+        font: {
+          size: 8,
+          weight: 'bold' as const
+        },
+        padding: 2,
+        cornerRadius: 3,
+        // Make label more subtle
+        opacity: 0.8
+      }
+    }
+    annotationIndex++
+  })
+  
+  return annotations
+}
 
 // Main chart data configuration (clean, no overlays)
 const mainChartData = computed(() => {
@@ -197,13 +253,14 @@ const mainChartData = computed(() => {
     return { labels: [], datasets: [] }
   }
 
-  // Convert timestamps to readable labels (ensure proper UTC to local conversion)
+  // Convert timestamps to readable labels with day names (ensure proper UTC to local conversion)
   const labels = props.chartData.map(point => {
     // Ensure the timestamp is properly parsed as UTC
     const utcDate = new Date(point.timestamp.endsWith('Z') ? point.timestamp : point.timestamp + 'Z')
     
-    // Format in user's local timezone
+    // Format in user's local timezone with day name
     return utcDate.toLocaleDateString(undefined, { 
+      weekday: 'short',
       month: 'short', 
       day: 'numeric' 
     }) + ' ' + utcDate.toLocaleTimeString(undefined, { 
@@ -284,7 +341,14 @@ const chartOptions = computed(() => ({
           const point = props.chartData[context[0].dataIndex]
           // Ensure the timestamp is properly parsed as UTC
           const utcDate = new Date(point.timestamp.endsWith('Z') ? point.timestamp : point.timestamp + 'Z')
-          return utcDate.toLocaleDateString() + ' ' + utcDate.toLocaleTimeString()
+          return utcDate.toLocaleDateString(undefined, { 
+            weekday: 'long',
+            month: 'short', 
+            day: 'numeric' 
+          }) + ' ' + utcDate.toLocaleTimeString(undefined, { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })
         },
         label: (context: any) => {
           const value = context.parsed.y
@@ -325,6 +389,9 @@ const chartOptions = computed(() => ({
     },
     annotation: {
       annotations: {
+        // Weekend highlighting
+        ...getWeekendAnnotations(),
+        // Statistical lines
         maxLine: {
           type: 'line' as const,
           yMin: peakPlayers.value,
