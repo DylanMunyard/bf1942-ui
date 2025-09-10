@@ -354,7 +354,26 @@
               </div>
 
               <!-- Forecast Cards -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Current Activity -->
+                <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
+                  <div class="flex items-center gap-2 mb-2">
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center" :class="`bg-gradient-to-r ${getActivityComparisonInfo(gameTrends.activityComparisonStatus).bgColor}`">
+                      <span class="text-slate-900 text-xs font-bold">{{ getActivityComparisonInfo(gameTrends.activityComparisonStatus).icon }}</span>
+                    </div>
+                    <span class="text-xs font-bold uppercase tracking-wide" :class="getActivityComparisonInfo(gameTrends.activityComparisonStatus).color">Current</span>
+                  </div>
+                  <div class="mb-1">
+                    <span class="text-2xl font-bold text-white">{{ gameTrends.currentActualPlayers }}</span>
+                    <span class="text-sm text-slate-400 ml-2 font-mono">
+                      ({{ Math.round(gameTrends.currentHourPredictedPlayers) }} exp.)
+                    </span>
+                  </div>
+                  <div class="text-xs" :class="getActivityComparisonInfo(gameTrends.activityComparisonStatus).color">
+                    {{ getActivityComparisonInfo(gameTrends.activityComparisonStatus).label }}
+                  </div>
+                </div>
+
                 <!-- Activity Forecast -->
                 <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
                   <div class="flex items-center gap-2 mb-2">
@@ -367,13 +386,13 @@
                     <span class="text-2xl font-bold text-white">{{ Math.round(gameTrends.nextHourPredictedPlayers) }}</span>
                     <span 
                       :class="{
-                        'text-green-400': gameTrends.nextHourPredictedPlayers > gameTrends.currentHourPredictedPlayers,
-                        'text-red-400': gameTrends.nextHourPredictedPlayers < gameTrends.currentHourPredictedPlayers,
-                        'text-slate-400': gameTrends.nextHourPredictedPlayers === gameTrends.currentHourPredictedPlayers
+                        'text-green-400': gameTrends.nextHourPredictedPlayers > gameTrends.currentActualPlayers,
+                        'text-red-400': gameTrends.nextHourPredictedPlayers < gameTrends.currentActualPlayers,
+                        'text-slate-400': gameTrends.nextHourPredictedPlayers === gameTrends.currentActualPlayers
                       }"
                       class="text-sm font-mono font-medium ml-2"
                     >
-                      ({{ gameTrends.nextHourPredictedPlayers > gameTrends.currentHourPredictedPlayers ? '+' : '' }}{{ Math.round(((gameTrends.nextHourPredictedPlayers - gameTrends.currentHourPredictedPlayers) / gameTrends.currentHourPredictedPlayers) * 100) }}%)
+                      ({{ gameTrends.nextHourPredictedPlayers > gameTrends.currentActualPlayers ? '+' : '' }}{{ Math.round(((gameTrends.nextHourPredictedPlayers - gameTrends.currentActualPlayers) / gameTrends.currentActualPlayers) * 100) }}%)
                     </span>
                   </div>
                   <div class="text-xs text-slate-400">Activity trend</div>
@@ -805,6 +824,8 @@ import bfvIcon from '@/assets/bfv.jpg'
 
 interface GameTrendsInsights {
   currentHourPredictedPlayers: number
+  currentActualPlayers: number
+  activityComparisonStatus: 'busier_than_usual' | 'quieter_than_usual' | 'as_usual'
   currentStatus: 'very_busy' | 'busy' | 'moderate' | 'quiet' | 'very_quiet'
   trendDirection: 'increasing_significantly' | 'increasing' | 'stable' | 'decreasing' | 'decreasing_significantly'
   nextHourPredictedPlayers: number
@@ -1265,8 +1286,11 @@ const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isI
   }
 }
 
-const fetchGameTrends = async () => {
-  trendsLoading.value = true
+const fetchGameTrends = async (isInitialLoad = false) => {
+  // Only show loading state on initial load to prevent flashing
+  if (isInitialLoad) {
+    trendsLoading.value = true
+  }
   trendsError.value = null
   
   try {
@@ -1282,7 +1306,9 @@ const fetchGameTrends = async () => {
     trendsError.value = 'Failed to load game trends'
     console.error('Error fetching game trends:', err)
   } finally {
-    trendsLoading.value = false
+    if (isInitialLoad) {
+      trendsLoading.value = false
+    }
   }
 }
 
@@ -1470,6 +1496,19 @@ const getHoursUntilPeak = () => {
   return 'Peak expected'
 }
 
+const getActivityComparisonInfo = (status: string) => {
+  switch (status) {
+    case 'busier_than_usual':
+      return { label: 'Busier than usual', color: 'text-green-400', icon: '📈', bgColor: 'from-green-400 to-emerald-500' }
+    case 'quieter_than_usual':
+      return { label: 'Quieter than usual', color: 'text-blue-400', icon: '📉', bgColor: 'from-blue-400 to-cyan-500' }
+    case 'as_usual':
+      return { label: 'As usual', color: 'text-slate-400', icon: '➡️', bgColor: 'from-slate-400 to-slate-500' }
+    default:
+      return { label: 'Normal', color: 'text-slate-400', icon: '➡️', bgColor: 'from-slate-400 to-slate-500' }
+  }
+}
+
 // Watch for game filter changes and fetch new data
 watch(activeFilter, (newFilter) => {
   fetchServersForGame(newFilter as 'bf1942' | 'fh2' | 'bfvietnam', true)
@@ -1478,13 +1517,13 @@ watch(activeFilter, (newFilter) => {
     fetchPlayerHistory()
   }
   // Refresh game trends
-  fetchGameTrends()
+  fetchGameTrends(true)
 })
 
 // Lifecycle
 onMounted(() => {
   fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', true)
-  fetchGameTrends()
+  fetchGameTrends(true)
   
   refreshTimer.value = window.setInterval(() => {
     fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', false)
@@ -1495,7 +1534,7 @@ onMounted(() => {
     if (!lastFetchTime || now.getUTCHours() !== lastFetchTime.getUTCHours()) {
       fetchGameTrends()
     }
-  }, 30000)
+  }, 300000)
   
   // Close dropdown on outside click
   document.addEventListener('click', (e) => {
