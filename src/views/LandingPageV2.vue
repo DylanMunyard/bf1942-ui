@@ -338,6 +338,128 @@
           </div>
         </div>
 
+        <!-- Game Trends Section -->
+        <div class="border-b border-slate-700/30">
+          <div class="p-3">
+            <!-- Game Trends -->
+            <div 
+              v-if="gameTrends && !trendsLoading" 
+              class="bg-slate-800/30 rounded-lg p-4 space-y-4"
+            >
+              <!-- Recommendation Message -->
+              <div class="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-cyan-500/20 rounded-lg p-3">
+                <div class="text-sm text-cyan-200 font-medium">
+                  {{ gameTrends.recommendationMessage }}
+                </div>
+              </div>
+
+              <!-- Forecast Cards -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Activity Forecast -->
+                <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
+                  <div class="flex items-center gap-2 mb-2">
+                    <div class="w-6 h-6 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
+                      <span class="text-slate-900 text-xs font-bold">⏰</span>
+                    </div>
+                    <span class="text-xs font-bold text-green-400 uppercase tracking-wide">Next Hour</span>
+                  </div>
+                  <div class="mb-1">
+                    <span class="text-2xl font-bold text-white">{{ Math.round(gameTrends.nextHourPredictedPlayers) }}</span>
+                    <span 
+                      :class="{
+                        'text-green-400': gameTrends.nextHourPredictedPlayers > gameTrends.currentHourPredictedPlayers,
+                        'text-red-400': gameTrends.nextHourPredictedPlayers < gameTrends.currentHourPredictedPlayers,
+                        'text-slate-400': gameTrends.nextHourPredictedPlayers === gameTrends.currentHourPredictedPlayers
+                      }"
+                      class="text-sm font-mono font-medium ml-2"
+                    >
+                      ({{ gameTrends.nextHourPredictedPlayers > gameTrends.currentHourPredictedPlayers ? '+' : '' }}{{ Math.round(((gameTrends.nextHourPredictedPlayers - gameTrends.currentHourPredictedPlayers) / gameTrends.currentHourPredictedPlayers) * 100) }}%)
+                    </span>
+                  </div>
+                  <div class="text-xs text-slate-400">Activity trend</div>
+                </div>
+
+                <!-- 4-Hour Peak -->
+                <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
+                  <div class="flex items-center gap-2 mb-2">
+                    <div class="w-6 h-6 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center">
+                      <span class="text-slate-900 text-xs font-bold">🚀</span>
+                    </div>
+                    <span class="text-xs font-bold text-orange-400 uppercase tracking-wide">4-Hour Peak</span>
+                  </div>
+                  <div class="text-2xl font-bold text-white mb-1">
+                    {{ Math.round(gameTrends.fourHourMaxPredictedPlayers) }}
+                  </div>
+                  <div class="text-xs text-slate-400">
+                    {{ getHoursUntilPeak() }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4-Hour Forecast Chart -->
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-5 h-5 bg-gradient-to-r from-purple-400 to-pink-500 rounded flex items-center justify-center">
+                    <span class="text-slate-900 text-xs font-bold">📊</span>
+                  </div>
+                  <span class="text-xs font-bold text-purple-400 uppercase tracking-wide">4-Hour Forecast</span>
+                </div>
+                
+                <div class="space-y-1">
+                  <div 
+                    v-for="(forecast, index) in gameTrends.fourHourForecast" 
+                    :key="index"
+                    class="flex items-center gap-3 p-2 bg-slate-800/40 rounded-md hover:bg-slate-700/40 transition-colors"
+                  >
+                    <div class="text-xs text-slate-400 font-mono min-w-[60px]">
+                      {{ formatHourDisplay(forecast.hourOfDay) }}
+                    </div>
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2">
+                        <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                          <div 
+                            class="h-full bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full transition-all duration-500"
+                            :style="{ 
+                              width: (forecast.predictedPlayers / gameTrends.fourHourMaxPredictedPlayers) * 100 + '%' 
+                            }"
+                          />
+                        </div>
+                        <div class="text-sm font-bold text-white min-w-[40px] text-right">
+                          {{ Math.round(forecast.predictedPlayers) }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Trends Loading State -->
+            <div 
+              v-else-if="trendsLoading" 
+              class="bg-slate-800/30 rounded-lg p-4"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+                <span class="text-sm text-slate-400">Loading activity trends...</span>
+              </div>
+            </div>
+
+            <!-- Trends Error State -->
+            <div 
+              v-else-if="trendsError" 
+              class="bg-red-500/10 border border-red-500/20 rounded-lg p-4"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
+                  <span class="text-red-400 text-xs">⚠️</span>
+                </div>
+                <span class="text-sm text-red-400">{{ trendsError }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Loading State -->
         <div
           v-if="loading"
@@ -681,6 +803,39 @@ import bf1942Icon from '@/assets/bf1942.jpg'
 import fh2Icon from '@/assets/fh2.jpg'
 import bfvIcon from '@/assets/bfv.jpg'
 
+interface GameTrendsInsights {
+  currentHourPredictedPlayers: number
+  currentStatus: 'very_busy' | 'busy' | 'moderate' | 'quiet' | 'very_quiet'
+  trendDirection: 'increasing_significantly' | 'increasing' | 'stable' | 'decreasing' | 'decreasing_significantly'
+  nextHourPredictedPlayers: number
+  fourHourMaxPredictedPlayers: number
+  fourHourForecast: {
+    hourOfDay: number
+    dayOfWeek: number
+    predictedPlayers: number
+    dataPoints: number
+  }[]
+  next24HourPeaks: {
+    hourOfDay: number
+    dayOfWeek: number
+    predictedPlayers: number
+  }[]
+  generatedAt: string
+  recommendationMessage: string
+}
+
+interface GameTrendsResponse {
+  currentActivity: {
+    game: string
+    serverGuid: string
+    currentPlayers: number
+    latestActivity: string
+    currentMapName: string
+  }[]
+  insights: GameTrendsInsights
+  generatedAt: string
+}
+
 interface PlayerSearchResult {
   playerName: string
   totalPlayTimeMinutes: number
@@ -764,6 +919,11 @@ const historyRollingWindow = ref('7d')
 const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
 const showLongerDropdown = ref(false)
+
+// Game trends state
+const gameTrends = ref<GameTrendsInsights | null>(null)
+const trendsLoading = ref(false)
+const trendsError = ref<string | null>(null)
 
 // Computed properties
 const filteredServers = computed(() => {
@@ -1105,6 +1265,27 @@ const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isI
   }
 }
 
+const fetchGameTrends = async () => {
+  trendsLoading.value = true
+  trendsError.value = null
+  
+  try {
+    const response = await fetch(`/stats/GameTrends/landing-summary?game=${activeFilter.value}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch game trends')
+    }
+
+    const data: GameTrendsResponse = await response.json()
+    gameTrends.value = data.insights
+    console.log('🎮 Game trends loaded:', data.insights)
+  } catch (err) {
+    trendsError.value = 'Failed to load game trends'
+    console.error('Error fetching game trends:', err)
+  } finally {
+    trendsLoading.value = false
+  }
+}
+
 const fetchPlayerHistory = async () => {
   historyLoading.value = true
   historyError.value = null
@@ -1224,6 +1405,71 @@ const getActiveGameName = () => {
   return gameType?.name || 'Game'
 }
 
+// Game trends helper functions
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'very_busy': return 'from-red-500 to-orange-500'
+    case 'busy': return 'from-orange-500 to-yellow-500'
+    case 'moderate': return 'from-yellow-500 to-green-500'
+    case 'quiet': return 'from-green-500 to-blue-500'
+    case 'very_quiet': return 'from-blue-500 to-slate-500'
+    default: return 'from-slate-500 to-slate-600'
+  }
+}
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'very_busy': return '🔥'
+    case 'busy': return '⚡'
+    case 'moderate': return '⚖️'
+    case 'quiet': return '🌙'
+    case 'very_quiet': return '💤'
+    default: return '❓'
+  }
+}
+
+const getTrendIcon = (direction: string) => {
+  switch (direction) {
+    case 'increasing_significantly': return '🚀'
+    case 'increasing': return '📈'
+    case 'stable': return '➡️'
+    case 'decreasing': return '📉'
+    case 'decreasing_significantly': return '⬇️'
+    default: return '➡️'
+  }
+}
+
+const formatHourDisplay = (hourUTC: number) => {
+  const now = new Date()
+  const currentHour = now.getUTCHours()
+  const diff = hourUTC - currentHour
+  
+  if (diff === 0) return 'Now'
+  if (diff === 1) return 'Next hour'
+  if (diff > 0) return `In ${diff}h`
+  if (diff === -1) return '1h ago'
+  return `${Math.abs(diff)}h ago`
+}
+
+const getHoursUntilPeak = () => {
+  if (!gameTrends.value?.fourHourForecast) return 'Peak expected'
+  
+  const peakForecast = gameTrends.value.fourHourForecast.find(
+    f => f.predictedPlayers === gameTrends.value!.fourHourMaxPredictedPlayers
+  )
+  
+  if (!peakForecast) return 'Peak expected'
+  
+  const now = new Date()
+  const currentHour = now.getUTCHours()
+  const diff = peakForecast.hourOfDay - currentHour
+  
+  if (diff === 0) return 'Peak now'
+  if (diff === 1) return 'Peak in 1 hour'
+  if (diff > 0) return `Peak in ${diff} hours`
+  return 'Peak expected'
+}
+
 // Watch for game filter changes and fetch new data
 watch(activeFilter, (newFilter) => {
   fetchServersForGame(newFilter as 'bf1942' | 'fh2' | 'bfvietnam', true)
@@ -1231,14 +1477,24 @@ watch(activeFilter, (newFilter) => {
   if (showPlayerHistory.value) {
     fetchPlayerHistory()
   }
+  // Refresh game trends
+  fetchGameTrends()
 })
 
 // Lifecycle
 onMounted(() => {
   fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', true)
+  fetchGameTrends()
   
   refreshTimer.value = window.setInterval(() => {
     fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', false)
+    
+    // Only fetch trends if we're at a new hour
+    const now = new Date()
+    const lastFetchTime = gameTrends.value ? new Date(gameTrends.value.generatedAt) : null
+    if (!lastFetchTime || now.getUTCHours() !== lastFetchTime.getUTCHours()) {
+      fetchGameTrends()
+    }
   }, 30000)
   
   // Close dropdown on outside click
