@@ -309,3 +309,69 @@ export async function fetchLiveServerData(
     throw new Error('Failed to get live server data');
   }
 }
+
+// === Server Busy Indicator / Trends (per-server) ===
+
+export type BusyLevel = 'very_busy' | 'busy' | 'moderate' | 'quiet' | 'very_quiet';
+
+export interface ServerBusyHistoricalRange {
+  min: number;
+  q25: number;
+  median: number;
+  q75: number;
+  q90: number;
+  max: number;
+  average: number;
+}
+
+export interface ServerBusyIndicator {
+  busyLevel: BusyLevel;
+  busyText: string;
+  currentPlayers: number;
+  typicalPlayers: number;
+  percentile: number;
+  historicalRange: ServerBusyHistoricalRange;
+  generatedAt: string; // ISO datetime
+}
+
+export interface ServerHourlyTimelineEntry {
+  hour: number; // UTC hour 0-23
+  typicalPlayers: number;
+  busyLevel: BusyLevel;
+  isCurrentHour: boolean;
+}
+
+export interface ServerBusyIndicatorResult {
+  serverGuid: string;
+  serverName: string;
+  game: string;
+  busyIndicator: ServerBusyIndicator;
+  hourlyTimeline: ServerHourlyTimelineEntry[];
+}
+
+export interface ServerBusyIndicatorResponse {
+  serverResults: ServerBusyIndicatorResult[];
+  generatedAt: string;
+}
+
+/**
+ * Fetch busy indicators and hourly timelines for a list of server GUIDs.
+ * The API expects repeated serverGuids query params (no [] array notation).
+ */
+export async function fetchServerBusyIndicators(serverGuids: string[]): Promise<ServerBusyIndicatorResponse> {
+  if (!serverGuids || serverGuids.length === 0) {
+    return { serverResults: [], generatedAt: new Date().toISOString() };
+  }
+
+  // Build query string with repeated keys
+  const query = serverGuids.map(g => `serverGuids=${encodeURIComponent(g)}`).join('&');
+  const url = `/stats/GameTrends/busy-indicator?${query}`;
+
+  try {
+    const response = await axios.get<ServerBusyIndicatorResponse>(url);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching server busy indicators:', err);
+    throw new Error('Failed to get server busy indicators');
+  }
+}

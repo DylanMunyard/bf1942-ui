@@ -691,7 +691,7 @@
                         v-if="server.country"
                         class="text-lg"
                       >{{ getCountryFlag(server.country) }}</span>
-                      <div class="flex-1 min-w-0">
+                      <div class="flex-1 min-w-0 flex items-center gap-2">
                         <div class="font-bold text-slate-200 truncate max-w-xs text-sm">
                           {{ server.name }}
                         </div>
@@ -700,6 +700,21 @@
                           class="text-xs text-slate-400 font-mono"
                         >
                           {{ getTimezoneDisplay(server.timezone) }}
+                        </div>
+                        <!-- Mini hourly timeline bars (current hour centered) -->
+                        <div
+                          v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
+                          class="hidden md:flex items-end gap-0.5 ml-1"
+                          aria-label="Server activity timeline"
+                        >
+                          <div
+                            v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
+                            :key="idx"
+                            class="w-1.5 rounded-t"
+                            :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
+                            :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
+                            :title="formatTimelineTooltip(entry)"
+                          />
                         </div>
                       </div>
                     </div>
@@ -763,6 +778,16 @@
                     >
                       {{ getGameDisplayName(server.gameType) }}
                     </span>
+                    <!-- Busy indicator badge -->
+                    <span
+                      v-if="serverTrendsByGuid[server.guid]?.busyIndicator"
+                      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase font-mono border ml-1"
+                      :class="getBusyBadgeClass(serverTrendsByGuid[server.guid]!.busyIndicator.busyLevel)"
+                      :title="`Typical: ${Math.round(serverTrendsByGuid[server.guid]!.busyIndicator.typicalPlayers)}, Current: ${serverTrendsByGuid[server.guid]!.busyIndicator.currentPlayers}`"
+                    >
+                      <span>{{ getBusyEmoji(serverTrendsByGuid[server.guid]!.busyIndicator.busyLevel) }}</span>
+                      <span class="hidden sm:inline">{{ serverTrendsByGuid[server.guid]!.busyIndicator.busyText }}</span>
+                    </span>
                   </div>
                 </td>
 
@@ -810,7 +835,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchAllServers } from '../services/serverDetailsService'
+import { fetchAllServers, fetchServerBusyIndicators, type ServerBusyIndicatorResult, type ServerHourlyTimelineEntry, type BusyLevel } from '../services/serverDetailsService'
 import { ServerSummary } from '../types/server'
 import { PlayerHistoryDataPoint, PlayerHistoryResponse, PlayerHistoryInsights } from '../types/playerStatsTypes'
 import PlayersPanel from '../components/PlayersPanel.vue'
@@ -945,6 +970,9 @@ const showLongerDropdown = ref(false)
 const gameTrends = ref<GameTrendsInsights | null>(null)
 const trendsLoading = ref(false)
 const trendsError = ref<string | null>(null)
+
+// Per-server trends state (busy indicator + hourly timeline)
+const serverTrendsByGuid = ref<Record<string, ServerBusyIndicatorResult>>({})
 
 // Computed properties
 const filteredServers = computed(() => {
@@ -1276,6 +1304,8 @@ const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isI
   try {
     const serverData = await fetchAllServers(gameType)
     servers.value = serverData.sort((a, b) => b.numPlayers - a.numPlayers)
+    // Fire-and-forget: fetch per-server busy indicators for active servers (>=5 players)
+    fetchAndAttachServerTrends()
   } catch (err) {
     error.value = 'Failed to fetch server data. Please try again.'
     console.error('Error fetching servers:', err)
@@ -1309,6 +1339,89 @@ const fetchGameTrends = async (isInitialLoad = false) => {
     if (isInitialLoad) {
       trendsLoading.value = false
     }
+  }
+}
+
+// Helper: fetch per-server busy indicators without blocking main render
+const fetchAndAttachServerTrends = async () => {
+  try {
+    const eligibleGuids = servers.value.filter(s => (s.numPlayers || 0) >= 5 && !!s.guid).map(s => s.guid)
+    if (eligibleGuids.length === 0) {
+      return
+    }
+
+    // Chunk requests to avoid overly long URLs
+    const chunkSize = 25
+    const chunks: string[][] = []
+    for (let i = 0; i < eligibleGuids.length; i += chunkSize) {
+      chunks.push(eligibleGuids.slice(i, i + chunkSize))
+    }
+
+    const results = await Promise.all(chunks.map(chunk => fetchServerBusyIndicators(chunk)))
+    const combined = results.flatMap(r => r.serverResults)
+
+    // Merge into map keyed by serverGuid
+    const updated: Record<string, ServerBusyIndicatorResult> = { ...serverTrendsByGuid.value }
+    for (const res of combined) {
+      updated[res.serverGuid] = res
+    }
+    serverTrendsByGuid.value = updated
+  } catch (e) {
+    // Non-fatal: keep UI working without trends
+    console.warn('Failed to update server busy indicators', e)
+  }
+}
+
+// UI helpers for busy badge
+const getBusyEmoji = (level: BusyLevel): string => {
+  switch (level) {
+    case 'very_busy': return '🔥'
+    case 'busy': return '⚡'
+    case 'moderate': return '⚖️'
+    case 'quiet': return '🌙'
+    case 'very_quiet': return '💤'
+    default: return '❓'
+  }
+}
+
+const getBusyBadgeClass = (level: BusyLevel): string => {
+  switch (level) {
+    case 'very_busy': return 'bg-red-500/20 text-red-300 border-red-500/30'
+    case 'busy': return 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+    case 'moderate': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
+    case 'quiet': return 'bg-green-500/20 text-green-300 border-green-500/30'
+    case 'very_quiet': return 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+    default: return 'bg-slate-600/30 text-slate-300 border-slate-600/40'
+  }
+}
+
+// Timeline bar helpers
+const getTimelineBarHeight = (guid: string, entry: ServerHourlyTimelineEntry): number => {
+  const timeline = serverTrendsByGuid.value[guid]?.hourlyTimeline || []
+  const maxTypical = Math.max(1, ...timeline.map(e => Math.max(0, e.typicalPlayers || 0)))
+  const pct = Math.max(0, Math.min(1, (entry.typicalPlayers || 0) / maxTypical))
+  const maxHeight = 18 // px
+  const minHeight = 2
+  return Math.max(minHeight, Math.round(pct * maxHeight))
+}
+
+const formatTimelineTooltip = (entry: ServerHourlyTimelineEntry): string => {
+  // Convert UTC hour to local "HH:00" display
+  const now = new Date()
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), entry.hour, 0, 0))
+  const local = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  const levelLabel = getBusyLevelLabel(entry.busyLevel)
+  return `${local} • Typical ${Math.round(entry.typicalPlayers)} • ${levelLabel}`
+}
+
+const getBusyLevelLabel = (level: BusyLevel): string => {
+  switch (level) {
+    case 'very_busy': return 'Very busy'
+    case 'busy': return 'Busy'
+    case 'moderate': return 'Moderate'
+    case 'quiet': return 'Quiet'
+    case 'very_quiet': return 'Very quiet'
+    default: return 'Unknown'
   }
 }
 
@@ -1511,6 +1624,8 @@ const getActivityComparisonInfo = (status: string) => {
 
 // Watch for game filter changes and fetch new data
 watch(activeFilter, (newFilter) => {
+  // Reset per-server trends when switching games to avoid stale badges
+  serverTrendsByGuid.value = {}
   fetchServersForGame(newFilter as 'bf1942' | 'fh2' | 'bfvietnam', true)
   // Also refresh player history if it's visible
   if (showPlayerHistory.value) {
