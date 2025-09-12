@@ -428,23 +428,45 @@
                   <div 
                     v-for="(forecast, index) in gameTrends.fourHourForecast" 
                     :key="index"
-                    class="flex items-center gap-3 p-2 bg-slate-800/40 rounded-md hover:bg-slate-700/40 transition-colors"
+                    class="flex items-center gap-3 p-2 rounded-md hover:bg-slate-700/40 transition-colors"
+                    :class="forecast.isCurrentHour ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-slate-800/40'"
                   >
-                    <div class="text-xs text-slate-400 font-mono min-w-[60px]">
+                    <div class="text-xs font-mono min-w-[60px]" :class="forecast.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'">
                       {{ formatHourDisplay(forecast.hourOfDay) }}
                     </div>
                     <div class="flex-1">
                       <div class="flex items-center gap-2">
                         <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
                           <div 
-                            class="h-full bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full transition-all duration-500"
+                            class="h-full rounded-full transition-all duration-500"
+                            :class="forecast.isCurrentHour ? 'bg-gradient-to-r from-cyan-300 to-cyan-500' : 'bg-gradient-to-r from-cyan-400 to-purple-500'"
                             :style="{ 
                               width: (forecast.predictedPlayers / gameTrends.fourHourMaxPredictedPlayers) * 100 + '%' 
                             }"
                           />
                         </div>
-                        <div class="text-sm font-bold text-white min-w-[40px] text-right">
-                          {{ Math.round(forecast.predictedPlayers) }}
+                        <div class="min-w-[80px] text-right">
+                          <!-- Current hour: show actual vs predicted -->
+                          <div v-if="forecast.isCurrentHour" class="space-y-0.5">
+                            <div class="text-xs font-bold text-cyan-400">
+                              {{ forecast.actualPlayers }}
+                              <span class="text-slate-400 font-normal">actual</span>
+                            </div>
+                            <div class="text-xs text-slate-400">
+                              ({{ Math.round(forecast.predictedPlayers) }} exp.
+                              <span 
+                                :class="{
+                                  'text-green-400': forecast.delta > 0,
+                                  'text-red-400': forecast.delta < 0,
+                                  'text-slate-400': forecast.delta === 0
+                                }"
+                              >{{ forecast.delta > 0 ? '+' : '' }}{{ Math.round(forecast.delta) }}</span>)
+                            </div>
+                          </div>
+                          <!-- Future hours: show predicted only -->
+                          <div v-else class="text-sm font-bold text-white">
+                            {{ Math.round(forecast.predictedPlayers) }}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -860,6 +882,9 @@ interface GameTrendsInsights {
     dayOfWeek: number
     predictedPlayers: number
     dataPoints: number
+    isCurrentHour?: boolean
+    actualPlayers?: number
+    delta?: number
   }[]
   next24HourPeaks: {
     hourOfDay: number
