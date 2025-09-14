@@ -353,70 +353,9 @@
                 </div>
               </div>
 
-              <!-- Forecast Cards -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Current Activity -->
-                <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
-                  <div class="flex items-center gap-2 mb-2">
-                    <div class="w-6 h-6 rounded-full flex items-center justify-center" :class="`bg-gradient-to-r ${getActivityComparisonInfo(gameTrends.activityComparisonStatus).bgColor}`">
-                      <span class="text-slate-900 text-xs font-bold">{{ getActivityComparisonInfo(gameTrends.activityComparisonStatus).icon }}</span>
-                    </div>
-                    <span class="text-xs font-bold uppercase tracking-wide" :class="getActivityComparisonInfo(gameTrends.activityComparisonStatus).color">Current</span>
-                  </div>
-                  <div class="mb-1">
-                    <span class="text-2xl font-bold text-white">{{ gameTrends.currentActualPlayers }}</span>
-                    <span class="text-sm text-slate-400 ml-2 font-mono">
-                      ({{ Math.round(gameTrends.currentHourPredictedPlayers) }} exp.)
-                    </span>
-                  </div>
-                  <div class="text-xs" :class="getActivityComparisonInfo(gameTrends.activityComparisonStatus).color">
-                    {{ getActivityComparisonInfo(gameTrends.activityComparisonStatus).label }}
-                  </div>
-                </div>
 
-                <!-- Activity Forecast -->
-                <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
-                  <div class="flex items-center gap-2 mb-2">
-                    <div class="w-6 h-6 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
-                      <span class="text-slate-900 text-xs font-bold">⏰</span>
-                    </div>
-                    <span class="text-xs font-bold text-green-400 uppercase tracking-wide">Next Hour</span>
-                  </div>
-                  <div class="mb-1">
-                    <span class="text-2xl font-bold text-white">{{ Math.round(gameTrends.nextHourPredictedPlayers) }}</span>
-                    <span 
-                      :class="{
-                        'text-green-400': gameTrends.nextHourPredictedPlayers > gameTrends.currentActualPlayers,
-                        'text-red-400': gameTrends.nextHourPredictedPlayers < gameTrends.currentActualPlayers,
-                        'text-slate-400': gameTrends.nextHourPredictedPlayers === gameTrends.currentActualPlayers
-                      }"
-                      class="text-sm font-mono font-medium ml-2"
-                    >
-                      ({{ gameTrends.nextHourPredictedPlayers > gameTrends.currentActualPlayers ? '+' : '' }}{{ Math.round(((gameTrends.nextHourPredictedPlayers - gameTrends.currentActualPlayers) / gameTrends.currentActualPlayers) * 100) }}%)
-                    </span>
-                  </div>
-                  <div class="text-xs text-slate-400">Activity trend</div>
-                </div>
-
-                <!-- 4-Hour Peak -->
-                <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
-                  <div class="flex items-center gap-2 mb-2">
-                    <div class="w-6 h-6 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center">
-                      <span class="text-slate-900 text-xs font-bold">🚀</span>
-                    </div>
-                    <span class="text-xs font-bold text-orange-400 uppercase tracking-wide">4-Hour Peak</span>
-                  </div>
-                  <div class="text-2xl font-bold text-white mb-1">
-                    {{ Math.round(gameTrends.fourHourMaxPredictedPlayers) }}
-                  </div>
-                  <div class="text-xs text-slate-400">
-                    {{ getHoursUntilPeak() }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- 4-Hour Forecast Chart -->
-              <div class="space-y-2">
+              <!-- 4-Hour Forecast Chart - Vertical Bar Display -->
+              <div class="space-y-3">
                 <div class="flex items-center gap-2">
                   <div class="w-5 h-5 bg-gradient-to-r from-purple-400 to-pink-500 rounded flex items-center justify-center">
                     <span class="text-slate-900 text-xs font-bold">📊</span>
@@ -424,50 +363,33 @@
                   <span class="text-xs font-bold text-purple-400 uppercase tracking-wide">4-Hour Forecast</span>
                 </div>
                 
-                <div class="space-y-1">
+                <!-- Vertical bars like Google Maps busy indicator -->
+                <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
                   <div 
                     v-for="(forecast, index) in gameTrends.fourHourForecast" 
                     :key="index"
-                    class="flex items-center gap-3 p-2 rounded-md hover:bg-slate-700/40 transition-colors"
-                    :class="forecast.isCurrentHour ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-slate-800/40'"
+                    class="flex flex-col items-center gap-1 flex-1 max-w-[60px]"
                   >
-                    <div class="text-xs font-mono min-w-[60px]" :class="forecast.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'">
-                      {{ formatHourDisplay(forecast.hourOfDay) }}
+                    <!-- Vertical bar -->
+                    <div 
+                      class="w-6 rounded-t transition-all duration-500"
+                      :class="forecast.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500' : 'bg-gradient-to-t from-cyan-400 to-purple-500'"
+                      :style="{ 
+                        height: Math.max(8, (forecast.predictedPlayers / gameTrends.fourHourMaxPredictedPlayers) * 80) + 'px' 
+                      }"
+                      :title="`${formatHourDisplayFixed(forecast.hourOfDay)}: ${Math.round(forecast.predictedPlayers)} players${forecast.isCurrentHour && forecast.actualPlayers ? ` (${forecast.actualPlayers} actual)` : ''}`"
+                    />
+                    <!-- Time label -->
+                    <div class="text-xs font-mono text-center" :class="forecast.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'">
+                      {{ formatHourDisplayFixed(forecast.hourOfDay) }}
                     </div>
-                    <div class="flex-1">
-                      <div class="flex items-center gap-2">
-                        <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
-                          <div 
-                            class="h-full rounded-full transition-all duration-500"
-                            :class="forecast.isCurrentHour ? 'bg-gradient-to-r from-cyan-300 to-cyan-500' : 'bg-gradient-to-r from-cyan-400 to-purple-500'"
-                            :style="{ 
-                              width: (forecast.predictedPlayers / gameTrends.fourHourMaxPredictedPlayers) * 100 + '%' 
-                            }"
-                          />
-                        </div>
-                        <div class="min-w-[80px] text-right">
-                          <!-- Current hour: show actual vs predicted -->
-                          <div v-if="forecast.isCurrentHour" class="space-y-0.5">
-                            <div class="text-xs font-bold text-cyan-400">
-                              {{ forecast.actualPlayers }}
-                              <span class="text-slate-400 font-normal">actual</span>
-                            </div>
-                            <div class="text-xs text-slate-400">
-                              ({{ Math.round(forecast.predictedPlayers) }} exp.
-                              <span 
-                                :class="{
-                                  'text-green-400': forecast.delta > 0,
-                                  'text-red-400': forecast.delta < 0,
-                                  'text-slate-400': forecast.delta === 0
-                                }"
-                              >{{ forecast.delta > 0 ? '+' : '' }}{{ Math.round(forecast.delta) }}</span>)
-                            </div>
-                          </div>
-                          <!-- Future hours: show predicted only -->
-                          <div v-else class="text-sm font-bold text-white">
-                            {{ Math.round(forecast.predictedPlayers) }}
-                          </div>
-                        </div>
+                    <!-- Player count -->
+                    <div class="text-xs text-center">
+                      <div v-if="forecast.isCurrentHour" class="text-cyan-400 font-bold">
+                        {{ forecast.actualPlayers || Math.round(forecast.predictedPlayers) }}
+                      </div>
+                      <div v-else class="text-slate-300 font-semibold">
+                        {{ Math.round(forecast.predictedPlayers) }}
                       </div>
                     </div>
                   </div>
@@ -1613,6 +1535,33 @@ const formatHourDisplay = (hourUTC: number) => {
   if (diff > 0) return `In ${diff}h`
   if (diff === -1) return '1h ago'
   return `${Math.abs(diff)}h ago`
+}
+
+const formatHourDisplayFixed = (hourUTC: number) => {
+  // Create a date object for the given UTC hour
+  const now = new Date()
+  const targetDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hourUTC, 0, 0))
+  
+  // Handle day boundaries - if the hour is in the past today, it might be tomorrow
+  const currentHour = now.getUTCHours()
+  const diff = hourUTC - currentHour
+  
+  // If the difference is negative and large (e.g., -22, -23), it's likely tomorrow
+  if (diff < -12) {
+    targetDate.setUTCDate(targetDate.getUTCDate() + 1)
+  }
+  // If the difference is positive and large (e.g., +22, +23), it's likely yesterday  
+  else if (diff > 12) {
+    targetDate.setUTCDate(targetDate.getUTCDate() - 1)
+  }
+  
+  const diffHours = Math.round((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60))
+  
+  if (diffHours === 0) return 'Now'
+  if (diffHours === 1) return '+1h'
+  if (diffHours > 0) return `+${diffHours}h`
+  if (diffHours === -1) return '-1h'
+  return `${diffHours}h`
 }
 
 const getHoursUntilPeak = () => {
