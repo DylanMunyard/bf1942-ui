@@ -708,7 +708,8 @@
                     :to="`/servers/${encodeURIComponent(server.name)}`" 
                     class="block group-hover:text-cyan-400 transition-all duration-300 no-underline"
                   >
-                    <div class="flex items-center gap-2">
+                    <!-- Desktop Layout -->
+                    <div class="hidden lg:flex items-center gap-2">
                       <span
                         v-if="server.country"
                         class="text-lg"
@@ -726,13 +727,51 @@
                         <!-- Mini hourly timeline bars (current hour centered) -->
                         <div
                           v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
-                          class="hidden md:flex items-end gap-0.5 ml-1"
+                          class="flex items-end gap-0.5 ml-1"
                           aria-label="Server activity timeline"
                         >
                           <div
                             v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
                             :key="idx"
                             class="w-1.5 rounded-t"
+                            :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
+                            :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
+                            :title="formatTimelineTooltip(entry)"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Mobile Layout -->
+                    <div class="block lg:hidden">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span
+                          v-if="server.country"
+                          class="text-lg"
+                        >{{ getCountryFlag(server.country) }}</span>
+                        <div class="font-bold text-slate-200 truncate text-sm flex-1">
+                          {{ server.name }}
+                        </div>
+                      </div>
+                      
+                      <!-- Mobile: Server time and timeline on second line -->
+                      <div class="flex items-center gap-2">
+                        <div
+                          v-if="getTimezoneDisplay(server.timezone)"
+                          class="text-xs text-slate-400 font-mono"
+                        >
+                          {{ getTimezoneDisplay(server.timezone) }}
+                        </div>
+                        <!-- Mini hourly timeline bars for mobile -->
+                        <div
+                          v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
+                          class="flex items-end gap-0.5 ml-1 flex-1"
+                          aria-label="Server activity timeline"
+                        >
+                          <div
+                            v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
+                            :key="idx"
+                            class="w-1 rounded-t"
                             :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
                             :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
                             :title="formatTimelineTooltip(entry)"
@@ -1606,13 +1645,20 @@ const getTrendIcon = (direction: string) => {
 const formatHourDisplay = (hourUTC: number) => {
   const now = new Date()
   const currentHour = now.getUTCHours()
-  const diff = hourUTC - currentHour
+  let diff = hourUTC - currentHour
+  
+  // Handle day boundary crossings (e.g., 22, 23, 0, 1)
+  if (diff > 12) diff -= 24
+  if (diff < -12) diff += 24
   
   if (diff === 0) return 'Now'
-  if (diff === 1) return 'Next hour'
-  if (diff > 0) return `In ${diff}h`
-  if (diff === -1) return '1h ago'
-  return `${Math.abs(diff)}h ago`
+  if (diff === 1) return '+1h'
+  if (diff === 2) return '+2h'
+  if (diff === 3) return '+3h'
+  if (diff === 4) return '+4h'
+  if (diff > 0) return `+${diff}h`
+  if (diff === -1) return '-1h'
+  return `${diff}h`
 }
 
 const getHoursUntilPeak = () => {
