@@ -346,128 +346,47 @@
               v-if="gameTrends && !trendsLoading" 
               class="bg-slate-800/30 rounded-lg p-4 space-y-4"
             >
-              <!-- Recommendation Message -->
-              <div class="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-cyan-500/20 rounded-lg p-3">
-                <div class="text-sm text-cyan-200 font-medium">
-                  {{ gameTrends.recommendationMessage }}
-                </div>
-              </div>
-
-              <!-- Forecast Cards -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Current Activity -->
-                <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
-                  <div class="flex items-center gap-2 mb-2">
-                    <div class="w-6 h-6 rounded-full flex items-center justify-center" :class="`bg-gradient-to-r ${getActivityComparisonInfo(gameTrends.activityComparisonStatus).bgColor}`">
-                      <span class="text-slate-900 text-xs font-bold">{{ getActivityComparisonInfo(gameTrends.activityComparisonStatus).icon }}</span>
-                    </div>
-                    <span class="text-xs font-bold uppercase tracking-wide" :class="getActivityComparisonInfo(gameTrends.activityComparisonStatus).color">Current</span>
-                  </div>
-                  <div class="mb-1">
-                    <span class="text-2xl font-bold text-white">{{ gameTrends.currentActualPlayers }}</span>
-                    <span class="text-sm text-slate-400 ml-2 font-mono">
-                      ({{ Math.round(gameTrends.currentHourPredictedPlayers) }} exp.)
-                    </span>
-                  </div>
-                  <div class="text-xs" :class="getActivityComparisonInfo(gameTrends.activityComparisonStatus).color">
-                    {{ getActivityComparisonInfo(gameTrends.activityComparisonStatus).label }}
-                  </div>
-                </div>
-
-                <!-- Activity Forecast -->
-                <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
-                  <div class="flex items-center gap-2 mb-2">
-                    <div class="w-6 h-6 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
-                      <span class="text-slate-900 text-xs font-bold">⏰</span>
-                    </div>
-                    <span class="text-xs font-bold text-green-400 uppercase tracking-wide">Next Hour</span>
-                  </div>
-                  <div class="mb-1">
-                    <span class="text-2xl font-bold text-white">{{ Math.round(gameTrends.nextHourPredictedPlayers) }}</span>
-                    <span 
-                      :class="{
-                        'text-green-400': gameTrends.nextHourPredictedPlayers > gameTrends.currentActualPlayers,
-                        'text-red-400': gameTrends.nextHourPredictedPlayers < gameTrends.currentActualPlayers,
-                        'text-slate-400': gameTrends.nextHourPredictedPlayers === gameTrends.currentActualPlayers
-                      }"
-                      class="text-sm font-mono font-medium ml-2"
-                    >
-                      ({{ gameTrends.nextHourPredictedPlayers > gameTrends.currentActualPlayers ? '+' : '' }}{{ Math.round(((gameTrends.nextHourPredictedPlayers - gameTrends.currentActualPlayers) / gameTrends.currentActualPlayers) * 100) }}%)
-                    </span>
-                  </div>
-                  <div class="text-xs text-slate-400">Activity trend</div>
-                </div>
-
-                <!-- 4-Hour Peak -->
-                <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
-                  <div class="flex items-center gap-2 mb-2">
-                    <div class="w-6 h-6 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center">
-                      <span class="text-slate-900 text-xs font-bold">🚀</span>
-                    </div>
-                    <span class="text-xs font-bold text-orange-400 uppercase tracking-wide">4-Hour Peak</span>
-                  </div>
-                  <div class="text-2xl font-bold text-white mb-1">
-                    {{ Math.round(gameTrends.fourHourMaxPredictedPlayers) }}
-                  </div>
-                  <div class="text-xs text-slate-400">
-                    {{ getHoursUntilPeak() }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- 4-Hour Forecast Chart -->
-              <div class="space-y-2">
+              <!-- Forecast Chart - Vertical Bar Display -->
+              <div class="space-y-3">
                 <div class="flex items-center gap-2">
                   <div class="w-5 h-5 bg-gradient-to-r from-purple-400 to-pink-500 rounded flex items-center justify-center">
                     <span class="text-slate-900 text-xs font-bold">📊</span>
                   </div>
-                  <span class="text-xs font-bold text-purple-400 uppercase tracking-wide">4-Hour Forecast</span>
+                  <span class="text-xs font-bold text-purple-400 uppercase tracking-wide">Forecast</span>
                 </div>
                 
-                <div class="space-y-1">
+                <!-- Activity trend sub-heading -->
+                <div class="text-xs text-slate-400 font-normal text-left">
+                  Activity will {{ getFourHourTrend() }} in the next 4 hours
+                </div>
+                
+                <!-- Vertical bars like Google Maps busy indicator -->
+                <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
                   <div 
-                    v-for="(forecast, index) in gameTrends.fourHourForecast" 
+                    v-for="(forecast, index) in processedForecast" 
                     :key="index"
-                    class="flex items-center gap-3 p-2 rounded-md hover:bg-slate-700/40 transition-colors"
-                    :class="forecast.isCurrentHour ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-slate-800/40'"
+                    class="flex flex-col items-center gap-1 flex-1 max-w-[60px] group cursor-pointer"
                   >
-                    <div class="text-xs font-mono min-w-[60px]" :class="forecast.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'">
-                      {{ formatHourDisplay(forecast.hourOfDay) }}
+                    <!-- Vertical bar -->
+                    <div 
+                      class="w-6 rounded-t transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/30"
+                      :class="forecast.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500 hover:from-cyan-200 hover:to-cyan-400' : 'bg-gradient-to-t from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400'"
+                      :style="{ 
+                        height: Math.max(8, (forecast.predictedPlayers / gameTrends.maxPredictedPlayers) * 80) + 'px' 
+                      }"
+                      :title="`${formatHourDisplayFixed(forecast.hourOfDay, forecast.isCurrentHour, index)}: ${Math.round(forecast.predictedPlayers)} players${forecast.isCurrentHour && forecast.actualPlayers ? ` (${forecast.actualPlayers} actual)` : ''}`"
+                    />
+                    <!-- Time label -->
+                    <div class="text-xs font-mono text-center transition-colors duration-300 group-hover:text-slate-200" :class="forecast.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'">
+                      {{ formatHourDisplayFixed(forecast.hourOfDay, forecast.isCurrentHour, index) }}
                     </div>
-                    <div class="flex-1">
-                      <div class="flex items-center gap-2">
-                        <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
-                          <div 
-                            class="h-full rounded-full transition-all duration-500"
-                            :class="forecast.isCurrentHour ? 'bg-gradient-to-r from-cyan-300 to-cyan-500' : 'bg-gradient-to-r from-cyan-400 to-purple-500'"
-                            :style="{ 
-                              width: (forecast.predictedPlayers / gameTrends.fourHourMaxPredictedPlayers) * 100 + '%' 
-                            }"
-                          />
-                        </div>
-                        <div class="min-w-[80px] text-right">
-                          <!-- Current hour: show actual vs predicted -->
-                          <div v-if="forecast.isCurrentHour" class="space-y-0.5">
-                            <div class="text-xs font-bold text-cyan-400">
-                              {{ forecast.actualPlayers }}
-                              <span class="text-slate-400 font-normal">actual</span>
-                            </div>
-                            <div class="text-xs text-slate-400">
-                              ({{ Math.round(forecast.predictedPlayers) }} exp.
-                              <span 
-                                :class="{
-                                  'text-green-400': forecast.delta > 0,
-                                  'text-red-400': forecast.delta < 0,
-                                  'text-slate-400': forecast.delta === 0
-                                }"
-                              >{{ forecast.delta > 0 ? '+' : '' }}{{ Math.round(forecast.delta) }}</span>)
-                            </div>
-                          </div>
-                          <!-- Future hours: show predicted only -->
-                          <div v-else class="text-sm font-bold text-white">
-                            {{ Math.round(forecast.predictedPlayers) }}
-                          </div>
-                        </div>
+                    <!-- Player count -->
+                    <div class="text-xs text-center transition-colors duration-300 group-hover:text-slate-200">
+                      <div v-if="forecast.isCurrentHour" class="text-cyan-400 font-bold group-hover:text-cyan-300">
+                        {{ forecast.actualPlayers || Math.round(forecast.predictedPlayers) }}
+                      </div>
+                      <div v-else class="text-slate-300 font-semibold">
+                        {{ Math.round(forecast.predictedPlayers) }}
                       </div>
                     </div>
                   </div>
@@ -708,7 +627,8 @@
                     :to="`/servers/${encodeURIComponent(server.name)}`" 
                     class="block group-hover:text-cyan-400 transition-all duration-300 no-underline"
                   >
-                    <div class="flex items-center gap-2">
+                    <!-- Desktop Layout -->
+                    <div class="hidden lg:flex items-center gap-2">
                       <span
                         v-if="server.country"
                         class="text-lg"
@@ -726,13 +646,105 @@
                         <!-- Mini hourly timeline bars (current hour centered) -->
                         <div
                           v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
-                          class="hidden md:flex items-end gap-0.5 ml-1"
+                          class="flex items-end gap-0.5 ml-1 group/timeline relative"
                           aria-label="Server activity timeline"
                         >
+                          <!-- Expanded timeline overlay -->
+                          <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-80 bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-2xl opacity-0 group-hover/timeline:opacity-100 transition-all duration-300 z-50 pointer-events-none mt-2">
+                            <div class="flex items-end justify-center gap-2 h-24">
+                              <div
+                                v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
+                                :key="idx"
+                                class="flex flex-col items-center gap-1"
+                              >
+                                <!-- Larger bar -->
+                                <div
+                                  class="w-4 rounded-t transition-all duration-300"
+                                  :class="entry.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500' : 'bg-gradient-to-t from-slate-500 to-slate-600'"
+                                  :style="{ height: Math.max(8, (entry.typicalPlayers / Math.max(1, ...serverTrendsByGuid[server.guid].hourlyTimeline.map(e => e.typicalPlayers || 0))) * 50) + 'px' }"
+                                />
+                                <!-- Time label -->
+                                <div class="text-[10px] font-mono text-slate-300">
+                                  {{ formatTimelineTimeLabel(entry) }}
+                                </div>
+                                <!-- Player count -->
+                                <div class="text-[10px] font-bold text-slate-200">
+                                  {{ Math.round(entry.typicalPlayers || 0) }}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <!-- Original small bars -->
                           <div
                             v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
                             :key="idx"
-                            class="w-1.5 rounded-t"
+                            class="w-1.5 rounded-t transition-all duration-300 cursor-pointer"
+                            :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
+                            :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
+                            :title="formatTimelineTooltip(entry)"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Mobile Layout -->
+                    <div class="block lg:hidden">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span
+                          v-if="server.country"
+                          class="text-lg"
+                        >{{ getCountryFlag(server.country) }}</span>
+                        <div class="font-bold text-slate-200 truncate text-sm flex-1">
+                          {{ server.name }}
+                        </div>
+                      </div>
+                      
+                      <!-- Mobile: Server time and timeline on second line -->
+                      <div class="flex items-center gap-2">
+                        <div
+                          v-if="getTimezoneDisplay(server.timezone)"
+                          class="text-xs text-slate-400 font-mono"
+                        >
+                          {{ getTimezoneDisplay(server.timezone) }}
+                        </div>
+                        <!-- Mini hourly timeline bars for mobile -->
+                        <div
+                          v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
+                          class="flex items-end gap-0.5 ml-1 flex-1 group/timeline relative"
+                          aria-label="Server activity timeline"
+                        >
+                          <!-- Expanded timeline overlay for mobile -->
+                          <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-72 bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-2xl opacity-0 group-hover/timeline:opacity-100 transition-all duration-300 z-50 pointer-events-none mt-2">
+                            <div class="flex items-end justify-center gap-2 h-24">
+                              <div
+                                v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
+                                :key="idx"
+                                class="flex flex-col items-center gap-1"
+                              >
+                                <!-- Larger bar -->
+                                <div
+                                  class="w-4 rounded-t transition-all duration-300"
+                                  :class="entry.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500' : 'bg-gradient-to-t from-slate-500 to-slate-600'"
+                                  :style="{ height: Math.max(8, (entry.typicalPlayers / Math.max(1, ...serverTrendsByGuid[server.guid].hourlyTimeline.map(e => e.typicalPlayers || 0))) * 50) + 'px' }"
+                                />
+                                <!-- Time label -->
+                                <div class="text-[10px] font-mono text-slate-300">
+                                  {{ formatTimelineTimeLabel(entry) }}
+                                </div>
+                                <!-- Player count -->
+                                <div class="text-[10px] font-bold text-slate-200">
+                                  {{ Math.round(entry.typicalPlayers || 0) }}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <!-- Original small bars -->
+                          <div
+                            v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
+                            :key="idx"
+                            class="w-1 rounded-t transition-all duration-300 cursor-pointer"
                             :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
                             :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
                             :title="formatTimelineTooltip(entry)"
@@ -876,8 +888,8 @@ interface GameTrendsInsights {
   currentStatus: 'very_busy' | 'busy' | 'moderate' | 'quiet' | 'very_quiet'
   trendDirection: 'increasing_significantly' | 'increasing' | 'stable' | 'decreasing' | 'decreasing_significantly'
   nextHourPredictedPlayers: number
-  fourHourMaxPredictedPlayers: number
-  fourHourForecast: {
+  maxPredictedPlayers: number
+  forecast: {
     hourOfDay: number
     dayOfWeek: number
     predictedPlayers: number
@@ -1003,6 +1015,86 @@ const serverTrendsByGuid = ref<Record<string, ServerBusyIndicatorResult>>({})
 const filteredServers = computed(() => {
   return servers.value
 })
+
+const processedForecast = computed(() => {
+  if (!gameTrends.value?.forecast) return []
+  
+  const forecast = [...gameTrends.value.forecast]
+  
+  // Find the current hour entry
+  const currentHourEntry = forecast.find(f => f.isCurrentHour)
+  if (!currentHourEntry) return forecast
+  
+  const currentDay = currentHourEntry.dayOfWeek
+  const currentHour = currentHourEntry.hourOfDay
+  
+  // Sort the forecast array chronologically
+  return forecast.sort((a, b) => {
+    // If both entries are from the same day, sort by hour
+    if (a.dayOfWeek === b.dayOfWeek) {
+      return a.hourOfDay - b.hourOfDay
+    }
+    
+    // If one entry is from the current day and the other is from the next day
+    if (a.dayOfWeek === currentDay && b.dayOfWeek === (currentDay % 7) + 1) {
+      return -1 // Current day comes first
+    }
+    if (b.dayOfWeek === currentDay && a.dayOfWeek === (currentDay % 7) + 1) {
+      return 1 // Current day comes first
+    }
+    
+    // If one entry is from the previous day and the other is from the current day
+    const prevDay = currentDay === 1 ? 7 : currentDay - 1
+    if (a.dayOfWeek === prevDay && b.dayOfWeek === currentDay) {
+      return -1 // Previous day comes first
+    }
+    if (b.dayOfWeek === prevDay && a.dayOfWeek === currentDay) {
+      return 1 // Previous day comes first
+    }
+    
+    // Default: sort by day of week
+    return a.dayOfWeek - b.dayOfWeek
+  })
+})
+
+const getFourHourTrend = () => {
+  if (!gameTrends.value?.forecast || processedForecast.value.length < 5) {
+    return 'remain stable'
+  }
+  
+  // Find current hour index
+  const currentHourIndex = processedForecast.value.findIndex(f => f.isCurrentHour)
+  if (currentHourIndex === -1) {
+    return 'remain stable'
+  }
+  
+  // Get current hour and next 4 hours
+  const currentPlayers = processedForecast.value[currentHourIndex].predictedPlayers
+  const nextFourHours = processedForecast.value.slice(currentHourIndex + 1, currentHourIndex + 5)
+  
+  if (nextFourHours.length < 4) {
+    return 'remain stable'
+  }
+  
+  // Calculate average of next 4 hours
+  const avgNextFourHours = nextFourHours.reduce((sum, hour) => sum + hour.predictedPlayers, 0) / 4
+  
+  // Calculate percentage change
+  const changePercent = ((avgNextFourHours - currentPlayers) / currentPlayers) * 100
+  
+  // Determine trend with thresholds
+  if (changePercent > 10) {
+    return 'increase significantly'
+  } else if (changePercent > 3) {
+    return 'increase'
+  } else if (changePercent < -10) {
+    return 'decrease significantly'
+  } else if (changePercent < -3) {
+    return 'decrease'
+  } else {
+    return 'remain stable'
+  }
+}
 
 const getTimezoneOffset = (timezone: string | undefined): number => {
   if (!timezone) return 999 // Sort servers without timezone to the end
@@ -1439,6 +1531,13 @@ const formatTimelineTooltip = (entry: ServerHourlyTimelineEntry): string => {
   return `${local} • Typical ${Math.round(entry.typicalPlayers)} • ${levelLabel}`
 }
 
+const formatTimelineTimeLabel = (entry: ServerHourlyTimelineEntry): string => {
+  // Convert UTC hour to local "HH" display for the expanded view
+  const now = new Date()
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), entry.hour, 0, 0))
+  return d.toLocaleTimeString(undefined, { hour: '2-digit' })
+}
+
 const getBusyLevelLabel = (level: BusyLevel): string => {
   switch (level) {
     case 'very_busy': return 'Very busy'
@@ -1606,27 +1705,58 @@ const getTrendIcon = (direction: string) => {
 const formatHourDisplay = (hourUTC: number) => {
   const now = new Date()
   const currentHour = now.getUTCHours()
-  const diff = hourUTC - currentHour
+  let diff = hourUTC - currentHour
+  
+  // Handle day boundary crossings (e.g., 22, 23, 0, 1)
+  if (diff > 12) diff -= 24
+  if (diff < -12) diff += 24
   
   if (diff === 0) return 'Now'
-  if (diff === 1) return 'Next hour'
-  if (diff > 0) return `In ${diff}h`
-  if (diff === -1) return '1h ago'
-  return `${Math.abs(diff)}h ago`
+  if (diff === 1) return '+1h'
+  if (diff === 2) return '+2h'
+  if (diff === 3) return '+3h'
+  if (diff === 4) return '+4h'
+  if (diff > 0) return `+${diff}h`
+  if (diff === -1) return '-1h'
+  return `${diff}h`
+}
+
+const formatHourDisplayFixed = (hourUTC: number, isCurrentHour?: boolean, forecastIndex?: number) => {
+  // If we have the isCurrentHour flag from the API, use it directly
+  if (isCurrentHour !== undefined) {
+    if (isCurrentHour) return 'Now'
+  }
+  
+  // Convert UTC hour to local time
+  const now = new Date()
+  const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hourUTC, 0, 0))
+  const localHour = utcDate.getHours()
+  
+  // Format the hour as 12-hour time with am/pm
+  const formatHour = (hour: number) => {
+    if (hour === 0) return '12am'
+    if (hour < 12) return `${hour}am`
+    if (hour === 12) return '12pm'
+    return `${hour - 12}pm`
+  }
+  
+  return formatHour(localHour)
 }
 
 const getHoursUntilPeak = () => {
-  if (!gameTrends.value?.fourHourForecast) return 'Peak expected'
+  if (!processedForecast.value.length) return 'Peak expected'
   
-  const peakForecast = gameTrends.value.fourHourForecast.find(
-    f => f.predictedPlayers === gameTrends.value!.fourHourMaxPredictedPlayers
+  const peakForecast = processedForecast.value.find(
+    f => f.predictedPlayers === gameTrends.value!.maxPredictedPlayers
   )
   
   if (!peakForecast) return 'Peak expected'
   
-  const now = new Date()
-  const currentHour = now.getUTCHours()
-  const diff = peakForecast.hourOfDay - currentHour
+  const currentHourIndex = processedForecast.value.findIndex(f => f.isCurrentHour)
+  if (currentHourIndex === -1) return 'Peak expected'
+  
+  const peakIndex = processedForecast.value.findIndex(f => f.predictedPlayers === gameTrends.value!.maxPredictedPlayers)
+  const diff = peakIndex - currentHourIndex
   
   if (diff === 0) return 'Peak now'
   if (diff === 1) return 'Peak in 1 hour'
