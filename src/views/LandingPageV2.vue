@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-900 px-3 sm:px-6">
+  <div class="min-h-screen bg-slate-900 px-3 sm:px-6" @click="closeAllModals">
     <div class="min-h-screen pt-4">
       <!-- Main Server Table -->
       <div class="w-full">
@@ -355,11 +355,6 @@
                   <span class="text-xs font-bold text-purple-400 uppercase tracking-wide">Forecast</span>
                 </div>
                 
-                <!-- Activity trend sub-heading -->
-                <div class="text-xs text-slate-400 font-normal text-left">
-                  Activity will {{ getFourHourTrend() }} in the next 4 hours
-                </div>
-                
                 <!-- Vertical bars like Google Maps busy indicator -->
                 <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
                   <div 
@@ -648,33 +643,8 @@
                           v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
                           class="flex items-end gap-0.5 ml-1 group/timeline relative"
                           aria-label="Server activity timeline"
+                          @click.stop="toggleServerModal(server.guid)"
                         >
-                          <!-- Expanded timeline overlay -->
-                          <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-80 bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-2xl opacity-0 group-hover/timeline:opacity-100 transition-all duration-300 z-50 pointer-events-none mt-2">
-                            <div class="flex items-end justify-center gap-2 h-24">
-                              <div
-                                v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
-                                :key="idx"
-                                class="flex flex-col items-center gap-1"
-                              >
-                                <!-- Larger bar -->
-                                <div
-                                  class="w-4 rounded-t transition-all duration-300"
-                                  :class="entry.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500' : 'bg-gradient-to-t from-slate-500 to-slate-600'"
-                                  :style="{ height: Math.max(8, (entry.typicalPlayers / Math.max(1, ...serverTrendsByGuid[server.guid].hourlyTimeline.map(e => e.typicalPlayers || 0))) * 50) + 'px' }"
-                                />
-                                <!-- Time label -->
-                                <div class="text-[10px] font-mono text-slate-300">
-                                  {{ formatTimelineTimeLabel(entry) }}
-                                </div>
-                                <!-- Player count -->
-                                <div class="text-[10px] font-bold text-slate-200">
-                                  {{ Math.round(entry.typicalPlayers || 0) }}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          
                           <!-- Original small bars -->
                           <div
                             v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
@@ -683,6 +653,17 @@
                             :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
                             :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
                             :title="formatTimelineTooltip(entry)"
+                          />
+                          
+                          <!-- Forecast Modal Component -->
+                          <ForecastModal
+                            :show-overlay="true"
+                            :show-modal="serverModalStates[server.guid] || false"
+                            :hourly-timeline="serverTrendsByGuid[server.guid].hourlyTimeline"
+                            :current-status="`${server.numPlayers} players (typical: ${Math.round(serverTrendsByGuid[server.guid].busyIndicator.typicalPlayers)})`"
+                            :current-players="server.numPlayers"
+                            overlay-class="opacity-0 group-hover/timeline:opacity-100"
+                            @close="closeServerModal(server.guid)"
                           />
                         </div>
                       </div>
@@ -713,33 +694,8 @@
                           v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
                           class="flex items-end gap-0.5 ml-1 flex-1 group/timeline relative"
                           aria-label="Server activity timeline"
+                          @click.stop="toggleServerModal(server.guid)"
                         >
-                          <!-- Expanded timeline overlay for mobile -->
-                          <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-72 bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-2xl opacity-0 group-hover/timeline:opacity-100 transition-all duration-300 z-50 pointer-events-none mt-2">
-                            <div class="flex items-end justify-center gap-2 h-24">
-                              <div
-                                v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
-                                :key="idx"
-                                class="flex flex-col items-center gap-1"
-                              >
-                                <!-- Larger bar -->
-                                <div
-                                  class="w-4 rounded-t transition-all duration-300"
-                                  :class="entry.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500' : 'bg-gradient-to-t from-slate-500 to-slate-600'"
-                                  :style="{ height: Math.max(8, (entry.typicalPlayers / Math.max(1, ...serverTrendsByGuid[server.guid].hourlyTimeline.map(e => e.typicalPlayers || 0))) * 50) + 'px' }"
-                                />
-                                <!-- Time label -->
-                                <div class="text-[10px] font-mono text-slate-300">
-                                  {{ formatTimelineTimeLabel(entry) }}
-                                </div>
-                                <!-- Player count -->
-                                <div class="text-[10px] font-bold text-slate-200">
-                                  {{ Math.round(entry.typicalPlayers || 0) }}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          
                           <!-- Original small bars -->
                           <div
                             v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
@@ -748,6 +704,17 @@
                             :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
                             :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
                             :title="formatTimelineTooltip(entry)"
+                          />
+                          
+                          <!-- Forecast Modal Component -->
+                          <ForecastModal
+                            :show-overlay="true"
+                            :show-modal="serverModalStates[server.guid] || false"
+                            :hourly-timeline="serverTrendsByGuid[server.guid].hourlyTimeline"
+                            :current-status="`${server.numPlayers} players (typical: ${Math.round(serverTrendsByGuid[server.guid].busyIndicator.typicalPlayers)})`"
+                            :current-players="server.numPlayers"
+                            overlay-class="opacity-0 group-hover/timeline:opacity-100"
+                            @close="closeServerModal(server.guid)"
                           />
                         </div>
                       </div>
@@ -876,6 +843,7 @@ import PlayersPanel from '../components/PlayersPanel.vue'
 import PlayerHistoryChart from '../components/PlayerHistoryChart.vue'
 import { fetchPlayerOnlineHistory } from '../services/playerStatsService'
 import { formatTimeRemaining } from '../utils/timeUtils'
+import ForecastModal from '../components/ForecastModal.vue'
 
 import bf1942Icon from '@/assets/bf1942.jpg'
 import fh2Icon from '@/assets/fh2.jpg'
@@ -1011,6 +979,9 @@ const trendsError = ref<string | null>(null)
 // Per-server trends state (busy indicator + hourly timeline)
 const serverTrendsByGuid = ref<Record<string, ServerBusyIndicatorResult>>({})
 
+// Per-server modal state
+const serverModalStates = ref<Record<string, boolean>>({})
+
 // Computed properties
 const filteredServers = computed(() => {
   return servers.value
@@ -1056,45 +1027,6 @@ const processedForecast = computed(() => {
     return a.dayOfWeek - b.dayOfWeek
   })
 })
-
-const getFourHourTrend = () => {
-  if (!gameTrends.value?.forecast || processedForecast.value.length < 5) {
-    return 'remain stable'
-  }
-  
-  // Find current hour index
-  const currentHourIndex = processedForecast.value.findIndex(f => f.isCurrentHour)
-  if (currentHourIndex === -1) {
-    return 'remain stable'
-  }
-  
-  // Get current hour and next 4 hours
-  const currentPlayers = processedForecast.value[currentHourIndex].predictedPlayers
-  const nextFourHours = processedForecast.value.slice(currentHourIndex + 1, currentHourIndex + 5)
-  
-  if (nextFourHours.length < 4) {
-    return 'remain stable'
-  }
-  
-  // Calculate average of next 4 hours
-  const avgNextFourHours = nextFourHours.reduce((sum, hour) => sum + hour.predictedPlayers, 0) / 4
-  
-  // Calculate percentage change
-  const changePercent = ((avgNextFourHours - currentPlayers) / currentPlayers) * 100
-  
-  // Determine trend with thresholds
-  if (changePercent > 10) {
-    return 'increase significantly'
-  } else if (changePercent > 3) {
-    return 'increase'
-  } else if (changePercent < -10) {
-    return 'decrease significantly'
-  } else if (changePercent < -3) {
-    return 'decrease'
-  } else {
-    return 'remain stable'
-  }
-}
 
 const getTimezoneOffset = (timezone: string | undefined): number => {
   if (!timezone) return 999 // Sort servers without timezone to the end
@@ -1520,6 +1452,22 @@ const getTimelineBarHeight = (guid: string, entry: ServerHourlyTimelineEntry): n
   const maxHeight = 18 // px
   const minHeight = 2
   return Math.max(minHeight, Math.round(pct * maxHeight))
+}
+
+// Modal helpers
+const toggleServerModal = (serverGuid: string) => {
+  serverModalStates.value[serverGuid] = !serverModalStates.value[serverGuid]
+}
+
+const closeServerModal = (serverGuid: string) => {
+  serverModalStates.value[serverGuid] = false
+}
+
+const closeAllModals = () => {
+  // Close all server modals
+  Object.keys(serverModalStates.value).forEach(guid => {
+    serverModalStates.value[guid] = false
+  })
 }
 
 const formatTimelineTooltip = (entry: ServerHourlyTimelineEntry): string => {
