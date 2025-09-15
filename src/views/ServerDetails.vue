@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { ServerDetails, ServerInsights, fetchServerDetails, fetchServerInsights, fetchLiveServerData } from '../services/serverDetailsService';
+import { ServerDetails, ServerInsights, fetchServerDetails, fetchServerInsights, fetchLiveServerData, ServerBusyIndicator, ServerHourlyTimelineEntry, fetchServerBusyIndicators } from '../services/serverDetailsService';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { countryCodeToName } from '../types/countryCodes';
 import { ServerSummary } from '../types/server';
@@ -32,6 +32,13 @@ const showPlayersModal = ref(false);
 const currentPeriod = ref('7d');
 const minPlayersForWeighting = ref(15);
 
+// Busy indicator state
+const serverBusyIndicator = ref<ServerBusyIndicator | null>(null);
+const serverHourlyTimeline = ref<ServerHourlyTimelineEntry[]>([]);
+const isBusyIndicatorLoading = ref(false);
+const busyIndicatorError = ref<string | null>(null);
+const showForecastOverlay = ref(false);
+
 // Fetch live server data asynchronously (non-blocking)
 const fetchLiveServerDataAsync = async () => {
   if (!serverDetails.value?.serverIp || !serverDetails.value?.serverPort) return;
@@ -58,6 +65,28 @@ const fetchLiveServerDataAsync = async () => {
   }
 };
 
+// Fetch busy indicator data for the server
+const fetchBusyIndicatorData = async () => {
+  if (!serverDetails.value?.serverGuid) return;
+
+  isBusyIndicatorLoading.value = true;
+  busyIndicatorError.value = null;
+
+  try {
+    const response = await fetchServerBusyIndicators([serverDetails.value.serverGuid]);
+    if (response.serverResults.length > 0) {
+      const result = response.serverResults[0];
+      serverBusyIndicator.value = result.busyIndicator;
+      serverHourlyTimeline.value = result.hourlyTimeline;
+    }
+  } catch (err) {
+    console.error('Error fetching busy indicator data:', err);
+    busyIndicatorError.value = 'Failed to load server activity forecast.';
+  } finally {
+    isBusyIndicatorLoading.value = false;
+  }
+};
+
 // Fetch server details and insights in parallel
 const fetchData = async () => {
   if (!serverName.value) return;
@@ -77,8 +106,9 @@ const fetchData = async () => {
     // Handle server details result
     if (detailsResult.status === 'fulfilled') {
       serverDetails.value = detailsResult.value;
-      // Fetch live server data asynchronously after server details are loaded
+      // Fetch live server data and busy indicator data asynchronously after server details are loaded
       fetchLiveServerDataAsync();
+      fetchBusyIndicatorData();
     } else {
       console.error('Error fetching server details:', detailsResult.reason);
       error.value = 'Failed to load server details. Please try again later.';
@@ -220,6 +250,84 @@ const refreshServerDetails = async () => {
     isLoading.value = false;
   }
 };
+
+// Helper functions for forecast bars
+const getTimelineBarHeight = (entry: ServerHourlyTimelineEntry): number => {
+  const timeline = serverHourlyTimeline.value || [];
+  const maxTypical = Math.max(1, ...timeline.map(e => Math.max(0, e.typicalPlayers || 0)));
+  const pct = Math.max(0, Math.min(1, (entry.typicalPlayers || 0) / maxTypical));
+  const maxHeight = 80; // px for forecast bars
+  const minHeight = 8;
+  return Math.max(minHeight, Math.round(pct * maxHeight));
+};
+
+const getMiniTimelineBarHeight = (entry: ServerHourlyTimelineEntry): number => {
+  const timeline = serverHourlyTimeline.value || [];
+  const maxTypical = Math.max(1, ...timeline.map(e => Math.max(0, e.typicalPlayers || 0)));
+  const pct = Math.max(0, Math.min(1, (entry.typicalPlayers || 0) / maxTypical));
+  const maxHeight = 20; // px for mini bars (h-6 = 24px container)
+  const minHeight = 2;
+  return Math.max(minHeight, Math.round(pct * maxHeight));
+};
+
+const formatTimelineTimeLabel = (entry: ServerHourlyTimelineEntry): string => {
+  // Convert UTC hour to local "HH" display
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), entry.hour, 0, 0));
+  return d.toLocaleTimeString(undefined, { hour: '2-digit' });
+};
+
+const formatTimelineTooltip = (entry: ServerHourlyTimelineEntry): string => {
+  // Convert UTC hour to local "HH:00" display
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), entry.hour, 0, 0));
+  const local = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const levelLabel = getBusyLevelLabel(entry.busyLevel);
+  return `${local} • Typical ${Math.round(entry.typicalPlayers)} • ${levelLabel}`;
+};
+
+const getBusyLevelLabel = (level: string): string => {
+  switch (level) {
+    case 'very_busy': return 'Very busy';
+    case 'busy': return 'Busy';
+    case 'moderate': return 'Moderate';
+    case 'quiet': return 'Quiet';
+    case 'very_quiet': return 'Very quiet';
+    default: return 'Unknown';
+  }
+};
+
+const getBusyEmoji = (level: string): string => {
+  switch (level) {
+    case 'very_busy': return '🔥';
+    case 'busy': return '⚡';
+    case 'moderate': return '⚖️';
+    case 'quiet': return '🌙';
+    case 'very_quiet': return '💤';
+    default: return '❓';
+  }
+};
+
+const getBusyBadgeClass = (level: string): string => {
+  switch (level) {
+    case 'very_busy': return 'bg-red-500/20 text-red-300 border-red-500/30';
+    case 'busy': return 'bg-orange-500/20 text-orange-300 border-orange-500/30';
+    case 'moderate': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
+    case 'quiet': return 'bg-green-500/20 text-green-300 border-green-500/30';
+    case 'very_quiet': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+    default: return 'bg-slate-600/30 text-slate-300 border-slate-600/40';
+  }
+};
+
+// Toggle forecast overlay for mobile
+const toggleForecastOverlay = () => {
+  showForecastOverlay.value = !showForecastOverlay.value;
+};
+
+// Close forecast overlay when clicking outside
+const closeForecastOverlay = () => {
+  showForecastOverlay.value = false;
+};
 </script>
 
 <template>
@@ -231,18 +339,6 @@ const refreshServerDetails = async () => {
       </div>
       
       <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8 mt-6">
-        <!-- Server Icon/Avatar (hidden on mobile) -->
-        <div class="hidden lg:block flex-shrink-0">
-          <div class="relative">
-            <div class="w-20 h-20 rounded-xl bg-slate-700 border border-slate-600 flex items-center justify-center">
-              <span class="text-2xl">🖥️</span>
-            </div>
-            <!-- Status indicator -->
-            <div class="absolute -bottom-1 -right-1">
-              <div class="w-4 h-4 bg-green-500 rounded-full border-2 border-slate-800" />
-            </div>
-          </div>
-        </div>
 
         <!-- Server Info -->
         <div class="flex-grow min-w-0">
@@ -281,6 +377,103 @@ const refreshServerDetails = async () => {
             class="text-slate-400 text-sm"
           >
             📊 Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
+          </div>
+
+          <!-- Server Activity Forecast Widget (Ultra Condensed) -->
+          <div
+            v-if="serverBusyIndicator && serverHourlyTimeline.length > 0"
+            class="mt-3 bg-slate-800/50 rounded-lg p-2 border border-slate-700/50 group/forecast relative inline-block cursor-pointer"
+            @click.stop="toggleForecastOverlay"
+          >
+            <!-- Mini Forecast Bars Only -->
+            <div class="flex items-end justify-center gap-0.5 h-6">
+              <div 
+                v-for="(entry, index) in serverHourlyTimeline" 
+                :key="index"
+                class="flex flex-col items-center gap-0.5 w-3 group"
+              >
+                <!-- Mini vertical bar -->
+                <div 
+                  class="w-1.5 rounded-t transition-all duration-300"
+                  :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
+                  :style="{ 
+                    height: getMiniTimelineBarHeight(entry) + 'px' 
+                  }"
+                  :title="formatTimelineTooltip(entry)"
+                />
+              </div>
+            </div>
+
+            <!-- Desktop: Expanded Forecast Overlay (like LandingPageV2) -->
+            <div class="hidden md:block absolute top-full left-1/2 transform -translate-x-1/2 w-80 bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-2xl transition-all duration-300 z-50 pointer-events-none mt-2 opacity-0 group-hover/forecast:opacity-100">
+              <div class="space-y-3">
+                <!-- Current Status in Overlay -->
+                <div class="flex items-center gap-3">
+                  <div class="text-xs text-slate-400">
+                    {{ serverBusyIndicator.currentPlayers }} players (typical: {{ Math.round(serverBusyIndicator.typicalPlayers) }})
+                  </div>
+                </div>
+
+                <!-- Full Forecast Bars -->
+                <div class="space-y-2">
+                  <div class="text-xs font-bold text-purple-400 uppercase tracking-wide">Activity Forecast</div>
+                  <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
+                    <div 
+                      v-for="(entry, index) in serverHourlyTimeline" 
+                      :key="index"
+                      class="flex flex-col items-center gap-1 flex-1 max-w-[60px] group cursor-pointer"
+                    >
+                      <!-- Vertical bar -->
+                      <div 
+                        class="w-6 rounded-t transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/30"
+                        :class="entry.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500 hover:from-cyan-200 hover:to-cyan-400' : 'bg-gradient-to-t from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400'"
+                        :style="{ 
+                          height: getTimelineBarHeight(entry) + 'px' 
+                        }"
+                        :title="formatTimelineTooltip(entry)"
+                      />
+                      <!-- Time label -->
+                      <div class="text-xs font-mono text-center transition-colors duration-300 group-hover:text-slate-200" :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'">
+                        {{ formatTimelineTimeLabel(entry) }}
+                      </div>
+                      <!-- Player count -->
+                      <div class="text-xs text-center transition-colors duration-300 group-hover:text-slate-200">
+                        <div v-if="entry.isCurrentHour" class="text-cyan-400 font-bold group-hover:text-cyan-300">
+                          {{ serverBusyIndicator.currentPlayers }}
+                        </div>
+                        <div v-else class="text-slate-300 font-semibold">
+                          {{ Math.round(entry.typicalPlayers) }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Busy Indicator Loading State -->
+          <div
+            v-else-if="isBusyIndicatorLoading"
+            class="mt-4 bg-slate-800/50 rounded-lg p-4 border border-slate-700/50"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+              <span class="text-sm text-slate-400">Loading activity forecast...</span>
+            </div>
+          </div>
+
+          <!-- Busy Indicator Error State -->
+          <div
+            v-else-if="busyIndicatorError"
+            class="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-4"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
+                <span class="text-red-400 text-xs">⚠️</span>
+              </div>
+              <span class="text-sm text-red-400">{{ busyIndicatorError }}</span>
+            </div>
           </div>
         </div>
 
@@ -351,7 +544,7 @@ const refreshServerDetails = async () => {
   </div>
 
   <!-- Main Content Area -->
-  <div class="min-h-screen bg-slate-900">
+  <div class="min-h-screen bg-slate-900" @click="closeForecastOverlay">
     <div class="relative">
       <div class="relative py-6 sm:py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -486,6 +679,69 @@ const refreshServerDetails = async () => {
     :server="liveServerInfo" 
     @close="closePlayersModal" 
   />
+
+  <!-- Mobile Forecast Modal -->
+  <div
+    v-if="showForecastOverlay && serverBusyIndicator && serverHourlyTimeline.length > 0"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 md:hidden"
+    @click="closeForecastOverlay"
+  >
+    <div 
+      class="bg-slate-800 border border-slate-600 rounded-lg p-6 w-full max-w-sm shadow-2xl"
+      @click.stop
+    >
+      <div class="space-y-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-white">Activity Forecast</h3>
+          <button 
+            @click="closeForecastOverlay"
+            class="text-slate-400 hover:text-white transition-colors"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Current Status -->
+        <div class="text-sm text-slate-400">
+          {{ serverBusyIndicator.currentPlayers }} players (typical: {{ Math.round(serverBusyIndicator.typicalPlayers) }})
+        </div>
+
+        <!-- Forecast Bars -->
+        <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
+          <div 
+            v-for="(entry, index) in serverHourlyTimeline" 
+            :key="index"
+            class="flex flex-col items-center gap-1 flex-1 max-w-[40px]"
+          >
+            <!-- Vertical bar -->
+            <div 
+              class="w-4 rounded-t transition-all duration-300"
+              :class="entry.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500' : 'bg-gradient-to-t from-cyan-400 to-purple-500'"
+              :style="{ 
+                height: getTimelineBarHeight(entry) + 'px' 
+              }"
+            />
+            <!-- Time label -->
+            <div class="text-xs font-mono text-center" :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'">
+              {{ formatTimelineTimeLabel(entry) }}
+            </div>
+            <!-- Player count -->
+            <div class="text-xs text-center">
+              <div v-if="entry.isCurrentHour" class="text-cyan-400 font-bold">
+                {{ serverBusyIndicator.currentPlayers }}
+              </div>
+              <div v-else class="text-slate-300 font-semibold">
+                {{ Math.round(entry.typicalPlayers) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
