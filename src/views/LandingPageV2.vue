@@ -355,11 +355,6 @@
                   <span class="text-xs font-bold text-purple-400 uppercase tracking-wide">Forecast</span>
                 </div>
                 
-                <!-- Activity trend sub-heading -->
-                <div class="text-xs text-slate-400 font-normal text-left">
-                  Activity will {{ getFourHourTrend() }} in the next 4 hours
-                </div>
-                
                 <!-- Vertical bars like Google Maps busy indicator -->
                 <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
                   <div 
@@ -1032,45 +1027,6 @@ const processedForecast = computed(() => {
     return a.dayOfWeek - b.dayOfWeek
   })
 })
-
-const getFourHourTrend = () => {
-  if (!gameTrends.value?.forecast || processedForecast.value.length < 5) {
-    return 'remain stable'
-  }
-  
-  // Find current hour index
-  const currentHourIndex = processedForecast.value.findIndex(f => f.isCurrentHour)
-  if (currentHourIndex === -1) {
-    return 'remain stable'
-  }
-  
-  // Get current hour and next 4 hours
-  const currentPlayers = processedForecast.value[currentHourIndex].predictedPlayers
-  const nextFourHours = processedForecast.value.slice(currentHourIndex + 1, currentHourIndex + 5)
-  
-  if (nextFourHours.length < 4) {
-    return 'remain stable'
-  }
-  
-  // Calculate average of next 4 hours
-  const avgNextFourHours = nextFourHours.reduce((sum, hour) => sum + hour.predictedPlayers, 0) / 4
-  
-  // Calculate percentage change
-  const changePercent = ((avgNextFourHours - currentPlayers) / currentPlayers) * 100
-  
-  // Determine trend with thresholds
-  if (changePercent > 10) {
-    return 'increase significantly'
-  } else if (changePercent > 3) {
-    return 'increase'
-  } else if (changePercent < -10) {
-    return 'decrease significantly'
-  } else if (changePercent < -3) {
-    return 'decrease'
-  } else {
-    return 'remain stable'
-  }
-}
 
 const getTimezoneOffset = (timezone: string | undefined): number => {
   if (!timezone) return 999 // Sort servers without timezone to the end
