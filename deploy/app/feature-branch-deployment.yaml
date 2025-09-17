@@ -2,29 +2,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bf42-servers-feature
-  namespace: bf42-servers
+  name: bfstats-ui-feature
+  namespace: bfstats-ui
   labels:
-    app: bf42-servers-feature
+    app: bfstats-ui-feature
     branch: feature
     deployment-type: feature-branch
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: bf42-servers-feature
+      app: bfstats-ui-feature
   template:
     metadata:
       labels:
-        app: bf42-servers-feature
+        app: bfstats-ui-feature
         branch: feature
         deployment-type: feature-branch
     spec:
-      nodeSelector:
-        kubernetes.io/arch: arm64
       containers:
-        - name: stats
-          image: localhost:30500/bf42-servers:feature
+        - name: ui
+          image: dylanmunyard/bf1942-ui:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -51,35 +49,42 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: bf42-servers-feature-service
-  namespace: bf42-servers
+  name: ui-service
+  namespace: bfstats-ui
   labels:
-    app: bf42-servers-feature
+    app: bfstats-ui-feature
     branch: feature
     deployment-type: feature-branch
 spec:
-  selector: 
-    app: bf42-servers-feature
-  type: ClusterIP  
+  selector:
+    app: bfstats-ui-feature
+  type: ClusterIP
   ports:
     - port: 80
       targetPort: 80
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: bf42-servers-staging
-  namespace: bf42-servers
+  name: bfstats-ui-ingress
+  namespace: bfstats-ui
   labels:
-    app: bf42-servers-feature
+    app: bfstats-ui-feature
     branch: feature
     deployment-type: feature-branch
 spec:
-  entryPoints:
-    - websecure
-  routes:
-  - match: Host(`staging.1942.home.net`)
-    kind: Rule
-    services:
-    - name: bf42-servers-feature-service
-      port: 80
+  tls:
+    - hosts:
+        - staging.bfstats.io
+      secretName: bfstats-ui-tls
+  rules:
+    - host: staging.bfstats.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ui-service
+                port:
+                  number: 80
