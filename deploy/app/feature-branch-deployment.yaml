@@ -72,6 +72,34 @@ metadata:
     app: bfstats-ui-feature
     branch: feature
     deployment-type: feature-branch
+  annotations:
+    # Use NGINX ingress controller
+    kubernetes.io/ingress.class: "nginx"
+
+    # Enable SSL redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+    # Enable CORS for UI
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://staging.bfstats.io"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+
+    # Request body size for large payloads
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+
+    # Timeout settings for long-running requests
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+
+    # Let's Encrypt certificate issuer
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # Higher priority than API ingress (API has default priority 0)
+    nginx.ingress.kubernetes.io/priority: "100"
 spec:
   tls:
     - hosts:
@@ -81,6 +109,7 @@ spec:
     - host: staging.bfstats.io
       http:
         paths:
+          # UI routes - catch all paths not handled by API
           - path: /
             pathType: Prefix
             backend:
@@ -88,3 +117,16 @@ spec:
                 name: ui-service
                 port:
                   number: 80
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: bfstats-ui-cert
+  namespace: bfstats-ui
+spec:
+  secretName: bfstats-ui-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - staging.bfstats.io
