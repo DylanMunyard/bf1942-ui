@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: bf42-servers
-  namespace: bf42-servers
+  namespace: bf42-ui
 spec:
   replicas: 1
   selector:
@@ -18,7 +18,7 @@ spec:
         kubernetes.io/arch: arm64
       containers:
         - name: stats
-          image: localhost:30500/bf42-servers:latest
+          image: dylanmunyard/bf42-servers:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -27,7 +27,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: bf42-servers-service
-  namespace: bf42-servers
+  namespace: bf42-ui
 spec:
   selector: 
     app: bf42-servers

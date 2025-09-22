@@ -2,14 +2,16 @@ metadata:
   labels:
     app: jenkins
 spec:
-  nodeSelector:
-    beta.kubernetes.io/arch: arm64
   containers:
+    - name: jnlp
+      image: jenkins/inbound-agent:latest
+      resources:
+        requests:
+          cpu: "1m"
     - name: dind
       image: docker:dind
       resources:
         requests:
-          cpu: 2
           memory: 1Gi
       securityContext:
         privileged: true
@@ -20,10 +22,9 @@ spec:
           mountPath: /etc/docker/daemon.json
           subPath: daemon.json
     - name: kubectl
-      image: localhost:30500/jenkins-agent-kubectl:03
+      image: dylanmunyard/jenkins-agent-kubectl:latest
       resources:
         requests:
-          cpu: 0.5
           memory: 512Mi
   volumes:
     - name: dind-storage

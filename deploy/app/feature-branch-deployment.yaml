@@ -2,29 +2,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bf42-servers-feature
-  namespace: bf42-servers
+  name: bfstats-ui-feature
+  namespace: bfstats-ui
   labels:
-    app: bf42-servers-feature
+    app: bfstats-ui-feature
     branch: feature
     deployment-type: feature-branch
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: bf42-servers-feature
+      app: bfstats-ui-feature
   template:
     metadata:
       labels:
-        app: bf42-servers-feature
+        app: bfstats-ui-feature
         branch: feature
         deployment-type: feature-branch
     spec:
-      nodeSelector:
-        kubernetes.io/arch: arm64
       containers:
-        - name: stats
-          image: localhost:30500/bf42-servers:feature
+        - name: ui
+          image: dylanmunyard/bf1942-ui:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -51,35 +49,82 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: bf42-servers-feature-service
-  namespace: bf42-servers
+  name: ui-service
+  namespace: bfstats-ui
   labels:
-    app: bf42-servers-feature
+    app: bfstats-ui-feature
     branch: feature
     deployment-type: feature-branch
 spec:
-  selector: 
-    app: bf42-servers-feature
-  type: ClusterIP  
+  selector:
+    app: bfstats-ui-feature
+  type: ClusterIP
   ports:
     - port: 80
       targetPort: 80
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: bf42-servers-staging
-  namespace: bf42-servers
+  name: bfstats-ui-ingress
+  namespace: bfstats-ui
   labels:
-    app: bf42-servers-feature
+    app: bfstats-ui-feature
     branch: feature
     deployment-type: feature-branch
+  annotations:
+    # Enable SSL redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+    # Enable CORS for UI
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://staging.bfstats.io"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+
+    # Request body size for large payloads
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+
+    # Timeout settings for long-running requests
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+
+    # Let's Encrypt certificate issuer
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # Higher priority than API ingress (API has default priority 0)
+    nginx.ingress.kubernetes.io/priority: "100"
 spec:
-  entryPoints:
-    - websecure
-  routes:
-  - match: Host(`staging.1942.home.net`)
-    kind: Rule
-    services:
-    - name: bf42-servers-feature-service
-      port: 80
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - staging.bfstats.io
+      secretName: bfstats-ui-tls
+  rules:
+    - host: staging.bfstats.io
+      http:
+        paths:
+          # UI routes - catch all paths not handled by API
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ui-service
+                port:
+                  number: 80
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: bfstats-ui-cert
+  namespace: bfstats-ui
+spec:
+  secretName: bfstats-ui-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - staging.bfstats.io
