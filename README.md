@@ -81,8 +81,8 @@ The application is deployed to Kubernetes using the configuration files in the `
    ```
 2. Build the Docker images:
    ```sh
-   docker build -t bf42-servers:latest .
-   docker build -t bf42-servers-backend:latest ./backend
+   docker build -t bfstats-ui:latest .
+   docker build -t bfstats-ui-backend:latest ./backend
    ```
 3. Push the images to your registry
 4. Apply the Kubernetes configurations:

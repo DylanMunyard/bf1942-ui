@@ -7,7 +7,7 @@ pipeline {
   
   environment {
     IMAGE_TAG = "feature"
-    FULL_IMAGE_NAME = "container-registry-service.container-registry:5000/bf42-servers:${IMAGE_TAG}"
+    FULL_IMAGE_NAME = "container-registry-service.container-registry:5000/bfstats-ui:${IMAGE_TAG}"
   }
   
   stages {
@@ -35,11 +35,11 @@ pipeline {
       steps {
         withCredentials([string(credentialsId: 'OPENAI_API_KEY', variable: 'OPENAI_API_KEY')]) {
           container('kubectl') {
-            withKubeConfig([namespace: "bf42-servers"]) {
+            withKubeConfig([namespace: "bfstats-ui"]) {
               sh """
                 # Apply the deployment
                 kubectl apply -f deploy/app/feature-branch-deployment.yaml
-                kubectl rollout restart deployment/bf42-servers-feature
+                kubectl rollout restart deployment/bfstats-ui-feature
               """
             }
           }

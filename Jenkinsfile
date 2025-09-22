@@ -29,10 +29,10 @@ pipeline {
                         --platform linux/arm64 \
                         --build-arg BUILDKIT_PROGRESS=plain \
                         --load \
-                        -t dylanmunyard/bf42-servers:latest
+                        -t dylanmunyard/bfstats-ui:latest
 
                       # Push the built image
-                      docker push dylanmunyard/bf42-servers:latest
+                      docker push dylanmunyard/bfstats-ui:latest
                     '''
                   }
                 }
@@ -47,9 +47,9 @@ pipeline {
               }
               steps {
                 container('kubectl') {
-                  withKubeConfig([namespace: "bf42-servers"]) {
+                  withKubeConfig([namespace: "bfstats-ui"]) {
                     withCredentials([string(credentialsId: 'OPENAI_API_KEY', variable: 'OPENAI_API_KEY')]) {
-                      sh 'kubectl rollout restart deployment/bf42-servers'
+                      sh 'kubectl rollout restart deployment/bfstats-ui'
                     }
                   }
                 }

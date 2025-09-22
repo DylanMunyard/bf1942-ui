@@ -1,8 +1,8 @@
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: bf42-servers
-  namespace: bf42-ui
+  name: bfstats-ui
+  namespace: bfstats-ui
 spec:
   entryPoints:
     - websecure
@@ -10,5 +10,5 @@ spec:
   - match: Host(`1942.home.net`)
     kind: Rule
     services:
-    - name: bf42-servers-service
+    - name: bfstats-ui-service
       port: 80

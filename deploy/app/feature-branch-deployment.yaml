@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: ui
-          image: dylanmunyard/bf1942-ui:latest
+          image: dylanmunyard/bfstats-ui:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
