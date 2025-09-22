@@ -73,9 +73,6 @@ metadata:
     branch: feature
     deployment-type: feature-branch
   annotations:
-    # Use NGINX ingress controller
-    kubernetes.io/ingress.class: "nginx"
-
     # Enable SSL redirect
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
@@ -101,6 +98,7 @@ metadata:
     # Higher priority than API ingress (API has default priority 0)
     nginx.ingress.kubernetes.io/priority: "100"
 spec:
+  ingressClassName: nginx
   tls:
     - hosts:
         - staging.bfstats.io

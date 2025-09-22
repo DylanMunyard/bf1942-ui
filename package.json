@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.ts",
     "lint:fix": "eslint . --ext .vue,.js,.ts --fix",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "load-test": "node scripts/load-test.js"
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",

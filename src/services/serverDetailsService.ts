@@ -211,12 +211,12 @@ export async function fetchServerDetails(
  */
 export async function fetchServerInsights(
   serverName: string,
-  period: string = '7d'
+  period: number = 1
 ): Promise<ServerInsights> {
   try {
     // Make the request to the API endpoint
     const response = await axios.get<ServerInsights>(`/stats/servers/${encodeURIComponent(serverName)}/insights`, {
-      params: { period }
+      params: { days: period }
     });
 
     // Return the response data

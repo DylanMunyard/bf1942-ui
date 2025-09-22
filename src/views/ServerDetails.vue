@@ -30,7 +30,7 @@ const error = ref<string | null>(null);
 const insightsError = ref<string | null>(null);
 const liveServerError = ref<string | null>(null);
 const showPlayersModal = ref(false);
-const currentPeriod = ref('7d');
+const currentPeriod = ref(1);
 const minPlayersForWeighting = ref(15);
 
 // Busy indicator state
@@ -213,9 +213,9 @@ const closePlayersModal = () => {
 };
 
 // Handle period change from chart component
-const handlePeriodChange = async (period: string) => {
+const handlePeriodChange = async (period: number) => {
   if (period === currentPeriod.value) return;
-  
+
   currentPeriod.value = period;
   isInsightsLoading.value = true;
   insightsError.value = null;
