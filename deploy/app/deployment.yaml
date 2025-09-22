@@ -18,7 +18,7 @@ spec:
         kubernetes.io/arch: arm64
       containers:
         - name: stats
-          image: localhost:30500/bf42-servers:latest
+          image: dylanmunyard/bf42-servers:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
