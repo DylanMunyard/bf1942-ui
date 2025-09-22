@@ -12,6 +12,7 @@ import ServerRecentRounds from '../components/ServerRecentRounds.vue';
 import { formatDate } from '../utils/date';
 import HeroBackButton from '../components/HeroBackButton.vue';
 import ForecastModal from '../components/ForecastModal.vue';
+import discordIcon from '@/assets/discord.png';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
@@ -310,8 +311,8 @@ const closeForecastOverlay = () => {
           </h1>
           
           <!-- Server Metadata -->
-          <div 
-            v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone)"
+          <div
+            v-if="serverDetails && (serverDetails.region || serverDetails.country || serverDetails.timezone || liveServerInfo?.discordUrl || liveServerInfo?.forumUrl)"
             class="flex flex-wrap gap-3 mb-4"
           >
             <div
@@ -332,6 +333,29 @@ const closeForecastOverlay = () => {
             >
               🕒 {{ getTimezoneDisplay(serverDetails.timezone) }}
             </div>
+
+            <!-- Community Links -->
+            <a
+              v-if="liveServerInfo?.discordUrl"
+              :href="liveServerInfo.discordUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center px-3 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 rounded-lg border border-indigo-500/30 hover:border-indigo-500/50 transition-all duration-200"
+              title="Join Discord"
+            >
+              <img :src="discordIcon" alt="Discord" class="w-4 h-4" />
+            </a>
+
+            <a
+              v-if="liveServerInfo?.forumUrl"
+              :href="liveServerInfo.forumUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center px-3 py-1 bg-orange-600/20 hover:bg-orange-600/30 rounded-lg border border-orange-500/30 hover:border-orange-500/50 transition-all duration-200"
+              title="Visit Forum"
+            >
+              <span class="text-orange-400 text-sm">📋</span>
+            </a>
           </div>
 
           <!-- Period Info -->

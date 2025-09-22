@@ -86,4 +86,6 @@ export interface ServerSummary {
   teams: TeamInfo[];
   country?: string;
   timezone?: string;
+  discordUrl?: string;
+  forumUrl?: string;
 }
