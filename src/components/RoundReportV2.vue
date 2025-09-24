@@ -247,7 +247,10 @@ const fetchData = async () => {
     generateBattleEvents();
     selectedSnapshotIndex.value = data.leaderboardSnapshots.length - 1;
     visibleEventIndex.value = batchUpdateEvents.value.length - 1;
-    
+
+    // Update page title with round data
+    updatePageTitle();
+
     // Handle player pinning from query parameter
     if (props.players) {
       trackedPlayer.value = props.players;
@@ -722,6 +725,91 @@ const shouldShowTickets = computed(() => {
   return tickets1 !== null && tickets1 !== undefined && tickets1 >= 0 &&
          tickets2 !== null && tickets2 !== undefined && tickets2 >= 0;
 });
+
+// Format date for SEO (absolute, not relative)
+const formatDateForSEO = (dateString: string | null): string => {
+  if (!dateString) return 'Unknown date';
+  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+
+  // Format as "Friday 17th September 2025"
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  const dayName = dayNames[date.getDay()];
+  const day = date.getDate();
+  const monthName = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+
+  // Add ordinal suffix to day (1st, 2nd, 3rd, 4th, etc.)
+  const getOrdinalSuffix = (n: number) => {
+    if (n >= 11 && n <= 13) return 'th';
+    switch (n % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
+  return `${dayName} ${day}${getOrdinalSuffix(day)} ${monthName} ${year}`;
+};
+
+// Dynamic title update function
+const updatePageTitle = () => {
+  if (!roundReport.value?.round) return;
+
+  const { round } = roundReport.value;
+  const date = formatDateForSEO(round.startTime);
+
+  // Build title with available data
+  let title = `${round.mapName} on ${round.serverName} on ${date}`;
+
+  // Add team scores if available
+  if (shouldShowTickets.value) {
+    const team1 = round.team1Label || 'Team 1';
+    const team2 = round.team2Label || 'Team 2';
+    title += ` | ${team1} (${round.tickets1}) vs ${team2} (${round.tickets2})`;
+  }
+
+  // Update document title and meta description
+  const fullTitle = `${title} - BF Stats`;
+  document.title = fullTitle;
+
+  // Update meta description
+  const playerCount = currentLeaderboard.value.length;
+  let description = `Battle report for ${round.mapName} on ${round.serverName}`;
+  if (playerCount > 0) {
+    description += ` with ${playerCount} players`;
+  }
+  if (shouldShowTickets.value) {
+    const team1 = round.team1Label || 'Team 1';
+    const team2 = round.team2Label || 'Team 2';
+    description += `. Final score: ${team1} ${round.tickets1} - ${round.tickets2} ${team2}`;
+  }
+  description += '. View detailed player performance, timeline, and battlefield events.';
+
+  // Update meta description tag
+  let descriptionTag = document.querySelector('meta[name="description"]');
+  if (descriptionTag) {
+    descriptionTag.setAttribute('content', description);
+  }
+
+  // Update Open Graph tags
+  let ogTitleTag = document.querySelector('meta[property="og:title"]');
+  if (ogTitleTag) {
+    ogTitleTag.setAttribute('content', fullTitle);
+  }
+
+  let ogDescriptionTag = document.querySelector('meta[property="og:description"]');
+  if (ogDescriptionTag) {
+    ogDescriptionTag.setAttribute('content', description);
+  }
+
+  // Update notification service's original title
+  import('../services/notificationService').then(({ notificationService }) => {
+    notificationService.updateOriginalTitle();
+  });
+};
 </script>
 
 <template>

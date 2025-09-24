@@ -46,8 +46,13 @@ class NotificationService {
 
   constructor() {
     // Store original title when service is initialized
+    // Now we need to get the current title dynamically since it changes with routes
+    this.updateOriginalTitle();
+  }
+  // Update the original title to current document title (called when route changes)
+  updateOriginalTitle() {
     if (typeof document !== 'undefined') {
-      this.originalTitle.value = document.title || 'BF1942 Servers Dashboard';
+      this.originalTitle.value = document.title || 'BF Stats - Battlefield Server Statistics';
     }
   }
 
@@ -214,6 +219,9 @@ class NotificationService {
   // Update tab title to show notification count
   private updateTabTitle() {
     if (typeof document === 'undefined') return;
+
+    // Update original title to current title before modifying
+    this.updateOriginalTitle();
 
     // Clear existing interval
     if (this.titleInterval) {
