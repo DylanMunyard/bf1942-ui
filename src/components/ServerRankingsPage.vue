@@ -104,18 +104,6 @@ const formatPlayTime = (minutes: number): string => {
   }
 };
 
-// Format date to a readable format
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleString();
-};
-
-// Calculate K/D ratio
-const calculateKDR = (kills: number, deaths: number): string => {
-  if (deaths === 0) return kills.toString();
-  return (kills / deaths).toFixed(2);
-};
-
 // Fetch rankings data
 const fetchRankings = async (page: number = 1) => {
   if (!route.params.serverName) return;
@@ -504,7 +492,7 @@ onUnmounted(() => {
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
-class="group-hover:rotate-180 transition-transform duration-300"
+              class="group-hover:rotate-180 transition-transform duration-300"
             >
               <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
               <path d="M21 3v5h-5" />

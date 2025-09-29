@@ -8,7 +8,6 @@ import {
   TeamKillerMetric,
   SimilarPlayersResponse,
   InitialData,
-  PlayerOnlineHistoryResponse,
   PlayerHistoryResponse
 } from '../types/playerStatsTypes';
 

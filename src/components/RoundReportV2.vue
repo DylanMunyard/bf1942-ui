@@ -789,18 +789,18 @@ const updatePageTitle = () => {
   description += '. View detailed player performance, timeline, and battlefield events.';
 
   // Update meta description tag
-  let descriptionTag = document.querySelector('meta[name="description"]');
+  const descriptionTag = document.querySelector('meta[name="description"]');
   if (descriptionTag) {
     descriptionTag.setAttribute('content', description);
   }
 
   // Update Open Graph tags
-  let ogTitleTag = document.querySelector('meta[property="og:title"]');
+  const ogTitleTag = document.querySelector('meta[property="og:title"]');
   if (ogTitleTag) {
     ogTitleTag.setAttribute('content', fullTitle);
   }
 
-  let ogDescriptionTag = document.querySelector('meta[property="og:description"]');
+  const ogDescriptionTag = document.querySelector('meta[property="og:description"]');
   if (ogDescriptionTag) {
     ogDescriptionTag.setAttribute('content', description);
   }

@@ -21,7 +21,7 @@ const routes: RouteRecordRaw[] = [
         title: 'BF Stats - Battlefield 1942, FH2 & BF Vietnam Server Statistics',
         description: 'Real-time Battlefield 1942, Forgotten Hope 2, and Battlefield Vietnam server monitoring. Track player statistics, server rankings, and game analytics.'
       },
-      beforeEnter: (to, from, next) => {
+      beforeEnter: (_to, _from, next) => {
         // Check for stored auth token synchronously first to avoid slow auth validation
         const storedToken = localStorage.getItem('auth_token')
         if (storedToken) {
@@ -55,7 +55,7 @@ const routes: RouteRecordRaw[] = [
         title: 'My Dashboard - BF Stats Personal Command Center',
         description: 'Your personal Battlefield statistics dashboard. View favorite servers, player profiles, and custom battlefield analytics.'
       },
-      beforeEnter: (to, from, next) => {
+      beforeEnter: (_to, _from, next) => {
         const { isAuthenticated } = useAuth()
         if (!isAuthenticated.value) {
           next('/servers/bf1942')

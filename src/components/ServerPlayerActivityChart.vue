@@ -220,7 +220,6 @@ const handleOutsideClick = (e: Event) => {
               <span class="text-xs">📡</span>
               <span>{{ pingMetric === 'median' ? 'Median' : 'P95' }} Ping</span>
             </button>
-            
           </div>
         </div>
         
@@ -278,7 +277,12 @@ const handleOutsideClick = (e: Event) => {
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </button>
 
@@ -364,7 +368,7 @@ const handleOutsideClick = (e: Event) => {
                     <span class="text-[10px] text-cyan-400 font-bold group-hover/tooltip:text-cyan-300">ℹ</span>
                   </div>
                   <!-- Subtle pulse animation to draw attention -->
-                  <div class="absolute inset-0 bg-cyan-400/20 rounded-full animate-ping opacity-75 group-hover/tooltip:opacity-0"></div>
+                  <div class="absolute inset-0 bg-cyan-400/20 rounded-full animate-ping opacity-75 group-hover/tooltip:opacity-0" />
                 </div>
 
                 <!-- Hint Text -->
@@ -428,7 +432,9 @@ const handleOutsideClick = (e: Event) => {
           >
             <div class="flex flex-col items-center gap-3">
               <div class="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
-              <div class="text-cyan-400 text-sm font-medium">Updating chart...</div>
+              <div class="text-cyan-400 text-sm font-medium">
+                Updating chart...
+              </div>
             </div>
           </div>
 
@@ -470,7 +476,9 @@ const handleOutsideClick = (e: Event) => {
           >
             <div class="flex flex-col items-center gap-3">
               <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-400 rounded-full animate-spin" />
-              <div class="text-orange-400 text-sm font-medium">Updating map analytics...</div>
+              <div class="text-orange-400 text-sm font-medium">
+                Updating map analytics...
+              </div>
             </div>
           </div>
           <div class="p-4 border-b border-slate-700/50">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, onUnmounted, watch, defineProps, defineEmits } from 'vue';
+import { ref, onMounted, computed, onUnmounted, watch, defineProps } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { formatLastSeen } from '@/utils/timeUtils';
 

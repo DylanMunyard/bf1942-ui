@@ -15,11 +15,11 @@ const { isConnected, connectionId } = useSignalR();
 useNotifications();
 
 // Debug logging for SignalR connection status
-watch(isConnected, (_connected) => {
+watch(isConnected, () => {
   // console.log('App.vue - SignalR connection status changed:', connected);
 });
 
-watch(connectionId, (_id) => {
+watch(connectionId, () => {
   // console.log('App.vue - SignalR connection ID changed:', id);
 });
 

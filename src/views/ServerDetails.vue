@@ -303,7 +303,6 @@ const closeForecastOverlay = () => {
       </div>
       
       <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8 mt-6">
-
         <!-- Server Info -->
         <div class="flex-grow min-w-0">
           <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-3">
@@ -343,7 +342,11 @@ const closeForecastOverlay = () => {
               class="inline-flex items-center px-3 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 rounded-lg border border-indigo-500/30 hover:border-indigo-500/50 transition-all duration-200"
               title="Join Discord"
             >
-              <img :src="discordIcon" alt="Discord" class="w-4 h-4" />
+              <img
+                :src="discordIcon"
+                alt="Discord"
+                class="w-4 h-4"
+              >
             </a>
 
             <a
@@ -495,7 +498,10 @@ const closeForecastOverlay = () => {
   </div>
 
   <!-- Main Content Area -->
-  <div class="min-h-screen bg-slate-900" @click="closeForecastOverlay">
+  <div
+    class="min-h-screen bg-slate-900"
+    @click="closeForecastOverlay"
+  >
     <div class="relative">
       <div class="relative py-6 sm:py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -630,7 +636,6 @@ const closeForecastOverlay = () => {
     :server="liveServerInfo" 
     @close="closePlayersModal" 
   />
-
 </template>
 
 <style scoped>

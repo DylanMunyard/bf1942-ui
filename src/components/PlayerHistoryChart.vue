@@ -30,7 +30,9 @@
         >
           <div class="flex flex-col items-center gap-3">
             <div class="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
-            <div class="text-cyan-400 text-sm font-medium">Updating chart...</div>
+            <div class="text-cyan-400 text-sm font-medium">
+              Updating chart...
+            </div>
           </div>
         </div>
         
@@ -53,7 +55,9 @@
         >
           <div class="flex flex-col items-center gap-2">
             <div class="w-6 h-6 border-2 border-purple-500/30 border-t-purple-400 rounded-full animate-spin" />
-            <div class="text-purple-400 text-xs font-medium">Updating trend...</div>
+            <div class="text-purple-400 text-xs font-medium">
+              Updating trend...
+            </div>
           </div>
         </div>
         
@@ -84,7 +88,6 @@
           :period="props.period || ''"
         />
       </div>
-      
     </div>
 
     <!-- No Data State -->

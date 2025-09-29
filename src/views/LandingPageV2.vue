@@ -1,5 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-900 px-3 sm:px-6" @click="closeAllModals">
+  <div
+    class="min-h-screen bg-slate-900 px-3 sm:px-6"
+    @click="closeAllModals"
+  >
     <div class="min-h-screen pt-4">
       <!-- Main Server Table -->
       <div class="w-full">
@@ -122,8 +125,19 @@
                   <span class="text-lg">🎮</span>
                   <span class="hidden sm:inline">Get Online</span>
                   <span class="sm:hidden">Install</span>
-                  <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': showInstallDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  <svg
+                    class="w-4 h-4 transition-transform duration-200"
+                    :class="{ 'rotate-180': showInstallDropdown }"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
 
@@ -371,8 +385,18 @@
                   @click="toggleLongerDropdown"
                 >
                   {{ getLongerPeriodLabel() }}
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  <svg
+                    class="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
                 
@@ -445,15 +469,24 @@
                       :title="`${formatHourDisplayFixed(forecast.hourOfDay, forecast.isCurrentHour, index)}: ${Math.round(forecast.predictedPlayers)} players${forecast.isCurrentHour && forecast.actualPlayers ? ` (${forecast.actualPlayers} actual)` : ''}`"
                     />
                     <!-- Time label -->
-                    <div class="text-xs font-mono text-center transition-colors duration-300 group-hover:text-slate-200" :class="forecast.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'">
+                    <div
+                      class="text-xs font-mono text-center transition-colors duration-300 group-hover:text-slate-200"
+                      :class="forecast.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'"
+                    >
                       {{ formatHourDisplayFixed(forecast.hourOfDay, forecast.isCurrentHour, index) }}
                     </div>
                     <!-- Player count -->
                     <div class="text-xs text-center transition-colors duration-300 group-hover:text-slate-200">
-                      <div v-if="forecast.isCurrentHour" class="text-cyan-400 font-bold group-hover:text-cyan-300">
+                      <div
+                        v-if="forecast.isCurrentHour"
+                        class="text-cyan-400 font-bold group-hover:text-cyan-300"
+                      >
                         {{ forecast.actualPlayers || Math.round(forecast.predictedPlayers) }}
                       </div>
-                      <div v-else class="text-slate-300 font-semibold">
+                      <div
+                        v-else
+                        class="text-slate-300 font-semibold"
+                      >
                         {{ Math.round(forecast.predictedPlayers) }}
                       </div>
                     </div>
@@ -886,7 +919,11 @@
                       class="w-7 h-7 bg-indigo-500/20 hover:bg-indigo-500/30 rounded border border-indigo-500/30 hover:border-indigo-500/50 flex items-center justify-center transition-all duration-200 p-1"
                       title="Join Discord"
                     >
-                      <img :src="discordIcon" alt="Discord" class="w-full h-full object-contain" />
+                      <img
+                        :src="discordIcon"
+                        alt="Discord"
+                        class="w-full h-full object-contain"
+                      >
                     </a>
 
                     <!-- Forum Link -->
@@ -936,7 +973,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchAllServers, fetchServerBusyIndicators, type ServerBusyIndicatorResult, type ServerHourlyTimelineEntry, type BusyLevel } from '../services/serverDetailsService'
 import { ServerSummary } from '../types/server'
-import { PlayerHistoryDataPoint, PlayerHistoryResponse, PlayerHistoryInsights } from '../types/playerStatsTypes'
+import { PlayerHistoryDataPoint, PlayerHistoryInsights } from '../types/playerStatsTypes'
 import PlayersPanel from '../components/PlayersPanel.vue'
 import PlayerHistoryChart from '../components/PlayerHistoryChart.vue'
 import { fetchPlayerOnlineHistory } from '../services/playerStatsService'

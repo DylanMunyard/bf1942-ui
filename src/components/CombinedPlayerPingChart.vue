@@ -13,7 +13,7 @@ import {
   Legend,
   TooltipItem
 } from 'chart.js';
-import type { ServerInsights, PlayerCountHistoryData, PingByHourData } from '../services/serverDetailsService';
+import type { ServerInsights } from '../services/serverDetailsService';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
@@ -219,7 +219,7 @@ const chartOptions = computed(() => {
           minRotation: 45,
           color: textMutedColor,
           maxTicksLimit: 8,
-          callback: function(tickValue: any, index: number) {
+          callback: function(_tickValue: any, index: number) {
             const labels = chartData.value.labels;
             if (!labels || labels.length === 0) return '';
 
@@ -295,7 +295,7 @@ const chartOptions = computed(() => {
             size: 12,
             weight: 'normal' as const
           },
-          filter: function(legendItem: any) {
+          filter: function() {
             // Show all datasets in legend
             return true;
           }

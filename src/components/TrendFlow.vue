@@ -20,9 +20,15 @@
           top: Math.max(0, hoveredPoint.y - 35) + 'px' 
         }"
       >
-        <div class="text-slate-200 font-medium">{{ hoveredPoint.value.toFixed(0) }} players</div>
-        <div class="text-slate-400">{{ hoveredPoint.dayName }}</div>
-        <div class="text-slate-500 text-xs">{{ hoveredPoint.date }}</div>
+        <div class="text-slate-200 font-medium">
+          {{ hoveredPoint.value.toFixed(0) }} players
+        </div>
+        <div class="text-slate-400">
+          {{ hoveredPoint.dayName }}
+        </div>
+        <div class="text-slate-500 text-xs">
+          {{ hoveredPoint.date }}
+        </div>
       </div>
     </div>
     

@@ -145,30 +145,30 @@ const chartOptions = {
     legend: {
       display: true,
       position: 'top',
-      onClick: (e: any, legendItem: any, legend: any) => {
+      onClick: (_e: any, _legendItem: any, _legend: any) => {
         // Get the index of the clicked dataset
-        const index = legendItem.datasetIndex;
+        const index = _legendItem.datasetIndex;
 
         // Check if the clicked dataset is the only visible one
-        const isOnlyVisibleDataset = legend.chart.data.datasets.every((dataset: any, i: number) => 
-          i === index ? legend.chart.getDatasetMeta(i).hidden === false : legend.chart.getDatasetMeta(i).hidden === true
+        const isOnlyVisibleDataset = _legend.chart.data.datasets.every((_dataset: any, i: number) =>
+          i === index ? _legend.chart.getDatasetMeta(i).hidden === false : _legend.chart.getDatasetMeta(i).hidden === true
         );
 
         if (isOnlyVisibleDataset) {
           // If it's the only visible dataset, show all datasets (unselect)
-          legend.chart.data.datasets.forEach((dataset: any, i: number) => {
-            legend.chart.setDatasetVisibility(i, true);
+          _legend.chart.data.datasets.forEach((_dataset: any, i: number) => {
+            _legend.chart.setDatasetVisibility(i, true);
           });
         } else {
           // Otherwise, hide all datasets and show only the clicked one (select)
-          legend.chart.data.datasets.forEach((dataset: any, i: number) => {
-            legend.chart.setDatasetVisibility(i, false);
+          _legend.chart.data.datasets.forEach((_dataset: any, i: number) => {
+            _legend.chart.setDatasetVisibility(i, false);
           });
-          legend.chart.setDatasetVisibility(index, true);
+          _legend.chart.setDatasetVisibility(index, true);
         }
 
         // Update the chart
-        legend.chart.update();
+        _legend.chart.update();
       }
     },
     tooltip: {

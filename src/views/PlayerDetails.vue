@@ -339,15 +339,7 @@ const fetchMapStats = async (serverGuid: string) => {
   }
 };
 
-// Function to toggle server expansion and fetch map stats
-const toggleServerExpansion = async (serverGuid: string) => {
-  if (expandedServerId.value === serverGuid) {
-    expandedServerId.value = null;
-  } else {
-    expandedServerId.value = serverGuid;
-    await fetchMapStats(serverGuid);
-  }
-};
+// Function to toggle server expansion and fetch map stats removed - was unused
 
 // Function to open map modal
 const openMapModal = async (serverGuid: string) => {
@@ -680,16 +672,7 @@ const sortedMapStats = computed(() => {
   });
 });
 
-// Computed property to get the current expanded server's name
-const expandedServerName = computed(() => {
-  if (!expandedServerId.value || !playerStats.value?.insights?.serverRankings) return null;
-  
-  const server = playerStats.value.insights.serverRankings.find(
-    ranking => ranking.serverGuid === expandedServerId.value
-  );
-  
-  return server?.serverName || null;
-});
+// Computed property to get the current expanded server's name removed - was unused
 
 // Computed property to get the selected server's name for modal
 const selectedServerName = computed(() => {
@@ -2981,8 +2964,8 @@ onUnmounted(() => {
           </div>
           <!-- Close Button -->
           <button
-            @click="closeMapModal"
             class="p-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 hover:text-white transition-all duration-200 border border-slate-600"
+            @click="closeMapModal"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

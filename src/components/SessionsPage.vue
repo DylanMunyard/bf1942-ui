@@ -771,7 +771,7 @@ onUnmounted(() => {
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
-class="group-hover:rotate-180 transition-transform duration-300"
+              class="group-hover:rotate-180 transition-transform duration-300"
             >
               <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
               <path d="M21 3v5h-5" />
@@ -835,7 +835,7 @@ class="group-hover:rotate-180 transition-transform duration-300"
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   class="text-slate-400 transition-transform duration-300"
-:class="{ 'rotate-180': showFilters }"
+                  :class="{ 'rotate-180': showFilters }"
                 >
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
@@ -1127,7 +1127,7 @@ class="group-hover:rotate-180 transition-transform duration-300"
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             class="text-cyan-400 transition-transform duration-200"
-:class="{ 'rotate-90': !isMapCollapsed(group.mapName) }"
+                            :class="{ 'rotate-90': !isMapCollapsed(group.mapName) }"
                           >
                             <polyline points="9 18 15 12 9 6" />
                           </svg>
@@ -1173,7 +1173,7 @@ class="group-hover:rotate-180 transition-transform duration-300"
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             class="text-emerald-400 transition-transform duration-200"
-:class="{ 'rotate-90': !isRoundCollapsed(group.mapName, roundIndex) }"
+                            :class="{ 'rotate-90': !isRoundCollapsed(group.mapName, roundIndex) }"
                           >
                             <polyline points="9 18 15 12 9 6" />
                           </svg>

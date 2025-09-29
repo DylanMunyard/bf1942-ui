@@ -7,7 +7,10 @@
   >
     <div class="space-y-3">
       <!-- Current Status -->
-      <div v-if="currentStatus" class="flex items-center gap-3">
+      <div
+        v-if="currentStatus"
+        class="flex items-center gap-3"
+      >
         <div class="text-xs text-slate-400">
           {{ currentStatus }}
         </div>
@@ -15,7 +18,9 @@
 
       <!-- Forecast Bars -->
       <div class="space-y-2">
-        <div class="text-xs font-bold text-purple-400 uppercase tracking-wide">Activity Forecast</div>
+        <div class="text-xs font-bold text-purple-400 uppercase tracking-wide">
+          Activity Forecast
+        </div>
         <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
           <div 
             v-for="(entry, index) in hourlyTimeline" 
@@ -32,15 +37,24 @@
               :title="formatTimelineTooltip(entry)"
             />
             <!-- Time label -->
-            <div class="text-xs font-mono text-center transition-colors duration-300 group-hover:text-slate-200" :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'">
+            <div
+              class="text-xs font-mono text-center transition-colors duration-300 group-hover:text-slate-200"
+              :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'"
+            >
               {{ formatTimelineTimeLabel(entry) }}
             </div>
             <!-- Player count -->
             <div class="text-xs text-center transition-colors duration-300 group-hover:text-slate-200">
-              <div v-if="entry.isCurrentHour && currentPlayers" class="text-cyan-400 font-bold group-hover:text-cyan-300">
+              <div
+                v-if="entry.isCurrentHour && currentPlayers"
+                class="text-cyan-400 font-bold group-hover:text-cyan-300"
+              >
                 {{ currentPlayers }}
               </div>
-              <div v-else class="text-slate-300 font-semibold">
+              <div
+                v-else
+                class="text-slate-300 font-semibold"
+              >
                 {{ Math.round(entry.typicalPlayers) }}
               </div>
             </div>
@@ -63,19 +77,34 @@
       <div class="space-y-4">
         <!-- Header -->
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-white">Activity Forecast</h3>
+          <h3 class="text-lg font-semibold text-white">
+            Activity Forecast
+          </h3>
           <button 
-            @click="$emit('close')"
             class="text-slate-400 hover:text-white transition-colors"
+            @click="$emit('close')"
           >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
 
         <!-- Current Status -->
-        <div v-if="currentStatus" class="text-sm text-slate-400">
+        <div
+          v-if="currentStatus"
+          class="text-sm text-slate-400"
+        >
           {{ currentStatus }}
         </div>
 
@@ -95,15 +124,24 @@
               }"
             />
             <!-- Time label -->
-            <div class="text-xs font-mono text-center" :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'">
+            <div
+              class="text-xs font-mono text-center"
+              :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'"
+            >
               {{ formatTimelineTimeLabel(entry) }}
             </div>
             <!-- Player count -->
             <div class="text-xs text-center">
-              <div v-if="entry.isCurrentHour && currentPlayers" class="text-cyan-400 font-bold">
+              <div
+                v-if="entry.isCurrentHour && currentPlayers"
+                class="text-cyan-400 font-bold"
+              >
                 {{ currentPlayers }}
               </div>
-              <div v-else class="text-slate-300 font-semibold">
+              <div
+                v-else
+                class="text-slate-300 font-semibold"
+              >
                 {{ Math.round(entry.typicalPlayers) }}
               </div>
             </div>
