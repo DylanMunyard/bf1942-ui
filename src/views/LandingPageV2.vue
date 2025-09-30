@@ -717,7 +717,7 @@
             <!-- Table Body -->
             <tbody>
               <tr
-                v-for="server in sortedServers"
+                v-for="(server, serverIndex) in sortedServers"
                 :key="server.guid"
                 class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
                 :class="getServerStatusClass(server)"
@@ -747,9 +747,9 @@
                         <!-- Mini hourly timeline bars (current hour centered) -->
                         <div
                           v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
-                          class="flex items-end gap-0.5 ml-1 group/timeline relative"
-                          aria-label="Server activity timeline"
-                          @click.stop="toggleServerModal(server.guid)"
+                          class="flex items-end gap-0.5 ml-1 py-2 px-1 -my-2 group/timeline relative cursor-pointer hover:bg-slate-700/20 active:bg-slate-700/30 rounded transition-colors"
+                          aria-label="Server activity timeline - hover or click to view forecast"
+                          @click.stop.prevent="toggleServerModal(server.guid)"
                         >
                           <!-- Original small bars -->
                           <div
@@ -768,6 +768,7 @@
                             :hourly-timeline="serverTrendsByGuid[server.guid].hourlyTimeline"
                             :current-status="`${server.numPlayers} players (typical: ${Math.round(serverTrendsByGuid[server.guid].busyIndicator.typicalPlayers)})`"
                             :current-players="server.numPlayers"
+                            :open-upward="shouldOpenUpward(serverIndex)"
                             overlay-class="opacity-0 group-hover/timeline:opacity-100"
                             @close="closeServerModal(server.guid)"
                           />
@@ -798,9 +799,9 @@
                         <!-- Mini hourly timeline bars for mobile -->
                         <div
                           v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
-                          class="flex items-end gap-0.5 ml-1 flex-1 group/timeline relative"
-                          aria-label="Server activity timeline"
-                          @click.stop="toggleServerModal(server.guid)"
+                          class="flex items-end gap-0.5 ml-1 py-2 px-1 -my-2 flex-1 group/timeline relative cursor-pointer active:bg-slate-700/30 rounded transition-colors"
+                          aria-label="Server activity timeline - tap to view forecast"
+                          @click.stop.prevent="toggleServerModal(server.guid)"
                         >
                           <!-- Original small bars -->
                           <div
@@ -819,6 +820,7 @@
                             :hourly-timeline="serverTrendsByGuid[server.guid].hourlyTimeline"
                             :current-status="`${server.numPlayers} players (typical: ${Math.round(serverTrendsByGuid[server.guid].busyIndicator.typicalPlayers)})`"
                             :current-players="server.numPlayers"
+                            :open-upward="shouldOpenUpward(serverIndex)"
                             overlay-class="opacity-0 group-hover/timeline:opacity-100"
                             @close="closeServerModal(server.guid)"
                           />
@@ -1120,6 +1122,13 @@ const serverTrendsByGuid = ref<Record<string, ServerBusyIndicatorResult>>({})
 
 // Per-server modal state
 const serverModalStates = ref<Record<string, boolean>>({})
+
+// Helper to determine if modal should open upward (for rows near bottom)
+const shouldOpenUpward = (index: number) => {
+  const totalRows = sortedServers.value.length
+  // Open upward if in the last 3 rows
+  return index >= totalRows - 3
+}
 
 // Computed properties
 const filteredServers = computed(() => {
@@ -1629,7 +1638,10 @@ const fetchGameTrends = async (isInitialLoad = false) => {
 // Helper: fetch per-server busy indicators without blocking main render
 const fetchAndAttachServerTrends = async () => {
   try {
-    const eligibleGuids = servers.value.filter(s => (s.numPlayers || 0) >= 5 && !!s.guid).map(s => s.guid)
+    // Get top 10 servers from the sorted list (as displayed to user)
+    const topServers = sortedServers.value.slice(0, 10)
+    const eligibleGuids = topServers.filter(s => !!s.guid).map(s => s.guid)
+    
     if (eligibleGuids.length === 0) {
       return
     }

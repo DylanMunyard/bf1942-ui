@@ -160,11 +160,11 @@
   </div>
 
   <!-- Mobile Top Navigation -->
-  <div class="fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-xl border-b border-slate-700/50 z-50 flex md:hidden overflow-hidden">
+  <div class="fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-xl border-b border-slate-700/50 z-[100] flex md:hidden overflow-visible">
     <!-- Animated background gradient -->
     <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-purple-500/5 opacity-60" />
     
-    <div class="relative z-10 flex items-center w-full px-2 sm:px-4 max-w-full overflow-hidden">
+    <div class="relative z-auto flex items-center w-full px-2 sm:px-4 max-w-full">
       <!-- Auth Section -->
       <div class="flex-shrink-0">
         <LoginButton />

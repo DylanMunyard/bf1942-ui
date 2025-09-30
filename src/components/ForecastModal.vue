@@ -2,26 +2,13 @@
   <!-- Desktop: Hover Overlay -->
   <div 
     v-if="showOverlay && !isMobile"
-    class="absolute top-full left-1/2 transform -translate-x-1/2 w-80 bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-2xl transition-all duration-300 z-50 pointer-events-none mt-2"
-    :class="overlayClass"
+    class="absolute left-1/2 transform -translate-x-1/2 w-80 bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-2xl transition-all duration-300 z-50 pointer-events-none"
+    :class="[overlayClass, openUpward ? 'bottom-full mb-2' : 'top-full mt-2']"
   >
     <div class="space-y-3">
-      <!-- Current Status -->
-      <div
-        v-if="currentStatus"
-        class="flex items-center gap-3"
-      >
-        <div class="text-xs text-slate-400">
-          {{ currentStatus }}
-        </div>
-      </div>
-
       <!-- Forecast Bars -->
       <div class="space-y-2">
-        <div class="text-xs font-bold text-purple-400 uppercase tracking-wide">
-          Activity Forecast
-        </div>
-        <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
+        <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-40">
           <div 
             v-for="(entry, index) in hourlyTimeline" 
             :key="index"
@@ -61,6 +48,16 @@
           </div>
         </div>
       </div>
+
+      <!-- Current Status -->
+      <div
+        v-if="currentStatus"
+        class="flex items-center justify-center gap-3"
+      >
+        <div class="text-xs text-slate-400 text-center">
+          {{ currentStatus }}
+        </div>
+      </div>
     </div>
   </div>
 
@@ -68,7 +65,7 @@
   <div
     v-if="showModal && isMobile"
     class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-    @click="$emit('close')"
+    @click.stop.prevent="$emit('close')"
   >
     <div 
       class="bg-slate-800 border border-slate-600 rounded-lg p-6 w-full max-w-sm shadow-2xl"
@@ -82,7 +79,7 @@
           </h3>
           <button 
             class="text-slate-400 hover:text-white transition-colors"
-            @click="$emit('close')"
+            @click.stop.prevent="$emit('close')"
           >
             <svg
               class="w-6 h-6"
@@ -163,6 +160,7 @@ interface Props {
   currentStatus?: string;
   currentPlayers?: number;
   overlayClass?: string;
+  openUpward?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -170,7 +168,8 @@ const props = withDefaults(defineProps<Props>(), {
   showModal: false,
   currentStatus: '',
   currentPlayers: undefined,
-  overlayClass: 'opacity-0'
+  overlayClass: 'opacity-0',
+  openUpward: false
 });
 
 defineEmits<{
@@ -187,7 +186,7 @@ const getTimelineBarHeight = (entry: ServerHourlyTimelineEntry): number => {
   const timeline = props.hourlyTimeline || [];
   const maxTypical = Math.max(1, ...timeline.map(e => Math.max(0, e.typicalPlayers || 0)));
   const pct = Math.max(0, Math.min(1, (entry.typicalPlayers || 0) / maxTypical));
-  const maxHeight = 80; // px for forecast bars
+  const maxHeight = 100; // px for forecast bars (increased to match h-40 container)
   const minHeight = 8;
   return Math.max(minHeight, Math.round(pct * maxHeight));
 };
