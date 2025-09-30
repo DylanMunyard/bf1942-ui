@@ -1,0 +1,18 @@
+# BF Stats - Robots.txt
+# Allow all search engines to crawl the site
+User-agent: *
+Allow: /
+
+# Optimize crawl rate
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://bfstats.io/sitemap.xml
+
+# Disallow admin/auth areas (if any in future)
+Disallow: /api/
+Disallow: /*.json$
+
+# Allow important pages
+Allow: /servers/
+Allow: /players/

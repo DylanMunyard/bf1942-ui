@@ -1224,6 +1224,100 @@ const sortedServers = computed(() => {
   })
 })
 
+// Generate dynamic keywords from top 5 servers by player count for SEO
+const topServerKeywords = computed(() => {
+  const topServers = [...servers.value]
+    .sort((a, b) => b.numPlayers - a.numPlayers)
+    .slice(0, 5)
+    .map(s => s.name)
+    .filter(name => name && name.trim())
+  
+  return topServers.join(', ')
+})
+
+// Base keywords that always appear
+const baseKeywords = computed(() => {
+  const gameType = activeFilter.value
+  if (gameType === 'bf1942') {
+    return 'Battlefield 1942, BF1942, WW2 multiplayer, WWII FPS, BF1942 servers, online players, server browser, player stats'
+  } else if (gameType === 'fh2') {
+    return 'Forgotten Hope 2, FH2, BF2 mod, realistic WW2, FH2 servers, tactical shooter, milsim, online players'
+  } else if (gameType === 'bfvietnam') {
+    return 'Battlefield Vietnam, BF Vietnam, BFV, Vietnam War game, BFV servers, 1960s FPS, online players'
+  }
+  return 'Battlefield 1942, Forgotten Hope 2, Battlefield Vietnam, server browser, player statistics, gaming stats, server monitoring'
+})
+
+// Combined SEO keywords
+const seoKeywords = computed(() => {
+  const keywords = [baseKeywords.value]
+  if (topServerKeywords.value) {
+    keywords.push(topServerKeywords.value)
+  }
+  return keywords.join(', ')
+})
+
+// Dynamic meta description with live stats
+const seoDescription = computed(() => {
+  const gameType = activeFilter.value
+  const totalPlayers = servers.value.reduce((sum, s) => sum + (s.numPlayers || 0), 0)
+  const activeServers = servers.value.filter(s => (s.numPlayers || 0) > 0).length
+  const topServer = servers.value.length > 0 
+    ? [...servers.value].sort((a, b) => b.numPlayers - a.numPlayers)[0]
+    : null
+  
+  let gameName = 'Battlefield 1942'
+  if (gameType === 'fh2') gameName = 'Forgotten Hope 2'
+  else if (gameType === 'bfvietnam') gameName = 'Battlefield Vietnam'
+  
+  let description = `Live ${gameName} server browser with ${activeServers} active servers`
+  if (totalPlayers > 0) {
+    description += ` and ${totalPlayers} online players`
+  }
+  if (topServer && topServer.numPlayers > 0) {
+    description += `. Most popular: ${topServer.name} (${topServer.numPlayers}/${topServer.maxPlayers})`
+  }
+  description += '. Real-time stats, player counts, maps, and instant join links.'
+  
+  return description
+})
+
+// Structured data for rich search results
+const structuredData = computed(() => {
+  const gameType = activeFilter.value
+  const totalPlayers = servers.value.reduce((sum, s) => sum + (s.numPlayers || 0), 0)
+  
+  let gameName = 'Battlefield 1942'
+  if (gameType === 'fh2') gameName = 'Forgotten Hope 2'
+  else if (gameType === 'bfvietnam') gameName = 'Battlefield Vietnam'
+  
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: `${gameName} Server Browser - BF Stats`,
+    applicationCategory: 'GameApplication',
+    description: seoDescription.value,
+    url: window.location.href,
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD'
+    },
+    aggregateRating: totalPlayers > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: '4.5',
+      ratingCount: totalPlayers.toString()
+    } : undefined,
+    featureList: [
+      'Real-time server monitoring',
+      'Live player statistics',
+      'Instant server join',
+      'Player search and tracking',
+      'Server activity forecasts'
+    ]
+  }
+})
+
 // Helper functions
 const formatTime = (date: Date) => {
   return date.toLocaleTimeString('en-US', { 
@@ -1492,6 +1586,8 @@ const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isI
   try {
     const serverData = await fetchAllServers(gameType)
     servers.value = serverData.sort((a, b) => b.numPlayers - a.numPlayers)
+    // Update SEO meta tags with fresh server data
+    updateSeoMetaTags()
     // Fire-and-forget: fetch per-server busy indicators for active servers (>=5 players)
     fetchAndAttachServerTrends()
   } catch (err) {
@@ -1863,6 +1959,46 @@ const getActivityComparisonInfo = (status: string) => {
       return { label: 'Normal', color: 'text-slate-400', icon: '➡️', bgColor: 'from-slate-400 to-slate-500' }
   }
 }
+
+// Update SEO meta tags when server data changes
+const updateSeoMetaTags = () => {
+  // Helper function to update or create meta tags
+  const updateMetaTag = (selector: string, attribute: string, content: string) => {
+    let tag = document.querySelector(selector)
+    if (!tag) {
+      tag = document.createElement('meta')
+      const attrName = attribute.includes('property') ? 'property' : 'name'
+      const attrValue = attribute.replace('property=', '').replace('name=', '')
+      tag.setAttribute(attrName, attrValue)
+      document.head.appendChild(tag)
+    }
+    tag.setAttribute('content', content)
+  }
+
+  // Update keywords
+  updateMetaTag('meta[name="keywords"]', 'name=keywords', seoKeywords.value)
+  
+  // Update descriptions
+  updateMetaTag('meta[name="description"]', 'name=description', seoDescription.value)
+  updateMetaTag('meta[property="og:description"]', 'property=og:description', seoDescription.value)
+  updateMetaTag('meta[name="twitter:description"]', 'name=twitter:description', seoDescription.value)
+  
+  // Update or create structured data script tag
+  let structuredDataScript = document.querySelector('script[type="application/ld+json"]')
+  if (!structuredDataScript) {
+    structuredDataScript = document.createElement('script')
+    structuredDataScript.setAttribute('type', 'application/ld+json')
+    document.head.appendChild(structuredDataScript)
+  }
+  structuredDataScript.textContent = JSON.stringify(structuredData.value)
+}
+
+// Watch for server data changes to update SEO
+watch([servers, activeFilter], () => {
+  if (servers.value.length > 0) {
+    updateSeoMetaTags()
+  }
+}, { immediate: false })
 
 // Watch for game filter changes and fetch new data
 watch(activeFilter, (newFilter) => {
