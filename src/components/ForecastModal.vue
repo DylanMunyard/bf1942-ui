@@ -8,11 +8,12 @@
     <div class="space-y-3">
       <!-- Forecast Bars -->
       <div class="space-y-2">
-        <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-40">
+        <!-- Bars container -->
+        <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
           <div 
             v-for="(entry, index) in hourlyTimeline" 
             :key="index"
-            class="flex flex-col items-center gap-1 flex-1 max-w-[60px] group cursor-pointer"
+            class="flex flex-col items-center flex-1 max-w-[60px] group cursor-pointer"
           >
             <!-- Vertical bar -->
             <div 
@@ -23,18 +24,28 @@
               }"
               :title="formatTimelineTooltip(entry)"
             />
+          </div>
+        </div>
+        
+        <!-- Labels container (below bars) -->
+        <div class="flex justify-center gap-1 px-4">
+          <div 
+            v-for="(entry, index) in hourlyTimeline" 
+            :key="index"
+            class="flex flex-col items-center gap-1 flex-1 max-w-[60px]"
+          >
             <!-- Time label -->
             <div
-              class="text-xs font-mono text-center transition-colors duration-300 group-hover:text-slate-200"
+              class="text-xs font-mono text-center transition-colors duration-300"
               :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'"
             >
               {{ formatTimelineTimeLabel(entry) }}
             </div>
             <!-- Player count -->
-            <div class="text-xs text-center transition-colors duration-300 group-hover:text-slate-200">
+            <div class="text-xs text-center transition-colors duration-300">
               <div
                 v-if="entry.isCurrentHour && currentPlayers"
-                class="text-cyan-400 font-bold group-hover:text-cyan-300"
+                class="text-cyan-400 font-bold"
               >
                 {{ currentPlayers }}
               </div>
@@ -106,40 +117,53 @@
         </div>
 
         <!-- Forecast Bars -->
-        <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
-          <div 
-            v-for="(entry, index) in hourlyTimeline" 
-            :key="index"
-            class="flex flex-col items-center gap-1 flex-1 max-w-[40px]"
-          >
-            <!-- Vertical bar -->
+        <div class="space-y-2">
+          <!-- Bars container -->
+          <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-28">
             <div 
-              class="w-4 rounded-t transition-all duration-300"
-              :class="entry.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500' : 'bg-gradient-to-t from-cyan-400 to-purple-500'"
-              :style="{ 
-                height: getTimelineBarHeight(entry) + 'px' 
-              }"
-            />
-            <!-- Time label -->
-            <div
-              class="text-xs font-mono text-center"
-              :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'"
+              v-for="(entry, index) in hourlyTimeline" 
+              :key="index"
+              class="flex flex-col items-center flex-1 max-w-[40px]"
             >
-              {{ formatTimelineTimeLabel(entry) }}
+              <!-- Vertical bar -->
+              <div 
+                class="w-4 rounded-t transition-all duration-300"
+                :class="entry.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500' : 'bg-gradient-to-t from-cyan-400 to-purple-500'"
+                :style="{ 
+                  height: getTimelineBarHeight(entry) + 'px' 
+                }"
+              />
             </div>
-            <!-- Player count -->
-            <div class="text-xs text-center">
+          </div>
+          
+          <!-- Labels container (below bars) -->
+          <div class="flex justify-center gap-1 px-4">
+            <div 
+              v-for="(entry, index) in hourlyTimeline" 
+              :key="index"
+              class="flex flex-col items-center gap-1 flex-1 max-w-[40px]"
+            >
+              <!-- Time label -->
               <div
-                v-if="entry.isCurrentHour && currentPlayers"
-                class="text-cyan-400 font-bold"
+                class="text-xs font-mono text-center"
+                :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'"
               >
-                {{ currentPlayers }}
+                {{ formatTimelineTimeLabel(entry) }}
               </div>
-              <div
-                v-else
-                class="text-slate-300 font-semibold"
-              >
-                {{ Math.round(entry.typicalPlayers) }}
+              <!-- Player count -->
+              <div class="text-xs text-center">
+                <div
+                  v-if="entry.isCurrentHour && currentPlayers"
+                  class="text-cyan-400 font-bold"
+                >
+                  {{ currentPlayers }}
+                </div>
+                <div
+                  v-else
+                  class="text-slate-300 font-semibold"
+                >
+                  {{ Math.round(entry.typicalPlayers) }}
+                </div>
               </div>
             </div>
           </div>

@@ -1144,8 +1144,7 @@ const processedForecast = computed(() => {
   const currentHourEntry = forecast.find(f => f.isCurrentHour)
   if (!currentHourEntry) return forecast
   
-  const currentDay = currentHourEntry.dayOfWeek
-  const currentHour = currentHourEntry.hourOfDay
+  const currentDay = currentHourEntry.dayOfWeek;
   
   // Sort the forecast array chronologically
   return forecast.sort((a, b) => {
@@ -1328,45 +1327,6 @@ const structuredData = computed(() => {
 })
 
 // Helper functions
-const formatTime = (date: Date) => {
-  return date.toLocaleTimeString('en-US', { 
-    hour12: false, 
-    hour: '2-digit', 
-    minute: '2-digit',
-    second: '2-digit' 
-  })
-}
-
-const getServerCount = (gameType: string) => {
-  if (gameType === activeFilter.value) {
-    return servers.value.length
-  }
-  return 0
-}
-
-const getTotalPlayers = () => {
-  return servers.value.reduce((total, server) => total + server.numPlayers, 0)
-}
-
-const getServerRegion = (server: ServerSummary) => {
-  // Simple region detection based on server name or IP
-  const name = server.name.toLowerCase()
-  if (name.includes('us') || name.includes('america')) return 'US'
-  if (name.includes('eu') || name.includes('europe')) return 'EU'
-  if (name.includes('asia') || name.includes('jp')) return 'ASIA'
-  return 'Global'
-}
-
-const getMapType = (mapName: string) => {
-  // Simple map type detection
-  if (!mapName) return 'Unknown'
-  if (mapName.toLowerCase().includes('city') || mapName.toLowerCase().includes('urban')) return 'Urban'
-  if (mapName.toLowerCase().includes('desert') || mapName.toLowerCase().includes('sand')) return 'Desert'
-  if (mapName.toLowerCase().includes('forest') || mapName.toLowerCase().includes('wood')) return 'Forest'
-  if (mapName.toLowerCase().includes('island') || mapName.toLowerCase().includes('beach')) return 'Island'
-  return 'Mixed'
-}
-
 const getGameIconClass = (gameType: string) => {
   const type = gameType?.toLowerCase() || ''
   if (type.includes('bf1942')) return 'icon-bf1942'
@@ -1726,13 +1686,6 @@ const formatTimelineTooltip = (entry: ServerHourlyTimelineEntry): string => {
   return `${local} • Typical ${Math.round(entry.typicalPlayers)} • ${levelLabel}`
 }
 
-const formatTimelineTimeLabel = (entry: ServerHourlyTimelineEntry): string => {
-  // Convert UTC hour to local "HH" display for the expanded view
-  const now = new Date()
-  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), entry.hour, 0, 0))
-  return d.toLocaleTimeString(undefined, { hour: '2-digit' })
-}
-
 const getBusyLevelLabel = (level: BusyLevel): string => {
   switch (level) {
     case 'very_busy': return 'Very busy'
@@ -1863,59 +1816,6 @@ const getActiveGameName = () => {
   return gameType?.name || 'Game'
 }
 
-// Game trends helper functions
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'very_busy': return 'from-red-500 to-orange-500'
-    case 'busy': return 'from-orange-500 to-yellow-500'
-    case 'moderate': return 'from-yellow-500 to-green-500'
-    case 'quiet': return 'from-green-500 to-blue-500'
-    case 'very_quiet': return 'from-blue-500 to-slate-500'
-    default: return 'from-slate-500 to-slate-600'
-  }
-}
-
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'very_busy': return '🔥'
-    case 'busy': return '⚡'
-    case 'moderate': return '⚖️'
-    case 'quiet': return '🌙'
-    case 'very_quiet': return '💤'
-    default: return '❓'
-  }
-}
-
-const getTrendIcon = (direction: string) => {
-  switch (direction) {
-    case 'increasing_significantly': return '🚀'
-    case 'increasing': return '📈'
-    case 'stable': return '➡️'
-    case 'decreasing': return '📉'
-    case 'decreasing_significantly': return '⬇️'
-    default: return '➡️'
-  }
-}
-
-const formatHourDisplay = (hourUTC: number) => {
-  const now = new Date()
-  const currentHour = now.getUTCHours()
-  let diff = hourUTC - currentHour
-  
-  // Handle day boundary crossings (e.g., 22, 23, 0, 1)
-  if (diff > 12) diff -= 24
-  if (diff < -12) diff += 24
-  
-  if (diff === 0) return 'Now'
-  if (diff === 1) return '+1h'
-  if (diff === 2) return '+2h'
-  if (diff === 3) return '+3h'
-  if (diff === 4) return '+4h'
-  if (diff > 0) return `+${diff}h`
-  if (diff === -1) return '-1h'
-  return `${diff}h`
-}
-
 const formatHourDisplayFixed = (hourUTC: number, isCurrentHour?: boolean, forecastIndex?: number) => {
   // If we have the isCurrentHour flag from the API, use it directly
   if (isCurrentHour !== undefined) {
@@ -1936,40 +1836,6 @@ const formatHourDisplayFixed = (hourUTC: number, isCurrentHour?: boolean, foreca
   }
   
   return formatHour(localHour)
-}
-
-const getHoursUntilPeak = () => {
-  if (!processedForecast.value.length) return 'Peak expected'
-  
-  const peakForecast = processedForecast.value.find(
-    f => f.predictedPlayers === gameTrends.value!.maxPredictedPlayers
-  )
-  
-  if (!peakForecast) return 'Peak expected'
-  
-  const currentHourIndex = processedForecast.value.findIndex(f => f.isCurrentHour)
-  if (currentHourIndex === -1) return 'Peak expected'
-  
-  const peakIndex = processedForecast.value.findIndex(f => f.predictedPlayers === gameTrends.value!.maxPredictedPlayers)
-  const diff = peakIndex - currentHourIndex
-  
-  if (diff === 0) return 'Peak now'
-  if (diff === 1) return 'Peak in 1 hour'
-  if (diff > 0) return `Peak in ${diff} hours`
-  return 'Peak expected'
-}
-
-const getActivityComparisonInfo = (status: string) => {
-  switch (status) {
-    case 'busier_than_usual':
-      return { label: 'Busier than usual', color: 'text-green-400', icon: '📈', bgColor: 'from-green-400 to-emerald-500' }
-    case 'quieter_than_usual':
-      return { label: 'Quieter than usual', color: 'text-blue-400', icon: '📉', bgColor: 'from-blue-400 to-cyan-500' }
-    case 'as_usual':
-      return { label: 'As usual', color: 'text-slate-400', icon: '➡️', bgColor: 'from-slate-400 to-slate-500' }
-    default:
-      return { label: 'Normal', color: 'text-slate-400', icon: '➡️', bgColor: 'from-slate-400 to-slate-500' }
-  }
 }
 
 // Update SEO meta tags when server data changes
