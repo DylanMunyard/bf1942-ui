@@ -2042,7 +2042,8 @@ onUnmounted(() => {
                         AVERAGE PING
                       </div>
                       <div class="flex items-center justify-center gap-2">
-                        <div 
+                        <div
+                          v-if="ranking.averagePing > 0"
                           class="w-2 h-2 rounded-full animate-pulse"
                           :class="{
                             'bg-green-400': ranking.averagePing < 50,
@@ -2050,15 +2051,20 @@ onUnmounted(() => {
                             'bg-red-400': ranking.averagePing >= 100
                           }"
                         />
-                        <div 
+                        <div
                           class="text-2xl font-black"
-                          :class="{
+                          :class="ranking.averagePing > 0 ? {
                             'text-green-400': ranking.averagePing < 50,
                             'text-yellow-400': ranking.averagePing >= 50 && ranking.averagePing < 100,
                             'text-red-400': ranking.averagePing >= 100
-                          }"
+                          } : 'text-slate-600 opacity-50'"
                         >
-                          {{ ranking.averagePing }}<span class="text-base opacity-60">ms</span>
+                          <template v-if="ranking.averagePing > 0">
+                            {{ ranking.averagePing }}<span class="text-base opacity-60">ms</span>
+                          </template>
+                          <template v-else>
+                            –
+                          </template>
                         </div>
                       </div>
                     </div>
