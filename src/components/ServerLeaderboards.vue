@@ -204,26 +204,32 @@ const placementTypeSubtitle = computed(() => {
           </div>
           
           <div class="section-time-controls">
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'week' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('week')"
             >
-              7 Days
+              <span v-if="isLoading && selectedTimePeriod === 'week'" class="loading-spinner" />
+              <span v-else>7 Days</span>
             </button>
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'month' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('month')"
             >
-              30 Days
+              <span v-if="isLoading && selectedTimePeriod === 'month'" class="loading-spinner" />
+              <span v-else>30 Days</span>
             </button>
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'alltime' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('alltime')"
             >
-              All Time
+              <span v-if="isLoading && selectedTimePeriod === 'alltime'" class="loading-spinner" />
+              <span v-else>All Time</span>
             </button>
           </div>
         </div>
@@ -268,26 +274,32 @@ const placementTypeSubtitle = computed(() => {
         </div>
         <div class="section-controls">
           <div class="section-time-controls">
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'week' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('week')"
             >
-              7 Days
+              <span v-if="isLoading && selectedTimePeriod === 'week'" class="loading-spinner" />
+              <span v-else>7 Days</span>
             </button>
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'month' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('month')"
             >
-              30 Days
+              <span v-if="isLoading && selectedTimePeriod === 'month'" class="loading-spinner" />
+              <span v-else>30 Days</span>
             </button>
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'alltime' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('alltime')"
             >
-              All Time
+              <span v-if="isLoading && selectedTimePeriod === 'alltime'" class="loading-spinner" />
+              <span v-else>All Time</span>
             </button>
           </div>
         </div>
@@ -323,26 +335,32 @@ const placementTypeSubtitle = computed(() => {
         </div>
         <div class="section-controls">
           <div class="section-time-controls">
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'week' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('week')"
             >
-              7 Days
+              <span v-if="isLoading && selectedTimePeriod === 'week'" class="loading-spinner" />
+              <span v-else>7 Days</span>
             </button>
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'month' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('month')"
             >
-              30 Days
+              <span v-if="isLoading && selectedTimePeriod === 'month'" class="loading-spinner" />
+              <span v-else>30 Days</span>
             </button>
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'alltime' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('alltime')"
             >
-              All Time
+              <span v-if="isLoading && selectedTimePeriod === 'alltime'" class="loading-spinner" />
+              <span v-else>All Time</span>
             </button>
           </div>
         </div>
@@ -387,26 +405,32 @@ const placementTypeSubtitle = computed(() => {
         </div>
         <div class="section-controls">
           <div class="section-time-controls">
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'week' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('week')"
             >
-              7 Days
+              <span v-if="isLoading && selectedTimePeriod === 'week'" class="loading-spinner" />
+              <span v-else>7 Days</span>
             </button>
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'month' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('month')"
             >
-              30 Days
+              <span v-if="isLoading && selectedTimePeriod === 'month'" class="loading-spinner" />
+              <span v-else>30 Days</span>
             </button>
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'alltime' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('alltime')"
             >
-              All Time
+              <span v-if="isLoading && selectedTimePeriod === 'alltime'" class="loading-spinner" />
+              <span v-else>All Time</span>
             </button>
           </div>
         </div>
@@ -453,26 +477,32 @@ const placementTypeSubtitle = computed(() => {
         </div>
         <div class="section-controls">
           <div class="section-time-controls">
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'week' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('week')"
             >
-              7 Days
+              <span v-if="isLoading && selectedTimePeriod === 'week'" class="loading-spinner" />
+              <span v-else>7 Days</span>
             </button>
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'month' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('month')"
             >
-              30 Days
+              <span v-if="isLoading && selectedTimePeriod === 'month'" class="loading-spinner" />
+              <span v-else>30 Days</span>
             </button>
-            <button 
+            <button
               class="enhanced-time-tab"
               :class="{ 'active': selectedTimePeriod === 'alltime' }"
+              :disabled="isLoading"
               @click="toggleTimePeriod('alltime')"
             >
-              All Time
+              <span v-if="isLoading && selectedTimePeriod === 'alltime'" class="loading-spinner" />
+              <span v-else>All Time</span>
             </button>
           </div>
         </div>
@@ -937,5 +967,25 @@ const placementTypeSubtitle = computed(() => {
   color: rgba(248, 113, 113, 0.9);
   font-size: 0.95rem;
   margin: 0;
+}
+
+/* Loading Spinner for Filter Buttons */
+.loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.enhanced-time-tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 </style> 
