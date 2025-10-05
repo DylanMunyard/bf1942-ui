@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { ServerDetails, ServerInsights, fetchServerDetails, fetchServerInsights, fetchLiveServerData, ServerBusyIndicator, ServerHourlyTimelineEntry, fetchServerBusyIndicators } from '../services/serverDetailsService';
+import { ServerDetails, ServerInsights, LeaderboardsData, fetchServerDetails, fetchServerInsights, fetchServerLeaderboards, fetchLiveServerData, ServerBusyIndicator, ServerHourlyTimelineEntry, fetchServerBusyIndicators } from '../services/serverDetailsService';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { countryCodeToName } from '../types/countryCodes';
 import { ServerSummary } from '../types/server';
@@ -23,15 +23,19 @@ const route = useRoute();
 const serverName = ref(route.params.serverName as string);
 const serverDetails = ref<ServerDetails | null>(null);
 const serverInsights = ref<ServerInsights | null>(null);
+const leaderboardsData = ref<LeaderboardsData | null>(null);
 const liveServerInfo = ref<ServerSummary | null>(null);
 const isLoading = ref(true);
 const isInsightsLoading = ref(true);
+const isLeaderboardsLoading = ref(true);
 const isLiveServerLoading = ref(false);
 const error = ref<string | null>(null);
 const insightsError = ref<string | null>(null);
+const leaderboardsError = ref<string | null>(null);
 const liveServerError = ref<string | null>(null);
 const showPlayersModal = ref(false);
 const currentPeriod = ref(1);
+const currentLeaderboardPeriod = ref<'week' | 'month' | 'alltime'>('week');
 const minPlayersForWeighting = ref(15);
 
 // Busy indicator state
@@ -89,20 +93,23 @@ const fetchBusyIndicatorData = async () => {
   }
 };
 
-// Fetch server details and insights in parallel
+// Fetch server details, insights, and leaderboards in parallel
 const fetchData = async () => {
   if (!serverName.value) return;
 
   isLoading.value = true;
   isInsightsLoading.value = true;
+  isLeaderboardsLoading.value = true;
   error.value = null;
   insightsError.value = null;
+  leaderboardsError.value = null;
 
   try {
-    // Fetch both server details and insights in parallel
-    const [detailsResult, insightsResult] = await Promise.allSettled([
-      fetchServerDetails(serverName.value, minPlayersForWeighting.value),
-      fetchServerInsights(serverName.value, currentPeriod.value)
+    // Fetch server details, insights, and leaderboards in parallel
+    const [detailsResult, insightsResult, leaderboardsResult] = await Promise.allSettled([
+      fetchServerDetails(serverName.value),
+      fetchServerInsights(serverName.value, currentPeriod.value),
+      fetchServerLeaderboards(serverName.value, currentLeaderboardPeriod.value, minPlayersForWeighting.value)
     ]);
 
     // Handle server details result
@@ -123,12 +130,21 @@ const fetchData = async () => {
       console.error('Error fetching server insights:', insightsResult.reason);
       insightsError.value = 'Failed to load server insights.';
     }
+
+    // Handle leaderboards result
+    if (leaderboardsResult.status === 'fulfilled') {
+      leaderboardsData.value = leaderboardsResult.value;
+    } else {
+      console.error('Error fetching server leaderboards:', leaderboardsResult.reason);
+      leaderboardsError.value = 'Failed to load server leaderboards.';
+    }
   } catch (err) {
     console.error('Unexpected error during fetch:', err);
     error.value = 'An unexpected error occurred. Please try again later.';
   } finally {
     isLoading.value = false;
     isInsightsLoading.value = false;
+    isLeaderboardsLoading.value = false;
   }
 };
 
@@ -231,25 +247,47 @@ const handlePeriodChange = async (period: number) => {
   }
 };
 
-// Handle min players for weighting update
-const handleMinPlayersUpdate = (value: number) => {
-  minPlayersForWeighting.value = value;
-};
+// Handle leaderboard period change
+const handleLeaderboardPeriodChange = async (period: 'week' | 'month' | 'alltime') => {
+  if (period === currentLeaderboardPeriod.value) return;
 
-// Refresh server details with current settings
-const refreshServerDetails = async () => {
-  if (!serverName.value) return;
-  
-  isLoading.value = true;
-  error.value = null;
+  currentLeaderboardPeriod.value = period;
+  isLeaderboardsLoading.value = true;
+  leaderboardsError.value = null;
 
   try {
-    serverDetails.value = await fetchServerDetails(serverName.value, minPlayersForWeighting.value);
+    leaderboardsData.value = await fetchServerLeaderboards(
+      serverName.value,
+      period,
+      minPlayersForWeighting.value
+    );
   } catch (err) {
-    console.error('Error refreshing server details:', err);
-    error.value = 'Failed to refresh server details. Please try again later.';
+    console.error('Error fetching leaderboards for period:', period, err);
+    leaderboardsError.value = 'Failed to load leaderboards for selected period.';
   } finally {
-    isLoading.value = false;
+    isLeaderboardsLoading.value = false;
+  }
+};
+
+// Handle min players for weighting update
+const handleMinPlayersUpdate = async (value: number) => {
+  minPlayersForWeighting.value = value;
+
+  // Refetch leaderboards with new min players value
+  isLeaderboardsLoading.value = true;
+  leaderboardsError.value = null;
+
+  try {
+    leaderboardsData.value = await fetchServerLeaderboards(
+      serverName.value,
+      currentLeaderboardPeriod.value,
+      value
+    );
+  } catch (err) {
+    console.error('Error refreshing leaderboards with new min players:', err);
+    leaderboardsError.value = 'Failed to refresh leaderboards.';
+  } finally {
+    isLeaderboardsLoading.value = false;
   }
 };
 
@@ -565,11 +603,14 @@ const closeForecastOverlay = () => {
               <!-- Leaderboards Content -->
               <div class="px-6 pb-6">
                 <ServerLeaderboards
-                  :server-details="serverDetails"
+                  :leaderboards-data="leaderboardsData"
+                  :is-loading="isLeaderboardsLoading"
+                  :error="leaderboardsError"
                   :server-name="serverName"
+                  :server-guid="serverDetails.serverGuid"
                   :min-players-for-weighting="minPlayersForWeighting"
                   @update-min-players-for-weighting="handleMinPlayersUpdate"
-                  @refresh-data="refreshServerDetails"
+                  @period-change="handleLeaderboardPeriodChange"
                 />
               </div>
             </div>

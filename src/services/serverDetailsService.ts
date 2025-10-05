@@ -137,31 +137,27 @@ export interface RoundReport {
   leaderboardSnapshots: LeaderboardSnapshot[];
 }
 
+export interface LeaderboardsData {
+  serverGuid: string;
+  serverName: string;
+  timePeriod: string; // "week", "month", or "alltime"
+  startPeriod: string; // ISO date string
+  endPeriod: string; // ISO date string
+  mostActivePlayersByTime: MostActivePlayer[];
+  topScores: TopScore[];
+  topKDRatios: TopScore[];
+  topKillRates: TopScore[];
+  topPlacements: TopPlacement[];
+  weightedTopPlacements?: TopPlacement[];
+  minPlayersForWeighting?: number;
+}
+
 export interface ServerDetails {
   endPeriod: string; // ISO date string
-  mostActivePlayersByTimeWeek: MostActivePlayer[]; // Last 7 days
-  mostActivePlayersByTimeMonth: MostActivePlayer[]; // Last 30 days
-  mostActivePlayersByTimeAllTime: MostActivePlayer[]; // All time
   popularMaps: PopularMap[];
   serverGuid: string;
   serverName: string;
   startPeriod: string; // ISO date string
-  topScoresWeek: TopScore[]; // Last 7 days
-  topScoresMonth: TopScore[]; // Last 30 days
-  topScoresAllTime: TopScore[]; // All time
-  topKDRatiosWeek: TopScore[]; // Top KD ratios last 7 days
-  topKDRatiosMonth: TopScore[]; // Top KD ratios last 30 days
-  topKDRatiosAllTime: TopScore[]; // Top KD ratios all time
-  topKillRatesWeek: TopScore[]; // Top kill rates last 7 days
-  topKillRatesMonth: TopScore[]; // Top kill rates last 30 days
-  topKillRatesAllTime: TopScore[]; // Top kill rates all time
-  topPlacementsWeek: TopPlacement[]; // Top placements last 7 days
-  topPlacementsMonth: TopPlacement[]; // Top placements last 30 days
-  topPlacementsAllTime: TopPlacement[]; // Top placements all time
-  // Weighted placement leaderboards (prioritizing performance in higher population rounds)
-  weightedTopPlacementsWeek: TopPlacement[]; // Weighted top placements last 7 days
-  weightedTopPlacementsMonth: TopPlacement[]; // Weighted top placements last 30 days
-  weightedTopPlacementsAllTime: TopPlacement[]; // Weighted top placements all time
   recentRounds: RecentRoundInfo[];
   region?: string;
   country?: string;
@@ -175,31 +171,60 @@ export interface ServerDetails {
 /**
  * Fetches server details from the API
  * @param serverName The name of the server to fetch details for
- * @param minPlayersForWeighting Optional minimum players required for weighted placements
  * @returns Server details
  */
 export async function fetchServerDetails(
-  serverName: string,
-  minPlayersForWeighting?: number
+  serverName: string
 ): Promise<ServerDetails> {
   try {
-    // Build query parameters
-    const params = new URLSearchParams();
-    if (minPlayersForWeighting !== undefined) {
-      params.set('minPlayersForWeighting', minPlayersForWeighting.toString());
-    }
-    
-    // Build URL with query parameters
-    const url = `/stats/servers/${encodeURIComponent(serverName)}${params.toString() ? `?${params.toString()}` : ''}`;
-    
-    // Make the request to the API endpoint
+    const url = `/stats/servers/${encodeURIComponent(serverName)}`;
     const response = await axios.get<ServerDetails>(url);
-
-    // Return the response data
     return response.data;
   } catch (err) {
     console.error('Error fetching server details:', err);
     throw new Error('Failed to get server details');
+  }
+}
+
+/**
+ * Fetches server leaderboards from the API
+ * @param serverName The name of the server to fetch leaderboards for
+ * @param timePeriod The time period: 'week', 'month', or 'alltime'
+ * @param minPlayersForWeighting Optional minimum players required for weighted placements
+ * @returns Server leaderboards data
+ */
+export async function fetchServerLeaderboards(
+  serverName: string,
+  timePeriod: 'week' | 'month' | 'alltime',
+  minPlayersForWeighting?: number
+): Promise<LeaderboardsData> {
+  try {
+    const params = new URLSearchParams();
+
+    // Map time period to API parameter
+    if (timePeriod === 'alltime') {
+      // Calculate days from current date back to Jan 1, 2025
+      const startDate = new Date('2025-01-01');
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - startDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      params.set('days', diffDays.toString());
+    } else if (timePeriod === 'week') {
+      params.set('days', '7');
+    } else if (timePeriod === 'month') {
+      params.set('days', '30');
+    }
+
+    if (minPlayersForWeighting !== undefined) {
+      params.set('minPlayersForWeighting', minPlayersForWeighting.toString());
+    }
+
+    const url = `/stats/servers/${encodeURIComponent(serverName)}/leaderboards?${params.toString()}`;
+    const response = await axios.get<LeaderboardsData>(url);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching server leaderboards:', err);
+    throw new Error('Failed to get server leaderboards');
   }
 }
 

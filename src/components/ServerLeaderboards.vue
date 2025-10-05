@@ -1,26 +1,37 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import type { ServerDetails } from '../services/serverDetailsService';
+import { ref, computed, watch } from 'vue';
+import type { LeaderboardsData } from '../services/serverDetailsService';
 import ServerLeaderboard from './ServerLeaderboard.vue';
 import OlympicLeaderboard from './OlympicLeaderboard.vue';
 
 const props = defineProps<{
-  serverDetails: ServerDetails | null;
+  leaderboardsData: LeaderboardsData | null;
+  isLoading: boolean;
+  error: string | null;
   serverName: string;
+  serverGuid?: string;
   minPlayersForWeighting?: number;
 }>();
 
 const emit = defineEmits<{
   updateMinPlayersForWeighting: [value: number];
-  refreshData: [];
+  periodChange: [period: 'week' | 'month' | 'alltime'];
 }>();
 
 const selectedTimePeriod = ref<'week' | 'month' | 'alltime'>('week');
 const showWeightedPlacements = ref(true);
 const localMinPlayersForWeighting = ref(props.minPlayersForWeighting || 15);
 
+// Watch for minPlayersForWeighting prop changes
+watch(() => props.minPlayersForWeighting, (newValue) => {
+  if (newValue !== undefined) {
+    localMinPlayersForWeighting.value = newValue;
+  }
+});
+
 const toggleTimePeriod = (period: 'week' | 'month' | 'alltime') => {
   selectedTimePeriod.value = period;
+  emit('periodChange', period);
 };
 
 const togglePlacementType = () => {
@@ -30,106 +41,46 @@ const togglePlacementType = () => {
 const updateMinPlayersWeighting = (value: number) => {
   localMinPlayersForWeighting.value = value;
   emit('updateMinPlayersForWeighting', value);
-  emit('refreshData');
 };
 
 const currentMostActivePlayers = computed(() => {
-  if (!props.serverDetails) return [];
-  switch (selectedTimePeriod.value) {
-    case 'week':
-      return props.serverDetails.mostActivePlayersByTimeWeek;
-    case 'month':
-      return props.serverDetails.mostActivePlayersByTimeMonth;
-    case 'alltime':
-      return props.serverDetails.mostActivePlayersByTimeAllTime;
-    default:
-      return props.serverDetails.mostActivePlayersByTimeWeek;
-  }
+  if (!props.leaderboardsData) return [];
+  return props.leaderboardsData.mostActivePlayersByTime || [];
 });
 
 const currentTopScores = computed(() => {
-  if (!props.serverDetails) return [];
-  switch (selectedTimePeriod.value) {
-    case 'week':
-      return props.serverDetails.topScoresWeek;
-    case 'month':
-      return props.serverDetails.topScoresMonth;
-    case 'alltime':
-      return props.serverDetails.topScoresAllTime;
-    default:
-      return props.serverDetails.topScoresWeek;
-  }
+  if (!props.leaderboardsData) return [];
+  return props.leaderboardsData.topScores || [];
 });
 
 const currentTopKDRatios = computed(() => {
-  if (!props.serverDetails) return [];
-  switch (selectedTimePeriod.value) {
-    case 'week':
-      return props.serverDetails.topKDRatiosWeek;
-    case 'month':
-      return props.serverDetails.topKDRatiosMonth;
-    case 'alltime':
-      return props.serverDetails.topKDRatiosAllTime;
-    default:
-      return props.serverDetails.topKDRatiosWeek;
-  }
+  if (!props.leaderboardsData) return [];
+  return props.leaderboardsData.topKDRatios || [];
 });
 
 const currentTopKillRates = computed(() => {
-  if (!props.serverDetails) return [];
-  switch (selectedTimePeriod.value) {
-    case 'week':
-      return props.serverDetails.topKillRatesWeek;
-    case 'month':
-      return props.serverDetails.topKillRatesMonth;
-    case 'alltime':
-      return props.serverDetails.topKillRatesAllTime;
-    default:
-      return props.serverDetails.topKillRatesWeek;
-  }
+  if (!props.leaderboardsData) return [];
+  return props.leaderboardsData.topKillRates || [];
 });
 
 const currentTopPlacements = computed(() => {
-  if (!props.serverDetails) return [];
-  
+  if (!props.leaderboardsData) return [];
+
   // Use weighted placements if available and toggle is on
-  if (showWeightedPlacements.value) {
-    switch (selectedTimePeriod.value) {
-      case 'week':
-        return props.serverDetails.weightedTopPlacementsWeek || props.serverDetails.topPlacementsWeek || [];
-      case 'month':
-        return props.serverDetails.weightedTopPlacementsMonth || props.serverDetails.topPlacementsMonth || [];
-      case 'alltime':
-        return props.serverDetails.weightedTopPlacementsAllTime || props.serverDetails.topPlacementsAllTime || [];
-      default:
-        return props.serverDetails.weightedTopPlacementsWeek || props.serverDetails.topPlacementsWeek || [];
-    }
-  } else {
-    // Use regular placements
-    switch (selectedTimePeriod.value) {
-      case 'week':
-        return props.serverDetails.topPlacementsWeek || [];
-      case 'month':
-        return props.serverDetails.topPlacementsMonth || [];
-      case 'alltime':
-        return props.serverDetails.topPlacementsAllTime || [];
-      default:
-        return props.serverDetails.topPlacementsWeek || [];
-    }
+  if (showWeightedPlacements.value && props.leaderboardsData.weightedTopPlacements) {
+    return props.leaderboardsData.weightedTopPlacements;
   }
+
+  return props.leaderboardsData.topPlacements || [];
 });
 
-// Check if we have any placement data at all (weighted or regular) for any time period
+// Check if we have any placement data at all (weighted or regular)
 const hasAnyPlacementData = computed(() => {
-  if (!props.serverDetails) return false;
-  
+  if (!props.leaderboardsData) return false;
+
   return !!(
-    props.serverDetails.topPlacementsWeek?.length ||
-    props.serverDetails.topPlacementsMonth?.length ||
-    props.serverDetails.topPlacementsAllTime?.length ||
-    props.serverDetails.weightedTopPlacementsWeek?.length ||
-    props.serverDetails.weightedTopPlacementsMonth?.length ||
-    props.serverDetails.weightedTopPlacementsAllTime?.length
+    props.leaderboardsData.topPlacements?.length ||
+    props.leaderboardsData.weightedTopPlacements?.length
   );
 });
 
@@ -145,10 +96,57 @@ const placementTypeSubtitle = computed(() => {
 </script>
 
 <template>
-  <div class="enhanced-leaderboards-container">
+  <!-- Loading State (only show skeleton on initial load when we have no data) -->
+  <div v-if="isLoading && !leaderboardsData" class="enhanced-leaderboards-container">
+    <!-- Skeleton for Olympic/Placements Section -->
+    <div class="olympic-section skeleton-section">
+      <div class="olympic-section-header">
+        <div class="section-title">
+          <div class="skeleton-icon" />
+          <div class="skeleton-text skeleton-title" />
+        </div>
+        <div class="skeleton-controls">
+          <div class="skeleton-button" />
+          <div class="skeleton-button" />
+        </div>
+      </div>
+      <div class="skeleton-leaderboard">
+        <div v-for="i in 5" :key="i" class="skeleton-row" />
+      </div>
+    </div>
+
+    <!-- Skeleton for other leaderboard sections (2 columns) -->
+    <div v-for="i in 4" :key="i" class="enhanced-leaderboard-section skeleton-section">
+      <div class="enhanced-section-header">
+        <div class="section-title">
+          <div class="skeleton-icon" />
+          <div class="skeleton-text skeleton-title" />
+        </div>
+        <div class="skeleton-controls">
+          <div class="skeleton-button-group">
+            <div class="skeleton-tab" />
+            <div class="skeleton-tab" />
+            <div class="skeleton-tab" />
+          </div>
+        </div>
+      </div>
+      <div class="skeleton-leaderboard">
+        <div v-for="j in 5" :key="j" class="skeleton-row" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div v-else-if="error" class="error-container">
+    <div class="error-icon">⚠️</div>
+    <p class="error-text">{{ error }}</p>
+  </div>
+
+  <!-- Content -->
+  <div v-else class="enhanced-leaderboards-container">
     <!-- Olympic Placements Leaderboard -->
-    <div 
-      v-if="hasAnyPlacementData" 
+    <div
+      v-if="hasAnyPlacementData"
       class="olympic-section"
     >
       <div class="olympic-section-header">
@@ -315,10 +313,7 @@ const placementTypeSubtitle = computed(() => {
     </div>
 
     <!-- Top Scores -->
-    <div
-      v-if="serverDetails"
-      class="enhanced-leaderboard-section"
-    >
+    <div class="enhanced-leaderboard-section">
       <div class="enhanced-section-header">
         <div class="section-title">
           <div class="section-icon">
@@ -370,17 +365,14 @@ const placementTypeSubtitle = computed(() => {
           source="server-leaderboards"
           score-label="Score"
           :time-period="selectedTimePeriod"
-          :server-guid="serverDetails?.serverGuid"
+          :server-guid="serverGuid"
           :show-round-links="false"
         />
       </div>
     </div>
 
     <!-- Top K/D Ratios -->
-    <div
-      v-if="serverDetails"
-      class="enhanced-leaderboard-section"
-    >
+    <div class="enhanced-leaderboard-section">
       <div class="enhanced-section-header">
         <div class="section-title">
           <div class="section-icon">
@@ -438,7 +430,7 @@ const placementTypeSubtitle = computed(() => {
           source="server-leaderboards"
           score-label="Ratio"
           :time-period="selectedTimePeriod"
-          :server-guid="serverDetails?.serverGuid"
+          :server-guid="serverGuid"
           :show-round-links="false"
           :show-total-rounds="true"
         />
@@ -446,10 +438,7 @@ const placementTypeSubtitle = computed(() => {
     </div>
 
     <!-- Top Kill Rates -->
-    <div
-      v-if="serverDetails"
-      class="enhanced-leaderboard-section"
-    >
+    <div class="enhanced-leaderboard-section">
       <div class="enhanced-section-header">
         <div class="section-title">
           <div class="section-icon">
@@ -507,7 +496,7 @@ const placementTypeSubtitle = computed(() => {
           source="server-leaderboards"
           score-label="Kills/Min"
           :time-period="selectedTimePeriod"
-          :server-guid="serverDetails?.serverGuid"
+          :server-guid="serverGuid"
           :show-round-links="false"
           :show-total-rounds="true"
         />
@@ -840,18 +829,113 @@ const placementTypeSubtitle = computed(() => {
   .enhanced-leaderboards-container {
     gap: 0.5rem;
   }
-  
+
   .enhanced-section-header {
     padding: 0.375rem;
   }
-  
+
   .section-title h3 {
     font-size: 1rem;
   }
-  
+
   .section-icon {
     font-size: 1.125rem;
   }
 
+}
+
+/* Skeleton Loading Styles */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.skeleton-section {
+  animation: skeleton-pulse 2s ease-in-out infinite;
+}
+
+.skeleton-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 0.25rem;
+}
+
+.skeleton-text {
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 0.25rem;
+  height: 1rem;
+}
+
+.skeleton-title {
+  width: 150px;
+  height: 1.25rem;
+}
+
+.skeleton-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.skeleton-button {
+  width: 80px;
+  height: 2rem;
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 0.5rem;
+}
+
+.skeleton-button-group {
+  display: flex;
+  gap: 0.25rem;
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+}
+
+.skeleton-tab {
+  width: 60px;
+  height: 1.75rem;
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 0.375rem;
+}
+
+.skeleton-leaderboard {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-row {
+  height: 2.5rem;
+  background: rgba(100, 116, 139, 0.2);
+  border-radius: 0.5rem;
+}
+
+/* Error State Styles */
+.error-container {
+  grid-column: 1 / -1;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 1rem;
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.error-text {
+  color: rgba(248, 113, 113, 0.9);
+  font-size: 0.95rem;
+  margin: 0;
 }
 </style> 

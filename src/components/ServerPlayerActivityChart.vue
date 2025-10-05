@@ -13,7 +13,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'period-change': [period: string];
+  'period-change': [period: number];
 }>();
 
 const pingMetric = ref<'median' | 'p95'>('median');
