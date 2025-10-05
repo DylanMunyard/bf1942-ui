@@ -98,52 +98,57 @@ const fetchData = async () => {
   if (!serverName.value) return;
 
   isLoading.value = true;
-  isInsightsLoading.value = true;
-  isLeaderboardsLoading.value = true;
   error.value = null;
+
+  try {
+    // Fetch server details first (blocks UI)
+    serverDetails.value = await fetchServerDetails(serverName.value);
+
+    // Fetch live server data and busy indicator data asynchronously after server details are loaded
+    fetchLiveServerDataAsync();
+    fetchBusyIndicatorData();
+
+    // Now fetch insights and leaderboards in parallel (non-blocking)
+    fetchInsightsAsync();
+    fetchLeaderboardsAsync();
+  } catch (err) {
+    console.error('Error fetching server details:', err);
+    error.value = 'Failed to load server details. Please try again later.';
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Fetch insights asynchronously (non-blocking)
+const fetchInsightsAsync = async () => {
+  isInsightsLoading.value = true;
   insightsError.value = null;
+
+  try {
+    serverInsights.value = await fetchServerInsights(serverName.value, currentPeriod.value);
+  } catch (err) {
+    console.error('Error fetching server insights:', err);
+    insightsError.value = 'Failed to load server insights.';
+  } finally {
+    isInsightsLoading.value = false;
+  }
+};
+
+// Fetch leaderboards asynchronously (non-blocking)
+const fetchLeaderboardsAsync = async () => {
+  isLeaderboardsLoading.value = true;
   leaderboardsError.value = null;
 
   try {
-    // Fetch server details, insights, and leaderboards in parallel
-    const [detailsResult, insightsResult, leaderboardsResult] = await Promise.allSettled([
-      fetchServerDetails(serverName.value),
-      fetchServerInsights(serverName.value, currentPeriod.value),
-      fetchServerLeaderboards(serverName.value, currentLeaderboardPeriod.value, minPlayersForWeighting.value)
-    ]);
-
-    // Handle server details result
-    if (detailsResult.status === 'fulfilled') {
-      serverDetails.value = detailsResult.value;
-      // Fetch live server data and busy indicator data asynchronously after server details are loaded
-      fetchLiveServerDataAsync();
-      fetchBusyIndicatorData();
-    } else {
-      console.error('Error fetching server details:', detailsResult.reason);
-      error.value = 'Failed to load server details. Please try again later.';
-    }
-
-    // Handle insights result
-    if (insightsResult.status === 'fulfilled') {
-      serverInsights.value = insightsResult.value;
-    } else {
-      console.error('Error fetching server insights:', insightsResult.reason);
-      insightsError.value = 'Failed to load server insights.';
-    }
-
-    // Handle leaderboards result
-    if (leaderboardsResult.status === 'fulfilled') {
-      leaderboardsData.value = leaderboardsResult.value;
-    } else {
-      console.error('Error fetching server leaderboards:', leaderboardsResult.reason);
-      leaderboardsError.value = 'Failed to load server leaderboards.';
-    }
+    leaderboardsData.value = await fetchServerLeaderboards(
+      serverName.value,
+      currentLeaderboardPeriod.value,
+      minPlayersForWeighting.value
+    );
   } catch (err) {
-    console.error('Unexpected error during fetch:', err);
-    error.value = 'An unexpected error occurred. Please try again later.';
+    console.error('Error fetching server leaderboards:', err);
+    leaderboardsError.value = 'Failed to load server leaderboards.';
   } finally {
-    isLoading.value = false;
-    isInsightsLoading.value = false;
     isLeaderboardsLoading.value = false;
   }
 };
