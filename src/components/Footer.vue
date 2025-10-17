@@ -14,6 +14,20 @@
       </div>
 
       <div class="footer-links">
+        <router-link
+          to="/system-stats"
+          class="stats-link"
+          title="System Statistics"
+        >
+          <svg class="stats-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1" y="1" width="14" height="14" rx="2" />
+            <path d="M1 6h14M6 1v14" />
+          </svg>
+          <span class="link-text">System Stats</span>
+        </router-link>
+
+        <span class="divider"></span>
+
         <a
           href="https://github.com/dylanMunyard/bf1942-stats"
           class="github-link"
@@ -110,6 +124,13 @@
   align-items: center;
 }
 
+.divider {
+  width: 1px;
+  height: 1rem;
+  background: rgba(134, 114, 184, 0.3);
+}
+
+.stats-link,
 .github-link {
   display: flex;
   align-items: center;
@@ -122,18 +143,21 @@
   border-radius: 0.375rem;
 }
 
+.stats-link:hover,
 .github-link:hover {
   color: var(--color-text);
   background: rgba(134, 114, 184, 0.1);
   transform: translateY(-1px);
 }
 
+.stats-icon,
 .github-icon {
   width: 1rem;
   height: 1rem;
   transition: transform 0.2s ease;
 }
 
+.stats-link:hover .stats-icon,
 .github-link:hover .github-icon {
   transform: scale(1.1);
 }

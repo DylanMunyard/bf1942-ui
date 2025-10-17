@@ -11,6 +11,7 @@ import ServerSessionsPage from '../components/ServerSessionsPage.vue'
 import RoundReportPageV2 from '../components/RoundReportPageV2.vue'
 import WorkInProgressPlaceholder from '../components/WorkInProgressPlaceholder.vue'
 import PlayerComparison from '../views/PlayerComparison.vue'
+import SystemStats from '../views/SystemStats.vue'
 import { useAuth } from '../composables/useAuth'
 
 const routes: RouteRecordRaw[] = [
@@ -213,6 +214,15 @@ const routes: RouteRecordRaw[] = [
       meta: {
         title: 'Team Killer Live Wire - BF Stats TK Detection System',
         description: 'Real-time team killer detection and reporting system for Battlefield servers. Monitor and report teamkilling incidents across the battlefield.'
+      }
+    },
+    {
+      path: '/system-stats',
+      name: 'system-stats',
+      component: SystemStats,
+      meta: {
+        title: 'System Statistics - BF Stats Infrastructure Metrics',
+        description: 'Real-time data volume metrics across analytical and operational databases. View the scale of data being processed in ClickHouse and SQLite.'
       }
     }
 ]
