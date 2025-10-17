@@ -592,23 +592,49 @@
             <thead class="sticky top-0 z-10">
               <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
                 <th class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
-                  <div class="flex items-center justify-between gap-2">
-                    <div
-                      class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50"
-                      @click="sortBy('name')"
-                    >
-                      <span class="text-slate-400 text-xs">🏷️</span>
-                      <span class="font-mono font-bold">NAME</span>
-                      <span
-                        class="text-xs transition-transform duration-200"
-                        :class="{
-                          'text-cyan-400 opacity-100': sortField === 'name',
-                          'opacity-50': sortField !== 'name',
-                          'rotate-0': sortField === 'name' && sortDirection === 'asc',
-                          'rotate-180': sortField === 'name' && sortDirection === 'desc'
-                        }"
-                      >▲</span>
+                  <!-- Desktop Layout: Horizontal -->
+                  <div class="hidden lg:flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50"
+                        @click="sortBy('name')"
+                      >
+                        <span class="text-slate-400 text-xs">🏷️</span>
+                        <span class="font-mono font-bold">NAME</span>
+                        <span
+                          class="text-xs transition-transform duration-200"
+                          :class="{
+                            'text-cyan-400 opacity-100': sortField === 'name',
+                            'opacity-50': sortField !== 'name',
+                            'rotate-0': sortField === 'name' && sortDirection === 'asc',
+                            'rotate-180': sortField === 'name' && sortDirection === 'desc'
+                          }"
+                        >▲</span>
+                      </div>
+
+                      <!-- Server Filter Input (Desktop) -->
+                      <div class="relative">
+                        <div class="absolute left-2 top-1/2 transform -translate-y-1/2 z-10">
+                          <span class="text-slate-500 text-xs">🔍</span>
+                        </div>
+                        <input
+                          v-model="serverFilterQuery"
+                          type="text"
+                          placeholder="Filter..."
+                          class="w-48 pl-7 pr-7 py-1 bg-slate-700/60 border border-slate-600/50 rounded text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-xs"
+                        >
+                        <button
+                          v-if="serverFilterQuery"
+                          class="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                          @click="serverFilterQuery = ''"
+                        >
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
+
                     <div
                       class="flex items-center gap-1 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-yellow-500/50"
                       @click="sortBy('timezone')"
@@ -624,6 +650,72 @@
                           'rotate-180': sortField === 'timezone' && sortDirection === 'desc'
                         }"
                       >▲</span>
+                    </div>
+                  </div>
+
+                  <!-- Mobile Layout: Vertical -->
+                  <div class="flex lg:hidden flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                      <div
+                        class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50"
+                        @click="sortBy('name')"
+                      >
+                        <span class="text-slate-400 text-xs">🏷️</span>
+                        <span class="font-mono font-bold">NAME</span>
+                        <span
+                          class="text-xs transition-transform duration-200"
+                          :class="{
+                            'text-cyan-400 opacity-100': sortField === 'name',
+                            'opacity-50': sortField !== 'name',
+                            'rotate-0': sortField === 'name' && sortDirection === 'asc',
+                            'rotate-180': sortField === 'name' && sortDirection === 'desc'
+                          }"
+                        >▲</span>
+                      </div>
+                      <div
+                        class="flex items-center gap-1 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-yellow-500/50"
+                        @click="sortBy('timezone')"
+                      >
+                        <span class="text-yellow-400 text-xs">🌍</span>
+                        <span class="font-mono font-bold text-xs">TIME</span>
+                        <span
+                          class="text-xs transition-transform duration-200"
+                          :class="{
+                            'text-yellow-400 opacity-100': sortField === 'timezone',
+                            'opacity-50': sortField !== 'timezone',
+                            'rotate-0': sortField === 'timezone' && sortDirection === 'asc',
+                            'rotate-180': sortField === 'timezone' && sortDirection === 'desc'
+                          }"
+                        >▲</span>
+                      </div>
+                    </div>
+
+                    <!-- Server Filter Input (Mobile) -->
+                    <div class="relative">
+                      <div class="absolute left-2 top-1/2 transform -translate-y-1/2 z-10">
+                        <span class="text-slate-500 text-xs">🔍</span>
+                      </div>
+                      <input
+                        v-model="serverFilterQuery"
+                        type="text"
+                        placeholder="Filter servers..."
+                        class="w-full pl-7 pr-7 py-1.5 bg-slate-700/60 border border-slate-600/50 rounded text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-xs"
+                      >
+                      <button
+                        v-if="serverFilterQuery"
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                        @click="serverFilterQuery = ''"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <div
+                        v-if="serverFilterQuery && filteredServers.length !== servers.length"
+                        class="absolute -top-1 -right-1 bg-cyan-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg"
+                      >
+                        {{ filteredServers.length }}
+                      </div>
                     </div>
                   </div>
                 </th>
@@ -1084,6 +1176,7 @@ const playerSearchQuery = ref('')
 const playerSuggestions = ref<PlayerSearchResult[]>([])
 const isSearchLoading = ref(false)
 const showPlayerDropdown = ref(false)
+const serverFilterQuery = ref('')
 const activeFilter = ref(getFilterFromMode(props.initialMode))
 const sortField = ref('numPlayers')
 const sortDirection = ref('desc')
@@ -1132,7 +1225,24 @@ const shouldOpenUpward = (index: number) => {
 
 // Computed properties
 const filteredServers = computed(() => {
-  return servers.value
+  if (!serverFilterQuery.value.trim()) {
+    return servers.value
+  }
+
+  const query = serverFilterQuery.value.toLowerCase().trim()
+
+  return servers.value.filter(server => {
+    // Search across multiple fields
+    return (
+      server.name?.toLowerCase().includes(query) ||
+      server.mapName?.toLowerCase().includes(query) ||
+      server.ip?.toLowerCase().includes(query) ||
+      server.gameType?.toLowerCase().includes(query) ||
+      server.country?.toLowerCase().includes(query) ||
+      server.timezone?.toLowerCase().includes(query) ||
+      `${server.ip}:${server.port}`.toLowerCase().includes(query)
+    )
+  })
 })
 
 const processedForecast = computed(() => {
