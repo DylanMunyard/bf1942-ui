@@ -4,7 +4,7 @@
       <div class="footer-text">
         Made by
         <a
-          href="https://bfstats.io/player/skandia"
+          href="https://bfstats.io/players/skandia"
           class="author-link"
           target="_blank"
           rel="noopener noreferrer"
