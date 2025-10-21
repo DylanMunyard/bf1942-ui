@@ -1,18 +1,20 @@
 import { createRouter, createWebHistory, type RouteRecordRaw, type RouteLocationNormalized } from 'vue-router'
-import Dashboard from '../views/Dashboard.vue'
-import LandingPageV2 from '../views/LandingPageV2.vue'
-import Players from '../views/Players.vue'
-import PlayerDetails from '../views/PlayerDetails.vue'
-import PlayerAllAchievements from '../views/PlayerAllAchievements.vue'
-import ServerDetails from '../views/ServerDetails.vue'
-import ServerRankingsPage from '../components/ServerRankingsPage.vue'
-import PlayerSessionsPage from '../components/PlayerSessionsPage.vue'
-import ServerSessionsPage from '../components/ServerSessionsPage.vue'
-import RoundReportPageV2 from '../components/RoundReportPageV2.vue'
-import WorkInProgressPlaceholder from '../components/WorkInProgressPlaceholder.vue'
-import PlayerComparison from '../views/PlayerComparison.vue'
-import SystemStats from '../views/SystemStats.vue'
 import { useAuth } from '../composables/useAuth'
+
+// Lazy load all route components for optimal code splitting
+const Dashboard = () => import('../views/Dashboard.vue')
+const LandingPageV2 = () => import('../views/LandingPageV2.vue')
+const Players = () => import('../views/Players.vue')
+const PlayerDetails = () => import('../views/PlayerDetails.vue')
+const PlayerAllAchievements = () => import('../views/PlayerAllAchievements.vue')
+const ServerDetails = () => import('../views/ServerDetails.vue')
+const ServerRankingsPage = () => import('../components/ServerRankingsPage.vue')
+const PlayerSessionsPage = () => import('../components/PlayerSessionsPage.vue')
+const ServerSessionsPage = () => import('../components/ServerSessionsPage.vue')
+const RoundReportPageV2 = () => import('../components/RoundReportPageV2.vue')
+const WorkInProgressPlaceholder = () => import('../components/WorkInProgressPlaceholder.vue')
+const PlayerComparison = () => import('../views/PlayerComparison.vue')
+const SystemStats = () => import('../views/SystemStats.vue')
 
 const routes: RouteRecordRaw[] = [
     {

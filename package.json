@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:analyze": "vite build --mode analyze",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.ts",
     "lint:fix": "eslint . --ext .vue,.js,.ts --fix",
@@ -40,6 +41,7 @@
     "eslint-plugin-unused-imports": "^4.1.4",
     "eslint-plugin-vue": "^10.4.0",
     "postcss": "^8.5.6",
+    "rollup-plugin-visualizer": "^6.0.5",
     "tailwindcss": "^4.1.12",
     "typescript": "^5.4.2",
     "vite": "^6.2.4",

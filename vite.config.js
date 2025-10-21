@@ -3,17 +3,45 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
+    visualizer({
+      filename: './dist/stats.html',
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+    }),
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split Vue core into its own chunk
+          'vue-vendor': ['vue', 'vue-router', '@unhead/vue'],
+
+          // Split Chart.js and related libs - only loads when charts are used
+          'chart-vendor': ['chart.js', 'vue-chartjs', 'chartjs-plugin-annotation'],
+
+          // Split PrimeVue into its own chunk
+          'primevue-vendor': ['primevue'],
+
+          // Split other heavy dependencies
+          'misc-vendor': ['axios', '@microsoft/signalr', 'marked', 'jwt-decode'],
+        }
+      }
+    },
+    // Increase chunk size warning limit since we're intentionally creating larger vendor chunks
+    chunkSizeWarningLimit: 600,
   },
   server: {
     proxy: {

@@ -9,7 +9,7 @@ import { createHead } from '@unhead/vue'
 import PrimeVue from 'primevue/config'
 import 'primevue/resources/themes/aura-dark-blue/theme.css'
 import 'primevue/resources/primevue.min.css'
-import 'primeicons/primeicons.css'
+// PrimeIcons loaded via CDN in index.html for better performance
 import 'primeflex/primeflex.css'
 
 const app = createApp(App)
