@@ -119,7 +119,7 @@
               <!-- Installation Links Dropdown -->
               <div class="relative">
                 <button
-                  class="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-green-500/30 transform hover:scale-105"
+                  class="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-medium transition-[background-color,box-shadow,transform] duration-300 shadow-lg hover:shadow-green-500/30 transform hover:scale-105 will-change-transform"
                   @click="showInstallDropdown = !showInstallDropdown"
                 >
                   <span class="text-lg">🎮</span>
@@ -460,11 +460,11 @@
                     class="flex flex-col items-center gap-1 flex-1 max-w-[60px] group cursor-pointer"
                   >
                     <!-- Vertical bar -->
-                    <div 
-                      class="w-6 rounded-t transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/30"
+                    <div
+                      class="w-6 rounded-t transition-[background-color,transform,box-shadow] duration-300 hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/30 will-change-transform"
                       :class="forecast.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500 hover:from-cyan-200 hover:to-cyan-400' : 'bg-gradient-to-t from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400'"
-                      :style="{ 
-                        height: Math.max(8, (forecast.predictedPlayers / gameTrends.maxPredictedPlayers) * 80) + 'px' 
+                      :style="{
+                        height: Math.max(8, (forecast.predictedPlayers / gameTrends.maxPredictedPlayers) * 80) + 'px'
                       }"
                       :title="`${formatHourDisplayFixed(forecast.hourOfDay, forecast.isCurrentHour, index)}: ${Math.round(forecast.predictedPlayers)} players${forecast.isCurrentHour && forecast.actualPlayers ? ` (${forecast.actualPlayers} actual)` : ''}`"
                     />
@@ -847,7 +847,7 @@
                           <div
                             v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
                             :key="idx"
-                            class="w-1.5 rounded-t transition-all duration-300 cursor-pointer"
+                            class="w-1.5 rounded-t transition-opacity duration-300 cursor-pointer"
                             :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
                             :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
                             :title="formatTimelineTooltip(entry)"
@@ -899,7 +899,7 @@
                           <div
                             v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
                             :key="idx"
-                            class="w-1 rounded-t transition-all duration-300 cursor-pointer"
+                            class="w-1 rounded-t transition-opacity duration-300 cursor-pointer"
                             :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
                             :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
                             :title="formatTimelineTooltip(entry)"
@@ -1036,7 +1036,7 @@
                     <button
                       class="px-2.5 py-1 text-xs font-bold uppercase transition-all duration-300 rounded-lg border font-mono"
                       :class="{
-                        'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-blue-600 shadow-lg hover:shadow-blue-500/30 transform hover:scale-105': server.numPlayers < server.maxPlayers,
+                        'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-blue-600 shadow-lg hover:shadow-blue-500/30 transform hover:scale-105 will-change-transform': server.numPlayers < server.maxPlayers,
                         'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60 border-slate-600': server.numPlayers >= server.maxPlayers
                       }"
                       :disabled="server.numPlayers >= server.maxPlayers"
@@ -1074,10 +1074,10 @@ import { fetchPlayerOnlineHistory } from '../services/playerStatsService'
 import { formatTimeRemaining } from '../utils/timeUtils'
 import ForecastModal from '../components/ForecastModal.vue'
 
-import bf1942Icon from '@/assets/bf1942.jpg'
-import fh2Icon from '@/assets/fh2.jpg'
-import bfvIcon from '@/assets/bfv.jpg'
-import discordIcon from '@/assets/discord.png'
+import bf1942Icon from '@/assets/bf1942.webp'
+import fh2Icon from '@/assets/fh2.webp'
+import bfvIcon from '@/assets/bfv.webp'
+import discordIcon from '@/assets/discord.webp'
 
 interface GameTrendsInsights {
   currentHourPredictedPlayers: number
@@ -1761,10 +1761,18 @@ const getBusyBadgeClass = (level: BusyLevel): string => {
   }
 }
 
-// Timeline bar helpers
+// Timeline bar helpers - Pre-compute max heights for performance
+const timelineMaxHeights = computed(() => {
+  const maxHeights: Record<string, number> = {}
+  Object.entries(serverTrendsByGuid.value).forEach(([guid, data]) => {
+    const timeline = data?.hourlyTimeline || []
+    maxHeights[guid] = Math.max(1, ...timeline.map(e => Math.max(0, e.typicalPlayers || 0)))
+  })
+  return maxHeights
+})
+
 const getTimelineBarHeight = (guid: string, entry: ServerHourlyTimelineEntry): number => {
-  const timeline = serverTrendsByGuid.value[guid]?.hourlyTimeline || []
-  const maxTypical = Math.max(1, ...timeline.map(e => Math.max(0, e.typicalPlayers || 0)))
+  const maxTypical = timelineMaxHeights.value[guid] || 1
   const pct = Math.max(0, Math.min(1, (entry.typicalPlayers || 0) / maxTypical))
   const maxHeight = 18 // px
   const minHeight = 2

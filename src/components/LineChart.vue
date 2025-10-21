@@ -30,6 +30,21 @@ const minValue = computed(() => {
   return Math.min(...chartData.value.map(p => p.value));
 });
 
+// Pre-compute the polyline points for better performance
+const polylinePoints = computed(() => {
+  if (chartData.value.length === 0) return '';
+  const max = maxValue.value;
+  if (max === 0) return '';
+
+  return chartData.value
+    .map((point, index) => {
+      const x = (index / (chartData.value.length - 1)) * 100;
+      const y = 30 - (point.value / max * 30);
+      return `${x},${y}`;
+    })
+    .join(' ');
+});
+
 const fetchPrometheusData = async () => {
   if (!props.serverName) return;
 
@@ -85,9 +100,7 @@ watch(() => props.serverName, fetchPrometheusData);
       >
         <!-- Chart line -->
         <polyline
-          :points="chartData
-            .map((point, index) => `${(index / (chartData.length - 1)) * 100},${30 - (point.value / Math.max(...chartData.map(p => p.value)) * 30)}`)
-            .join(' ')"
+          :points="polylinePoints"
           fill="none"
           stroke="#4CAF50"
           stroke-width="2"
@@ -162,11 +175,16 @@ watch(() => props.serverName, fetchPrometheusData);
 
 .clickable-chart {
   cursor: pointer;
+  will-change: transform;
   transition: transform 0.2s ease;
 }
 
 .chart:hover .clickable-chart {
   transform: scale(1.05);
+}
+
+.chart {
+  position: relative;
 }
 
 .chart::after {
@@ -179,6 +197,7 @@ watch(() => props.serverName, fetchPrometheusData);
   transition: opacity 0.2s ease;
   font-size: 12px;
   pointer-events: none;
+  will-change: opacity;
 }
 
 .chart:hover::after {

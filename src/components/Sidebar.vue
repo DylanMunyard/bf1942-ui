@@ -230,10 +230,10 @@ import { useRoute } from 'vue-router';
 import LoginButton from './LoginButton.vue';
 import { useAuth } from '@/composables/useAuth';
 
-import dashboardIcon from '@/assets/achievements/dashboard-sidemenu.png';
-import serversIcon from '@/assets/servers.jpg';
-import playersIcon from '@/assets/players.jpg';
-import compareIcon from '@/assets/player_vs_player.png';
+import dashboardIcon from '@/assets/achievements/dashboard-sidemenu.webp';
+import serversIcon from '@/assets/servers.webp';
+import playersIcon from '@/assets/players.webp';
+import compareIcon from '@/assets/player_vs_player.webp';
 
 const route = useRoute();
 const { isAuthenticated } = useAuth();

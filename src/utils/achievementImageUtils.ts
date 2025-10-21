@@ -9,14 +9,14 @@ interface Achievement {
 }
 
 // Pre-import all team victory images to ensure they're processed by Vite
-import teamVictoryBronze from '../assets/achievements/team_victory_bronze.png';
-import teamVictorySilver from '../assets/achievements/team_victory_silver.png';
-import teamVictoryGold from '../assets/achievements/team_victory_gold.png';
-import teamVictoryLegendary from '../assets/achievements/team_victory_legendary.png';
-import teamVictorySwitchedBronze from '../assets/achievements/team_victory_switched_bronze.png';
-import teamVictorySwitchedSilver from '../assets/achievements/team_victory_switched_silver.png';
-import teamVictorySwitchedGold from '../assets/achievements/team_victory_switched_gold.png';
-import teamVictorySwitchedLegendary from '../assets/achievements/team_victory_switched_legendary.png';
+import teamVictoryBronze from '../assets/achievements/team_victory_bronze.webp';
+import teamVictorySilver from '../assets/achievements/team_victory_silver.webp';
+import teamVictoryGold from '../assets/achievements/team_victory_gold.webp';
+import teamVictoryLegendary from '../assets/achievements/team_victory_legendary.webp';
+import teamVictorySwitchedBronze from '../assets/achievements/team_victory_switched_bronze.webp';
+import teamVictorySwitchedSilver from '../assets/achievements/team_victory_switched_silver.webp';
+import teamVictorySwitchedGold from '../assets/achievements/team_victory_switched_gold.webp';
+import teamVictorySwitchedLegendary from '../assets/achievements/team_victory_switched_legendary.webp';
 
 // Mapping of tier-specific images
 const TEAM_VICTORY_IMAGES: Record<string, string> = {
@@ -63,10 +63,10 @@ export function getAchievementImage(achievementId: string, tier?: string): strin
     }
     
     // Default behavior: load image based on achievementId
-    return new URL(`../assets/achievements/${achievementId}.png`, import.meta.url).href;
+    return new URL(`../assets/achievements/${achievementId}.webp`, import.meta.url).href;
   } catch {
     // Ultimate fallback to a known working image
-    return new URL('../assets/achievements/kill_streak_10.png', import.meta.url).href;
+    return new URL('../assets/achievements/kill_streak_10.webp', import.meta.url).href;
   }
 }
 

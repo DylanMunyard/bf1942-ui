@@ -169,7 +169,12 @@ provide('toggleDarkMode', toggleDarkMode);
   --sidebar-submenu: #020617;
 }
 
-* {
+/* Removed global transitions for performance - apply transitions selectively on specific elements */
+a,
+button,
+.nav-button,
+.clickable,
+.interactive {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 

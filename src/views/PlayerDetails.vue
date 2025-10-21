@@ -9,10 +9,10 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import PlayerAchievements from '../components/PlayerAchievements.vue';
 import HeroBackButton from '../components/HeroBackButton.vue';
 
-import bf1942Icon from '@/assets/bf1942.jpg';
-import fh2Icon from '@/assets/fh2.jpg';
-import bfvIcon from '@/assets/bfv.jpg';
-import defaultIcon from '@/assets/servers.jpg';
+import bf1942Icon from '@/assets/bf1942.webp';
+import fh2Icon from '@/assets/fh2.webp';
+import bfvIcon from '@/assets/bfv.webp';
+import defaultIcon from '@/assets/servers.webp';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);

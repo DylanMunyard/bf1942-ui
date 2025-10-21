@@ -183,9 +183,9 @@ const nextMilestone = computed((): NextMilestone | null => {
 
 const getMilestoneImage = (milestone: number): string => {
   try {
-    return new URL(`../assets/achievements/total_kills_${milestone}.png`, import.meta.url).href;
+    return new URL(`../assets/achievements/total_kills_${milestone}.webp`, import.meta.url).href;
   } catch {
-    return new URL('../assets/achievements/kill_streak_10.png', import.meta.url).href;
+    return new URL('../assets/achievements/kill_streak_10.webp', import.meta.url).href;
   }
 };
 
