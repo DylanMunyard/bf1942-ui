@@ -15,6 +15,7 @@ const RoundReportPageV2 = () => import('../components/RoundReportPageV2.vue')
 const WorkInProgressPlaceholder = () => import('../components/WorkInProgressPlaceholder.vue')
 const PlayerComparison = () => import('../views/PlayerComparison.vue')
 const SystemStats = () => import('../views/SystemStats.vue')
+const DiscordCallback = () => import('../views/DiscordCallback.vue')
 
 const routes: RouteRecordRaw[] = [
     {
@@ -225,6 +226,15 @@ const routes: RouteRecordRaw[] = [
       meta: {
         title: 'System Statistics - BF Stats Infrastructure Metrics',
         description: 'Real-time data volume metrics across analytical and operational databases. View the scale of data being processed in ClickHouse and SQLite.'
+      }
+    },
+    {
+      path: '/auth/discord/callback',
+      name: 'discord-callback',
+      component: DiscordCallback,
+      meta: {
+        title: 'Discord Authentication - BF Stats',
+        description: 'Completing Discord authentication...'
       }
     }
 ]

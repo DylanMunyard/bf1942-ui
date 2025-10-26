@@ -23,7 +23,7 @@ export function useAuth() {
   };
 
   const handleAuthError = (event: CustomEvent) => {
-    console.error('Google auth error:', event.detail);
+    console.error('Discord auth error:', event.detail);
     authState.value = {
       isAuthenticated: false,
       token: null,
@@ -31,8 +31,8 @@ export function useAuth() {
     };
   };
 
-  const login = async (): Promise<void> => {
-    await authService.initiateGoogleLogin();
+  const loginWithDiscord = async (): Promise<void> => {
+    await authService.initiateDiscordLogin();
   };
 
   const logout = (): void => {
@@ -89,14 +89,14 @@ export function useAuth() {
   
   // Initialize auth state on first use
   onMounted(() => {
-    // Listen for Google auth events
-    window.addEventListener('google-auth-success', handleAuthSuccess as EventListener);
-    window.addEventListener('google-auth-error', handleAuthError as EventListener);
+    // Listen for Discord auth events
+    window.addEventListener('discord-auth-success', handleAuthSuccess as EventListener);
+    window.addEventListener('discord-auth-error', handleAuthError as EventListener);
   });
 
   onUnmounted(() => {
-    window.removeEventListener('google-auth-success', handleAuthSuccess as EventListener);
-    window.removeEventListener('google-auth-error', handleAuthError as EventListener);
+    window.removeEventListener('discord-auth-success', handleAuthSuccess as EventListener);
+    window.removeEventListener('discord-auth-error', handleAuthError as EventListener);
   });
 
   const ensureValidToken = async (): Promise<boolean> => {
@@ -107,7 +107,7 @@ export function useAuth() {
     isAuthenticated,
     token,
     user,
-    login,
+    loginWithDiscord,
     logout,
     loadStoredAuth,
     ensureValidToken,

@@ -11,108 +11,9 @@ export interface AuthState {
   user: UserProfile | null;
 }
 
-// Declare Google Identity Services types
-declare global {
-  interface Window {
-    google: {
-      accounts: {
-        id: {
-          initialize: (config: any) => void;
-          prompt: () => void;
-          renderButton: (element: Element, config: any) => void;
-          disableAutoSelect: () => void;
-        };
-      };
-    };
-  }
-}
-
 class AuthService {
-  private clientId = '468014767883-2gsdumjjgpgm2fp1qgic82i45k03tj7e.apps.googleusercontent.com';
-  private isInitialized = false;
-
-  async initializeGoogleAuth(): Promise<void> {
-    if (this.isInitialized) return;
-
-    // Load Google Identity Services script
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    document.head.appendChild(script);
-
-    return new Promise((resolve) => {
-      script.onload = () => {
-        window.google.accounts.id.initialize({
-          client_id: this.clientId,
-          callback: this.handleCredentialResponse.bind(this),
-          auto_select: false,
-          use_fedcm_for_prompt: false,
-        });
-        this.isInitialized = true;
-        resolve();
-      };
-    });
-  }
-
-  private async handleCredentialResponse(response: any): Promise<void> {
-    try {
-      // Get the Google ID token (only used for initial authentication)
-      const idToken = response.credential;
-
-      // Exchange Google ID token for long-lived JWT from our backend
-      try {
-        const loginResponse = await fetch('/stats/auth/login', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ googleIdToken: idToken })
-        });
-
-        if (loginResponse.ok) {
-          // Parse response from backend
-          const loginData = await loginResponse.json();
-          console.log('Backend login response:', loginData);
-          
-          const userProfile: UserProfile = {
-            id: loginData.user.id,
-            name: loginData.user.name,
-            email: loginData.user.email,
-          };
-          console.log('User profile from backend:', userProfile);
-
-          const authState: AuthState = {
-            isAuthenticated: true,
-            // Use backend-issued long-lived JWT (1 week expiry)
-            token: loginData.accessToken,
-            user: userProfile,
-          };
-
-          // Store the backend JWT, user profile, and expiration in localStorage
-          localStorage.setItem('authToken', loginData.accessToken);
-          localStorage.setItem('userProfile', JSON.stringify(userProfile));
-          if (loginData.expiresAt) {
-            localStorage.setItem('tokenExpiresAt', loginData.expiresAt);
-          }
-          console.log('Stored auth data in localStorage:', {
-            userProfile: JSON.stringify(userProfile),
-            expiresAt: loginData.expiresAt
-          });
-          
-          // Trigger success event
-          window.dispatchEvent(new CustomEvent('google-auth-success', { detail: authState }));
-        } else {
-          throw new Error('Backend authentication failed');
-        }
-      } catch (error) {
-        console.error('Failed to authenticate with stats service:', error);
-        throw error;
-      }
-    } catch (error) {
-      console.error('Authentication error:', error);
-      window.dispatchEvent(new CustomEvent('google-auth-error', { detail: error }));
-    }
-  }
+  private discordClientId = import.meta.env.VITE_DISCORD_CLIENT_ID || '';
+  private discordRedirectUri = `${window.location.origin}/auth/discord/callback`;
 
   private parseJwt(token: string): any {
     const base64Url = token.split('.')[1];
@@ -126,49 +27,85 @@ class AuthService {
     return JSON.parse(jsonPayload);
   }
 
-  async initiateGoogleLogin(): Promise<void> {
-    try {
-      console.log('Initializing Google auth...');
-      console.log('Current origin:', window.location.origin);
-      console.log('Client ID:', this.clientId);
-      await this.initializeGoogleAuth();
-      console.log('Creating popup auth...');
-      
-      // Create a hidden button and click it to trigger OAuth popup
-      const tempButton = document.createElement('div');
-      tempButton.id = 'temp-google-signin-' + Date.now();
-      tempButton.style.display = 'none';
-      document.body.appendChild(tempButton);
-      
-      window.google.accounts.id.renderButton(tempButton, {
-        theme: 'outline',
-        size: 'large',
-        type: 'standard'
-      });
-      
-      // Trigger the button click
-      setTimeout(() => {
-        const button = tempButton.querySelector('div[role="button"]') as HTMLElement;
-        if (button) {
-          console.log('Clicking Google sign-in button...');
-          button.click();
-        } else {
-          console.error('Google sign-in button not found');
-          // Fallback to prompt
-          window.google.accounts.id.prompt();
-        }
-        // Clean up the temporary button
-        document.body.removeChild(tempButton);
-      }, 100);
-    } catch (error) {
-      console.error('Login initialization error:', error);
-      throw error;
+  // Discord OAuth Methods
+  async initiateDiscordLogin(): Promise<void> {
+    if (!this.discordClientId) {
+      console.error('Discord Client ID not configured');
+      throw new Error('Discord Client ID not configured. Please set VITE_DISCORD_CLIENT_ID environment variable.');
     }
+
+    // Save the current path to redirect back after auth
+    const currentPath = window.location.pathname;
+    localStorage.setItem('discord_auth_return_path', currentPath);
+
+    // Build Discord OAuth URL
+    const params = new URLSearchParams({
+      client_id: this.discordClientId,
+      redirect_uri: this.discordRedirectUri,
+      response_type: 'code',
+      scope: 'identify email',
+    });
+
+    const discordAuthUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+    console.log('Redirecting to Discord OAuth:', discordAuthUrl);
+
+    // Redirect to Discord OAuth
+    window.location.href = discordAuthUrl;
   }
 
-  async signInWithPopup(): Promise<void> {
-    await this.initializeGoogleAuth();
-    window.google.accounts.id.prompt();
+  async handleDiscordCallback(code: string): Promise<void> {
+    try {
+      console.log('Handling Discord callback with code');
+
+      // Send the authorization code to our backend
+      // The backend will exchange it for an access token using the client secret (server-side)
+      // This is more secure than doing it client-side
+      const loginResponse = await fetch('/stats/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          discordCode: code,
+          redirectUri: this.discordRedirectUri
+        })
+      });
+
+      if (loginResponse.ok) {
+        const loginData = await loginResponse.json();
+        console.log('Backend login response:', loginData);
+
+        const userProfile: UserProfile = {
+          id: loginData.user.id,
+          name: loginData.user.name,
+          email: loginData.user.email,
+        };
+        console.log('User profile from backend:', userProfile);
+
+        const authState: AuthState = {
+          isAuthenticated: true,
+          token: loginData.accessToken,
+          user: userProfile,
+        };
+
+        // Store the backend JWT, user profile, and expiration in localStorage
+        localStorage.setItem('authToken', loginData.accessToken);
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        if (loginData.expiresAt) {
+          localStorage.setItem('tokenExpiresAt', loginData.expiresAt);
+        }
+
+        // Trigger success event
+        window.dispatchEvent(new CustomEvent('discord-auth-success', { detail: authState }));
+      } else {
+        const errorData = await loginResponse.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Backend authentication failed');
+      }
+    } catch (error) {
+      console.error('Discord authentication error:', error);
+      window.dispatchEvent(new CustomEvent('discord-auth-error', { detail: error }));
+      throw error;
+    }
   }
 
   getStoredAuthState(): AuthState {
@@ -208,10 +145,7 @@ class AuthService {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userProfile');
     localStorage.removeItem('tokenExpiresAt');
-    
-    // Disable Google auto-select
-    window.google?.accounts?.id?.disableAutoSelect?.();
-    
+
     // Trigger logout event
     window.dispatchEvent(new CustomEvent('auth-logout'));
   }
