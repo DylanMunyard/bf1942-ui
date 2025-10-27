@@ -92,7 +92,6 @@ export interface ServerInsights {
   pingByHour: PingByHour;
   playerCountHistory: PlayerCountHistoryData[];
   playerCountSummary: PlayerCountSummary;
-  maps: PopularMap[];
   playerCountHistoryComparison?: PlayerCountHistoryData[];
   playersOnlineHistory?: {
     dataPoints: { timestamp: string; totalPlayers: number; }[];
@@ -111,6 +110,14 @@ export interface ServerInsights {
     game: string;
     lastUpdated: string;
   };
+}
+
+export interface ServerMapsInsights {
+  serverGuid: string;
+  serverName: string;
+  startPeriod: string; // ISO date string
+  endPeriod: string; // ISO date string
+  maps: PopularMap[];
 }
 
 export interface LeaderboardEntry {
@@ -272,6 +279,30 @@ export async function fetchServerInsights(
   } catch (err) {
     console.error('Error fetching server insights:', err);
     throw new Error('Failed to get server insights');
+  }
+}
+
+/**
+ * Fetches server maps insights from the API
+ * @param serverName The name of the server to fetch maps insights for
+ * @param days The number of days for the time period
+ * @returns Server maps insights including map analytics
+ */
+export async function fetchServerMapsInsights(
+  serverName: string,
+  days: number = 7
+): Promise<ServerMapsInsights> {
+  try {
+    // Make the request to the API endpoint
+    const response = await axios.get<ServerMapsInsights>(`/stats/servers/${encodeURIComponent(serverName)}/insights/maps`, {
+      params: { days }
+    });
+
+    // Return the response data
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching server maps insights:', err);
+    throw new Error('Failed to get server maps insights');
   }
 }
 

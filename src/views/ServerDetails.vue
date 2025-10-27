@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { ServerDetails, ServerInsights, LeaderboardsData, fetchServerDetails, fetchServerInsights, fetchServerLeaderboards, fetchLiveServerData, ServerBusyIndicator, ServerHourlyTimelineEntry, fetchServerBusyIndicators } from '../services/serverDetailsService';
+import { ServerDetails, ServerInsights, ServerMapsInsights, LeaderboardsData, fetchServerDetails, fetchServerInsights, fetchServerMapsInsights, fetchServerLeaderboards, fetchLiveServerData, ServerBusyIndicator, ServerHourlyTimelineEntry, fetchServerBusyIndicators } from '../services/serverDetailsService';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { countryCodeToName } from '../types/countryCodes';
 import { ServerSummary } from '../types/server';
@@ -41,6 +41,15 @@ const historyPeriod = ref<'1d' | '3d' | '7d' | 'longer'>('7d');
 const longerPeriod = ref<'1month' | '3months' | 'thisyear' | 'alltime'>('1month');
 const showLongerDropdown = ref(false);
 const showPlayerHistory = ref(false);
+const hasLoadedPlayerHistory = ref(false);
+
+// Maps state
+const serverMapsInsights = ref<ServerMapsInsights | null>(null);
+const isMapsLoading = ref(false);
+const mapsError = ref<string | null>(null);
+const mapsPeriod = ref<'1d' | '7d' | '30d' | '90d' | 'thisyear'>('7d');
+const showMapAnalytics = ref(false);
+const hasLoadedMaps = ref(false);
 
 // Busy indicator state
 const serverBusyIndicator = ref<ServerBusyIndicator | null>(null);
@@ -112,8 +121,8 @@ const fetchData = async () => {
     fetchLiveServerDataAsync();
     fetchBusyIndicatorData();
 
-    // Now fetch insights and leaderboards in parallel (non-blocking)
-    fetchInsightsAsync();
+    // Now fetch leaderboards (non-blocking)
+    // Player history and maps will be loaded when user expands those sections
     fetchLeaderboardsAsync();
   } catch (err) {
     console.error('Error fetching server details:', err);
@@ -155,6 +164,22 @@ const fetchLeaderboardsAsync = async () => {
     leaderboardsError.value = 'Failed to load server leaderboards.';
   } finally {
     isLeaderboardsLoading.value = false;
+  }
+};
+
+// Fetch maps insights asynchronously (non-blocking)
+const fetchMapsInsightsAsync = async () => {
+  isMapsLoading.value = true;
+  mapsError.value = null;
+
+  try {
+    const days = getMapsPeriodInDays();
+    serverMapsInsights.value = await fetchServerMapsInsights(serverName.value, days);
+  } catch (err) {
+    console.error('Error fetching server maps insights:', err);
+    mapsError.value = 'Failed to load map analytics.';
+  } finally {
+    isMapsLoading.value = false;
   }
 };
 
@@ -345,9 +370,117 @@ const getLongerPeriodLabel = () => {
   return labels[longerPeriod.value];
 };
 
-// Toggle player history visibility
+// Toggle player history visibility and fetch data on first expand
 const togglePlayerHistory = () => {
   showPlayerHistory.value = !showPlayerHistory.value;
+
+  // Fetch data on first expand
+  if (showPlayerHistory.value && !hasLoadedPlayerHistory.value) {
+    hasLoadedPlayerHistory.value = true;
+    fetchInsightsAsync();
+  }
+};
+
+// Toggle map analytics visibility and fetch data on first expand
+const toggleMapAnalytics = () => {
+  showMapAnalytics.value = !showMapAnalytics.value;
+
+  // Fetch data on first expand
+  if (showMapAnalytics.value && !hasLoadedMaps.value) {
+    hasLoadedMaps.value = true;
+    fetchMapsInsightsAsync();
+  }
+};
+
+// Convert maps period to days for API
+const getMapsPeriodInDays = (): number => {
+  switch (mapsPeriod.value) {
+    case '1d': return 1;
+    case '7d': return 7;
+    case '30d': return 30;
+    case '90d': return 90;
+    case 'thisyear': {
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      return Math.ceil((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+    }
+    default: return 7;
+  }
+};
+
+// Handle maps period change
+const handleMapsPeriodChange = async (period: '1d' | '7d' | '30d' | '90d' | 'thisyear') => {
+  if (period === mapsPeriod.value) return;
+
+  mapsPeriod.value = period;
+  await fetchMapsInsightsAsync();
+};
+
+// Maps table sorting
+const mapsSortField = ref('totalPlayTime');
+const mapsSortDirection = ref('desc');
+
+// Sort maps by field
+const sortMapsBy = (field: string) => {
+  if (mapsSortField.value === field) {
+    mapsSortDirection.value = mapsSortDirection.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    mapsSortField.value = field;
+    // Default sorting directions
+    if (field === 'totalPlayTime') {
+      mapsSortDirection.value = 'desc';
+    } else {
+      mapsSortDirection.value = 'asc';
+    }
+  }
+};
+
+// Sorted maps for the table
+const sortedMaps = computed(() => {
+  const maps = serverMapsInsights.value?.maps || [];
+  if (maps.length === 0) return [];
+
+  return [...maps].sort((a, b) => {
+    let aVal, bVal;
+
+    switch (mapsSortField.value) {
+      case 'mapName':
+        aVal = a.mapName.toLowerCase();
+        bVal = b.mapName.toLowerCase();
+        break;
+      case 'averagePlayerCount':
+        aVal = a.averagePlayerCount;
+        bVal = b.averagePlayerCount;
+        break;
+      case 'peakPlayerCount':
+        aVal = a.peakPlayerCount;
+        bVal = b.peakPlayerCount;
+        break;
+      case 'totalPlayTime':
+        aVal = a.totalPlayTime;
+        bVal = b.totalPlayTime;
+        break;
+      case 'playTimePercentage':
+        aVal = a.playTimePercentage;
+        bVal = b.playTimePercentage;
+        break;
+      default:
+        aVal = a.totalPlayTime;
+        bVal = b.totalPlayTime;
+    }
+
+    if (mapsSortDirection.value === 'asc') {
+      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+    } else {
+      return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+    }
+  });
+});
+
+// Helper function to format play time in hours
+const formatPlayTimeHours = (minutes: number): string => {
+  const hours = Math.round(minutes / 60);
+  return `${hours}h`;
 };
 
 // Helper functions for mini forecast bars
@@ -789,6 +922,297 @@ const closeForecastOverlay = () => {
                 >
                   <div class="flex items-center justify-center py-8">
                     <div class="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Map Analytics Section (Collapsible) -->
+            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+              <!-- Toggle Button -->
+              <button
+                class="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-all duration-300 group"
+                @click="toggleMapAnalytics"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-r from-orange-400 to-red-500 flex items-center justify-center">
+                    <span class="text-slate-900 text-sm font-bold">🗺️</span>
+                  </div>
+                  <div class="text-left">
+                    <div class="text-base font-semibold text-slate-200">
+                      Map Analytics
+                    </div>
+                    <div class="text-xs text-slate-400">
+                      Most & least played maps
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-400 hidden sm:block">{{ showMapAnalytics ? 'Hide' : 'Show' }}</span>
+                  <div
+                    class="transform transition-transform duration-300"
+                    :class="{ 'rotate-180': showMapAnalytics }"
+                  >
+                    <svg
+                      class="w-5 h-5 text-slate-400 group-hover:text-orange-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </button>
+
+              <!-- Collapsible Content -->
+              <div
+                v-if="showMapAnalytics"
+                class="border-t border-slate-700/50"
+              >
+                <!-- Maps Table Content -->
+                <div
+                  v-if="sortedMaps.length > 0"
+                  class="animate-in slide-in-from-top duration-300"
+                >
+                  <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg overflow-hidden relative">
+                    <!-- Loading Overlay for Maps Analytics -->
+                    <div
+                      v-if="isMapsLoading"
+                      class="absolute inset-0 bg-slate-800/50 backdrop-blur-sm rounded-xl flex items-center justify-center z-10"
+                    >
+                      <div class="flex flex-col items-center gap-3">
+                        <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-400 rounded-full animate-spin" />
+                        <div class="text-orange-400 text-sm font-medium">
+                          Loading map analytics...
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Period Selector -->
+                    <div class="px-6 py-4 bg-slate-800/30 flex justify-center">
+                      <div class="flex items-center gap-2 bg-slate-800/30 rounded-lg p-1">
+                        <button
+                          v-for="period in [
+                            { id: '1d', label: '24h' },
+                            { id: '7d', label: '7 days' },
+                            { id: '30d', label: '30 days' },
+                            { id: '90d', label: '3 months' },
+                            { id: 'thisyear', label: 'This Year' }
+                          ]"
+                          :key="period.id"
+                          :class="[
+                            'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
+                            mapsPeriod === period.id
+                              ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50',
+                            isMapsLoading ? 'opacity-60 cursor-not-allowed' : ''
+                          ]"
+                          :disabled="isMapsLoading"
+                          @click="handleMapsPeriodChange(period.id as '1d' | '7d' | '30d' | '90d' | 'thisyear')"
+                        >
+                          {{ period.label }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Maps Table -->
+                    <div class="overflow-x-auto">
+                      <table class="w-full border-collapse">
+                        <!-- Table Header -->
+                        <thead class="sticky top-0 z-10">
+                          <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+                            <th
+                              class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50"
+                              @click="sortMapsBy('mapName')"
+                            >
+                              <div class="flex items-center gap-2">
+                                <span class="text-orange-400 text-xs">🗺️</span>
+                                <span class="font-mono font-bold">MAP NAME</span>
+                                <span
+                                  class="text-xs transition-transform duration-200"
+                                  :class="{
+                                    'text-orange-400 opacity-100': mapsSortField === 'mapName',
+                                    'opacity-50': mapsSortField !== 'mapName',
+                                    'rotate-0': mapsSortField === 'mapName' && mapsSortDirection === 'asc',
+                                    'rotate-180': mapsSortField === 'mapName' && mapsSortDirection === 'desc'
+                                  }"
+                                >▲</span>
+                              </div>
+                            </th>
+                            <th
+                              class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-cyan-500/50"
+                              @click="sortMapsBy('totalPlayTime')"
+                            >
+                              <div class="flex items-center gap-2">
+                                <span class="text-cyan-400 text-xs">⏱️</span>
+                                <span class="font-mono font-bold">TOTAL HOURS</span>
+                                <span
+                                  class="text-xs transition-transform duration-200"
+                                  :class="{
+                                    'text-cyan-400 opacity-100': mapsSortField === 'totalPlayTime',
+                                    'opacity-50': mapsSortField !== 'totalPlayTime',
+                                    'rotate-0': mapsSortField === 'totalPlayTime' && mapsSortDirection === 'asc',
+                                    'rotate-180': mapsSortField === 'totalPlayTime' && mapsSortDirection === 'desc'
+                                  }"
+                                >▲</span>
+                              </div>
+                            </th>
+                            <th
+                              class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-purple-500/50"
+                              @click="sortMapsBy('playTimePercentage')"
+                            >
+                              <div class="flex items-center gap-2">
+                                <span class="text-purple-400 text-xs">📊</span>
+                                <span class="font-mono font-bold">% PLAYTIME</span>
+                                <span
+                                  class="text-xs transition-transform duration-200"
+                                  :class="{
+                                    'text-purple-400 opacity-100': mapsSortField === 'playTimePercentage',
+                                    'opacity-50': mapsSortField !== 'playTimePercentage',
+                                    'rotate-0': mapsSortField === 'playTimePercentage' && mapsSortDirection === 'asc',
+                                    'rotate-180': mapsSortField === 'playTimePercentage' && mapsSortDirection === 'desc'
+                                  }"
+                                >▲</span>
+                              </div>
+                            </th>
+                            <th
+                              class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50"
+                              @click="sortMapsBy('averagePlayerCount')"
+                            >
+                              <div class="flex items-center gap-2">
+                                <span class="text-green-400 text-xs">👥</span>
+                                <span class="font-mono font-bold">AVG PLAYERS</span>
+                                <span
+                                  class="text-xs transition-transform duration-200"
+                                  :class="{
+                                    'text-green-400 opacity-100': mapsSortField === 'averagePlayerCount',
+                                    'opacity-50': mapsSortField !== 'averagePlayerCount',
+                                    'rotate-0': mapsSortField === 'averagePlayerCount' && mapsSortDirection === 'asc',
+                                    'rotate-180': mapsSortField === 'averagePlayerCount' && mapsSortDirection === 'desc'
+                                  }"
+                                >▲</span>
+                              </div>
+                            </th>
+                            <th
+                              class="group p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-yellow-500/50"
+                              @click="sortMapsBy('peakPlayerCount')"
+                            >
+                              <div class="flex items-center gap-2">
+                                <span class="text-yellow-400 text-xs">🔥</span>
+                                <span class="font-mono font-bold">PEAK PLAYERS</span>
+                                <span
+                                  class="text-xs transition-transform duration-200"
+                                  :class="{
+                                    'text-yellow-400 opacity-100': mapsSortField === 'peakPlayerCount',
+                                    'opacity-50': mapsSortField !== 'peakPlayerCount',
+                                    'rotate-0': mapsSortField === 'peakPlayerCount' && mapsSortDirection === 'asc',
+                                    'rotate-180': mapsSortField === 'peakPlayerCount' && mapsSortDirection === 'desc'
+                                  }"
+                                >▲</span>
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <!-- Table Body -->
+                        <tbody>
+                          <tr
+                            v-for="map in sortedMaps"
+                            :key="map.mapName"
+                            class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
+                          >
+                            <!-- Map Name -->
+                            <td class="p-3">
+                              <router-link
+                                :to="`/servers/${encodeURIComponent(serverName)}/sessions?mapName=${encodeURIComponent(map.mapName)}`"
+                                class="font-bold text-slate-200 hover:text-cyan-400 text-sm capitalize transition-colors duration-200 cursor-pointer hover:underline"
+                                :title="`View all sessions for ${map.mapName.replace(/_/g, ' ')}`"
+                              >
+                                {{ map.mapName.replace(/_/g, ' ') }}
+                              </router-link>
+                            </td>
+
+                            <!-- Total Hours -->
+                            <td class="p-3">
+                              <div class="font-bold text-cyan-400 text-sm font-mono">
+                                {{ formatPlayTimeHours(map.totalPlayTime) }}
+                              </div>
+                            </td>
+
+                            <!-- Percentage with Progress Bar -->
+                            <td class="p-3">
+                              <div class="flex items-center gap-3">
+                                <div class="font-bold text-purple-400 text-sm font-mono min-w-0">
+                                  {{ map.playTimePercentage.toFixed(1) }}%
+                                </div>
+                                <div class="flex-1 max-w-[100px]">
+                                  <div class="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div
+                                      class="h-full transition-all duration-500 rounded-full"
+                                      :style="{
+                                        width: map.playTimePercentage + '%',
+                                        backgroundColor: '#a855f7',
+                                        boxShadow: '0 0 6px #a855f760'
+                                      }"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            <!-- Average Players -->
+                            <td class="p-3">
+                              <div class="font-bold text-green-400 text-sm font-mono">
+                                {{ Math.round(map.averagePlayerCount) }}
+                              </div>
+                            </td>
+
+                            <!-- Peak Players -->
+                            <td class="p-3">
+                              <div class="font-bold text-yellow-400 text-sm font-mono">
+                                {{ map.peakPlayerCount }}
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Loading State (initial load) -->
+                <div
+                  v-else-if="isMapsLoading"
+                  class="p-6"
+                >
+                  <div class="flex items-center justify-center py-8">
+                    <div class="flex flex-col items-center gap-3">
+                      <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-400 rounded-full animate-spin" />
+                      <div class="text-orange-400 text-sm font-medium">
+                        Loading map analytics...
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Error State -->
+                <div
+                  v-else-if="mapsError"
+                  class="p-6"
+                >
+                  <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
+                        <span class="text-red-400 text-xs">⚠️</span>
+                      </div>
+                      <span class="text-sm text-red-400">{{ mapsError }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
