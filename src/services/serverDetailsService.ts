@@ -49,6 +49,12 @@ export interface RecentRoundInfo {
   endTime: string; // ISO date string
   sessionId: string;
   isActive?: boolean;
+  participantCount: number;
+  winningTeamLabel?: string | null;
+  winningTeamScore?: number | null;
+  losingTeamScore?: number | null;
+  topPlayerName?: string | null;
+  topPlayerScore?: number | null;
 }
 
 // New interfaces for server insights

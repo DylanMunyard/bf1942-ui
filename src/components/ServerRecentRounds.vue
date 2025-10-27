@@ -60,6 +60,17 @@ const navigateToRoundReport = (round: RecentRoundInfo) => {
     },
   });
 };
+
+// Helper to get team color based on label
+const getTeamColor = (teamLabel: string | null | undefined): string => {
+  if (!teamLabel) return 'slate';
+  const label = teamLabel.toLowerCase();
+  if (label.includes('axis') || label.includes('red')) return 'red';
+  if (label.includes('allies') || label.includes('blue')) return 'blue';
+  if (label.includes('north') || label.includes('nva')) return 'red';
+  if (label.includes('south') || label.includes('usa')) return 'blue';
+  return 'purple';
+};
 </script>
 
 <template>
@@ -67,68 +78,103 @@ const navigateToRoundReport = (round: RecentRoundInfo) => {
     v-if="serverDetails.recentRounds && serverDetails.recentRounds.length > 0"
     class="relative"
   >
-    <!-- Compact horizontal timeline -->
-    <div class="flex items-start gap-6 overflow-x-auto pb-2 px-2">
+    <!-- Card Grid Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div
         v-for="(round, index) in serverDetails.recentRounds"
         :key="index"
-        class="flex-shrink-0 group cursor-pointer transition-all duration-300"
+        class="group cursor-pointer transition-all duration-300 hover:-translate-y-1"
         @click="navigateToRoundReport(round)"
       >
-        <div class="flex flex-col items-center text-center min-w-0 w-24">
-          <!-- Map name above -->
-          <div class="mb-2 min-h-[2.5rem] flex items-center justify-center">
-            <span
-              class="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r transition-all duration-300 leading-tight text-center max-w-full truncate"
-              :class="round.isActive && index === 0 
-                ? 'from-emerald-300 to-emerald-400 animate-pulse' 
+        <!-- Card -->
+        <div
+          class="relative bg-slate-800/50 hover:bg-slate-800/70 border rounded-lg p-4 h-full flex flex-col gap-3 transition-all duration-300"
+          :class="round.isActive && index === 0
+            ? 'border-emerald-500/50 shadow-lg shadow-emerald-500/20'
+            : 'border-slate-700/50 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10'"
+        >
+          <!-- Live Badge -->
+          <div
+            v-if="round.isActive && index === 0"
+            class="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-emerald-500/20 border border-emerald-500/50 rounded-full text-xs text-emerald-300 animate-pulse"
+          >
+            <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+            <span class="font-semibold">LIVE</span>
+          </div>
+
+          <!-- Map Name Header -->
+          <div class="flex items-start justify-between gap-2">
+            <h4
+              class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r flex-grow"
+              :class="round.isActive && index === 0
+                ? 'from-emerald-300 to-emerald-400'
                 : 'from-cyan-300 to-blue-300 group-hover:from-cyan-200 group-hover:to-blue-200'"
             >
               {{ round.mapName }}
-            </span>
+            </h4>
           </div>
 
-          <!-- Timeline dot -->
-          <div class="relative flex items-center">
-            <!-- Main dot -->
-            <div class="relative">
-              <div 
-                class="w-4 h-4 rounded-full border-2 transition-all duration-300 group-hover:scale-125"
-                :class="round.isActive && index === 0 
-                  ? 'bg-emerald-400 border-emerald-300 animate-pulse shadow-lg shadow-emerald-400/50' 
-                  : 'bg-cyan-500/80 border-cyan-400 group-hover:bg-cyan-400 group-hover:shadow-lg group-hover:shadow-cyan-400/30'"
-              />
-              
-              <!-- Live indicator -->
+          <!-- Winner Section -->
+          <div
+            v-if="round.winningTeamLabel"
+            class="flex items-center gap-2 p-2 rounded-lg transition-colors"
+            :class="{
+              'bg-red-500/10 border border-red-500/20': getTeamColor(round.winningTeamLabel) === 'red',
+              'bg-blue-500/10 border border-blue-500/20': getTeamColor(round.winningTeamLabel) === 'blue',
+              'bg-purple-500/10 border border-purple-500/20': getTeamColor(round.winningTeamLabel) === 'purple',
+              'bg-slate-700/30 border border-slate-600/30': getTeamColor(round.winningTeamLabel) === 'slate'
+            }"
+          >
+            <div class="text-2xl">🏆</div>
+            <div class="flex-grow min-w-0">
               <div
-                v-if="round.isActive && index === 0"
-                class="absolute -top-1 -right-1 w-2 h-2 bg-emerald-300 rounded-full animate-ping"
-              />
+                class="font-semibold truncate"
+                :class="{
+                  'text-red-300': getTeamColor(round.winningTeamLabel) === 'red',
+                  'text-blue-300': getTeamColor(round.winningTeamLabel) === 'blue',
+                  'text-purple-300': getTeamColor(round.winningTeamLabel) === 'purple',
+                  'text-slate-300': getTeamColor(round.winningTeamLabel) === 'slate'
+                }"
+              >
+                {{ round.winningTeamLabel }}
+              </div>
+              <div class="text-xs text-slate-400">
+                {{ round.winningTeamScore }} - {{ round.losingTeamScore }}
+              </div>
             </div>
           </div>
 
-          <!-- Round details below -->
-          <div class="mt-2 space-y-1">
-            <!-- Duration -->
-            <div class="text-xs font-mono text-slate-300 group-hover:text-cyan-300 transition-colors">
-              {{ formatPlayTime(getDurationMinutes(round.startTime, round.endTime)) }}
+          <!-- Top Player Section -->
+          <div
+            v-if="round.topPlayerName"
+            class="flex items-center gap-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg"
+          >
+            <div class="text-2xl">⭐</div>
+            <div class="flex-grow min-w-0">
+              <div class="font-semibold text-amber-300 truncate">
+                {{ round.topPlayerName }}
+              </div>
+              <div class="text-xs text-slate-400">
+                {{ round.topPlayerScore }} points
+              </div>
             </div>
-            <!-- Time ago -->
-            <div class="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
+          </div>
+
+          <!-- Stats Footer -->
+          <div class="flex items-center justify-between gap-3 pt-2 border-t border-slate-700/50 text-xs text-slate-400">
+            <div class="flex items-center gap-1">
+              <span>👥</span>
+              <span>{{ round.participantCount }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span>⏱️</span>
+              <span>{{ formatPlayTime(getDurationMinutes(round.startTime, round.endTime)) }}</span>
+            </div>
+            <div class="text-right">
               {{ formatRelativeTime(round.startTime) }}
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- End padding -->
-      <div class="flex-shrink-0 w-4" />
-    </div>
-
-    <!-- Subtle scroll hint -->
-    <div class="flex justify-center mt-3">
-      <div class="text-slate-500 text-xs opacity-60">
-        {{ serverDetails.recentRounds.length }} recent rounds • Scroll to see all
       </div>
     </div>
   </div>
@@ -136,46 +182,23 @@ const navigateToRoundReport = (round: RecentRoundInfo) => {
   <!-- Empty state -->
   <div
     v-else
-    class="flex flex-col items-center justify-center py-8 text-slate-400"
+    class="flex flex-col items-center justify-center py-12 text-slate-400"
   >
-    <div class="text-3xl mb-2 opacity-50">
+    <div class="text-5xl mb-3 opacity-50">
       🎮
     </div>
-    <p class="text-sm font-medium">
+    <p class="text-base font-medium">
       No recent rounds
+    </p>
+    <p class="text-sm text-slate-500 mt-1">
+      Round data will appear here once available
     </p>
   </div>
 </template>
 
 <style scoped>
-/* Custom scrollbar for better cross-browser support */
-.overflow-x-auto::-webkit-scrollbar {
-  height: 6px;
+/* Smooth animations */
+.group:hover .bg-slate-800\/50 {
+  transition: all 0.3s ease;
 }
-
-.overflow-x-auto::-webkit-scrollbar-track {
-  background: rgba(71, 85, 105, 0.3);
-  border-radius: 3px;
-}
-
-.overflow-x-auto::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.5);
-  border-radius: 3px;
-  transition: background-color 0.2s ease;
-}
-
-.overflow-x-auto::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.7);
-}
-
-/* For Firefox */
-.overflow-x-auto {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(100, 116, 139, 0.5) rgba(71, 85, 105, 0.3);
-}
-
-/* Smooth scroll behavior */
-.overflow-x-auto {
-  scroll-behavior: smooth;
-}
-</style> 
+</style>

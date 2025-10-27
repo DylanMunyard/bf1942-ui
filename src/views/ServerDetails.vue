@@ -577,6 +577,27 @@ const closeForecastOverlay = () => {
             v-else-if="serverDetails"
             class="space-y-6"
           >
+            <!-- Recent Rounds Section -->
+            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+              <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
+                  🎯 Recent Rounds
+                </h3>
+                <router-link
+                  :to="`/servers/${encodeURIComponent(serverName)}/sessions`"
+                  class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70 rounded-lg border border-slate-600/50"
+                >
+                  View All Sessions
+                </router-link>
+              </div>
+              <div class="p-6">
+                <ServerRecentRounds
+                  :server-details="serverDetails"
+                  :server-name="serverName"
+                />
+              </div>
+            </div>
+
             <!-- Server Rankings & Leaderboards Section -->
             <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
               <div class="px-6 py-4 border-b border-slate-700/50">
@@ -590,10 +611,10 @@ const closeForecastOverlay = () => {
                 <div class="relative group">
                   <!-- Background Glow Effect -->
                   <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-300" />
-                  
+
                   <!-- Main Button -->
-                  <router-link 
-                    :to="`/servers/${encodeURIComponent(serverName)}/rankings`" 
+                  <router-link
+                    :to="`/servers/${encodeURIComponent(serverName)}/rankings`"
                     class="relative group/btn block w-full bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-lg p-4 shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5"
                   >
                     <div class="flex items-center justify-center gap-3 text-white">
@@ -616,27 +637,6 @@ const closeForecastOverlay = () => {
                   :min-players-for-weighting="minPlayersForWeighting"
                   @update-min-players-for-weighting="handleMinPlayersUpdate"
                   @period-change="handleLeaderboardPeriodChange"
-                />
-              </div>
-            </div>
-
-            <!-- Recent Rounds Section -->
-            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
-              <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
-                <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
-                  🎯 Recent Rounds
-                </h3>
-                <router-link 
-                  :to="`/servers/${encodeURIComponent(serverName)}/sessions`" 
-                  class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70 rounded-lg border border-slate-600/50"
-                >
-                  View All Sessions
-                </router-link>
-              </div>
-              <div class="p-6">
-                <ServerRecentRounds
-                  :server-details="serverDetails"
-                  :server-name="serverName"
                 />
               </div>
             </div>
