@@ -32,15 +32,11 @@ const formatRelativeTime = (dateString: string): string => {
   const diffMinutes = Math.floor(diffSeconds / 60);
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
-  const diffMonths = Math.floor(diffDays / 30);
-  const diffYears = Math.floor(diffMonths / 12);
 
-  if (diffYears > 0) return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
-  if (diffMonths > 0) return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
-  if (diffDays > 0) return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
-  if (diffHours > 0) return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
-  if (diffMinutes > 0) return diffMinutes === 1 ? '1 minute ago' : `${diffMinutes} minutes ago`;
-  return 'Just now';
+  if (diffDays > 0) return diffDays === 1 ? '1d ago' : `${diffDays}d ago`;
+  if (diffHours > 0) return diffHours === 1 ? '1h ago' : `${diffHours}h ago`;
+  if (diffMinutes > 0) return diffMinutes === 1 ? '1m ago' : `${diffMinutes}m ago`;
+  return 'now';
 };
 
 const getDurationMinutes = (startTime: string, endTime: string): number => {
@@ -62,14 +58,57 @@ const navigateToRoundReport = (round: RecentRoundInfo) => {
 };
 
 // Helper to get team color based on label
-const getTeamColor = (teamLabel: string | null | undefined): string => {
-  if (!teamLabel) return 'slate';
+const getTeamColor = (teamLabel: string | null | undefined): { bg: string; border: string; text: string } => {
+  if (!teamLabel) return { bg: 'bg-slate-700/30', border: 'border-slate-600/30', text: 'text-slate-300' };
   const label = teamLabel.toLowerCase();
-  if (label.includes('axis') || label.includes('red')) return 'red';
-  if (label.includes('allies') || label.includes('blue')) return 'blue';
-  if (label.includes('north') || label.includes('nva')) return 'red';
-  if (label.includes('south') || label.includes('usa')) return 'blue';
-  return 'purple';
+  if (label.includes('axis') || label.includes('red')) {
+    return { bg: 'bg-red-500/15', border: 'border-red-500/40', text: 'text-red-400' };
+  }
+  if (label.includes('allies') || label.includes('blue')) {
+    return { bg: 'bg-blue-500/15', border: 'border-blue-500/40', text: 'text-blue-400' };
+  }
+  if (label.includes('north') || label.includes('nva')) {
+    return { bg: 'bg-red-500/15', border: 'border-red-500/40', text: 'text-red-400' };
+  }
+  if (label.includes('south') || label.includes('usa')) {
+    return { bg: 'bg-blue-500/15', border: 'border-blue-500/40', text: 'text-blue-400' };
+  }
+  return { bg: 'bg-purple-500/15', border: 'border-purple-500/40', text: 'text-purple-400' };
+};
+
+// Generate vibrant accent color for map name based on hash
+const getMapAccentColor = (mapName: string): string => {
+  let hash = 0;
+  for (let i = 0; i < mapName.length; i++) {
+    hash = mapName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const colors = [
+    'from-cyan-400 to-blue-500',
+    'from-emerald-400 to-teal-500',
+    'from-violet-400 to-purple-500',
+    'from-orange-400 to-red-500',
+    'from-pink-400 to-rose-500',
+    'from-amber-400 to-orange-500',
+    'from-lime-400 to-green-500',
+    'from-sky-400 to-cyan-500',
+    'from-fuchsia-400 to-pink-500',
+    'from-indigo-400 to-violet-500',
+  ];
+
+  return colors[Math.abs(hash) % colors.length];
+};
+
+// Get left border accent color
+const getLeftBorderColor = (round: RecentRoundInfo): string => {
+  if (round.isActive) return 'border-l-emerald-400';
+  if (round.winningTeamLabel?.toLowerCase().includes('axis') || round.winningTeamLabel?.toLowerCase().includes('red')) {
+    return 'border-l-red-400';
+  }
+  if (round.winningTeamLabel?.toLowerCase().includes('allies') || round.winningTeamLabel?.toLowerCase().includes('blue')) {
+    return 'border-l-blue-400';
+  }
+  return 'border-l-cyan-400';
 };
 </script>
 
@@ -78,100 +117,102 @@ const getTeamColor = (teamLabel: string | null | undefined): string => {
     v-if="serverDetails.recentRounds && serverDetails.recentRounds.length > 0"
     class="relative"
   >
-    <!-- Card Grid Layout -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Compact Card Grid Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
       <div
         v-for="(round, index) in serverDetails.recentRounds"
         :key="index"
-        class="group cursor-pointer transition-all duration-300 hover:-translate-y-1"
+        class="group cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
         @click="navigateToRoundReport(round)"
       >
-        <!-- Card -->
+        <!-- Compact Card with Left Accent Border -->
         <div
-          class="relative bg-slate-800/50 hover:bg-slate-800/70 border rounded-lg p-4 h-full flex flex-col gap-3 transition-all duration-300"
-          :class="round.isActive && index === 0
-            ? 'border-emerald-500/50 shadow-lg shadow-emerald-500/20'
-            : 'border-slate-700/50 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10'"
+          class="relative bg-slate-800/40 hover:bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 hover:border-slate-600 rounded-lg overflow-hidden border-l-4 transition-all duration-200"
+          :class="[
+            getLeftBorderColor(round),
+            round.isActive && index === 0 ? 'shadow-lg shadow-emerald-500/10' : 'hover:shadow-lg hover:shadow-cyan-500/5'
+          ]"
         >
-          <!-- Live Badge -->
-          <div
-            v-if="round.isActive && index === 0"
-            class="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-emerald-500/20 border border-emerald-500/50 rounded-full text-xs text-emerald-300 animate-pulse"
-          >
-            <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-            <span class="font-semibold">LIVE</span>
-          </div>
-
-          <!-- Map Name Header -->
-          <div class="flex items-start justify-between gap-2">
+          <!-- Header Section: Map Name + Badge -->
+          <div class="px-3 py-2 bg-slate-900/40 border-b border-slate-700/30 flex items-center justify-between gap-2">
             <h4
-              class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r flex-grow"
+              class="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r truncate flex-grow"
               :class="round.isActive && index === 0
                 ? 'from-emerald-300 to-emerald-400'
-                : 'from-cyan-300 to-blue-300 group-hover:from-cyan-200 group-hover:to-blue-200'"
+                : getMapAccentColor(round.mapName)"
             >
               {{ round.mapName }}
             </h4>
-          </div>
 
-          <!-- Winner Section -->
-          <div
-            v-if="round.winningTeamLabel"
-            class="flex items-center gap-2 p-2 rounded-lg transition-colors"
-            :class="{
-              'bg-red-500/10 border border-red-500/20': getTeamColor(round.winningTeamLabel) === 'red',
-              'bg-blue-500/10 border border-blue-500/20': getTeamColor(round.winningTeamLabel) === 'blue',
-              'bg-purple-500/10 border border-purple-500/20': getTeamColor(round.winningTeamLabel) === 'purple',
-              'bg-slate-700/30 border border-slate-600/30': getTeamColor(round.winningTeamLabel) === 'slate'
-            }"
-          >
-            <div class="text-2xl">🏆</div>
-            <div class="flex-grow min-w-0">
-              <div
-                class="font-semibold truncate"
-                :class="{
-                  'text-red-300': getTeamColor(round.winningTeamLabel) === 'red',
-                  'text-blue-300': getTeamColor(round.winningTeamLabel) === 'blue',
-                  'text-purple-300': getTeamColor(round.winningTeamLabel) === 'purple',
-                  'text-slate-300': getTeamColor(round.winningTeamLabel) === 'slate'
-                }"
-              >
-                {{ round.winningTeamLabel }}
-              </div>
-              <div class="text-xs text-slate-400">
-                {{ round.winningTeamScore }} - {{ round.losingTeamScore }}
-              </div>
+            <!-- Current Map Badge -->
+            <div
+              v-if="round.isActive && index === 0"
+              class="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/40 rounded text-[10px] text-emerald-300 font-semibold uppercase tracking-wide flex-shrink-0"
+            >
+              <div class="w-1 h-1 bg-emerald-400 rounded-full animate-pulse" />
+              <span>Current Map</span>
             </div>
-          </div>
-
-          <!-- Top Player Section -->
-          <div
-            v-if="round.topPlayerName"
-            class="flex items-center gap-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg"
-          >
-            <div class="text-2xl">⭐</div>
-            <div class="flex-grow min-w-0">
-              <div class="font-semibold text-amber-300 truncate">
-                {{ round.topPlayerName }}
-              </div>
-              <div class="text-xs text-slate-400">
-                {{ round.topPlayerScore }} points
-              </div>
-            </div>
-          </div>
-
-          <!-- Stats Footer -->
-          <div class="flex items-center justify-between gap-3 pt-2 border-t border-slate-700/50 text-xs text-slate-400">
-            <div class="flex items-center gap-1">
-              <span>👥</span>
-              <span>{{ round.participantCount }}</span>
-            </div>
-            <div class="flex items-center gap-1">
-              <span>⏱️</span>
-              <span>{{ formatPlayTime(getDurationMinutes(round.startTime, round.endTime)) }}</span>
-            </div>
-            <div class="text-right">
+            <div
+              v-else
+              class="text-[10px] text-slate-500 font-medium flex-shrink-0"
+            >
               {{ formatRelativeTime(round.startTime) }}
+            </div>
+          </div>
+
+          <!-- Content Section: Horizontal Layout -->
+          <div class="p-3 space-y-2">
+            <!-- Winner + Score (Horizontal) -->
+            <div
+              v-if="round.winningTeamLabel"
+              class="flex items-center gap-2 text-sm"
+            >
+              <div
+                class="flex items-center gap-1.5 px-2 py-1 rounded flex-grow min-w-0"
+                :class="[
+                  getTeamColor(round.winningTeamLabel).bg,
+                  'border',
+                  getTeamColor(round.winningTeamLabel).border
+                ]"
+              >
+                <span class="text-xs">🏆</span>
+                <span
+                  class="font-semibold truncate"
+                  :class="getTeamColor(round.winningTeamLabel).text"
+                >
+                  {{ round.winningTeamLabel }}
+                </span>
+              </div>
+              <div class="flex items-center gap-1 text-slate-300 font-mono font-bold text-sm flex-shrink-0">
+                <span>{{ round.winningTeamScore }}</span>
+                <span class="text-slate-600">-</span>
+                <span class="text-slate-500">{{ round.losingTeamScore }}</span>
+              </div>
+            </div>
+
+            <!-- Top Player (Horizontal) -->
+            <div
+              v-if="round.topPlayerName"
+              class="flex items-center justify-between gap-2 px-2 py-1 bg-amber-500/10 border border-amber-500/30 rounded text-sm"
+            >
+              <div class="flex items-center gap-1.5 min-w-0 flex-grow">
+                <span class="text-xs flex-shrink-0">⭐</span>
+                <span class="font-semibold text-amber-300 truncate text-xs">
+                  {{ round.topPlayerName }}
+                </span>
+              </div>
+              <span class="text-xs text-slate-400 font-mono flex-shrink-0">
+                {{ round.topPlayerScore }} pts
+              </span>
+            </div>
+
+            <!-- Stats Footer (Horizontal) -->
+            <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500 pt-1 border-t border-slate-700/30">
+              <div class="flex items-center gap-2">
+                <span>👥 {{ round.participantCount }}</span>
+                <span class="text-slate-700">•</span>
+                <span>⏱️ {{ formatPlayTime(getDurationMinutes(round.startTime, round.endTime)) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -198,7 +239,7 @@ const getTeamColor = (teamLabel: string | null | undefined): string => {
 
 <style scoped>
 /* Smooth animations */
-.group:hover .bg-slate-800\/50 {
-  transition: all 0.3s ease;
+.group:hover .bg-slate-800\/40 {
+  transition: all 0.2s ease;
 }
 </style>
