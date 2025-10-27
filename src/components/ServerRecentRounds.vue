@@ -11,16 +11,16 @@ const props = defineProps<{
 const router = useRouter();
 const showAll = ref(false);
 
-// Show 8 rounds initially
+// Show 3 rounds initially
 const visibleRounds = computed(() => {
   if (showAll.value || !props.serverDetails.recentRounds) {
     return props.serverDetails.recentRounds;
   }
-  return props.serverDetails.recentRounds.slice(0, 8);
+  return props.serverDetails.recentRounds.slice(0, 3);
 });
 
 const hasMoreRounds = computed(() => {
-  return props.serverDetails.recentRounds && props.serverDetails.recentRounds.length > 8;
+  return props.serverDetails.recentRounds && props.serverDetails.recentRounds.length > 3;
 });
 
 const toggleShowAll = () => {
@@ -133,9 +133,6 @@ const getLeftBorderColor = (round: RecentRoundInfo): string => {
         <thead>
           <tr class="border-b border-slate-700/50">
             <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Time
-            </th>
-            <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Map
             </th>
             <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -166,29 +163,27 @@ const getLeftBorderColor = (round: RecentRoundInfo): string => {
             ]"
             @click="navigateToRoundReport(round)"
           >
-            <!-- Time Column -->
+            <!-- Map Column (with time as subheading) -->
             <td class="py-3 px-4">
-              <div class="flex flex-col">
-                <span class="text-sm text-slate-300 font-medium">
-                  {{ formatRelativeTime(round.startTime) }}
-                </span>
-                <span
-                  v-if="round.isActive && index === 0"
-                  class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wide mt-0.5"
-                >
-                  Live
+              <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-sm font-bold"
+                    :class="round.isActive && index === 0 ? 'text-emerald-400' : getMapAccentColor(round.mapName)"
+                  >
+                    {{ round.mapName }}
+                  </span>
+                  <span
+                    v-if="round.isActive && index === 0"
+                    class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wide px-1.5 py-0.5 bg-emerald-500/20 rounded"
+                  >
+                    Live
+                  </span>
+                </div>
+                <span class="text-xs text-slate-500 font-medium">
+                  {{ formatRelativeTime(round.startTime) }} ago
                 </span>
               </div>
-            </td>
-
-            <!-- Map Column -->
-            <td class="py-3 px-4">
-              <span
-                class="text-sm font-bold"
-                :class="round.isActive && index === 0 ? 'text-emerald-400' : getMapAccentColor(round.mapName)"
-              >
-                {{ round.mapName }}
-              </span>
             </td>
 
             <!-- Winner Column -->
@@ -276,7 +271,7 @@ const getLeftBorderColor = (round: RecentRoundInfo): string => {
         @click="toggleShowAll"
       >
         <span class="text-sm font-medium text-slate-300 group-hover:text-slate-200">
-          {{ showAll ? 'Show Less' : `Show ${serverDetails.recentRounds.length - 8} More` }}
+          {{ showAll ? 'Show Less' : `Show ${serverDetails.recentRounds.length - 3} More` }}
         </span>
         <span
           class="text-slate-400 transition-transform duration-200"

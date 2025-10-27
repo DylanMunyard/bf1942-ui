@@ -6,7 +6,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { countryCodeToName } from '../types/countryCodes';
 import { ServerSummary } from '../types/server';
 import PlayersPanel from '../components/PlayersPanel.vue';
-import ServerPlayerActivityChart from '../components/ServerPlayerActivityChart.vue';
+import PlayerHistoryChart from '../components/PlayerHistoryChart.vue';
 import ServerLeaderboards from '../components/ServerLeaderboards.vue';
 import ServerRecentRounds from '../components/ServerRecentRounds.vue';
 import { formatDate } from '../utils/date';
@@ -34,9 +34,13 @@ const insightsError = ref<string | null>(null);
 const leaderboardsError = ref<string | null>(null);
 const liveServerError = ref<string | null>(null);
 const showPlayersModal = ref(false);
-const currentPeriod = ref(1);
 const currentLeaderboardPeriod = ref<'week' | 'month' | 'alltime'>('week');
 const minPlayersForWeighting = ref(15);
+const historyRollingWindow = ref('7d');
+const historyPeriod = ref<'1d' | '3d' | '7d' | 'longer'>('7d');
+const longerPeriod = ref<'1month' | '3months' | 'thisyear' | 'alltime'>('1month');
+const showLongerDropdown = ref(false);
+const showPlayerHistory = ref(false);
 
 // Busy indicator state
 const serverBusyIndicator = ref<ServerBusyIndicator | null>(null);
@@ -125,7 +129,8 @@ const fetchInsightsAsync = async () => {
   insightsError.value = null;
 
   try {
-    serverInsights.value = await fetchServerInsights(serverName.value, currentPeriod.value);
+    const days = getPeriodInDays();
+    serverInsights.value = await fetchServerInsights(serverName.value, days);
   } catch (err) {
     console.error('Error fetching server insights:', err);
     insightsError.value = 'Failed to load server insights.';
@@ -234,24 +239,6 @@ const closePlayersModal = () => {
   showPlayersModal.value = false;
 };
 
-// Handle period change from chart component
-const handlePeriodChange = async (period: number) => {
-  if (period === currentPeriod.value) return;
-
-  currentPeriod.value = period;
-  isInsightsLoading.value = true;
-  insightsError.value = null;
-
-  try {
-    serverInsights.value = await fetchServerInsights(serverName.value, period);
-  } catch (err) {
-    console.error('Error fetching server insights for period:', period, err);
-    insightsError.value = 'Failed to load server insights for selected period.';
-  } finally {
-    isInsightsLoading.value = false;
-  }
-};
-
 // Handle leaderboard period change
 const handleLeaderboardPeriodChange = async (period: 'week' | 'month' | 'alltime') => {
   if (period === currentLeaderboardPeriod.value) return;
@@ -294,6 +281,73 @@ const handleMinPlayersUpdate = async (value: number) => {
   } finally {
     isLeaderboardsLoading.value = false;
   }
+};
+
+// Handle rolling window change for player history chart
+const handleRollingWindowChange = async (rollingWindow: string) => {
+  historyRollingWindow.value = rollingWindow;
+  // Refetch insights with new rolling window - the API will recalculate rolling average
+  await fetchInsightsAsync();
+};
+
+// Convert period string to days for API
+const getPeriodInDays = (): number => {
+  if (historyPeriod.value === 'longer') {
+    switch (longerPeriod.value) {
+      case '1month': return 30;
+      case '3months': return 90;
+      case 'thisyear': {
+        const now = new Date();
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        return Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+      }
+      case 'alltime': return 36500; // ~100 years
+    }
+  }
+
+  switch (historyPeriod.value) {
+    case '1d': return 1;
+    case '3d': return 3;
+    case '7d': return 7;
+    default: return 7;
+  }
+};
+
+// Handle period change
+const handleHistoryPeriodChange = async (period: '1d' | '3d' | '7d') => {
+  historyPeriod.value = period;
+  showLongerDropdown.value = false;
+  await fetchInsightsAsync();
+};
+
+// Handle longer period selection
+const selectLongerPeriod = async (period: '1month' | '3months' | 'thisyear' | 'alltime') => {
+  longerPeriod.value = period;
+  historyPeriod.value = 'longer';
+  showLongerDropdown.value = false;
+  await fetchInsightsAsync();
+};
+
+// Toggle longer period dropdown
+const toggleLongerDropdown = () => {
+  showLongerDropdown.value = !showLongerDropdown.value;
+};
+
+// Get label for longer period button
+const getLongerPeriodLabel = () => {
+  if (historyPeriod.value !== 'longer') return 'More';
+  const labels = {
+    '1month': '1 Month',
+    '3months': '3 Months',
+    'thisyear': 'This Year',
+    'alltime': 'All Time'
+  };
+  return labels[longerPeriod.value];
+};
+
+// Toggle player history visibility
+const togglePlayerHistory = () => {
+  showPlayerHistory.value = !showPlayerHistory.value;
 };
 
 // Helper functions for mini forecast bars
@@ -598,6 +652,148 @@ const closeForecastOverlay = () => {
               </div>
             </div>
 
+            <!-- Player Activity History Section (Collapsible) -->
+            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+              <!-- Toggle Button -->
+              <button
+                class="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-all duration-300 group"
+                @click="togglePlayerHistory"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center">
+                    <span class="text-slate-900 text-sm font-bold">📈</span>
+                  </div>
+                  <div class="text-left">
+                    <div class="text-base font-semibold text-slate-200">
+                      Player Activity History
+                    </div>
+                    <div class="text-xs text-slate-400">
+                      Server population trends
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-400 hidden sm:block">{{ showPlayerHistory ? 'Hide' : 'Show' }}</span>
+                  <div
+                    class="transform transition-transform duration-300"
+                    :class="{ 'rotate-180': showPlayerHistory }"
+                  >
+                    <svg
+                      class="w-5 h-5 text-slate-400 group-hover:text-cyan-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </button>
+
+              <!-- Collapsible Content -->
+              <div
+                v-if="showPlayerHistory"
+                class="border-t border-slate-700/50"
+              >
+                <div
+                  v-if="serverInsights?.playersOnlineHistory"
+                  class="animate-in slide-in-from-top duration-300"
+                >
+                  <!-- Period Selector -->
+                  <div class="px-6 py-4 bg-slate-800/30 flex justify-center">
+                    <div class="flex items-center gap-2 bg-slate-800/30 rounded-lg p-1">
+                      <!-- Short periods -->
+                      <button
+                        v-for="period in ['1d', '3d', '7d']"
+                        :key="period"
+                        :class="[
+                          'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
+                          historyPeriod === period
+                            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                        ]"
+                        @click="handleHistoryPeriodChange(period as '1d' | '3d' | '7d')"
+                      >
+                        {{ period === '1d' ? '24h' : period === '3d' ? '3 days' : '7 days' }}
+                      </button>
+
+                      <!-- Longer periods dropdown -->
+                      <div class="relative">
+                        <button
+                          :class="[
+                            'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1',
+                            historyPeriod === 'longer'
+                              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                          ]"
+                          @click="toggleLongerDropdown"
+                        >
+                          {{ getLongerPeriodLabel() }}
+                          <svg
+                            class="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </button>
+
+                        <!-- Dropdown menu -->
+                        <div
+                          v-if="showLongerDropdown"
+                          class="absolute top-full mt-1 right-0 bg-slate-800/95 backdrop-blur-lg rounded-lg border border-slate-700/50 shadow-xl z-50 min-w-[120px]"
+                        >
+                          <button
+                            v-for="period in [{ id: '1month', label: '1 Month' }, { id: '3months', label: '3 Months' }, { id: 'thisyear', label: 'This Year' }, { id: 'alltime', label: 'All Time' }]"
+                            :key="period.id"
+                            :class="[
+                              'w-full text-left px-3 py-2 text-xs hover:bg-slate-700/50 transition-colors first:rounded-t-lg last:rounded-b-lg',
+                              longerPeriod === period.id ? 'text-cyan-400 bg-cyan-500/10' : 'text-slate-300'
+                            ]"
+                            @click="selectLongerPeriod(period.id as '1month' | '3months' | 'thisyear' | 'alltime')"
+                          >
+                            {{ period.label }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Chart -->
+                  <div class="p-6">
+                    <PlayerHistoryChart
+                      :chart-data="serverInsights.playersOnlineHistory.dataPoints"
+                      :insights="serverInsights.playersOnlineHistory.insights"
+                      :period="serverInsights.playersOnlineHistory.period"
+                      :rolling-window="historyRollingWindow"
+                      :loading="isInsightsLoading"
+                      :error="insightsError"
+                      @rolling-window-change="handleRollingWindowChange"
+                    />
+                  </div>
+                </div>
+                <div
+                  v-else-if="isInsightsLoading"
+                  class="p-6"
+                >
+                  <div class="flex items-center justify-center py-8">
+                    <div class="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Server Rankings & Leaderboards Section -->
             <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
               <div class="px-6 py-4 border-b border-slate-700/50">
@@ -639,23 +835,6 @@ const closeForecastOverlay = () => {
                   @period-change="handleLeaderboardPeriodChange"
                 />
               </div>
-            </div>
-
-            <!-- Player Activity Section -->
-            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
-              <ServerPlayerActivityChart
-                :server-insights="serverInsights"
-                :is-loading="isInsightsLoading"
-                @period-change="handlePeriodChange"
-              />
-            </div>
-            <div
-              v-if="insightsError"
-              class="bg-red-900/20 border border-red-700/50 rounded-xl p-4"
-            >
-              <p class="text-red-400 text-sm">
-                {{ insightsError }}
-              </p>
             </div>
           </div>
 

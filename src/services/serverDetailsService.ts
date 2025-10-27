@@ -94,6 +94,23 @@ export interface ServerInsights {
   playerCountSummary: PlayerCountSummary;
   maps: PopularMap[];
   playerCountHistoryComparison?: PlayerCountHistoryData[];
+  playersOnlineHistory?: {
+    dataPoints: { timestamp: string; totalPlayers: number; }[];
+    insights: {
+      overallAverage: number;
+      rollingAverage: { timestamp: string; average: number; }[];
+      trendDirection: 'increasing' | 'decreasing' | 'stable';
+      percentageChange: number;
+      peakPlayers: number;
+      peakTimestamp: string;
+      lowestPlayers: number;
+      lowestTimestamp: string;
+      calculationMethod?: string;
+    };
+    period: string;
+    game: string;
+    lastUpdated: string;
+  };
 }
 
 export interface LeaderboardEntry {
