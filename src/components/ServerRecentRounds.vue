@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { ServerDetails, RecentRoundInfo } from '@/services/serverDetailsService';
 
@@ -8,6 +9,23 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
+const showAll = ref(false);
+
+// Show 6 cards initially (2 rows × 3 columns on desktop)
+const visibleRounds = computed(() => {
+  if (showAll.value || !props.serverDetails.recentRounds) {
+    return props.serverDetails.recentRounds;
+  }
+  return props.serverDetails.recentRounds.slice(0, 6);
+});
+
+const hasMoreRounds = computed(() => {
+  return props.serverDetails.recentRounds && props.serverDetails.recentRounds.length > 6;
+});
+
+const toggleShowAll = () => {
+  showAll.value = !showAll.value;
+};
 
 const formatPlayTime = (minutes: number): string => {
   if (minutes < 1) {
@@ -117,14 +135,16 @@ const getLeftBorderColor = (round: RecentRoundInfo): string => {
     v-if="serverDetails.recentRounds && serverDetails.recentRounds.length > 0"
     class="relative"
   >
-    <!-- Compact Card Grid Layout -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-      <div
-        v-for="(round, index) in serverDetails.recentRounds"
-        :key="index"
-        class="group cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
-        @click="navigateToRoundReport(round)"
-      >
+    <!-- Cards Container with Gradient Overlay -->
+    <div class="relative">
+      <!-- Compact Card Grid Layout -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div
+          v-for="(round, index) in visibleRounds"
+          :key="index"
+          class="group cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+          @click="navigateToRoundReport(round)"
+        >
         <!-- Compact Card with Left Accent Border -->
         <div
           class="relative bg-slate-800/40 hover:bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 hover:border-slate-600 rounded-lg overflow-hidden border-l-4 transition-all duration-200"
@@ -160,63 +180,72 @@ const getLeftBorderColor = (round: RecentRoundInfo): string => {
             </div>
           </div>
 
-          <!-- Content Section: Horizontal Layout -->
-          <div class="p-3 space-y-2">
-            <!-- Winner + Score (Horizontal) -->
+          <!-- Content Section: Text-Based Layout -->
+          <div class="p-3 space-y-1.5">
+            <!-- Winner Text -->
             <div
               v-if="round.winningTeamLabel"
-              class="flex items-center gap-2 text-sm"
+              class="text-sm text-slate-400"
             >
-              <div
-                class="flex items-center gap-1.5 px-2 py-1 rounded flex-grow min-w-0"
-                :class="[
-                  getTeamColor(round.winningTeamLabel).bg,
-                  'border',
-                  getTeamColor(round.winningTeamLabel).border
-                ]"
+              <span
+                class="font-bold"
+                :class="getTeamColor(round.winningTeamLabel).text"
               >
-                <span class="text-xs">🏆</span>
-                <span
-                  class="font-semibold truncate"
-                  :class="getTeamColor(round.winningTeamLabel).text"
-                >
-                  {{ round.winningTeamLabel }}
-                </span>
-              </div>
-              <div class="flex items-center gap-1 text-slate-300 font-mono font-bold text-sm flex-shrink-0">
-                <span>{{ round.winningTeamScore }}</span>
-                <span class="text-slate-600">-</span>
-                <span class="text-slate-500">{{ round.losingTeamScore }}</span>
-              </div>
+                {{ round.winningTeamLabel }}
+              </span>
+              <span>{{ round.isActive ? ' winning ' : ' won ' }}</span>
+              <span class="font-bold text-slate-200">{{ round.winningTeamScore }}</span>
+              <span> to </span>
+              <span class="font-bold text-slate-400">{{ round.losingTeamScore }}</span>
             </div>
 
-            <!-- Top Player (Horizontal) -->
+            <!-- Top Player Text with Trophy -->
             <div
               v-if="round.topPlayerName"
-              class="flex items-center justify-between gap-2 px-2 py-1 bg-amber-500/10 border border-amber-500/30 rounded text-sm"
+              class="text-xs text-slate-400 flex items-center gap-1.5"
             >
-              <div class="flex items-center gap-1.5 min-w-0 flex-grow">
-                <span class="text-xs flex-shrink-0">⭐</span>
-                <span class="font-semibold text-amber-300 truncate text-xs">
-                  {{ round.topPlayerName }}
-                </span>
-              </div>
-              <span class="text-xs text-slate-400 font-mono flex-shrink-0">
-                {{ round.topPlayerScore }} pts
-              </span>
+              <span class="text-amber-400">🏆</span>
+              <span class="font-semibold text-amber-300 truncate">{{ round.topPlayerName }}</span>
+              <span class="font-mono text-slate-300">{{ round.topPlayerScore }}</span>
             </div>
 
-            <!-- Stats Footer (Horizontal) -->
-            <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500 pt-1 border-t border-slate-700/30">
-              <div class="flex items-center gap-2">
-                <span>👥 {{ round.participantCount }}</span>
-                <span class="text-slate-700">•</span>
-                <span>⏱️ {{ formatPlayTime(getDurationMinutes(round.startTime, round.endTime)) }}</span>
-              </div>
+            <!-- Stats Footer -->
+            <div class="flex items-center gap-2 text-[11px] text-slate-500 pt-1.5 border-t border-slate-700/30">
+              <span>👥 {{ round.participantCount }}</span>
+              <span class="text-slate-700">•</span>
+              <span>⏱️ {{ formatPlayTime(getDurationMinutes(round.startTime, round.endTime)) }}</span>
             </div>
           </div>
         </div>
+        </div>
       </div>
+
+      <!-- Gradient Fade Overlay (when collapsed) -->
+      <div
+        v-if="hasMoreRounds && !showAll"
+        class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent pointer-events-none"
+      />
+    </div>
+
+    <!-- Show More Button -->
+    <div
+      v-if="hasMoreRounds"
+      class="mt-4 flex justify-center"
+    >
+      <button
+        class="group px-6 py-2.5 bg-slate-800/60 hover:bg-slate-800/80 border border-slate-700/50 hover:border-slate-600 rounded-lg transition-all duration-200 flex items-center gap-2"
+        @click="toggleShowAll"
+      >
+        <span class="text-sm font-medium text-slate-300 group-hover:text-slate-200">
+          {{ showAll ? 'Show Less' : `Show ${serverDetails.recentRounds.length - 6} More` }}
+        </span>
+        <span
+          class="text-slate-400 transition-transform duration-200"
+          :class="showAll ? 'rotate-180' : ''"
+        >
+          ▼
+        </span>
+      </button>
     </div>
   </div>
 
@@ -241,5 +270,10 @@ const getLeftBorderColor = (round: RecentRoundInfo): string => {
 /* Smooth animations */
 .group:hover .bg-slate-800\/40 {
   transition: all 0.2s ease;
+}
+
+/* Smooth transition for showing/hiding cards */
+.grid {
+  transition: max-height 0.3s ease-in-out;
 }
 </style>
