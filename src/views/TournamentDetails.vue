@@ -114,22 +114,6 @@
               </div>
             </div>
 
-            <!-- Overall Winner -->
-            <div
-              v-if="tournament.overallWinner"
-              class="mt-6 p-4 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg"
-            >
-              <div class="flex items-center gap-3">
-                <span class="text-3xl">🏆</span>
-                <div>
-                  <div class="font-bold text-lg text-amber-400">Tournament Winner</div>
-                  <div class="text-slate-300">{{ tournament.overallWinner.team }}</div>
-                  <div class="text-sm text-slate-400 mt-1">
-                    {{ tournament.overallWinner.players.join(', ') }}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -166,9 +150,6 @@
                       Map
                     </th>
                     <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      Winner
-                    </th>
-                    <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                       Score
                     </th>
                     <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell">
@@ -183,8 +164,7 @@
                   <tr
                     v-for="(round, index) in tournament.rounds"
                     :key="round.roundId"
-                    class="group border-l-4 border-b border-slate-700/30 hover:bg-slate-800/40 transition-all duration-150"
-                    :class="getLeftBorderColor(round.winningTeam)"
+                    class="group border-l-4 border-l-cyan-400 border-b border-slate-700/30 hover:bg-slate-800/40 transition-all duration-150"
                   >
                     <!-- Round Number -->
                     <td class="py-3 px-4">
@@ -206,23 +186,6 @@
                           {{ formatRelativeTime(round.startTime) }} ago
                         </span>
                       </div>
-                    </td>
-
-                    <!-- Winner Column -->
-                    <td class="py-3 px-4">
-                      <span
-                        v-if="round.winningTeam"
-                        class="text-sm font-semibold"
-                        :class="getTeamColor(round.winningTeam)"
-                      >
-                        {{ round.winningTeam }}
-                      </span>
-                      <span
-                        v-else
-                        class="text-sm text-slate-500"
-                      >
-                        —
-                      </span>
                     </td>
 
                     <!-- Score Column -->
@@ -466,16 +429,6 @@ const formatRelativeTime = (dateString: string): string => {
   return 'now';
 };
 
-const getTeamColor = (teamLabel: string | null | undefined): string => {
-  if (!teamLabel) return 'text-slate-300';
-  const label = teamLabel.toLowerCase();
-  if (label.includes('axis') || label.includes('red')) return 'text-red-400';
-  if (label.includes('allies') || label.includes('blue')) return 'text-blue-400';
-  if (label.includes('north') || label.includes('nva')) return 'text-red-400';
-  if (label.includes('south') || label.includes('usa')) return 'text-blue-400';
-  return 'text-purple-400';
-};
-
 const getMapAccentColor = (mapName: string): string => {
   let hash = 0;
   for (let i = 0; i < mapName.length; i++) {
@@ -496,14 +449,6 @@ const getMapAccentColor = (mapName: string): string => {
   ];
 
   return colors[Math.abs(hash) % colors.length];
-};
-
-const getLeftBorderColor = (winningTeam: string | undefined): string => {
-  if (!winningTeam) return 'border-l-cyan-400';
-  const team = winningTeam.toLowerCase();
-  if (team.includes('axis') || team.includes('red')) return 'border-l-red-400';
-  if (team.includes('allies') || team.includes('blue')) return 'border-l-blue-400';
-  return 'border-l-cyan-400';
 };
 
 const viewRoundReport = (roundId: string) => {
