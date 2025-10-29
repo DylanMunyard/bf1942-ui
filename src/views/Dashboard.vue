@@ -188,6 +188,56 @@
               />
             </div>
           </section>
+
+          <!-- Tournaments Section -->
+          <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden lg:col-span-2">
+            <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
+              <div class="flex flex-col gap-2">
+                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400 flex items-center gap-3">
+                  🏆 Tournaments
+                </h2>
+                <p class="text-slate-400 text-sm">
+                  Create and manage competitive tournaments and track results
+                </p>
+              </div>
+              <div class="flex items-center gap-3">
+                <button
+                  v-if="isAuthenticated && tournaments.length > 0"
+                  class="group flex items-center justify-center w-10 h-10 rounded-full border-2 border-amber-400 bg-transparent text-amber-400 hover:bg-amber-400 hover:text-slate-900 transition-all duration-300 transform hover:scale-105"
+                  title="Create Tournament"
+                  @click="showAddTournamentModal = true"
+                >
+                  <span class="text-xl font-bold">+</span>
+                </button>
+                <span class="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold rounded-full">
+                  {{ tournaments.length }}
+                </span>
+              </div>
+            </div>
+            <div class="p-4 sm:p-6">
+              <div
+                v-if="tournaments.length > 0"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+              >
+                <TournamentCard
+                  v-for="tournament in tournaments"
+                  :key="tournament.id"
+                  :tournament="tournament"
+                  @view-details="() => router.push(`/tournaments/${tournament.id}`)"
+                  @edit="() => editTournament(tournament.id)"
+                  @remove="() => removeTournament(tournament.id)"
+                />
+              </div>
+              <EmptyStateCard
+                v-else
+                :title="isAuthenticated ? 'No Tournaments Yet' : 'Tournaments'"
+                :description="isAuthenticated ? 'Create competitive tournaments and track results across multiple rounds.' : 'Sign in to create and manage your own tournaments.'"
+                :action-text="isAuthenticated ? 'Create Tournament' : undefined"
+                icon="🏆"
+                @action="showAddTournamentModal = true"
+              />
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -207,6 +257,13 @@
       v-if="showAddBuddyModal"
       @close="showAddBuddyModal = false"
       @added="onBuddyAdded"
+    />
+    <AddTournamentModal
+      v-if="showAddTournamentModal"
+      :tournament="editingTournament"
+      :default-organizer="userProfiles.length > 0 ? userProfiles[0].playerName : undefined"
+      @close="showAddTournamentModal = false; editingTournament = null"
+      @added="onTournamentAdded"
     />
 
     <!-- Confirmation Modals -->
@@ -231,6 +288,13 @@
       @confirm="handleBuddyRemove"
       @cancel="cancelBuddyConfirm"
     />
+    <ConfirmationModal
+      v-if="showTournamentConfirm"
+      :message="tournamentConfirmMessage"
+      confirm-text="Remove"
+      @confirm="handleTournamentRemove"
+      @cancel="cancelTournamentConfirm"
+    />
   </div>
 </template>
 
@@ -239,6 +303,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import { statsService } from '@/services/statsService';
+import { adminTournamentService, type TournamentListItem } from '@/services/adminTournamentService';
 import PlayerNameCard from '@/components/dashboard/PlayerNameCard.vue';
 import FavoriteServerCard from '@/components/dashboard/FavoriteServerCard.vue';
 import BuddyCard from '@/components/dashboard/BuddyCard.vue';
@@ -247,6 +312,8 @@ import AddPlayerModal from '@/components/dashboard/AddPlayerModal.vue';
 import AddServerModal from '@/components/dashboard/AddServerModal.vue';
 import AddBuddyModal from '@/components/dashboard/AddBuddyModal.vue';
 import ConfirmationModal from '@/components/dashboard/ConfirmationModal.vue';
+import TournamentCard from '@/components/dashboard/TournamentCard.vue';
+import AddTournamentModal from '@/components/dashboard/AddTournamentModal.vue';
 
 interface Player {
   name: string;
@@ -297,6 +364,7 @@ const { isAuthenticated } = useAuth();
 const userProfiles = ref<UserProfile[]>([]);
 const favoriteServers = ref<FavoriteServer[]>([]);
 const buddies = ref<Buddy[]>([]);
+const tournaments = ref<TournamentListItem[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
@@ -304,17 +372,22 @@ const error = ref<string | null>(null);
 const showAddPlayerModal = ref(false);
 const showAddServerModal = ref(false);
 const showAddBuddyModal = ref(false);
+const showAddTournamentModal = ref(false);
+const editingTournament = ref<TournamentListItem | null>(null);
 
 // Confirmation modal states for each section
 const showPlayerConfirm = ref(false);
 const showServerConfirm = ref(false);
 const showBuddyConfirm = ref(false);
+const showTournamentConfirm = ref(false);
 const playerConfirmMessage = ref('');
 const serverConfirmMessage = ref('');
 const buddyConfirmMessage = ref('');
+const tournamentConfirmMessage = ref('');
 const pendingPlayerAction = ref<(() => Promise<void>) | null>(null);
 const pendingServerAction = ref<(() => Promise<void>) | null>(null);
 const pendingBuddyAction = ref<(() => Promise<void>) | null>(null);
+const pendingTournamentAction = ref<(() => Promise<void>) | null>(null);
 
 // Actions
 const goToPlayerDetails = (playerName: string) => {
@@ -392,6 +465,56 @@ const onBuddyAdded = () => {
   loadUserData(); // Refresh data
 };
 
+const removeTournament = (tournamentId: number) => {
+  const tournament = tournaments.value.find(t => t.id === tournamentId);
+  if (!tournament) return;
+
+  tournamentConfirmMessage.value = `Remove tournament "${tournament.name}"`;
+  pendingTournamentAction.value = async () => {
+    try {
+      await adminTournamentService.deleteTournament(tournamentId);
+      tournaments.value = tournaments.value.filter(t => t.id !== tournamentId);
+    } catch (err) {
+      console.error('Error removing tournament:', err);
+      error.value = 'Failed to remove tournament';
+    }
+  };
+  showTournamentConfirm.value = true;
+};
+
+const editTournament = async (tournamentId: number) => {
+  const tournament = tournaments.value.find(t => t.id === tournamentId);
+  if (!tournament) return;
+
+  // Fetch full tournament details for editing
+  try {
+    const details = await adminTournamentService.getTournamentDetail(tournamentId);
+    // Store the details with the id and basic info from the list item
+    editingTournament.value = {
+      ...tournament,
+      ...details
+    } as any;
+    showAddTournamentModal.value = true;
+  } catch (err) {
+    console.error('Error loading tournament details:', err);
+    error.value = 'Failed to load tournament details';
+  }
+};
+
+const onTournamentAdded = (tournamentId?: number) => {
+  const wasEditing = editingTournament.value !== null;
+  showAddTournamentModal.value = false;
+  editingTournament.value = null;
+
+  // If a new tournament was created (not editing), navigate to it
+  if (tournamentId && !wasEditing) {
+    router.push(`/tournaments/${tournamentId}`);
+  } else {
+    // Otherwise just reload the data
+    loadUserData();
+  }
+};
+
 const loadUserData = async () => {
   loading.value = true;
   error.value = null;
@@ -408,11 +531,16 @@ const loadUserData = async () => {
         // Then sort by name alphabetically
         return a.buddyPlayerName.localeCompare(b.buddyPlayerName);
       });
+
+      // Load all tournaments created by current user
+      const allTournaments = await adminTournamentService.getAllTournaments();
+      tournaments.value = allTournaments;
     } else {
       // For unauthenticated users, clear data to show empty states
       userProfiles.value = [];
       favoriteServers.value = [];
       buddies.value = [];
+      tournaments.value = [];
     }
   } catch (err) {
     console.error('Error loading dashboard data:', err);
@@ -421,6 +549,7 @@ const loadUserData = async () => {
     userProfiles.value = [];
     favoriteServers.value = [];
     buddies.value = [];
+    tournaments.value = [];
   } finally {
     loading.value = false;
   }
@@ -464,6 +593,19 @@ const cancelBuddyConfirm = () => {
   showBuddyConfirm.value = false;
   buddyConfirmMessage.value = '';
   pendingBuddyAction.value = null;
+};
+
+const handleTournamentRemove = async () => {
+  if (pendingTournamentAction.value) {
+    await pendingTournamentAction.value();
+  }
+  cancelTournamentConfirm();
+};
+
+const cancelTournamentConfirm = () => {
+  showTournamentConfirm.value = false;
+  tournamentConfirmMessage.value = '';
+  pendingTournamentAction.value = null;
 };
 
 onMounted(() => {

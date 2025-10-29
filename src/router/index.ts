@@ -16,6 +16,7 @@ const WorkInProgressPlaceholder = () => import('../components/WorkInProgressPlac
 const PlayerComparison = () => import('../views/PlayerComparison.vue')
 const SystemStats = () => import('../views/SystemStats.vue')
 const DiscordCallback = () => import('../views/DiscordCallback.vue')
+const TournamentDetails = () => import('../views/TournamentDetails.vue')
 
 const routes: RouteRecordRaw[] = [
     {
@@ -208,6 +209,24 @@ const routes: RouteRecordRaw[] = [
       meta: {
         title: (route: RouteLocationNormalized) => `Round ${route.params.roundId} Report - BF Stats Match Analysis`,
         description: (route: RouteLocationNormalized) => `Detailed round report and match analysis for round ${route.params.roundId}. View player performance, team statistics, and battlefield events.`
+      }
+    },
+    {
+      path: '/tournaments/:id',
+      name: 'tournament-details',
+      component: TournamentDetails,
+      props: true,
+      meta: {
+        title: (route: RouteLocationNormalized) => `Tournament ${route.params.id} - BF Stats Tournament Manager`,
+        description: 'Manage your Battlefield tournament rounds, track results, and view the overall winner.'
+      },
+      beforeEnter: (_to, _from, next) => {
+        const { isAuthenticated } = useAuth()
+        if (!isAuthenticated.value) {
+          next('/servers/bf1942')
+        } else {
+          next()
+        }
       }
     },
     {
