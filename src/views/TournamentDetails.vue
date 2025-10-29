@@ -84,7 +84,7 @@
                   </span>
                   <span v-if="tournament.anticipatedRoundCount" class="flex items-center gap-2">
                     <span>🎯</span>
-                    <span>{{ tournament.rounds.length }}/{{ tournament.anticipatedRoundCount }} rounds</span>
+                    <span>{{ tournament.matches.length }}/{{ tournament.anticipatedRoundCount }} matches</span>
                   </span>
                 </div>
               </div>
@@ -117,139 +117,205 @@
           </div>
         </div>
 
-        <!-- Rounds Section -->
+        <!-- Teams Section -->
         <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
           <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
             <div>
-              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
-                Tournament Rounds
+              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
+                Teams
               </h2>
               <p class="text-slate-400 text-sm mt-1">
-                Manage and track all rounds in this tournament
+                Configure tournament teams and their players
               </p>
             </div>
             <button
-              class="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
-              @click="showAddRoundModal = true"
+              class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+              @click="showAddTeamModal = true"
             >
               <span class="text-lg">+</span>
-              <span>Add Round</span>
+              <span>Add Team</span>
             </button>
           </div>
 
           <div class="p-4 sm:p-6">
-            <!-- Rounds Table -->
-            <div v-if="tournament.rounds.length > 0" class="overflow-x-auto">
-              <table class="w-full">
-                <thead>
-                  <tr class="border-b border-slate-700/50">
-                    <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      Round
-                    </th>
-                    <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      Map
-                    </th>
-                    <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      Score
-                    </th>
-                    <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell">
-                      Server
-                    </th>
-                    <th class="text-right py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(round, index) in tournament.rounds"
-                    :key="round.roundId"
-                    class="group border-l-4 border-l-cyan-400 border-b border-slate-700/30 hover:bg-slate-800/40 transition-all duration-150"
-                  >
-                    <!-- Round Number -->
-                    <td class="py-3 px-4">
-                      <span class="px-2 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold rounded-full">
-                        #{{ index + 1 }}
-                      </span>
-                    </td>
-
-                    <!-- Map Column (with time as subheading) -->
-                    <td class="py-3 px-4">
-                      <div class="flex flex-col gap-1">
-                        <span
-                          class="text-sm font-bold"
-                          :class="getMapAccentColor(round.mapName)"
-                        >
-                          {{ round.mapName }}
-                        </span>
-                        <span class="text-xs text-slate-500 font-medium">
-                          {{ formatRelativeTime(round.startTime) }} ago
-                        </span>
-                      </div>
-                    </td>
-
-                    <!-- Score Column -->
-                    <td class="py-3 px-4">
-                      <div
-                        v-if="round.tickets1 !== null && round.tickets2 !== null"
-                        class="flex items-center gap-1 font-mono text-sm"
-                      >
-                        <span class="text-slate-200 font-bold">{{ round.tickets1 }}</span>
-                        <span class="text-slate-600">-</span>
-                        <span class="text-slate-500">{{ round.tickets2 }}</span>
-                      </div>
-                      <span
-                        v-else
-                        class="text-sm text-slate-500"
-                      >
-                        —
-                      </span>
-                    </td>
-
-                    <!-- Server Column (hidden on mobile) -->
-                    <td class="py-3 px-4 hidden md:table-cell">
-                      <span class="text-sm text-slate-400 truncate max-w-[200px] block">
-                        {{ round.serverName }}
-                      </span>
-                    </td>
-
-                    <!-- Actions Column -->
-                    <td class="py-3 px-4 text-right">
-                      <div class="flex items-center justify-end gap-2">
-                        <button
-                          class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium"
-                          @click="viewRoundReport(round.roundId)"
-                        >
-                          View Report
-                        </button>
-                        <button
-                          class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
-                          @click="confirmDeleteRound(round.roundId, round.mapName, round.serverName, index + 1)"
-                          title="Remove round from tournament"
-                        >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <!-- Teams Grid -->
+            <div v-if="tournament.teams.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div
+                v-for="team in tournament.teams"
+                :key="team.id"
+                class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-emerald-500/30 transition-all"
+              >
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex-1">
+                    <h3 class="text-lg font-bold text-emerald-400">{{ team.name }}</h3>
+                    <p class="text-slate-400 text-sm mt-1">
+                      {{ team.players.length }} {{ team.players.length === 1 ? 'player' : 'players' }}
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button
+                      class="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all"
+                      @click="editTeam(team.id)"
+                      title="Edit team"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
+                      @click="confirmDeleteTeam(team.id, team.name)"
+                      title="Delete team"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Empty State -->
             <div v-else class="text-center py-12">
-              <div class="text-6xl mb-4">🎮</div>
-              <h3 class="text-xl font-bold text-slate-300 mb-2">No Rounds Yet</h3>
+              <div class="text-6xl mb-4">👥</div>
+              <h3 class="text-xl font-bold text-slate-300 mb-2">No Teams Yet</h3>
               <p class="text-slate-400 mb-6">
-                Add rounds as the tournament progresses to track results and determine the winner
+                Create teams to organize players for tournament matches
               </p>
               <button
-                class="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all"
-                @click="showAddRoundModal = true"
+                class="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-medium transition-all"
+                @click="showAddTeamModal = true"
               >
-                Add First Round
+                Add First Team
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Matches Section -->
+        <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+          <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
+            <div>
+              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-400">
+                Match Schedule
+              </h2>
+              <p class="text-slate-400 text-sm mt-1">
+                Schedule and track matches between teams
+              </p>
+            </div>
+            <button
+              class="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+              @click="showAddMatchModal = true"
+              :disabled="tournament.teams.length < 2"
+              :title="tournament.teams.length < 2 ? 'Create at least 2 teams first' : ''"
+            >
+              <span class="text-lg">+</span>
+              <span>Schedule Match</span>
+            </button>
+          </div>
+
+          <div class="p-4 sm:p-6">
+            <!-- Matches List -->
+            <div v-if="sortedMatches.length > 0" class="space-y-4">
+              <div
+                v-for="match in sortedMatches"
+                :key="match.id"
+                class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-violet-500/30 transition-all"
+              >
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                      <span class="text-sm text-slate-400">📅 {{ formatMatchDate(match.scheduledDate) }}</span>
+                      <span v-if="match.roundId" class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
+                        Linked
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <div class="text-center">
+                        <div class="text-lg font-bold text-emerald-400">{{ match.team1Name }}</div>
+                      </div>
+                      <div class="text-2xl font-bold text-violet-400">VS</div>
+                      <div class="text-center">
+                        <div class="text-lg font-bold text-emerald-400">{{ match.team2Name }}</div>
+                      </div>
+                    </div>
+                    <div class="mt-2 text-sm text-slate-400">
+                      <span class="text-amber-400">{{ match.mapName }}</span>
+                      <span v-if="match.serverName"> • {{ match.serverName }}</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button
+                      v-if="match.roundId"
+                      class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium"
+                      @click="viewRoundReport(match.roundId)"
+                    >
+                      View Round
+                    </button>
+                    <button
+                      v-if="match.roundId"
+                      class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
+                      @click="linkRound(match)"
+                      title="Change the linked round"
+                    >
+                      Change
+                    </button>
+                    <button
+                      v-if="match.roundId"
+                      class="p-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-400 border border-slate-500/30 hover:border-slate-500/50 rounded-lg transition-all"
+                      @click="unlinkRound(match)"
+                      title="Unlink round from this match"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 14.828l-2.121 2.121a4 4 0 11-5.657-5.657l2.122-2.121m5.656 5.656l2.122-2.121a4 4 0 115.656 5.657l-2.121 2.121" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l4-4" opacity="0.3" />
+                      </svg>
+                    </button>
+                    <button
+                      v-else
+                      class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
+                      @click="linkRound(match)"
+                      title="Link completed round to this match"
+                    >
+                      Link Round
+                    </button>
+                    <button
+                      class="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all"
+                      @click="editMatch(match.id)"
+                      title="Edit match"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
+                      @click="confirmDeleteMatch(match.id)"
+                      title="Delete match"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-12">
+              <div class="text-6xl mb-4">📅</div>
+              <h3 class="text-xl font-bold text-slate-300 mb-2">No Matches Scheduled</h3>
+              <p class="text-slate-400 mb-6">
+                {{ tournament.teams.length < 2 ? 'Create at least 2 teams before scheduling matches' : 'Schedule matches to organize your tournament calendar' }}
+              </p>
+              <button
+                v-if="tournament.teams.length >= 2"
+                class="px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all"
+                @click="showAddMatchModal = true"
+              >
+                Schedule First Match
               </button>
             </div>
           </div>
@@ -265,41 +331,59 @@
       @added="onTournamentUpdated"
     />
 
-    <!-- Add Round Modal -->
-    <AddRoundModal
-      v-if="showAddRoundModal && tournament"
+    <!-- Add/Edit Team Modal -->
+    <AddTeamModal
+      v-if="showAddTeamModal && tournament"
       :tournament-id="tournament.id"
-      :game="tournament.game"
-      :default-server-guid="tournament.serverGuid"
-      :default-server-name="tournament.serverName"
-      @close="showAddRoundModal = false"
-      @added="onRoundAdded"
+      :team="editingTeam"
+      @close="showAddTeamModal = false; editingTeam = null"
+      @added="onTeamAdded"
     />
 
-    <!-- Delete Round Confirmation Modal -->
+    <!-- Add/Edit Match Modal -->
+    <AddMatchModal
+      v-if="showAddMatchModal && tournament"
+      :tournament-id="tournament.id"
+      :teams="tournament.teams"
+      :match="editingMatch"
+      @close="showAddMatchModal = false; editingMatch = null"
+      @added="onMatchAdded"
+    />
+
+    <!-- Link Round Modal -->
+    <AddRoundModal
+      v-if="showLinkRoundModal && tournament && linkingMatch"
+      :tournament-id="tournament.id"
+      :game="tournament.game"
+      :default-server-guid="linkingMatch.serverGuid"
+      :default-server-name="linkingMatch.serverName"
+      :multi-select="false"
+      @close="showLinkRoundModal = false; linkingMatch = null"
+      @added="onRoundLinked"
+    />
+
+    <!-- Delete Team Confirmation Modal -->
     <div
-      v-if="deleteRoundConfirmation"
+      v-if="deleteTeamConfirmation"
       class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="cancelDeleteRound"
+      @click.self="cancelDeleteTeam"
     >
       <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 max-w-md w-full shadow-2xl">
         <div class="flex items-start gap-4 mb-6">
-          <div class="w-12 h-12 bg-cyan-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-            <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div class="flex-1">
             <h3 class="text-xl font-bold text-slate-100 mb-2">
-              Remove Round from Tournament?
+              Delete Team?
             </h3>
             <p class="text-slate-300 mb-2">
-              Remove <span class="font-bold text-cyan-400">Round #{{ deleteRoundConfirmation.roundNumber }}</span>
-              (<span class="text-amber-400">{{ deleteRoundConfirmation.mapName }}</span>) on
-              <span class="text-slate-300">{{ deleteRoundConfirmation.serverName }}</span> from this tournament?
+              Delete team <span class="font-bold text-emerald-400">{{ deleteTeamConfirmation.name }}</span>?
             </p>
-            <p class="text-slate-400">
-              You can re-add it later using ID: <code class="text-cyan-400 font-mono">{{ deleteRoundConfirmation.roundId }}</code>
+            <p class="text-slate-400 text-sm">
+              This will remove the team and all its players from the tournament.
             </p>
           </div>
         </div>
@@ -307,33 +391,89 @@
         <div class="flex items-center justify-end gap-3">
           <button
             class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors"
-            @click="cancelDeleteRound"
+            @click="cancelDeleteTeam"
           >
             Cancel
           </button>
           <button
-            class="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+            class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-medium transition-all flex items-center gap-2"
             :disabled="isDeleting"
-            @click="executeDeleteRound"
+            @click="executeDeleteTeam"
           >
             <svg v-if="!isDeleting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
             <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            <span>{{ isDeleting ? 'Removing...' : 'Remove Round' }}</span>
+            <span>{{ isDeleting ? 'Deleting...' : 'Delete Team' }}</span>
           </button>
         </div>
       </div>
     </div>
+
+    <!-- Delete Match Confirmation Modal -->
+    <div
+      v-if="deleteMatchConfirmation"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="cancelDeleteMatch"
+    >
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+        <div class="flex items-start gap-4 mb-6">
+          <div class="w-12 h-12 bg-violet-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-slate-100 mb-2">
+              Delete Match?
+            </h3>
+            <p class="text-slate-300 mb-2">
+              Delete this scheduled match?
+            </p>
+            <p class="text-slate-400 text-sm">
+              This action cannot be undone.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3">
+          <button
+            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors"
+            @click="cancelDeleteMatch"
+          >
+            Cancel
+          </button>
+          <button
+            class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+            :disabled="isDeleting"
+            @click="executeDeleteMatch"
+          >
+            <svg v-if="!isDeleting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span>{{ isDeleting ? 'Deleting...' : 'Delete Match' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { adminTournamentService, type TournamentDetail } from '@/services/adminTournamentService';
+import { 
+  adminTournamentService, 
+  type TournamentDetail,
+  type TournamentTeam,
+  type TournamentMatch
+} from '@/services/adminTournamentService';
 import AddTournamentModal from '@/components/dashboard/AddTournamentModal.vue';
 import AddRoundModal from '@/components/dashboard/AddRoundModal.vue';
+import AddTeamModal from '@/components/dashboard/AddTeamModal.vue';
+import AddMatchModal from '@/components/dashboard/AddMatchModal.vue';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -346,11 +486,24 @@ const heroImageUrl = ref<string | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const showEditModal = ref(false);
-const showAddRoundModal = ref(false);
-const deleteRoundConfirmation = ref<{ roundId: string; mapName: string; serverName: string; roundNumber: number } | null>(null);
+const showAddTeamModal = ref(false);
+const showAddMatchModal = ref(false);
+const showLinkRoundModal = ref(false);
+const deleteTeamConfirmation = ref<{ id: number; name: string } | null>(null);
+const deleteMatchConfirmation = ref<{ id: number } | null>(null);
 const isDeleting = ref(false);
+const editingTeam = ref<TournamentTeam | null>(null);
+const editingMatch = ref<TournamentMatch | null>(null);
+const linkingMatch = ref<TournamentMatch | null>(null);
 
 const tournamentId = parseInt(route.params.id as string);
+
+const sortedMatches = computed(() => {
+  if (!tournament.value) return [];
+  return [...tournament.value.matches].sort((a, b) => {
+    return new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime();
+  });
+});
 
 const loadTournament = async () => {
   loading.value = true;
@@ -405,50 +558,12 @@ const getProgressPercentage = (): number => {
   if (!tournament.value?.anticipatedRoundCount || tournament.value.anticipatedRoundCount === 0) {
     return 0;
   }
-  return Math.min(100, (tournament.value.rounds.length / tournament.value.anticipatedRoundCount) * 100);
+  return Math.min(100, (tournament.value.matches.length / tournament.value.anticipatedRoundCount) * 100);
 };
 
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-};
-
-const formatRelativeTime = (dateString: string): string => {
-  if (!dateString) return '';
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffDays > 0) return diffDays === 1 ? '1d' : `${diffDays}d`;
-  if (diffHours > 0) return diffHours === 1 ? '1h' : `${diffHours}h`;
-  if (diffMinutes > 0) return diffMinutes === 1 ? '1m' : `${diffMinutes}m`;
-  return 'now';
-};
-
-const getMapAccentColor = (mapName: string): string => {
-  let hash = 0;
-  for (let i = 0; i < mapName.length; i++) {
-    hash = mapName.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  const colors = [
-    'text-cyan-400',
-    'text-emerald-400',
-    'text-violet-400',
-    'text-orange-400',
-    'text-pink-400',
-    'text-amber-400',
-    'text-lime-400',
-    'text-sky-400',
-    'text-fuchsia-400',
-    'text-indigo-400',
-  ];
-
-  return colors[Math.abs(hash) % colors.length];
 };
 
 const viewRoundReport = (roundId: string) => {
@@ -460,41 +575,6 @@ const onTournamentUpdated = () => {
   loadTournament(); // Reload to get updated data
 };
 
-const onRoundAdded = () => {
-  showAddRoundModal.value = false;
-  loadTournament(); // Reload to get updated rounds
-};
-
-const confirmDeleteRound = (roundId: string, mapName: string, serverName: string, roundNumber: number) => {
-  deleteRoundConfirmation.value = { roundId, mapName, serverName, roundNumber };
-};
-
-const cancelDeleteRound = () => {
-  deleteRoundConfirmation.value = null;
-  isDeleting.value = false;
-};
-
-const executeDeleteRound = async () => {
-  if (!deleteRoundConfirmation.value || !tournament.value) return;
-
-  isDeleting.value = true;
-  try {
-    await adminTournamentService.removeRoundFromTournament(
-      tournament.value.id,
-      deleteRoundConfirmation.value.roundId
-    );
-
-    // Close modal and reload tournament data
-    deleteRoundConfirmation.value = null;
-    await loadTournament();
-  } catch (err) {
-    console.error('Error removing round:', err);
-    error.value = err instanceof Error ? err.message : 'Failed to remove round';
-  } finally {
-    isDeleting.value = false;
-  }
-};
-
 const getGameIcon = (): string => {
   if (!tournament.value) return `url('${bf1942Icon}')`;
 
@@ -504,6 +584,140 @@ const getGameIcon = (): string => {
     'bfvietnam': `url('${bfvIcon}')`
   };
   return iconMap[tournament.value.game] || `url('${bf1942Icon}')`;
+};
+
+const formatMatchDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString(undefined, { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Teams management
+const editTeam = async (teamId: number) => {
+  try {
+    editingTeam.value = await adminTournamentService.getTeamDetail(tournamentId, teamId);
+    showAddTeamModal.value = true;
+  } catch (err) {
+    console.error('Error loading team details:', err);
+    error.value = 'Failed to load team details';
+  }
+};
+
+const confirmDeleteTeam = (teamId: number, teamName: string) => {
+  deleteTeamConfirmation.value = { id: teamId, name: teamName };
+};
+
+const cancelDeleteTeam = () => {
+  deleteTeamConfirmation.value = null;
+  isDeleting.value = false;
+};
+
+const executeDeleteTeam = async () => {
+  if (!deleteTeamConfirmation.value) return;
+
+  isDeleting.value = true;
+  try {
+    await adminTournamentService.deleteTeam(tournamentId, deleteTeamConfirmation.value.id);
+    deleteTeamConfirmation.value = null;
+    await loadTournament();
+  } catch (err) {
+    console.error('Error deleting team:', err);
+    error.value = err instanceof Error ? err.message : 'Failed to delete team';
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
+const onTeamAdded = () => {
+  showAddTeamModal.value = false;
+  editingTeam.value = null;
+  loadTournament();
+};
+
+// Matches management
+const editMatch = async (matchId: number) => {
+  try {
+    editingMatch.value = await adminTournamentService.getMatchDetail(tournamentId, matchId);
+    showAddMatchModal.value = true;
+  } catch (err) {
+    console.error('Error loading match details:', err);
+    error.value = 'Failed to load match details';
+  }
+};
+
+const linkRound = (match: TournamentMatch) => {
+  linkingMatch.value = match;
+  showLinkRoundModal.value = true;
+};
+
+const unlinkRound = async (match: TournamentMatch) => {
+  if (!tournament.value) return;
+  
+  try {
+    await adminTournamentService.updateMatch(tournament.value.id, match.id, {
+      roundId: null,
+      updateRoundId: true
+    });
+    await loadTournament();
+  } catch (err) {
+    console.error('Error unlinking round:', err);
+    error.value = err instanceof Error ? err.message : 'Failed to unlink round';
+  }
+};
+
+const confirmDeleteMatch = (matchId: number) => {
+  deleteMatchConfirmation.value = { id: matchId };
+};
+
+const cancelDeleteMatch = () => {
+  deleteMatchConfirmation.value = null;
+  isDeleting.value = false;
+};
+
+const executeDeleteMatch = async () => {
+  if (!deleteMatchConfirmation.value) return;
+
+  isDeleting.value = true;
+  try {
+    await adminTournamentService.deleteMatch(tournamentId, deleteMatchConfirmation.value.id);
+    deleteMatchConfirmation.value = null;
+    await loadTournament();
+  } catch (err) {
+    console.error('Error deleting match:', err);
+    error.value = err instanceof Error ? err.message : 'Failed to delete match';
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
+const onMatchAdded = () => {
+  showAddMatchModal.value = false;
+  editingMatch.value = null;
+  loadTournament();
+};
+
+const onRoundLinked = async (roundId: string) => {
+  if (!linkingMatch.value) return;
+
+  try {
+    // Link the round to the match
+    await adminTournamentService.updateMatch(tournamentId, linkingMatch.value.id, {
+      roundId,
+      updateRoundId: true,
+    });
+
+    showLinkRoundModal.value = false;
+    linkingMatch.value = null;
+    await loadTournament();
+  } catch (err) {
+    console.error('Error linking round to match:', err);
+    error.value = err instanceof Error ? err.message : 'Failed to link round to match';
+  }
 };
 
 onMounted(() => {

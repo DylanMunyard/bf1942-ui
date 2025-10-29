@@ -9,10 +9,10 @@
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
-              Add Round to Tournament
+              Link Round to Match
             </h2>
             <p class="text-slate-400 text-xs sm:text-sm mt-0.5 sm:mt-1 hidden sm:block">
-              Select a server and game round for {{ gameLabel }}
+              Search for and select a completed round for {{ gameLabel }}
             </p>
           </div>
           <button
@@ -190,7 +190,7 @@
           <!-- Rounds Table -->
           <div v-else-if="rounds.length > 0" class="space-y-2">
             <!-- Selection Actions -->
-            <div class="flex items-center justify-between text-xs text-slate-400 pb-2">
+            <div v-if="multiSelect" class="flex items-center justify-between text-xs text-slate-400 pb-2">
               <span>{{ selectedRoundIds.length }} of {{ rounds.length }} selected</span>
               <div class="flex gap-2">
                 <button
@@ -207,6 +207,10 @@
                   Clear
                 </button>
               </div>
+            </div>
+            <div v-else class="text-xs text-slate-400 pb-2">
+              <span v-if="selectedRoundIds.length > 0">1 round selected</span>
+              <span v-else>Select a round</span>
             </div>
 
             <div class="overflow-x-auto">
@@ -236,13 +240,17 @@
                   <!-- Selection Indicator -->
                   <td class="py-1.5 sm:py-2 px-2 sm:px-3">
                     <div
-                      class="w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center transition-all"
-                      :class="isRoundSelected(round.roundId)
-                        ? 'border-cyan-400 bg-cyan-400'
-                        : 'border-slate-600 bg-transparent group-hover:border-slate-500'"
+                      class="w-4 h-4 sm:w-5 sm:h-5 border-2 flex items-center justify-center transition-all"
+                      :class="[
+                        multiSelect ? 'rounded' : 'rounded-full',
+                        isRoundSelected(round.roundId)
+                          ? 'border-cyan-400 bg-cyan-400'
+                          : 'border-slate-600 bg-transparent group-hover:border-slate-500'
+                      ]"
                     >
+                      <!-- Checkbox checkmark for multi-select -->
                       <svg
-                        v-if="isRoundSelected(round.roundId)"
+                        v-if="multiSelect && isRoundSelected(round.roundId)"
                         class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-900"
                         fill="none"
                         stroke="currentColor"
@@ -250,6 +258,11 @@
                       >
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                       </svg>
+                      <!-- Radio dot for single-select -->
+                      <div
+                        v-else-if="!multiSelect && isRoundSelected(round.roundId)"
+                        class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-slate-900"
+                      />
                     </div>
                   </td>
 
@@ -343,13 +356,10 @@
             @click="addRound"
           >
             <template v-if="adding">
-              Adding...
-            </template>
-            <template v-else-if="selectedRoundIds.length > 1">
-              Add {{ selectedRoundIds.length }} Rounds
+              Linking...
             </template>
             <template v-else>
-              Add Round
+              Link Round
             </template>
           </button>
         </div>
@@ -388,9 +398,12 @@ interface Props {
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   defaultServerGuid?: string;
   defaultServerName?: string;
+  multiSelect?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  multiSelect: true,
+});
 const emit = defineEmits<{
   close: [];
   added: [];
@@ -511,11 +524,21 @@ const isRoundSelected = (roundId: string): boolean => {
 };
 
 const toggleRoundSelection = (roundId: string) => {
-  const index = selectedRoundIds.value.indexOf(roundId);
-  if (index > -1) {
-    selectedRoundIds.value.splice(index, 1);
+  if (!props.multiSelect) {
+    // Single select mode - replace selection
+    if (selectedRoundIds.value[0] === roundId) {
+      selectedRoundIds.value = [];
+    } else {
+      selectedRoundIds.value = [roundId];
+    }
   } else {
-    selectedRoundIds.value.push(roundId);
+    // Multi-select mode - toggle
+    const index = selectedRoundIds.value.indexOf(roundId);
+    if (index > -1) {
+      selectedRoundIds.value.splice(index, 1);
+    } else {
+      selectedRoundIds.value.push(roundId);
+    }
   }
 };
 
@@ -615,17 +638,14 @@ const addRound = async () => {
   error.value = null;
 
   try {
-    // Add all selected rounds
-    for (const roundId of roundIds) {
-      await adminTournamentService.addRoundToTournament(props.tournamentId, {
-        roundId: roundId,
-      });
-    }
-    emit('added');
+    // For now, just emit the first selected round ID
+    // This is used to link rounds to matches
+    const roundId = roundIds[0];
+    emit('added', roundId);
     emit('close');
   } catch (err) {
-    console.error('Error adding round(s):', err);
-    error.value = err instanceof Error ? err.message : 'Failed to add round(s) to tournament';
+    console.error('Error selecting round:', err);
+    error.value = err instanceof Error ? err.message : 'Failed to select round';
   } finally {
     adding.value = false;
   }

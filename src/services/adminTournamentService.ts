@@ -4,26 +4,42 @@ export interface TournamentListItem {
   organizer: string;
   createdAt: string;
   anticipatedRoundCount?: number;
-  roundCount: number;
+  matchCount: number;
+  teamCount: number;
   hasHeroImage: boolean;
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   serverGuid?: string;
   serverName?: string;
 }
 
-export interface TournamentRound {
-  roundId: string;
-  serverGuid: string;
-  serverName: string;
+export interface TournamentTeam {
+  id: number;
+  name: string;
+  createdAt: string;
+  players: TeamPlayerResponse[];
+}
+
+export interface TournamentMatch {
+  id: number;
+  scheduledDate: string;
   mapName: string;
-  startTime: string;
-  endTime: string;
-  winningTeam?: string;
-  winningPlayers?: string[];
-  tickets1: number;
-  tickets2: number;
-  team1Label: string;
-  team2Label: string;
+  team1Name: string;
+  team2Name: string;
+  serverGuid?: string;
+  serverName?: string;
+  roundId?: string;
+  round?: {
+    roundId: string;
+    serverGuid: string;
+    serverName: string;
+    mapName: string;
+    startTime: string;
+    endTime?: string;
+    tickets1?: number;
+    tickets2?: number;
+    team1Label?: string;
+    team2Label?: string;
+  } | null;
 }
 
 export interface TournamentDetail {
@@ -32,11 +48,8 @@ export interface TournamentDetail {
   organizer: string;
   createdAt: string;
   anticipatedRoundCount?: number;
-  rounds: TournamentRound[];
-  overallWinner?: {
-    team: string;
-    players: string[];
-  };
+  teams: TournamentTeam[];
+  matches: TournamentMatch[];
   heroImageBase64?: string;
   heroImageContentType?: string;
   game: 'bf1942' | 'fh2' | 'bfvietnam';
@@ -49,7 +62,6 @@ export interface CreateTournamentRequest {
   organizer: string;
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   anticipatedRoundCount?: number;
-  roundIds?: string[];
   heroImageBase64?: string;
   heroImageContentType?: string;
   serverGuid?: string;
@@ -60,14 +72,47 @@ export interface UpdateTournamentRequest {
   organizer?: string;
   game?: 'bf1942' | 'fh2' | 'bfvietnam';
   anticipatedRoundCount?: number;
-  roundIds?: string[];
   heroImageBase64?: string;
   heroImageContentType?: string;
   serverGuid?: string;
 }
 
-export interface AddRoundRequest {
-  roundId: string;
+// Teams interfaces
+export interface CreateTeamRequest {
+  name: string;
+}
+
+export interface UpdateTeamRequest {
+  name?: string;
+}
+
+export interface AddPlayerRequest {
+  playerName: string;
+}
+
+export interface TeamPlayerResponse {
+  playerName: string;
+}
+
+// Matches interfaces
+export interface CreateMatchRequest {
+  scheduledDate: string;
+  team1Id: number;
+  team2Id: number;
+  mapName: string;
+  serverGuid?: string;
+  serverName?: string;
+}
+
+export interface UpdateMatchRequest {
+  scheduledDate?: string;
+  team1Id?: number;
+  team2Id?: number;
+  mapName?: string;
+  serverGuid?: string;
+  serverName?: string;
+  roundId?: string | null;
+  updateRoundId?: boolean;
 }
 
 class AdminTournamentService {
@@ -196,21 +241,6 @@ class AdminTournamentService {
     });
   }
 
-  // Add round to tournament (owned by current user only)
-  async addRoundToTournament(id: number, request: AddRoundRequest): Promise<TournamentDetail> {
-    return this.request<TournamentDetail>(`/${id}/rounds`, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
-  }
-
-  // Remove round from tournament (owned by current user only)
-  async removeRoundFromTournament(id: number, roundId: string): Promise<void> {
-    await this.request(`/${id}/rounds/${roundId}`, {
-      method: 'DELETE',
-    });
-  }
-
   // Helper to convert image file to base64
   async imageToBase64(file: File): Promise<{ base64: string; contentType: string }> {
     return new Promise((resolve, reject) => {
@@ -239,6 +269,81 @@ class AdminTournamentService {
       };
       reader.onerror = () => reject(new Error('Failed to read file'));
       reader.readAsDataURL(file);
+    });
+  }
+
+  // ===== Teams Management =====
+
+  // Get team detail with players
+  async getTeamDetail(tournamentId: number, teamId: number): Promise<TournamentTeam> {
+    return this.request<TournamentTeam>(`/${tournamentId}/teams/${teamId}`);
+  }
+
+  // Create a new team
+  async createTeam(tournamentId: number, request: CreateTeamRequest): Promise<TournamentTeam> {
+    return this.request<TournamentTeam>(`/${tournamentId}/teams`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  // Update team
+  async updateTeam(tournamentId: number, teamId: number, request: UpdateTeamRequest): Promise<TournamentTeam> {
+    return this.request<TournamentTeam>(`/${tournamentId}/teams/${teamId}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+  }
+
+  // Delete team
+  async deleteTeam(tournamentId: number, teamId: number): Promise<void> {
+    await this.request(`/${tournamentId}/teams/${teamId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Add player to team
+  async addPlayerToTeam(tournamentId: number, teamId: number, request: AddPlayerRequest): Promise<TournamentTeam> {
+    return this.request<TournamentTeam>(`/${tournamentId}/teams/${teamId}/players`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  // Remove player from team
+  async removePlayerFromTeam(tournamentId: number, teamId: number, playerName: string): Promise<TournamentTeam> {
+    return this.request<TournamentTeam>(`/${tournamentId}/teams/${teamId}/players/${encodeURIComponent(playerName)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ===== Matches Management =====
+
+  // Get match detail
+  async getMatchDetail(tournamentId: number, matchId: number): Promise<TournamentMatch> {
+    return this.request<TournamentMatch>(`/${tournamentId}/matches/${matchId}`);
+  }
+
+  // Create a new match
+  async createMatch(tournamentId: number, request: CreateMatchRequest): Promise<TournamentMatch> {
+    return this.request<TournamentMatch>(`/${tournamentId}/matches`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  // Update match (including linking to round via roundId)
+  async updateMatch(tournamentId: number, matchId: number, request: UpdateMatchRequest): Promise<TournamentMatch> {
+    return this.request<TournamentMatch>(`/${tournamentId}/matches/${matchId}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+  }
+
+  // Delete match
+  async deleteMatch(tournamentId: number, matchId: number): Promise<void> {
+    await this.request(`/${tournamentId}/matches/${matchId}`, {
+      method: 'DELETE',
     });
   }
 }
