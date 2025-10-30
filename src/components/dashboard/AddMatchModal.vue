@@ -100,18 +100,50 @@
             </div>
           </div>
 
-          <!-- Map Name -->
+          <!-- Map Names -->
           <div>
             <label class="block text-sm font-medium text-slate-300 mb-2">
-              Map Name <span class="text-red-400">*</span>
+              Maps <span class="text-red-400">*</span>
             </label>
-            <input
-              v-model="formData.mapName"
-              type="text"
-              placeholder="e.g., Wake Island, El Alamein"
-              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-              :disabled="loading"
-            >
+            <div class="space-y-2">
+              <div
+                v-for="(_mapName, index) in formData.mapNames"
+                :key="index"
+                class="flex items-center gap-2"
+              >
+                <div class="flex-shrink-0 w-6 text-center text-slate-500 text-sm font-mono">
+                  {{ index + 1 }}
+                </div>
+                <input
+                  v-model="formData.mapNames[index]"
+                  type="text"
+                  placeholder="e.g., Wake Island, El Alamein"
+                  class="flex-1 px-4 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                  :disabled="loading"
+                >
+                <button
+                  v-if="formData.mapNames.length > 1"
+                  class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
+                  @click="removeMap(index)"
+                  :disabled="loading"
+                  title="Remove map"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <button
+                class="w-full px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
+                @click="addMap"
+                :disabled="loading"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Add Map</span>
+              </button>
+            </div>
           </div>
 
           <!-- Server Details -->
@@ -176,6 +208,34 @@
 
       <!-- Footer -->
       <div class="sticky bottom-0 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-t border-slate-700/50 p-6">
+        <!-- Validation Messages -->
+        <div v-if="!isFormValid && !loading" class="mb-4 space-y-1">
+          <p v-if="!formData.scheduledDate" class="text-xs text-amber-400 flex items-center gap-1">
+            <span>⚠</span>
+            <span>Please select a scheduled date and time</span>
+          </p>
+          <p v-if="formData.team1Id === null" class="text-xs text-amber-400 flex items-center gap-1">
+            <span>⚠</span>
+            <span>Please select Team 1</span>
+          </p>
+          <p v-if="formData.team2Id === null" class="text-xs text-amber-400 flex items-center gap-1">
+            <span>⚠</span>
+            <span>Please select Team 2</span>
+          </p>
+          <p v-if="formData.team1Id !== null && formData.team2Id !== null && formData.team1Id === formData.team2Id" class="text-xs text-amber-400 flex items-center gap-1">
+            <span>⚠</span>
+            <span>Team 1 and Team 2 must be different</span>
+          </p>
+          <p v-if="formData.mapNames.length === 0" class="text-xs text-amber-400 flex items-center gap-1">
+            <span>⚠</span>
+            <span>Please add at least one map</span>
+          </p>
+          <p v-if="formData.mapNames.length > 0 && !formData.mapNames.every(name => name.trim().length > 0)" class="text-xs text-amber-400 flex items-center gap-1">
+            <span>⚠</span>
+            <span>All map names must be filled in (or remove empty maps)</span>
+          </p>
+        </div>
+
         <div class="flex items-center justify-end gap-3">
           <button
             class="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors"
@@ -185,9 +245,10 @@
             Cancel
           </button>
           <button
-            class="px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+            class="px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             @click="handleSubmit"
             :disabled="loading || !isFormValid"
+            :title="!isFormValid ? 'Please fill in all required fields' : ''"
           >
             <div v-if="loading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             <span>{{ editMode ? 'Update Match' : 'Schedule Match' }}</span>
@@ -237,7 +298,7 @@ const formData = ref({
   scheduledDate: '',
   team1Id: null as number | null,
   team2Id: null as number | null,
-  mapName: '',
+  mapNames: [''],
   serverGuid: '',
   serverName: '',
 });
@@ -257,7 +318,8 @@ const isFormValid = computed(() => {
     formData.value.team1Id !== null &&
     formData.value.team2Id !== null &&
     formData.value.team1Id !== formData.value.team2Id &&
-    formData.value.mapName.trim().length > 0
+    formData.value.mapNames.length > 0 &&
+    formData.value.mapNames.every(name => name.trim().length > 0)
   );
 });
 
@@ -326,20 +388,29 @@ const selectServer = (server: ServerSearchResult) => {
   showServerDropdown.value = false;
 };
 
+const addMap = () => {
+  formData.value.mapNames.push('');
+};
+
+const removeMap = (index: number) => {
+  formData.value.mapNames.splice(index, 1);
+};
+
 onMounted(() => {
   if (props.match) {
     // Convert ISO date to datetime-local format
     const date = new Date(props.match.scheduledDate);
     const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
     formData.value.scheduledDate = localDate.toISOString().slice(0, 16);
-    
+
     // Find team IDs from team names
     const team1 = props.teams.find(t => t.name === props.match!.team1Name);
     const team2 = props.teams.find(t => t.name === props.match!.team2Name);
-    
+
     formData.value.team1Id = team1?.id || null;
     formData.value.team2Id = team2?.id || null;
-    formData.value.mapName = props.match.mapName;
+    // Extract map names from maps array
+    formData.value.mapNames = props.match.maps.map(m => m.mapName);
     formData.value.serverGuid = props.match.serverGuid || '';
     formData.value.serverName = props.match.serverName || '';
     serverSearchQuery.value = props.match.serverName || '';
@@ -358,19 +429,22 @@ const handleSubmit = async () => {
   try {
     // Use serverSearchQuery as the server name (could be typed manually or selected)
     const serverName = serverSearchQuery.value.trim() || formData.value.serverName.trim();
-    
+
+    // Both create and update now use the same payload structure
     const requestData = {
       scheduledDate: new Date(formData.value.scheduledDate).toISOString(),
       team1Id: formData.value.team1Id!,
       team2Id: formData.value.team2Id!,
-      mapName: formData.value.mapName.trim(),
+      mapNames: formData.value.mapNames.map(name => name.trim()).filter(name => name.length > 0),
       serverGuid: formData.value.serverGuid.trim() || undefined,
       serverName: serverName || undefined,
     };
 
     if (editMode.value && props.match) {
+      console.log('Updating match with data:', requestData);
       await adminTournamentService.updateMatch(props.tournamentId, props.match.id, requestData);
     } else {
+      console.log('Creating match with data:', requestData);
       await adminTournamentService.createMatch(props.tournamentId, requestData);
     }
 
@@ -378,7 +452,14 @@ const handleSubmit = async () => {
     emit('close');
   } catch (err) {
     console.error('Error saving match:', err);
-    error.value = err instanceof Error ? err.message : 'Failed to save match';
+    // Handle different error types
+    if (err instanceof Error) {
+      error.value = err.message;
+    } else if (typeof err === 'object' && err !== null && 'message' in err) {
+      error.value = String((err as any).message);
+    } else {
+      error.value = 'Failed to save match. Please check the console for details.';
+    }
   } finally {
     loading.value = false;
   }

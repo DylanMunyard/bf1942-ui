@@ -398,6 +398,7 @@ interface Props {
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   defaultServerGuid?: string;
   defaultServerName?: string;
+  defaultMapName?: string;
   multiSelect?: boolean;
 }
 
@@ -406,7 +407,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 const emit = defineEmits<{
   close: [];
-  added: [];
+  added: [roundId: string];
 }>();
 
 const searchMode = ref<'search' | 'direct'>('search');
@@ -428,7 +429,7 @@ const showServerDropdown = ref(false);
 const searchingRounds = ref(false);
 
 const filters = ref({
-  mapName: '',
+  mapName: props.defaultMapName || '',
 });
 
 const currentPage = ref(1);

@@ -227,11 +227,8 @@
                   <div class="flex-1">
                     <div class="flex items-center gap-3 mb-2">
                       <span class="text-sm text-slate-400">📅 {{ formatMatchDate(match.scheduledDate) }}</span>
-                      <span v-if="match.roundId" class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
-                        Linked
-                      </span>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 mb-2">
                       <div class="text-center">
                         <div class="text-lg font-bold text-emerald-400">{{ match.team1Name }}</div>
                       </div>
@@ -240,46 +237,11 @@
                         <div class="text-lg font-bold text-emerald-400">{{ match.team2Name }}</div>
                       </div>
                     </div>
-                    <div class="mt-2 text-sm text-slate-400">
-                      <span class="text-amber-400">{{ match.mapName }}</span>
-                      <span v-if="match.serverName"> • {{ match.serverName }}</span>
+                    <div v-if="match.serverName" class="text-sm text-slate-400">
+                      <span>🖥️ {{ match.serverName }}</span>
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <button
-                      v-if="match.roundId"
-                      class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium"
-                      @click="viewRoundReport(match.roundId)"
-                    >
-                      View Round
-                    </button>
-                    <button
-                      v-if="match.roundId"
-                      class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
-                      @click="linkRound(match)"
-                      title="Change the linked round"
-                    >
-                      Change
-                    </button>
-                    <button
-                      v-if="match.roundId"
-                      class="p-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-400 border border-slate-500/30 hover:border-slate-500/50 rounded-lg transition-all"
-                      @click="unlinkRound(match)"
-                      title="Unlink round from this match"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 14.828l-2.121 2.121a4 4 0 11-5.657-5.657l2.122-2.121m5.656 5.656l2.122-2.121a4 4 0 115.656 5.657l-2.121 2.121" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l4-4" opacity="0.3" />
-                      </svg>
-                    </button>
-                    <button
-                      v-else
-                      class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
-                      @click="linkRound(match)"
-                      title="Link completed round to this match"
-                    >
-                      Link Round
-                    </button>
                     <button
                       class="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all"
                       @click="editMatch(match.id)"
@@ -298,6 +260,58 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
+                  </div>
+                </div>
+
+                <!-- Maps List -->
+                <div class="space-y-2">
+                  <div
+                    v-for="map in match.maps"
+                    :key="map.id"
+                    class="flex items-center justify-between bg-slate-700/30 rounded-lg p-3 border border-slate-600/30"
+                  >
+                    <div class="flex items-center gap-3">
+                      <span class="text-sm font-mono text-slate-500">{{ map.mapOrder + 1 }}</span>
+                      <span class="text-amber-400 font-medium">{{ map.mapName }}</span>
+                      <span v-if="map.roundId" class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
+                        Linked
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button
+                        v-if="map.roundId"
+                        class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium"
+                        @click="viewRoundReport(map.roundId)"
+                      >
+                        View Round
+                      </button>
+                      <button
+                        v-if="map.roundId"
+                        class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
+                        @click="linkRound(match, map)"
+                        title="Change the linked round"
+                      >
+                        Change
+                      </button>
+                      <button
+                        v-if="map.roundId"
+                        class="p-1.5 bg-slate-500/20 hover:bg-slate-500/30 text-slate-400 border border-slate-500/30 hover:border-slate-500/50 rounded-lg transition-all"
+                        @click="unlinkRound(match, map)"
+                        title="Unlink round from this map"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <button
+                        v-else
+                        class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
+                        @click="linkRound(match, map)"
+                        title="Link completed round to this map"
+                      >
+                        Link Round
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -336,7 +350,7 @@
       v-if="showAddTeamModal && tournament"
       :tournament-id="tournament.id"
       :team="editingTeam"
-      @close="showAddTeamModal = false; editingTeam = null"
+      @close="showAddTeamModal = false; editingTeam = undefined"
       @added="onTeamAdded"
     />
 
@@ -346,19 +360,20 @@
       :tournament-id="tournament.id"
       :teams="tournament.teams"
       :match="editingMatch"
-      @close="showAddMatchModal = false; editingMatch = null"
+      @close="showAddMatchModal = false; editingMatch = undefined"
       @added="onMatchAdded"
     />
 
     <!-- Link Round Modal -->
     <AddRoundModal
-      v-if="showLinkRoundModal && tournament && linkingMatch"
+      v-if="showLinkRoundModal && tournament && linkingMatch && linkingMap"
       :tournament-id="tournament.id"
       :game="tournament.game"
       :default-server-guid="linkingMatch.serverGuid"
       :default-server-name="linkingMatch.serverName"
+      :default-map-name="linkingMap.mapName"
       :multi-select="false"
-      @close="showLinkRoundModal = false; linkingMatch = null"
+      @close="showLinkRoundModal = false; linkingMatch = undefined; linkingMap = undefined"
       @added="onRoundLinked"
     />
 
@@ -464,11 +479,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  adminTournamentService, 
+import {
+  adminTournamentService,
   type TournamentDetail,
   type TournamentTeam,
-  type TournamentMatch
+  type TournamentMatch,
+  type TournamentMatchMap
 } from '@/services/adminTournamentService';
 import AddTournamentModal from '@/components/dashboard/AddTournamentModal.vue';
 import AddRoundModal from '@/components/dashboard/AddRoundModal.vue';
@@ -492,9 +508,10 @@ const showLinkRoundModal = ref(false);
 const deleteTeamConfirmation = ref<{ id: number; name: string } | null>(null);
 const deleteMatchConfirmation = ref<{ id: number } | null>(null);
 const isDeleting = ref(false);
-const editingTeam = ref<TournamentTeam | null>(null);
-const editingMatch = ref<TournamentMatch | null>(null);
-const linkingMatch = ref<TournamentMatch | null>(null);
+const editingTeam = ref<TournamentTeam | undefined>(undefined);
+const editingMatch = ref<TournamentMatch | undefined>(undefined);
+const linkingMatch = ref<TournamentMatch | undefined>(undefined);
+const linkingMap = ref<TournamentMatchMap | undefined>(undefined);
 
 const tournamentId = parseInt(route.params.id as string);
 
@@ -635,7 +652,7 @@ const executeDeleteTeam = async () => {
 
 const onTeamAdded = () => {
   showAddTeamModal.value = false;
-  editingTeam.value = null;
+  editingTeam.value = undefined;
   loadTournament();
 };
 
@@ -650,16 +667,18 @@ const editMatch = async (matchId: number) => {
   }
 };
 
-const linkRound = (match: TournamentMatch) => {
+const linkRound = (match: TournamentMatch, map: TournamentMatchMap) => {
   linkingMatch.value = match;
+  linkingMap.value = map;
   showLinkRoundModal.value = true;
 };
 
-const unlinkRound = async (match: TournamentMatch) => {
+const unlinkRound = async (match: TournamentMatch, map: TournamentMatchMap) => {
   if (!tournament.value) return;
-  
+
   try {
-    await adminTournamentService.updateMatch(tournament.value.id, match.id, {
+    await adminTournamentService.updateMatchMap(tournament.value.id, match.id, map.id, {
+      mapId: map.id,
       roundId: null,
       updateRoundId: true
     });
@@ -697,26 +716,28 @@ const executeDeleteMatch = async () => {
 
 const onMatchAdded = () => {
   showAddMatchModal.value = false;
-  editingMatch.value = null;
+  editingMatch.value = undefined;
   loadTournament();
 };
 
 const onRoundLinked = async (roundId: string) => {
-  if (!linkingMatch.value) return;
+  if (!linkingMatch.value || !linkingMap.value) return;
 
   try {
-    // Link the round to the match
-    await adminTournamentService.updateMatch(tournamentId, linkingMatch.value.id, {
+    // Link the round to the specific map
+    await adminTournamentService.updateMatchMap(tournamentId, linkingMatch.value.id, linkingMap.value.id, {
+      mapId: linkingMap.value.id,
       roundId,
       updateRoundId: true,
     });
 
     showLinkRoundModal.value = false;
-    linkingMatch.value = null;
+    linkingMatch.value = undefined;
+    linkingMap.value = undefined;
     await loadTournament();
   } catch (err) {
-    console.error('Error linking round to match:', err);
-    error.value = err instanceof Error ? err.message : 'Failed to link round to match';
+    console.error('Error linking round to map:', err);
+    error.value = err instanceof Error ? err.message : 'Failed to link round to map';
   }
 };
 

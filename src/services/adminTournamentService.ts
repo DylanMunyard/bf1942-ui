@@ -19,14 +19,10 @@ export interface TournamentTeam {
   players: TeamPlayerResponse[];
 }
 
-export interface TournamentMatch {
+export interface TournamentMatchMap {
   id: number;
-  scheduledDate: string;
   mapName: string;
-  team1Name: string;
-  team2Name: string;
-  serverGuid?: string;
-  serverName?: string;
+  mapOrder: number;
   roundId?: string;
   round?: {
     roundId: string;
@@ -40,6 +36,17 @@ export interface TournamentMatch {
     team1Label?: string;
     team2Label?: string;
   } | null;
+}
+
+export interface TournamentMatch {
+  id: number;
+  scheduledDate: string;
+  team1Name: string;
+  team2Name: string;
+  serverGuid?: string;
+  serverName?: string;
+  createdAt: string;
+  maps: TournamentMatchMap[];
 }
 
 export interface TournamentDetail {
@@ -99,7 +106,7 @@ export interface CreateMatchRequest {
   scheduledDate: string;
   team1Id: number;
   team2Id: number;
-  mapName: string;
+  mapNames: string[];
   serverGuid?: string;
   serverName?: string;
 }
@@ -108,11 +115,16 @@ export interface UpdateMatchRequest {
   scheduledDate?: string;
   team1Id?: number;
   team2Id?: number;
-  mapName?: string;
+  mapNames?: string[];
   serverGuid?: string;
   serverName?: string;
+}
+
+export interface UpdateMatchMapRequest {
+  mapId: number;
+  mapName?: string;
   roundId?: string | null;
-  updateRoundId?: boolean;
+  updateRoundId: boolean;
 }
 
 class AdminTournamentService {
@@ -344,6 +356,14 @@ class AdminTournamentService {
   async deleteMatch(tournamentId: number, matchId: number): Promise<void> {
     await this.request(`/${tournamentId}/matches/${matchId}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Update match map (link/unlink round to specific map)
+  async updateMatchMap(tournamentId: number, matchId: number, mapId: number, request: UpdateMatchMapRequest): Promise<TournamentMatchMap> {
+    return this.request<TournamentMatchMap>(`/${tournamentId}/matches/${matchId}/maps/${mapId}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
     });
   }
 }
