@@ -123,13 +123,23 @@
                     <span class="text-amber-400 text-base font-semibold">📅 {{ formatMatchDate(match.scheduledDate) }}</span>
                   </div>
                   <div class="flex items-center gap-3 mb-2">
-                    <div class="text-center">
-                      <div class="text-lg font-bold text-emerald-400">{{ match.team1Name }}</div>
-                    </div>
+                    <button
+                      class="text-center hover:scale-105 transition-transform"
+                      @click="openMatchupModal(match)"
+                    >
+                      <div class="text-lg font-bold text-emerald-400 hover:text-emerald-300 underline decoration-emerald-400/50 decoration-2 underline-offset-4">
+                        {{ match.team1Name }}
+                      </div>
+                    </button>
                     <div class="text-2xl font-bold text-violet-400">VS</div>
-                    <div class="text-center">
-                      <div class="text-lg font-bold text-emerald-400">{{ match.team2Name }}</div>
-                    </div>
+                    <button
+                      class="text-center hover:scale-105 transition-transform"
+                      @click="openMatchupModal(match)"
+                    >
+                      <div class="text-lg font-bold text-emerald-400 hover:text-emerald-300 underline decoration-emerald-400/50 decoration-2 underline-offset-4">
+                        {{ match.team2Name }}
+                      </div>
+                    </button>
                   </div>
                   <div v-if="match.serverName" class="text-sm text-slate-400">
                     <span>🖥️ {{ match.serverName }}</span>
@@ -371,19 +381,29 @@
                     <span class="text-amber-400 text-base font-semibold">📅 {{ formatMatchDate(match.scheduledDate) }}</span>
                   </div>
                   <div class="flex items-center gap-3 mb-2">
-                    <div class="text-center">
-                      <div class="text-lg font-bold text-emerald-400">{{ match.team1Name }}</div>
+                    <button
+                      class="text-center hover:scale-105 transition-transform"
+                      @click="openMatchupModal(match)"
+                    >
+                      <div class="text-lg font-bold text-emerald-400 hover:text-emerald-300 underline decoration-emerald-400/50 decoration-2 underline-offset-4">
+                        {{ match.team1Name }}
+                      </div>
                       <div v-if="getMatchWinner(match) === match.team1Name" class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400 text-xs font-bold mt-1">
                         🏆 Winner
                       </div>
-                    </div>
+                    </button>
                     <div class="text-2xl font-bold text-violet-400">VS</div>
-                    <div class="text-center">
-                      <div class="text-lg font-bold text-emerald-400">{{ match.team2Name }}</div>
+                    <button
+                      class="text-center hover:scale-105 transition-transform"
+                      @click="openMatchupModal(match)"
+                    >
+                      <div class="text-lg font-bold text-emerald-400 hover:text-emerald-300 underline decoration-emerald-400/50 decoration-2 underline-offset-4">
+                        {{ match.team2Name }}
+                      </div>
                       <div v-if="getMatchWinner(match) === match.team2Name" class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400 text-xs font-bold mt-1">
                         🏆 Winner
                       </div>
-                    </div>
+                    </button>
                   </div>
                   <div v-if="match.serverName" class="text-sm text-slate-400">
                     <span>🖥️ {{ match.serverName }}</span>
@@ -615,50 +635,31 @@
           </p>
         </div>
 
-        <!-- Teams Section -->
-        <div v-if="tournament.teams.length > 0">
-          <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
-            Teams
-          </h2>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <button
-              v-for="team in tournament.teams"
-              :key="team.id"
-              class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-lg rounded-xl border-2 border-slate-700/50 p-6 hover:border-amber-500/40 transition-all duration-300 shadow-lg text-left"
-              @click="openTeamModal(team)"
-            >
-              <h3 class="text-xl font-bold text-amber-400 mb-2">{{ team.name }}</h3>
-              <p class="text-slate-400">
-                {{ team.players.length }} {{ team.players.length === 1 ? 'player' : 'players' }}
-              </p>
-              <div class="mt-3 text-sm text-cyan-400 flex items-center gap-2">
-                <span>View Roster</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- Team Roster Modal -->
+    <!-- Team Matchup Modal -->
     <div
-      v-if="selectedTeam"
+      v-if="selectedMatch"
       class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="closeTeamModal"
+      @click.self="closeMatchupModal"
     >
-      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-amber-500/50 rounded-2xl p-6 max-w-2xl w-full shadow-2xl max-h-[80vh] overflow-y-auto">
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-violet-500/50 rounded-2xl p-6 max-w-5xl w-full shadow-2xl max-h-[85vh] overflow-y-auto">
+        <!-- Header -->
         <div class="flex items-start justify-between mb-6">
-          <div>
-            <h3 class="text-2xl font-bold text-amber-400 mb-2">{{ selectedTeam.name }}</h3>
-            <p class="text-slate-400">{{ selectedTeam.players.length }} {{ selectedTeam.players.length === 1 ? 'player' : 'players' }}</p>
+          <div class="flex-1">
+            <h3 class="text-3xl font-bold text-center mb-3">
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
+                Team Matchup
+              </span>
+            </h3>
+            <div class="flex items-center justify-center gap-4 text-amber-400 text-sm">
+              <span>📅 {{ formatMatchDate(selectedMatch.scheduledDate) }}</span>
+            </div>
           </div>
           <button
-            class="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
-            @click="closeTeamModal"
+            class="p-2 hover:bg-slate-700/50 rounded-lg transition-colors flex-shrink-0"
+            @click="closeMatchupModal"
           >
             <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -666,15 +667,107 @@
           </button>
         </div>
 
-        <div class="space-y-2">
-          <router-link
-            v-for="player in selectedTeam.players"
-            :key="player.playerName"
-            :to="`/players/${player.playerName}`"
-            class="block px-4 py-3 bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all"
+        <!-- Gamification Banner -->
+        <div class="mb-6 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl">
+          <div class="flex items-start gap-3">
+            <span class="text-3xl flex-shrink-0">⚔️</span>
+            <div>
+              <h4 class="text-lg font-bold text-purple-300 mb-1">Preview the Battle</h4>
+              <p class="text-slate-300 text-sm">
+                Click any two players (one from each team) to compare their stats and predict who will dominate the matchup!
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rosters Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
+                <th class="p-4 text-center font-bold text-lg uppercase tracking-wide border-b border-slate-700/30 bg-cyan-500/10 border-4 border-cyan-400/60">
+                  <div class="flex flex-col items-center gap-2">
+                    <span class="text-cyan-400">{{ selectedMatch.team1Name }}</span>
+                    <span class="text-slate-400 text-xs font-normal">
+                      {{ getTeamRoster(selectedMatch, selectedMatch.team1Name).length }} players
+                    </span>
+                  </div>
+                </th>
+                <th class="p-4 text-center font-bold text-lg uppercase tracking-wide border-b border-slate-700/30 bg-orange-500/10 border-4 border-orange-400/60">
+                  <div class="flex flex-col items-center gap-2">
+                    <span class="text-orange-400">{{ selectedMatch.team2Name }}</span>
+                    <span class="text-slate-400 text-xs font-normal">
+                      {{ getTeamRoster(selectedMatch, selectedMatch.team2Name).length }} players
+                    </span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(_, idx) in Math.max(
+                  getTeamRoster(selectedMatch, selectedMatch.team1Name).length,
+                  getTeamRoster(selectedMatch, selectedMatch.team2Name).length
+                )"
+                :key="idx"
+                class="border-b border-slate-700/20 hover:bg-slate-800/30 transition-all"
+              >
+                <!-- Team 1 Player -->
+                <td class="p-3 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
+                  <button
+                    v-if="getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx]"
+                    class="w-full text-left px-3 py-2 rounded-lg transition-all"
+                    :class="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)
+                      ? 'bg-purple-500/20 border-2 border-purple-500/50 text-purple-300 font-bold'
+                      : 'hover:bg-cyan-500/10 text-cyan-400 hover:text-cyan-300'"
+                    @click="selectPlayerForComparison(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName, selectedMatch.team1Name)"
+                  >
+                    <div class="flex items-center justify-between">
+                      <span>{{ getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName }}</span>
+                      <svg v-if="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)" class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                  </button>
+                </td>
+                <!-- Team 2 Player -->
+                <td class="p-3 bg-orange-500/5 border-l-2 border-l-orange-400/40">
+                  <button
+                    v-if="getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx]"
+                    class="w-full text-left px-3 py-2 rounded-lg transition-all"
+                    :class="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)
+                      ? 'bg-purple-500/20 border-2 border-purple-500/50 text-purple-300 font-bold'
+                      : 'hover:bg-orange-500/10 text-orange-400 hover:text-orange-300'"
+                    @click="selectPlayerForComparison(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName, selectedMatch.team2Name)"
+                  >
+                    <div class="flex items-center justify-between">
+                      <span>{{ getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName }}</span>
+                      <svg v-if="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)" class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Compare Button -->
+        <div v-if="selectedPlayers.length === 2" class="mt-6 text-center">
+          <button
+            class="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-3 mx-auto"
+            @click="comparePlayers"
           >
-            <span class="text-cyan-400 hover:text-cyan-300 font-medium">{{ player.playerName }}</span>
-          </router-link>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span>Compare {{ selectedPlayers[0] }} vs {{ selectedPlayers[1] }}</span>
+            <span>⚡</span>
+          </button>
+        </div>
+        <div v-else-if="selectedPlayers.length === 1" class="mt-6 text-center text-slate-400 text-sm">
+          Select one more player from the other team to compare
         </div>
       </div>
     </div>
@@ -688,7 +781,6 @@ import {
   publicTournamentService,
   type PublicTournamentDetail,
   type PublicTournamentMatch,
-  type PublicTournamentTeam,
   type PublicTournamentMatchMap
 } from '@/services/publicTournamentService';
 import bf1942Icon from '@/assets/bf1942.webp';
@@ -702,7 +794,8 @@ const tournament = ref<PublicTournamentDetail | null>(null);
 const heroImageUrl = ref<string | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
-const selectedTeam = ref<PublicTournamentTeam | null>(null);
+const selectedMatch = ref<PublicTournamentMatch | null>(null);
+const selectedPlayers = ref<string[]>([]);
 const expandedMaps = ref<Set<number>>(new Set());
 
 const tournamentId = parseInt(route.params.id as string);
@@ -827,12 +920,65 @@ const getGameIcon = (): string => {
   return iconMap[tournament.value.game] || `url('${bf1942Icon}')`;
 };
 
-const openTeamModal = (team: PublicTournamentTeam) => {
-  selectedTeam.value = team;
+const openMatchupModal = (match: PublicTournamentMatch) => {
+  selectedMatch.value = match;
+  selectedPlayers.value = [];
 };
 
-const closeTeamModal = () => {
-  selectedTeam.value = null;
+const closeMatchupModal = () => {
+  selectedMatch.value = null;
+  selectedPlayers.value = [];
+};
+
+const getTeamRoster = (_match: PublicTournamentMatch, teamName: string) => {
+  if (!tournament.value) return [];
+  const team = tournament.value.teams.find(t => t.name === teamName);
+  return team?.players || [];
+};
+
+const selectPlayerForComparison = (playerName: string, teamName: string) => {
+  const currentIndex = selectedPlayers.value.indexOf(playerName);
+
+  // If player already selected, deselect them
+  if (currentIndex !== -1) {
+    selectedPlayers.value.splice(currentIndex, 1);
+    return;
+  }
+
+  // If we have 2 players selected, we need to replace one
+  if (selectedPlayers.value.length === 2) {
+    // Find which team the currently selected players are from
+    const player1Team = selectedMatch.value?.team1Name;
+
+    const player1InTeam1 = getTeamRoster(selectedMatch.value!, player1Team!).some(p => p.playerName === selectedPlayers.value[0]);
+    const newPlayerInTeam1 = teamName === player1Team;
+
+    // Replace the player from the same team
+    if (player1InTeam1 === newPlayerInTeam1) {
+      selectedPlayers.value[0] = playerName;
+    } else {
+      selectedPlayers.value[1] = playerName;
+    }
+  } else {
+    // Add the player
+    selectedPlayers.value.push(playerName);
+  }
+};
+
+const isPlayerSelected = (playerName: string): boolean => {
+  return selectedPlayers.value.includes(playerName);
+};
+
+const comparePlayers = () => {
+  if (selectedPlayers.value.length === 2) {
+    router.push({
+      path: '/players/compare',
+      query: {
+        player1: selectedPlayers.value[0],
+        player2: selectedPlayers.value[1]
+      }
+    });
+  }
 };
 
 const toggleMapExpansion = (mapId: number) => {
