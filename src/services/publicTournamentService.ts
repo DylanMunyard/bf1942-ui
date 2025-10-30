@@ -35,6 +35,8 @@ export interface PublicTournamentMatchMap {
   mapName: string;
   mapOrder: number;
   roundId?: string;
+  teamId?: number;
+  teamName?: string;
   round?: PublicTournamentRound | null;
 }
 

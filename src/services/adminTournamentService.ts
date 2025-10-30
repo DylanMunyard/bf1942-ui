@@ -26,6 +26,8 @@ export interface TournamentMatchMap {
   mapName: string;
   mapOrder: number;
   roundId?: string;
+  teamId?: number;
+  teamName?: string;
   round?: {
     roundId: string;
     serverGuid: string;
@@ -133,6 +135,7 @@ export interface UpdateMatchMapRequest {
   mapName?: string;
   roundId?: string | null;
   updateRoundId: boolean;
+  teamId?: number;
 }
 
 class AdminTournamentService {

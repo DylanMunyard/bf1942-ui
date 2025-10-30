@@ -272,7 +272,12 @@
                   >
                     <div class="flex items-center gap-3 flex-1 min-w-0">
                       <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
-                      <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
+                      <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+                        <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
+                        <span v-if="map.teamName" class="text-xs text-emerald-400">
+                          Selected by {{ map.teamName }}
+                        </span>
+                      </div>
                       <button
                         v-if="map.roundId"
                         class="p-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded transition-all flex-shrink-0"

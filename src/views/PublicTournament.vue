@@ -148,8 +148,13 @@
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3 flex-1 min-w-0">
                         <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
-                        <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                        <span v-if="map.round?.winningTeamName" class="text-xs text-emerald-400 flex items-center gap-1">
+                        <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+                          <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
+                          <span v-if="map.teamName" class="text-xs text-cyan-400">
+                            Selected by {{ map.teamName }}
+                          </span>
+                        </div>
+                        <span v-if="map.round?.winningTeamName" class="text-xs text-emerald-400 flex items-center gap-1 flex-shrink-0">
                           <span>🏆</span>
                           <span>{{ map.round.winningTeamName }}</span>
                           <span v-if="getTeamScore(map, 1) !== undefined && getTeamScore(map, 2) !== undefined" class="text-slate-400">
@@ -395,8 +400,13 @@
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3 flex-1 min-w-0">
                         <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
-                        <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                        <span v-if="map.round?.winningTeamName" class="text-xs text-emerald-400 flex items-center gap-1">
+                        <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+                          <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
+                          <span v-if="map.teamName" class="text-xs text-cyan-400">
+                            Selected by {{ map.teamName }}
+                          </span>
+                        </div>
+                        <span v-if="map.round?.winningTeamName" class="text-xs text-emerald-400 flex items-center gap-1 flex-shrink-0">
                           <span>🏆</span>
                           <span>{{ map.round.winningTeamName }}</span>
                           <span v-if="getTeamScore(map, 1) !== undefined && getTeamScore(map, 2) !== undefined" class="text-slate-400">

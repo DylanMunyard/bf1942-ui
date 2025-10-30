@@ -105,33 +105,59 @@
             <label class="block text-sm font-medium text-slate-300 mb-2">
               Maps <span class="text-red-400">*</span>
             </label>
-            <div class="space-y-2">
+            <div class="space-y-3">
               <div
-                v-for="(_mapName, index) in formData.mapNames"
+                v-for="(_map, index) in formData.maps"
                 :key="index"
-                class="flex items-center gap-2"
+                class="bg-slate-800/30 border border-slate-700/30 rounded-lg p-3"
               >
-                <div class="flex-shrink-0 w-6 text-center text-slate-500 text-sm font-mono">
-                  {{ index + 1 }}
+                <!-- Map Name Row -->
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="flex-shrink-0 w-6 text-center text-slate-500 text-sm font-mono">
+                    {{ index + 1 }}
+                  </div>
+                  <input
+                    v-model="formData.maps[index].name"
+                    type="text"
+                    placeholder="e.g., Wake Island, El Alamein"
+                    class="flex-1 px-4 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                    :disabled="loading"
+                  >
+                  <button
+                    v-if="formData.maps.length > 1"
+                    class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
+                    @click="removeMap(index)"
+                    :disabled="loading"
+                    title="Remove map"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <input
-                  v-model="formData.mapNames[index]"
-                  type="text"
-                  placeholder="e.g., Wake Island, El Alamein"
-                  class="flex-1 px-4 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-                  :disabled="loading"
-                >
-                <button
-                  v-if="formData.mapNames.length > 1"
-                  class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
-                  @click="removeMap(index)"
-                  :disabled="loading"
-                  title="Remove map"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+
+                <!-- Team Selection Row (Optional) -->
+                <div v-if="formData.team1Id && formData.team2Id" class="flex items-center gap-2 ml-8">
+                  <span class="text-xs text-slate-400 flex-shrink-0">Selected by:</span>
+                  <div class="flex items-center gap-2 flex-1">
+                    <button
+                      v-for="team in props.teams.filter(t => t.id === formData.team1Id || t.id === formData.team2Id)"
+                      :key="team.id"
+                      type="button"
+                      :class="[
+                        'flex-1 px-2 py-1 rounded border text-xs font-medium transition-all',
+                        formData.maps[index].teamId === team.id
+                          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                          : 'bg-slate-700/30 border-slate-600/30 text-slate-400 hover:bg-slate-700/50 hover:border-slate-600/50'
+                      ]"
+                      @click="formData.maps[index].teamId = formData.maps[index].teamId === team.id ? null : team.id"
+                      :disabled="loading"
+                    >
+                      {{ team.name }}
+                    </button>
+                  </div>
+                  <span class="text-xs text-slate-500 flex-shrink-0">(Optional)</span>
+                </div>
               </div>
               <button
                 class="w-full px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
@@ -226,11 +252,11 @@
             <span>⚠</span>
             <span>Team 1 and Team 2 must be different</span>
           </p>
-          <p v-if="formData.mapNames.length === 0" class="text-xs text-amber-400 flex items-center gap-1">
+          <p v-if="formData.maps.length === 0" class="text-xs text-amber-400 flex items-center gap-1">
             <span>⚠</span>
             <span>Please add at least one map</span>
           </p>
-          <p v-if="formData.mapNames.length > 0 && !formData.mapNames.every(name => name.trim().length > 0)" class="text-xs text-amber-400 flex items-center gap-1">
+          <p v-if="formData.maps.length > 0 && !formData.maps.every(map => map.name.trim().length > 0)" class="text-xs text-amber-400 flex items-center gap-1">
             <span>⚠</span>
             <span>All map names must be filled in (or remove empty maps)</span>
           </p>
@@ -294,11 +320,16 @@ const isServerSearching = ref(false);
 let serverSearchTimeout: number | null = null;
 let blurTimeout: number | null = null;
 
+interface MapEntry {
+  name: string;
+  teamId: number | null;
+}
+
 const formData = ref({
   scheduledDate: '',
   team1Id: null as number | null,
   team2Id: null as number | null,
-  mapNames: [''],
+  maps: [{ name: '', teamId: null }] as MapEntry[],
   serverGuid: '',
   serverName: '',
 });
@@ -318,8 +349,8 @@ const isFormValid = computed(() => {
     formData.value.team1Id !== null &&
     formData.value.team2Id !== null &&
     formData.value.team1Id !== formData.value.team2Id &&
-    formData.value.mapNames.length > 0 &&
-    formData.value.mapNames.every(name => name.trim().length > 0)
+    formData.value.maps.length > 0 &&
+    formData.value.maps.every(map => map.name.trim().length > 0)
   );
 });
 
@@ -389,11 +420,11 @@ const selectServer = (server: ServerSearchResult) => {
 };
 
 const addMap = () => {
-  formData.value.mapNames.push('');
+  formData.value.maps.push({ name: '', teamId: null });
 };
 
 const removeMap = (index: number) => {
-  formData.value.mapNames.splice(index, 1);
+  formData.value.maps.splice(index, 1);
 };
 
 onMounted(() => {
@@ -409,8 +440,11 @@ onMounted(() => {
 
     formData.value.team1Id = team1?.id || null;
     formData.value.team2Id = team2?.id || null;
-    // Extract map names from maps array
-    formData.value.mapNames = props.match.maps.map(m => m.mapName);
+    // Extract maps with their team selections
+    formData.value.maps = props.match.maps.map(m => ({
+      name: m.mapName,
+      teamId: m.teamId || null
+    }));
     formData.value.serverGuid = props.match.serverGuid || '';
     formData.value.serverName = props.match.serverName || '';
     serverSearchQuery.value = props.match.serverName || '';
@@ -435,17 +469,44 @@ const handleSubmit = async () => {
       scheduledDate: new Date(formData.value.scheduledDate).toISOString(),
       team1Id: formData.value.team1Id!,
       team2Id: formData.value.team2Id!,
-      mapNames: formData.value.mapNames.map(name => name.trim()).filter(name => name.length > 0),
+      mapNames: formData.value.maps.map(map => map.name.trim()).filter(name => name.length > 0),
       serverGuid: formData.value.serverGuid.trim() || undefined,
       serverName: serverName || undefined,
     };
 
+    let matchId: number;
     if (editMode.value && props.match) {
       console.log('Updating match with data:', requestData);
       await adminTournamentService.updateMatch(props.tournamentId, props.match.id, requestData);
+      matchId = props.match.id;
     } else {
       console.log('Creating match with data:', requestData);
-      await adminTournamentService.createMatch(props.tournamentId, requestData);
+      const createdMatch = await adminTournamentService.createMatch(props.tournamentId, requestData);
+      matchId = createdMatch.id;
+    }
+
+    // Now update team selections for each map
+    // Get the updated match to get the map IDs
+    const updatedMatch = await adminTournamentService.getMatchDetail(props.tournamentId, matchId);
+
+    // Update team selections for maps (including clearing them if null)
+    const teamUpdatePromises = formData.value.maps
+      .map((mapEntry, index) => {
+        const matchMap = updatedMatch.maps[index];
+        // Only update if teamId differs from the existing value
+        if (matchMap && mapEntry.teamId !== (matchMap.teamId || null)) {
+          return adminTournamentService.updateMatchMap(props.tournamentId, matchId, matchMap.id, {
+            mapId: matchMap.id,
+            teamId: mapEntry.teamId || undefined,
+            updateRoundId: false,
+          });
+        }
+        return null;
+      })
+      .filter(promise => promise !== null);
+
+    if (teamUpdatePromises.length > 0) {
+      await Promise.all(teamUpdatePromises);
     }
 
     emit('added');
