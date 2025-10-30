@@ -133,7 +133,7 @@
               @click="showAddTeamModal = true"
             >
               <span class="text-lg">+</span>
-              <span>Add Team</span>
+              <span>Add</span>
             </button>
           </div>
 
@@ -211,7 +211,7 @@
               :title="tournament.teams.length < 2 ? 'Create at least 2 teams first' : ''"
             >
               <span class="text-lg">+</span>
-              <span>Schedule Match</span>
+              <span>Schedule</span>
             </button>
           </div>
 
@@ -270,21 +270,21 @@
                     :key="map.id"
                     class="flex items-center justify-between bg-slate-700/30 rounded-lg p-3 border border-slate-600/30"
                   >
-                    <div class="flex items-center gap-3">
-                      <span class="text-sm font-mono text-slate-500">{{ map.mapOrder + 1 }}</span>
-                      <span class="text-amber-400 font-medium">{{ map.mapName }}</span>
-                      <span v-if="map.roundId" class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
-                        Linked
-                      </span>
-                    </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                      <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
+                      <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
                       <button
                         v-if="map.roundId"
-                        class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium"
+                        class="p-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded transition-all flex-shrink-0"
                         @click="viewRoundReport(map.roundId)"
+                        :title="`View round report`"
                       >
-                        View Round
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
                       </button>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
                       <button
                         v-if="map.roundId"
                         class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"

@@ -223,7 +223,7 @@
                   v-for="tournament in tournaments"
                   :key="tournament.id"
                   :tournament="tournament"
-                  @view-details="() => router.push(`/tournaments/${tournament.id}`)"
+                  @view-details="() => router.push(`/admin/tournaments/${tournament.id}`)"
                   @edit="() => editTournament(tournament.id)"
                   @remove="() => removeTournament(tournament.id)"
                 />
@@ -508,7 +508,7 @@ const onTournamentAdded = (tournamentId?: number) => {
 
   // If a new tournament was created (not editing), navigate to it
   if (tournamentId && !wasEditing) {
-    router.push(`/tournaments/${tournamentId}`);
+    router.push(`/admin/tournaments/${tournamentId}`);
   } else {
     // Otherwise just reload the data
     loadUserData();

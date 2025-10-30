@@ -244,6 +244,14 @@ const fetchData = async () => {
   try {
     const data = await fetchRoundReport(props.roundId);
     roundReport.value = data;
+
+    // Check if round is empty (no participants)
+    if (!data.leaderboardSnapshots || data.leaderboardSnapshots.length === 0 ||
+        (data.leaderboardSnapshots.length === 1 && data.leaderboardSnapshots[0].entries.length === 0)) {
+      error.value = 'This round was empty - no players participated';
+      return;
+    }
+
     generateBattleEvents();
     selectedSnapshotIndex.value = data.leaderboardSnapshots.length - 1;
     visibleEventIndex.value = batchUpdateEvents.value.length - 1;
@@ -937,13 +945,17 @@ const updatePageTitle = () => {
       <!-- Error State -->
       <div
         v-else-if="error"
-        class="bg-red-900/20 backdrop-blur-sm border border-red-700/50 rounded-2xl p-8 text-center"
+        :class="error.includes('empty') ? 'bg-slate-800/20 border-slate-700/50' : 'bg-red-900/20 border-red-700/50'"
+        class="backdrop-blur-sm border rounded-2xl p-8 text-center max-w-2xl mx-auto"
       >
         <div class="text-6xl mb-4">
-          ⚠️
+          {{ error.includes('empty') ? '🏜️' : '⚠️' }}
         </div>
-        <p class="text-red-400 text-lg font-semibold">
+        <p :class="error.includes('empty') ? 'text-slate-300' : 'text-red-400'" class="text-lg font-semibold mb-2">
           {{ error }}
+        </p>
+        <p v-if="error.includes('empty')" class="text-slate-400 text-sm">
+          This match was recorded but no players were present during the round.
         </p>
       </div>
 

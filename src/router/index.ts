@@ -17,6 +17,7 @@ const PlayerComparison = () => import('../views/PlayerComparison.vue')
 const SystemStats = () => import('../views/SystemStats.vue')
 const DiscordCallback = () => import('../views/DiscordCallback.vue')
 const TournamentDetails = () => import('../views/TournamentDetails.vue')
+const PublicTournament = () => import('../views/PublicTournament.vue')
 
 const routes: RouteRecordRaw[] = [
     {
@@ -213,7 +214,17 @@ const routes: RouteRecordRaw[] = [
     },
     {
       path: '/tournaments/:id',
-      name: 'tournament-details',
+      name: 'public-tournament',
+      component: PublicTournament,
+      props: true,
+      meta: {
+        title: (route: RouteLocationNormalized) => `Tournament ${route.params.id} - BF Stats`,
+        description: 'View tournament schedule, matches, and results for Battlefield competitions.'
+      }
+    },
+    {
+      path: '/admin/tournaments/:id',
+      name: 'admin-tournament-details',
       component: TournamentDetails,
       props: true,
       meta: {
