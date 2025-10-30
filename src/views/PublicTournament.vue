@@ -775,7 +775,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import {
   publicTournamentService,
@@ -783,6 +783,7 @@ import {
   type PublicTournamentMatch,
   type PublicTournamentMatchMap
 } from '@/services/publicTournamentService';
+import { notificationService } from '@/services/notificationService';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -882,6 +883,35 @@ const loadTournament = async () => {
 
     const data = await publicTournamentService.getTournamentDetail(tournamentId);
     tournament.value = data;
+
+    // Create description
+    const matchCount = data.matches.length;
+    let description = `View tournament schedule, matches, and results for ${data.name}. `;
+    description += `${matchCount} match${matchCount !== 1 ? 'es' : ''} scheduled`;
+    if (data.organizer) {
+      description += ` organized by ${data.organizer}`;
+    }
+    description += '. Track live tournament progress and player statistics.';
+
+    // Update meta description tag
+    const descriptionTag = document.querySelector('meta[name="description"]');
+    if (descriptionTag) {
+      descriptionTag.setAttribute('content', description);
+    }
+
+    // Create title
+    const fullTitle = `${data.name} - BF Stats`;
+
+    // Update Open Graph tags
+    const ogTitleTag = document.querySelector('meta[property="og:title"]');
+    if (ogTitleTag) {
+      ogTitleTag.setAttribute('content', fullTitle);
+    }
+
+    const ogDescriptionTag = document.querySelector('meta[property="og:description"]');
+    if (ogDescriptionTag) {
+      ogDescriptionTag.setAttribute('content', description);
+    }
 
     // Load hero image if available
     if (data.hasHeroImage) {
@@ -992,6 +1022,15 @@ const toggleMapExpansion = (mapId: number) => {
 const isMapExpanded = (mapId: number) => {
   return expandedMaps.value.has(mapId);
 };
+
+// Watch tournament data and update page title when it loads
+watch(tournament, (newTournament) => {
+  if (newTournament) {
+    const fullTitle = `${newTournament.name} - BF Stats`;
+    document.title = fullTitle;
+    notificationService.updateOriginalTitle();
+  }
+});
 
 onMounted(() => {
   loadTournament();
