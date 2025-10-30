@@ -268,7 +268,7 @@
                   <div
                     v-for="map in match.maps"
                     :key="map.id"
-                    class="flex items-center justify-between bg-slate-700/30 rounded-lg p-3 border border-slate-600/30"
+                    class="flex items-center justify-between gap-3 bg-slate-700/30 rounded-lg p-3 border border-slate-600/30"
                   >
                     <div class="flex items-center gap-3 flex-1 min-w-0">
                       <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>

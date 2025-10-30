@@ -145,15 +145,17 @@
                   class="bg-slate-700/30 rounded-lg border border-slate-600/30 overflow-hidden"
                 >
                   <div class="p-3">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div class="flex items-center gap-3 flex-1 min-w-0">
                         <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
                         <div class="flex flex-col gap-0.5 flex-1 min-w-0">
                           <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                          <span v-if="map.teamName" class="text-xs text-cyan-400">
+                          <span v-if="map.teamName" class="text-xs text-cyan-400 truncate">
                             Selected by {{ map.teamName }}
                           </span>
                         </div>
+                      </div>
+                      <div class="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
                         <span v-if="map.round?.winningTeamName" class="text-xs text-emerald-400 flex items-center gap-1 flex-shrink-0">
                           <span>🏆</span>
                           <span>{{ map.round.winningTeamName }}</span>
@@ -161,35 +163,35 @@
                             ({{ getTeamScore(map, 1) }} - {{ getTeamScore(map, 2) }})
                           </span>
                         </span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <button
-                          v-if="map.roundId && map.round?.players && map.round.players.length > 0"
-                          class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2"
-                          @click="toggleMapExpansion(map.id)"
-                        >
-                          <span>{{ isMapExpanded(map.id) ? 'Hide' : 'Show' }} Stats</span>
-                          <svg
-                            class="w-3.5 h-3.5 transition-transform"
-                            :class="{ 'rotate-180': isMapExpanded(map.id) }"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        <div class="flex items-center gap-2">
+                          <button
+                            v-if="map.roundId && map.round?.players && map.round.players.length > 0"
+                            class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2 whitespace-nowrap"
+                            @click="toggleMapExpansion(map.id)"
                           >
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                        <button
-                          v-if="map.roundId"
-                          class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2"
-                          @click="viewRoundReport(map.roundId)"
-                        >
-                          <span>Report</span>
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                        <div v-if="!map.roundId" class="text-slate-500 text-xs italic px-2">Pending</div>
+                            <span>{{ isMapExpanded(map.id) ? 'Hide' : 'Show' }} Stats</span>
+                            <svg
+                              class="w-3.5 h-3.5 transition-transform"
+                              :class="{ 'rotate-180': isMapExpanded(map.id) }"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          <button
+                            v-if="map.roundId"
+                            class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2 whitespace-nowrap"
+                            @click="viewRoundReport(map.roundId)"
+                          >
+                            <span>Report</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                          <div v-if="!map.roundId" class="text-slate-500 text-xs italic px-2 whitespace-nowrap">Pending</div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -397,15 +399,17 @@
                   class="bg-slate-700/30 rounded-lg border border-slate-600/30 overflow-hidden"
                 >
                   <div class="p-3">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div class="flex items-center gap-3 flex-1 min-w-0">
                         <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
                         <div class="flex flex-col gap-0.5 flex-1 min-w-0">
                           <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                          <span v-if="map.teamName" class="text-xs text-cyan-400">
+                          <span v-if="map.teamName" class="text-xs text-cyan-400 truncate">
                             Selected by {{ map.teamName }}
                           </span>
                         </div>
+                      </div>
+                      <div class="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
                         <span v-if="map.round?.winningTeamName" class="text-xs text-emerald-400 flex items-center gap-1 flex-shrink-0">
                           <span>🏆</span>
                           <span>{{ map.round.winningTeamName }}</span>
@@ -413,35 +417,35 @@
                             ({{ getTeamScore(map, 1) }} - {{ getTeamScore(map, 2) }})
                           </span>
                         </span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <button
-                          v-if="map.roundId && map.round?.players && map.round.players.length > 0"
-                          class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2"
-                          @click="toggleMapExpansion(map.id)"
-                        >
-                          <span>{{ isMapExpanded(map.id) ? 'Hide' : 'Show' }} Stats</span>
-                          <svg
-                            class="w-3.5 h-3.5 transition-transform"
-                            :class="{ 'rotate-180': isMapExpanded(map.id) }"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        <div class="flex items-center gap-2">
+                          <button
+                            v-if="map.roundId && map.round?.players && map.round.players.length > 0"
+                            class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2 whitespace-nowrap"
+                            @click="toggleMapExpansion(map.id)"
                           >
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                        <button
-                          v-if="map.roundId"
-                          class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2"
-                          @click="viewRoundReport(map.roundId)"
-                        >
-                          <span>Report</span>
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                        <div v-if="!map.roundId" class="text-slate-500 text-xs italic px-2">Pending</div>
+                            <span>{{ isMapExpanded(map.id) ? 'Hide' : 'Show' }} Stats</span>
+                            <svg
+                              class="w-3.5 h-3.5 transition-transform"
+                              :class="{ 'rotate-180': isMapExpanded(map.id) }"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          <button
+                            v-if="map.roundId"
+                            class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2 whitespace-nowrap"
+                            @click="viewRoundReport(map.roundId)"
+                          >
+                            <span>Report</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                          <div v-if="!map.roundId" class="text-slate-500 text-xs italic px-2 whitespace-nowrap">Pending</div>
+                        </div>
                       </div>
                     </div>
                   </div>
