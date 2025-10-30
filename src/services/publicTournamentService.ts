@@ -61,6 +61,8 @@ export interface PublicTournamentDetail {
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   serverGuid?: string;
   serverName?: string;
+  discordUrl?: string;
+  forumUrl?: string;
 }
 
 class PublicTournamentService {

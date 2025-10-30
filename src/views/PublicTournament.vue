@@ -42,25 +42,22 @@
         </div>
 
         <!-- Hero Content -->
-        <div class="relative z-10 px-4 sm:px-6 py-12 sm:py-20">
+        <div class="relative z-10 px-4 sm:px-6 py-8 sm:py-10">
           <div class="max-w-6xl mx-auto">
-            <!-- Game Icon Badge -->
-            <div class="flex justify-center mb-6">
-              <div
-                class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-cover bg-center border-4 border-amber-500/30 shadow-2xl"
-                :style="{ backgroundImage: getGameIcon() }"
-              />
-            </div>
-
             <!-- Tournament Name -->
-            <h1 class="text-4xl sm:text-5xl md:text-7xl font-black text-center mb-6 leading-tight">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-center mb-6 leading-tight">
               <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-300 drop-shadow-2xl">
                 {{ tournament.name }}
               </span>
             </h1>
 
-            <!-- Organizer & Info -->
+            <!-- Game Icon & Info -->
             <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-slate-300 mb-8">
+              <!-- Game Icon Badge -->
+              <div
+                class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-cover bg-center border-4 border-amber-500/30 shadow-2xl flex-shrink-0"
+                :style="{ backgroundImage: getGameIcon() }"
+              />
               <div class="flex items-center gap-2 px-4 py-2 bg-slate-800/60 backdrop-blur-sm rounded-full border border-slate-700/50">
                 <span class="text-amber-400">👤</span>
                 <span class="font-medium">{{ tournament.organizer }}</span>
@@ -73,6 +70,26 @@
                 <span class="text-emerald-400">⚔️</span>
                 <span class="font-medium">{{ tournament.matches.length }} Matches</span>
               </div>
+              <a
+                v-if="tournament.discordUrl"
+                :href="tournament.discordUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-2 px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 backdrop-blur-sm rounded-full border border-indigo-500/50 hover:border-indigo-400/70 transition-all"
+              >
+                <span class="text-indigo-400">💬</span>
+                <span class="font-medium text-indigo-300">Discord</span>
+              </a>
+              <a
+                v-if="tournament.forumUrl"
+                :href="tournament.forumUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-2 px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 backdrop-blur-sm rounded-full border border-orange-500/50 hover:border-orange-400/70 transition-all"
+              >
+                <span class="text-orange-400">📋</span>
+                <span class="font-medium text-orange-300">Forum</span>
+              </a>
             </div>
 
             <!-- Decorative Divider -->
@@ -93,13 +110,237 @@
             Upcoming Matches
           </h2>
 
-          <div class="space-y-6">
+          <div class="space-y-4">
             <div
               v-for="(match, index) in upcomingMatches"
               :key="match.id"
-              class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-lg rounded-2xl border-2 border-violet-500/40 overflow-hidden hover:border-violet-500/60 transition-all duration-300 shadow-xl"
+              class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-violet-500/30 transition-all"
             >
-              <MatchCard :match="match" :index="index" :is-upcoming="true" />
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <span class="text-2xl font-black text-violet-400">{{ index + 1 }}</span>
+                    <span class="text-amber-400 text-base font-semibold">📅 {{ formatMatchDate(match.scheduledDate) }}</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="text-center">
+                      <div class="text-lg font-bold text-emerald-400">{{ match.team1Name }}</div>
+                    </div>
+                    <div class="text-2xl font-bold text-violet-400">VS</div>
+                    <div class="text-center">
+                      <div class="text-lg font-bold text-emerald-400">{{ match.team2Name }}</div>
+                    </div>
+                  </div>
+                  <div v-if="match.serverName" class="text-sm text-slate-400">
+                    <span>🖥️ {{ match.serverName }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Maps List -->
+              <div class="space-y-2">
+                <div
+                  v-for="map in match.maps"
+                  :key="map.id"
+                  class="bg-slate-700/30 rounded-lg border border-slate-600/30 overflow-hidden"
+                >
+                  <div class="p-3">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
+                        <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
+                        <span v-if="map.round?.winningTeamName" class="text-xs text-emerald-400 flex items-center gap-1">
+                          <span>🏆</span>
+                          <span>{{ map.round.winningTeamName }}</span>
+                          <span v-if="getTeamScore(map, 1) !== undefined && getTeamScore(map, 2) !== undefined" class="text-slate-400">
+                            ({{ getTeamScore(map, 1) }} - {{ getTeamScore(map, 2) }})
+                          </span>
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <button
+                          v-if="map.roundId && map.round?.players && map.round.players.length > 0"
+                          class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2"
+                          @click="toggleMapExpansion(map.id)"
+                        >
+                          <span>{{ isMapExpanded(map.id) ? 'Hide' : 'Show' }} Stats</span>
+                          <svg
+                            class="w-3.5 h-3.5 transition-transform"
+                            :class="{ 'rotate-180': isMapExpanded(map.id) }"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        <button
+                          v-if="map.roundId"
+                          class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2"
+                          @click="viewRoundReport(map.roundId)"
+                        >
+                          <span>Report</span>
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                        <div v-if="!map.roundId" class="text-slate-500 text-xs italic px-2">Pending</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Expandable Player Stats Table -->
+                  <div
+                    v-if="isMapExpanded(map.id) && map.round?.players && map.round.players.length > 0"
+                    class="border-t border-slate-600/30 bg-slate-800/40 p-3"
+                  >
+                    <div class="overflow-x-auto">
+                      <table class="w-full border-collapse">
+                        <thead>
+                          <!-- Team Headers -->
+                          <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
+                            <th class="p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-400 border-b border-slate-700/30 w-8">
+                              #
+                            </th>
+                            <!-- Team 1 Header -->
+                            <th
+                              class="p-2 text-center font-bold text-xs uppercase tracking-wide border-b border-slate-700/30 bg-emerald-500/10 border-l-4"
+                              :class="map.round.winningTeamName === getTeamName(map, 1)
+                                ? 'text-emerald-400 border-l-emerald-400/60'
+                                : 'text-cyan-400 border-l-cyan-400/60'"
+                              colspan="4"
+                            >
+                              <div class="flex items-center justify-center gap-2">
+                                <span class="font-mono font-bold text-sm">{{ getTeamName(map, 1) }}</span>
+                                <span v-if="getTeamScore(map, 1) !== undefined" class="text-slate-300 font-bold text-sm">
+                                  ({{ getTeamScore(map, 1) }})
+                                </span>
+                                <span v-if="map.round.winningTeamName === getTeamName(map, 1)">🏆</span>
+                              </div>
+                            </th>
+                            <!-- Team 2 Header -->
+                            <th
+                              class="p-2 text-center font-bold text-xs uppercase tracking-wide border-b border-slate-700/30 bg-orange-500/10 border-l-4"
+                              :class="map.round.winningTeamName === getTeamName(map, 2)
+                                ? 'text-emerald-400 border-l-emerald-400/60'
+                                : 'text-orange-400 border-l-orange-400/60'"
+                              colspan="4"
+                            >
+                              <div class="flex items-center justify-center gap-2">
+                                <span class="font-mono font-bold text-sm">{{ getTeamName(map, 2) }}</span>
+                                <span v-if="getTeamScore(map, 2) !== undefined" class="text-slate-300 font-bold text-sm">
+                                  ({{ getTeamScore(map, 2) }})
+                                </span>
+                                <span v-if="map.round.winningTeamName === getTeamName(map, 2)">🏆</span>
+                              </div>
+                            </th>
+                          </tr>
+                          <!-- Stat Column Headers -->
+                          <tr class="bg-gradient-to-r from-slate-800/90 to-slate-900/90">
+                            <th class="p-2 border-b border-slate-700/30" />
+                            <!-- Team 1 Stats -->
+                            <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60 min-w-[120px]">
+                              <span class="font-mono">Player</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
+                              <span class="font-mono">S</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
+                              <span class="font-mono">K</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-r-4 border-r-cyan-400/60">
+                              <span class="font-mono">D</span>
+                            </th>
+                            <!-- Team 2 Stats -->
+                            <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60 min-w-[120px]">
+                              <span class="font-mono">Player</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                              <span class="font-mono">S</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                              <span class="font-mono">K</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                              <span class="font-mono">D</span>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            v-for="(_, idx) in Math.max(getTeamPlayers(map, 1).length, getTeamPlayers(map, 2).length)"
+                            :key="idx"
+                            class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/10"
+                          >
+                            <!-- Row Number -->
+                            <td class="p-2 text-slate-500 text-xs font-mono">
+                              {{ idx + 1 }}
+                            </td>
+                            <!-- Team 1 Player -->
+                            <template v-if="getTeamPlayers(map, 1)[idx]">
+                              <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
+                                <router-link
+                                  :to="`/players/${getTeamPlayers(map, 1)[idx].playerName}`"
+                                  class="text-cyan-400 hover:text-cyan-300 font-medium text-xs truncate block"
+                                >
+                                  {{ getTeamPlayers(map, 1)[idx].playerName }}
+                                </router-link>
+                              </td>
+                              <td class="p-2 text-center bg-cyan-500/5">
+                                <span class="text-slate-200 font-bold text-xs font-mono">
+                                  {{ getTeamPlayers(map, 1)[idx].totalScore.toLocaleString() }}
+                                </span>
+                              </td>
+                              <td class="p-2 text-center bg-cyan-500/5">
+                                <span class="text-slate-300 text-xs font-mono">
+                                  {{ getTeamPlayers(map, 1)[idx].totalKills }}
+                                </span>
+                              </td>
+                              <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
+                                <span class="text-slate-300 text-xs font-mono">
+                                  {{ getTeamPlayers(map, 1)[idx].totalDeaths }}
+                                </span>
+                              </td>
+                            </template>
+                            <template v-else>
+                              <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40" colspan="4" />
+                            </template>
+                            <!-- Team 2 Player -->
+                            <template v-if="getTeamPlayers(map, 2)[idx]">
+                              <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40">
+                                <router-link
+                                  :to="`/players/${getTeamPlayers(map, 2)[idx].playerName}`"
+                                  class="text-orange-400 hover:text-orange-300 font-medium text-xs truncate block"
+                                >
+                                  {{ getTeamPlayers(map, 2)[idx].playerName }}
+                                </router-link>
+                              </td>
+                              <td class="p-2 text-center bg-orange-500/5">
+                                <span class="text-slate-200 font-bold text-xs font-mono">
+                                  {{ getTeamPlayers(map, 2)[idx].totalScore.toLocaleString() }}
+                                </span>
+                              </td>
+                              <td class="p-2 text-center bg-orange-500/5">
+                                <span class="text-slate-300 text-xs font-mono">
+                                  {{ getTeamPlayers(map, 2)[idx].totalKills }}
+                                </span>
+                              </td>
+                              <td class="p-2 text-center bg-orange-500/5">
+                                <span class="text-slate-300 text-xs font-mono">
+                                  {{ getTeamPlayers(map, 2)[idx].totalDeaths }}
+                                </span>
+                              </td>
+                            </template>
+                            <template v-else>
+                              <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40" colspan="4" />
+                            </template>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -110,13 +351,243 @@
             Completed Matches
           </h2>
 
-          <div class="space-y-6">
+          <div class="space-y-4">
             <div
               v-for="(match, index) in completedMatches"
               :key="match.id"
-              class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-lg rounded-2xl border-2 border-slate-700/50 overflow-hidden hover:border-emerald-500/40 transition-all duration-300 shadow-xl"
+              class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-emerald-500/30 transition-all"
             >
-              <MatchCard :match="match" :index="index" :is-upcoming="false" />
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <span class="text-2xl font-black text-emerald-400">{{ index + 1 }}</span>
+                    <span class="text-amber-400 text-base font-semibold">📅 {{ formatMatchDate(match.scheduledDate) }}</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="text-center">
+                      <div class="text-lg font-bold text-emerald-400">{{ match.team1Name }}</div>
+                      <div v-if="getMatchWinner(match) === match.team1Name" class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400 text-xs font-bold mt-1">
+                        🏆 Winner
+                      </div>
+                    </div>
+                    <div class="text-2xl font-bold text-violet-400">VS</div>
+                    <div class="text-center">
+                      <div class="text-lg font-bold text-emerald-400">{{ match.team2Name }}</div>
+                      <div v-if="getMatchWinner(match) === match.team2Name" class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400 text-xs font-bold mt-1">
+                        🏆 Winner
+                      </div>
+                    </div>
+                  </div>
+                  <div v-if="match.serverName" class="text-sm text-slate-400">
+                    <span>🖥️ {{ match.serverName }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Maps List with Player Stats -->
+              <div class="space-y-2">
+                <div
+                  v-for="map in match.maps"
+                  :key="map.id"
+                  class="bg-slate-700/30 rounded-lg border border-slate-600/30 overflow-hidden"
+                >
+                  <div class="p-3">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
+                        <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
+                        <span v-if="map.round?.winningTeamName" class="text-xs text-emerald-400 flex items-center gap-1">
+                          <span>🏆</span>
+                          <span>{{ map.round.winningTeamName }}</span>
+                          <span v-if="getTeamScore(map, 1) !== undefined && getTeamScore(map, 2) !== undefined" class="text-slate-400">
+                            ({{ getTeamScore(map, 1) }} - {{ getTeamScore(map, 2) }})
+                          </span>
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <button
+                          v-if="map.roundId && map.round?.players && map.round.players.length > 0"
+                          class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2"
+                          @click="toggleMapExpansion(map.id)"
+                        >
+                          <span>{{ isMapExpanded(map.id) ? 'Hide' : 'Show' }} Stats</span>
+                          <svg
+                            class="w-3.5 h-3.5 transition-transform"
+                            :class="{ 'rotate-180': isMapExpanded(map.id) }"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        <button
+                          v-if="map.roundId"
+                          class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2"
+                          @click="viewRoundReport(map.roundId)"
+                        >
+                          <span>Report</span>
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                        <div v-if="!map.roundId" class="text-slate-500 text-xs italic px-2">Pending</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Expandable Player Stats Table -->
+                  <div
+                    v-if="isMapExpanded(map.id) && map.round?.players && map.round.players.length > 0"
+                    class="border-t border-slate-600/30 bg-slate-800/40 p-3"
+                  >
+                    <div class="overflow-x-auto">
+                      <table class="w-full border-collapse">
+                        <thead>
+                          <!-- Team Headers -->
+                          <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
+                            <th class="p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-400 border-b border-slate-700/30 w-8">
+                              #
+                            </th>
+                            <!-- Team 1 Header -->
+                            <th
+                              class="p-2 text-center font-bold text-xs uppercase tracking-wide border-b border-slate-700/30 bg-emerald-500/10 border-l-4"
+                              :class="map.round.winningTeamName === getTeamName(map, 1)
+                                ? 'text-emerald-400 border-l-emerald-400/60'
+                                : 'text-cyan-400 border-l-cyan-400/60'"
+                              colspan="4"
+                            >
+                              <div class="flex items-center justify-center gap-2">
+                                <span class="font-mono font-bold text-sm">{{ getTeamName(map, 1) }}</span>
+                                <span v-if="getTeamScore(map, 1) !== undefined" class="text-slate-300 font-bold text-sm">
+                                  ({{ getTeamScore(map, 1) }})
+                                </span>
+                                <span v-if="map.round.winningTeamName === getTeamName(map, 1)">🏆</span>
+                              </div>
+                            </th>
+                            <!-- Team 2 Header -->
+                            <th
+                              class="p-2 text-center font-bold text-xs uppercase tracking-wide border-b border-slate-700/30 bg-orange-500/10 border-l-4"
+                              :class="map.round.winningTeamName === getTeamName(map, 2)
+                                ? 'text-emerald-400 border-l-emerald-400/60'
+                                : 'text-orange-400 border-l-orange-400/60'"
+                              colspan="4"
+                            >
+                              <div class="flex items-center justify-center gap-2">
+                                <span class="font-mono font-bold text-sm">{{ getTeamName(map, 2) }}</span>
+                                <span v-if="getTeamScore(map, 2) !== undefined" class="text-slate-300 font-bold text-sm">
+                                  ({{ getTeamScore(map, 2) }})
+                                </span>
+                                <span v-if="map.round.winningTeamName === getTeamName(map, 2)">🏆</span>
+                              </div>
+                            </th>
+                          </tr>
+                          <!-- Stat Column Headers -->
+                          <tr class="bg-gradient-to-r from-slate-800/90 to-slate-900/90">
+                            <th class="p-2 border-b border-slate-700/30" />
+                            <!-- Team 1 Stats -->
+                            <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60 min-w-[120px]">
+                              <span class="font-mono">Player</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
+                              <span class="font-mono">S</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
+                              <span class="font-mono">K</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-r-4 border-r-cyan-400/60">
+                              <span class="font-mono">D</span>
+                            </th>
+                            <!-- Team 2 Stats -->
+                            <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60 min-w-[120px]">
+                              <span class="font-mono">Player</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                              <span class="font-mono">S</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                              <span class="font-mono">K</span>
+                            </th>
+                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                              <span class="font-mono">D</span>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            v-for="(_, idx) in Math.max(getTeamPlayers(map, 1).length, getTeamPlayers(map, 2).length)"
+                            :key="idx"
+                            class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/10"
+                          >
+                            <!-- Row Number -->
+                            <td class="p-2 text-slate-500 text-xs font-mono">
+                              {{ idx + 1 }}
+                            </td>
+                            <!-- Team 1 Player -->
+                            <template v-if="getTeamPlayers(map, 1)[idx]">
+                              <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
+                                <router-link
+                                  :to="`/players/${getTeamPlayers(map, 1)[idx].playerName}`"
+                                  class="text-cyan-400 hover:text-cyan-300 font-medium text-xs truncate block"
+                                >
+                                  {{ getTeamPlayers(map, 1)[idx].playerName }}
+                                </router-link>
+                              </td>
+                              <td class="p-2 text-center bg-cyan-500/5">
+                                <span class="text-slate-200 font-bold text-xs font-mono">
+                                  {{ getTeamPlayers(map, 1)[idx].totalScore.toLocaleString() }}
+                                </span>
+                              </td>
+                              <td class="p-2 text-center bg-cyan-500/5">
+                                <span class="text-slate-300 text-xs font-mono">
+                                  {{ getTeamPlayers(map, 1)[idx].totalKills }}
+                                </span>
+                              </td>
+                              <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
+                                <span class="text-slate-300 text-xs font-mono">
+                                  {{ getTeamPlayers(map, 1)[idx].totalDeaths }}
+                                </span>
+                              </td>
+                            </template>
+                            <template v-else>
+                              <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40" colspan="4" />
+                            </template>
+                            <!-- Team 2 Player -->
+                            <template v-if="getTeamPlayers(map, 2)[idx]">
+                              <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40">
+                                <router-link
+                                  :to="`/players/${getTeamPlayers(map, 2)[idx].playerName}`"
+                                  class="text-orange-400 hover:text-orange-300 font-medium text-xs truncate block"
+                                >
+                                  {{ getTeamPlayers(map, 2)[idx].playerName }}
+                                </router-link>
+                              </td>
+                              <td class="p-2 text-center bg-orange-500/5">
+                                <span class="text-slate-200 font-bold text-xs font-mono">
+                                  {{ getTeamPlayers(map, 2)[idx].totalScore.toLocaleString() }}
+                                </span>
+                              </td>
+                              <td class="p-2 text-center bg-orange-500/5">
+                                <span class="text-slate-300 text-xs font-mono">
+                                  {{ getTeamPlayers(map, 2)[idx].totalKills }}
+                                </span>
+                              </td>
+                              <td class="p-2 text-center bg-orange-500/5">
+                                <span class="text-slate-300 text-xs font-mono">
+                                  {{ getTeamPlayers(map, 2)[idx].totalDeaths }}
+                                </span>
+                              </td>
+                            </template>
+                            <template v-else>
+                              <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40" colspan="4" />
+                            </template>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -197,8 +668,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, defineComponent, h } from 'vue';
-import { useRouter, useRoute, RouterLink } from 'vue-router';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import {
   publicTournamentService,
   type PublicTournamentDetail,
@@ -218,223 +689,58 @@ const heroImageUrl = ref<string | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const selectedTeam = ref<PublicTournamentTeam | null>(null);
+const expandedMaps = ref<Set<number>>(new Set());
 
 const tournamentId = parseInt(route.params.id as string);
 
-// Match Card Component
-const MatchCard = defineComponent({
-  props: {
-    match: {
-      type: Object as () => PublicTournamentMatch,
-      required: true
-    },
-    index: {
-      type: Number,
-      required: true
-    },
-    isUpcoming: {
-      type: Boolean,
-      required: true
-    }
-  },
-  setup(props) {
-    const router = useRouter();
+// Helper functions
+const getTeamPlayers = (map: PublicTournamentMatchMap, team: number) => {
+  if (!map.round?.players) return [];
+  return map.round.players
+    .filter(p => p.team === team)
+    .sort((a, b) => b.totalScore - a.totalScore);
+};
 
-    const viewRoundReport = (roundId: string) => {
-      router.push(`/rounds/${roundId}/report`);
-    };
+const getTeamName = (map: PublicTournamentMatchMap, team: number): string => {
+  if (team === 1 && map.round?.team1Label) return map.round.team1Label;
+  if (team === 2 && map.round?.team2Label) return map.round.team2Label;
+  return `Team ${team}`;
+};
 
-    const getTeamPlayers = (map: PublicTournamentMatchMap, team: number) => {
-      if (!map.round?.players) return [];
-      return map.round.players
-        .filter(p => p.team === team)
-        .sort((a, b) => b.totalScore - a.totalScore);
-    };
+const getTeamScore = (map: PublicTournamentMatchMap, team: number): number | undefined => {
+  if (team === 1) return map.round?.tickets1;
+  if (team === 2) return map.round?.tickets2;
+  return undefined;
+};
 
-    const formatMatchDate = (dateString: string): string => {
-      const date = new Date(dateString);
-      return date.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    };
+const formatMatchDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
-    const getMatchWinner = (): string | null => {
-      const completedMaps = props.match.maps.filter(map => map.round);
-      if (completedMaps.length === 0 || completedMaps.length < props.match.maps.length) {
-        return null;
-      }
-
-      const team1Wins = completedMaps.filter(map => map.round?.winningTeamName === props.match.team1Name).length;
-      const team2Wins = completedMaps.filter(map => map.round?.winningTeamName === props.match.team2Name).length;
-
-      if (team1Wins > team2Wins) return props.match.team1Name;
-      if (team2Wins > team1Wins) return props.match.team2Name;
-      return null;
-    };
-
-    return () => h('div', [
-      // Match Header
-      h('div', {
-        class: 'bg-gradient-to-r from-slate-800/50 to-slate-900/50 px-4 sm:px-6 py-3 border-b border-slate-700/50'
-      }, [
-        h('div', { class: 'flex items-center justify-between' }, [
-          h('div', { class: 'flex items-center gap-3' }, [
-            h('span', { class: 'text-2xl sm:text-3xl font-black text-violet-400' }, props.index + 1),
-            h('span', { class: 'text-slate-400 text-sm sm:text-base' }, `📅 ${formatMatchDate(props.match.scheduledDate)}`)
-          ]),
-          props.match.serverName && h('div', { class: 'text-slate-400 text-xs sm:text-sm hidden sm:block' }, `🖥️ ${props.match.serverName}`)
-        ])
-      ]),
-
-      // Team Matchup
-      h('div', { class: 'px-4 sm:px-8 py-6 sm:py-8' }, [
-        h('div', { class: 'flex items-center justify-between gap-4 mb-6' }, [
-          // Team 1
-          h('div', { class: 'flex-1 text-center' }, [
-            h('div', { class: 'text-2xl sm:text-3xl font-bold text-emerald-400 mb-2' }, props.match.team1Name),
-            getMatchWinner() === props.match.team1Name && h('div', {
-              class: 'inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400 text-sm font-bold'
-            }, '🏆 Winner')
-          ]),
-
-          // VS Divider
-          h('div', { class: 'flex-shrink-0' }, [
-            h('div', {
-              class: 'text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-violet-400 to-purple-400 px-4'
-            }, 'VS')
-          ]),
-
-          // Team 2
-          h('div', { class: 'flex-1 text-center' }, [
-            h('div', { class: 'text-2xl sm:text-3xl font-bold text-emerald-400 mb-2' }, props.match.team2Name),
-            getMatchWinner() === props.match.team2Name && h('div', {
-              class: 'inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400 text-sm font-bold'
-            }, '🏆 Winner')
-          ])
-        ]),
-
-        // Maps & Rounds
-        h('div', { class: 'space-y-3' }, [
-          h('div', { class: 'text-center text-slate-400 text-sm font-medium mb-3' }, 'Maps'),
-          ...props.match.maps.map(map =>
-            h('div', {
-              key: map.id,
-              class: 'bg-slate-800/60 rounded-xl p-4 border border-slate-700/50'
-            }, [
-              // Map Header
-              h('div', { class: 'flex items-center justify-between gap-4 mb-4' }, [
-                h('div', { class: 'flex items-center gap-3 flex-1 min-w-0' }, [
-                  h('span', { class: 'text-lg font-mono font-bold text-violet-400 flex-shrink-0' }, map.mapOrder + 1),
-                  h('span', { class: 'text-lg font-bold text-amber-400 truncate' }, map.mapName)
-                ]),
-                map.round
-                  ? h('button', {
-                      class: 'px-3 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-sm font-medium flex items-center gap-2',
-                      onClick: () => viewRoundReport(map.roundId!)
-                    }, [
-                      h('span', {}, 'View Report'),
-                      h('svg', {
-                        class: 'w-4 h-4',
-                        fill: 'none',
-                        stroke: 'currentColor',
-                        viewBox: '0 0 24 24'
-                      }, [
-                        h('path', {
-                          'stroke-linecap': 'round',
-                          'stroke-linejoin': 'round',
-                          'stroke-width': '2',
-                          d: 'M9 5l7 7-7 7'
-                        })
-                      ])
-                    ])
-                  : h('div', { class: 'text-slate-500 text-sm italic' }, 'Pending')
-              ]),
-
-              // Leaderboard
-              map.round?.players && map.round.players.length > 0 && h('div', { class: 'grid grid-cols-1 lg:grid-cols-2 gap-4' }, [
-                // Team 1 Column
-                h('div', {
-                  class: map.round.winningTeamName === props.match.team1Name
-                    ? 'bg-emerald-500/10 border-2 border-emerald-500/30 rounded-lg p-3'
-                    : 'bg-slate-700/30 border border-slate-600/30 rounded-lg p-3'
-                }, [
-                  h('div', { class: 'text-center font-bold text-emerald-400 mb-3 flex items-center justify-center gap-2' }, [
-                    h('span', {}, props.match.team1Name),
-                    map.round.winningTeamName === props.match.team1Name && h('span', {}, '🏆')
-                  ]),
-                  h('div', { class: 'space-y-2' }, [
-                    // Header
-                    h('div', { class: 'grid grid-cols-4 gap-2 text-xs text-slate-400 font-medium pb-2 border-b border-slate-600/50' }, [
-                      h('div', {}, 'Player'),
-                      h('div', { class: 'text-center' }, 'S'),
-                      h('div', { class: 'text-center' }, 'K'),
-                      h('div', { class: 'text-center' }, 'D')
-                    ]),
-                    // Players
-                    ...getTeamPlayers(map, 1).map(player =>
-                      h('div', {
-                        key: player.playerName,
-                        class: 'grid grid-cols-4 gap-2 text-sm hover:bg-slate-600/20 rounded px-1 py-1'
-                      }, [
-                        h(RouterLink, {
-                          to: `/players/${player.playerName}`,
-                          class: 'text-cyan-400 hover:text-cyan-300 truncate'
-                        }, () => player.playerName),
-                        h('div', { class: 'text-center text-slate-300' }, player.totalScore.toLocaleString()),
-                        h('div', { class: 'text-center text-slate-300' }, player.totalKills),
-                        h('div', { class: 'text-center text-slate-300' }, player.totalDeaths)
-                      ])
-                    )
-                  ])
-                ]),
-
-                // Team 2 Column
-                h('div', {
-                  class: map.round.winningTeamName === props.match.team2Name
-                    ? 'bg-emerald-500/10 border-2 border-emerald-500/30 rounded-lg p-3'
-                    : 'bg-slate-700/30 border border-slate-600/30 rounded-lg p-3'
-                }, [
-                  h('div', { class: 'text-center font-bold text-emerald-400 mb-3 flex items-center justify-center gap-2' }, [
-                    h('span', {}, props.match.team2Name),
-                    map.round.winningTeamName === props.match.team2Name && h('span', {}, '🏆')
-                  ]),
-                  h('div', { class: 'space-y-2' }, [
-                    // Header
-                    h('div', { class: 'grid grid-cols-4 gap-2 text-xs text-slate-400 font-medium pb-2 border-b border-slate-600/50' }, [
-                      h('div', {}, 'Player'),
-                      h('div', { class: 'text-center' }, 'S'),
-                      h('div', { class: 'text-center' }, 'K'),
-                      h('div', { class: 'text-center' }, 'D')
-                    ]),
-                    // Players
-                    ...getTeamPlayers(map, 2).map(player =>
-                      h('div', {
-                        key: player.playerName,
-                        class: 'grid grid-cols-4 gap-2 text-sm hover:bg-slate-600/20 rounded px-1 py-1'
-                      }, [
-                        h(RouterLink, {
-                          to: `/players/${player.playerName}`,
-                          class: 'text-cyan-400 hover:text-cyan-300 truncate'
-                        }, () => player.playerName),
-                        h('div', { class: 'text-center text-slate-300' }, player.totalScore.toLocaleString()),
-                        h('div', { class: 'text-center text-slate-300' }, player.totalKills),
-                        h('div', { class: 'text-center text-slate-300' }, player.totalDeaths)
-                      ])
-                    )
-                  ])
-                ])
-              ])
-            ])
-          )
-        ])
-      ])
-    ]);
+const getMatchWinner = (match: PublicTournamentMatch): string | null => {
+  const completedMaps = match.maps.filter(map => map.round);
+  if (completedMaps.length === 0 || completedMaps.length < match.maps.length) {
+    return null;
   }
-});
+
+  const team1Wins = completedMaps.filter(map => map.round?.winningTeamName === match.team1Name).length;
+  const team2Wins = completedMaps.filter(map => map.round?.winningTeamName === match.team2Name).length;
+
+  if (team1Wins > team2Wins) return match.team1Name;
+  if (team2Wins > team1Wins) return match.team2Name;
+  return null;
+};
+
+const viewRoundReport = (roundId: string) => {
+  router.push(`/rounds/${roundId}/report`);
+};
 
 const upcomingMatches = computed(() => {
   if (!tournament.value) return [];
@@ -513,6 +819,18 @@ const openTeamModal = (team: PublicTournamentTeam) => {
 
 const closeTeamModal = () => {
   selectedTeam.value = null;
+};
+
+const toggleMapExpansion = (mapId: number) => {
+  if (expandedMaps.value.has(mapId)) {
+    expandedMaps.value.delete(mapId);
+  } else {
+    expandedMaps.value.add(mapId);
+  }
+};
+
+const isMapExpanded = (mapId: number) => {
+  return expandedMaps.value.has(mapId);
 };
 
 onMounted(() => {

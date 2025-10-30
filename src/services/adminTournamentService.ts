@@ -10,6 +10,8 @@ export interface TournamentListItem {
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   serverGuid?: string;
   serverName?: string;
+  discordUrl?: string;
+  forumUrl?: string;
 }
 
 export interface TournamentTeam {
@@ -62,6 +64,8 @@ export interface TournamentDetail {
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   serverGuid?: string;
   serverName?: string;
+  discordUrl?: string;
+  forumUrl?: string;
 }
 
 export interface CreateTournamentRequest {
@@ -72,6 +76,8 @@ export interface CreateTournamentRequest {
   heroImageBase64?: string;
   heroImageContentType?: string;
   serverGuid?: string;
+  discordUrl?: string;
+  forumUrl?: string;
 }
 
 export interface UpdateTournamentRequest {
@@ -82,6 +88,8 @@ export interface UpdateTournamentRequest {
   heroImageBase64?: string;
   heroImageContentType?: string;
   serverGuid?: string;
+  discordUrl?: string;
+  forumUrl?: string;
 }
 
 // Teams interfaces

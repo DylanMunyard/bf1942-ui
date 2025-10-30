@@ -222,6 +222,38 @@
           </p>
         </div>
 
+        <!-- Discord URL -->
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">
+            Discord URL <span class="text-slate-500">(Optional)</span>
+          </label>
+          <input
+            v-model="formData.discordUrl"
+            type="url"
+            placeholder="https://discord.gg/..."
+            class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+          >
+          <p class="mt-1 text-xs text-slate-500">
+            Link to your tournament Discord server
+          </p>
+        </div>
+
+        <!-- Forum URL -->
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">
+            Forum URL <span class="text-slate-500">(Optional)</span>
+          </label>
+          <input
+            v-model="formData.forumUrl"
+            type="url"
+            placeholder="https://..."
+            class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+          >
+          <p class="mt-1 text-xs text-slate-500">
+            Link to your tournament forum or discussion page
+          </p>
+        </div>
+
         <!-- Hero Image Upload -->
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -355,6 +387,8 @@ const formData = ref({
   game: 'bf1942' as 'bf1942' | 'fh2' | 'bfvietnam',
   anticipatedRoundCount: undefined as number | undefined,
   serverGuid: undefined as string | undefined,
+  discordUrl: '',
+  forumUrl: '',
 });
 
 const loading = ref(false);
@@ -392,6 +426,8 @@ onMounted(() => {
       game: props.tournament.game,
       anticipatedRoundCount: props.tournament.anticipatedRoundCount,
       serverGuid: props.tournament.serverGuid,
+      discordUrl: props.tournament.discordUrl || '',
+      forumUrl: props.tournament.forumUrl || '',
     };
 
     // Populate server selection if available
@@ -629,6 +665,14 @@ const handleSubmit = async () => {
 
     if (formData.value.serverGuid) {
       request.serverGuid = formData.value.serverGuid;
+    }
+
+    if (formData.value.discordUrl?.trim()) {
+      request.discordUrl = formData.value.discordUrl.trim();
+    }
+
+    if (formData.value.forumUrl?.trim()) {
+      request.forumUrl = formData.value.forumUrl.trim();
     }
 
     // Convert image to base64 if provided
