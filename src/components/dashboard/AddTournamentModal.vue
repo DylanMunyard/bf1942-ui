@@ -257,7 +257,7 @@
         <!-- Hero Image Upload -->
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">
-            Hero Image
+            Hero Image <span class="text-slate-500">(Optional)</span>
           </label>
 
           <!-- Image Preview -->
@@ -316,6 +316,106 @@
           </p>
         </div>
 
+        <!-- Community Logo Upload -->
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">
+            Community Logo <span class="text-slate-500">(Optional)</span>
+          </label>
+
+          <!-- Logo Preview -->
+          <div
+            v-if="logoPreview"
+            class="relative mb-3 rounded-lg overflow-hidden border border-slate-700/50 bg-slate-800/30 p-4 flex items-center justify-center h-32"
+          >
+            <img
+              :src="logoPreview"
+              alt="Community logo"
+              class="max-h-28 max-w-full object-contain"
+            >
+            <button
+              type="button"
+              class="absolute top-2 right-2 p-2 bg-red-500/80 hover:bg-red-600 text-white rounded-lg transition-colors"
+              @click="removeLogo"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Upload Button -->
+          <div
+            class="relative border-2 border-dashed border-slate-700/50 rounded-lg p-6 text-center hover:border-cyan-500/50 transition-colors cursor-pointer"
+            @click="triggerLogoFileInput"
+            @dragover.prevent="isDraggingLogo = true"
+            @dragleave.prevent="isDraggingLogo = false"
+            @drop.prevent="handleLogoDrop"
+            :class="{ 'border-cyan-500/50 bg-cyan-500/5': isDraggingLogo }"
+          >
+            <input
+              ref="logoFileInput"
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              class="hidden"
+              @change="handleLogoFileSelect"
+            >
+            <div class="text-slate-400">
+              <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p class="text-sm font-medium">
+                {{ logoPreview ? 'Change Logo' : 'Upload Community Logo' }}
+              </p>
+              <p class="text-xs text-slate-500 mt-1">
+                Click or drag & drop (Max 4MB, JPEG/PNG/GIF/WEBP)
+              </p>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <p v-if="logoError" class="mt-2 text-xs text-red-400">
+            {{ logoError }}
+          </p>
+        </div>
+
+        <!-- Tournament Rules (Markdown) -->
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">
+            Tournament Rules <span class="text-slate-500">(Optional)</span>
+          </label>
+          <p class="text-xs text-slate-500 mb-2">
+            Use Markdown to format your rules. Preview shows on the right.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Markdown Editor -->
+            <div>
+              <textarea
+                v-model="formData.rules"
+                placeholder="# Tournament Rules&#10;&#10;Write your tournament rules in markdown..."
+                class="w-full h-64 px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all resize-none"
+              />
+              <p class="mt-2 text-xs text-slate-500">
+                **bold**, *italic*, # headings, - lists
+              </p>
+            </div>
+
+            <!-- Markdown Preview -->
+            <div class="bg-slate-800/40 border border-slate-700/50 rounded-lg p-4 overflow-y-auto h-64">
+              <div class="prose prose-invert prose-sm max-w-none text-slate-300">
+                <div
+                  v-if="formData.rules && formData.rules.trim()"
+                  v-html="renderedMarkdown"
+                  class="markdown-content"
+                />
+                <div v-else class="text-slate-500 text-sm italic">
+                  Markdown preview will appear here
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Error Message -->
         <div
           v-if="error"
@@ -347,7 +447,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { marked } from 'marked';
 import { adminTournamentService, type CreateTournamentRequest, type TournamentDetail } from '@/services/adminTournamentService';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
@@ -389,6 +490,7 @@ const formData = ref({
   serverGuid: undefined as string | undefined,
   discordUrl: '',
   forumUrl: '',
+  rules: '',
 });
 
 const loading = ref(false);
@@ -417,6 +519,25 @@ const imageFile = ref<File | null>(null);
 const imageError = ref<string | null>(null);
 const isDragging = ref(false);
 
+// Logo upload state
+const logoFileInput = ref<HTMLInputElement | null>(null);
+const logoPreview = ref<string | null>(null);
+const logoFile = ref<File | null>(null);
+const logoError = ref<string | null>(null);
+const isDraggingLogo = ref(false);
+
+// Markdown preview
+const renderedMarkdown = computed(() => {
+  if (!formData.value.rules || !formData.value.rules.trim()) {
+    return '';
+  }
+  try {
+    return marked(formData.value.rules, { breaks: true });
+  } catch {
+    return '<p class="text-red-400">Invalid markdown</p>';
+  }
+});
+
 onMounted(() => {
   if (props.tournament) {
     // Edit mode - populate form
@@ -428,6 +549,7 @@ onMounted(() => {
       serverGuid: props.tournament.serverGuid,
       discordUrl: props.tournament.discordUrl || '',
       forumUrl: props.tournament.forumUrl || '',
+      rules: props.tournament.rules || '',
     };
 
     // Populate server selection if available
@@ -442,13 +564,14 @@ onMounted(() => {
       serverSearchQuery.value = props.tournament.serverName;
     }
 
-    // Load existing image if available
+    // Load existing image if available (only from base64, not from URL)
     if (props.tournament.heroImageBase64) {
-      // If we have base64 data, use it directly
       imagePreview.value = `data:${props.tournament.heroImageContentType || 'image/png'};base64,${props.tournament.heroImageBase64}`;
-    } else if (props.tournament.hasHeroImage || props.tournament.id) {
-      // Otherwise try to fetch from the API
-      imagePreview.value = adminTournamentService.getTournamentImageUrl(props.tournament.id);
+    }
+
+    // Load existing logo if available (only from base64, not from URL)
+    if (props.tournament.communityLogoBase64) {
+      logoPreview.value = `data:${props.tournament.communityLogoContentType || 'image/png'};base64,${props.tournament.communityLogoBase64}`;
     }
   } else if (props.defaultOrganizer) {
     // Create mode with default organizer
@@ -593,6 +716,7 @@ const clearServerSelection = () => {
   formData.value.serverGuid = undefined;
 };
 
+// Hero image functions
 const triggerFileInput = () => {
   fileInput.value?.click();
 };
@@ -616,14 +740,12 @@ const handleDrop = (event: DragEvent) => {
 const processImageFile = (file: File) => {
   imageError.value = null;
 
-  // Validate file type
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
   if (!validTypes.includes(file.type)) {
     imageError.value = 'Invalid file type. Please use JPEG, PNG, GIF, or WEBP.';
     return;
   }
 
-  // Validate file size (4MB)
   if (file.size > 4 * 1024 * 1024) {
     imageError.value = 'File size must be less than 4MB.';
     return;
@@ -631,7 +753,6 @@ const processImageFile = (file: File) => {
 
   imageFile.value = file;
 
-  // Create preview
   const reader = new FileReader();
   reader.onload = (e) => {
     imagePreview.value = e.target?.result as string;
@@ -645,6 +766,59 @@ const removeImage = () => {
   imageError.value = null;
   if (fileInput.value) {
     fileInput.value.value = '';
+  }
+};
+
+// Community logo functions
+const triggerLogoFileInput = () => {
+  logoFileInput.value?.click();
+};
+
+const handleLogoFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) {
+    processLogoFile(file);
+  }
+};
+
+const handleLogoDrop = (event: DragEvent) => {
+  isDraggingLogo.value = false;
+  const file = event.dataTransfer?.files[0];
+  if (file) {
+    processLogoFile(file);
+  }
+};
+
+const processLogoFile = (file: File) => {
+  logoError.value = null;
+
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+    logoError.value = 'Invalid file type. Please use JPEG, PNG, GIF, or WEBP.';
+    return;
+  }
+
+  if (file.size > 4 * 1024 * 1024) {
+    logoError.value = 'File size must be less than 4MB.';
+    return;
+  }
+
+  logoFile.value = file;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    logoPreview.value = e.target?.result as string;
+  };
+  reader.readAsDataURL(file);
+};
+
+const removeLogo = () => {
+  logoFile.value = null;
+  logoPreview.value = null;
+  logoError.value = null;
+  if (logoFileInput.value) {
+    logoFileInput.value.value = '';
   }
 };
 
@@ -675,11 +849,22 @@ const handleSubmit = async () => {
       request.forumUrl = formData.value.forumUrl.trim();
     }
 
-    // Convert image to base64 if provided
+    if (formData.value.rules?.trim()) {
+      request.rules = formData.value.rules.trim();
+    }
+
+    // Convert hero image to base64 if provided
     if (imageFile.value) {
       const imageData = await adminTournamentService.imageToBase64(imageFile.value);
       request.heroImageBase64 = imageData.base64;
       request.heroImageContentType = imageData.contentType;
+    }
+
+    // Convert community logo to base64 if provided
+    if (logoFile.value) {
+      const logoData = await adminTournamentService.imageToBase64(logoFile.value);
+      request.communityLogoBase64 = logoData.base64;
+      request.communityLogoContentType = logoData.contentType;
     }
 
     let tournamentId: number | undefined;
@@ -702,3 +887,67 @@ const handleSubmit = async () => {
   }
 };
 </script>
+
+<style scoped>
+.markdown-content :deep(h1),
+.markdown-content :deep(h2),
+.markdown-content :deep(h3),
+.markdown-content :deep(h4),
+.markdown-content :deep(h5),
+.markdown-content :deep(h6) {
+  color: #cbd5e1;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content :deep(p) {
+  margin-bottom: 0.5rem;
+  color: #cbd5e1;
+}
+
+.markdown-content :deep(strong) {
+  font-weight: 600;
+  color: #e0f2fe;
+}
+
+.markdown-content :deep(em) {
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+.markdown-content :deep(ul),
+.markdown-content :deep(ol) {
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content :deep(li) {
+  margin-bottom: 0.25rem;
+  color: #cbd5e1;
+}
+
+.markdown-content :deep(code) {
+  background-color: rgba(71, 85, 105, 0.5);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  color: #fbbf24;
+  font-family: monospace;
+}
+
+.markdown-content :deep(blockquote) {
+  border-left: 3px solid #475569;
+  padding-left: 1rem;
+  margin-left: 0;
+  color: #94a3b8;
+}
+
+.markdown-content :deep(a) {
+  color: #06b6d4;
+  text-decoration: underline;
+}
+
+.markdown-content :deep(a:hover) {
+  color: #22d3ee;
+}
+</style>

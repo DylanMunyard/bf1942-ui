@@ -44,6 +44,15 @@
 
           <!-- Header Content -->
           <div class="relative z-10 p-6 sm:p-8 md:p-12">
+            <!-- Community Logo Display -->
+            <div v-if="logoImageUrl" class="mb-6 flex justify-center">
+              <img
+                :src="logoImageUrl"
+                alt="Community logo"
+                class="max-h-20 object-contain"
+              >
+            </div>
+
             <div class="flex items-start justify-between gap-4 mb-6">
               <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
@@ -339,6 +348,29 @@
             </div>
           </div>
         </div>
+
+        <!-- Tournament Rules Section -->
+        <div v-if="tournament.rules && tournament.rules.trim()" class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+          <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
+            <div>
+              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+                Tournament Rules
+              </h2>
+              <p class="text-slate-400 text-sm mt-1">
+                Guidelines and rules for the tournament
+              </p>
+            </div>
+          </div>
+
+          <div class="p-4 sm:p-6">
+            <div class="prose prose-invert prose-sm max-w-none">
+              <div
+                v-html="renderedRules"
+                class="text-slate-300 markdown-rules"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -484,6 +516,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { marked } from 'marked';
 import {
   adminTournamentService,
   type TournamentDetail,
@@ -504,6 +537,7 @@ const route = useRoute();
 
 const tournament = ref<TournamentDetail | null>(null);
 const heroImageUrl = ref<string | null>(null);
+const logoImageUrl = ref<string | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const showEditModal = ref(false);
@@ -527,6 +561,17 @@ const sortedMatches = computed(() => {
   });
 });
 
+const renderedRules = computed(() => {
+  if (!tournament.value?.rules || !tournament.value.rules.trim()) {
+    return '';
+  }
+  try {
+    return marked(tournament.value.rules, { breaks: true });
+  } catch {
+    return '<p class="text-red-400">Invalid markdown in rules</p>';
+  }
+});
+
 const loadTournament = async () => {
   loading.value = true;
   error.value = null;
@@ -545,6 +590,14 @@ const loadTournament = async () => {
     } else {
       // Try to fetch from API
       await loadHeroImage();
+    }
+
+    // Load logo image if available
+    if (data.communityLogoBase64) {
+      logoImageUrl.value = `data:${data.communityLogoContentType || 'image/png'};base64,${data.communityLogoBase64}`;
+    } else {
+      // Try to fetch from API
+      await loadLogoImage();
     }
   } catch (err) {
     console.error('Error loading tournament:', err);
@@ -573,6 +626,28 @@ const loadHeroImage = async () => {
   } catch (err) {
     // Silently fail - hero image is optional
     console.debug('No hero image available');
+  }
+};
+
+const loadLogoImage = async () => {
+  try {
+    const { authService } = await import('@/services/authService');
+    await authService.ensureValidToken();
+    const token = localStorage.getItem('authToken');
+
+    const response = await fetch(adminTournamentService.getTournamentLogoUrl(tournamentId), {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      logoImageUrl.value = URL.createObjectURL(blob);
+    }
+  } catch (err) {
+    // Silently fail - logo image is optional
+    console.debug('No logo image available');
   }
 };
 
@@ -779,5 +854,68 @@ tbody tr {
 
 .overflow-x-auto::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.7);
+}
+
+/* Markdown rules styling */
+.markdown-rules :deep(h1),
+.markdown-rules :deep(h2),
+.markdown-rules :deep(h3),
+.markdown-rules :deep(h4),
+.markdown-rules :deep(h5),
+.markdown-rules :deep(h6) {
+  color: #cbd5e1;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-rules :deep(p) {
+  margin-bottom: 0.5rem;
+  color: #cbd5e1;
+}
+
+.markdown-rules :deep(strong) {
+  font-weight: 600;
+  color: #e0f2fe;
+}
+
+.markdown-rules :deep(em) {
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+.markdown-rules :deep(ul),
+.markdown-rules :deep(ol) {
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-rules :deep(li) {
+  margin-bottom: 0.25rem;
+  color: #cbd5e1;
+}
+
+.markdown-rules :deep(code) {
+  background-color: rgba(71, 85, 105, 0.5);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  color: #fbbf24;
+  font-family: monospace;
+}
+
+.markdown-rules :deep(blockquote) {
+  border-left: 3px solid #475569;
+  padding-left: 1rem;
+  margin-left: 0;
+  color: #94a3b8;
+}
+
+.markdown-rules :deep(a) {
+  color: #06b6d4;
+  text-decoration: underline;
+}
+
+.markdown-rules :deep(a:hover) {
+  color: #22d3ee;
 }
 </style>

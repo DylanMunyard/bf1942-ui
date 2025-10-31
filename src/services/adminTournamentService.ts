@@ -241,6 +241,11 @@ class AdminTournamentService {
     return `${this.baseUrl}/${id}/image`;
   }
 
+  // Get tournament community logo URL (owned by current user only)
+  getTournamentLogoUrl(id: number): string {
+    return `${this.baseUrl}/${id}/logo`;
+  }
+
   // Create tournament
   async createTournament(request: CreateTournamentRequest): Promise<TournamentDetail> {
     return this.request<TournamentDetail>('', {

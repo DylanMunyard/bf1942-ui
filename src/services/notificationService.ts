@@ -97,15 +97,15 @@ class NotificationService {
 
     this.notifications.value.unshift(newNotification);
     this.pendingNotifications.value++;
-    
+
     // Add to recent notifications (at the beginning)
     this.recentNotifications.value.unshift({ ...newNotification });
-    
+
     // Keep only the most recent notifications
     if (this.recentNotifications.value.length > this.MAX_RECENT_NOTIFICATIONS) {
       this.recentNotifications.value = this.recentNotifications.value.slice(0, this.MAX_RECENT_NOTIFICATIONS);
     }
-    
+
     // Update tab title to indicate new notification
     this.updateTabTitle();
 
@@ -128,10 +128,10 @@ class NotificationService {
       if (recentIndex > -1) {
         this.recentNotifications.value[recentIndex].autoRemoved = autoRemoved;
       }
-      
+
       this.notifications.value.splice(index, 1);
       this.pendingNotifications.value = Math.max(0, this.pendingNotifications.value - 1);
-      
+
       // Update tab title
       this.updateTabTitle();
     }
@@ -220,9 +220,6 @@ class NotificationService {
   private updateTabTitle() {
     if (typeof document === 'undefined') return;
 
-    // Update original title to current title before modifying
-    this.updateOriginalTitle();
-
     // Clear existing interval
     if (this.titleInterval) {
       clearInterval(this.titleInterval);
@@ -258,7 +255,7 @@ class NotificationService {
       clearInterval(this.titleInterval);
       this.titleInterval = null;
     }
-    
+
     if (typeof document !== 'undefined') {
       document.title = this.originalTitle.value;
     }
@@ -274,7 +271,7 @@ class NotificationService {
       timestamp: new Date().toISOString(),
       message: `${buddyName} is now online on -[HELLO]- Desert Combat playing dc twin rivers`
     };
-    
+
     return this.handleBuddyOnline(testData);
   }
 
@@ -288,7 +285,7 @@ class NotificationService {
       message: `Server ${serverName} changed map from fh2 sidi_bou_zid to fh2 normandy_1944`,
       joinLink: 'bf1942://192.168.1.100:14567'
     };
-    
+
     return this.handleServerMapChange(testData);
   }
 }
