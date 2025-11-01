@@ -137,7 +137,19 @@ export function getContrastLevel(ratio: number): 'AAA' | 'AA' | 'Fail' {
 
 /**
  * Validates if a hex color is valid
+ * Accepts colors with or without # prefix
  */
 export function isValidHex(hex: string): boolean {
-  return /^#[0-9A-F]{6}$/i.test(hex);
+  if (!hex || typeof hex !== 'string') return false;
+  // Match 6 hex digits, with optional # prefix
+  return /^#?[0-9A-F]{6}$/i.test(hex.trim());
+}
+
+/**
+ * Ensures a hex color has the # prefix
+ */
+export function normalizeHex(hex: string): string {
+  if (!hex) return '';
+  const trimmed = hex.trim();
+  return trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
 }

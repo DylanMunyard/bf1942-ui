@@ -22,8 +22,8 @@
     <div v-else-if="tournament">
       <!-- Hero Banner Section -->
       <div class="relative overflow-hidden" :style="{
-        background: tournament.value?.primaryColour && isValidHex(tournament.value.primaryColour)
-          ? `linear-gradient(135deg, ${tournament.value.primaryColour} 0%, ${tournament.value.primaryColour}dd 50%, ${tournament.value.primaryColour}99 100%)`
+        background: getValidColors().primary
+          ? `linear-gradient(135deg, ${getValidColors().primary} 0%, ${getValidColors().primary}dd 50%, ${getValidColors().primary}99 100%)`
           : 'linear-gradient(to bottom right, rgb(15, 23, 42) 0%, rgb(30, 41, 59) 50%, rgb(15, 23, 42) 100%)'
       }">
         <!-- Background Hero Image -->
@@ -37,9 +37,9 @@
             class="w-full h-full object-cover opacity-30"
           >
           <div :style="{
-            background: tournament.value?.primaryColour && isValidHex(tournament.value.primaryColour)
-              ? `linear-gradient(to bottom, ${tournament.value.primaryColour}cc, ${tournament.value.primaryColour})`
-              : 'linear-gradient(to bottom, rgb(15, 23, 42, 0.8), rgb(15, 23, 42))'
+            background: getValidColors().primary
+              ? `linear-gradient(to bottom, ${getValidColors().primary}33, ${getValidColors().primary}55)`
+              : 'linear-gradient(to bottom, rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0.4))'
           }" class="absolute inset-0" />
         </div>
 
@@ -137,8 +137,8 @@
         <!-- Upcoming Matches Section -->
         <div v-if="upcomingMatches.length > 0">
           <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text" :style="{
-            backgroundImage: tournament.value?.primaryColour && isValidHex(tournament.value.primaryColour)
-              ? `linear-gradient(to right, ${tournament.value.primaryColour}, ${tournament.value.secondaryColour || (tournament.value.primaryColour ? generateComplementaryColor(tournament.value.primaryColour) : '#a855f7')})`
+            backgroundImage: getValidColors().primary
+              ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
               : 'linear-gradient(to right, rgb(167, 139, 250), rgb(168, 85, 247))'
           }">
             Upcoming Matches
@@ -399,8 +399,8 @@
         <!-- Completed Matches Section -->
         <div v-if="completedMatches.length > 0">
           <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text" :style="{
-            backgroundImage: tournament.value?.primaryColour && isValidHex(tournament.value.primaryColour)
-              ? `linear-gradient(to right, ${tournament.value.primaryColour}, ${tournament.value.secondaryColour || (tournament.value.primaryColour ? generateComplementaryColor(tournament.value.primaryColour) : '#10b981')})`
+            backgroundImage: getValidColors().primary
+              ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
               : 'linear-gradient(to right, rgb(52, 211, 153), rgb(20, 184, 166))'
           }">
             Completed Matches
@@ -860,7 +860,7 @@ import {
   type PublicTournamentMatchMap
 } from '@/services/publicTournamentService';
 import { notificationService } from '@/services/notificationService';
-import { generateComplementaryColor, getContrastingTextColor, isValidHex } from '@/utils/colorUtils';
+import { generateComplementaryColor, getContrastingTextColor, isValidHex, normalizeHex } from '@/utils/colorUtils';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -891,27 +891,47 @@ const renderedRules = computed(() => {
   }
 });
 
-const themeStyles = computed(() => {
-  if (!tournament.value) return {};
+// Helper function to check and return valid colors
+const getValidColors = () => {
+  if (!tournament.value) return { primary: null, secondary: null };
 
-  const primaryColour = tournament.value.primaryColour && isValidHex(tournament.value.primaryColour)
-    ? tournament.value.primaryColour
+  // Normalize and validate primary color
+  const normalizedPrimary = tournament.value.primaryColour ? normalizeHex(tournament.value.primaryColour) : null;
+  const primaryColour = normalizedPrimary && isValidHex(normalizedPrimary)
+    ? normalizedPrimary
     : null;
 
   if (!primaryColour) {
+    return { primary: null, secondary: null };
+  }
+
+  // Normalize and validate secondary color
+  const normalizedSecondary = tournament.value.secondaryColour ? normalizeHex(tournament.value.secondaryColour) : null;
+  const secondaryColour = normalizedSecondary && isValidHex(normalizedSecondary)
+    ? normalizedSecondary
+    : generateComplementaryColor(primaryColour);
+
+  return { primary: primaryColour, secondary: secondaryColour };
+};
+
+const themeStyles = computed(() => {
+  const colors = getValidColors();
+
+  if (!colors.primary) {
     return {};
   }
 
-  const secondaryColour = tournament.value.secondaryColour && isValidHex(tournament.value.secondaryColour)
-    ? tournament.value.secondaryColour
-    : generateComplementaryColor(primaryColour);
+  const textColor = getContrastingTextColor(colors.primary);
 
-  const textColor = getContrastingTextColor(primaryColour);
+  // Create a visible gradient background using the tournament colors
+  const backgroundGradient = `linear-gradient(135deg, ${colors.primary}40 0%, ${colors.secondary}35 50%, ${colors.primary}25 100%)`;
 
   return {
-    '--tournament-primary': primaryColour,
-    '--tournament-secondary': secondaryColour,
+    '--tournament-primary': colors.primary,
+    '--tournament-secondary': colors.secondary,
     '--tournament-text': textColor,
+    backgroundImage: backgroundGradient,
+    backgroundColor: 'rgb(15, 23, 42)',
   } as Record<string, string>;
 });
 
@@ -997,6 +1017,15 @@ const loadTournament = async () => {
 
     const data = await publicTournamentService.getTournamentDetail(tournamentId);
     tournament.value = data;
+
+    // Debug logging for theme colors
+    console.log('Tournament loaded:', {
+      name: data.name,
+      primaryColour: data.primaryColour,
+      secondaryColour: data.secondaryColour,
+      isValidHex_primary: data.primaryColour ? isValidHex(data.primaryColour) : 'N/A',
+      isValidHex_secondary: data.secondaryColour ? isValidHex(data.secondaryColour) : 'N/A'
+    });
 
     // Create description
     const matchCount = data.matches.length;
