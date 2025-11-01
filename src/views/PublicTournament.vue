@@ -1411,10 +1411,7 @@ onMounted(() => {
 .markdown-rules :deep(h4),
 .markdown-rules :deep(h5),
 .markdown-rules :deep(h6) {
-  background: linear-gradient(to right, var(--rule-primary), var(--rule-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--rule-primary);
   font-weight: 700;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
