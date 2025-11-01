@@ -759,14 +759,10 @@
         <!-- Header -->
         <div class="flex items-start justify-between mb-6">
           <div class="flex-1">
-            <h3 class="text-3xl font-bold text-center mb-3">
-              <span class="text-transparent bg-clip-text" :style="{
-                backgroundImage: getValidColors().primary
-                  ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
-                  : 'linear-gradient(to right, rgb(251, 191, 36), rgb(249, 115, 22))'
-              }">
-                Tournament Rules
-              </span>
+            <h3 class="text-3xl font-bold text-center mb-3" :style="{
+              color: getValidColors().primary || 'rgb(139, 92, 246)'
+            }">
+              Tournament Rules
             </h3>
           </div>
           <button
@@ -829,14 +825,10 @@
         <!-- Header -->
         <div class="flex items-start justify-between mb-6">
           <div class="flex-1">
-            <h3 class="text-3xl font-bold text-center mb-3">
-              <span class="text-transparent bg-clip-text" :style="{
-                backgroundImage: getValidColors().primary
-                  ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
-                  : 'linear-gradient(to right, rgb(6, 182, 212), rgb(139, 92, 246))'
-              }">
-                Team Matchup
-              </span>
+            <h3 class="text-3xl font-bold text-center mb-3" :style="{
+              color: getValidColors().primary || 'rgb(139, 92, 246)'
+            }">
+              Team Matchup
             </h3>
             <div class="flex items-center justify-center gap-4 text-sm" :style="{ color: getThemedAccentColor() }">
               <span>📅 {{ formatMatchDate(selectedMatch.scheduledDate) }}</span>
