@@ -794,7 +794,13 @@
         </div>
 
         <!-- Rules Content -->
-        <div class="prose prose-invert prose-sm max-w-none">
+        <div
+          class="prose prose-invert prose-sm max-w-none"
+          :style="{
+            '--rule-primary': getValidColors().primary || 'rgb(139, 92, 246)',
+            '--rule-secondary': getValidColors().secondary || 'rgb(147, 51, 234)',
+          } as Record<string, string>"
+        >
           <div
             v-html="renderedRules"
             class="text-slate-300 markdown-rules"
@@ -1405,92 +1411,105 @@ onMounted(() => {
 .markdown-rules :deep(h4),
 .markdown-rules :deep(h5),
 .markdown-rules :deep(h6) {
-  color: #cbd5e1;
-  font-weight: 600;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+  background: linear-gradient(to right, var(--rule-primary), var(--rule-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .markdown-rules :deep(p) {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
   color: #cbd5e1;
+  line-height: 1.6;
 }
 
 .markdown-rules :deep(strong) {
-  font-weight: 600;
-  color: #e0f2fe;
+  font-weight: 700;
+  color: var(--rule-primary);
 }
 
 .markdown-rules :deep(em) {
-  color: #cbd5e1;
+  color: var(--rule-secondary);
   font-style: italic;
 }
 
 .markdown-rules :deep(ul) {
   list-style-type: disc;
   margin-left: 1.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
   padding-left: 0;
 }
 
 .markdown-rules :deep(ol) {
   list-style-type: decimal;
   margin-left: 1.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
   padding-left: 0;
 }
 
 .markdown-rules :deep(li) {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
   color: #cbd5e1;
   margin-left: 1rem;
 }
 
 .markdown-rules :deep(code) {
-  background-color: rgba(71, 85, 105, 0.5);
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  color: #fbbf24;
-  font-family: monospace;
+  background: linear-gradient(135deg, var(--rule-primary)15, var(--rule-secondary)10);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  color: var(--rule-primary);
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  border: 1px solid rgba(var(--rule-primary), 0.2);
 }
 
 .markdown-rules :deep(blockquote) {
-  border-left: 3px solid #475569;
+  border-left: 4px solid var(--rule-primary);
   padding-left: 1rem;
   margin-left: 0;
-  color: #94a3b8;
+  margin-bottom: 1rem;
+  color: #cbd5e1;
+  background: linear-gradient(to right, var(--rule-primary)08, transparent);
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
 }
 
 .markdown-rules :deep(a) {
-  color: #06b6d4;
+  color: var(--rule-primary);
   text-decoration: underline;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .markdown-rules :deep(a:hover) {
-  color: #22d3ee;
+  color: var(--rule-secondary);
+  text-decoration: none;
 }
 
 .markdown-rules :deep(table) {
   border-collapse: collapse;
   width: 100%;
-  margin: 1rem 0;
-  border: 1px solid rgba(71, 85, 105, 0.5);
+  margin: 1.5rem 0;
+  border: 2px solid var(--rule-primary);
   border-radius: 0.5rem;
   overflow: hidden;
 }
 
 .markdown-rules :deep(thead) {
-  background: linear-gradient(to right, rgba(51, 65, 85, 0.95), rgba(15, 23, 42, 0.95));
+  background: linear-gradient(to right, var(--rule-primary)30, var(--rule-secondary)20);
   backdrop-filter: blur(0.5rem);
 }
 
 .markdown-rules :deep(th) {
-  padding: 0.75rem 1rem;
+  padding: 1rem;
   text-align: left;
-  font-weight: 600;
-  color: #cbd5e1;
-  border-bottom: 1px solid rgba(71, 85, 105, 0.5);
-  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--rule-primary);
+  border-bottom: 2px solid var(--rule-primary);
+  font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-family: 'Monaco', 'Menlo', monospace;
@@ -1499,20 +1518,20 @@ onMounted(() => {
 .markdown-rules :deep(td) {
   padding: 0.75rem 1rem;
   color: #cbd5e1;
-  border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+  border-bottom: 1px solid var(--rule-primary)20;
 }
 
 .markdown-rules :deep(tbody tr) {
-  background-color: rgba(30, 41, 59, 0.3);
+  background-color: transparent;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .markdown-rules :deep(tbody tr:nth-child(even)) {
-  background-color: rgba(15, 23, 42, 0.4);
+  background-color: var(--rule-primary)08;
 }
 
 .markdown-rules :deep(tbody tr:hover) {
-  background-color: rgba(51, 65, 85, 0.4);
-  box-shadow: inset 0 0 12px rgba(6, 182, 212, 0.1);
+  background-color: var(--rule-primary)15;
+  box-shadow: inset 0 0 16px var(--rule-primary)15;
 }
 </style>
