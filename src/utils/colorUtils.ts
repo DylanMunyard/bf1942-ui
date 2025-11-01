@@ -49,6 +49,7 @@ export function getContrastingTextColor(hex: string): string {
 
 /**
  * Generates a complementary color (opposite on color wheel)
+ * Preserves the saturation and lightness of the original color
  */
 export function generateComplementaryColor(hex: string): string {
   const rgb = hexToRgb(hex);
@@ -62,11 +63,12 @@ export function generateComplementaryColor(hex: string): string {
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   let h = 0;
+  let s = 0;
   const l = (max + min) / 2;
 
   if (max !== min) {
     const d = max - min;
-    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
 
     if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
     else if (max === g) h = (b - r) / d + 2;
@@ -78,7 +80,7 @@ export function generateComplementaryColor(hex: string): string {
   // Shift hue by 180 degrees for complementary color
   h = (h + 0.5) % 1;
 
-  // Convert back to RGB
+  // Convert back to RGB, preserving original saturation and lightness
   const hslToRgb = (h: number, s: number, l: number) => {
     let rOut, gOut, bOut;
 
@@ -96,7 +98,7 @@ export function generateComplementaryColor(hex: string): string {
     return [Math.round(rOut * 255), Math.round(gOut * 255), Math.round(bOut * 255)];
   };
 
-  const [rOut, gOut, bOut] = hslToRgb(h, 0.7, 0.5);
+  const [rOut, gOut, bOut] = hslToRgb(h, s, l);
   return rgbToHex(rOut, gOut, bOut);
 }
 

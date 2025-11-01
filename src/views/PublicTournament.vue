@@ -136,15 +136,8 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-12">
         <!-- Upcoming Matches Section -->
         <div v-if="upcomingMatchesByWeek.length > 0">
-          <div class="mb-8 p-6 rounded-xl border-2" :style="{
-            borderColor: getValidColors().primary || 'rgb(139, 92, 246)',
-            backgroundColor: getValidColors().primary ? `${getValidColors().primary}15` : 'rgba(139, 92, 246, 0.1)'
-          }">
-            <h2 class="text-3xl sm:text-4xl font-bold text-center text-transparent bg-clip-text" :style="{
-              backgroundImage: getValidColors().primary
-                ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
-                : 'linear-gradient(to right, rgb(167, 139, 250), rgb(168, 85, 247))'
-            }">
+          <div class="mb-8">
+            <h2 class="text-3xl sm:text-4xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-300 mb-6">
               Upcoming Matches
             </h2>
           </div>
@@ -429,15 +422,8 @@
 
         <!-- Completed Matches Section -->
         <div v-if="completedMatchesByWeek.length > 0">
-          <div class="mb-8 p-6 rounded-xl border-2" :style="{
-            borderColor: getValidColors().primary || 'rgb(16, 185, 129)',
-            backgroundColor: getValidColors().primary ? `${getValidColors().primary}15` : 'rgba(16, 185, 129, 0.1)'
-          }">
-            <h2 class="text-3xl sm:text-4xl font-bold text-center text-transparent bg-clip-text" :style="{
-              backgroundImage: getValidColors().primary
-                ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
-                : 'linear-gradient(to right, rgb(52, 211, 153), rgb(20, 184, 166))'
-            }">
+          <div class="mb-8">
+            <h2 class="text-3xl sm:text-4xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-300 mb-6">
               Completed Matches
             </h2>
           </div>
@@ -750,9 +736,9 @@
         :style="{
           background: getValidColors().primary
             ? `linear-gradient(to bottom right, ${getValidColors().primary}15, ${getValidColors().secondary}10)`
-            : 'linear-gradient(to bottom right, rgba(139, 92, 246, 0.1), rgba(147, 51, 234, 0.08))',
+            : 'linear-gradient(to bottom right, rgba(34, 211, 238, 0.1), rgba(96, 165, 250, 0.08))',
           backdropFilter: 'blur(10px)',
-          borderColor: getValidColors().primary || 'rgba(139, 92, 246, 0.5)',
+          borderColor: getValidColors().primary || 'rgba(34, 211, 238, 0.5)',
           backgroundColor: 'rgba(30, 41, 59, 0.95)'
         }"
       >
@@ -760,7 +746,7 @@
         <div class="flex items-start justify-between mb-6">
           <div class="flex-1">
             <h3 class="text-3xl font-bold text-center mb-3" :style="{
-              color: getValidColors().primary || 'rgb(139, 92, 246)'
+              color: getValidColors().primary || 'rgb(34, 211, 238)'
             }">
               Tournament Rules
             </h3>
@@ -816,9 +802,9 @@
         :style="{
           background: getValidColors().primary
             ? `linear-gradient(to bottom right, ${getValidColors().primary}15, ${getValidColors().secondary}10)`
-            : 'linear-gradient(to bottom right, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.08))',
+            : 'linear-gradient(to bottom right, rgba(34, 211, 238, 0.1), rgba(96, 165, 250, 0.08))',
           backdropFilter: 'blur(10px)',
-          borderColor: getValidColors().primary || 'rgba(6, 182, 212, 0.5)',
+          borderColor: getValidColors().primary || 'rgba(34, 211, 238, 0.5)',
           backgroundColor: 'rgba(30, 41, 59, 0.95)'
         }"
       >
@@ -826,7 +812,7 @@
         <div class="flex items-start justify-between mb-6">
           <div class="flex-1">
             <h3 class="text-3xl font-bold text-center mb-3" :style="{
-              color: getValidColors().primary || 'rgb(139, 92, 246)'
+              color: getValidColors().primary || 'rgb(34, 211, 238)'
             }">
               Team Matchup
             </h3>
@@ -1031,7 +1017,7 @@ const renderedRules = computed(() => {
 // Helper function to get themed accent color
 const getThemedAccentColor = (): string => {
   const colors = getValidColors();
-  return colors.primary || 'rgb(139, 92, 246)';
+  return colors.primary || 'rgb(34, 211, 238)';
 };
 
 // Helper function to check and return valid colors
@@ -1058,27 +1044,9 @@ const getValidColors = () => {
 };
 
 const themeStyles = computed(() => {
-  const colors = getValidColors();
-
-  if (!colors.primary) {
-    return {};
-  }
-
-  const textColor = getContrastingTextColor(colors.primary);
-
-  // Create a more prominent gradient background using the tournament colors
-  const backgroundGradient = `
-    linear-gradient(135deg, ${colors.primary}50 0%, ${colors.secondary}40 25%, ${colors.primary}35 50%, ${colors.secondary}30 75%, ${colors.primary}40 100%),
-    radial-gradient(circle at 20% 50%, ${colors.primary}25 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, ${colors.secondary}25 0%, transparent 50%)
-  `;
-
+  // Use standard dark background with subtle gradient
   return {
-    '--tournament-primary': colors.primary,
-    '--tournament-secondary': colors.secondary,
-    '--tournament-text': textColor,
-    backgroundImage: backgroundGradient,
-    backgroundColor: 'rgb(15, 23, 42)',
+    background: 'linear-gradient(to bottom, rgb(15, 23, 42), rgb(25, 35, 55))',
   } as Record<string, string>;
 });
 
@@ -1225,19 +1193,21 @@ const loadTournament = async () => {
       ogDescriptionTag.setAttribute('content', description);
     }
 
-    // Load hero image if available
+    // Set loading to false BEFORE loading images - images load asynchronously in background
+    loading.value = false;
+
+    // Load hero image if available (async, doesn't block rendering)
     if (data.hasHeroImage) {
-      await loadHeroImage();
+      loadHeroImage().catch(err => console.debug('Failed to load hero image:', err));
     }
 
-    // Load logo image if available
+    // Load logo image if available (async, doesn't block rendering)
     if (data.hasCommunityLogo) {
-      await loadLogoImage();
+      loadLogoImage().catch(err => console.debug('Failed to load logo image:', err));
     }
   } catch (err) {
     console.error('Error loading tournament:', err);
     error.value = err instanceof Error ? err.message : 'Failed to load tournament';
-  } finally {
     loading.value = false;
   }
 };
