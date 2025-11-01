@@ -794,10 +794,7 @@
         </div>
 
         <!-- Rules Content -->
-        <div class="prose prose-invert prose-sm max-w-none p-4 rounded-lg" :style="{
-          backgroundColor: getValidColors().primary ? `${getValidColors().primary}08` : 'rgba(100, 116, 139, 0.1)',
-          borderLeft: `4px solid ${getThemedAccentColor()}`
-        }">
+        <div class="prose prose-invert prose-sm max-w-none">
           <div
             v-html="renderedRules"
             class="text-slate-300 markdown-rules"
