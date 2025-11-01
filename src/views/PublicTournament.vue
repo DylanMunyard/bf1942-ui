@@ -136,13 +136,18 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-12">
         <!-- Upcoming Matches Section -->
         <div v-if="upcomingMatchesByWeek.length > 0">
-          <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text" :style="{
-            backgroundImage: getValidColors().primary
-              ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
-              : 'linear-gradient(to right, rgb(167, 139, 250), rgb(168, 85, 247))'
+          <div class="mb-8 p-6 rounded-xl border-2" :style="{
+            borderColor: getValidColors().primary || 'rgb(139, 92, 246)',
+            backgroundColor: getValidColors().primary ? `${getValidColors().primary}15` : 'rgba(139, 92, 246, 0.1)'
           }">
-            Upcoming Matches
-          </h2>
+            <h2 class="text-3xl sm:text-4xl font-bold text-center text-transparent bg-clip-text" :style="{
+              backgroundImage: getValidColors().primary
+                ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
+                : 'linear-gradient(to right, rgb(167, 139, 250), rgb(168, 85, 247))'
+            }">
+              Upcoming Matches
+            </h2>
+          </div>
 
           <div class="space-y-8">
             <div
@@ -151,7 +156,7 @@
               class="space-y-3"
             >
               <!-- Week Header -->
-              <h3 class="text-lg font-bold text-violet-400">
+              <h3 class="text-lg font-bold" :style="{ color: getThemedAccentColor() }">
                 {{ weekGroup.week || 'Unscheduled' }}
               </h3>
 
@@ -160,7 +165,11 @@
                 <div
                   v-for="(match, index) in weekGroup.matches"
                   :key="match.id"
-                  class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-violet-500/30 transition-all"
+                  class="rounded-lg p-4 transition-all border-2 backdrop-blur-sm hover:shadow-lg"
+                  :style="{
+                    backgroundColor: getValidColors().primary ? `${getValidColors().primary}12` : 'rgba(139, 92, 246, 0.1)',
+                    borderColor: getValidColors().primary ? `${getValidColors().primary}40` : 'rgba(139, 92, 246, 0.3)',
+                  }"
                 >
               <div class="flex items-start justify-between mb-3">
                 <div class="flex-1">
@@ -198,7 +207,11 @@
                 <div
                   v-for="map in match.maps"
                   :key="map.id"
-                  class="bg-slate-700/30 rounded-lg border border-slate-600/30 overflow-hidden"
+                  class="rounded-lg border overflow-hidden"
+                  :style="{
+                    backgroundColor: getValidColors().primary ? `${getValidColors().primary}08` : 'rgba(100, 116, 139, 0.2)',
+                    borderColor: getValidColors().primary ? `${getValidColors().primary}25` : 'rgba(100, 116, 139, 0.3)',
+                  }"
                 >
                   <div class="p-3">
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -255,7 +268,11 @@
                   <!-- Expandable Player Stats Table -->
                   <div
                     v-if="isMapExpanded(map.id) && map.round?.players && map.round.players.length > 0"
-                    class="border-t border-slate-600/30 bg-slate-800/40 p-3"
+                    class="border-t p-3"
+                    :style="{
+                      borderTopColor: getValidColors().primary ? `${getValidColors().primary}40` : 'rgba(100, 116, 139, 0.3)',
+                      backgroundColor: getValidColors().primary ? `${getValidColors().primary}05` : 'rgba(100, 116, 139, 0.2)',
+                    }"
                   >
                     <div class="overflow-x-auto">
                       <table class="w-full border-collapse">
@@ -412,13 +429,18 @@
 
         <!-- Completed Matches Section -->
         <div v-if="completedMatchesByWeek.length > 0">
-          <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text" :style="{
-            backgroundImage: getValidColors().primary
-              ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
-              : 'linear-gradient(to right, rgb(52, 211, 153), rgb(20, 184, 166))'
+          <div class="mb-8 p-6 rounded-xl border-2" :style="{
+            borderColor: getValidColors().primary || 'rgb(16, 185, 129)',
+            backgroundColor: getValidColors().primary ? `${getValidColors().primary}15` : 'rgba(16, 185, 129, 0.1)'
           }">
-            Completed Matches
-          </h2>
+            <h2 class="text-3xl sm:text-4xl font-bold text-center text-transparent bg-clip-text" :style="{
+              backgroundImage: getValidColors().primary
+                ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
+                : 'linear-gradient(to right, rgb(52, 211, 153), rgb(20, 184, 166))'
+            }">
+              Completed Matches
+            </h2>
+          </div>
 
           <div class="space-y-8">
             <div
@@ -436,7 +458,11 @@
                 <div
                   v-for="(match, index) in weekGroup.matches"
                   :key="match.id"
-                  class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-emerald-500/30 transition-all"
+                  class="rounded-lg p-4 transition-all border-2 backdrop-blur-sm hover:shadow-lg"
+                  :style="{
+                    backgroundColor: getValidColors().primary ? `${getValidColors().primary}12` : 'rgba(16, 185, 129, 0.1)',
+                    borderColor: getValidColors().primary ? `${getValidColors().primary}40` : 'rgba(16, 185, 129, 0.3)',
+                  }"
                 >
               <div class="flex items-start justify-between mb-3">
                 <div class="flex-1">
@@ -480,7 +506,11 @@
                 <div
                   v-for="map in match.maps"
                   :key="map.id"
-                  class="bg-slate-700/30 rounded-lg border border-slate-600/30 overflow-hidden"
+                  class="rounded-lg border overflow-hidden"
+                  :style="{
+                    backgroundColor: getValidColors().primary ? `${getValidColors().primary}08` : 'rgba(100, 116, 139, 0.2)',
+                    borderColor: getValidColors().primary ? `${getValidColors().primary}25` : 'rgba(100, 116, 139, 0.3)',
+                  }"
                 >
                   <div class="p-3">
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -537,7 +567,11 @@
                   <!-- Expandable Player Stats Table -->
                   <div
                     v-if="isMapExpanded(map.id) && map.round?.players && map.round.players.length > 0"
-                    class="border-t border-slate-600/30 bg-slate-800/40 p-3"
+                    class="border-t p-3"
+                    :style="{
+                      borderTopColor: getValidColors().primary ? `${getValidColors().primary}40` : 'rgba(100, 116, 139, 0.3)',
+                      backgroundColor: getValidColors().primary ? `${getValidColors().primary}05` : 'rgba(100, 116, 139, 0.2)',
+                    }"
                   >
                     <div class="overflow-x-auto">
                       <table class="w-full border-collapse">
@@ -919,6 +953,12 @@ const renderedRules = computed(() => {
   }
 });
 
+// Helper function to get themed accent color
+const getThemedAccentColor = (): string => {
+  const colors = getValidColors();
+  return colors.primary || 'rgb(139, 92, 246)';
+};
+
 // Helper function to check and return valid colors
 const getValidColors = () => {
   if (!tournament.value) return { primary: null, secondary: null };
@@ -951,8 +991,12 @@ const themeStyles = computed(() => {
 
   const textColor = getContrastingTextColor(colors.primary);
 
-  // Create a visible gradient background using the tournament colors
-  const backgroundGradient = `linear-gradient(135deg, ${colors.primary}40 0%, ${colors.secondary}35 50%, ${colors.primary}25 100%)`;
+  // Create a more prominent gradient background using the tournament colors
+  const backgroundGradient = `
+    linear-gradient(135deg, ${colors.primary}50 0%, ${colors.secondary}40 25%, ${colors.primary}35 50%, ${colors.secondary}30 75%, ${colors.primary}40 100%),
+    radial-gradient(circle at 20% 50%, ${colors.primary}25 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, ${colors.secondary}25 0%, transparent 50%)
+  `;
 
   return {
     '--tournament-primary': colors.primary,
