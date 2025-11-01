@@ -1,9 +1,142 @@
 <template>
+  <!-- Markdown Help Modal (separate from tournament modal) -->
+  <div v-if="showMarkdownHelp" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" @click.self="showMarkdownHelp = false">
+    <div class="bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-2xl border border-slate-700/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <!-- Header -->
+      <div class="sticky top-0 z-10 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-6 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
+          Markdown Guide
+        </h2>
+        <button
+          type="button"
+          class="text-slate-400 hover:text-slate-200 transition-colors"
+          @click="showMarkdownHelp = false"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="p-6 space-y-6">
+        <!-- Headings -->
+        <div>
+          <h3 class="text-lg font-semibold text-slate-200 mb-3">Headings</h3>
+          <div class="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
+            <div class="text-sm">
+              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400"># Main Heading</code>
+              <p class="text-slate-400 mt-1">Creates the largest heading</p>
+            </div>
+            <div class="text-sm">
+              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">## Subheading</code>
+              <p class="text-slate-400 mt-1">Creates a smaller heading</p>
+            </div>
+            <div class="text-sm">
+              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">### Even Smaller</code>
+              <p class="text-slate-400 mt-1">And so on...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text Formatting -->
+        <div>
+          <h3 class="text-lg font-semibold text-slate-200 mb-3">Text Formatting</h3>
+          <div class="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
+            <div class="text-sm">
+              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">**bold text**</code>
+              <p class="text-slate-400 mt-1">Makes text <strong>bold</strong></p>
+            </div>
+            <div class="text-sm">
+              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">*italic text*</code>
+              <p class="text-slate-400 mt-1">Makes text <em>italic</em></p>
+            </div>
+            <div class="text-sm">
+              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">`code`</code>
+              <p class="text-slate-400 mt-1">Highlights inline code</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lists -->
+        <div>
+          <h3 class="text-lg font-semibold text-slate-200 mb-3">Lists</h3>
+          <div class="space-y-3 bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
+            <div>
+              <p class="text-sm font-medium text-slate-300 mb-2">Bullet List:</p>
+              <code class="block bg-slate-900 px-3 py-2 rounded text-amber-400 text-xs whitespace-pre-wrap">- Item one
+- Item two
+- Item three</code>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-slate-300 mb-2">Numbered List:</p>
+              <code class="block bg-slate-900 px-3 py-2 rounded text-amber-400 text-xs whitespace-pre-wrap">1. First item
+2. Second item
+3. Third item</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Links -->
+        <div>
+          <h3 class="text-lg font-semibold text-slate-200 mb-3">Links</h3>
+          <div class="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
+            <div class="text-sm">
+              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">[link text](https://example.com)</code>
+              <p class="text-slate-400 mt-1">Creates a clickable link</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blockquotes -->
+        <div>
+          <h3 class="text-lg font-semibold text-slate-200 mb-3">Blockquotes</h3>
+          <div class="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
+            <div class="text-sm">
+              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">> Important note</code>
+              <p class="text-slate-400 mt-1">Creates a highlighted blockquote</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example -->
+        <div>
+          <h3 class="text-lg font-semibold text-slate-200 mb-3">Example</h3>
+          <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
+            <p class="text-slate-300 text-sm mb-3">This markdown:</p>
+            <code class="block bg-slate-900 px-3 py-2 rounded text-amber-400 text-xs whitespace-pre-wrap mb-3"># Tournament Rules
+
+## General Rules
+- All players must be registered
+- Respect all referees
+- No cheating allowed
+
+## Map Selection
+Winners choose first map for next round.</code>
+            <p class="text-slate-300 text-sm">Will display nicely formatted rules with sections and lists.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Close Button -->
+      <div class="sticky bottom-0 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-t border-slate-700/50 p-6">
+        <button
+          type="button"
+          class="w-full px-4 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all"
+          @click="showMarkdownHelp = false"
+        >
+          Got it!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Tournament Modal -->
   <div
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
     @click.self="$emit('close')"
   >
-    <div class="bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-2xl border border-slate-700/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div class="bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-2xl border border-slate-700/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
       <!-- Header -->
       <div class="sticky top-0 z-10 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-6">
         <div class="flex items-center justify-between">
@@ -380,37 +513,161 @@
 
         <!-- Tournament Rules (Markdown) -->
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            Tournament Rules <span class="text-slate-500">(Optional)</span>
-          </label>
-          <p class="text-xs text-slate-500 mb-2">
-            Use Markdown to format your rules. Preview shows on the right.
+          <div class="flex items-center justify-between gap-4 mb-2">
+            <label class="block text-sm font-medium text-slate-300">
+              Tournament Rules <span class="text-slate-500">(Optional)</span>
+            </label>
+            <button
+              type="button"
+              @click="showMarkdownHelp = true"
+              class="text-xs px-3 py-1 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-slate-200 rounded transition-colors"
+              title="Show markdown syntax help"
+            >
+              ? Help
+            </button>
+          </div>
+
+          <textarea
+            v-model="formData.rules"
+            placeholder="# Tournament Rules&#10;&#10;Write your tournament rules in markdown..."
+            class="w-full h-64 px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all resize-none"
+          />
+
+          <!-- Preview Toggle and Display -->
+          <div class="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              @click="showRulesPreview = !showRulesPreview"
+              class="text-xs px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-slate-200 rounded transition-colors flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              {{ showRulesPreview ? 'Hide' : 'Show' }} Preview
+            </button>
+          </div>
+
+          <!-- Markdown Preview (Below Editor) -->
+          <div v-if="showRulesPreview && (formData.rules && formData.rules.trim())" class="mt-4 bg-slate-800/40 border border-slate-700/50 rounded-lg p-4 overflow-y-auto max-h-64">
+            <div class="prose prose-invert prose-sm max-w-none">
+              <div
+                v-html="renderedMarkdown"
+                class="text-slate-300 markdown-content"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Theme Colors -->
+        <div class="border-t border-slate-700/30 pt-6">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-lg">🎨</span>
+            <label class="block text-sm font-medium text-slate-300">
+              Theme Colors <span class="text-slate-500">(Optional)</span>
+            </label>
+          </div>
+
+          <p class="text-xs text-slate-400 mb-4">
+            Customize the color scheme of your tournament page. Colors are completely optional - the page will use default colors if not specified.
           </p>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Markdown Editor -->
-            <div>
-              <textarea
-                v-model="formData.rules"
-                placeholder="# Tournament Rules&#10;&#10;Write your tournament rules in markdown..."
-                class="w-full h-64 px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all resize-none"
-              />
-              <p class="mt-2 text-xs text-slate-500">
-                **bold**, *italic*, # headings, - lists
-              </p>
+          <!-- Primary Color -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Primary Color
+            </label>
+            <div class="flex items-center gap-3">
+              <div class="relative flex-1">
+                <input
+                  v-model="formData.primaryColour"
+                  type="color"
+                  class="w-full h-12 rounded-lg cursor-pointer border border-slate-700/50"
+                  @change="onPrimaryColorChange"
+                >
+              </div>
+              <input
+                v-model="primaryColorInput"
+                type="text"
+                placeholder="#FF6B35"
+                class="w-32 px-3 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                @change="onPrimaryColorInputChange"
+                title="Paste or type hex color (e.g., #FF6B35)"
+              >
+              <button
+                v-if="formData.primaryColour"
+                type="button"
+                class="text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+                @click="formData.primaryColour = ''; primaryColorInput = ''"
+                title="Clear color"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
+            <p class="mt-1 text-xs text-slate-500">
+              Used for hero section, headers, and accents. Paste or type hex color (e.g., #FF6B35). The secondary color will be auto-generated from this.
+            </p>
+          </div>
 
-            <!-- Markdown Preview -->
-            <div class="bg-slate-800/40 border border-slate-700/50 rounded-lg p-4 overflow-y-auto h-64">
-              <div class="prose prose-invert prose-sm max-w-none text-slate-300">
-                <div
-                  v-if="formData.rules && formData.rules.trim()"
-                  v-html="renderedMarkdown"
-                  class="markdown-content"
-                />
-                <div v-else class="text-slate-500 text-sm italic">
-                  Markdown preview will appear here
-                </div>
+          <!-- Secondary Color -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Secondary Color
+            </label>
+            <div class="flex items-center gap-3">
+              <div class="relative flex-1">
+                <input
+                  v-model="formData.secondaryColour"
+                  type="color"
+                  class="w-full h-12 rounded-lg cursor-pointer border border-slate-700/50"
+                >
+              </div>
+              <input
+                v-model="secondaryColorInput"
+                type="text"
+                placeholder="#9333EA"
+                class="w-32 px-3 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                @change="onSecondaryColorInputChange"
+                title="Paste or type hex color (e.g., #9333EA)"
+              >
+              <button
+                v-if="formData.secondaryColour"
+                type="button"
+                class="text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+                @click="formData.secondaryColour = ''; secondaryColorInput = ''"
+                title="Clear color"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">
+              Complements the primary color. Auto-generated if left empty. Paste or type hex color (e.g., #9333EA). <a href="https://coolors.co" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300">Need inspiration?</a>
+            </p>
+          </div>
+
+          <!-- Color Preview -->
+          <div v-if="formData.primaryColour" class="mt-4 p-4 rounded-lg border border-slate-700/50 bg-slate-800/30">
+            <p class="text-xs text-slate-400 mb-3 font-medium">PREVIEW:</p>
+            <div class="space-y-2">
+              <!-- Hero preview -->
+              <div
+                class="h-12 rounded-lg flex items-center justify-center text-white font-bold text-sm transition-colors"
+                :style="{ backgroundColor: formData.primaryColour }"
+              >
+                Hero Section
+              </div>
+              <!-- Section title preview -->
+              <div
+                class="h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm transition-colors"
+                :style="{
+                  background: `linear-gradient(to right, ${formData.primaryColour}, ${formData.secondaryColour || getDefaultSecondaryColor()})`
+                }"
+              >
+                Section Title
               </div>
             </div>
           </div>
@@ -447,9 +704,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { marked } from 'marked';
 import { adminTournamentService, type CreateTournamentRequest, type TournamentDetail } from '@/services/adminTournamentService';
+import { generateComplementaryColor, isValidHex } from '@/utils/colorUtils';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -491,6 +749,8 @@ const formData = ref({
   discordUrl: '',
   forumUrl: '',
   rules: '',
+  primaryColour: '',
+  secondaryColour: '',
 });
 
 const loading = ref(false);
@@ -526,6 +786,14 @@ const logoFile = ref<File | null>(null);
 const logoError = ref<string | null>(null);
 const isDraggingLogo = ref(false);
 
+// Rules editor state
+const showRulesPreview = ref(false);
+const showMarkdownHelp = ref(false);
+
+// Color input state
+const primaryColorInput = ref('');
+const secondaryColorInput = ref('');
+
 // Markdown preview
 const renderedMarkdown = computed(() => {
   if (!formData.value.rules || !formData.value.rules.trim()) {
@@ -550,7 +818,17 @@ onMounted(() => {
       discordUrl: props.tournament.discordUrl || '',
       forumUrl: props.tournament.forumUrl || '',
       rules: props.tournament.rules || '',
+      primaryColour: props.tournament.primaryColour || '',
+      secondaryColour: props.tournament.secondaryColour || '',
     };
+
+    // Populate color input fields
+    if (props.tournament.primaryColour) {
+      primaryColorInput.value = props.tournament.primaryColour;
+    }
+    if (props.tournament.secondaryColour) {
+      secondaryColorInput.value = props.tournament.secondaryColour;
+    }
 
     // Populate server selection if available
     if (props.tournament.serverGuid && props.tournament.serverName) {
@@ -576,6 +854,19 @@ onMounted(() => {
   } else if (props.defaultOrganizer) {
     // Create mode with default organizer
     formData.value.organizer = props.defaultOrganizer;
+  }
+});
+
+// Watch for changes in formData colors to sync with text inputs
+watch(() => formData.value.primaryColour, (newVal) => {
+  if (newVal && primaryColorInput.value !== newVal) {
+    primaryColorInput.value = newVal;
+  }
+});
+
+watch(() => formData.value.secondaryColour, (newVal) => {
+  if (newVal && secondaryColorInput.value !== newVal) {
+    secondaryColorInput.value = newVal;
   }
 });
 
@@ -822,6 +1113,67 @@ const removeLogo = () => {
   }
 };
 
+// Color picker functions
+const getDefaultSecondaryColor = (): string => {
+  if (!formData.value.primaryColour || !isValidHex(formData.value.primaryColour)) {
+    return '#9333ea'; // Default fallback
+  }
+  return generateComplementaryColor(formData.value.primaryColour);
+};
+
+const onPrimaryColorChange = () => {
+  // Auto-generate secondary color if primary color changes and secondary is empty
+  if (formData.value.primaryColour && !formData.value.secondaryColour) {
+    formData.value.secondaryColour = getDefaultSecondaryColor();
+  }
+  // Sync the text input
+  primaryColorInput.value = formData.value.primaryColour;
+};
+
+const onPrimaryColorInputChange = () => {
+  let input = primaryColorInput.value.trim();
+
+  // Add # if missing
+  if (input && !input.startsWith('#')) {
+    input = '#' + input;
+  }
+
+  // Validate and update
+  if (input && isValidHex(input)) {
+    formData.value.primaryColour = input;
+    primaryColorInput.value = input;
+
+    // Auto-generate secondary color if empty
+    if (!formData.value.secondaryColour) {
+      formData.value.secondaryColour = getDefaultSecondaryColor();
+      secondaryColorInput.value = formData.value.secondaryColour;
+    }
+  } else if (input === '') {
+    // Allow clearing the field
+    formData.value.primaryColour = '';
+    primaryColorInput.value = '';
+  }
+};
+
+const onSecondaryColorInputChange = () => {
+  let input = secondaryColorInput.value.trim();
+
+  // Add # if missing
+  if (input && !input.startsWith('#')) {
+    input = '#' + input;
+  }
+
+  // Validate and update
+  if (input && isValidHex(input)) {
+    formData.value.secondaryColour = input;
+    secondaryColorInput.value = input;
+  } else if (input === '') {
+    // Allow clearing the field
+    formData.value.secondaryColour = '';
+    secondaryColorInput.value = '';
+  }
+};
+
 const handleSubmit = async () => {
   loading.value = true;
   error.value = null;
@@ -851,6 +1203,14 @@ const handleSubmit = async () => {
 
     if (formData.value.rules?.trim()) {
       request.rules = formData.value.rules.trim();
+    }
+
+    if (formData.value.primaryColour?.trim()) {
+      request.primaryColour = formData.value.primaryColour.trim();
+    }
+
+    if (formData.value.secondaryColour?.trim()) {
+      request.secondaryColour = formData.value.secondaryColour.trim();
     }
 
     // Convert hero image to base64 if provided
@@ -916,15 +1276,24 @@ const handleSubmit = async () => {
   font-style: italic;
 }
 
-.markdown-content :deep(ul),
-.markdown-content :deep(ol) {
+.markdown-content :deep(ul) {
+  list-style-type: disc;
   margin-left: 1.5rem;
   margin-bottom: 0.5rem;
+  padding-left: 0;
+}
+
+.markdown-content :deep(ol) {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 0;
 }
 
 .markdown-content :deep(li) {
   margin-bottom: 0.25rem;
   color: #cbd5e1;
+  margin-left: 1rem;
 }
 
 .markdown-content :deep(code) {
@@ -949,5 +1318,51 @@ const handleSubmit = async () => {
 
 .markdown-content :deep(a:hover) {
   color: #22d3ee;
+}
+
+.markdown-content :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.markdown-content :deep(thead) {
+  background: linear-gradient(to right, rgba(51, 65, 85, 0.95), rgba(15, 23, 42, 0.95));
+  backdrop-filter: blur(0.5rem);
+}
+
+.markdown-content :deep(th) {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(71, 85, 105, 0.5);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.markdown-content :deep(td) {
+  padding: 0.75rem 1rem;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.markdown-content :deep(tbody tr) {
+  background-color: rgba(30, 41, 59, 0.3);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.markdown-content :deep(tbody tr:nth-child(even)) {
+  background-color: rgba(15, 23, 42, 0.4);
+}
+
+.markdown-content :deep(tbody tr:hover) {
+  background-color: rgba(51, 65, 85, 0.4);
+  box-shadow: inset 0 0 12px rgba(6, 182, 212, 0.1);
 }
 </style>

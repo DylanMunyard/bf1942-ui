@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen pb-12">
+  <div class="min-h-screen pb-12" :style="themeStyles">
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
       <div class="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
@@ -21,7 +21,11 @@
     <!-- Tournament Content -->
     <div v-else-if="tournament">
       <!-- Hero Banner Section -->
-      <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div class="relative overflow-hidden" :style="{
+        background: tournament.value?.primaryColour && isValidHex(tournament.value.primaryColour)
+          ? `linear-gradient(135deg, ${tournament.value.primaryColour} 0%, ${tournament.value.primaryColour}dd 50%, ${tournament.value.primaryColour}99 100%)`
+          : 'linear-gradient(to bottom right, rgb(15, 23, 42) 0%, rgb(30, 41, 59) 50%, rgb(15, 23, 42) 100%)'
+      }">
         <!-- Background Hero Image -->
         <div
           v-if="heroImageUrl"
@@ -32,7 +36,11 @@
             :alt="tournament.name"
             class="w-full h-full object-cover opacity-30"
           >
-          <div class="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/70 to-slate-900" />
+          <div :style="{
+            background: tournament.value?.primaryColour && isValidHex(tournament.value.primaryColour)
+              ? `linear-gradient(to bottom, ${tournament.value.primaryColour}cc, ${tournament.value.primaryColour})`
+              : 'linear-gradient(to bottom, rgb(15, 23, 42, 0.8), rgb(15, 23, 42))'
+          }" class="absolute inset-0" />
         </div>
 
         <!-- Decorative Elements -->
@@ -44,6 +52,15 @@
         <!-- Hero Content -->
         <div class="relative z-10 px-4 sm:px-6 py-8 sm:py-10">
           <div class="max-w-6xl mx-auto">
+            <!-- Community Logo Display -->
+            <div v-if="logoImageUrl" class="mb-6 flex justify-center">
+              <img
+                :src="logoImageUrl"
+                alt="Community logo"
+                class="max-h-20 object-contain"
+              >
+            </div>
+
             <!-- Tournament Name -->
             <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-center mb-6 leading-tight">
               <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-300 drop-shadow-2xl">
@@ -60,7 +77,12 @@
               />
               <div class="flex items-center gap-2 px-4 py-2 bg-slate-800/60 backdrop-blur-sm rounded-full border border-slate-700/50">
                 <span class="text-amber-400">👤</span>
-                <span class="font-medium">{{ tournament.organizer }}</span>
+                <router-link
+                  :to="`/players/${tournament.organizer}`"
+                  class="font-medium text-amber-300 hover:text-amber-200 transition-colors"
+                >
+                  {{ tournament.organizer }}
+                </router-link>
               </div>
               <div v-if="tournament.serverName" class="flex items-center gap-2 px-4 py-2 bg-slate-800/60 backdrop-blur-sm rounded-full border border-slate-700/50">
                 <span class="text-cyan-400">🖥️</span>
@@ -90,6 +112,14 @@
                 <span class="text-orange-400">📋</span>
                 <span class="font-medium text-orange-300">Forum</span>
               </a>
+              <button
+                v-if="tournament.rules && tournament.rules.trim()"
+                @click="openRulesModal"
+                class="flex items-center gap-2 px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 backdrop-blur-sm rounded-full border border-amber-500/50 hover:border-amber-400/70 transition-all"
+              >
+                <span class="text-amber-400">📜</span>
+                <span class="font-medium text-amber-300">Rules</span>
+              </button>
             </div>
 
             <!-- Decorative Divider -->
@@ -106,7 +136,11 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-12">
         <!-- Upcoming Matches Section -->
         <div v-if="upcomingMatches.length > 0">
-          <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-400">
+          <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text" :style="{
+            backgroundImage: tournament.value?.primaryColour && isValidHex(tournament.value.primaryColour)
+              ? `linear-gradient(to right, ${tournament.value.primaryColour}, ${tournament.value.secondaryColour || (tournament.value.primaryColour ? generateComplementaryColor(tournament.value.primaryColour) : '#a855f7')})`
+              : 'linear-gradient(to right, rgb(167, 139, 250), rgb(168, 85, 247))'
+          }">
             Upcoming Matches
           </h2>
 
@@ -364,7 +398,11 @@
 
         <!-- Completed Matches Section -->
         <div v-if="completedMatches.length > 0">
-          <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
+          <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text" :style="{
+            backgroundImage: tournament.value?.primaryColour && isValidHex(tournament.value.primaryColour)
+              ? `linear-gradient(to right, ${tournament.value.primaryColour}, ${tournament.value.secondaryColour || (tournament.value.primaryColour ? generateComplementaryColor(tournament.value.primaryColour) : '#10b981')})`
+              : 'linear-gradient(to right, rgb(52, 211, 153), rgb(20, 184, 166))'
+          }">
             Completed Matches
           </h2>
 
@@ -626,6 +664,7 @@
           </div>
         </div>
 
+
         <!-- Empty State -->
         <div v-if="upcomingMatches.length === 0 && completedMatches.length === 0" class="text-center py-20">
           <div class="text-8xl mb-6 opacity-50">📅</div>
@@ -635,6 +674,42 @@
           </p>
         </div>
 
+      </div>
+    </div>
+
+    <!-- Tournament Rules Modal -->
+    <div
+      v-if="showRulesModal && tournament.rules && tournament.rules.trim()"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="closeRulesModal"
+    >
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-amber-500/50 rounded-2xl p-6 max-w-4xl w-full shadow-2xl max-h-[85vh] overflow-y-auto">
+        <!-- Header -->
+        <div class="flex items-start justify-between mb-6">
+          <div class="flex-1">
+            <h3 class="text-3xl font-bold text-center mb-3">
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+                Tournament Rules
+              </span>
+            </h3>
+          </div>
+          <button
+            class="p-2 hover:bg-slate-700/50 rounded-lg transition-colors flex-shrink-0"
+            @click="closeRulesModal"
+          >
+            <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Rules Content -->
+        <div class="prose prose-invert prose-sm max-w-none">
+          <div
+            v-html="renderedRules"
+            class="text-slate-300 markdown-rules"
+          />
+        </div>
       </div>
     </div>
 
@@ -777,6 +852,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { marked } from 'marked';
 import {
   publicTournamentService,
   type PublicTournamentDetail,
@@ -784,6 +860,7 @@ import {
   type PublicTournamentMatchMap
 } from '@/services/publicTournamentService';
 import { notificationService } from '@/services/notificationService';
+import { generateComplementaryColor, getContrastingTextColor, isValidHex } from '@/utils/colorUtils';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -793,13 +870,50 @@ const route = useRoute();
 
 const tournament = ref<PublicTournamentDetail | null>(null);
 const heroImageUrl = ref<string | null>(null);
+const logoImageUrl = ref<string | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const selectedMatch = ref<PublicTournamentMatch | null>(null);
 const selectedPlayers = ref<string[]>([]);
 const expandedMaps = ref<Set<number>>(new Set());
+const showRulesModal = ref(false);
 
 const tournamentId = parseInt(route.params.id as string);
+
+const renderedRules = computed(() => {
+  if (!tournament.value?.rules || !tournament.value.rules.trim()) {
+    return '';
+  }
+  try {
+    return marked(tournament.value.rules, { breaks: true });
+  } catch {
+    return '<p class="text-red-400">Invalid markdown in rules</p>';
+  }
+});
+
+const themeStyles = computed(() => {
+  if (!tournament.value) return {};
+
+  const primaryColour = tournament.value.primaryColour && isValidHex(tournament.value.primaryColour)
+    ? tournament.value.primaryColour
+    : null;
+
+  if (!primaryColour) {
+    return {};
+  }
+
+  const secondaryColour = tournament.value.secondaryColour && isValidHex(tournament.value.secondaryColour)
+    ? tournament.value.secondaryColour
+    : generateComplementaryColor(primaryColour);
+
+  const textColor = getContrastingTextColor(primaryColour);
+
+  return {
+    '--tournament-primary': primaryColour,
+    '--tournament-secondary': secondaryColour,
+    '--tournament-text': textColor,
+  } as Record<string, string>;
+});
 
 // Helper functions
 const getTeamPlayers = (map: PublicTournamentMatchMap, team: number) => {
@@ -917,6 +1031,11 @@ const loadTournament = async () => {
     if (data.hasHeroImage) {
       await loadHeroImage();
     }
+
+    // Load logo image if available
+    if (data.hasCommunityLogo) {
+      await loadLogoImage();
+    }
   } catch (err) {
     console.error('Error loading tournament:', err);
     error.value = err instanceof Error ? err.message : 'Failed to load tournament';
@@ -936,6 +1055,20 @@ const loadHeroImage = async () => {
   } catch {
     // Silently fail - hero image is optional
     console.debug('No hero image available');
+  }
+};
+
+const loadLogoImage = async () => {
+  try {
+    const response = await fetch(publicTournamentService.getTournamentLogoUrl(tournamentId));
+
+    if (response.ok) {
+      const blob = await response.blob();
+      logoImageUrl.value = URL.createObjectURL(blob);
+    }
+  } catch {
+    // Silently fail - logo image is optional
+    console.debug('No logo image available');
   }
 };
 
@@ -1023,6 +1156,14 @@ const isMapExpanded = (mapId: number) => {
   return expandedMaps.value.has(mapId);
 };
 
+const openRulesModal = () => {
+  showRulesModal.value = true;
+};
+
+const closeRulesModal = () => {
+  showRulesModal.value = false;
+};
+
 // Watch tournament data and update page title when it loads
 watch(tournament, (newTournament) => {
   if (newTournament) {
@@ -1067,5 +1208,123 @@ onMounted(() => {
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.7);
+}
+
+/* Markdown rules styling */
+.markdown-rules :deep(h1),
+.markdown-rules :deep(h2),
+.markdown-rules :deep(h3),
+.markdown-rules :deep(h4),
+.markdown-rules :deep(h5),
+.markdown-rules :deep(h6) {
+  color: #cbd5e1;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-rules :deep(p) {
+  margin-bottom: 0.5rem;
+  color: #cbd5e1;
+}
+
+.markdown-rules :deep(strong) {
+  font-weight: 600;
+  color: #e0f2fe;
+}
+
+.markdown-rules :deep(em) {
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+.markdown-rules :deep(ul) {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 0;
+}
+
+.markdown-rules :deep(ol) {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 0;
+}
+
+.markdown-rules :deep(li) {
+  margin-bottom: 0.25rem;
+  color: #cbd5e1;
+  margin-left: 1rem;
+}
+
+.markdown-rules :deep(code) {
+  background-color: rgba(71, 85, 105, 0.5);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  color: #fbbf24;
+  font-family: monospace;
+}
+
+.markdown-rules :deep(blockquote) {
+  border-left: 3px solid #475569;
+  padding-left: 1rem;
+  margin-left: 0;
+  color: #94a3b8;
+}
+
+.markdown-rules :deep(a) {
+  color: #06b6d4;
+  text-decoration: underline;
+}
+
+.markdown-rules :deep(a:hover) {
+  color: #22d3ee;
+}
+
+.markdown-rules :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.markdown-rules :deep(thead) {
+  background: linear-gradient(to right, rgba(51, 65, 85, 0.95), rgba(15, 23, 42, 0.95));
+  backdrop-filter: blur(0.5rem);
+}
+
+.markdown-rules :deep(th) {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(71, 85, 105, 0.5);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.markdown-rules :deep(td) {
+  padding: 0.75rem 1rem;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.markdown-rules :deep(tbody tr) {
+  background-color: rgba(30, 41, 59, 0.3);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.markdown-rules :deep(tbody tr:nth-child(even)) {
+  background-color: rgba(15, 23, 42, 0.4);
+}
+
+.markdown-rules :deep(tbody tr:hover) {
+  background-color: rgba(51, 65, 85, 0.4);
+  box-shadow: inset 0 0 12px rgba(6, 182, 212, 0.1);
 }
 </style>

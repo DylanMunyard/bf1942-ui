@@ -63,11 +63,16 @@ export interface TournamentDetail {
   matches: TournamentMatch[];
   heroImageBase64?: string;
   heroImageContentType?: string;
+  communityLogoBase64?: string;
+  communityLogoContentType?: string;
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   serverGuid?: string;
   serverName?: string;
   discordUrl?: string;
   forumUrl?: string;
+  rules?: string;
+  primaryColour?: string;
+  secondaryColour?: string;
 }
 
 export interface CreateTournamentRequest {
@@ -77,9 +82,14 @@ export interface CreateTournamentRequest {
   anticipatedRoundCount?: number;
   heroImageBase64?: string;
   heroImageContentType?: string;
+  communityLogoBase64?: string;
+  communityLogoContentType?: string;
   serverGuid?: string;
   discordUrl?: string;
   forumUrl?: string;
+  rules?: string;
+  primaryColour?: string;
+  secondaryColour?: string;
 }
 
 export interface UpdateTournamentRequest {
@@ -89,9 +99,14 @@ export interface UpdateTournamentRequest {
   anticipatedRoundCount?: number;
   heroImageBase64?: string;
   heroImageContentType?: string;
+  communityLogoBase64?: string;
+  communityLogoContentType?: string;
   serverGuid?: string;
   discordUrl?: string;
   forumUrl?: string;
+  rules?: string;
+  primaryColour?: string;
+  secondaryColour?: string;
 }
 
 // Teams interfaces

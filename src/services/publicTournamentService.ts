@@ -60,11 +60,15 @@ export interface PublicTournamentDetail {
   teams: PublicTournamentTeam[];
   matches: PublicTournamentMatch[];
   hasHeroImage?: boolean;
+  hasCommunityLogo?: boolean;
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   serverGuid?: string;
   serverName?: string;
   discordUrl?: string;
   forumUrl?: string;
+  rules?: string;
+  primaryColour?: string;
+  secondaryColour?: string;
 }
 
 class PublicTournamentService {
@@ -93,6 +97,11 @@ class PublicTournamentService {
   // Get tournament hero image URL
   getTournamentImageUrl(id: number): string {
     return `${this.baseUrl}/${id}/image`;
+  }
+
+  // Get tournament community logo URL
+  getTournamentLogoUrl(id: number): string {
+    return `${this.baseUrl}/${id}/logo`;
   }
 }
 

@@ -98,15 +98,27 @@
                 </div>
               </div>
 
-              <button
-                class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-lg transition-all flex items-center gap-2"
-                @click="showEditModal = true"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                <span>Edit</span>
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-lg transition-all flex items-center gap-2"
+                  @click="showEditModal = true"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Edit</span>
+                </button>
+                <button
+                  class="px-4 py-2 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white rounded-lg transition-all flex items-center gap-2 font-medium"
+                  @click="router.push(`/tournaments/${tournament.id}`)"
+                  title="View public tournament page"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  <span>View Public</span>
+                </button>
+              </div>
             </div>
 
             <!-- Progress Bar -->
@@ -884,15 +896,24 @@ tbody tr {
   font-style: italic;
 }
 
-.markdown-rules :deep(ul),
-.markdown-rules :deep(ol) {
+.markdown-rules :deep(ul) {
+  list-style-type: disc;
   margin-left: 1.5rem;
   margin-bottom: 0.5rem;
+  padding-left: 0;
+}
+
+.markdown-rules :deep(ol) {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 0;
 }
 
 .markdown-rules :deep(li) {
   margin-bottom: 0.25rem;
   color: #cbd5e1;
+  margin-left: 1rem;
 }
 
 .markdown-rules :deep(code) {
@@ -917,5 +938,51 @@ tbody tr {
 
 .markdown-rules :deep(a:hover) {
   color: #22d3ee;
+}
+
+.markdown-rules :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.markdown-rules :deep(thead) {
+  background: linear-gradient(to right, rgba(51, 65, 85, 0.95), rgba(15, 23, 42, 0.95));
+  backdrop-filter: blur(0.5rem);
+}
+
+.markdown-rules :deep(th) {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(71, 85, 105, 0.5);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.markdown-rules :deep(td) {
+  padding: 0.75rem 1rem;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.markdown-rules :deep(tbody tr) {
+  background-color: rgba(30, 41, 59, 0.3);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.markdown-rules :deep(tbody tr:nth-child(even)) {
+  background-color: rgba(15, 23, 42, 0.4);
+}
+
+.markdown-rules :deep(tbody tr:hover) {
+  background-color: rgba(51, 65, 85, 0.4);
+  box-shadow: inset 0 0 12px rgba(6, 182, 212, 0.1);
 }
 </style>
