@@ -745,28 +745,59 @@
       class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       @click.self="closeRulesModal"
     >
-      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-amber-500/50 rounded-2xl p-6 max-w-4xl w-full shadow-2xl max-h-[85vh] overflow-y-auto">
+      <div
+        class="rounded-2xl p-6 max-w-4xl w-full shadow-2xl max-h-[85vh] overflow-y-auto border-2"
+        :style="{
+          background: getValidColors().primary
+            ? `linear-gradient(to bottom right, ${getValidColors().primary}15, ${getValidColors().secondary}10)`
+            : 'linear-gradient(to bottom right, rgba(139, 92, 246, 0.1), rgba(147, 51, 234, 0.08))',
+          backdropFilter: 'blur(10px)',
+          borderColor: getValidColors().primary || 'rgba(139, 92, 246, 0.5)',
+          backgroundColor: 'rgba(30, 41, 59, 0.95)'
+        }"
+      >
         <!-- Header -->
         <div class="flex items-start justify-between mb-6">
           <div class="flex-1">
             <h3 class="text-3xl font-bold text-center mb-3">
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+              <span class="text-transparent bg-clip-text" :style="{
+                backgroundImage: getValidColors().primary
+                  ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
+                  : 'linear-gradient(to right, rgb(251, 191, 36), rgb(249, 115, 22))'
+              }">
                 Tournament Rules
               </span>
             </h3>
           </div>
           <button
-            class="p-2 hover:bg-slate-700/50 rounded-lg transition-colors flex-shrink-0"
+            class="p-2 rounded-lg transition-colors flex-shrink-0"
+            :style="{
+              color: getThemedAccentColor(),
+              backgroundColor: `${getThemedAccentColor()}20`,
+            }"
             @click="closeRulesModal"
+            @mouseenter="(e) => {
+              if (e.currentTarget) {
+                (e.currentTarget as HTMLElement).style.backgroundColor = `${getThemedAccentColor()}35`;
+              }
+            }"
+            @mouseleave="(e) => {
+              if (e.currentTarget) {
+                (e.currentTarget as HTMLElement).style.backgroundColor = `${getThemedAccentColor()}20`;
+              }
+            }"
           >
-            <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         <!-- Rules Content -->
-        <div class="prose prose-invert prose-sm max-w-none">
+        <div class="prose prose-invert prose-sm max-w-none p-4 rounded-lg" :style="{
+          backgroundColor: getValidColors().primary ? `${getValidColors().primary}08` : 'rgba(100, 116, 139, 0.1)',
+          borderLeft: `4px solid ${getThemedAccentColor()}`
+        }">
           <div
             v-html="renderedRules"
             class="text-slate-300 markdown-rules"
@@ -781,35 +812,69 @@
       class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       @click.self="closeMatchupModal"
     >
-      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-violet-500/50 rounded-2xl p-6 max-w-5xl w-full shadow-2xl max-h-[85vh] overflow-y-auto">
+      <div
+        class="rounded-2xl p-6 max-w-5xl w-full shadow-2xl max-h-[85vh] overflow-y-auto border-2"
+        :style="{
+          background: getValidColors().primary
+            ? `linear-gradient(to bottom right, ${getValidColors().primary}15, ${getValidColors().secondary}10)`
+            : 'linear-gradient(to bottom right, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.08))',
+          backdropFilter: 'blur(10px)',
+          borderColor: getValidColors().primary || 'rgba(6, 182, 212, 0.5)',
+          backgroundColor: 'rgba(30, 41, 59, 0.95)'
+        }"
+      >
         <!-- Header -->
         <div class="flex items-start justify-between mb-6">
           <div class="flex-1">
             <h3 class="text-3xl font-bold text-center mb-3">
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
+              <span class="text-transparent bg-clip-text" :style="{
+                backgroundImage: getValidColors().primary
+                  ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
+                  : 'linear-gradient(to right, rgb(6, 182, 212), rgb(139, 92, 246))'
+              }">
                 Team Matchup
               </span>
             </h3>
-            <div class="flex items-center justify-center gap-4 text-amber-400 text-sm">
+            <div class="flex items-center justify-center gap-4 text-sm" :style="{ color: getThemedAccentColor() }">
               <span>📅 {{ formatMatchDate(selectedMatch.scheduledDate) }}</span>
             </div>
           </div>
           <button
-            class="p-2 hover:bg-slate-700/50 rounded-lg transition-colors flex-shrink-0"
+            class="p-2 rounded-lg transition-colors flex-shrink-0"
+            :style="{
+              color: getThemedAccentColor(),
+              backgroundColor: `${getThemedAccentColor()}20`,
+            }"
             @click="closeMatchupModal"
+            @mouseenter="(e) => {
+              if (e.currentTarget) {
+                (e.currentTarget as HTMLElement).style.backgroundColor = `${getThemedAccentColor()}35`;
+              }
+            }"
+            @mouseleave="(e) => {
+              if (e.currentTarget) {
+                (e.currentTarget as HTMLElement).style.backgroundColor = `${getThemedAccentColor()}20`;
+              }
+            }"
           >
-            <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         <!-- Gamification Banner -->
-        <div class="mb-6 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl">
+        <div
+          class="mb-6 p-4 rounded-xl border"
+          :style="{
+            backgroundColor: getValidColors().primary ? `${getValidColors().primary}15` : 'rgba(139, 92, 246, 0.1)',
+            borderColor: getThemedAccentColor()
+          }"
+        >
           <div class="flex items-start gap-3">
             <span class="text-3xl flex-shrink-0">⚔️</span>
             <div>
-              <h4 class="text-lg font-bold text-purple-300 mb-1">Preview the Battle</h4>
+              <h4 class="text-lg font-bold mb-1" :style="{ color: getThemedAccentColor() }">Preview the Battle</h4>
               <p class="text-slate-300 text-sm">
                 Click any two players (one from each team) to compare their stats and predict who will dominate the matchup!
               </p>
@@ -893,8 +958,23 @@
         <!-- Compare Button -->
         <div v-if="selectedPlayers.length === 2" class="mt-6 text-center">
           <button
-            class="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-3 mx-auto"
+            class="px-8 py-4 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-3 mx-auto"
+            :style="{
+              backgroundImage: getValidColors().primary
+                ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
+                : 'linear-gradient(to right, rgb(168, 85, 247), rgb(236, 72, 153))'
+            }"
             @click="comparePlayers"
+            @mouseenter="(e) => {
+              if (e.currentTarget) {
+                (e.currentTarget as HTMLElement).style.opacity = '0.8';
+              }
+            }"
+            @mouseleave="(e) => {
+              if (e.currentTarget) {
+                (e.currentTarget as HTMLElement).style.opacity = '1';
+              }
+            }"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
