@@ -155,8 +155,8 @@
               :key="weekGroup.week || 'no-week'"
               class="space-y-3"
             >
-              <!-- Week Header -->
-              <h3 class="text-lg font-bold" :style="{ color: getThemedAccentColor() }">
+              <!-- Week Header (hidden for single null week) -->
+              <h3 v-if="!weekGroup.hideWeekHeader" class="text-lg font-bold" :style="{ color: getThemedAccentColor() }">
                 {{ weekGroup.week || 'Unscheduled' }}
               </h3>
 
@@ -448,8 +448,8 @@
               :key="weekGroup.week || 'no-week'"
               class="space-y-3"
             >
-              <!-- Week Header -->
-              <h3 class="text-lg font-bold text-emerald-400">
+              <!-- Week Header (hidden for single null week) -->
+              <h3 v-if="!weekGroup.hideWeekHeader" class="text-lg font-bold text-emerald-400">
                 {{ weekGroup.week || 'Unscheduled' }}
               </h3>
 
@@ -1135,29 +1135,41 @@ const viewRoundReport = (roundId: string) => {
 const upcomingMatchesByWeek = computed(() => {
   if (!tournament.value?.matchesByWeek) return [];
 
-  return tournament.value.matchesByWeek
+  // Check if there's only one week group with null week value
+  const hasOnlyOneNullWeek = tournament.value.matchesByWeek.length === 1 && tournament.value.matchesByWeek[0].week === null;
+
+  const filtered = tournament.value.matchesByWeek
     .map(group => ({
       week: group.week,
+      hideWeekHeader: hasOnlyOneNullWeek, // Don't show week header for single null week
       matches: group.matches.filter(match => {
         const completedMaps = match.maps.filter(map => map.round);
         return completedMaps.length < match.maps.length;
       })
     }))
     .filter(group => group.matches.length > 0);
+
+  return filtered;
 });
 
 const completedMatchesByWeek = computed(() => {
   if (!tournament.value?.matchesByWeek) return [];
 
-  return tournament.value.matchesByWeek
+  // Check if there's only one week group with null week value
+  const hasOnlyOneNullWeek = tournament.value.matchesByWeek.length === 1 && tournament.value.matchesByWeek[0].week === null;
+
+  const filtered = tournament.value.matchesByWeek
     .map(group => ({
       week: group.week,
+      hideWeekHeader: hasOnlyOneNullWeek, // Don't show week header for single null week
       matches: group.matches.filter(match => {
         const completedMaps = match.maps.filter(map => map.round);
         return completedMaps.length === match.maps.length && match.maps.length > 0;
       })
     }))
     .filter(group => group.matches.length > 0);
+
+  return filtered;
 });
 
 

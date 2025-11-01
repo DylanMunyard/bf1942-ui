@@ -93,7 +93,7 @@
                   </span>
                   <span v-if="tournament.anticipatedRoundCount" class="flex items-center gap-2">
                     <span>🎯</span>
-                    <span>{{ tournament.matches.length }}/{{ tournament.anticipatedRoundCount }} matches</span>
+                    <span>{{ (tournament.matches?.length ?? 0) }}/{{ tournament.anticipatedRoundCount }} matches</span>
                   </span>
                 </div>
               </div>
@@ -244,8 +244,8 @@
                 :key="weekGroup.week || 'no-week'"
                 class="space-y-3"
               >
-                <!-- Week Header -->
-                <div class="flex justify-between items-center">
+                <!-- Week Header (hidden for single null week) -->
+                <div v-if="!weekGroup.hideWeekHeader" class="flex justify-between items-center">
                   <h3 class="text-lg font-bold text-violet-400">
                     {{ weekGroup.week || 'Unscheduled' }}
                   </h3>
@@ -596,8 +596,12 @@ const matchesByWeekGroups = computed(() => {
 
   // Use matchesByWeek if available, otherwise fallback to grouping matches by week field
   if (tournament.value.matchesByWeek && tournament.value.matchesByWeek.length > 0) {
+    // Check if there's only one week group with null week value
+    const hasOnlyOneNullWeek = tournament.value.matchesByWeek.length === 1 && tournament.value.matchesByWeek[0].week === null;
+
     return tournament.value.matchesByWeek.map(group => ({
       week: group.week,
+      hideWeekHeader: hasOnlyOneNullWeek, // Don't show week header for single null week
       matches: [...group.matches].sort((a, b) => {
         return new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime();
       })
@@ -615,10 +619,14 @@ const matchesByWeekGroups = computed(() => {
     groups.get(week)!.push(match);
   });
 
+  // Check if there's only one week group with null week value (for fallback path)
+  const hasOnlyOneNullWeek = groups.size === 1 && groups.has(null);
+
   // Sort groups and matches within groups
   return Array.from(groups.entries())
     .map(([week, matches]) => ({
       week,
+      hideWeekHeader: hasOnlyOneNullWeek, // Don't show week header for single null week
       matches: [...matches].sort((a, b) => {
         return new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime();
       })
@@ -652,7 +660,11 @@ const loadTournament = async () => {
     }
 
     const data = await adminTournamentService.getTournamentDetail(tournamentId);
-    tournament.value = data;
+    // Ensure matches array exists (may be undefined for newly created tournaments)
+    tournament.value = {
+      ...data,
+      matches: data.matches ?? []
+    };
 
     // Load hero image if available
     if (data.heroImageBase64) {
@@ -725,7 +737,7 @@ const getProgressPercentage = (): number => {
   if (!tournament.value?.anticipatedRoundCount || tournament.value.anticipatedRoundCount === 0) {
     return 0;
   }
-  return Math.min(100, (tournament.value.matches.length / tournament.value.anticipatedRoundCount) * 100);
+  return Math.min(100, ((tournament.value.matches?.length ?? 0) / tournament.value.anticipatedRoundCount) * 100);
 };
 
 const formatDate = (dateString: string): string => {
