@@ -90,7 +90,7 @@
               </div>
               <div class="flex items-center gap-2 px-4 py-2 bg-slate-800/60 backdrop-blur-sm rounded-full border border-slate-700/50">
                 <span class="text-emerald-400">⚔️</span>
-                <span class="font-medium">{{ tournament.matches.length }} Matches</span>
+                <span class="font-medium">{{ tournament.matchesByWeek?.reduce((sum, w) => sum + w.matches.length, 0) ?? 0 }} Matches</span>
               </div>
               <a
                 v-if="tournament.discordUrl"
@@ -135,7 +135,7 @@
       <!-- Main Content -->
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-12">
         <!-- Upcoming Matches Section -->
-        <div v-if="upcomingMatches.length > 0">
+        <div v-if="upcomingMatchesByWeek.length > 0">
           <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text" :style="{
             backgroundImage: getValidColors().primary
               ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
@@ -144,12 +144,24 @@
             Upcoming Matches
           </h2>
 
-          <div class="space-y-4">
+          <div class="space-y-8">
             <div
-              v-for="(match, index) in upcomingMatches"
-              :key="match.id"
-              class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-violet-500/30 transition-all"
+              v-for="weekGroup in upcomingMatchesByWeek"
+              :key="weekGroup.week || 'no-week'"
+              class="space-y-3"
             >
+              <!-- Week Header -->
+              <h3 class="text-lg font-bold text-violet-400">
+                {{ weekGroup.week || 'Unscheduled' }}
+              </h3>
+
+              <!-- Matches in this week -->
+              <div class="space-y-4">
+                <div
+                  v-for="(match, index) in weekGroup.matches"
+                  :key="match.id"
+                  class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-violet-500/30 transition-all"
+                >
               <div class="flex items-start justify-between mb-3">
                 <div class="flex-1">
                   <div class="flex items-center gap-3 mb-2">
@@ -393,11 +405,13 @@
                 </div>
               </div>
             </div>
+            </div>
+            </div>
           </div>
         </div>
 
         <!-- Completed Matches Section -->
-        <div v-if="completedMatches.length > 0">
+        <div v-if="completedMatchesByWeek.length > 0">
           <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8 text-transparent bg-clip-text" :style="{
             backgroundImage: getValidColors().primary
               ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
@@ -406,12 +420,24 @@
             Completed Matches
           </h2>
 
-          <div class="space-y-4">
+          <div class="space-y-8">
             <div
-              v-for="(match, index) in completedMatches"
-              :key="match.id"
-              class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-emerald-500/30 transition-all"
+              v-for="weekGroup in completedMatchesByWeek"
+              :key="weekGroup.week || 'no-week'"
+              class="space-y-3"
             >
+              <!-- Week Header -->
+              <h3 class="text-lg font-bold text-emerald-400">
+                {{ weekGroup.week || 'Unscheduled' }}
+              </h3>
+
+              <!-- Matches in this week -->
+              <div class="space-y-4">
+                <div
+                  v-for="(match, index) in weekGroup.matches"
+                  :key="match.id"
+                  class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-emerald-500/30 transition-all"
+                >
               <div class="flex items-start justify-between mb-3">
                 <div class="flex-1">
                   <div class="flex items-center gap-3 mb-2">
@@ -661,12 +687,14 @@
                 </div>
               </div>
             </div>
+            </div>
+            </div>
           </div>
         </div>
 
 
         <!-- Empty State -->
-        <div v-if="upcomingMatches.length === 0 && completedMatches.length === 0" class="text-center py-20">
+        <div v-if="upcomingMatchesByWeek.length === 0 && completedMatchesByWeek.length === 0" class="text-center py-20">
           <div class="text-8xl mb-6 opacity-50">📅</div>
           <h3 class="text-2xl font-bold text-slate-300 mb-3">No Matches Scheduled Yet</h3>
           <p class="text-slate-400 text-lg">
@@ -679,7 +707,7 @@
 
     <!-- Tournament Rules Modal -->
     <div
-      v-if="showRulesModal && tournament.rules && tournament.rules.trim()"
+      v-if="showRulesModal && tournament && tournament.rules && tournament.rules.trim()"
       class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       @click.self="closeRulesModal"
     >
@@ -984,27 +1012,35 @@ const viewRoundReport = (roundId: string) => {
   router.push(`/rounds/${roundId}/report`);
 };
 
-const upcomingMatches = computed(() => {
-  if (!tournament.value) return [];
-  return tournament.value.matches
-    .filter(match => {
-      // A match is upcoming if not all maps have been played
-      const completedMaps = match.maps.filter(map => map.round);
-      return completedMaps.length < match.maps.length;
-    })
-    .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime());
+
+const upcomingMatchesByWeek = computed(() => {
+  if (!tournament.value?.matchesByWeek) return [];
+
+  return tournament.value.matchesByWeek
+    .map(group => ({
+      week: group.week,
+      matches: group.matches.filter(match => {
+        const completedMaps = match.maps.filter(map => map.round);
+        return completedMaps.length < match.maps.length;
+      })
+    }))
+    .filter(group => group.matches.length > 0);
 });
 
-const completedMatches = computed(() => {
-  if (!tournament.value) return [];
-  return tournament.value.matches
-    .filter(match => {
-      // A match is completed if all maps have been played
-      const completedMaps = match.maps.filter(map => map.round);
-      return completedMaps.length === match.maps.length && match.maps.length > 0;
-    })
-    .sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
+const completedMatchesByWeek = computed(() => {
+  if (!tournament.value?.matchesByWeek) return [];
+
+  return tournament.value.matchesByWeek
+    .map(group => ({
+      week: group.week,
+      matches: group.matches.filter(match => {
+        const completedMaps = match.maps.filter(map => map.round);
+        return completedMaps.length === match.maps.length && match.maps.length > 0;
+      })
+    }))
+    .filter(group => group.matches.length > 0);
 });
+
 
 const loadTournament = async () => {
   loading.value = true;
@@ -1028,7 +1064,9 @@ const loadTournament = async () => {
     });
 
     // Create description
-    const matchCount = data.matches.length;
+    const matchCount = data.matchesByWeek
+      ? data.matchesByWeek.reduce((sum, week) => sum + week.matches.length, 0)
+      : 0;
     let description = `View tournament schedule, matches, and results for ${data.name}. `;
     description += `${matchCount} match${matchCount !== 1 ? 'es' : ''} scheduled`;
     if (data.organizer) {

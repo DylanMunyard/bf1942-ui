@@ -237,106 +237,131 @@
           </div>
 
           <div class="p-4 sm:p-6">
-            <!-- Matches List -->
-            <div v-if="sortedMatches.length > 0" class="space-y-4">
+            <!-- Matches Grouped by Week -->
+            <div v-if="matchesByWeekGroups.length > 0" class="space-y-6">
               <div
-                v-for="match in sortedMatches"
-                :key="match.id"
-                class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-violet-500/30 transition-all"
+                v-for="weekGroup in matchesByWeekGroups"
+                :key="weekGroup.week || 'no-week'"
+                class="space-y-3"
               >
-                <div class="flex items-start justify-between mb-3">
-                  <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-2">
-                      <span class="text-sm text-slate-400">📅 {{ formatMatchDate(match.scheduledDate) }}</span>
-                    </div>
-                    <div class="flex items-center gap-3 mb-2">
-                      <div class="text-center">
-                        <div class="text-lg font-bold text-emerald-400">{{ match.team1Name }}</div>
-                      </div>
-                      <div class="text-2xl font-bold text-violet-400">VS</div>
-                      <div class="text-center">
-                        <div class="text-lg font-bold text-emerald-400">{{ match.team2Name }}</div>
-                      </div>
-                    </div>
-                    <div v-if="match.serverName" class="text-sm text-slate-400">
-                      <span>🖥️ {{ match.serverName }}</span>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all"
-                      @click="editMatch(match.id)"
-                      title="Edit match"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
-                      @click="confirmDeleteMatch(match.id)"
-                      title="Delete match"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+                <!-- Week Header -->
+                <div class="flex justify-between items-center">
+                  <h3 class="text-lg font-bold text-violet-400">
+                    {{ weekGroup.week || 'Unscheduled' }}
+                  </h3>
+                  <button
+                    class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-1"
+                    @click="addMatchForWeek"
+                    :disabled="tournament.teams.length < 2"
+                    :title="tournament.teams.length < 2 ? 'Create at least 2 teams first' : ''"
+                  >
+                    <span class="text-base">+</span>
+                    <span>Match</span>
+                  </button>
                 </div>
 
-                <!-- Maps List -->
-                <div class="space-y-2">
+                <!-- Matches in this week -->
+                <div class="space-y-3">
                   <div
-                    v-for="map in match.maps"
-                    :key="map.id"
-                    class="flex items-center justify-between gap-3 bg-slate-700/30 rounded-lg p-3 border border-slate-600/30"
+                    v-for="match in weekGroup.matches"
+                    :key="match.id"
+                    class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-4 hover:border-violet-500/30 transition-all"
                   >
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                      <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
-                      <div class="flex flex-col gap-0.5 flex-1 min-w-0">
-                        <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                        <span v-if="map.teamName" class="text-xs text-emerald-400">
-                          Selected by {{ map.teamName }}
-                        </span>
+                    <div class="flex items-start justify-between mb-3">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                          <span class="text-sm text-slate-400">📅 {{ formatMatchDate(match.scheduledDate) }}</span>
+                        </div>
+                        <div class="flex items-center gap-3 mb-2">
+                          <div class="text-center">
+                            <div class="text-lg font-bold text-emerald-400">{{ match.team1Name }}</div>
+                          </div>
+                          <div class="text-2xl font-bold text-violet-400">VS</div>
+                          <div class="text-center">
+                            <div class="text-lg font-bold text-emerald-400">{{ match.team2Name }}</div>
+                          </div>
+                        </div>
+                        <div v-if="match.serverName" class="text-sm text-slate-400">
+                          <span>🖥️ {{ match.serverName }}</span>
+                        </div>
                       </div>
-                      <button
-                        v-if="map.roundId"
-                        class="p-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded transition-all flex-shrink-0"
-                        @click="viewRoundReport(map.roundId)"
-                        :title="`View round report`"
-                      >
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
+                      <div class="flex items-center gap-2">
+                        <button
+                          class="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all"
+                          @click="editMatch(match.id)"
+                          title="Edit match"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
+                          @click="confirmDeleteMatch(match.id)"
+                          title="Delete match"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        v-if="map.roundId"
-                        class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
-                        @click="linkRound(match, map)"
-                        title="Change the linked round"
+
+                    <!-- Maps List -->
+                    <div class="space-y-2">
+                      <div
+                        v-for="map in match.maps"
+                        :key="map.id"
+                        class="flex items-center justify-between gap-3 bg-slate-700/30 rounded-lg p-3 border border-slate-600/30"
                       >
-                        Change
-                      </button>
-                      <button
-                        v-if="map.roundId"
-                        class="p-1.5 bg-slate-500/20 hover:bg-slate-500/30 text-slate-400 border border-slate-500/30 hover:border-slate-500/50 rounded-lg transition-all"
-                        @click="unlinkRound(match, map)"
-                        title="Unlink round from this map"
-                      >
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                      <button
-                        v-else
-                        class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
-                        @click="linkRound(match, map)"
-                        title="Link completed round to this map"
-                      >
-                        Link Round
-                      </button>
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                          <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
+                          <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+                            <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
+                            <span v-if="map.teamName" class="text-xs text-emerald-400">
+                              Selected by {{ map.teamName }}
+                            </span>
+                          </div>
+                          <button
+                            v-if="map.roundId"
+                            class="p-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded transition-all flex-shrink-0"
+                            @click="viewRoundReport(map.roundId)"
+                            :title="`View round report`"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            v-if="map.roundId"
+                            class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
+                            @click="linkRound(match, map)"
+                            title="Change the linked round"
+                          >
+                            Change
+                          </button>
+                          <button
+                            v-if="map.roundId"
+                            class="p-1.5 bg-slate-500/20 hover:bg-slate-500/30 text-slate-400 border border-slate-500/30 hover:border-slate-500/50 rounded-lg transition-all"
+                            @click="unlinkRound(match, map)"
+                            title="Unlink round from this map"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                          <button
+                            v-else
+                            class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
+                            @click="linkRound(match, map)"
+                            title="Link completed round to this map"
+                          >
+                            Link Round
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -566,11 +591,44 @@ const linkingMap = ref<TournamentMatchMap | undefined>(undefined);
 
 const tournamentId = parseInt(route.params.id as string);
 
-const sortedMatches = computed(() => {
+const matchesByWeekGroups = computed(() => {
   if (!tournament.value) return [];
-  return [...tournament.value.matches].sort((a, b) => {
-    return new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime();
+
+  // Use matchesByWeek if available, otherwise fallback to grouping matches by week field
+  if (tournament.value.matchesByWeek && tournament.value.matchesByWeek.length > 0) {
+    return tournament.value.matchesByWeek.map(group => ({
+      week: group.week,
+      matches: [...group.matches].sort((a, b) => {
+        return new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime();
+      })
+    }));
+  }
+
+  // Fallback: group by week field if available
+  const groups: Map<string | null, typeof tournament.value.matches> = new Map();
+
+  tournament.value.matches.forEach(match => {
+    const week = match.week ?? null;
+    if (!groups.has(week)) {
+      groups.set(week, []);
+    }
+    groups.get(week)!.push(match);
   });
+
+  // Sort groups and matches within groups
+  return Array.from(groups.entries())
+    .map(([week, matches]) => ({
+      week,
+      matches: [...matches].sort((a, b) => {
+        return new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime();
+      })
+    }))
+    .sort((a, b) => {
+      // Put unscheduled (null) at the end
+      if (a.week === null) return 1;
+      if (b.week === null) return -1;
+      return (a.week || '').localeCompare(b.week || '');
+    });
 });
 
 const renderedRules = computed(() => {
@@ -749,6 +807,12 @@ const onTeamAdded = () => {
 };
 
 // Matches management
+const addMatchForWeek = () => {
+  // Clear any editing state and open the add match modal
+  editingMatch.value = undefined;
+  showAddMatchModal.value = true;
+};
+
 const editMatch = async (matchId: number) => {
   try {
     editingMatch.value = await adminTournamentService.getMatchDetail(tournamentId, matchId);

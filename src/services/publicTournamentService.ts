@@ -49,6 +49,12 @@ export interface PublicTournamentMatch {
   serverName?: string;
   createdAt: string;
   maps: PublicTournamentMatchMap[];
+  week?: string | null;
+}
+
+export interface PublicTournamentMatchesByWeek {
+  week: string | null;
+  matches: PublicTournamentMatch[];
 }
 
 export interface PublicTournamentDetail {
@@ -59,6 +65,7 @@ export interface PublicTournamentDetail {
   anticipatedRoundCount?: number;
   teams: PublicTournamentTeam[];
   matches: PublicTournamentMatch[];
+  matchesByWeek?: PublicTournamentMatchesByWeek[];
   hasHeroImage?: boolean;
   hasCommunityLogo?: boolean;
   game: 'bf1942' | 'fh2' | 'bfvietnam';

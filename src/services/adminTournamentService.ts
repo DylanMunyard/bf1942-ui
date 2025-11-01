@@ -51,6 +51,12 @@ export interface TournamentMatch {
   serverName?: string;
   createdAt: string;
   maps: TournamentMatchMap[];
+  week?: string | null;
+}
+
+export interface TournamentMatchesByWeek {
+  week: string | null;
+  matches: TournamentMatch[];
 }
 
 export interface TournamentDetail {
@@ -61,6 +67,7 @@ export interface TournamentDetail {
   anticipatedRoundCount?: number;
   teams: TournamentTeam[];
   matches: TournamentMatch[];
+  matchesByWeek?: TournamentMatchesByWeek[];
   heroImageBase64?: string;
   heroImageContentType?: string;
   communityLogoBase64?: string;
@@ -134,6 +141,7 @@ export interface CreateMatchRequest {
   mapNames: string[];
   serverGuid?: string;
   serverName?: string;
+  week?: string | null;
 }
 
 export interface UpdateMatchRequest {
@@ -143,6 +151,7 @@ export interface UpdateMatchRequest {
   mapNames?: string[];
   serverGuid?: string;
   serverName?: string;
+  week?: string | null;
 }
 
 export interface UpdateMatchMapRequest {

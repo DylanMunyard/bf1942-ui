@@ -580,10 +580,17 @@ Winners choose first map for next round.</code>
             <div class="flex items-center gap-3">
               <div class="relative flex-1">
                 <input
-                  v-model="formData.primaryColour"
+                  :value="formData.primaryColour || '#000000'"
                   type="color"
                   class="w-full h-12 rounded-lg cursor-pointer border border-slate-700/50"
-                  @change="onPrimaryColorChange"
+                  @change="(e) => {
+                    formData.primaryColour = (e.target as HTMLInputElement).value;
+                    primaryColorInput.value = formData.primaryColour;
+                    if (!formData.secondaryColour) {
+                      formData.secondaryColour = getDefaultSecondaryColor();
+                      secondaryColorInput.value = formData.secondaryColour;
+                    }
+                  }"
                 >
               </div>
               <input
@@ -591,7 +598,7 @@ Winners choose first map for next round.</code>
                 type="text"
                 placeholder="#FF6B35"
                 class="w-32 px-3 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-                @change="onPrimaryColorInputChange"
+                @blur="onPrimaryColorInputChange"
                 title="Paste or type hex color (e.g., #FF6B35)"
               >
               <button
@@ -619,9 +626,13 @@ Winners choose first map for next round.</code>
             <div class="flex items-center gap-3">
               <div class="relative flex-1">
                 <input
-                  v-model="formData.secondaryColour"
+                  :value="formData.secondaryColour || '#9333ea'"
                   type="color"
                   class="w-full h-12 rounded-lg cursor-pointer border border-slate-700/50"
+                  @change="(e) => {
+                    formData.secondaryColour = (e.target as HTMLInputElement).value;
+                    secondaryColorInput.value = formData.secondaryColour;
+                  }"
                 >
               </div>
               <input
@@ -629,7 +640,7 @@ Winners choose first map for next round.</code>
                 type="text"
                 placeholder="#9333EA"
                 class="w-32 px-3 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-                @change="onSecondaryColorInputChange"
+                @blur="onSecondaryColorInputChange"
                 title="Paste or type hex color (e.g., #9333EA)"
               >
               <button
@@ -857,18 +868,7 @@ onMounted(() => {
   }
 });
 
-// Watch for changes in formData colors to sync with text inputs
-watch(() => formData.value.primaryColour, (newVal) => {
-  if (newVal && primaryColorInput.value !== newVal) {
-    primaryColorInput.value = newVal;
-  }
-});
-
-watch(() => formData.value.secondaryColour, (newVal) => {
-  if (newVal && secondaryColorInput.value !== newVal) {
-    secondaryColorInput.value = newVal;
-  }
-});
+// Watchers removed - color inputs now handle their own syncing via event handlers
 
 const searchPlayers = async (query: string) => {
   if (!query || query.length < 2) {
@@ -1142,6 +1142,7 @@ const onPrimaryColorInputChange = () => {
   if (input && isValidHex(input)) {
     formData.value.primaryColour = input;
     primaryColorInput.value = input;
+    console.debug('Primary color validated and set:', input);
 
     // Auto-generate secondary color if empty
     if (!formData.value.secondaryColour) {
@@ -1152,6 +1153,9 @@ const onPrimaryColorInputChange = () => {
     // Allow clearing the field
     formData.value.primaryColour = '';
     primaryColorInput.value = '';
+    console.debug('Primary color cleared');
+  } else {
+    console.debug('Primary color validation failed for:', input);
   }
 };
 
@@ -1179,6 +1183,17 @@ const handleSubmit = async () => {
   error.value = null;
 
   try {
+    // Ensure color inputs are synced before submitting
+    // This handles the case where a user pastes a value without triggering blur
+    console.debug('Before sync - primaryColorInput:', primaryColorInput.value, 'formData.primaryColour:', formData.value.primaryColour);
+    if (primaryColorInput.value.trim()) {
+      onPrimaryColorInputChange();
+    }
+    if (secondaryColorInput.value.trim()) {
+      onSecondaryColorInputChange();
+    }
+    console.debug('After sync - formData.primaryColour:', formData.value.primaryColour, 'formData.secondaryColour:', formData.value.secondaryColour);
+
     const request: CreateTournamentRequest = {
       name: formData.value.name.trim(),
       organizer: formData.value.organizer.trim(),
@@ -1212,6 +1227,8 @@ const handleSubmit = async () => {
     if (formData.value.secondaryColour?.trim()) {
       request.secondaryColour = formData.value.secondaryColour.trim();
     }
+
+    console.debug('Tournament request colors:', { primaryColour: request.primaryColour, secondaryColour: request.secondaryColour });
 
     // Convert hero image to base64 if provided
     if (imageFile.value) {

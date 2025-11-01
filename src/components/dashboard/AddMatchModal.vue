@@ -55,6 +55,23 @@
             >
           </div>
 
+          <!-- Week -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Week <span class="text-slate-500 text-xs">(Optional)</span>
+            </label>
+            <input
+              v-model="formData.week"
+              type="text"
+              placeholder="e.g., Week 1, Week 2, or leave empty"
+              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+              :disabled="loading"
+            >
+            <p class="text-xs text-slate-500 mt-1">
+              Matches without a week will be grouped under "Unscheduled"
+            </p>
+          </div>
+
           <!-- Teams Section -->
           <div>
             <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -332,6 +349,7 @@ const formData = ref({
   maps: [{ name: '', teamId: null }] as MapEntry[],
   serverGuid: '',
   serverName: '',
+  week: null as string | null,
 });
 
 const availableTeamsForTeam1 = computed(() => {
@@ -447,6 +465,7 @@ onMounted(() => {
     }));
     formData.value.serverGuid = props.match.serverGuid || '';
     formData.value.serverName = props.match.serverName || '';
+    formData.value.week = props.match.week || '';
     serverSearchQuery.value = props.match.serverName || '';
   } else {
     // Set default date to now
@@ -465,6 +484,7 @@ const handleSubmit = async () => {
     const serverName = serverSearchQuery.value.trim() || formData.value.serverName.trim();
 
     // Both create and update now use the same payload structure
+    const weekValue = formData.value.week ? formData.value.week.trim() : null;
     const requestData = {
       scheduledDate: new Date(formData.value.scheduledDate).toISOString(),
       team1Id: formData.value.team1Id!,
@@ -472,6 +492,7 @@ const handleSubmit = async () => {
       mapNames: formData.value.maps.map(map => map.name.trim()).filter(name => name.length > 0),
       serverGuid: formData.value.serverGuid.trim() || undefined,
       serverName: serverName || undefined,
+      week: weekValue && weekValue.length > 0 ? weekValue : null,
     };
 
     let matchId: number;
