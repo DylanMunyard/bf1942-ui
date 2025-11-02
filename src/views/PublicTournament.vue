@@ -456,109 +456,108 @@
 
             <!-- Expandable Player Stats Table -->
             <div v-if="map.round?.players && map.round.players.length > 0 && isMapExpanded(map.id)" class="rounded-lg overflow-hidden border border-slate-700/50">
-                <table class="w-full border-collapse">
-                  <thead>
-                    <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
-                      <th class="p-2 border-b border-slate-700/30" />
-                      <!-- Team 1 Stats -->
-                      <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60 min-w-[120px]">
-                        <span class="font-mono">{{ getTeamName(map, 1) }} - Player</span>
-                      </th>
-                      <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
-                        <span class="font-mono">S</span>
-                      </th>
-                      <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
-                        <span class="font-mono">K</span>
-                      </th>
-                      <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-r-4 border-r-cyan-400/60">
-                        <span class="font-mono">D</span>
-                      </th>
-                      <!-- Team 2 Stats -->
-                      <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60 min-w-[120px]">
-                        <span class="font-mono">{{ getTeamName(map, 2) }} - Player</span>
-                      </th>
-                      <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                        <span class="font-mono">S</span>
-                      </th>
-                      <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                        <span class="font-mono">K</span>
-                      </th>
-                      <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                        <span class="font-mono">D</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="(_, idx) in Math.max(getTeamPlayers(map, 1).length, getTeamPlayers(map, 2).length)"
-                      :key="idx"
-                      class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/10"
-                    >
-                      <td class="p-2 text-slate-500 text-xs font-mono">
-                        {{ idx + 1 }}
+              <table class="w-full border-collapse">
+                <thead>
+                  <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
+                    <th class="p-2 border-b border-slate-700/30" />
+                    <!-- Team 1 Stats -->
+                    <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60 min-w-[120px]">
+                      <span class="font-mono">{{ getTeamName(map, 1) }} - Player</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
+                      <span class="font-mono">S</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
+                      <span class="font-mono">K</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-r-4 border-r-cyan-400/60">
+                      <span class="font-mono">D</span>
+                    </th>
+                    <!-- Team 2 Stats -->
+                    <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60 min-w-[120px]">
+                      <span class="font-mono">{{ getTeamName(map, 2) }} - Player</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                      <span class="font-mono">S</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                      <span class="font-mono">K</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                      <span class="font-mono">D</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(_, idx) in Math.max(getTeamPlayers(map, 1).length, getTeamPlayers(map, 2).length)"
+                    :key="idx"
+                    class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/10"
+                  >
+                    <td class="p-2 text-slate-500 text-xs font-mono">
+                      {{ idx + 1 }}
+                    </td>
+                    <!-- Team 1 Player -->
+                    <template v-if="getTeamPlayers(map, 1)[idx]">
+                      <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
+                        <router-link
+                          :to="`/players/${getTeamPlayers(map, 1)[idx].playerName}`"
+                          class="text-cyan-400 hover:text-cyan-300 font-medium text-xs truncate block"
+                        >
+                          {{ getTeamPlayers(map, 1)[idx].playerName }}
+                        </router-link>
                       </td>
-                      <!-- Team 1 Player -->
-                      <template v-if="getTeamPlayers(map, 1)[idx]">
-                        <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
-                          <router-link
-                            :to="`/players/${getTeamPlayers(map, 1)[idx].playerName}`"
-                            class="text-cyan-400 hover:text-cyan-300 font-medium text-xs truncate block"
-                          >
-                            {{ getTeamPlayers(map, 1)[idx].playerName }}
-                          </router-link>
-                        </td>
-                        <td class="p-2 text-center bg-cyan-500/5">
-                          <span class="text-slate-200 font-bold text-xs font-mono">
-                            {{ getTeamPlayers(map, 1)[idx].totalScore.toLocaleString() }}
-                          </span>
-                        </td>
-                        <td class="p-2 text-center bg-cyan-500/5">
-                          <span class="text-slate-300 text-xs font-mono">
-                            {{ getTeamPlayers(map, 1)[idx].totalKills }}
-                          </span>
-                        </td>
-                        <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
-                          <span class="text-slate-300 text-xs font-mono">
-                            {{ getTeamPlayers(map, 1)[idx].totalDeaths }}
-                          </span>
-                        </td>
-                      </template>
-                      <template v-else>
-                        <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40" colspan="4" />
-                      </template>
-                      <!-- Team 2 Player -->
-                      <template v-if="getTeamPlayers(map, 2)[idx]">
-                        <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40">
-                          <router-link
-                            :to="`/players/${getTeamPlayers(map, 2)[idx].playerName}`"
-                            class="text-orange-400 hover:text-orange-300 font-medium text-xs truncate block"
-                          >
-                            {{ getTeamPlayers(map, 2)[idx].playerName }}
-                          </router-link>
-                        </td>
-                        <td class="p-2 text-center bg-orange-500/5">
-                          <span class="text-slate-200 font-bold text-xs font-mono">
-                            {{ getTeamPlayers(map, 2)[idx].totalScore.toLocaleString() }}
-                          </span>
-                        </td>
-                        <td class="p-2 text-center bg-orange-500/5">
-                          <span class="text-slate-300 text-xs font-mono">
-                            {{ getTeamPlayers(map, 2)[idx].totalKills }}
-                          </span>
-                        </td>
-                        <td class="p-2 text-center bg-orange-500/5">
-                          <span class="text-slate-300 text-xs font-mono">
-                            {{ getTeamPlayers(map, 2)[idx].totalDeaths }}
-                          </span>
-                        </td>
-                      </template>
-                      <template v-else>
-                        <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40" colspan="4" />
-                      </template>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                      <td class="p-2 text-center bg-cyan-500/5">
+                        <span class="text-slate-200 font-bold text-xs font-mono">
+                          {{ getTeamPlayers(map, 1)[idx].totalScore.toLocaleString() }}
+                        </span>
+                      </td>
+                      <td class="p-2 text-center bg-cyan-500/5">
+                        <span class="text-slate-300 text-xs font-mono">
+                          {{ getTeamPlayers(map, 1)[idx].totalKills }}
+                        </span>
+                      </td>
+                      <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
+                        <span class="text-slate-300 text-xs font-mono">
+                          {{ getTeamPlayers(map, 1)[idx].totalDeaths }}
+                        </span>
+                      </td>
+                    </template>
+                    <template v-else>
+                      <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40" colspan="4" />
+                    </template>
+                    <!-- Team 2 Player -->
+                    <template v-if="getTeamPlayers(map, 2)[idx]">
+                      <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40">
+                        <router-link
+                          :to="`/players/${getTeamPlayers(map, 2)[idx].playerName}`"
+                          class="text-orange-400 hover:text-orange-300 font-medium text-xs truncate block"
+                        >
+                          {{ getTeamPlayers(map, 2)[idx].playerName }}
+                        </router-link>
+                      </td>
+                      <td class="p-2 text-center bg-orange-500/5">
+                        <span class="text-slate-200 font-bold text-xs font-mono">
+                          {{ getTeamPlayers(map, 2)[idx].totalScore.toLocaleString() }}
+                        </span>
+                      </td>
+                      <td class="p-2 text-center bg-orange-500/5">
+                        <span class="text-slate-300 text-xs font-mono">
+                          {{ getTeamPlayers(map, 2)[idx].totalKills }}
+                        </span>
+                      </td>
+                      <td class="p-2 text-center bg-orange-500/5">
+                        <span class="text-slate-300 text-xs font-mono">
+                          {{ getTeamPlayers(map, 2)[idx].totalDeaths }}
+                        </span>
+                      </td>
+                    </template>
+                    <template v-else>
+                      <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40" colspan="4" />
+                    </template>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
