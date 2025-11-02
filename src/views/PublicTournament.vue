@@ -180,11 +180,16 @@
               <tbody>
                 <!-- Week groups with matches -->
                 <template v-for="weekGroup in allMatchesByWeek" :key="weekGroup.week || 'no-week'">
-                  <!-- Week Header Row (colspan for all columns) -->
+                  <!-- Week Header Row -->
                   <tr v-if="!weekGroup.hideWeekHeader" class="bg-slate-700/30 border-b border-slate-700/50">
-                    <td colspan="4" class="p-4">
+                    <td class="p-4 w-32">
                       <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getThemedAccentColor() }">
-                        {{ weekGroup.week }} - {{ getWeekDateRange(weekGroup.matches) }}
+                        {{ weekGroup.week }}
+                      </span>
+                    </td>
+                    <td colspan="3" class="p-4 text-center">
+                      <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getThemedAccentColor() }">
+                        {{ getWeekDateRange(weekGroup.matches) }}
                       </span>
                     </td>
                   </tr>
@@ -343,7 +348,7 @@
       </div>
     </div>
 
-    <!-- Team Matchup Modal -->
+    <!-- Match Details Modal -->
     <div
       v-if="selectedMatch"
       class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
@@ -366,10 +371,12 @@
             <h3 class="text-3xl font-bold text-center mb-3" :style="{
               color: getValidColors().primary || 'rgb(34, 211, 238)'
             }">
-              Team Matchup
+              Match Details
             </h3>
-            <div class="flex items-center justify-center gap-4 text-sm" :style="{ color: getThemedAccentColor() }">
+            <div class="flex items-center justify-center gap-4 text-sm flex-wrap" :style="{ color: getThemedAccentColor() }">
+              <span>{{ selectedMatch.team1Name }} vs {{ selectedMatch.team2Name }}</span>
               <span>📅 {{ formatMatchDate(selectedMatch.scheduledDate) }}</span>
+              <span v-if="selectedMatch.serverName">🖥️ {{ selectedMatch.serverName }}</span>
             </div>
           </div>
           <button
@@ -396,128 +403,149 @@
           </button>
         </div>
 
-        <!-- Gamification Banner -->
-        <div
-          class="mb-6 p-4 rounded-xl border"
-          :style="{
-            backgroundColor: getValidColors().primary ? `${getValidColors().primary}15` : 'rgba(139, 92, 246, 0.1)',
-            borderColor: getThemedAccentColor()
-          }"
-        >
-          <div class="flex items-start gap-3">
-            <span class="text-3xl flex-shrink-0">⚔️</span>
-            <div>
-              <h4 class="text-lg font-bold mb-1" :style="{ color: getThemedAccentColor() }">Preview the Battle</h4>
-              <p class="text-slate-300 text-sm">
-                Click any two players (one from each team) to compare their stats and predict who will dominate the matchup!
-              </p>
+        <!-- Maps and Results -->
+        <div class="space-y-6">
+          <div v-for="map in selectedMatch.maps" :key="map.id" class="space-y-3">
+            <!-- Map Header -->
+            <div class="rounded-lg p-4 border-2" :style="{
+              backgroundColor: getValidColors().primary ? `${getValidColors().primary}08` : 'rgba(100, 116, 139, 0.2)',
+              borderColor: getValidColors().primary ? `${getValidColors().primary}25` : 'rgba(100, 116, 139, 0.3)',
+            }">
+              <div class="flex items-center justify-between gap-4 flex-wrap">
+                <div class="flex-1">
+                  <div class="text-sm text-slate-500 font-mono mb-1">Map {{ map.mapOrder + 1 }}</div>
+                  <div class="text-lg font-bold text-amber-400">{{ map.mapName }}</div>
+                  <div v-if="map.teamName" class="text-xs text-cyan-400 mt-1">
+                    Selected by {{ map.teamName }}
+                  </div>
+                </div>
+                <div v-if="map.round?.winningTeamName" class="text-center">
+                  <div class="text-sm text-slate-400 mb-1">Result</div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-emerald-400 font-bold">🏆 {{ map.round.winningTeamName }} Wins</span>
+                    <span v-if="getTeamScore(map, 1) !== undefined && getTeamScore(map, 2) !== undefined" class="text-slate-400 font-bold">
+                      ({{ getTeamScore(map, 1) }} - {{ getTeamScore(map, 2) }})
+                    </span>
+                  </div>
+                </div>
+                <div v-else class="text-center">
+                  <div class="text-sm text-slate-400">Status</div>
+                  <div class="text-slate-400 font-bold">Pending</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Player Stats Table -->
+            <div v-if="map.round?.players && map.round.players.length > 0" class="overflow-x-auto">
+              <table class="w-full border-collapse">
+                <thead>
+                  <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
+                    <th class="p-2 border-b border-slate-700/30" />
+                    <!-- Team 1 Stats -->
+                    <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60 min-w-[120px]">
+                      <span class="font-mono">{{ getTeamName(map, 1) }} - Player</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
+                      <span class="font-mono">S</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
+                      <span class="font-mono">K</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-r-4 border-r-cyan-400/60">
+                      <span class="font-mono">D</span>
+                    </th>
+                    <!-- Team 2 Stats -->
+                    <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60 min-w-[120px]">
+                      <span class="font-mono">{{ getTeamName(map, 2) }} - Player</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                      <span class="font-mono">S</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                      <span class="font-mono">K</span>
+                    </th>
+                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
+                      <span class="font-mono">D</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(_, idx) in Math.max(getTeamPlayers(map, 1).length, getTeamPlayers(map, 2).length)"
+                    :key="idx"
+                    class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/10"
+                  >
+                    <td class="p-2 text-slate-500 text-xs font-mono">
+                      {{ idx + 1 }}
+                    </td>
+                    <!-- Team 1 Player -->
+                    <template v-if="getTeamPlayers(map, 1)[idx]">
+                      <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
+                        <router-link
+                          :to="`/players/${getTeamPlayers(map, 1)[idx].playerName}`"
+                          class="text-cyan-400 hover:text-cyan-300 font-medium text-xs truncate block"
+                        >
+                          {{ getTeamPlayers(map, 1)[idx].playerName }}
+                        </router-link>
+                      </td>
+                      <td class="p-2 text-center bg-cyan-500/5">
+                        <span class="text-slate-200 font-bold text-xs font-mono">
+                          {{ getTeamPlayers(map, 1)[idx].totalScore.toLocaleString() }}
+                        </span>
+                      </td>
+                      <td class="p-2 text-center bg-cyan-500/5">
+                        <span class="text-slate-300 text-xs font-mono">
+                          {{ getTeamPlayers(map, 1)[idx].totalKills }}
+                        </span>
+                      </td>
+                      <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
+                        <span class="text-slate-300 text-xs font-mono">
+                          {{ getTeamPlayers(map, 1)[idx].totalDeaths }}
+                        </span>
+                      </td>
+                    </template>
+                    <template v-else>
+                      <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40" colspan="4" />
+                    </template>
+                    <!-- Team 2 Player -->
+                    <template v-if="getTeamPlayers(map, 2)[idx]">
+                      <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40">
+                        <router-link
+                          :to="`/players/${getTeamPlayers(map, 2)[idx].playerName}`"
+                          class="text-orange-400 hover:text-orange-300 font-medium text-xs truncate block"
+                        >
+                          {{ getTeamPlayers(map, 2)[idx].playerName }}
+                        </router-link>
+                      </td>
+                      <td class="p-2 text-center bg-orange-500/5">
+                        <span class="text-slate-200 font-bold text-xs font-mono">
+                          {{ getTeamPlayers(map, 2)[idx].totalScore.toLocaleString() }}
+                        </span>
+                      </td>
+                      <td class="p-2 text-center bg-orange-500/5">
+                        <span class="text-slate-300 text-xs font-mono">
+                          {{ getTeamPlayers(map, 2)[idx].totalKills }}
+                        </span>
+                      </td>
+                      <td class="p-2 text-center bg-orange-500/5">
+                        <span class="text-slate-300 text-xs font-mono">
+                          {{ getTeamPlayers(map, 2)[idx].totalDeaths }}
+                        </span>
+                      </td>
+                    </template>
+                    <template v-else>
+                      <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40" colspan="4" />
+                    </template>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
-        <!-- Rosters Table -->
-        <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
-                <th class="p-4 text-center font-bold text-lg uppercase tracking-wide border-b border-slate-700/30 bg-cyan-500/10 border-4 border-cyan-400/60">
-                  <div class="flex flex-col items-center gap-2">
-                    <span class="text-cyan-400">{{ selectedMatch.team1Name }}</span>
-                    <span class="text-slate-400 text-xs font-normal">
-                      {{ getTeamRoster(selectedMatch, selectedMatch.team1Name).length }} players
-                    </span>
-                  </div>
-                </th>
-                <th class="p-4 text-center font-bold text-lg uppercase tracking-wide border-b border-slate-700/30 bg-orange-500/10 border-4 border-orange-400/60">
-                  <div class="flex flex-col items-center gap-2">
-                    <span class="text-orange-400">{{ selectedMatch.team2Name }}</span>
-                    <span class="text-slate-400 text-xs font-normal">
-                      {{ getTeamRoster(selectedMatch, selectedMatch.team2Name).length }} players
-                    </span>
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(_, idx) in Math.max(
-                  getTeamRoster(selectedMatch, selectedMatch.team1Name).length,
-                  getTeamRoster(selectedMatch, selectedMatch.team2Name).length
-                )"
-                :key="idx"
-                class="border-b border-slate-700/20 hover:bg-slate-800/30 transition-all"
-              >
-                <!-- Team 1 Player -->
-                <td class="p-3 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
-                  <button
-                    v-if="getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx]"
-                    class="w-full text-left px-3 py-2 rounded-lg transition-all"
-                    :class="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)
-                      ? 'bg-purple-500/20 border-2 border-purple-500/50 text-purple-300 font-bold'
-                      : 'hover:bg-cyan-500/10 text-cyan-400 hover:text-cyan-300'"
-                    @click="selectPlayerForComparison(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName, selectedMatch.team1Name)"
-                  >
-                    <div class="flex items-center justify-between">
-                      <span>{{ getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName }}</span>
-                      <svg v-if="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)" class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                      </svg>
-                    </div>
-                  </button>
-                </td>
-                <!-- Team 2 Player -->
-                <td class="p-3 bg-orange-500/5 border-l-2 border-l-orange-400/40">
-                  <button
-                    v-if="getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx]"
-                    class="w-full text-left px-3 py-2 rounded-lg transition-all"
-                    :class="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)
-                      ? 'bg-purple-500/20 border-2 border-purple-500/50 text-purple-300 font-bold'
-                      : 'hover:bg-orange-500/10 text-orange-400 hover:text-orange-300'"
-                    @click="selectPlayerForComparison(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName, selectedMatch.team2Name)"
-                  >
-                    <div class="flex items-center justify-between">
-                      <span>{{ getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName }}</span>
-                      <svg v-if="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)" class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                      </svg>
-                    </div>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Compare Button -->
-        <div v-if="selectedPlayers.length === 2" class="mt-6 text-center">
-          <button
-            class="px-8 py-4 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-3 mx-auto"
-            :style="{
-              backgroundImage: getValidColors().primary
-                ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
-                : 'linear-gradient(to right, rgb(168, 85, 247), rgb(236, 72, 153))'
-            }"
-            @click="comparePlayers"
-            @mouseenter="(e) => {
-              if (e.currentTarget) {
-                (e.currentTarget as HTMLElement).style.opacity = '0.8';
-              }
-            }"
-            @mouseleave="(e) => {
-              if (e.currentTarget) {
-                (e.currentTarget as HTMLElement).style.opacity = '1';
-              }
-            }"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <span>Compare {{ selectedPlayers[0] }} vs {{ selectedPlayers[1] }}</span>
-            <span>⚡</span>
-          </button>
-        </div>
-        <div v-else-if="selectedPlayers.length === 1" class="mt-6 text-center text-slate-400 text-sm">
-          Select one more player from the other team to compare
+        <!-- Future: Add comments section, more details, etc. -->
+        <div class="mt-8 p-4 border border-slate-700/50 rounded-lg bg-slate-800/30 text-center text-slate-400 text-sm">
+          More details and match comments coming soon...
         </div>
       </div>
     </div>
@@ -796,6 +824,23 @@ const getTeamRoster = (_match: PublicTournamentMatch, teamName: string) => {
   if (!tournament.value) return [];
   const team = tournament.value.teams.find(t => t.name === teamName);
   return team?.players || [];
+};
+
+const getTeamName = (map: any, teamNumber: 1 | 2): string => {
+  if (!selectedMatch.value) return '';
+  return teamNumber === 1 ? selectedMatch.value.team1Name : selectedMatch.value.team2Name;
+};
+
+const getTeamScore = (map: any, teamNumber: 1 | 2): number | undefined => {
+  if (!map.round?.teamScores) return undefined;
+  const teamName = getTeamName(map, teamNumber);
+  return map.round.teamScores[teamName];
+};
+
+const getTeamPlayers = (map: any, teamNumber: 1 | 2): any[] => {
+  if (!map.round?.players) return [];
+  const teamName = getTeamName(map, teamNumber);
+  return map.round.players.filter((p: any) => p.teamName === teamName);
 };
 
 const selectPlayerForComparison = (playerName: string, teamName: string) => {
