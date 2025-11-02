@@ -410,7 +410,6 @@
             <div class="rounded-lg p-3 border border-slate-700/50 bg-slate-800/30 flex items-center justify-between gap-4">
               <!-- Map Info -->
               <div class="min-w-[140px]">
-                <div class="text-xs text-slate-500 font-mono mb-0.5">Map {{ map.mapOrder + 1 }}</div>
                 <div class="text-sm font-bold text-amber-400 truncate">{{ map.mapName }}</div>
                 <div v-if="map.teamName" class="text-xs text-cyan-400 mt-0.5">
                   {{ map.teamName }} pick
