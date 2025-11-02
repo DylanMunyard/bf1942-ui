@@ -412,9 +412,8 @@
               </div>
 
               <!-- Show Stats Link -->
-              <div class="p-2 border-t border-slate-700/50 text-center">
+              <div v-if="map.round?.players && map.round.players.length > 0" class="p-2 border-t border-slate-700/50 text-center">
                 <button
-                  v-if="map.round?.players && map.round.players.length > 0"
                   class="text-xs text-slate-400 hover:text-slate-300 transition-colors"
                   @click="toggleMapExpansion(map.id)"
                 >
