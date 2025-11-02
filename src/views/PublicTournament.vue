@@ -445,28 +445,18 @@
                 </div>
               </div>
 
-            </div>
-
-            <!-- Expandable Ladder Section -->
-            <div v-if="map.round?.players && map.round.players.length > 0" class="rounded-lg overflow-hidden border border-slate-700/50">
+              <!-- Show Stats Link -->
               <button
-                class="w-full p-3 flex items-center justify-between bg-slate-800/50 hover:bg-slate-800/70 transition-colors"
+                v-if="map.round?.players && map.round.players.length > 0"
+                class="text-xs text-slate-400 hover:text-slate-300 transition-colors ml-2 whitespace-nowrap"
                 @click="toggleMapExpansion(map.id)"
               >
-                <span class="text-xs font-bold uppercase text-slate-400">📊 Player Statistics</span>
-                <svg
-                  class="w-4 h-4 transition-transform text-slate-400"
-                  :class="{ 'rotate-180': isMapExpanded(map.id) }"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
+                {{ isMapExpanded(map.id) ? '▼ Hide' : '▶ Show' }} stats
               </button>
+            </div>
 
-              <!-- Player Stats Table (Collapsible) -->
-              <div v-if="isMapExpanded(map.id)" class="overflow-x-auto">
+            <!-- Expandable Player Stats Table -->
+            <div v-if="map.round?.players && map.round.players.length > 0 && isMapExpanded(map.id)" class="rounded-lg overflow-hidden border border-slate-700/50">
                 <table class="w-full border-collapse">
                   <thead>
                     <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
