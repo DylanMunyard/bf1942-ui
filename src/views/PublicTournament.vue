@@ -376,40 +376,37 @@
         <!-- Maps and Results -->
         <div class="space-y-4">
           <div v-for="map in selectedMatch.maps" :key="map.id" class="space-y-2">
-            <!-- Map Result Card - Compact Style -->
-            <div class="rounded-lg p-3 border border-slate-700/50 bg-slate-800/30 flex items-center justify-between gap-4">
-              <!-- Map Info -->
-              <div class="min-w-[140px]">
-                <div class="text-sm font-bold text-amber-400 truncate">{{ map.mapName }}</div>
-                <div v-if="map.teamName" class="text-xs text-cyan-400 mt-0.5">
-                  {{ map.teamName }} pick
+            <!-- Map Result Card - Column Layout -->
+            <div class="rounded-lg p-4 border border-slate-700/50 bg-slate-800/30">
+              <!-- Map Info Header -->
+              <div class="mb-3 pb-3 border-b border-slate-700/50">
+                <div class="text-sm font-bold text-amber-400">{{ map.mapName }}</div>
+                <div v-if="map.teamName" class="text-xs text-cyan-400 mt-1">
+                  Selected by {{ map.teamName }}
                 </div>
               </div>
 
-              <!-- Result Display - Two Column -->
-              <div class="flex-1 flex items-center gap-2 justify-center">
-                <!-- Team 1 Score -->
-                <div class="text-center flex-1">
-                  <div class="text-xs text-slate-400 mb-0.5">{{ getTeamName(map, 1) }}</div>
-                  <div class="flex items-center justify-center gap-1">
+              <!-- Team Results - Stacked Vertically -->
+              <div class="space-y-2 mb-3">
+                <!-- Team 1 Result -->
+                <div class="flex items-center justify-between p-2 rounded bg-slate-700/20">
+                  <div class="text-sm font-bold text-slate-300">{{ getTeamName(map, 1) }}</div>
+                  <div class="flex items-center gap-2">
                     <div class="text-2xl font-black" :class="map.round?.winningTeamName === getTeamName(map, 1) ? 'text-emerald-400' : 'text-slate-500'">
                       {{ getTeamScore(map, 1) ?? '-' }}
                     </div>
-                    <span v-if="map.round?.winningTeamName === getTeamName(map, 1)" class="text-xs">🏆</span>
+                    <span v-if="map.round?.winningTeamName === getTeamName(map, 1)" class="text-lg">🏆</span>
                   </div>
                 </div>
 
-                <!-- Divider -->
-                <div class="h-8 w-px bg-slate-700/50" />
-
-                <!-- Team 2 Score -->
-                <div class="text-center flex-1">
-                  <div class="text-xs text-slate-400 mb-0.5">{{ getTeamName(map, 2) }}</div>
-                  <div class="flex items-center justify-center gap-1">
-                    <span v-if="map.round?.winningTeamName === getTeamName(map, 2)" class="text-xs">🏆</span>
+                <!-- Team 2 Result -->
+                <div class="flex items-center justify-between p-2 rounded bg-slate-700/20">
+                  <div class="text-sm font-bold text-slate-300">{{ getTeamName(map, 2) }}</div>
+                  <div class="flex items-center gap-2">
                     <div class="text-2xl font-black" :class="map.round?.winningTeamName === getTeamName(map, 2) ? 'text-emerald-400' : 'text-slate-500'">
                       {{ getTeamScore(map, 2) ?? '-' }}
                     </div>
+                    <span v-if="map.round?.winningTeamName === getTeamName(map, 2)" class="text-lg">🏆</span>
                   </div>
                 </div>
               </div>
@@ -417,7 +414,7 @@
               <!-- Show Stats Link -->
               <button
                 v-if="map.round?.players && map.round.players.length > 0"
-                class="text-xs text-slate-400 hover:text-slate-300 transition-colors ml-2 whitespace-nowrap"
+                class="text-xs text-slate-400 hover:text-slate-300 transition-colors"
                 @click="toggleMapExpansion(map.id)"
               >
                 {{ isMapExpanded(map.id) ? '▼ Hide' : '▶ Show' }} stats
