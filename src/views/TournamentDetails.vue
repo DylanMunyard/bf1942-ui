@@ -297,7 +297,7 @@
                       <!-- Maps Summary -->
                       <td class="p-3">
                         <div class="text-xs space-y-0.5">
-                          <div v-for="map in match.maps" :key="map.id" class="flex items-center gap-2">
+                          <div v-for="map in (match.maps || []).filter((m: any) => m)" :key="map.id" class="flex items-center gap-2">
                             <span class="text-slate-500 font-mono">{{ map.mapOrder + 1 }}.</span>
                             <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
                             <span v-if="map.roundId" class="text-cyan-400 flex-shrink-0 text-xs">🎮</span>
@@ -310,8 +310,8 @@
 
                       <!-- Round Link Status & Team Mapping -->
                       <td class="p-3">
-                        <div v-if="match.maps.length > 0" class="text-xs space-y-1">
-                          <div v-for="map in match.maps" :key="`status-${map.id}`" class="flex items-center gap-1">
+                        <div v-if="(match.maps || []).length > 0" class="text-xs space-y-1">
+                          <div v-for="map in (match.maps || []).filter((m: any) => m)" :key="`status-${map.id}`" class="flex items-center gap-1">
                             <span v-if="!map.roundId" class="text-slate-400">No round</span>
                             <span v-else-if="needsTeamMapping(map)" class="text-amber-400">⚠️ Map team assignment needed</span>
                             <span v-else class="text-emerald-400">✓ Complete</span>
@@ -345,28 +345,27 @@
                     </tr>
 
                     <!-- Expanded Map Details Rows (for team mapping and round linking) -->
-                    <tr
-                      v-for="map in match.maps.map(map => ({ ...map, matchId: match.id, match: match }))"
-                      v-show="overridingMapId === map.id || (map.roundId && map.matchResult && overridingMapId !== map.id)"
-                      :key="`detail-${map.id}`"
-                      class="bg-slate-900/50 border-b border-slate-700/50 border-l-4 border-l-cyan-500/50"
-                    >
+                    <template v-for="(originalMap, mapIndex) in (match.maps || []).filter((m: any) => m && m.id)" :key="`detail-${originalMap.id}`">
+                      <tr
+                        v-if="originalMap && (overridingMapId === originalMap.id || !originalMap.roundId || (originalMap.roundId && originalMap.matchResult && overridingMapId !== originalMap.id))"
+                        class="bg-slate-900/50 border-b border-slate-700/50 border-l-4 border-l-cyan-500/50"
+                      >
                       <td colspan="5" class="p-4">
                         <div class="space-y-2">
                           <!-- Map Header -->
                           <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center gap-2">
-                              <span class="text-xs font-mono text-slate-500">{{ map.mapOrder + 1 }}.</span>
-                              <span class="text-sm font-bold text-amber-400">{{ map.mapName }}</span>
-                              <span v-if="map.teamName" class="text-xs text-cyan-400">
-                                Selected by {{ map.teamName }}
+                              <span class="text-xs font-mono text-slate-500">{{ originalMap.mapOrder + 1 }}.</span>
+                              <span class="text-sm font-bold text-amber-400">{{ originalMap.mapName }}</span>
+                              <span v-if="originalMap.teamName" class="text-xs text-cyan-400">
+                                Selected by {{ originalMap.teamName }}
                               </span>
                             </div>
                             <div class="flex items-center gap-2">
                               <button
-                                v-if="map.roundId"
+                                v-if="originalMap.roundId"
                                 class="p-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded transition-all"
-                                @click="viewRoundReport(map.roundId)"
+                                @click="viewRoundReport(originalMap.roundId)"
                                 title="View round report"
                               >
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -374,17 +373,17 @@
                                 </svg>
                               </button>
                               <button
-                                v-if="map.roundId"
+                                v-if="originalMap.roundId"
                                 class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
-                                @click="linkRound(map.match, map)"
+                                @click="linkRound(match, originalMap)"
                                 title="Change the linked round"
                               >
                                 Change
                               </button>
                               <button
-                                v-if="map.roundId"
+                                v-if="originalMap.roundId"
                                 class="p-1.5 bg-slate-500/20 hover:bg-slate-500/30 text-slate-400 border border-slate-500/30 hover:border-slate-500/50 rounded-lg transition-all cursor-pointer"
-                                @click="confirmUnlinkRound(map.match, map)"
+                                @click="confirmUnlinkRound(match, originalMap)"
                                 title="Unlink round from this map"
                               >
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -394,7 +393,7 @@
                               <button
                                 v-else
                                 class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
-                                @click="linkRound(map.match, map)"
+                                @click="linkRound(match, originalMap)"
                                 title="Link completed round to this map"
                               >
                                 Link Round
@@ -403,36 +402,36 @@
                           </div>
 
                           <!-- Team Mapping Section (only show if round is linked) -->
-                          <div v-if="map.roundId && map.matchResult" class="border-t border-slate-600/30 pt-2">
+                          <div v-if="originalMap.roundId" class="border-t border-slate-600/30 pt-2">
                             <!-- Editing state -->
-                            <div v-if="overridingMapId === map.id" class="flex flex-wrap items-center gap-3">
+                            <div v-if="overridingMapId === originalMap.id" class="flex flex-wrap items-center gap-3">
                               <div class="flex items-center gap-1.5 flex-1 min-w-48">
-                                <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ map.round?.team1Label || 'Team 1' }}:</label>
+                                <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ originalMap.round?.team1Label || 'Team 1' }}:</label>
                                 <select
                                   v-model.number="overridingTeam1Id"
                                   class="flex-1 px-2 py-1 bg-slate-800 border border-slate-600 rounded text-xs text-slate-200 hover:border-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
                                 >
                                   <option :value="null">Select team</option>
-                                  <option v-for="team in getMatchTeams(map.match)" :key="team.id" :value="team.id">
+                                  <option v-for="team in getMatchTeams(match)" :key="team.id" :value="team.id">
                                     {{ team.name }}
                                   </option>
                                 </select>
-                                <span v-if="map.round" class="text-slate-500 whitespace-nowrap text-xs">({{ map.round.tickets1 }})</span>
-                                <span v-if="getWinningTeam(map)?.teamNumber === 1" title="Winner">🏆</span>
+                                <span v-if="originalMap.round" class="text-slate-500 whitespace-nowrap text-xs">({{ originalMap.round.tickets1 }})</span>
+                                <span v-if="getWinningTeam(originalMap)?.teamNumber === 1" title="Winner">🏆</span>
                               </div>
                               <div class="flex items-center gap-1.5 flex-1 min-w-48">
-                                <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ map.round?.team2Label || 'Team 2' }}:</label>
+                                <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ originalMap.round?.team2Label || 'Team 2' }}:</label>
                                 <select
                                   v-model.number="overridingTeam2Id"
                                   class="flex-1 px-2 py-1 bg-slate-800 border border-slate-600 rounded text-xs text-slate-200 hover:border-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
                                 >
                                   <option :value="null">Select team</option>
-                                  <option v-for="team in getMatchTeams(map.match)" :key="team.id" :value="team.id">
+                                  <option v-for="team in getMatchTeams(match)" :key="team.id" :value="team.id">
                                     {{ team.name }}
                                   </option>
                                 </select>
-                                <span v-if="map.round" class="text-slate-500 whitespace-nowrap text-xs">({{ map.round.tickets2 }})</span>
-                                <span v-if="getWinningTeam(map)?.teamNumber === 2" title="Winner">🏆</span>
+                                <span v-if="originalMap.round" class="text-slate-500 whitespace-nowrap text-xs">({{ originalMap.round.tickets2 }})</span>
+                                <span v-if="getWinningTeam(originalMap)?.teamNumber === 2" title="Winner">🏆</span>
                               </div>
                               <button
                                 class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -443,7 +442,7 @@
                               </button>
                               <button
                                 class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-xs font-medium transition-colors flex items-center gap-1"
-                                @click="saveTeamMappingOverride(map.match, map)"
+                                @click="saveTeamMappingOverride(match, originalMap)"
                                 :disabled="!canSaveTeamMapping() || isOverridingSaving"
                               >
                                 <svg v-if="isOverridingSaving" class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -455,41 +454,46 @@
                             </div>
                             <!-- View state -->
                             <div v-else class="flex flex-wrap items-center gap-3 text-xs">
-                              <div class="flex items-center gap-1.5">
-                                <span class="text-slate-400 font-medium whitespace-nowrap">{{ map.round?.team1Label || 'Team 1' }}:</span>
-                                <span v-if="map.matchResult.team1Name" class="text-emerald-400 font-medium">
-                                  {{ map.matchResult.team1Name }}
+                              <div v-if="originalMap.matchResult" class="flex items-center gap-1.5">
+                                <span class="text-slate-400 font-medium whitespace-nowrap">{{ originalMap.round?.team1Label || 'Team 1' }}:</span>
+                                <span v-if="originalMap.matchResult.team1Name" class="text-emerald-400 font-medium">
+                                  {{ originalMap.matchResult.team1Name }}
                                 </span>
                                 <span v-else class="text-red-400">-</span>
-                                <span v-if="map.round" class="text-slate-500">({{ map.round.tickets1 }})</span>
-                                <span v-if="getWinningTeam(map)?.teamNumber === 1">🏆</span>
+                                <span v-if="originalMap.round" class="text-slate-500">({{ originalMap.round.tickets1 }})</span>
+                                <span v-if="getWinningTeam(originalMap)?.teamNumber === 1">🏆</span>
                               </div>
-                              <div class="flex items-center gap-1.5">
-                                <span class="text-slate-400 font-medium whitespace-nowrap">{{ map.round?.team2Label || 'Team 2' }}:</span>
-                                <span v-if="map.matchResult.team2Name" class="text-emerald-400 font-medium">
-                                  {{ map.matchResult.team2Name }}
+                              <div v-if="originalMap.matchResult" class="flex items-center gap-1.5">
+                                <span class="text-slate-400 font-medium whitespace-nowrap">{{ originalMap.round?.team2Label || 'Team 2' }}:</span>
+                                <span v-if="originalMap.matchResult.team2Name" class="text-emerald-400 font-medium">
+                                  {{ originalMap.matchResult.team2Name }}
                                 </span>
                                 <span v-else class="text-red-400">-</span>
-                                <span v-if="map.round" class="text-slate-500">({{ map.round.tickets2 }})</span>
-                                <span v-if="getWinningTeam(map)?.teamNumber === 2">🏆</span>
+                                <span v-if="originalMap.round" class="text-slate-500">({{ originalMap.round.tickets2 }})</span>
+                                <span v-if="getWinningTeam(originalMap)?.teamNumber === 2">🏆</span>
+                              </div>
+                              <div v-if="!originalMap.matchResult" class="text-slate-400 flex-1">
+                                Loading team mapping data...
                               </div>
                               <button
+                                v-if="originalMap.matchResult"
                                 :class="[
                                   'px-1.5 py-0.5 rounded transition-all text-xs font-medium ml-auto',
-                                  needsTeamMapping(map)
+                                  needsTeamMapping(originalMap)
                                     ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30'
                                     : 'bg-slate-600/20 hover:bg-slate-600/30 text-slate-300 border border-slate-600/30'
                                 ]"
-                                @click="startOverrideTeamMapping(map)"
+                                @click="startOverrideTeamMapping(originalMap)"
                               >
-                                {{ needsTeamMapping(map) ? 'Assign' : 'Edit' }}
+                                {{ needsTeamMapping(originalMap) ? 'Assign' : 'Edit' }}
                               </button>
                             </div>
                           </div>
                         </div>
                       </td>
-                  </tr>
-                </template>
+                      </tr>
+                    </template>
+                  </template>
                 </template>
               </tbody>
             </table>
