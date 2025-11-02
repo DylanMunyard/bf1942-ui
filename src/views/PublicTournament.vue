@@ -206,8 +206,8 @@
                         <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2">
                           <span class="text-slate-500 font-mono">{{ map.mapOrder + 1 }}.</span>
                           <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                          <span v-if="map.round?.winningTeamName" class="text-emerald-400 flex-shrink-0">
-                            🏆 {{ map.round.winningTeamName }}
+                          <span v-if="map.matchResult?.winningTeamName" class="text-emerald-400 flex-shrink-0">
+                            🏆 {{ map.matchResult.winningTeamName }}
                           </span>
                         </div>
                       </div>
@@ -392,10 +392,10 @@
                 <div class="flex-1 p-3 border-r border-slate-700/50 flex items-center justify-between">
                   <div class="text-sm font-bold text-slate-300">{{ getTeamName(map, 1) }}</div>
                   <div class="flex items-center gap-1">
-                    <div class="text-2xl font-black" :class="map.round?.winningTeamName === getTeamName(map, 1) ? 'text-emerald-400' : 'text-slate-500'">
+                    <div class="text-2xl font-black" :class="map.matchResult?.winningTeamName === getTeamName(map, 1) ? 'text-emerald-400' : 'text-slate-500'">
                       {{ getTeamScore(map, 1) ?? '-' }}
                     </div>
-                    <span v-if="map.round?.winningTeamName === getTeamName(map, 1)" class="text-lg">🏆</span>
+                    <span v-if="map.matchResult?.winningTeamName === getTeamName(map, 1)" class="text-lg">🏆</span>
                   </div>
                 </div>
 
@@ -403,10 +403,10 @@
                 <div class="flex-1 p-3 flex items-center justify-between">
                   <div class="text-sm font-bold text-slate-300">{{ getTeamName(map, 2) }}</div>
                   <div class="flex items-center gap-1">
-                    <div class="text-2xl font-black" :class="map.round?.winningTeamName === getTeamName(map, 2) ? 'text-emerald-400' : 'text-slate-500'">
+                    <div class="text-2xl font-black" :class="map.matchResult?.winningTeamName === getTeamName(map, 2) ? 'text-emerald-400' : 'text-slate-500'">
                       {{ getTeamScore(map, 2) ?? '-' }}
                     </div>
-                    <span v-if="map.round?.winningTeamName === getTeamName(map, 2)" class="text-lg">🏆</span>
+                    <span v-if="map.matchResult?.winningTeamName === getTeamName(map, 2)" class="text-lg">🏆</span>
                   </div>
                 </div>
               </div>
@@ -742,7 +742,7 @@ const getWeekDateRange = (matches: MatchWithStatus[]): string => {
   if (!matches || matches.length === 0) return '';
 
   // Get all scheduled dates from all matches
-  const dates = matches.flatMap(m => m.match.maps.map(map => new Date(m.match.scheduledDate)));
+  const dates = matches.flatMap(m => m.match.maps.map(_map => new Date(m.match.scheduledDate)));
 
   if (dates.length === 0) return '';
 
@@ -919,16 +919,17 @@ const closeMatchupModal = () => {
   expandedMaps.value.clear();
 };
 
-const toggleMapExpansion = (mapId: string) => {
-  if (expandedMaps.value.has(mapId)) {
-    expandedMaps.value.delete(mapId);
+const toggleMapExpansion = (mapId: number) => {
+  const mapIdStr = String(mapId);
+  if (expandedMaps.value.has(mapIdStr)) {
+    expandedMaps.value.delete(mapIdStr);
   } else {
-    expandedMaps.value.add(mapId);
+    expandedMaps.value.add(mapIdStr);
   }
 };
 
-const isMapExpanded = (mapId: string): boolean => {
-  return expandedMaps.value.has(mapId);
+const isMapExpanded = (mapId: number): boolean => {
+  return expandedMaps.value.has(String(mapId));
 };
 
 const getTeamRoster = (_match: PublicTournamentMatch, teamName: string) => {
@@ -937,15 +938,24 @@ const getTeamRoster = (_match: PublicTournamentMatch, teamName: string) => {
   return team?.players || [];
 };
 
-const getTeamName = (map: any, teamNumber: 1 | 2): string => {
+const getTeamName = (_map: any, teamNumber: 1 | 2): string => {
   if (!selectedMatch.value) return '';
   return teamNumber === 1 ? selectedMatch.value.team1Name : selectedMatch.value.team2Name;
 };
 
 const getTeamScore = (map: any, teamNumber: 1 | 2): number | undefined => {
-  if (!map.round?.teamScores) return undefined;
-  const teamName = getTeamName(map, teamNumber);
-  return map.round.teamScores[teamName];
+  if (!map.matchResult || !selectedMatch.value) return undefined;
+
+  // Match team by name to get the correct score, in case the order differs
+  const tournamentTeamName = teamNumber === 1 ? selectedMatch.value.team1Name : selectedMatch.value.team2Name;
+
+  if (map.matchResult.team1Name === tournamentTeamName) {
+    return map.matchResult.team1Tickets;
+  } else if (map.matchResult.team2Name === tournamentTeamName) {
+    return map.matchResult.team2Tickets;
+  }
+
+  return undefined;
 };
 
 const getTeamPlayers = (map: any, teamNumber: 1 | 2): any[] => {

@@ -30,6 +30,18 @@ export interface PublicTournamentRound {
   players?: PublicTournamentRoundPlayer[];
 }
 
+export interface PublicTournamentMatchResult {
+  id: number;
+  team1Id?: number;
+  team1Name?: string;
+  team2Id?: number;
+  team2Name?: string;
+  winningTeamId?: number;
+  winningTeamName?: string;
+  team1Tickets: number;
+  team2Tickets: number;
+}
+
 export interface PublicTournamentMatchMap {
   id: number;
   mapName: string;
@@ -38,6 +50,7 @@ export interface PublicTournamentMatchMap {
   teamId?: number;
   teamName?: string;
   round?: PublicTournamentRound | null;
+  matchResult?: PublicTournamentMatchResult;
 }
 
 export interface PublicTournamentMatch {
