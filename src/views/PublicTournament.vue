@@ -184,7 +184,7 @@
                   <tr v-if="!weekGroup.hideWeekHeader" class="bg-slate-700/30 border-b border-slate-700/50">
                     <td colspan="4" class="p-4">
                       <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getThemedAccentColor() }">
-                        {{ getWeekDateRange(weekGroup.matches) }}
+                        {{ weekGroup.week }} - {{ getWeekDateRange(weekGroup.matches) }}
                       </span>
                     </td>
                   </tr>
