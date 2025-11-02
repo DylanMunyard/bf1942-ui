@@ -217,15 +217,6 @@
                     <td class="p-3 text-center">
                       <div class="flex items-center justify-center gap-2">
                         <button
-                          class="px-3 py-1.5 text-xs font-bold uppercase transition-all rounded border"
-                          :class="matchItem.match.maps.some(m => m.roundId)
-                            ? 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border-cyan-500/30 hover:border-cyan-500/50'
-                            : 'bg-slate-600/20 text-slate-500 border-slate-600/30 cursor-not-allowed opacity-50'"
-                          @click="matchItem.match.maps.filter(m => m.roundId)[0] && viewRoundReport(matchItem.match.maps.filter(m => m.roundId)[0]!.roundId!)"
-                        >
-                          Report
-                        </button>
-                        <button
                           class="px-3 py-1.5 text-xs font-bold transition-all rounded border bg-slate-700/30 hover:bg-slate-600/30 text-slate-300 border-slate-600/30"
                           @click="openMatchupModal(matchItem.match)"
                         >
@@ -373,53 +364,83 @@
           </button>
         </div>
 
-        <!-- Maps and Results -->
-        <div class="space-y-4">
-          <div v-for="map in selectedMatch.maps" :key="map.id" class="space-y-2">
-            <!-- Map Result Card - Column Layout -->
-            <div class="rounded-lg border border-slate-700/50 bg-slate-800/30">
-              <!-- Map Info Header -->
-              <div class="p-3 pb-2 border-b border-slate-700/50">
-                <div class="text-sm font-bold text-amber-400">{{ map.mapName }}</div>
-                <div v-if="map.teamName" class="text-xs text-cyan-400 mt-1">
-                  Selected by {{ map.teamName }}
-                </div>
-              </div>
+        <!-- Maps and Results Table -->
+        <div class="rounded-lg overflow-hidden border border-slate-700/50">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
+                <th class="p-3 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30">
+                  Map
+                </th>
+                <th class="p-3 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60">
+                  {{ selectedMatch.team1Name }}
+                </th>
+                <th class="p-3 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60">
+                  {{ selectedMatch.team2Name }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="map in selectedMatch.maps"
+                :key="map.id"
+                class="border-b border-slate-700/20 hover:bg-slate-800/30 transition-all group"
+              >
+                <!-- Map Name & Info -->
+                <td class="p-3">
+                  <div class="flex flex-col gap-1">
+                    <button
+                      v-if="map.roundId"
+                      @click="viewRoundReport(map.roundId)"
+                      class="text-sm font-bold text-amber-400 hover:text-amber-300 hover:underline transition-colors cursor-pointer text-left inline-flex items-center gap-1.5 group"
+                    >
+                      {{ map.mapName }}
+                      <svg class="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-300 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </button>
+                    <span v-else class="text-sm font-bold text-amber-400">{{ map.mapName }}</span>
+                    <span v-if="map.teamName" class="text-xs text-cyan-400">
+                      Selected by {{ map.teamName }}
+                    </span>
+                  </div>
+                </td>
 
-              <!-- Team Results - Side by Side Columns -->
-              <div class="flex">
-                <!-- Team 1 Column -->
-                <div class="flex-1 p-3 border-r border-slate-700/50 flex items-center justify-between">
-                  <div class="text-sm font-bold text-slate-300">{{ getTeamName(map, 1) }}</div>
-                  <div class="flex items-center gap-1">
-                    <div class="text-2xl font-black" :class="map.matchResult?.winningTeamName === getTeamName(map, 1) ? 'text-emerald-400' : 'text-slate-500'">
+                <!-- Team 1 Score -->
+                <td class="p-3 bg-cyan-500/5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-slate-300">
                       {{ getTeamScore(map, 1) ?? '-' }}
-                    </div>
+                    </span>
                     <span v-if="map.matchResult?.winningTeamName === getTeamName(map, 1)" class="text-lg">🏆</span>
                   </div>
-                </div>
+                </td>
 
-                <!-- Team 2 Column -->
-                <div class="flex-1 p-3 flex items-center justify-between">
-                  <div class="text-sm font-bold text-slate-300">{{ getTeamName(map, 2) }}</div>
-                  <div class="flex items-center gap-1">
-                    <div class="text-2xl font-black" :class="map.matchResult?.winningTeamName === getTeamName(map, 2) ? 'text-emerald-400' : 'text-slate-500'">
+                <!-- Team 2 Score -->
+                <td class="p-3 bg-orange-500/5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-slate-300">
                       {{ getTeamScore(map, 2) ?? '-' }}
-                    </div>
+                    </span>
                     <span v-if="map.matchResult?.winningTeamName === getTeamName(map, 2)" class="text-lg">🏆</span>
                   </div>
-                </div>
-              </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-              <!-- Show Stats Link -->
-              <div v-if="map.round?.players && map.round.players.length > 0" class="p-2 border-t border-slate-700/50 text-center">
-                <button
-                  class="text-xs text-slate-400 hover:text-slate-300 transition-colors"
-                  @click="toggleMapExpansion(map.id)"
-                >
-                  {{ isMapExpanded(map.id) ? '▼ Hide' : '▶ Show' }} stats
-                </button>
-              </div>
+        <!-- Expandable Player Stats Section -->
+        <div class="space-y-4">
+          <div v-for="map in selectedMatch.maps" :key="map.id" class="space-y-2">
+            <!-- Show Stats Toggle (only if stats available) -->
+            <div v-if="map.round?.players && map.round.players.length > 0" class="p-3 bg-slate-800/30 rounded-lg border border-slate-700/50">
+              <button
+                class="text-xs text-slate-400 hover:text-slate-300 transition-colors"
+                @click="toggleMapExpansion(map.id)"
+              >
+                {{ isMapExpanded(map.id) ? '▼ Hide' : '▶ Show' }} {{ map.mapName }} stats
+              </button>
             </div>
 
             <!-- Expandable Player Stats Table -->

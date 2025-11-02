@@ -884,25 +884,21 @@ const loadTournament = async () => {
       matches: data.matches ?? []
     };
 
-    // Load hero image if available
-    if (data.heroImageBase64) {
-      heroImageUrl.value = `data:${data.heroImageContentType || 'image/png'};base64,${data.heroImageBase64}`;
-    } else {
-      // Try to fetch from API
-      await loadHeroImage();
+    // Set loading to false BEFORE loading images - images load asynchronously in background
+    loading.value = false;
+
+    // Load hero image if available (async, doesn't block rendering)
+    if (data.hasHeroImage) {
+      loadHeroImage().catch(err => console.debug('Failed to load hero image:', err));
     }
 
-    // Load logo image if available
-    if (data.communityLogoBase64) {
-      logoImageUrl.value = `data:${data.communityLogoContentType || 'image/png'};base64,${data.communityLogoBase64}`;
-    } else {
-      // Try to fetch from API
-      await loadLogoImage();
+    // Load logo image if available (async, doesn't block rendering)
+    if (data.hasCommunityLogo) {
+      loadLogoImage().catch(err => console.debug('Failed to load logo image:', err));
     }
   } catch (err) {
     console.error('Error loading tournament:', err);
     error.value = err instanceof Error ? err.message : 'Failed to load tournament';
-  } finally {
     loading.value = false;
   }
 };
@@ -913,7 +909,7 @@ const loadHeroImage = async () => {
     await authService.ensureValidToken();
     const token = localStorage.getItem('authToken');
 
-    const response = await fetch(adminTournamentService.getTournamentImageUrl(tournamentId), {
+    const response = await fetch(`/stats/admin/tournaments/${tournamentId}/image`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -935,7 +931,7 @@ const loadLogoImage = async () => {
     await authService.ensureValidToken();
     const token = localStorage.getItem('authToken');
 
-    const response = await fetch(adminTournamentService.getTournamentLogoUrl(tournamentId), {
+    const response = await fetch(`/stats/admin/tournaments/${tournamentId}/logo`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
