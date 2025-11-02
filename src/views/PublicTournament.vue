@@ -377,21 +377,21 @@
         <div class="space-y-4">
           <div v-for="map in selectedMatch.maps" :key="map.id" class="space-y-2">
             <!-- Map Result Card - Column Layout -->
-            <div class="rounded-lg p-4 border border-slate-700/50 bg-slate-800/30">
+            <div class="rounded-lg border border-slate-700/50 bg-slate-800/30">
               <!-- Map Info Header -->
-              <div class="mb-3 pb-3 border-b border-slate-700/50">
+              <div class="p-3 pb-2 border-b border-slate-700/50">
                 <div class="text-sm font-bold text-amber-400">{{ map.mapName }}</div>
                 <div v-if="map.teamName" class="text-xs text-cyan-400 mt-1">
                   Selected by {{ map.teamName }}
                 </div>
               </div>
 
-              <!-- Team Results - Stacked Vertically -->
-              <div class="space-y-2 mb-3">
-                <!-- Team 1 Result -->
-                <div class="flex items-center justify-between p-2 rounded bg-slate-700/20">
+              <!-- Team Results - Side by Side Columns -->
+              <div class="flex">
+                <!-- Team 1 Column -->
+                <div class="flex-1 p-3 border-r border-slate-700/50 flex items-center justify-between">
                   <div class="text-sm font-bold text-slate-300">{{ getTeamName(map, 1) }}</div>
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1">
                     <div class="text-2xl font-black" :class="map.round?.winningTeamName === getTeamName(map, 1) ? 'text-emerald-400' : 'text-slate-500'">
                       {{ getTeamScore(map, 1) ?? '-' }}
                     </div>
@@ -399,10 +399,10 @@
                   </div>
                 </div>
 
-                <!-- Team 2 Result -->
-                <div class="flex items-center justify-between p-2 rounded bg-slate-700/20">
+                <!-- Team 2 Column -->
+                <div class="flex-1 p-3 flex items-center justify-between">
                   <div class="text-sm font-bold text-slate-300">{{ getTeamName(map, 2) }}</div>
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1">
                     <div class="text-2xl font-black" :class="map.round?.winningTeamName === getTeamName(map, 2) ? 'text-emerald-400' : 'text-slate-500'">
                       {{ getTeamScore(map, 2) ?? '-' }}
                     </div>
@@ -412,13 +412,15 @@
               </div>
 
               <!-- Show Stats Link -->
-              <button
-                v-if="map.round?.players && map.round.players.length > 0"
-                class="text-xs text-slate-400 hover:text-slate-300 transition-colors"
-                @click="toggleMapExpansion(map.id)"
-              >
-                {{ isMapExpanded(map.id) ? '▼ Hide' : '▶ Show' }} stats
-              </button>
+              <div class="p-2 border-t border-slate-700/50 text-center">
+                <button
+                  v-if="map.round?.players && map.round.players.length > 0"
+                  class="text-xs text-slate-400 hover:text-slate-300 transition-colors"
+                  @click="toggleMapExpansion(map.id)"
+                >
+                  {{ isMapExpanded(map.id) ? '▼ Hide' : '▶ Show' }} stats
+                </button>
+              </div>
             </div>
 
             <!-- Expandable Player Stats Table -->
