@@ -152,25 +152,25 @@
                   <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
                     <div class="flex items-center gap-2">
                       <span class="text-purple-400 text-xs">📅</span>
-                      <span class="font-mono">MATCH</span>
+                      <span class="font-mono">Date</span>
                     </div>
                   </th>
                   <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-emerald-500/50">
                     <div class="flex items-center gap-2">
                       <span class="text-emerald-400 text-xs">⚔️</span>
-                      <span class="font-mono">MATCHUP</span>
+                      <span class="font-mono">Matchup</span>
                     </div>
                   </th>
                   <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
                     <div class="flex items-center gap-2">
                       <span class="text-orange-400 text-xs">🗺️</span>
-                      <span class="font-mono">MAPS</span>
+                      <span class="font-mono">Maps</span>
                     </div>
                   </th>
                   <th class="p-3 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
                     <div class="flex items-center justify-center gap-2">
                       <span class="text-blue-400 text-xs">🔗</span>
-                      <span class="font-mono">ACTIONS</span>
+                      <span class="font-mono">Actions</span>
                     </div>
                   </th>
                 </tr>
@@ -182,20 +182,20 @@
                 <template v-for="weekGroup in allMatchesByWeek" :key="weekGroup.week || 'no-week'">
                   <!-- Week Header Row (colspan for all columns) -->
                   <tr v-if="!weekGroup.hideWeekHeader" class="bg-slate-700/30 border-b border-slate-700/50">
-                    <td colspan="5" class="p-3">
+                    <td colspan="4" class="p-4">
                       <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getThemedAccentColor() }">
-                        {{ weekGroup.week || 'Unscheduled' }}
+                        {{ getWeekDateRange(weekGroup.matches) }}
                       </span>
                     </td>
                   </tr>
 
                   <!-- Match rows -->
                   <tr
-                    v-for="(matchItem, index) in weekGroup.matches"
+                    v-for="matchItem in weekGroup.matches"
                     :key="matchItem.match.id"
                     class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
                   >
-                    <!-- Date & Match Number -->
+                    <!-- Date -->
                     <td class="p-3">
                       <div class="text-xs font-mono text-slate-400">
                         {{ formatMatchDate(matchItem.match.scheduledDate) }}
@@ -204,46 +204,36 @@
 
                     <!-- Team Matchup -->
                     <td class="p-3">
-                      <div class="space-y-1">
-                        <div class="flex items-center gap-2 flex-wrap">
-                          <button
-                            class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
-                            @click="openMatchupModal(matchItem.match)"
-                          >
-                            <div class="text-sm font-bold text-emerald-400 hover:text-emerald-300">
-                              {{ matchItem.match.team1Name }}
-                            </div>
-                          </button>
-                          <div class="text-xs text-slate-500 font-medium">VS</div>
-                          <button
-                            class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
-                            @click="openMatchupModal(matchItem.match)"
-                          >
-                            <div class="text-sm font-bold text-emerald-400 hover:text-emerald-300">
-                              {{ matchItem.match.team2Name }}
-                            </div>
-                          </button>
-                        </div>
-                        <div v-if="matchItem.match.serverName" class="text-xs text-slate-500">
-                          🖥️ {{ matchItem.match.serverName }}
-                        </div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <button
+                          class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
+                          @click="openMatchupModal(matchItem.match)"
+                        >
+                          <div class="text-sm font-bold text-emerald-400 hover:text-emerald-300">
+                            {{ matchItem.match.team1Name }}
+                          </div>
+                        </button>
+                        <div class="text-xs text-slate-500 font-medium">VS</div>
+                        <button
+                          class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
+                          @click="openMatchupModal(matchItem.match)"
+                        >
+                          <div class="text-sm font-bold text-emerald-400 hover:text-emerald-300">
+                            {{ matchItem.match.team2Name }}
+                          </div>
+                        </button>
                       </div>
                     </td>
 
                     <!-- Maps Summary -->
                     <td class="p-3">
-                      <div class="space-y-1">
-                        <div v-for="map in matchItem.match.maps" :key="map.id" class="text-xs">
-                          <div class="flex items-center gap-2">
-                            <span class="text-slate-500 font-mono">{{ map.mapOrder + 1 }}.</span>
-                            <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                            <span v-if="map.round?.winningTeamName" class="text-emerald-400 text-xs flex-shrink-0">
-                              🏆 {{ map.round.winningTeamName }}
-                            </span>
-                          </div>
-                          <div v-if="map.teamName" class="text-slate-500 ml-6 text-xs">
-                            Selected by {{ map.teamName }}
-                          </div>
+                      <div class="text-xs space-y-0.5">
+                        <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2">
+                          <span class="text-slate-500 font-mono">{{ map.mapOrder + 1 }}.</span>
+                          <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
+                          <span v-if="map.round?.winningTeamName" class="text-emerald-400 flex-shrink-0">
+                            🏆 {{ map.round.winningTeamName }}
+                          </span>
                         </div>
                       </div>
                     </td>
@@ -620,6 +610,29 @@ const formatMatchDate = (dateString: string): string => {
     hour: '2-digit',
     minute: '2-digit'
   });
+};
+
+const getWeekDateRange = (matches: MatchWithStatus[]): string => {
+  if (!matches || matches.length === 0) return '';
+
+  // Get all scheduled dates from all matches
+  const dates = matches.flatMap(m => m.match.maps.map(map => new Date(m.match.scheduledDate)));
+
+  if (dates.length === 0) return '';
+
+  const earliestDate = new Date(Math.min(...dates.map(d => d.getTime())));
+  const latestDate = new Date(Math.max(...dates.map(d => d.getTime())));
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString(undefined, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  return `${formatDate(earliestDate)} - ${formatDate(latestDate)}`;
 };
 
 const viewRoundReport = (roundId: string) => {
