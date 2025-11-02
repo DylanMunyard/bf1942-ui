@@ -887,14 +887,20 @@ const loadTournament = async () => {
     // Set loading to false BEFORE loading images - images load asynchronously in background
     loading.value = false;
 
-    // Load hero image if available (async, doesn't block rendering)
+    // Load or clear hero image
     if (data.hasHeroImage) {
       loadHeroImage().catch(err => console.debug('Failed to load hero image:', err));
+    } else {
+      // Clear hero image if it was removed
+      heroImageUrl.value = null;
     }
 
-    // Load logo image if available (async, doesn't block rendering)
+    // Load or clear logo image
     if (data.hasCommunityLogo) {
       loadLogoImage().catch(err => console.debug('Failed to load logo image:', err));
+    } else {
+      // Clear logo image if it was removed
+      logoImageUrl.value = null;
     }
   } catch (err) {
     console.error('Error loading tournament:', err);

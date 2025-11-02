@@ -789,6 +789,7 @@ const imagePreview = ref<string | null>(null);
 const imageFile = ref<File | null>(null);
 const imageError = ref<string | null>(null);
 const isDragging = ref(false);
+const removeHeroImage = ref(false);
 
 // Logo upload state
 const logoFileInput = ref<HTMLInputElement | null>(null);
@@ -796,6 +797,7 @@ const logoPreview = ref<string | null>(null);
 const logoFile = ref<File | null>(null);
 const logoError = ref<string | null>(null);
 const isDraggingLogo = ref(false);
+const removeCommunityLogo = ref(false);
 
 // Rules editor state
 const showRulesPreview = ref(false);
@@ -816,6 +818,52 @@ const renderedMarkdown = computed(() => {
     return '<p class="text-red-400">Invalid markdown</p>';
   }
 });
+
+// Load hero image from API
+const loadHeroImage = async (tournamentId: number) => {
+  try {
+    const { authService } = await import('@/services/authService');
+    await authService.ensureValidToken();
+    const token = localStorage.getItem('authToken');
+
+    const response = await fetch(`/stats/admin/tournaments/${tournamentId}/image`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      imagePreview.value = URL.createObjectURL(blob);
+    }
+  } catch (err) {
+    // Silently fail - hero image is optional
+    console.debug('No hero image available');
+  }
+};
+
+// Load logo image from API
+const loadLogoImage = async (tournamentId: number) => {
+  try {
+    const { authService } = await import('@/services/authService');
+    await authService.ensureValidToken();
+    const token = localStorage.getItem('authToken');
+
+    const response = await fetch(`/stats/admin/tournaments/${tournamentId}/logo`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      logoPreview.value = URL.createObjectURL(blob);
+    }
+  } catch (err) {
+    // Silently fail - logo image is optional
+    console.debug('No logo image available');
+  }
+};
 
 onMounted(() => {
   if (props.tournament) {
@@ -853,14 +901,17 @@ onMounted(() => {
       serverSearchQuery.value = props.tournament.serverName;
     }
 
-    // Load existing image if available (only from base64, not from URL)
-    if (props.tournament.heroImageBase64) {
-      imagePreview.value = `data:${props.tournament.heroImageContentType || 'image/png'};base64,${props.tournament.heroImageBase64}`;
+    // Reset remove flags for edit mode
+    removeHeroImage.value = false;
+    removeCommunityLogo.value = false;
+
+    // Load existing images using the new API structure
+    if (props.tournament.hasHeroImage && props.tournament.id) {
+      loadHeroImage(props.tournament.id).catch(err => console.debug('Failed to load hero image:', err));
     }
 
-    // Load existing logo if available (only from base64, not from URL)
-    if (props.tournament.communityLogoBase64) {
-      logoPreview.value = `data:${props.tournament.communityLogoContentType || 'image/png'};base64,${props.tournament.communityLogoBase64}`;
+    if (props.tournament.hasCommunityLogo && props.tournament.id) {
+      loadLogoImage(props.tournament.id).catch(err => console.debug('Failed to load logo image:', err));
     }
   } else if (props.defaultOrganizer) {
     // Create mode with default organizer
@@ -1043,6 +1094,7 @@ const processImageFile = (file: File) => {
   }
 
   imageFile.value = file;
+  removeHeroImage.value = false; // Clear remove flag when uploading new image
 
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -1055,6 +1107,7 @@ const removeImage = () => {
   imageFile.value = null;
   imagePreview.value = null;
   imageError.value = null;
+  removeHeroImage.value = true;
   if (fileInput.value) {
     fileInput.value.value = '';
   }
@@ -1096,6 +1149,7 @@ const processLogoFile = (file: File) => {
   }
 
   logoFile.value = file;
+  removeCommunityLogo.value = false; // Clear remove flag when uploading new image
 
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -1108,6 +1162,7 @@ const removeLogo = () => {
   logoFile.value = null;
   logoPreview.value = null;
   logoError.value = null;
+  removeCommunityLogo.value = true;
   if (logoFileInput.value) {
     logoFileInput.value.value = '';
   }
@@ -1230,18 +1285,28 @@ const handleSubmit = async () => {
 
     console.debug('Tournament request colors:', { primaryColour: request.primaryColour, secondaryColour: request.secondaryColour });
 
-    // Convert hero image to base64 if provided
+    // Handle hero image: only include base64 if uploading new image, or remove flag if removing
     if (imageFile.value) {
       const imageData = await adminTournamentService.imageToBase64(imageFile.value);
       request.heroImageBase64 = imageData.base64;
       request.heroImageContentType = imageData.contentType;
+      // Clear the remove flag since we're uploading a new image
+      removeHeroImage.value = false;
+    } else if (removeHeroImage.value) {
+      // Only include remove flag if explicitly removing
+      (request as any).RemoveHeroImage = true;
     }
 
-    // Convert community logo to base64 if provided
+    // Handle community logo: only include base64 if uploading new image, or remove flag if removing
     if (logoFile.value) {
       const logoData = await adminTournamentService.imageToBase64(logoFile.value);
       request.communityLogoBase64 = logoData.base64;
       request.communityLogoContentType = logoData.contentType;
+      // Clear the remove flag since we're uploading a new image
+      removeCommunityLogo.value = false;
+    } else if (removeCommunityLogo.value) {
+      // Only include remove flag if explicitly removing
+      (request as any).RemoveCommunityLogo = true;
     }
 
     let tournamentId: number | undefined;
