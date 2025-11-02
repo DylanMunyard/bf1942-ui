@@ -445,11 +445,6 @@
                 </div>
               </div>
 
-              <!-- Status Badge -->
-              <div class="text-right text-xs">
-                <span v-if="map.round?.winningTeamName" class="text-emerald-400 font-bold">✓ Final</span>
-                <span v-else class="text-slate-500">Pending</span>
-              </div>
             </div>
 
             <!-- Expandable Ladder Section -->
