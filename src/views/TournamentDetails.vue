@@ -403,102 +403,99 @@
                           </div>
 
                           <!-- Team Mapping Section (only show if round is linked) -->
-                          <div v-if="map.roundId && map.matchResult" class="border-t border-slate-600/30 pt-3">
+                          <div v-if="map.roundId && map.matchResult" class="border-t border-slate-600/30 pt-2">
                             <!-- Editing state -->
-                            <div v-if="overridingMapId === map.id" class="space-y-2">
-                              <div class="text-xs font-medium text-slate-300 mb-3">Assign tournament teams to round teams:</div>
-                              <div class="flex flex-col sm:flex-row gap-3">
+                            <div v-if="overridingMapId === map.id" class="space-y-1">
+                              <div class="flex flex-wrap items-center gap-2">
                                 <!-- Team 1 Selection -->
-                                <div class="flex items-center gap-2 flex-1">
-                                  <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ map.round?.team1Label || 'Team 1' }}:</label>
+                                <div class="flex items-center gap-1">
+                                  <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ map.round?.team1Label || 'T1' }}:</label>
                                   <select
-                                  v-model.number="overridingTeam1Id"
-                                  class="flex-1 px-2 py-1.5 bg-slate-800 border border-slate-600 rounded text-xs text-slate-200 hover:border-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                                    v-model.number="overridingTeam1Id"
+                                    class="px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-xs text-slate-200 hover:border-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                                  >
+                                    <option :value="null">-</option>
+                                    <option v-for="team in getMatchTeams(map.match)" :key="team.id" :value="team.id">
+                                      {{ team.name }}
+                                    </option>
+                                  </select>
+                                  <span v-if="map.round" class="text-xs text-slate-500">{{ map.round.tickets1 }}</span>
+                                  <span v-if="getWinningTeam(map)?.teamNumber === 1" title="Winner">🏆</span>
+                                </div>
+                                <!-- Team 2 Selection -->
+                                <div class="flex items-center gap-1">
+                                  <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ map.round?.team2Label || 'T2' }}:</label>
+                                  <select
+                                    v-model.number="overridingTeam2Id"
+                                    class="px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-xs text-slate-200 hover:border-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                                  >
+                                    <option :value="null">-</option>
+                                    <option v-for="team in getMatchTeams(map.match)" :key="team.id" :value="team.id">
+                                      {{ team.name }}
+                                    </option>
+                                  </select>
+                                  <span v-if="map.round" class="text-xs text-slate-500">{{ map.round.tickets2 }}</span>
+                                  <span v-if="getWinningTeam(map)?.teamNumber === 2" title="Winner">🏆</span>
+                                </div>
+                                <!-- Action buttons -->
+                                <button
+                                  class="px-2 py-0.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  @click="cancelOverrideTeamMapping"
+                                  :disabled="isOverridingSaving"
                                 >
-                                  <option :value="null">-- Select Team --</option>
-                                  <option v-for="team in getMatchTeams(map.match)" :key="team.id" :value="team.id">
-                                    {{ team.name }}
-                                  </option>
-                                </select>
-                                <span v-if="map.round" class="text-xs text-slate-500 flex-shrink-0">{{ map.round.tickets1 }}</span>
-                                <span v-if="getWinningTeam(map)?.teamNumber === 1" class="flex-shrink-0" title="Winner">🏆</span>
-                              </div>
-                              <!-- Team 2 Selection -->
-                              <div class="flex items-center gap-2 flex-1">
-                                <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ map.round?.team2Label || 'Team 2' }}:</label>
-                                <select
-                                  v-model.number="overridingTeam2Id"
-                                  class="flex-1 px-2 py-1.5 bg-slate-800 border border-slate-600 rounded text-xs text-slate-200 hover:border-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                                  Cancel
+                                </button>
+                                <button
+                                  class="px-2 py-0.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-xs font-medium transition-colors flex items-center gap-0.5"
+                                  @click="saveTeamMappingOverride(map.match, map)"
+                                  :disabled="!canSaveTeamMapping() || isOverridingSaving"
                                 >
-                                  <option :value="null">-- Select Team --</option>
-                                  <option v-for="team in getMatchTeams(map.match)" :key="team.id" :value="team.id">
-                                    {{ team.name }}
-                                  </option>
-                                </select>
-                                <span v-if="map.round" class="text-xs text-slate-500 flex-shrink-0">{{ map.round.tickets2 }}</span>
-                                <span v-if="getWinningTeam(map)?.teamNumber === 2" class="flex-shrink-0" title="Winner">🏆</span>
+                                  <svg v-if="isOverridingSaving" class="w-2.5 h-2.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                  </svg>
+                                  <span>Save</span>
+                                </button>
                               </div>
                             </div>
-                            <div class="flex items-center gap-2 pt-2">
-                              <button
-                                class="flex-1 px-2 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                @click="cancelOverrideTeamMapping"
-                                :disabled="isOverridingSaving"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                class="flex-1 px-2 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
-                                @click="saveTeamMappingOverride(map.match, map)"
-                                :disabled="!canSaveTeamMapping() || isOverridingSaving"
-                              >
-                                <svg v-if="isOverridingSaving" class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                </svg>
-                                <span>Save</span>
-                              </button>
-                            </div>
-                          </div>
-                          <!-- View state -->
-                          <div v-else class="space-y-2">
-                            <div class="text-xs font-medium text-slate-300 mb-3">Team Mapping:</div>
-                            <div class="flex flex-col sm:flex-row gap-3">
-                              <div class="flex items-center gap-2 flex-1">
-                                <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ map.round?.team1Label || 'Team 1' }}:</label>
-                                <span v-if="map.matchResult.team1Name" class="text-xs text-emerald-400 font-medium">
+                            <!-- View state -->
+                            <div v-else class="flex flex-wrap items-center gap-2 text-xs">
+                              <span class="text-slate-400 font-medium">Maps:</span>
+                              <!-- Team 1 Mapping -->
+                              <div class="flex items-center gap-1">
+                                <span class="text-slate-400">{{ map.round?.team1Label || 'T1' }}→</span>
+                                <span v-if="map.matchResult.team1Name" class="text-emerald-400 font-medium">
                                   {{ map.matchResult.team1Name }}
                                 </span>
-                                <span v-else class="text-xs text-red-400">Not assigned</span>
-                                <span v-if="map.round" class="text-xs text-slate-500 flex-shrink-0">{{ map.round.tickets1 }}</span>
-                                <span v-if="getWinningTeam(map)?.teamNumber === 1" class="flex-shrink-0" title="Winner">🏆</span>
+                                <span v-else class="text-red-400">-</span>
+                                <span v-if="map.round" class="text-slate-500">({{ map.round.tickets1 }})</span>
+                                <span v-if="getWinningTeam(map)?.teamNumber === 1">🏆</span>
                               </div>
-                              <div class="flex items-center gap-2 flex-1">
-                                <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ map.round?.team2Label || 'Team 2' }}:</label>
-                                <span v-if="map.matchResult.team2Name" class="text-xs text-emerald-400 font-medium">
+                              <!-- Divider -->
+                              <span class="text-slate-600">|</span>
+                              <!-- Team 2 Mapping -->
+                              <div class="flex items-center gap-1">
+                                <span class="text-slate-400">{{ map.round?.team2Label || 'T2' }}→</span>
+                                <span v-if="map.matchResult.team2Name" class="text-emerald-400 font-medium">
                                   {{ map.matchResult.team2Name }}
                                 </span>
-                                <span v-else class="text-xs text-red-400">Not assigned</span>
-                                <span v-if="map.round" class="text-xs text-slate-500 flex-shrink-0">{{ map.round.tickets2 }}</span>
-                                <span v-if="getWinningTeam(map)?.teamNumber === 2" class="flex-shrink-0" title="Winner">🏆</span>
+                                <span v-else class="text-red-400">-</span>
+                                <span v-if="map.round" class="text-slate-500">({{ map.round.tickets2 }})</span>
+                                <span v-if="getWinningTeam(map)?.teamNumber === 2">🏆</span>
                               </div>
+                              <!-- Action button -->
+                              <button
+                                :class="[
+                                  'px-1.5 py-0.5 rounded transition-all text-xs font-medium ml-auto',
+                                  needsTeamMapping(map)
+                                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30'
+                                    : 'bg-slate-600/20 hover:bg-slate-600/30 text-slate-300 border border-slate-600/30'
+                                ]"
+                                @click="startOverrideTeamMapping(map)"
+                              >
+                                {{ needsTeamMapping(map) ? 'Assign' : 'Edit' }}
+                              </button>
                             </div>
-                            <!-- Edit/Override button when mapping is incomplete -->
-                            <button
-                              v-if="needsTeamMapping(map)"
-                              class="w-full mt-2 px-2 py-1.5 text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 rounded transition-all font-medium"
-                              @click="startOverrideTeamMapping(map)"
-                            >
-                              Assign Teams
-                            </button>
-                            <!-- Override button for complete mappings -->
-                            <button
-                              v-else
-                              class="w-full mt-2 px-2 py-1.5 text-xs bg-slate-600/20 hover:bg-slate-600/30 text-slate-300 border border-slate-600/30 rounded transition-all font-medium"
-                              @click="startOverrideTeamMapping(map)"
-                            >
-                              Edit Mapping
-                            </button>
                           </div>
                         </div>
                       </div>
