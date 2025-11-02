@@ -146,36 +146,6 @@
           <!-- Matches Table -->
           <div class="overflow-x-auto">
             <table class="w-full border-collapse">
-              <!-- Table Header -->
-              <thead class="sticky top-0 z-10">
-                <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
-                  <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
-                    <div class="flex items-center gap-2">
-                      <span class="text-purple-400 text-xs">📅</span>
-                      <span class="font-mono">Date</span>
-                    </div>
-                  </th>
-                  <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-emerald-500/50">
-                    <div class="flex items-center gap-2">
-                      <span class="text-emerald-400 text-xs">⚔️</span>
-                      <span class="font-mono">Matchup</span>
-                    </div>
-                  </th>
-                  <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
-                    <div class="flex items-center gap-2">
-                      <span class="text-orange-400 text-xs">🗺️</span>
-                      <span class="font-mono">Maps</span>
-                    </div>
-                  </th>
-                  <th class="p-3 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
-                    <div class="flex items-center justify-center gap-2">
-                      <span class="text-blue-400 text-xs">🔗</span>
-                      <span class="font-mono">Actions</span>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-
               <!-- Table Body -->
               <tbody>
                 <!-- Week groups with matches -->
