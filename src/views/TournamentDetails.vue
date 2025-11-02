@@ -498,8 +498,7 @@
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
                   </tr>
                 </template>
                 </template>
