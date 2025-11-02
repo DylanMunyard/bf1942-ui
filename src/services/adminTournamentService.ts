@@ -21,6 +21,18 @@ export interface TournamentTeam {
   players: TeamPlayerResponse[];
 }
 
+export interface TournamentMatchResult {
+  id: number;
+  team1Id?: number;
+  team1Name?: string;
+  team2Id?: number;
+  team2Name?: string;
+  winningTeamId?: number;
+  winningTeamName?: string;
+  team1Tickets: number;
+  team2Tickets: number;
+}
+
 export interface TournamentMatchMap {
   id: number;
   mapName: string;
@@ -40,6 +52,12 @@ export interface TournamentMatchMap {
     team1Label?: string;
     team2Label?: string;
   } | null;
+  matchResult?: TournamentMatchResult;
+}
+
+export interface UpdateMatchMapResponse {
+  response: TournamentMatchMap;
+  teamMappingWarning?: string;
 }
 
 export interface TournamentMatch {
@@ -160,6 +178,11 @@ export interface UpdateMatchMapRequest {
   roundId?: string | null;
   updateRoundId: boolean;
   teamId?: number;
+}
+
+export interface OverrideTeamMappingRequest {
+  team1Id: number;
+  team2Id: number;
 }
 
 class AdminTournamentService {
@@ -400,8 +423,18 @@ class AdminTournamentService {
   }
 
   // Update match map (link/unlink round to specific map)
-  async updateMatchMap(tournamentId: number, matchId: number, mapId: number, request: UpdateMatchMapRequest): Promise<TournamentMatchMap> {
-    return this.request<TournamentMatchMap>(`/${tournamentId}/matches/${matchId}/maps/${mapId}`, {
+  async updateMatchMap(tournamentId: number, matchId: number, mapId: number, request: UpdateMatchMapRequest): Promise<UpdateMatchMapResponse> {
+    return this.request<UpdateMatchMapResponse>(`/${tournamentId}/matches/${matchId}/maps/${mapId}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+  }
+
+  // ===== Match Results Management =====
+
+  // Override team mapping for match result
+  async overrideTeamMapping(tournamentId: number, resultId: number, request: OverrideTeamMappingRequest): Promise<TournamentMatchResult> {
+    return this.request<TournamentMatchResult>(`/${tournamentId}/match-results/${resultId}/override-teams`, {
       method: 'PUT',
       body: JSON.stringify(request),
     });
