@@ -406,53 +406,49 @@
         <!-- Maps and Results -->
         <div class="space-y-4">
           <div v-for="map in selectedMatch.maps" :key="map.id" class="space-y-2">
-            <!-- Map Result Card - Fight Night Style -->
-            <div class="rounded-lg p-6 border-2" :style="{
-              backgroundColor: getValidColors().primary ? `${getValidColors().primary}08` : 'rgba(100, 116, 139, 0.2)',
-              borderColor: getValidColors().primary ? `${getValidColors().primary}25` : 'rgba(100, 116, 139, 0.3)',
-            }">
-              <!-- Map Name and Info -->
-              <div class="text-center mb-4">
-                <div class="text-xs text-slate-500 font-mono uppercase tracking-wide mb-1">Map {{ map.mapOrder + 1 }} - {{ map.mapName }}</div>
-                <div v-if="map.teamName" class="text-xs text-cyan-400">
-                  Selected by <span class="font-bold">{{ map.teamName }}</span>
+            <!-- Map Result Card - Compact Style -->
+            <div class="rounded-lg p-3 border border-slate-700/50 bg-slate-800/30 flex items-center justify-between gap-4">
+              <!-- Map Info -->
+              <div class="min-w-[140px]">
+                <div class="text-xs text-slate-500 font-mono mb-0.5">Map {{ map.mapOrder + 1 }}</div>
+                <div class="text-sm font-bold text-amber-400 truncate">{{ map.mapName }}</div>
+                <div v-if="map.teamName" class="text-xs text-cyan-400 mt-0.5">
+                  {{ map.teamName }} pick
                 </div>
               </div>
 
-              <!-- Result Display -->
-              <div class="flex items-center justify-between gap-6">
+              <!-- Result Display - Two Column -->
+              <div class="flex-1 flex items-center gap-2 justify-center">
                 <!-- Team 1 Score -->
-                <div class="flex-1 text-center">
-                  <div class="text-sm text-slate-400 mb-1">{{ getTeamName(map, 1) }}</div>
-                  <div class="text-4xl font-black" :class="map.round?.winningTeamName === getTeamName(map, 1) ? 'text-emerald-400' : 'text-slate-400'">
-                    {{ getTeamScore(map, 1) ?? '-' }}
-                  </div>
-                  <div v-if="map.round?.winningTeamName === getTeamName(map, 1)" class="text-xs text-emerald-400 font-bold mt-2">
-                    🏆 WINNER
+                <div class="text-center flex-1">
+                  <div class="text-xs text-slate-400 mb-0.5">{{ getTeamName(map, 1) }}</div>
+                  <div class="flex items-center justify-center gap-1">
+                    <div class="text-2xl font-black" :class="map.round?.winningTeamName === getTeamName(map, 1) ? 'text-emerald-400' : 'text-slate-500'">
+                      {{ getTeamScore(map, 1) ?? '-' }}
+                    </div>
+                    <span v-if="map.round?.winningTeamName === getTeamName(map, 1)" class="text-xs">🏆</span>
                   </div>
                 </div>
 
-                <!-- Result Status -->
-                <div class="flex flex-col items-center gap-2">
-                  <div v-if="map.round?.winningTeamName" class="text-xs text-slate-500 uppercase font-bold">
-                    Final
-                  </div>
-                  <div v-else class="text-xs text-slate-500 uppercase font-bold">
-                    Pending
-                  </div>
-                  <div class="w-1 h-1 bg-slate-600 rounded-full" v-if="map.round?.winningTeamName" />
-                </div>
+                <!-- Divider -->
+                <div class="h-8 w-px bg-slate-700/50" />
 
                 <!-- Team 2 Score -->
-                <div class="flex-1 text-center">
-                  <div class="text-sm text-slate-400 mb-1">{{ getTeamName(map, 2) }}</div>
-                  <div class="text-4xl font-black" :class="map.round?.winningTeamName === getTeamName(map, 2) ? 'text-emerald-400' : 'text-slate-400'">
-                    {{ getTeamScore(map, 2) ?? '-' }}
-                  </div>
-                  <div v-if="map.round?.winningTeamName === getTeamName(map, 2)" class="text-xs text-emerald-400 font-bold mt-2">
-                    🏆 WINNER
+                <div class="text-center flex-1">
+                  <div class="text-xs text-slate-400 mb-0.5">{{ getTeamName(map, 2) }}</div>
+                  <div class="flex items-center justify-center gap-1">
+                    <span v-if="map.round?.winningTeamName === getTeamName(map, 2)" class="text-xs">🏆</span>
+                    <div class="text-2xl font-black" :class="map.round?.winningTeamName === getTeamName(map, 2) ? 'text-emerald-400' : 'text-slate-500'">
+                      {{ getTeamScore(map, 2) ?? '-' }}
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Status Badge -->
+              <div class="text-right text-xs">
+                <span v-if="map.round?.winningTeamName" class="text-emerald-400 font-bold">✓ Final</span>
+                <span v-else class="text-slate-500">Pending</span>
               </div>
             </div>
 
