@@ -133,588 +133,150 @@
       </div>
 
       <!-- Main Content -->
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-12">
-        <!-- Upcoming Matches Section -->
-        <div v-if="upcomingMatchesByWeek.length > 0">
-          <div class="mb-8">
-            <h2 class="text-3xl sm:text-4xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-300 mb-6">
-              Upcoming Matches
-            </h2>
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
+        <!-- Tournament Matches Table -->
+        <div v-if="allMatchesByWeek.length > 0" class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+          <!-- Table Header -->
+          <div class="px-6 py-4 border-b border-slate-700/50">
+            <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
+              🎯 Matches
+            </h3>
           </div>
 
-          <div class="space-y-8">
-            <div
-              v-for="weekGroup in upcomingMatchesByWeek"
-              :key="weekGroup.week || 'no-week'"
-              class="space-y-3"
-            >
-              <!-- Week Header (hidden for single null week) -->
-              <h3 v-if="!weekGroup.hideWeekHeader" class="text-lg font-bold" :style="{ color: getThemedAccentColor() }">
-                {{ weekGroup.week || 'Unscheduled' }}
-              </h3>
-
-              <!-- Matches in this week -->
-              <div class="space-y-4">
-                <div
-                  v-for="(match, index) in weekGroup.matches"
-                  :key="match.id"
-                  class="rounded-lg p-4 transition-all border-2 backdrop-blur-sm hover:shadow-lg"
-                  :style="{
-                    backgroundColor: getValidColors().primary ? `${getValidColors().primary}12` : 'rgba(139, 92, 246, 0.1)',
-                    borderColor: getValidColors().primary ? `${getValidColors().primary}40` : 'rgba(139, 92, 246, 0.3)',
-                  }"
-                >
-              <div class="flex items-start justify-between mb-3">
-                <div class="flex-1">
-                  <div class="flex items-center gap-3 mb-2">
-                    <span class="text-2xl font-black text-violet-400">{{ index + 1 }}</span>
-                    <span class="text-amber-400 text-base font-semibold">📅 {{ formatMatchDate(match.scheduledDate) }}</span>
-                  </div>
-                  <div class="flex items-center gap-3 mb-2">
-                    <button
-                      class="text-center hover:scale-105 transition-transform"
-                      @click="openMatchupModal(match)"
-                    >
-                      <div class="text-lg font-bold text-emerald-400 hover:text-emerald-300 underline decoration-emerald-400/50 decoration-2 underline-offset-4">
-                        {{ match.team1Name }}
-                      </div>
-                    </button>
-                    <div class="text-2xl font-bold text-violet-400">VS</div>
-                    <button
-                      class="text-center hover:scale-105 transition-transform"
-                      @click="openMatchupModal(match)"
-                    >
-                      <div class="text-lg font-bold text-emerald-400 hover:text-emerald-300 underline decoration-emerald-400/50 decoration-2 underline-offset-4">
-                        {{ match.team2Name }}
-                      </div>
-                    </button>
-                  </div>
-                  <div v-if="match.serverName" class="text-sm text-slate-400">
-                    <span>🖥️ {{ match.serverName }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Maps List -->
-              <div class="space-y-2">
-                <div
-                  v-for="map in match.maps"
-                  :key="map.id"
-                  class="rounded-lg border overflow-hidden"
-                  :style="{
-                    backgroundColor: getValidColors().primary ? `${getValidColors().primary}08` : 'rgba(100, 116, 139, 0.2)',
-                    borderColor: getValidColors().primary ? `${getValidColors().primary}25` : 'rgba(100, 116, 139, 0.3)',
-                  }"
-                >
-                  <div class="p-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                      <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
-                        <div class="flex flex-col gap-0.5 flex-1 min-w-0">
-                          <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                          <span v-if="map.teamName" class="text-xs text-cyan-400 truncate">
-                            Selected by {{ map.teamName }}
-                          </span>
-                        </div>
-                      </div>
-                      <div class="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
-                        <span v-if="map.round?.winningTeamName" class="text-xs text-emerald-400 flex items-center gap-1 flex-shrink-0">
-                          <span>🏆</span>
-                          <span>{{ map.round.winningTeamName }}</span>
-                          <span v-if="getTeamScore(map, 1) !== undefined && getTeamScore(map, 2) !== undefined" class="text-slate-400">
-                            ({{ getTeamScore(map, 1) }} - {{ getTeamScore(map, 2) }})
-                          </span>
-                        </span>
-                        <div class="flex items-center gap-2">
-                          <button
-                            v-if="map.roundId && map.round?.players && map.round.players.length > 0"
-                            class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2 whitespace-nowrap"
-                            @click="toggleMapExpansion(map.id)"
-                          >
-                            <span>{{ isMapExpanded(map.id) ? 'Hide' : 'Show' }} Stats</span>
-                            <svg
-                              class="w-3.5 h-3.5 transition-transform"
-                              :class="{ 'rotate-180': isMapExpanded(map.id) }"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </button>
-                          <button
-                            v-if="map.roundId"
-                            class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2 whitespace-nowrap"
-                            @click="viewRoundReport(map.roundId)"
-                          >
-                            <span>Report</span>
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                          <div v-if="!map.roundId" class="text-slate-500 text-xs italic px-2 whitespace-nowrap">Pending</div>
-                        </div>
-                      </div>
+          <!-- Matches Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+              <!-- Table Header -->
+              <thead class="sticky top-0 z-10">
+                <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+                  <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                    <div class="flex items-center gap-2">
+                      <span class="text-purple-400 text-xs">📅</span>
+                      <span class="font-mono">MATCH</span>
                     </div>
-                  </div>
+                  </th>
+                  <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-emerald-500/50">
+                    <div class="flex items-center gap-2">
+                      <span class="text-emerald-400 text-xs">⚔️</span>
+                      <span class="font-mono">MATCHUP</span>
+                    </div>
+                  </th>
+                  <th class="p-3 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                    <div class="flex items-center gap-2">
+                      <span class="text-orange-400 text-xs">🗺️</span>
+                      <span class="font-mono">MAPS</span>
+                    </div>
+                  </th>
+                  <th class="p-3 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                    <div class="flex items-center justify-center gap-2">
+                      <span class="text-blue-400 text-xs">🔗</span>
+                      <span class="font-mono">ACTIONS</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
 
-                  <!-- Expandable Player Stats Table -->
-                  <div
-                    v-if="isMapExpanded(map.id) && map.round?.players && map.round.players.length > 0"
-                    class="border-t p-3"
-                    :style="{
-                      borderTopColor: getValidColors().primary ? `${getValidColors().primary}40` : 'rgba(100, 116, 139, 0.3)',
-                      backgroundColor: getValidColors().primary ? `${getValidColors().primary}05` : 'rgba(100, 116, 139, 0.2)',
-                    }"
+              <!-- Table Body -->
+              <tbody>
+                <!-- Week groups with matches -->
+                <template v-for="weekGroup in allMatchesByWeek" :key="weekGroup.week || 'no-week'">
+                  <!-- Week Header Row (colspan for all columns) -->
+                  <tr v-if="!weekGroup.hideWeekHeader" class="bg-slate-700/30 border-b border-slate-700/50">
+                    <td colspan="5" class="p-3">
+                      <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getThemedAccentColor() }">
+                        {{ weekGroup.week || 'Unscheduled' }}
+                      </span>
+                    </td>
+                  </tr>
+
+                  <!-- Match rows -->
+                  <tr
+                    v-for="(matchItem, index) in weekGroup.matches"
+                    :key="matchItem.match.id"
+                    class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
                   >
-                    <div class="overflow-x-auto">
-                      <table class="w-full border-collapse">
-                        <thead>
-                          <!-- Team Headers -->
-                          <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
-                            <th class="p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-400 border-b border-slate-700/30 w-8">
-                              #
-                            </th>
-                            <!-- Team 1 Header -->
-                            <th
-                              class="p-2 text-center font-bold text-xs uppercase tracking-wide border-b border-slate-700/30 bg-emerald-500/10 border-l-4"
-                              :class="map.round.winningTeamName === getTeamName(map, 1)
-                                ? 'text-emerald-400 border-l-emerald-400/60'
-                                : 'text-cyan-400 border-l-cyan-400/60'"
-                              colspan="4"
-                            >
-                              <div class="flex items-center justify-center gap-2">
-                                <span class="font-mono font-bold text-sm">{{ getTeamName(map, 1) }}</span>
-                                <span v-if="getTeamScore(map, 1) !== undefined" class="text-slate-300 font-bold text-sm">
-                                  ({{ getTeamScore(map, 1) }})
-                                </span>
-                                <span v-if="map.round.winningTeamName === getTeamName(map, 1)">🏆</span>
-                              </div>
-                            </th>
-                            <!-- Team 2 Header -->
-                            <th
-                              class="p-2 text-center font-bold text-xs uppercase tracking-wide border-b border-slate-700/30 bg-orange-500/10 border-l-4"
-                              :class="map.round.winningTeamName === getTeamName(map, 2)
-                                ? 'text-emerald-400 border-l-emerald-400/60'
-                                : 'text-orange-400 border-l-orange-400/60'"
-                              colspan="4"
-                            >
-                              <div class="flex items-center justify-center gap-2">
-                                <span class="font-mono font-bold text-sm">{{ getTeamName(map, 2) }}</span>
-                                <span v-if="getTeamScore(map, 2) !== undefined" class="text-slate-300 font-bold text-sm">
-                                  ({{ getTeamScore(map, 2) }})
-                                </span>
-                                <span v-if="map.round.winningTeamName === getTeamName(map, 2)">🏆</span>
-                              </div>
-                            </th>
-                          </tr>
-                          <!-- Stat Column Headers -->
-                          <tr class="bg-gradient-to-r from-slate-800/90 to-slate-900/90">
-                            <th class="p-2 border-b border-slate-700/30" />
-                            <!-- Team 1 Stats -->
-                            <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60 min-w-[120px]">
-                              <span class="font-mono">Player</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
-                              <span class="font-mono">S</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
-                              <span class="font-mono">K</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-r-4 border-r-cyan-400/60">
-                              <span class="font-mono">D</span>
-                            </th>
-                            <!-- Team 2 Stats -->
-                            <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60 min-w-[120px]">
-                              <span class="font-mono">Player</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                              <span class="font-mono">S</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                              <span class="font-mono">K</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                              <span class="font-mono">D</span>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr
-                            v-for="(_, idx) in Math.max(getTeamPlayers(map, 1).length, getTeamPlayers(map, 2).length)"
-                            :key="idx"
-                            class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/10"
+                    <!-- Date & Match Number -->
+                    <td class="p-3">
+                      <div class="text-xs font-mono text-slate-400">
+                        {{ formatMatchDate(matchItem.match.scheduledDate) }}
+                      </div>
+                    </td>
+
+                    <!-- Team Matchup -->
+                    <td class="p-3">
+                      <div class="space-y-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <button
+                            class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
+                            @click="openMatchupModal(matchItem.match)"
                           >
-                            <!-- Row Number -->
-                            <td class="p-2 text-slate-500 text-xs font-mono">
-                              {{ idx + 1 }}
-                            </td>
-                            <!-- Team 1 Player -->
-                            <template v-if="getTeamPlayers(map, 1)[idx]">
-                              <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
-                                <router-link
-                                  :to="`/players/${getTeamPlayers(map, 1)[idx].playerName}`"
-                                  class="text-cyan-400 hover:text-cyan-300 font-medium text-xs truncate block"
-                                >
-                                  {{ getTeamPlayers(map, 1)[idx].playerName }}
-                                </router-link>
-                              </td>
-                              <td class="p-2 text-center bg-cyan-500/5">
-                                <span class="text-slate-200 font-bold text-xs font-mono">
-                                  {{ getTeamPlayers(map, 1)[idx].totalScore.toLocaleString() }}
-                                </span>
-                              </td>
-                              <td class="p-2 text-center bg-cyan-500/5">
-                                <span class="text-slate-300 text-xs font-mono">
-                                  {{ getTeamPlayers(map, 1)[idx].totalKills }}
-                                </span>
-                              </td>
-                              <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
-                                <span class="text-slate-300 text-xs font-mono">
-                                  {{ getTeamPlayers(map, 1)[idx].totalDeaths }}
-                                </span>
-                              </td>
-                            </template>
-                            <template v-else>
-                              <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40" colspan="4" />
-                            </template>
-                            <!-- Team 2 Player -->
-                            <template v-if="getTeamPlayers(map, 2)[idx]">
-                              <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40">
-                                <router-link
-                                  :to="`/players/${getTeamPlayers(map, 2)[idx].playerName}`"
-                                  class="text-orange-400 hover:text-orange-300 font-medium text-xs truncate block"
-                                >
-                                  {{ getTeamPlayers(map, 2)[idx].playerName }}
-                                </router-link>
-                              </td>
-                              <td class="p-2 text-center bg-orange-500/5">
-                                <span class="text-slate-200 font-bold text-xs font-mono">
-                                  {{ getTeamPlayers(map, 2)[idx].totalScore.toLocaleString() }}
-                                </span>
-                              </td>
-                              <td class="p-2 text-center bg-orange-500/5">
-                                <span class="text-slate-300 text-xs font-mono">
-                                  {{ getTeamPlayers(map, 2)[idx].totalKills }}
-                                </span>
-                              </td>
-                              <td class="p-2 text-center bg-orange-500/5">
-                                <span class="text-slate-300 text-xs font-mono">
-                                  {{ getTeamPlayers(map, 2)[idx].totalDeaths }}
-                                </span>
-                              </td>
-                            </template>
-                            <template v-else>
-                              <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40" colspan="4" />
-                            </template>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            </div>
-            </div>
+                            <div class="text-sm font-bold text-emerald-400 hover:text-emerald-300">
+                              {{ matchItem.match.team1Name }}
+                            </div>
+                          </button>
+                          <div class="text-xs text-slate-500 font-medium">VS</div>
+                          <button
+                            class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
+                            @click="openMatchupModal(matchItem.match)"
+                          >
+                            <div class="text-sm font-bold text-emerald-400 hover:text-emerald-300">
+                              {{ matchItem.match.team2Name }}
+                            </div>
+                          </button>
+                        </div>
+                        <div v-if="matchItem.match.serverName" class="text-xs text-slate-500">
+                          🖥️ {{ matchItem.match.serverName }}
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Maps Summary -->
+                    <td class="p-3">
+                      <div class="space-y-1">
+                        <div v-for="map in matchItem.match.maps" :key="map.id" class="text-xs">
+                          <div class="flex items-center gap-2">
+                            <span class="text-slate-500 font-mono">{{ map.mapOrder + 1 }}.</span>
+                            <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
+                            <span v-if="map.round?.winningTeamName" class="text-emerald-400 text-xs flex-shrink-0">
+                              🏆 {{ map.round.winningTeamName }}
+                            </span>
+                          </div>
+                          <div v-if="map.teamName" class="text-slate-500 ml-6 text-xs">
+                            Selected by {{ map.teamName }}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="p-3 text-center">
+                      <div class="flex items-center justify-center gap-2">
+                        <button
+                          class="px-3 py-1.5 text-xs font-bold uppercase transition-all rounded border"
+                          :class="matchItem.match.maps.some(m => m.roundId)
+                            ? 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border-cyan-500/30 hover:border-cyan-500/50'
+                            : 'bg-slate-600/20 text-slate-500 border-slate-600/30 cursor-not-allowed opacity-50'"
+                          @click="matchItem.match.maps.filter(m => m.roundId)[0] && viewRoundReport(matchItem.match.maps.filter(m => m.roundId)[0]!.roundId!)"
+                        >
+                          Report
+                        </button>
+                        <button
+                          class="px-3 py-1.5 text-xs font-bold transition-all rounded border bg-slate-700/30 hover:bg-slate-600/30 text-slate-300 border-slate-600/30"
+                          @click="openMatchupModal(matchItem.match)"
+                        >
+                          Details
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
           </div>
         </div>
-
-        <!-- Completed Matches Section -->
-        <div v-if="completedMatchesByWeek.length > 0">
-          <div class="mb-8">
-            <h2 class="text-3xl sm:text-4xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-300 mb-6">
-              Completed Matches
-            </h2>
-          </div>
-
-          <div class="space-y-8">
-            <div
-              v-for="weekGroup in completedMatchesByWeek"
-              :key="weekGroup.week || 'no-week'"
-              class="space-y-3"
-            >
-              <!-- Week Header (hidden for single null week) -->
-              <h3 v-if="!weekGroup.hideWeekHeader" class="text-lg font-bold text-emerald-400">
-                {{ weekGroup.week || 'Unscheduled' }}
-              </h3>
-
-              <!-- Matches in this week -->
-              <div class="space-y-4">
-                <div
-                  v-for="(match, index) in weekGroup.matches"
-                  :key="match.id"
-                  class="rounded-lg p-4 transition-all border-2 backdrop-blur-sm hover:shadow-lg"
-                  :style="{
-                    backgroundColor: getValidColors().primary ? `${getValidColors().primary}12` : 'rgba(16, 185, 129, 0.1)',
-                    borderColor: getValidColors().primary ? `${getValidColors().primary}40` : 'rgba(16, 185, 129, 0.3)',
-                  }"
-                >
-              <div class="flex items-start justify-between mb-3">
-                <div class="flex-1">
-                  <div class="flex items-center gap-3 mb-2">
-                    <span class="text-2xl font-black text-emerald-400">{{ index + 1 }}</span>
-                    <span class="text-amber-400 text-base font-semibold">📅 {{ formatMatchDate(match.scheduledDate) }}</span>
-                  </div>
-                  <div class="flex items-center gap-3 mb-2">
-                    <button
-                      class="text-center hover:scale-105 transition-transform"
-                      @click="openMatchupModal(match)"
-                    >
-                      <div class="text-lg font-bold text-emerald-400 hover:text-emerald-300 underline decoration-emerald-400/50 decoration-2 underline-offset-4">
-                        {{ match.team1Name }}
-                      </div>
-                      <div v-if="getMatchWinner(match) === match.team1Name" class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400 text-xs font-bold mt-1">
-                        🏆 Winner
-                      </div>
-                    </button>
-                    <div class="text-2xl font-bold text-violet-400">VS</div>
-                    <button
-                      class="text-center hover:scale-105 transition-transform"
-                      @click="openMatchupModal(match)"
-                    >
-                      <div class="text-lg font-bold text-emerald-400 hover:text-emerald-300 underline decoration-emerald-400/50 decoration-2 underline-offset-4">
-                        {{ match.team2Name }}
-                      </div>
-                      <div v-if="getMatchWinner(match) === match.team2Name" class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400 text-xs font-bold mt-1">
-                        🏆 Winner
-                      </div>
-                    </button>
-                  </div>
-                  <div v-if="match.serverName" class="text-sm text-slate-400">
-                    <span>🖥️ {{ match.serverName }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Maps List with Player Stats -->
-              <div class="space-y-2">
-                <div
-                  v-for="map in match.maps"
-                  :key="map.id"
-                  class="rounded-lg border overflow-hidden"
-                  :style="{
-                    backgroundColor: getValidColors().primary ? `${getValidColors().primary}08` : 'rgba(100, 116, 139, 0.2)',
-                    borderColor: getValidColors().primary ? `${getValidColors().primary}25` : 'rgba(100, 116, 139, 0.3)',
-                  }"
-                >
-                  <div class="p-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                      <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <span class="text-sm font-mono text-slate-500 flex-shrink-0">{{ map.mapOrder + 1 }}</span>
-                        <div class="flex flex-col gap-0.5 flex-1 min-w-0">
-                          <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                          <span v-if="map.teamName" class="text-xs text-cyan-400 truncate">
-                            Selected by {{ map.teamName }}
-                          </span>
-                        </div>
-                      </div>
-                      <div class="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
-                        <span v-if="map.round?.winningTeamName" class="text-xs text-emerald-400 flex items-center gap-1 flex-shrink-0">
-                          <span>🏆</span>
-                          <span>{{ map.round.winningTeamName }}</span>
-                          <span v-if="getTeamScore(map, 1) !== undefined && getTeamScore(map, 2) !== undefined" class="text-slate-400">
-                            ({{ getTeamScore(map, 1) }} - {{ getTeamScore(map, 2) }})
-                          </span>
-                        </span>
-                        <div class="flex items-center gap-2">
-                          <button
-                            v-if="map.roundId && map.round?.players && map.round.players.length > 0"
-                            class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2 whitespace-nowrap"
-                            @click="toggleMapExpansion(map.id)"
-                          >
-                            <span>{{ isMapExpanded(map.id) ? 'Hide' : 'Show' }} Stats</span>
-                            <svg
-                              class="w-3.5 h-3.5 transition-transform"
-                              :class="{ 'rotate-180': isMapExpanded(map.id) }"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </button>
-                          <button
-                            v-if="map.roundId"
-                            class="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-2 whitespace-nowrap"
-                            @click="viewRoundReport(map.roundId)"
-                          >
-                            <span>Report</span>
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                          <div v-if="!map.roundId" class="text-slate-500 text-xs italic px-2 whitespace-nowrap">Pending</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Expandable Player Stats Table -->
-                  <div
-                    v-if="isMapExpanded(map.id) && map.round?.players && map.round.players.length > 0"
-                    class="border-t p-3"
-                    :style="{
-                      borderTopColor: getValidColors().primary ? `${getValidColors().primary}40` : 'rgba(100, 116, 139, 0.3)',
-                      backgroundColor: getValidColors().primary ? `${getValidColors().primary}05` : 'rgba(100, 116, 139, 0.2)',
-                    }"
-                  >
-                    <div class="overflow-x-auto">
-                      <table class="w-full border-collapse">
-                        <thead>
-                          <!-- Team Headers -->
-                          <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
-                            <th class="p-2 text-left font-bold text-xs uppercase tracking-wide text-slate-400 border-b border-slate-700/30 w-8">
-                              #
-                            </th>
-                            <!-- Team 1 Header -->
-                            <th
-                              class="p-2 text-center font-bold text-xs uppercase tracking-wide border-b border-slate-700/30 bg-emerald-500/10 border-l-4"
-                              :class="map.round.winningTeamName === getTeamName(map, 1)
-                                ? 'text-emerald-400 border-l-emerald-400/60'
-                                : 'text-cyan-400 border-l-cyan-400/60'"
-                              colspan="4"
-                            >
-                              <div class="flex items-center justify-center gap-2">
-                                <span class="font-mono font-bold text-sm">{{ getTeamName(map, 1) }}</span>
-                                <span v-if="getTeamScore(map, 1) !== undefined" class="text-slate-300 font-bold text-sm">
-                                  ({{ getTeamScore(map, 1) }})
-                                </span>
-                                <span v-if="map.round.winningTeamName === getTeamName(map, 1)">🏆</span>
-                              </div>
-                            </th>
-                            <!-- Team 2 Header -->
-                            <th
-                              class="p-2 text-center font-bold text-xs uppercase tracking-wide border-b border-slate-700/30 bg-orange-500/10 border-l-4"
-                              :class="map.round.winningTeamName === getTeamName(map, 2)
-                                ? 'text-emerald-400 border-l-emerald-400/60'
-                                : 'text-orange-400 border-l-orange-400/60'"
-                              colspan="4"
-                            >
-                              <div class="flex items-center justify-center gap-2">
-                                <span class="font-mono font-bold text-sm">{{ getTeamName(map, 2) }}</span>
-                                <span v-if="getTeamScore(map, 2) !== undefined" class="text-slate-300 font-bold text-sm">
-                                  ({{ getTeamScore(map, 2) }})
-                                </span>
-                                <span v-if="map.round.winningTeamName === getTeamName(map, 2)">🏆</span>
-                              </div>
-                            </th>
-                          </tr>
-                          <!-- Stat Column Headers -->
-                          <tr class="bg-gradient-to-r from-slate-800/90 to-slate-900/90">
-                            <th class="p-2 border-b border-slate-700/30" />
-                            <!-- Team 1 Stats -->
-                            <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60 min-w-[120px]">
-                              <span class="font-mono">Player</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
-                              <span class="font-mono">S</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
-                              <span class="font-mono">K</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-r-4 border-r-cyan-400/60">
-                              <span class="font-mono">D</span>
-                            </th>
-                            <!-- Team 2 Stats -->
-                            <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60 min-w-[120px]">
-                              <span class="font-mono">Player</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                              <span class="font-mono">S</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                              <span class="font-mono">K</span>
-                            </th>
-                            <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                              <span class="font-mono">D</span>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr
-                            v-for="(_, idx) in Math.max(getTeamPlayers(map, 1).length, getTeamPlayers(map, 2).length)"
-                            :key="idx"
-                            class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/10"
-                          >
-                            <!-- Row Number -->
-                            <td class="p-2 text-slate-500 text-xs font-mono">
-                              {{ idx + 1 }}
-                            </td>
-                            <!-- Team 1 Player -->
-                            <template v-if="getTeamPlayers(map, 1)[idx]">
-                              <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
-                                <router-link
-                                  :to="`/players/${getTeamPlayers(map, 1)[idx].playerName}`"
-                                  class="text-cyan-400 hover:text-cyan-300 font-medium text-xs truncate block"
-                                >
-                                  {{ getTeamPlayers(map, 1)[idx].playerName }}
-                                </router-link>
-                              </td>
-                              <td class="p-2 text-center bg-cyan-500/5">
-                                <span class="text-slate-200 font-bold text-xs font-mono">
-                                  {{ getTeamPlayers(map, 1)[idx].totalScore.toLocaleString() }}
-                                </span>
-                              </td>
-                              <td class="p-2 text-center bg-cyan-500/5">
-                                <span class="text-slate-300 text-xs font-mono">
-                                  {{ getTeamPlayers(map, 1)[idx].totalKills }}
-                                </span>
-                              </td>
-                              <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
-                                <span class="text-slate-300 text-xs font-mono">
-                                  {{ getTeamPlayers(map, 1)[idx].totalDeaths }}
-                                </span>
-                              </td>
-                            </template>
-                            <template v-else>
-                              <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40" colspan="4" />
-                            </template>
-                            <!-- Team 2 Player -->
-                            <template v-if="getTeamPlayers(map, 2)[idx]">
-                              <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40">
-                                <router-link
-                                  :to="`/players/${getTeamPlayers(map, 2)[idx].playerName}`"
-                                  class="text-orange-400 hover:text-orange-300 font-medium text-xs truncate block"
-                                >
-                                  {{ getTeamPlayers(map, 2)[idx].playerName }}
-                                </router-link>
-                              </td>
-                              <td class="p-2 text-center bg-orange-500/5">
-                                <span class="text-slate-200 font-bold text-xs font-mono">
-                                  {{ getTeamPlayers(map, 2)[idx].totalScore.toLocaleString() }}
-                                </span>
-                              </td>
-                              <td class="p-2 text-center bg-orange-500/5">
-                                <span class="text-slate-300 text-xs font-mono">
-                                  {{ getTeamPlayers(map, 2)[idx].totalKills }}
-                                </span>
-                              </td>
-                              <td class="p-2 text-center bg-orange-500/5">
-                                <span class="text-slate-300 text-xs font-mono">
-                                  {{ getTeamPlayers(map, 2)[idx].totalDeaths }}
-                                </span>
-                              </td>
-                            </template>
-                            <template v-else>
-                              <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40" colspan="4" />
-                            </template>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            </div>
-            </div>
-          </div>
-        </div>
-
 
         <!-- Empty State -->
-        <div v-if="upcomingMatchesByWeek.length === 0 && completedMatchesByWeek.length === 0" class="text-center py-20">
+        <div v-if="allMatchesByWeek.length === 0" class="text-center py-20">
           <div class="text-8xl mb-6 opacity-50">📅</div>
           <h3 class="text-2xl font-bold text-slate-300 mb-3">No Matches Scheduled Yet</h3>
           <p class="text-slate-400 text-lg">
@@ -979,11 +541,10 @@ import { marked } from 'marked';
 import {
   publicTournamentService,
   type PublicTournamentDetail,
-  type PublicTournamentMatch,
-  type PublicTournamentMatchMap
+  type PublicTournamentMatch
 } from '@/services/publicTournamentService';
 import { notificationService } from '@/services/notificationService';
-import { generateComplementaryColor, getContrastingTextColor, isValidHex, normalizeHex } from '@/utils/colorUtils';
+import { generateComplementaryColor, isValidHex, normalizeHex } from '@/utils/colorUtils';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -998,7 +559,6 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const selectedMatch = ref<PublicTournamentMatch | null>(null);
 const selectedPlayers = ref<string[]>([]);
-const expandedMaps = ref<Set<number>>(new Set());
 const showRulesModal = ref(false);
 
 const tournamentId = parseInt(route.params.id as string);
@@ -1051,25 +611,6 @@ const themeStyles = computed(() => {
 });
 
 // Helper functions
-const getTeamPlayers = (map: PublicTournamentMatchMap, team: number) => {
-  if (!map.round?.players) return [];
-  return map.round.players
-    .filter(p => p.team === team)
-    .sort((a, b) => b.totalScore - a.totalScore);
-};
-
-const getTeamName = (map: PublicTournamentMatchMap, team: number): string => {
-  if (team === 1 && map.round?.team1Label) return map.round.team1Label;
-  if (team === 2 && map.round?.team2Label) return map.round.team2Label;
-  return `Team ${team}`;
-};
-
-const getTeamScore = (map: PublicTournamentMatchMap, team: number): number | undefined => {
-  if (team === 1) return map.round?.tickets1;
-  if (team === 2) return map.round?.tickets2;
-  return undefined;
-};
-
 const formatMatchDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString(undefined, {
@@ -1081,26 +622,18 @@ const formatMatchDate = (dateString: string): string => {
   });
 };
 
-const getMatchWinner = (match: PublicTournamentMatch): string | null => {
-  const completedMaps = match.maps.filter(map => map.round);
-  if (completedMaps.length === 0 || completedMaps.length < match.maps.length) {
-    return null;
-  }
-
-  const team1Wins = completedMaps.filter(map => map.round?.winningTeamName === match.team1Name).length;
-  const team2Wins = completedMaps.filter(map => map.round?.winningTeamName === match.team2Name).length;
-
-  if (team1Wins > team2Wins) return match.team1Name;
-  if (team2Wins > team1Wins) return match.team2Name;
-  return null;
-};
-
 const viewRoundReport = (roundId: string) => {
   router.push(`/rounds/${roundId}/report`);
 };
 
+// Consolidated matches by week for condensed table view
+interface MatchWithStatus {
+  match: PublicTournamentMatch;
+  status: 'upcoming' | 'completed';
+  isCompleted: boolean;
+}
 
-const upcomingMatchesByWeek = computed(() => {
+const allMatchesByWeek = computed(() => {
   if (!tournament.value?.matchesByWeek) return [];
 
   // Check if there's only one week group with null week value
@@ -1109,30 +642,15 @@ const upcomingMatchesByWeek = computed(() => {
   const filtered = tournament.value.matchesByWeek
     .map(group => ({
       week: group.week,
-      hideWeekHeader: hasOnlyOneNullWeek, // Don't show week header for single null week
-      matches: group.matches.filter(match => {
+      hideWeekHeader: hasOnlyOneNullWeek,
+      matches: group.matches.map(match => {
         const completedMaps = match.maps.filter(map => map.round);
-        return completedMaps.length < match.maps.length;
-      })
-    }))
-    .filter(group => group.matches.length > 0);
-
-  return filtered;
-});
-
-const completedMatchesByWeek = computed(() => {
-  if (!tournament.value?.matchesByWeek) return [];
-
-  // Check if there's only one week group with null week value
-  const hasOnlyOneNullWeek = tournament.value.matchesByWeek.length === 1 && tournament.value.matchesByWeek[0].week === null;
-
-  const filtered = tournament.value.matchesByWeek
-    .map(group => ({
-      week: group.week,
-      hideWeekHeader: hasOnlyOneNullWeek, // Don't show week header for single null week
-      matches: group.matches.filter(match => {
-        const completedMaps = match.maps.filter(map => map.round);
-        return completedMaps.length === match.maps.length && match.maps.length > 0;
+        const isCompleted = completedMaps.length === match.maps.length && match.maps.length > 0;
+        return {
+          match,
+          status: isCompleted ? 'completed' : 'upcoming',
+          isCompleted
+        } as MatchWithStatus;
       })
     }))
     .filter(group => group.matches.length > 0);
@@ -1310,18 +828,6 @@ const comparePlayers = () => {
       }
     });
   }
-};
-
-const toggleMapExpansion = (mapId: number) => {
-  if (expandedMaps.value.has(mapId)) {
-    expandedMaps.value.delete(mapId);
-  } else {
-    expandedMaps.value.add(mapId);
-  }
-};
-
-const isMapExpanded = (mapId: number) => {
-  return expandedMaps.value.has(mapId);
 };
 
 const openRulesModal = () => {
