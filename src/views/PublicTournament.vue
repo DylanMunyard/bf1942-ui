@@ -198,13 +198,13 @@
                     <!-- Maps Summary -->
                     <td class="p-3">
                       <div class="text-xs space-y-0.5">
-                        <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2">
+                        <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2 flex-wrap">
                           <span class="font-mono" :style="{ color: getTextMutedColor() }">{{ map.mapOrder + 1 }}.</span>
                           <span :style="{ color: getAccentColor() }" class="font-medium truncate">{{ map.mapName }}</span>
-                          <span v-if="map.matchResults?.length > 0" :style="{ color: getAccentColor() }" class="font-bold flex-shrink-0">
-                            {{ getResultsAggregation(map) }}
+                          <span v-if="map.matchResults?.length > 0" :style="{ color: getAccentColor() }" class="font-bold">
+                            {{ getResultsAggregation(map, matchItem.match.team1Name, matchItem.match.team2Name) }}
                           </span>
-                          <span v-else :style="{ color: getTextMutedColor() }" class="flex-shrink-0">—</span>
+                          <span v-else :style="{ color: getTextMutedColor() }">—</span>
                         </div>
                       </div>
                     </td>
@@ -377,7 +377,7 @@
                         (Selected by {{ map.teamName }})
                       </span>
                       <span v-if="map.matchResults?.length > 0" class="text-xs font-bold ml-auto" :style="{ color: getAccentColor() }">
-                        {{ getResultsAggregation(map) }}
+                        {{ getResultsAggregation(map, selectedMatch.team1Name, selectedMatch.team2Name) }}
                       </span>
                     </div>
                   </td>
@@ -734,8 +734,8 @@ const getThemedAccentColor = (): string => {
   return colors.accent;
 };
 
-// Helper function to get results aggregation (e.g., "2-0", "1-1", "1-0-1" with draws)
-const getResultsAggregation = (map: any): string => {
+// Helper function to get results aggregation (e.g., "Team A 2-0 Team B", "Team A 1-1 Team B")
+const getResultsAggregation = (map: any, matchTeam1Name?: string, matchTeam2Name?: string): string => {
   const results = map.matchResults;
   if (!results || results.length === 0) return '—';
 
@@ -747,10 +747,18 @@ const getResultsAggregation = (map: any): string => {
   const team2Wins = results.filter((r: any) => r.winningTeamId === team2Id).length;
   const draws = results.filter((r: any) => r.winningTeamId !== team1Id && r.winningTeamId !== team2Id).length;
 
+  let scoreStr: string;
   if (draws > 0) {
-    return `${team1Wins}-${team2Wins}-${draws}`;
+    scoreStr = `${team1Wins}-${team2Wins}-${draws}`;
+  } else {
+    scoreStr = `${team1Wins}-${team2Wins}`;
   }
-  return `${team1Wins}-${team2Wins}`;
+
+  // Add team names if provided
+  if (matchTeam1Name && matchTeam2Name) {
+    return `${matchTeam1Name} ${scoreStr} ${matchTeam2Name}`;
+  }
+  return scoreStr;
 };
 
 // Helper function to get theme colors
