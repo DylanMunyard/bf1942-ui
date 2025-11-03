@@ -132,11 +132,8 @@
         <div v-if="leaderboard && leaderboard.rankings.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
           <!-- Leaderboard Header -->
           <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
-            <h3 class="text-xl font-semibold flex items-center gap-3" :style="{ color: getTextColor() }">
+            <h3 class="text-xl font-semibold" :style="{ color: getTextColor() }">
               🏆 Leaderboard
-              <span class="text-sm font-normal" :style="{ color: getTextMutedColor() }">
-                Cumulative Standings
-              </span>
             </h3>
           </div>
 
