@@ -371,7 +371,7 @@
                   <td colspan="3" class="p-3">
                     <div class="flex items-center gap-3">
                       <span class="text-sm font-bold" :style="{ color: getAccentColor() }">
-                        Map {{ mapIndex + 1 }}: {{ map.mapName }}
+                        {{ map.mapName }}
                       </span>
                       <span v-if="map.teamName" class="text-xs" :style="{ color: getTextMutedColor() }">
                         (Selected by {{ map.teamName }})
