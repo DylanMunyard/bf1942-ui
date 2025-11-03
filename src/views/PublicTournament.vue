@@ -201,9 +201,10 @@
                         <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2">
                           <span class="font-mono" :style="{ color: getTextMutedColor() }">{{ map.mapOrder + 1 }}.</span>
                           <span :style="{ color: getAccentColor() }" class="font-medium truncate">{{ map.mapName }}</span>
-                          <span v-if="map.matchResults?.[0]?.winningTeamName" class="text-green-400 flex-shrink-0">
-                            🏆 {{ map.matchResults[0].winningTeamName }}
+                          <span v-if="map.matchResults?.length > 0" :style="{ color: getAccentColor() }" class="font-bold flex-shrink-0">
+                            {{ getResultsAggregation(map) }}
                           </span>
+                          <span v-else :style="{ color: getTextMutedColor() }" class="flex-shrink-0">—</span>
                         </div>
                       </div>
                     </td>
@@ -352,7 +353,7 @@
             <thead>
               <tr :style="{ backgroundColor: getBackgroundMuteColor() }">
                 <th class="p-3 text-left font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                  Map
+                  Round
                 </th>
                 <th class="p-3 text-left font-bold text-xs uppercase border-b border-l-4" :style="{ color: getTextColor(), borderColor: getAccentColor(), borderLeftColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.1) }">
                   {{ selectedMatch.team1Name }}
@@ -363,42 +364,65 @@
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="map in selectedMatch.maps"
-                :key="map.id"
-                class="border-b transition-all group"
-                :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }"
-              >
-                <!-- Map Name & Info -->
-                <td class="p-3">
-                  <div class="flex flex-col gap-1">
-                    <span class="text-sm font-bold" :style="{ color: getAccentColor() }">{{ map.mapName }}</span>
-                    <span v-if="map.teamName" class="text-xs" :style="{ color: getTextMutedColor() }">
-                      Selected by {{ map.teamName }}
-                    </span>
-                  </div>
-                </td>
+              <!-- Group results by map -->
+              <template v-for="(map, mapIndex) in selectedMatch.maps" :key="map.id">
+                <!-- Map Header Row -->
+                <tr :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }" class="border-b">
+                  <td colspan="3" class="p-3">
+                    <div class="flex items-center gap-3">
+                      <span class="text-sm font-bold" :style="{ color: getAccentColor() }">
+                        Map {{ mapIndex + 1 }}: {{ map.mapName }}
+                      </span>
+                      <span v-if="map.teamName" class="text-xs" :style="{ color: getTextMutedColor() }">
+                        (Selected by {{ map.teamName }})
+                      </span>
+                      <span v-if="map.matchResults?.length > 0" class="text-xs font-bold ml-auto" :style="{ color: getAccentColor() }">
+                        {{ getResultsAggregation(map) }}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
 
-                <!-- Team 1 Score -->
-                <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold" :style="{ color: getTextColor() }">
-                      {{ getTeamScore(map, 1) ?? '-' }}
-                    </span>
-                    <span v-if="map.matchResults?.[0]?.winningTeamName === getTeamName(map, 1)" class="text-lg">🏆</span>
-                  </div>
-                </td>
+                <!-- Rounds for this map -->
+                <tr
+                  v-for="(result, roundIndex) in map.matchResults"
+                  :key="`${map.id}-${result.id}`"
+                  class="border-b transition-all group"
+                  :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }"
+                >
+                  <!-- Round number -->
+                  <td class="p-3" :style="{ color: getTextMutedColor() }">
+                    <div class="text-xs font-mono">Round {{ roundIndex + 1 }}</div>
+                  </td>
 
-                <!-- Team 2 Score -->
-                <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold" :style="{ color: getTextColor() }">
-                      {{ getTeamScore(map, 2) ?? '-' }}
-                    </span>
-                    <span v-if="map.matchResults?.[0]?.winningTeamName === getTeamName(map, 2)" class="text-lg">🏆</span>
-                  </div>
-                </td>
-              </tr>
+                  <!-- Team 1 Score -->
+                  <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-bold" :style="{ color: getTextColor() }">
+                        {{ result.team1Tickets }}
+                      </span>
+                      <span v-if="result.winningTeamId === result.team1Id" class="text-lg">🏆</span>
+                    </div>
+                  </td>
+
+                  <!-- Team 2 Score -->
+                  <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-bold" :style="{ color: getTextColor() }">
+                        {{ result.team2Tickets }}
+                      </span>
+                      <span v-if="result.winningTeamId === result.team2Id" class="text-lg">🏆</span>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Empty state if no results for this map -->
+                <tr v-if="!map.matchResults || map.matchResults.length === 0" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }" class="border-b">
+                  <td colspan="3" class="p-3 text-center" :style="{ color: getTextMutedColor() }">
+                    <span class="text-xs">No results yet</span>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -708,6 +732,25 @@ const renderedRules = computed(() => {
 const getThemedAccentColor = (): string => {
   const colors = getThemeColors();
   return colors.accent;
+};
+
+// Helper function to get results aggregation (e.g., "2-0", "1-1", "1-0-1" with draws)
+const getResultsAggregation = (map: any): string => {
+  const results = map.matchResults;
+  if (!results || results.length === 0) return '—';
+
+  const team1Id = results[0]?.team1Id;
+  const team2Id = results[0]?.team2Id;
+  if (!team1Id || !team2Id) return '—';
+
+  const team1Wins = results.filter((r: any) => r.winningTeamId === team1Id).length;
+  const team2Wins = results.filter((r: any) => r.winningTeamId === team2Id).length;
+  const draws = results.filter((r: any) => r.winningTeamId !== team1Id && r.winningTeamId !== team2Id).length;
+
+  if (draws > 0) {
+    return `${team1Wins}-${team2Wins}-${draws}`;
+  }
+  return `${team1Wins}-${team2Wins}`;
 };
 
 // Helper function to get theme colors
