@@ -117,12 +117,6 @@ const isDropdownOpen = ref(false);
 const showBenefits = ref(false);
 const dropdownRef = ref<HTMLElement>();
 
-// Debug logging to see user data
-watchEffect(() => {
-  console.log('LoginButton - isAuthenticated:', isAuthenticated.value);
-  console.log('LoginButton - user:', user.value);
-});
-
 const handleDiscordLogin = async () => {
   if (isLoading.value) return;
 
@@ -131,7 +125,6 @@ const handleDiscordLogin = async () => {
     isDropdownOpen.value = false;
     await loginWithDiscord();
   } catch (error) {
-    console.error('Discord login failed:', error);
     alert('Discord login failed. Please try again.');
   } finally {
     isLoading.value = false;

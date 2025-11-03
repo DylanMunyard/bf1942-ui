@@ -1,3 +1,5 @@
+import { normalizeHex, isValidHex, getContrastingTextColor, generateComplementaryColor } from '@/utils/colorUtils';
+
 export interface PublicTournamentTeam {
   id: number;
   name: string;
@@ -70,6 +72,16 @@ export interface PublicTournamentMatchesByWeek {
   matches: PublicTournamentMatch[];
 }
 
+export interface TournamentTheme {
+  backgroundColour?: string;
+  textColour?: string;
+  primaryColour?: string;
+  secondaryColour?: string;
+  accentColour?: string;
+  radius?: string;
+  borderWidth?: string;
+}
+
 export interface PublicTournamentDetail {
   id: number;
   name: string;
@@ -87,8 +99,7 @@ export interface PublicTournamentDetail {
   discordUrl?: string;
   forumUrl?: string;
   rules?: string;
-  primaryColour?: string;
-  secondaryColour?: string;
+  theme: TournamentTheme;
 }
 
 class PublicTournamentService {
@@ -111,7 +122,8 @@ class PublicTournamentService {
       throw new Error(errorMessage);
     }
 
-    return response.json();
+    const data: PublicTournamentDetail = await response.json();
+    return data;
   }
 
   // Get tournament hero image URL

@@ -12,6 +12,7 @@ export interface TournamentListItem {
   serverName?: string;
   discordUrl?: string;
   forumUrl?: string;
+  theme?: TournamentTheme;
 }
 
 export interface TournamentTeam {
@@ -77,6 +78,16 @@ export interface TournamentMatchesByWeek {
   matches: TournamentMatch[];
 }
 
+export interface TournamentTheme {
+  backgroundColour?: string;
+  textColour?: string;
+  accentColour?: string;
+  primaryColour?: string;
+  secondaryColour?: string;
+  radius?: string;
+  borderWidth?: string;
+}
+
 export interface TournamentDetail {
   id: number;
   name: string;
@@ -96,8 +107,9 @@ export interface TournamentDetail {
   discordUrl?: string;
   forumUrl?: string;
   rules?: string;
-  primaryColour?: string;
-  secondaryColour?: string;
+  theme: TournamentTheme;
+  hasHeroImage?: boolean;
+  hasCommunityLogo?: boolean;
 }
 
 export interface CreateTournamentRequest {
@@ -113,8 +125,7 @@ export interface CreateTournamentRequest {
   discordUrl?: string;
   forumUrl?: string;
   rules?: string;
-  primaryColour?: string;
-  secondaryColour?: string;
+  theme: TournamentTheme;
 }
 
 export interface UpdateTournamentRequest {
@@ -130,8 +141,7 @@ export interface UpdateTournamentRequest {
   discordUrl?: string;
   forumUrl?: string;
   rules?: string;
-  primaryColour?: string;
-  secondaryColour?: string;
+  theme?: TournamentTheme;
 }
 
 // Teams interfaces

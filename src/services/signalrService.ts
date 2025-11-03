@@ -10,11 +10,8 @@ export class SignalRService {
   async connect(user: UserProfile): Promise<void> {
     // If we already have a connection in any state other than Disconnected, don't create a new one
     if (this.connection && this.connection.state !== signalR.HubConnectionState.Disconnected) {
-      console.log('SignalR connection already exists in state:', this.connection.state);
       return;
     }
-
-    console.log('SignalR: Starting connection process...');
 
     this.userEmail = user.email;
 
@@ -38,16 +35,15 @@ export class SignalRService {
 
     // Set up event listeners for connection state changes
     this.connection.onreconnecting((error) => {
-      console.log('SignalR reconnecting...', error);
+      // SignalR reconnecting
     });
 
     this.connection.onreconnected((connectionId) => {
-      console.log('SignalR reconnected with connection ID:', connectionId);
       this.registerUser();
     });
 
     this.connection.onclose((error) => {
-      console.log('SignalR connection closed', error);
+      // SignalR connection closed
     });
 
     // Set up message handlers
@@ -55,50 +51,38 @@ export class SignalRService {
 
     try {
       await this.connection.start();
-      console.log('SignalR connected successfully');
-      console.log('Connection ID:', this.connection.connectionId);
-      console.log('User email:', this.userEmail);
-      
+
       // Register the user with their email after connection is established
       await this.registerUser();
     } catch (error) {
-      console.error('Error connecting to SignalR hub:', error);
       throw error;
     }
   }
 
   private async registerUser(): Promise<void> {
     if (!this.connection || !this.userEmail) {
-      console.error('Cannot register user: connection or email not available');
       return;
     }
 
     try {
       // Send the user's email to the hub to associate it with the connection
       await this.connection.invoke('RegisterUser', this.userEmail);
-      console.log('User registered with SignalR hub:', this.userEmail);
     } catch (error) {
-      console.error('Error registering user with SignalR hub:', error);
+      // Error registering user with SignalR hub
     }
   }
 
   private setupEventHandlers(): void {
     if (!this.connection) return;
 
-    console.log('SignalR: Setting up event handlers...');
-
     // Buddy-related handler
     this.connection.on('BuddyOnline', (data: BuddyOnlineNotification) => {
-      console.log('SignalR - BuddyOnline:', data);
-      
       // Handle the buddy online notification
       notificationService.handleBuddyOnline(data);
     });
 
     // Server map change handler
     this.connection.on('ServerMapChange', (data: ServerMapChangeNotification) => {
-      console.log('SignalR - ServerMapChange:', data);
-      
       // Handle the server map change notification
       notificationService.handleServerMapChange(data);
     });
@@ -108,9 +92,8 @@ export class SignalRService {
     if (this.connection) {
       try {
         await this.connection.stop();
-        console.log('SignalR disconnected');
       } catch (error) {
-        console.error('Error disconnecting from SignalR hub:', error);
+        // Error disconnecting from SignalR hub
       }
       this.connection = null;
       this.userEmail = null;
@@ -128,15 +111,13 @@ export class SignalRService {
   // Method to send messages to the hub if needed
   async sendMessage(method: string, ...args: any[]): Promise<void> {
     if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
-      console.error('SignalR not connected. Cannot send message.');
       return;
     }
 
     try {
       await this.connection.invoke(method, ...args);
-      console.log(`SignalR message sent: ${method}`, args);
     } catch (error) {
-      console.error(`Error sending SignalR message ${method}:`, error);
+      // Error sending SignalR message
     }
   }
 }

@@ -1465,7 +1465,6 @@ const searchPlayers = async (query: string) => {
     playerSuggestions.value = data.items
     showPlayerDropdown.value = data.items.length > 0 || query.length >= 2
   } catch (error) {
-    console.error('Error searching players:', error)
     playerSuggestions.value = []
     showPlayerDropdown.value = false
   } finally {
@@ -1671,7 +1670,6 @@ const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isI
     fetchAndAttachServerTrends()
   } catch (err) {
     error.value = 'Failed to fetch server data. Please try again.'
-    console.error('Error fetching servers:', err)
   } finally {
     if (isInitialLoad) {
       loading.value = false
@@ -1694,10 +1692,8 @@ const fetchGameTrends = async (isInitialLoad = false) => {
 
     const data: GameTrendsResponse = await response.json()
     gameTrends.value = data.insights
-    console.log('🎮 Game trends loaded:', data.insights)
   } catch (err) {
     trendsError.value = 'Failed to load game trends'
-    console.error('Error fetching game trends:', err)
   } finally {
     if (isInitialLoad) {
       trendsLoading.value = false
@@ -1734,7 +1730,6 @@ const fetchAndAttachServerTrends = async () => {
     serverTrendsByGuid.value = updated
   } catch (e) {
     // Non-fatal: keep UI working without trends
-    console.warn('Failed to update server busy indicators', e)
   }
 }
 
@@ -1822,22 +1817,13 @@ const fetchPlayerHistory = async () => {
   try {
     const currentPeriod = getCurrentPeriod()
     const apiPeriod = getCurrentPeriodForAPI()
-    console.log('🔄 Fetching player history for period:', currentPeriod, 'rolling window:', getRollingWindowDays(historyRollingWindow.value), 'days')
-    
+
     const response = await fetchPlayerOnlineHistory(
       activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam',
       apiPeriod,
       getRollingWindowDays(historyRollingWindow.value)
     )
-    
-    console.log('📊 API Response:', {
-      hasDataPoints: !!response.dataPoints,
-      dataPointsLength: response.dataPoints?.length,
-      hasInsights: !!response.insights,
-      rollingAverageLength: response.insights?.rollingAverage?.length,
-      period: response.period
-    })
-    
+
     // Set the response data - only update if we have valid data
     if (response.dataPoints && response.dataPoints.length > 0) {
       playerHistoryData.value = response.dataPoints
@@ -1845,10 +1831,6 @@ const fetchPlayerHistory = async () => {
     if (response.insights) {
       playerHistoryInsights.value = response.insights
     }
-    console.log('✅ Set insights data:', {
-      hasRollingAverage: !!(response.insights?.rollingAverage),
-      rollingPoints: response.insights?.rollingAverage?.length || 0
-    })
   } catch (err) {
     historyError.value = 'Failed to load player history'
     // Only clear data on error, not during normal updates
@@ -1856,7 +1838,6 @@ const fetchPlayerHistory = async () => {
       playerHistoryData.value = []
       playerHistoryInsights.value = null
     }
-    console.error('Error fetching player history:', err)
   } finally {
     historyLoading.value = false
   }

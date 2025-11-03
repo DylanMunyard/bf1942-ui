@@ -136,7 +136,7 @@ Winners choose first map for next round.</code>
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
     @click.self="$emit('close')"
   >
-    <div class="bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-2xl border border-slate-700/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
+    <div class="bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-2xl border border-slate-700/50 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative flex flex-col">
       <!-- Header -->
       <div class="sticky top-0 z-10 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-6">
         <div class="flex items-center justify-between">
@@ -155,19 +155,36 @@ Winners choose first map for next round.</code>
       </div>
 
       <!-- Form -->
-      <form @submit.prevent="handleSubmit" class="p-6 space-y-6">
-        <!-- Tournament Name -->
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            Tournament Name <span class="text-red-400">*</span>
-          </label>
-          <input
-            v-model="formData.name"
-            type="text"
-            required
-            placeholder="e.g., Summer Championship 2025"
-            class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-          >
+      <form @submit.prevent="handleSubmit" class="p-6 space-y-6 flex-1 overflow-y-auto">
+        <!-- Row 1: Tournament Name + Round Count -->
+        <div class="grid grid-cols-3 gap-4">
+          <!-- Tournament Name -->
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Tournament Name <span class="text-red-400">*</span>
+            </label>
+            <input
+              v-model="formData.name"
+              type="text"
+              required
+              placeholder="e.g., Summer Championship 2025"
+              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+            >
+          </div>
+
+          <!-- Anticipated Round Count -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Rounds <span class="text-slate-500">(Optional)</span>
+            </label>
+            <input
+              v-model.number="formData.anticipatedRoundCount"
+              type="number"
+              min="1"
+              placeholder="e.g., 5"
+              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+            >
+          </div>
         </div>
 
         <!-- Organizer (with player search) -->
@@ -338,25 +355,10 @@ Winners choose first map for next round.</code>
           </p>
         </div>
 
-        <!-- Anticipated Round Count -->
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            # Matches
-          </label>
-          <input
-            v-model.number="formData.anticipatedRoundCount"
-            type="number"
-            min="1"
-            placeholder="e.g., 5"
-            class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-          >
-          <p class="mt-1 text-xs text-slate-500">
-            How many matches do you expect in this tournament?
-          </p>
-        </div>
-
-        <!-- Discord URL -->
-        <div>
+        <!-- Row 2: Discord URL + Forum URL -->
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Discord URL -->
+          <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">
             Discord URL <span class="text-slate-500">(Optional)</span>
           </label>
@@ -371,24 +373,27 @@ Winners choose first map for next round.</code>
           </p>
         </div>
 
-        <!-- Forum URL -->
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            Forum URL <span class="text-slate-500">(Optional)</span>
-          </label>
-          <input
-            v-model="formData.forumUrl"
-            type="url"
-            placeholder="https://..."
-            class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-          >
-          <p class="mt-1 text-xs text-slate-500">
-            Link to your tournament forum or discussion page
-          </p>
+          <!-- Forum URL -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Forum URL <span class="text-slate-500">(Optional)</span>
+            </label>
+            <input
+              v-model="formData.forumUrl"
+              type="url"
+              placeholder="https://..."
+              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+            >
+            <p class="mt-1 text-xs text-slate-500">
+              Link to your tournament forum or discussion page
+            </p>
+          </div>
         </div>
 
-        <!-- Hero Image Upload -->
-        <div>
+        <!-- Row 3: Hero Image + Community Logo -->
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Hero Image Upload -->
+          <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">
             Hero Image <span class="text-slate-500">(Optional)</span>
           </label>
@@ -447,10 +452,10 @@ Winners choose first map for next round.</code>
           <p v-if="imageError" class="mt-2 text-xs text-red-400">
             {{ imageError }}
           </p>
-        </div>
+          </div>
 
-        <!-- Community Logo Upload -->
-        <div>
+          <!-- Community Logo Upload -->
+          <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">
             Community Logo <span class="text-slate-500">(Optional)</span>
           </label>
@@ -505,10 +510,11 @@ Winners choose first map for next round.</code>
             </div>
           </div>
 
-          <!-- Error Message -->
-          <p v-if="logoError" class="mt-2 text-xs text-red-400">
-            {{ logoError }}
-          </p>
+            <!-- Error Message -->
+            <p v-if="logoError" class="mt-2 text-xs text-red-400">
+              {{ logoError }}
+            </p>
+          </div>
         </div>
 
         <!-- Tournament Rules (Markdown) -->
@@ -560,125 +566,280 @@ Winners choose first map for next round.</code>
         </div>
 
         <!-- Theme Colors -->
+        <!-- Theme Configuration Section -->
         <div class="border-t border-slate-700/30 pt-6">
           <div class="flex items-center gap-2 mb-4">
             <span class="text-lg">🎨</span>
             <label class="block text-sm font-medium text-slate-300">
-              Theme Colors <span class="text-slate-500">(Optional)</span>
+              Theme Configuration <span class="text-slate-500">(Optional)</span>
             </label>
+            <button
+              v-if="!showThemePreview"
+              type="button"
+              class="ml-auto text-xs px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 rounded transition-all"
+              @click="showThemePreview = true"
+              title="Show live preview"
+            >
+              👁️ Preview
+            </button>
+            <button
+              v-else
+              type="button"
+              class="ml-auto text-xs px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded transition-all"
+              @click="showThemePreview = false"
+              title="Hide preview"
+            >
+              ✕ Close
+            </button>
           </div>
 
-          <p class="text-xs text-slate-400 mb-4">
-            Customize the color scheme of your tournament page. Colors are completely optional - the page will use default colors if not specified.
+          <p class="text-xs text-slate-400 mb-6">
+            Customize 3 core colors to create your unique tournament look. The page will intelligently derive lighter/darker variants.
           </p>
 
-          <!-- Primary Color -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-slate-300 mb-2">
-              Primary Color
-            </label>
-            <div class="flex items-center gap-3">
-              <div class="relative flex-1">
-                <input
-                  :value="formData.primaryColour || '#000000'"
-                  type="color"
-                  class="w-full h-12 rounded-lg cursor-pointer border border-slate-700/50"
-                  @change="(e) => {
-                    formData.primaryColour = (e.target as HTMLInputElement).value;
-                    primaryColorInput.value = formData.primaryColour;
-                    if (!formData.secondaryColour) {
-                      formData.secondaryColour = getDefaultSecondaryColor();
-                      secondaryColorInput.value = formData.secondaryColour;
-                    }
-                  }"
-                >
+          <div :class="['space-y-6', showThemePreview && 'grid grid-cols-1 lg:grid-cols-2 lg:gap-6 lg:space-y-0']">
+            <!-- Color Pickers -->
+            <div class="space-y-6">
+              <!-- Background Color -->
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">
+                  Background Color
+                </label>
+                <div class="flex items-center gap-3">
+                  <div class="relative flex-1">
+                    <input
+                      :value="formData.theme?.backgroundColour || '#000000'"
+                      type="color"
+                      class="w-full h-10 rounded-lg cursor-pointer border border-slate-700/50"
+                      @change="(e) => {
+                        if (!formData.theme) formData.theme = { backgroundColour: '', textColour: '', accentColour: '' };
+                        formData.theme.backgroundColour = (e.target as HTMLInputElement).value;
+                        bgColorInput = formData.theme.backgroundColour;
+                      }"
+                    >
+                  </div>
+                  <input
+                    v-model="bgColorInput"
+                    type="text"
+                    placeholder="#000000"
+                    class="w-24 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                    @blur="onBgColorChange"
+                    title="Paste or type hex color"
+                  >
+                  <button
+                    v-if="formData.theme?.backgroundColour"
+                    type="button"
+                    class="text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+                    @click="() => { if (formData.theme) formData.theme.backgroundColour = ''; bgColorInput = '#000000'; }"
+                    title="Reset to default"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">
+                  Main page background. Default: Black (#000000)
+                </p>
               </div>
-              <input
-                v-model="primaryColorInput"
-                type="text"
-                placeholder="#FF6B35"
-                class="w-32 px-3 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-                @blur="onPrimaryColorInputChange"
-                title="Paste or type hex color (e.g., #FF6B35)"
-              >
-              <button
-                v-if="formData.primaryColour"
-                type="button"
-                class="text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
-                @click="formData.primaryColour = ''; primaryColorInput = ''"
-                title="Clear color"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <p class="mt-1 text-xs text-slate-500">
-              Used for hero section, headers, and accents. Paste or type hex color (e.g., #FF6B35). The secondary color will be auto-generated from this.
-            </p>
-          </div>
 
-          <!-- Secondary Color -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-slate-300 mb-2">
-              Secondary Color
-            </label>
-            <div class="flex items-center gap-3">
-              <div class="relative flex-1">
-                <input
-                  :value="formData.secondaryColour || '#9333ea'"
-                  type="color"
-                  class="w-full h-12 rounded-lg cursor-pointer border border-slate-700/50"
-                  @change="(e) => {
-                    formData.secondaryColour = (e.target as HTMLInputElement).value;
-                    secondaryColorInput.value = formData.secondaryColour;
-                  }"
-                >
+              <!-- Text Color -->
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">
+                  Text Color
+                </label>
+                <div class="flex items-center gap-3">
+                  <div class="relative flex-1">
+                    <input
+                      :value="formData.theme?.textColour || '#FFFFFF'"
+                      type="color"
+                      class="w-full h-10 rounded-lg cursor-pointer border border-slate-700/50"
+                      @change="(e) => {
+                        if (!formData.theme) formData.theme = { backgroundColour: '', textColour: '', accentColour: '' };
+                        formData.theme.textColour = (e.target as HTMLInputElement).value;
+                        textColorInput = formData.theme.textColour;
+                      }"
+                    >
+                  </div>
+                  <input
+                    v-model="textColorInput"
+                    type="text"
+                    placeholder="#FFFFFF"
+                    class="w-24 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                    @blur="onTextColorChange"
+                    title="Paste or type hex color"
+                  >
+                  <button
+                    v-if="formData.theme?.textColour"
+                    type="button"
+                    class="text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+                    @click="() => { if (formData.theme) formData.theme.textColour = ''; textColorInput = '#FFFFFF'; }"
+                    title="Reset to default"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">
+                  Main text and headings. Default: White (#FFFFFF)
+                </p>
               </div>
-              <input
-                v-model="secondaryColorInput"
-                type="text"
-                placeholder="#9333EA"
-                class="w-32 px-3 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-                @blur="onSecondaryColorInputChange"
-                title="Paste or type hex color (e.g., #9333EA)"
-              >
-              <button
-                v-if="formData.secondaryColour"
-                type="button"
-                class="text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
-                @click="formData.secondaryColour = ''; secondaryColorInput = ''"
-                title="Clear color"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <p class="mt-1 text-xs text-slate-500">
-              Complements the primary color. Auto-generated if left empty. Paste or type hex color (e.g., #9333EA). <a href="https://coolors.co" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300">Need inspiration?</a>
-            </p>
-          </div>
 
-          <!-- Color Preview -->
-          <div v-if="formData.primaryColour" class="mt-4 p-4 rounded-lg border border-slate-700/50 bg-slate-800/30">
-            <p class="text-xs text-slate-400 mb-3 font-medium">PREVIEW:</p>
-            <div class="space-y-2">
-              <!-- Hero preview -->
-              <div
-                class="h-12 rounded-lg flex items-center justify-center text-white font-bold text-sm transition-colors"
-                :style="{ backgroundColor: formData.primaryColour }"
-              >
-                Hero Section
+              <!-- Accent Color -->
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">
+                  Accent Color
+                </label>
+                <div class="flex items-center gap-3">
+                  <div class="relative flex-1">
+                    <input
+                      :value="formData.theme?.accentColour || '#FFD700'"
+                      type="color"
+                      class="w-full h-10 rounded-lg cursor-pointer border border-slate-700/50"
+                      @change="(e) => {
+                        if (!formData.theme) formData.theme = { backgroundColour: '', textColour: '', accentColour: '' };
+                        formData.theme.accentColour = (e.target as HTMLInputElement).value;
+                        accentColorInput = formData.theme.accentColour;
+                      }"
+                    >
+                  </div>
+                  <input
+                    v-model="accentColorInput"
+                    type="text"
+                    placeholder="#FFD700"
+                    class="w-24 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                    @blur="onAccentColorChange"
+                    title="Paste or type hex color"
+                  >
+                  <button
+                    v-if="formData.theme?.accentColour"
+                    type="button"
+                    class="text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+                    @click="() => { if (formData.theme) formData.theme.accentColour = ''; accentColorInput = '#FFD700'; }"
+                    title="Reset to default"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">
+                  Borders, buttons, highlights. Default: Golden (#FFD700)
+                </p>
               </div>
-              <!-- Section title preview -->
+
+              <!-- Quick Presets -->
+              <div class="pt-4 border-t border-slate-700/30">
+                <p class="text-xs text-slate-400 mb-3 font-medium">Quick Presets:</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    class="text-xs px-3 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded transition-all"
+                    @click="applyPreset('dark')"
+                    title="Black background, white text, golden accents"
+                  >
+                    🌙 Dark Mode
+                  </button>
+                  <button
+                    type="button"
+                    class="text-xs px-3 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded transition-all"
+                    @click="applyPreset('light')"
+                    title="White background, black text, blue accents"
+                  >
+                    ☀️ Light Mode
+                  </button>
+                  <button
+                    type="button"
+                    class="text-xs px-3 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded transition-all"
+                    @click="applyPreset('cyberpunk')"
+                    title="Dark background, white text, neon pink/cyan"
+                  >
+                    ⚡ Cyberpunk
+                  </button>
+                  <button
+                    type="button"
+                    class="text-xs px-3 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded transition-all"
+                    @click="applyPreset('ocean')"
+                    title="Dark blue background, white text, cyan accents"
+                  >
+                    🌊 Ocean
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Preview -->
+            <div v-if="showThemePreview" class="lg:sticky lg:top-6 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
+              <div class="text-xs text-slate-400 mb-3 font-medium">Live Preview:</div>
               <div
-                class="h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm transition-colors"
+                class="rounded-lg overflow-hidden border-2 shadow-xl"
                 :style="{
-                  background: `linear-gradient(to right, ${formData.primaryColour}, ${formData.secondaryColour || getDefaultSecondaryColor()})`
+                  borderColor: formData.theme?.accentColour || '#FFD700',
+                  backgroundColor: formData.theme?.backgroundColour || '#000000'
                 }"
               >
-                Section Title
+                <!-- Mock Tournament Page -->
+                <div class="p-6 space-y-4">
+                  <!-- Header -->
+                  <div
+                    class="rounded-lg p-4"
+                    :style="{ backgroundColor: formData.theme?.backgroundColour ? `${formData.theme.backgroundColour}20` : 'rgba(255,215,0,0.1)' }"
+                  >
+                    <div :style="{ color: formData.theme?.accentColour || '#FFD700' }" class="text-lg font-bold mb-2">Sample Tournament</div>
+                    <div :style="{ color: formData.theme?.textColour || '#FFFFFF' }" class="text-xs">Organizer: Demo Player</div>
+                  </div>
+
+                  <!-- Match Table -->
+                  <div class="border-2 rounded-lg overflow-hidden" :style="{ borderColor: formData.theme?.accentColour || '#FFD700' }">
+                    <div
+                      class="px-3 py-2"
+                      :style="{ backgroundColor: formData.theme?.backgroundColour ? `${formData.theme.backgroundColour}40` : 'rgba(255,215,0,0.15)' }"
+                    >
+                      <div :style="{ color: formData.theme?.textColour || '#FFFFFF' }" class="text-xs font-bold">Matches</div>
+                    </div>
+                    <div class="space-y-0 border-t" :style="{ borderColor: formData.theme?.accentColour || '#FFD700' }">
+                      <div
+                        class="px-3 py-2 border-b text-xs flex justify-between"
+                        :style="{
+                          borderColor: formData.theme?.accentColour || '#FFD700',
+                          backgroundColor: formData.theme?.backgroundColour ? `${formData.theme.backgroundColour}20` : 'rgba(0,0,0,0.3)',
+                          color: formData.theme?.textColour || '#FFFFFF'
+                        }"
+                      >
+                        <span>Team A vs Team B</span>
+                        <button
+                          type="button"
+                          class="px-2 py-0.5 rounded text-xs transition-colors"
+                          :style="{
+                            backgroundColor: formData.theme?.accentColour ? `${formData.theme.accentColour}33` : 'rgba(255,215,0,0.2)',
+                            color: formData.theme?.accentColour || '#FFD700',
+                            border: `1px solid ${formData.theme?.accentColour || '#FFD700'}`
+                          }"
+                        >
+                          Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Map List -->
+                  <div class="space-y-2">
+                    <div :style="{ color: formData.theme?.textColour || '#FFFFFF' }" class="text-xs font-medium">Maps:</div>
+                    <div
+                      v-for="i in 2"
+                      :key="i"
+                      class="text-xs px-3 py-1.5 rounded flex justify-between"
+                      :style="{
+                        backgroundColor: formData.theme?.backgroundColour ? `${formData.theme.backgroundColour}30` : 'rgba(45,45,45,1)',
+                        color: formData.theme?.accentColour || '#FFD700'
+                      }"
+                    >
+                      <span>Map {{ String.fromCharCode(64 + i) }}</span>
+                      <span style="opacity: 0.7;">→</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -692,33 +853,33 @@ Winners choose first map for next round.</code>
           <p class="text-sm text-red-400">{{ error }}</p>
         </div>
 
-        <!-- Actions -->
-        <div class="flex items-center gap-3 pt-4">
-          <button
-            type="button"
-            class="flex-1 px-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-lg font-medium transition-colors"
-            @click="$emit('close')"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            :disabled="loading"
-            class="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ loading ? 'Saving...' : (editMode ? 'Update Tournament' : 'Create Tournament') }}
-          </button>
-        </div>
+      <!-- Actions -->
+      <div class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-t border-slate-700/50 p-6 flex items-center gap-3">
+        <button
+          type="button"
+          class="flex-1 px-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-lg font-medium transition-colors"
+          @click="$emit('close')"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          :disabled="loading"
+          class="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ loading ? 'Saving...' : (editMode ? 'Update Tournament' : 'Create Tournament') }}
+        </button>
+      </div>
       </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { marked } from 'marked';
 import { adminTournamentService, type CreateTournamentRequest, type TournamentDetail } from '@/services/adminTournamentService';
-import { generateComplementaryColor, isValidHex } from '@/utils/colorUtils';
+import { isValidHex } from '@/utils/colorUtils';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -760,8 +921,11 @@ const formData = ref({
   discordUrl: '',
   forumUrl: '',
   rules: '',
-  primaryColour: '',
-  secondaryColour: '',
+  theme: {
+    backgroundColour: '#000000',
+    textColour: '#FFFFFF',
+    accentColour: '#FFD700',
+  },
 });
 
 const loading = ref(false);
@@ -803,9 +967,11 @@ const removeCommunityLogo = ref(false);
 const showRulesPreview = ref(false);
 const showMarkdownHelp = ref(false);
 
-// Color input state
-const primaryColorInput = ref('');
-const secondaryColorInput = ref('');
+// Theme color input state
+const bgColorInput = ref('#000000');
+const textColorInput = ref('#FFFFFF');
+const accentColorInput = ref('#FFD700');
+const showThemePreview = ref(false);
 
 // Markdown preview
 const renderedMarkdown = computed(() => {
@@ -877,16 +1043,14 @@ onMounted(() => {
       discordUrl: props.tournament.discordUrl || '',
       forumUrl: props.tournament.forumUrl || '',
       rules: props.tournament.rules || '',
-      primaryColour: props.tournament.primaryColour || '',
-      secondaryColour: props.tournament.secondaryColour || '',
+      theme: props.tournament.theme,
     };
 
-    // Populate color input fields
-    if (props.tournament.primaryColour) {
-      primaryColorInput.value = props.tournament.primaryColour;
-    }
-    if (props.tournament.secondaryColour) {
-      secondaryColorInput.value = props.tournament.secondaryColour;
+    // Populate theme color inputs
+    if (props.tournament.theme) {
+      bgColorInput.value = props.tournament.theme.backgroundColour || '#000000';
+      textColorInput.value = props.tournament.theme.textColour || '#FFFFFF';
+      accentColorInput.value = props.tournament.theme.accentColour || '#FFD700';
     }
 
     // Populate server selection if available
@@ -1168,25 +1332,9 @@ const removeLogo = () => {
   }
 };
 
-// Color picker functions
-const getDefaultSecondaryColor = (): string => {
-  if (!formData.value.primaryColour || !isValidHex(formData.value.primaryColour)) {
-    return '#9333ea'; // Default fallback
-  }
-  return generateComplementaryColor(formData.value.primaryColour);
-};
-
-const onPrimaryColorChange = () => {
-  // Auto-generate secondary color if primary color changes and secondary is empty
-  if (formData.value.primaryColour && !formData.value.secondaryColour) {
-    formData.value.secondaryColour = getDefaultSecondaryColor();
-  }
-  // Sync the text input
-  primaryColorInput.value = formData.value.primaryColour;
-};
-
-const onPrimaryColorInputChange = () => {
-  let input = primaryColorInput.value.trim();
+// Theme system methods
+const onBgColorChange = () => {
+  let input = bgColorInput.value.trim();
 
   // Add # if missing
   if (input && !input.startsWith('#')) {
@@ -1195,27 +1343,22 @@ const onPrimaryColorInputChange = () => {
 
   // Validate and update
   if (input && isValidHex(input)) {
-    formData.value.primaryColour = input;
-    primaryColorInput.value = input;
-    console.debug('Primary color validated and set:', input);
-
-    // Auto-generate secondary color if empty
-    if (!formData.value.secondaryColour) {
-      formData.value.secondaryColour = getDefaultSecondaryColor();
-      secondaryColorInput.value = formData.value.secondaryColour;
+    if (!formData.value.theme) {
+      formData.value.theme = { backgroundColour: '', textColour: '', accentColour: '' };
     }
+    formData.value.theme.backgroundColour = input;
+    bgColorInput.value = input;
   } else if (input === '') {
     // Allow clearing the field
-    formData.value.primaryColour = '';
-    primaryColorInput.value = '';
-    console.debug('Primary color cleared');
-  } else {
-    console.debug('Primary color validation failed for:', input);
+    if (formData.value.theme) {
+      formData.value.theme.backgroundColour = '';
+    }
+    bgColorInput.value = '#000000';
   }
 };
 
-const onSecondaryColorInputChange = () => {
-  let input = secondaryColorInput.value.trim();
+const onTextColorChange = () => {
+  let input = textColorInput.value.trim();
 
   // Add # if missing
   if (input && !input.startsWith('#')) {
@@ -1224,12 +1367,78 @@ const onSecondaryColorInputChange = () => {
 
   // Validate and update
   if (input && isValidHex(input)) {
-    formData.value.secondaryColour = input;
-    secondaryColorInput.value = input;
+    if (!formData.value.theme) {
+      formData.value.theme = { backgroundColour: '', textColour: '', accentColour: '' };
+    }
+    formData.value.theme.textColour = input;
+    textColorInput.value = input;
   } else if (input === '') {
     // Allow clearing the field
-    formData.value.secondaryColour = '';
-    secondaryColorInput.value = '';
+    if (formData.value.theme) {
+      formData.value.theme.textColour = '';
+    }
+    textColorInput.value = '#FFFFFF';
+  }
+};
+
+const onAccentColorChange = () => {
+  let input = accentColorInput.value.trim();
+
+  // Add # if missing
+  if (input && !input.startsWith('#')) {
+    input = '#' + input;
+  }
+
+  // Validate and update
+  if (input && isValidHex(input)) {
+    if (!formData.value.theme) {
+      formData.value.theme = { backgroundColour: '', textColour: '', accentColour: '' };
+    }
+    formData.value.theme.accentColour = input;
+    accentColorInput.value = input;
+  } else if (input === '') {
+    // Allow clearing the field
+    if (formData.value.theme) {
+      formData.value.theme.accentColour = '';
+    }
+    accentColorInput.value = '#FFD700';
+  }
+};
+
+const applyPreset = (presetName: string) => {
+  if (!formData.value.theme) {
+    formData.value.theme = { backgroundColour: '', textColour: '', accentColour: '' };
+  }
+
+  const presets: Record<string, { backgroundColour: string; textColour: string; accentColour: string }> = {
+    dark: {
+      backgroundColour: '#000000',
+      textColour: '#FFFFFF',
+      accentColour: '#FFD700',
+    },
+    light: {
+      backgroundColour: '#FFFFFF',
+      textColour: '#000000',
+      accentColour: '#0066CC',
+    },
+    cyberpunk: {
+      backgroundColour: '#0a0e27',
+      textColour: '#FFFFFF',
+      accentColour: '#FF00FF',
+    },
+    ocean: {
+      backgroundColour: '#0f2c5c',
+      textColour: '#FFFFFF',
+      accentColour: '#00FFFF',
+    },
+  };
+
+  const preset = presets[presetName];
+  if (preset) {
+    formData.value.theme = { ...preset };
+    bgColorInput.value = preset.backgroundColour;
+    textColorInput.value = preset.textColour;
+    accentColorInput.value = preset.accentColour;
   }
 };
 
@@ -1238,21 +1447,15 @@ const handleSubmit = async () => {
   error.value = null;
 
   try {
-    // Ensure color inputs are synced before submitting
-    // This handles the case where a user pastes a value without triggering blur
-    console.debug('Before sync - primaryColorInput:', primaryColorInput.value, 'formData.primaryColour:', formData.value.primaryColour);
-    if (primaryColorInput.value.trim()) {
-      onPrimaryColorInputChange();
-    }
-    if (secondaryColorInput.value.trim()) {
-      onSecondaryColorInputChange();
-    }
-    console.debug('After sync - formData.primaryColour:', formData.value.primaryColour, 'formData.secondaryColour:', formData.value.secondaryColour);
-
     const request: CreateTournamentRequest = {
       name: formData.value.name.trim(),
       organizer: formData.value.organizer.trim(),
       game: formData.value.game,
+      theme: {
+        backgroundColour: formData.value.theme?.backgroundColour || '#000000',
+        textColour: formData.value.theme?.textColour || '#FFFFFF',
+        accentColour: formData.value.theme?.accentColour || '#FFD700',
+      },
     };
 
     if (formData.value.anticipatedRoundCount) {
@@ -1275,15 +1478,7 @@ const handleSubmit = async () => {
       request.rules = formData.value.rules.trim();
     }
 
-    if (formData.value.primaryColour?.trim()) {
-      request.primaryColour = formData.value.primaryColour.trim();
-    }
-
-    if (formData.value.secondaryColour?.trim()) {
-      request.secondaryColour = formData.value.secondaryColour.trim();
-    }
-
-    console.debug('Tournament request colors:', { primaryColour: request.primaryColour, secondaryColour: request.secondaryColour });
+    console.debug('Tournament request theme:', request.theme);
 
     // Handle hero image: only include base64 if uploading new image, or remove flag if removing
     if (imageFile.value) {

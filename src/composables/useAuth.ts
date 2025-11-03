@@ -23,7 +23,6 @@ export function useAuth() {
   };
 
   const handleAuthError = (event: CustomEvent) => {
-    console.error('Discord auth error:', event.detail);
     authState.value = {
       isAuthenticated: false,
       token: null,
@@ -51,8 +50,7 @@ export function useAuth() {
 
   const loadStoredAuth = async (): Promise<void> => {
     const stored = authService.getStoredAuthState();
-    console.log('useAuth - loadStoredAuth:', stored);
-    
+
     if (stored.isAuthenticated && stored.token) {
       // Check if token is expired and try to refresh if needed
       try {
@@ -71,7 +69,6 @@ export function useAuth() {
         // Setup auto-refresh for future expirations
         authService.setupAutoRefresh();
       } catch (error) {
-        console.error('Error ensuring valid token:', error);
         // Clear auth state on error
         authState.value = {
           isAuthenticated: false,

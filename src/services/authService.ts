@@ -30,7 +30,6 @@ class AuthService {
   // Discord OAuth Methods
   async initiateDiscordLogin(): Promise<void> {
     if (!this.discordClientId) {
-      console.error('Discord Client ID not configured');
       throw new Error('Discord Client ID not configured. Please set VITE_DISCORD_CLIENT_ID environment variable.');
     }
 
@@ -47,7 +46,6 @@ class AuthService {
     });
 
     const discordAuthUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
-    console.log('Redirecting to Discord OAuth:', discordAuthUrl);
 
     // Redirect to Discord OAuth
     window.location.href = discordAuthUrl;
@@ -55,8 +53,6 @@ class AuthService {
 
   async handleDiscordCallback(code: string): Promise<void> {
     try {
-      console.log('Handling Discord callback with code');
-
       // Send the authorization code to our backend
       // The backend will exchange it for an access token using the client secret (server-side)
       // This is more secure than doing it client-side
@@ -73,14 +69,12 @@ class AuthService {
 
       if (loginResponse.ok) {
         const loginData = await loginResponse.json();
-        console.log('Backend login response:', loginData);
 
         const userProfile: UserProfile = {
           id: loginData.user.id,
           name: loginData.user.name,
           email: loginData.user.email,
         };
-        console.log('User profile from backend:', userProfile);
 
         const authState: AuthState = {
           isAuthenticated: true,
@@ -102,7 +96,6 @@ class AuthService {
         throw new Error(errorData.message || 'Backend authentication failed');
       }
     } catch (error) {
-      console.error('Discord authentication error:', error);
       window.dispatchEvent(new CustomEvent('discord-auth-error', { detail: error }));
       throw error;
     }
@@ -117,7 +110,7 @@ class AuthService {
       try {
         user = JSON.parse(userProfileJson);
       } catch (error) {
-        console.error('Failed to parse stored user profile:', error);
+        // Failed to parse stored user profile
       }
     }
 
@@ -139,7 +132,7 @@ class AuthService {
         credentials: 'same-origin',
       });
     } catch (e) {
-      console.warn('Logout request failed (continuing to clear client state):', e);
+      // Logout request failed, continuing to clear client state
     }
     // Clear stored token and user profile
     localStorage.removeItem('authToken');
@@ -156,7 +149,6 @@ class AuthService {
       const currentTime = Math.floor(Date.now() / 1000);
       return payload.exp < currentTime;
     } catch (error) {
-      console.error('Error parsing token for expiration check:', error);
       return true;
     }
   }
@@ -166,14 +158,12 @@ class AuthService {
       const payload = this.parseJwt(token);
       return payload.exp * 1000; // Convert to milliseconds
     } catch (error) {
-      console.error('Error parsing token for expiration time:', error);
       return null;
     }
   }
 
   async refreshToken(): Promise<boolean> {
     try {
-      console.log('Attempting backend token refresh...');
       const response = await fetch('/stats/auth/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,7 +172,6 @@ class AuthService {
       });
 
       if (!response.ok) {
-        console.log('Refresh endpoint returned non-OK status:', response.status);
         return false;
       }
 
@@ -191,7 +180,6 @@ class AuthService {
       const expiresAt: string | undefined = data.expiresAt;
 
       if (!accessToken) {
-        console.log('No accessToken returned from refresh');
         return false;
       }
 
@@ -201,10 +189,8 @@ class AuthService {
         localStorage.setItem('tokenExpiresAt', expiresAt);
       }
 
-      console.log('Backend token refresh successful');
       return true;
     } catch (error) {
-      console.error('Backend token refresh error:', error);
       return false;
     }
   }
@@ -229,16 +215,13 @@ class AuthService {
     }
 
     if (isExpired) {
-      console.log('Token expired, attempting refresh...');
       try {
         const refreshed = await this.refreshToken();
         if (!refreshed) {
-          console.log('Token refresh failed, logging out...');
           await this.logout();
           return false;
         }
       } catch (error) {
-        console.error('Token refresh error:', error);
         await this.logout();
         return false;
       }
@@ -258,32 +241,26 @@ class AuthService {
 
     const currentTime = Date.now();
     const timeUntilExpiration = expirationTime - currentTime;
-    
+
     // For long-lived tokens (> 1 day), refresh 1 hour before expiration
     // For shorter tokens, refresh 5 minutes before expiration
     const isLongLived = timeUntilExpiration > (24 * 60 * 60 * 1000); // > 1 day
     const refreshBuffer = isLongLived ? (60 * 60 * 1000) : (5 * 60 * 1000); // 1 hour or 5 minutes
     const refreshTime = Math.max(0, timeUntilExpiration - refreshBuffer);
 
-    const refreshTimeInHours = refreshTime / (1000 * 60 * 60);
-    console.log(`Setting up auto-refresh in ${refreshTimeInHours > 1 ? `${refreshTimeInHours.toFixed(1)} hours` : `${Math.round(refreshTime / 1000)} seconds`}`);
-    
     setTimeout(async () => {
-      console.log('Auto-refreshing token...');
       const refreshed = await this.refreshToken();
       if (refreshed) {
         // Set up next auto-refresh with the new token
         this.setupAutoRefresh();
       } else {
-        console.log('Auto-refresh failed, user will need to login again');
         // Set a timer to logout 1 minute later if no manual intervention
         setTimeout(async () => {
           const currentToken = localStorage.getItem('authToken');
           if (currentToken && this.isTokenExpired(currentToken)) {
-            console.log('Token still expired after failed refresh, logging out...');
             await this.logout();
-            window.dispatchEvent(new CustomEvent('auth-expired', { 
-              detail: { message: 'Your session has expired. Please sign in again.' } 
+            window.dispatchEvent(new CustomEvent('auth-expired', {
+              detail: { message: 'Your session has expired. Please sign in again.' }
             }));
           }
         }, 60 * 1000); // Wait 1 minute then logout if token still expired

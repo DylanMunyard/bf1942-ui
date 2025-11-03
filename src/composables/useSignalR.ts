@@ -10,18 +10,14 @@ export function useSignalR() {
 
   const connect = async () => {
     if (!isAuthenticated.value || !user.value) {
-      console.log('SignalR: Not connecting - user not authenticated');
       return;
     }
 
     try {
-      console.log('SignalR: Connecting for authenticated user:', user.value.email);
       await signalrService.connect(user.value);
       isConnected.value = signalrService.isConnected();
       connectionId.value = signalrService.getConnectionId();
-      console.log('SignalR: Connected successfully');
     } catch (error) {
-      console.error('SignalR: Connection failed:', error);
       isConnected.value = false;
       connectionId.value = null;
     }
@@ -29,13 +25,11 @@ export function useSignalR() {
 
   const disconnect = async () => {
     try {
-      console.log('SignalR: Disconnecting...');
       await signalrService.disconnect();
       isConnected.value = false;
       connectionId.value = null;
-      console.log('SignalR: Disconnected successfully');
     } catch (error) {
-      console.error('SignalR: Disconnect failed:', error);
+      // Disconnect failed
     }
   };
 
@@ -43,8 +37,6 @@ export function useSignalR() {
   watch(
     [isAuthenticated, user],
     ([authenticated, currentUser]) => {
-      console.log('SignalR: Auth state changed:', { authenticated, user: currentUser?.email });
-      
       if (authenticated && currentUser) {
         // User is authenticated, connect to SignalR
         connect();
@@ -59,7 +51,6 @@ export function useSignalR() {
   // Handle logout events
   onMounted(() => {
     const handleLogout = () => {
-      console.log('SignalR: Handling logout event');
       disconnect();
     };
 

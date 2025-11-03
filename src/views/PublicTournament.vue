@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen pb-12" :style="themeStyles">
+  <div class="min-h-screen pb-12 text-bf-text" :style="{ ...themeVars, backgroundColor: getBackgroundColor() }">
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
       <div class="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
@@ -22,9 +22,7 @@
     <div v-else-if="tournament">
       <!-- Hero Banner Section -->
       <div class="relative overflow-hidden" :style="{
-        background: getValidColors().primary
-          ? `linear-gradient(135deg, ${getValidColors().primary} 0%, ${getValidColors().primary}dd 50%, ${getValidColors().primary}99 100%)`
-          : 'linear-gradient(to bottom right, rgb(15, 23, 42) 0%, rgb(30, 41, 59) 50%, rgb(15, 23, 42) 100%)'
+        background: '#1a1a1a'
       }">
         <!-- Background Hero Image -->
         <div
@@ -37,9 +35,7 @@
             class="w-full h-full object-cover opacity-30"
           >
           <div :style="{
-            background: getValidColors().primary
-              ? `linear-gradient(to bottom, ${getValidColors().primary}33, ${getValidColors().primary}55)`
-              : 'linear-gradient(to bottom, rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0.4))'
+            background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7))'
           }" class="absolute inset-0" />
         </div>
 
@@ -62,14 +58,12 @@
             </div>
 
             <!-- Tournament Name -->
-            <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-center mb-6 leading-tight">
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-300 drop-shadow-2xl">
-                {{ tournament.name }}
-              </span>
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-center mb-6 leading-tight" :style="{ color: getAccentColor() }">
+              {{ tournament.name }}
             </h1>
 
             <!-- Game Icon & Info -->
-            <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-slate-300 mb-8">
+            <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white mb-8">
               <!-- Game Icon Badge -->
               <div
                 class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-cover bg-center border-4 border-amber-500/30 shadow-2xl flex-shrink-0"
@@ -135,11 +129,11 @@
       <!-- Main Content -->
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
         <!-- Tournament Matches Table -->
-        <div v-if="allMatchesByWeek.length > 0" class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+        <div v-if="allMatchesByWeek.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
           <!-- Table Header -->
-          <div class="px-6 py-4 border-b border-slate-700/50">
-            <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
-              🎯 Matches
+          <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+            <h3 class="text-xl font-semibold flex items-center gap-3" :style="{ color: getTextColor() }">
+              Matches
             </h3>
           </div>
 
@@ -151,14 +145,14 @@
                 <!-- Week groups with matches -->
                 <template v-for="weekGroup in allMatchesByWeek" :key="weekGroup.week || 'no-week'">
                   <!-- Week Header Row -->
-                  <tr v-if="!weekGroup.hideWeekHeader" class="bg-slate-700/30 border-b border-slate-700/50">
+                  <tr v-if="!weekGroup.hideWeekHeader" class="border-b" :style="{ backgroundColor: getBackgroundSoftColor(), borderColor: getAccentColor() }">
                     <td class="p-4 w-32">
-                      <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getThemedAccentColor() }">
+                      <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getAccentColor() }">
                         {{ weekGroup.week }}
                       </span>
                     </td>
                     <td colspan="3" class="p-4 text-center">
-                      <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getThemedAccentColor() }">
+                      <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getAccentColor() }">
                         {{ getWeekDateRange(weekGroup.matches) }}
                       </span>
                     </td>
@@ -168,11 +162,12 @@
                   <tr
                     v-for="matchItem in weekGroup.matches"
                     :key="matchItem.match.id"
-                    class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
+                    class="group transition-all duration-300 border-b"
+                    :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }"
                   >
                     <!-- Date -->
                     <td class="p-3">
-                      <div class="text-xs font-mono text-slate-400">
+                      <div class="text-xs font-mono" :style="{ color: getTextMutedColor() }">
                         {{ formatMatchDate(matchItem.match.scheduledDate) }}
                       </div>
                     </td>
@@ -184,16 +179,16 @@
                           class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
                           @click="openMatchupModal(matchItem.match)"
                         >
-                          <div class="text-sm font-bold text-emerald-400 hover:text-emerald-300">
+                          <div class="text-sm font-bold" :style="{ color: getTextColor() }">
                             {{ matchItem.match.team1Name }}
                           </div>
                         </button>
-                        <div class="text-xs text-slate-500 font-medium">VS</div>
+                        <div class="text-xs font-medium" :style="{ color: getTextMutedColor() }">VS</div>
                         <button
                           class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
                           @click="openMatchupModal(matchItem.match)"
                         >
-                          <div class="text-sm font-bold text-emerald-400 hover:text-emerald-300">
+                          <div class="text-sm font-bold" :style="{ color: getTextColor() }">
                             {{ matchItem.match.team2Name }}
                           </div>
                         </button>
@@ -204,9 +199,9 @@
                     <td class="p-3">
                       <div class="text-xs space-y-0.5">
                         <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2">
-                          <span class="text-slate-500 font-mono">{{ map.mapOrder + 1 }}.</span>
-                          <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                          <span v-if="map.matchResult?.winningTeamName" class="text-emerald-400 flex-shrink-0">
+                          <span class="font-mono" :style="{ color: getTextMutedColor() }">{{ map.mapOrder + 1 }}.</span>
+                          <span :style="{ color: getAccentColor() }" class="font-medium truncate">{{ map.mapName }}</span>
+                          <span v-if="map.matchResult?.winningTeamName" class="text-green-400 flex-shrink-0">
                             🏆 {{ map.matchResult.winningTeamName }}
                           </span>
                         </div>
@@ -217,7 +212,8 @@
                     <td class="p-3 text-center">
                       <div class="flex items-center justify-center gap-2">
                         <button
-                          class="px-3 py-1.5 text-xs font-bold transition-all rounded border bg-slate-700/30 hover:bg-slate-600/30 text-slate-300 border-slate-600/30"
+                          class="px-3 py-1.5 text-xs font-bold transition-all rounded border-2"
+                          :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.2), color: getAccentColor() }"
                           @click="openMatchupModal(matchItem.match)"
                         >
                           Details
@@ -234,8 +230,8 @@
         <!-- Empty State -->
         <div v-if="allMatchesByWeek.length === 0" class="text-center py-20">
           <div class="text-8xl mb-6 opacity-50">📅</div>
-          <h3 class="text-2xl font-bold text-slate-300 mb-3">No Matches Scheduled Yet</h3>
-          <p class="text-slate-400 text-lg">
+          <h3 class="text-2xl font-bold text-white mb-3">No Matches Scheduled Yet</h3>
+          <p class="text-gray-400 text-lg">
             Check back soon for match announcements!
           </p>
         </div>
@@ -252,38 +248,31 @@
       <div
         class="rounded-2xl p-6 max-w-4xl w-full shadow-2xl max-h-[85vh] overflow-y-auto border-2"
         :style="{
-          background: getValidColors().primary
-            ? `linear-gradient(to bottom right, ${getValidColors().primary}15, ${getValidColors().secondary}10)`
-            : 'linear-gradient(to bottom right, rgba(34, 211, 238, 0.1), rgba(96, 165, 250, 0.08))',
+          background: getBackgroundSoftColor(),
           backdropFilter: 'blur(10px)',
-          borderColor: getValidColors().primary || 'rgba(34, 211, 238, 0.5)',
-          backgroundColor: 'rgba(30, 41, 59, 0.95)'
+          borderColor: getAccentColor(),
+          backgroundColor: getBackgroundSoftColor()
         }"
       >
         <!-- Header -->
         <div class="flex items-start justify-between mb-6">
           <div class="flex-1">
-            <h3 class="text-3xl font-bold text-center mb-3" :style="{
-              color: getValidColors().primary || 'rgb(34, 211, 238)'
-            }">
+            <h3 class="text-3xl font-bold text-center mb-3" :style="{ color: getAccentColor() }">
               Tournament Rules
             </h3>
           </div>
           <button
             class="p-2 rounded-lg transition-colors flex-shrink-0"
-            :style="{
-              color: getThemedAccentColor(),
-              backgroundColor: `${getThemedAccentColor()}20`,
-            }"
+            :style="{ color: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.2) }"
             @click="closeRulesModal"
             @mouseenter="(e) => {
               if (e.currentTarget) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = `${getThemedAccentColor()}35`;
+                (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.35);
               }
             }"
             @mouseleave="(e) => {
               if (e.currentTarget) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = `${getThemedAccentColor()}20`;
+                (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.2);
               }
             }"
           >
@@ -297,13 +286,13 @@
         <div
           class="prose prose-invert prose-sm max-w-none"
           :style="{
-            '--rule-primary': getValidColors().primary || 'rgb(139, 92, 246)',
-            '--rule-secondary': getValidColors().secondary || 'rgb(147, 51, 234)',
+            '--rule-primary': getAccentColor(),
+            '--rule-secondary': getAccentColor(),
           } as Record<string, string>"
         >
           <div
             v-html="renderedRules"
-            class="text-slate-300 markdown-rules"
+            class="text-white markdown-rules"
           />
         </div>
       </div>
@@ -318,23 +307,19 @@
       <div
         class="rounded-2xl p-6 max-w-5xl w-full shadow-2xl max-h-[85vh] overflow-y-auto border-2"
         :style="{
-          background: getValidColors().primary
-            ? `linear-gradient(to bottom right, ${getValidColors().primary}15, ${getValidColors().secondary}10)`
-            : 'linear-gradient(to bottom right, rgba(34, 211, 238, 0.1), rgba(96, 165, 250, 0.08))',
+          background: getBackgroundSoftColor(),
           backdropFilter: 'blur(10px)',
-          borderColor: getValidColors().primary || 'rgba(34, 211, 238, 0.5)',
-          backgroundColor: 'rgba(30, 41, 59, 0.95)'
+          borderColor: getAccentColor(),
+          backgroundColor: getBackgroundSoftColor()
         }"
       >
         <!-- Header -->
         <div class="flex items-start justify-between mb-6">
           <div class="flex-1">
-            <h3 class="text-3xl font-bold text-center mb-3" :style="{
-              color: getValidColors().primary || 'rgb(34, 211, 238)'
-            }">
+            <h3 class="text-3xl font-bold text-center mb-3" :style="{ color: getAccentColor() }">
               Match Details
             </h3>
-            <div class="flex items-center justify-center gap-4 text-sm flex-wrap" :style="{ color: getThemedAccentColor() }">
+            <div class="flex items-center justify-center gap-4 text-sm flex-wrap" :style="{ color: getTextColor() }">
               <span>{{ selectedMatch.team1Name }} vs {{ selectedMatch.team2Name }}</span>
               <span>📅 {{ formatMatchDate(selectedMatch.scheduledDate) }}</span>
               <span v-if="selectedMatch.serverName">🖥️ {{ selectedMatch.serverName }}</span>
@@ -342,19 +327,16 @@
           </div>
           <button
             class="p-2 rounded-lg transition-colors flex-shrink-0"
-            :style="{
-              color: getThemedAccentColor(),
-              backgroundColor: `${getThemedAccentColor()}20`,
-            }"
+            :style="{ color: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.2) }"
             @click="closeMatchupModal"
             @mouseenter="(e) => {
               if (e.currentTarget) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = `${getThemedAccentColor()}35`;
+                (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.35);
               }
             }"
             @mouseleave="(e) => {
               if (e.currentTarget) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = `${getThemedAccentColor()}20`;
+                (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.2);
               }
             }"
           >
@@ -365,17 +347,17 @@
         </div>
 
         <!-- Maps and Results Table -->
-        <div class="rounded-lg overflow-hidden border border-slate-700/50">
+        <div class="rounded-lg overflow-hidden border-2" :style="{ borderColor: getAccentColor() }">
           <table class="w-full border-collapse">
             <thead>
-              <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
-                <th class="p-3 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30">
+              <tr :style="{ backgroundColor: getBackgroundMuteColor() }">
+                <th class="p-3 text-left font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
                   Map
                 </th>
-                <th class="p-3 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60">
+                <th class="p-3 text-left font-bold text-xs uppercase border-b border-l-4" :style="{ color: getTextColor(), borderColor: getAccentColor(), borderLeftColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.1) }">
                   {{ selectedMatch.team1Name }}
                 </th>
-                <th class="p-3 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60">
+                <th class="p-3 text-left font-bold text-xs uppercase border-b border-l-4" :style="{ color: getTextColor(), borderColor: getAccentColor(), borderLeftColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.1) }">
                   {{ selectedMatch.team2Name }}
                 </th>
               </tr>
@@ -384,7 +366,8 @@
               <tr
                 v-for="map in selectedMatch.maps"
                 :key="map.id"
-                class="border-b border-slate-700/20 hover:bg-slate-800/30 transition-all group"
+                class="border-b transition-all group"
+                :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }"
               >
                 <!-- Map Name & Info -->
                 <td class="p-3">
@@ -392,24 +375,25 @@
                     <button
                       v-if="map.roundId"
                       @click="viewRoundReport(map.roundId)"
-                      class="text-sm font-bold text-amber-400 hover:text-amber-300 hover:underline transition-colors cursor-pointer text-left inline-flex items-center gap-1.5 group"
+                      class="text-sm font-bold hover:underline transition-colors cursor-pointer text-left inline-flex items-center gap-1.5 group"
+                      :style="{ color: getAccentColor() }"
                     >
                       {{ map.mapName }}
-                      <svg class="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-300 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-3.5 h-3.5 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: getAccentColor() }">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                     </button>
-                    <span v-else class="text-sm font-bold text-amber-400">{{ map.mapName }}</span>
-                    <span v-if="map.teamName" class="text-xs text-cyan-400">
+                    <span v-else class="text-sm font-bold" :style="{ color: getAccentColor() }">{{ map.mapName }}</span>
+                    <span v-if="map.teamName" class="text-xs" :style="{ color: getTextMutedColor() }">
                       Selected by {{ map.teamName }}
                     </span>
                   </div>
                 </td>
 
                 <!-- Team 1 Score -->
-                <td class="p-3 bg-cyan-500/5">
+                <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold text-slate-300">
+                    <span class="text-sm font-bold" :style="{ color: getTextColor() }">
                       {{ getTeamScore(map, 1) ?? '-' }}
                     </span>
                     <span v-if="map.matchResult?.winningTeamName === getTeamName(map, 1)" class="text-lg">🏆</span>
@@ -417,9 +401,9 @@
                 </td>
 
                 <!-- Team 2 Score -->
-                <td class="p-3 bg-orange-500/5">
+                <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold text-slate-300">
+                    <span class="text-sm font-bold" :style="{ color: getTextColor() }">
                       {{ getTeamScore(map, 2) ?? '-' }}
                     </span>
                     <span v-if="map.matchResult?.winningTeamName === getTeamName(map, 2)" class="text-lg">🏆</span>
@@ -631,12 +615,8 @@
           <!-- Compare Button -->
           <div v-if="selectedPlayers.length === 2" class="text-center">
             <button
-              class="px-8 py-4 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-3 mx-auto"
-              :style="{
-                backgroundImage: getValidColors().primary
-                  ? `linear-gradient(to right, ${getValidColors().primary}, ${getValidColors().secondary})`
-                  : 'linear-gradient(to right, rgb(168, 85, 247), rgb(236, 72, 153))'
-              }"
+              class="px-8 py-4 font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-3 mx-auto"
+              :style="{ backgroundColor: getAccentColor(), color: getBackgroundColor() }"
               @click="comparePlayers"
               @mouseenter="(e) => {
                 if (e.currentTarget) {
@@ -662,7 +642,7 @@
         </div>
 
         <!-- Future: Add comments section, more details, etc. -->
-        <div class="mt-8 p-4 border border-slate-700/50 rounded-lg bg-slate-800/30 text-center text-slate-400 text-sm">
+        <div class="mt-8 p-4 border-2 rounded-lg text-center text-sm" :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.08), color: getTextMutedColor() }">
           More details and match comments coming soon...
         </div>
       </div>
@@ -680,7 +660,7 @@ import {
   type PublicTournamentMatch
 } from '@/services/publicTournamentService';
 import { notificationService } from '@/services/notificationService';
-import { generateComplementaryColor, isValidHex, normalizeHex } from '@/utils/colorUtils';
+import { isValidHex, normalizeHex, getContrastingTextColor, hexToRgb, rgbToHex, calculateLuminance } from '@/utils/colorUtils';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -713,41 +693,113 @@ const renderedRules = computed(() => {
 
 // Helper function to get themed accent color
 const getThemedAccentColor = (): string => {
-  const colors = getValidColors();
-  return colors.primary || 'rgb(34, 211, 238)';
+  const colors = getThemeColors();
+  return colors.accent;
 };
 
-// Helper function to check and return valid colors
-const getValidColors = () => {
-  if (!tournament.value) return { primary: null, secondary: null };
-
-  // Normalize and validate primary color
-  const normalizedPrimary = tournament.value.primaryColour ? normalizeHex(tournament.value.primaryColour) : null;
-  const primaryColour = normalizedPrimary && isValidHex(normalizedPrimary)
-    ? normalizedPrimary
-    : null;
-
-  if (!primaryColour) {
-    return { primary: null, secondary: null };
+// Helper function to get theme colors
+const getThemeColors = () => {
+  if (!tournament.value?.theme) {
+    return {
+      background: '#000000',
+      text: '#FFFFFF',
+      accent: '#FFD700',
+    };
   }
 
-  // Normalize and validate secondary color
-  const normalizedSecondary = tournament.value.secondaryColour ? normalizeHex(tournament.value.secondaryColour) : null;
-  const secondaryColour = normalizedSecondary && isValidHex(normalizedSecondary)
-    ? normalizedSecondary
-    : generateComplementaryColor(primaryColour);
-
-  return { primary: primaryColour, secondary: secondaryColour };
+  return {
+    background: tournament.value.theme.backgroundColour || '#000000',
+    text: tournament.value.theme.textColour || '#FFFFFF',
+    accent: tournament.value.theme.accentColour || '#FFD700',
+  };
 };
 
-const themeStyles = computed(() => {
-  // Use standard dark background with subtle gradient
+const themeVars = computed<Record<string, string>>(() => {
+  // Defaults - black background, white text, yellow/golden borders
+  const defaults = {
+    background: '#000000',       // black
+    backgroundSoft: '#1a1a1a',   // very dark gray
+    backgroundMute: '#2d2d2d',   // dark gray
+    text: '#FFFFFF',             // white
+    textMuted: '#d0d0d0',        // light gray
+    border: '#FFD700',           // golden/yellow
+  } as const;
+
+  const bgHex = normalizeHex(tournament.value?.theme?.backgroundColour ?? '') || defaults.background;
+  const textHexRaw = normalizeHex(tournament.value?.theme?.textColour ?? '');
+  const borderHexRaw = normalizeHex(tournament.value?.theme?.accentColour ?? '');
+
+  const bg = isValidHex(bgHex) ? bgHex : defaults.background;
+  const bgLum = calculateLuminance(bg);
+  const isDark = bgLum < 0.5;
+
+  // Helper to mix two hex colors
+  const mixHex = (a: string, b: string, t: number): string => {
+    const ra = hexToRgb(a);
+    const rb = hexToRgb(b);
+    if (!ra || !rb) return a;
+    const mix = (x: number, y: number) => Math.round(x + (y - x) * t);
+    return rgbToHex(mix(ra.r, rb.r), mix(ra.g, rb.g), mix(ra.b, rb.b));
+  };
+
+  const text = isValidHex(textHexRaw) ? textHexRaw : getContrastingTextColor(bg);
+  const border = isValidHex(borderHexRaw) ? borderHexRaw : defaults.border;
+
+  const backgroundSoft = isDark ? mixHex(bg, '#FFFFFF', 0.08) : mixHex(bg, '#000000', 0.06);
+  const backgroundMute = isDark ? mixHex(bg, '#FFFFFF', 0.16) : mixHex(bg, '#000000', 0.12);
+  const textMuted = isDark ? mixHex(text, bg, 0.35) : mixHex(text, bg, 0.45);
+
+  const borderHover = isDark ? mixHex(border, '#FFFFFF', 0.1) : mixHex(border, '#000000', 0.1);
+
   return {
-    background: 'linear-gradient(to bottom, rgb(15, 23, 42), rgb(25, 35, 55))',
-  } as Record<string, string>;
+    '--color-background': bg,
+    '--color-background-soft': backgroundSoft,
+    '--color-background-mute': backgroundMute,
+    '--color-text': text,
+    '--color-text-muted': textMuted,
+    '--color-heading': text,
+    '--color-border': border,
+    '--color-primary': border,
+    '--color-primary-hover': borderHover,
+    '--rule-primary': border,
+    '--rule-secondary': border,
+  };
 });
 
-// Helper functions
+// Helper functions to derive colors from theme
+const getAccentColor = (): string => {
+  if (!tournament.value?.theme?.accentColour) return '#FFD700';
+  const normalized = normalizeHex(tournament.value.theme.accentColour);
+  return isValidHex(normalized) ? normalized : '#FFD700';
+};
+
+const getAccentColorWithOpacity = (opacity: number): string => {
+  const accent = getAccentColor();
+  const rgb = hexToRgb(accent);
+  if (!rgb) return `rgba(255, 215, 0, ${opacity})`;
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+};
+
+const getBackgroundColor = (): string => {
+  return themeVars.value['--color-background'] || '#000000';
+};
+
+const getBackgroundSoftColor = (): string => {
+  return themeVars.value['--color-background-soft'] || '#1a1a1a';
+};
+
+const getBackgroundMuteColor = (): string => {
+  return themeVars.value['--color-background-mute'] || '#2d2d2d';
+};
+
+const getTextColor = (): string => {
+  return themeVars.value['--color-text'] || '#FFFFFF';
+};
+
+const getTextMutedColor = (): string => {
+  return themeVars.value['--color-text-muted'] || '#d0d0d0';
+};
+
 const formatMatchDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString(undefined, {
@@ -834,10 +886,7 @@ const loadTournament = async () => {
     // Debug logging for theme colors
     console.log('Tournament loaded:', {
       name: data.name,
-      primaryColour: data.primaryColour,
-      secondaryColour: data.secondaryColour,
-      isValidHex_primary: data.primaryColour ? isValidHex(data.primaryColour) : 'N/A',
-      isValidHex_secondary: data.secondaryColour ? isValidHex(data.secondaryColour) : 'N/A'
+      theme: data.theme
     });
 
     // Create description
@@ -1053,6 +1102,37 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* CSS Custom Property Utilities */
+:deep(.bg-bf-background) {
+  background-color: var(--color-background);
+}
+
+:deep(.bg-bf-background-soft) {
+  background-color: var(--color-background-soft);
+}
+
+:deep(.bg-bf-background-mute) {
+  background-color: var(--color-background-mute);
+}
+
+:deep(.text-bf-text) {
+  color: var(--color-text);
+}
+
+:deep(.text-bf-text-muted) {
+  color: var(--color-text-muted);
+}
+
+:deep(.border-bf-border) {
+  border-color: var(--color-border);
+}
+
+/* Apply background color from CSS variables to root element */
+:deep(#app) {
+  background-color: var(--color-background, #000000);
+  color: var(--color-text, #FFFFFF);
+}
+
 /* Smooth transitions */
 * {
   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
@@ -1099,7 +1179,7 @@ onMounted(() => {
 
 .markdown-rules :deep(p) {
   margin-bottom: 0.75rem;
-  color: #cbd5e1;
+  color: var(--color-text-muted);
   line-height: 1.6;
 }
 
@@ -1129,7 +1209,7 @@ onMounted(() => {
 
 .markdown-rules :deep(li) {
   margin-bottom: 0.5rem;
-  color: #cbd5e1;
+  color: var(--color-text-muted);
   margin-left: 1rem;
 }
 
@@ -1148,7 +1228,7 @@ onMounted(() => {
   padding-left: 1rem;
   margin-left: 0;
   margin-bottom: 1rem;
-  color: #cbd5e1;
+  color: var(--color-text-muted);
   background: linear-gradient(to right, var(--rule-primary)08, transparent);
   padding: 0.75rem 1rem;
   border-radius: 0.375rem;
@@ -1194,7 +1274,7 @@ onMounted(() => {
 
 .markdown-rules :deep(td) {
   padding: 0.75rem 1rem;
-  color: #cbd5e1;
+  color: var(--color-text-muted);
   border-bottom: 1px solid var(--rule-primary)20;
 }
 
