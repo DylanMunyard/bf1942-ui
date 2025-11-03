@@ -139,6 +139,64 @@
           </div>
         </div>
 
+        <!-- Credits Section -->
+        <div v-if="stats" class="mt-8">
+          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+            <div class="p-6 sm:p-8">
+              <h2 class="text-xl font-semibold text-slate-300 mb-4">Credits</h2>
+              <div class="space-y-4 text-slate-400 text-sm">
+                <!-- Data Source Credit -->
+                <div>
+                  <p class="mb-2">
+                    <strong class="text-slate-300">Data provided by:</strong>
+                  </p>
+                  <p>
+                    <a href="https://bflist.io/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 transition-colors underline">
+                      bflist.io
+                    </a>
+                    - Special thanks to 
+                    <a href="https://github.com/sponsors/cetteup" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 transition-colors underline">
+                      ceeteup
+                    </a>
+                    for providing the APIs that make all server and player data possible.
+                  </p>
+                </div>
+
+                <!-- Feedback Contributors -->
+                <div>
+                  <p class="mb-2">
+                    <strong class="text-slate-300">Early feedback and suggestions:</strong>
+                  </p>
+                  <ul class="space-y-1 ml-4">
+                    <li>
+                      • <a href="/players/pada" class="text-cyan-400 hover:text-cyan-300 transition-colors underline">pada</a>
+                    </li>
+                    <li>
+                      • <a href="/players/tragic!" class="text-cyan-400 hover:text-cyan-300 transition-colors underline">tragic!</a>
+                    </li>
+                    <li>
+                      • <a href="/players/Black%20Mamba" class="text-cyan-400 hover:text-cyan-300 transition-colors underline">Black Mamba</a>
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Special Recognition -->
+                <div>
+                  <p class="mb-2">
+                    <strong class="text-slate-300">Special recognition:</strong>
+                  </p>
+                  <p>
+                    <a href="/players/Black%20Mamba" class="text-yellow-400 hover:text-yellow-300 transition-colors underline">
+                      Black Mamba
+                    </a>
+                    for originating the tournaments idea and providing detailed documentation to make it happen.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Footer with Last Updated -->
         <div v-if="stats && !loading" class="mt-8 text-center">
           <div class="inline-flex flex-col sm:flex-row items-center gap-2 sm:gap-4 bg-slate-800/40 backdrop-blur-lg rounded-full px-6 py-3 border border-slate-700/50">
