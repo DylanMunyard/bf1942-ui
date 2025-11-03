@@ -44,15 +44,6 @@
 
           <!-- Header Content -->
           <div class="relative z-10 p-6 sm:p-8 md:p-12">
-            <!-- Community Logo Display -->
-            <div v-if="logoImageUrl" class="mb-6 flex justify-center">
-              <img
-                :src="logoImageUrl"
-                alt="Community logo"
-                class="max-h-20 object-contain"
-              >
-            </div>
-
             <div class="flex items-start justify-between gap-4 mb-6">
               <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
@@ -72,6 +63,15 @@
                   <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400">
                     {{ tournament.name }}
                   </h1>
+                </div>
+
+                <!-- Community Logo Display (below tournament name) -->
+                <div v-if="logoImageUrl" class="mb-4 flex justify-start">
+                  <img
+                    :src="logoImageUrl"
+                    alt="Community logo"
+                    class="max-h-16 object-contain"
+                  >
                 </div>
 
                 <div class="flex flex-wrap items-center gap-4 text-slate-300">
@@ -358,7 +358,7 @@
                     <!-- Expanded Map Details Rows (for team mapping and round linking) -->
                     <template v-for="(originalMap, mapIndex) in (match.maps || []).filter((m: any) => m && m.id)" :key="`detail-${originalMap.id}`">
                       <tr
-                        v-if="originalMap && (overridingMapId === originalMap.id || !originalMap.roundId || (originalMap.roundId && originalMap.matchResult && overridingMapId !== originalMap.id))"
+                        v-if="originalMap"
                         class="bg-slate-900/50 border-b border-slate-700/50 border-l-4 border-l-cyan-500/50"
                       >
                       <td colspan="5" class="p-4">
@@ -374,7 +374,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                               <button
-                                v-if="originalMap.roundId"
+                                v-if="originalMap.roundId && originalMap.matchResult"
                                 class="p-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded transition-all"
                                 @click="viewRoundReport(originalMap.roundId)"
                                 title="View round report"
@@ -384,7 +384,7 @@
                                 </svg>
                               </button>
                               <button
-                                v-if="originalMap.roundId"
+                                v-if="originalMap.roundId && originalMap.matchResult"
                                 class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
                                 @click="linkRound(match, originalMap)"
                                 title="Change the linked round"
@@ -392,7 +392,7 @@
                                 Change
                               </button>
                               <button
-                                v-if="originalMap.roundId"
+                                v-if="originalMap.roundId && originalMap.matchResult"
                                 class="p-1.5 bg-slate-500/20 hover:bg-slate-500/30 text-slate-400 border border-slate-500/30 hover:border-slate-500/50 rounded-lg transition-all cursor-pointer"
                                 @click="confirmUnlinkRound(match, originalMap)"
                                 title="Unlink round from this map"
@@ -402,7 +402,7 @@
                                 </svg>
                               </button>
                               <button
-                                v-else
+                                v-if="!originalMap.roundId || !originalMap.matchResult"
                                 class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
                                 @click="linkRound(match, originalMap)"
                                 title="Link completed round to this map"
@@ -412,8 +412,8 @@
                             </div>
                           </div>
 
-                          <!-- Team Mapping Section (only show if round is linked) -->
-                          <div v-if="originalMap.roundId" class="border-t border-slate-600/30 pt-2">
+                          <!-- Team Mapping Section (only show if round is linked and has match result) -->
+                          <div v-if="originalMap.roundId && originalMap.matchResult" class="border-t border-slate-600/30 pt-2">
                             <!-- Editing state -->
                             <div v-if="overridingMapId === originalMap.id" class="flex flex-wrap items-center gap-3">
                               <div class="flex items-center gap-1.5 flex-1 min-w-48">
@@ -903,6 +903,9 @@ const loadTournament = async () => {
       ...data,
       matches: data.matches ?? []
     };
+
+    // Update page title
+    document.title = `${tournament.value.name} - Tournament Details`;
 
     // Set loading to false BEFORE loading images - images load asynchronously in background
     loading.value = false;

@@ -48,19 +48,19 @@
         <!-- Hero Content -->
         <div class="relative z-10 px-4 sm:px-6 py-8 sm:py-10">
           <div class="max-w-6xl mx-auto">
-            <!-- Community Logo Display -->
-            <div v-if="logoImageUrl" class="mb-6 flex justify-center">
-              <img
-                :src="logoImageUrl"
-                alt="Community logo"
-                class="max-h-20 object-contain"
-              >
-            </div>
-
             <!-- Tournament Name -->
             <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-center mb-6 leading-tight" :style="{ color: getAccentColor() }">
               {{ tournament.name }}
             </h1>
+
+            <!-- Community Logo Display (below tournament name) -->
+            <div v-if="logoImageUrl" class="mb-6 flex justify-center">
+              <img
+                :src="logoImageUrl"
+                alt="Community logo"
+                class="max-h-16 object-contain"
+              >
+            </div>
 
             <!-- Game Icon & Info -->
             <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white mb-8">
