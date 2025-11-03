@@ -53,53 +53,21 @@
       <!-- Round Progress -->
       <div class="mb-3">
         <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-          <span>Tournament Progress</span>
+          <span>Matches</span>
           <span class="font-mono">
-            {{ tournament.roundCount }}/{{ tournament.anticipatedRoundCount || '?' }}
+            {{ tournament.matchCount }} scheduled
           </span>
         </div>
 
-        <!-- Progress Bar -->
-        <div class="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden">
-          <div
-            class="h-full bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full transition-all duration-500"
-            :style="{ width: getProgressPercentage() + '%' }"
-          />
-        </div>
-
-        <!-- Skeleton Rounds -->
-        <div
-          v-if="tournament.anticipatedRoundCount && tournament.roundCount < tournament.anticipatedRoundCount"
-          class="mt-2 flex gap-1"
-        >
-          <!-- Completed rounds -->
-          <div
-            v-for="n in tournament.roundCount"
-            :key="'completed-' + n"
-            class="flex-1 h-1.5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full"
-            :title="`Round ${n} completed`"
-          />
-          <!-- Upcoming rounds -->
-          <div
-            v-for="n in (tournament.anticipatedRoundCount - tournament.roundCount)"
-            :key="'upcoming-' + n"
-            class="flex-1 h-1.5 bg-slate-700/50 rounded-full animate-pulse"
-            :title="`Round ${tournament.roundCount + n} upcoming`"
-          />
+        <div v-if="tournament.anticipatedRoundCount" class="text-xs text-slate-500">
+          Anticipated {{ tournament.anticipatedRoundCount }} round{{ tournament.anticipatedRoundCount > 1 ? 's' : '' }}
         </div>
       </div>
 
       <!-- Status Badge -->
       <div class="flex items-center gap-2 mb-3">
         <span
-          v-if="isComplete"
-          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full"
-        >
-          <span>✓</span>
-          <span>Complete</span>
-        </span>
-        <span
-          v-else-if="isInProgress"
+          v-if="isInProgress"
           class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-cyan-400 bg-cyan-500/20 border border-cyan-500/30 rounded-full"
         >
           <span>🎮</span>
@@ -166,23 +134,9 @@ defineEmits<{
 const heroImageUrl = ref<string | null>(null);
 const imageLoading = ref(false);
 
-const isComplete = computed(() => {
-  if (!props.tournament.anticipatedRoundCount) {
-    return false;
-  }
-  return props.tournament.roundCount >= props.tournament.anticipatedRoundCount;
-});
-
 const isInProgress = computed(() => {
-  return props.tournament.roundCount > 0 && !isComplete.value;
+  return props.tournament.matchCount > 0;
 });
-
-const getProgressPercentage = (): number => {
-  if (!props.tournament.anticipatedRoundCount || props.tournament.anticipatedRoundCount === 0) {
-    return 0;
-  }
-  return Math.min(100, (props.tournament.roundCount / props.tournament.anticipatedRoundCount) * 100);
-};
 
 const loadHeroImage = async () => {
   if (!props.tournament.hasHeroImage) {
@@ -198,18 +152,29 @@ const loadHeroImage = async () => {
     await authService.ensureValidToken();
     const token = localStorage.getItem('authToken');
 
-    const response = await fetch(adminTournamentService.getTournamentImageUrl(props.tournament.id), {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    // Create an AbortController with a 10-second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    if (response.ok) {
-      const blob = await response.blob();
-      heroImageUrl.value = URL.createObjectURL(blob);
+    try {
+      const response = await fetch(adminTournamentService.getTournamentImageUrl(props.tournament.id), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const blob = await response.blob();
+        heroImageUrl.value = URL.createObjectURL(blob);
+      }
+    } finally {
+      clearTimeout(timeoutId);
     }
   } catch (error) {
-    console.error('Error loading tournament hero image:', error);
+    console.debug('Error loading tournament hero image:', error);
   } finally {
     imageLoading.value = false;
   }

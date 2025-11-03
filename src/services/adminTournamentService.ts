@@ -38,22 +38,9 @@ export interface TournamentMatchMap {
   id: number;
   mapName: string;
   mapOrder: number;
-  roundId?: string;
   teamId?: number;
   teamName?: string;
-  round?: {
-    roundId: string;
-    serverGuid: string;
-    serverName: string;
-    mapName: string;
-    startTime: string;
-    endTime?: string;
-    tickets1?: number;
-    tickets2?: number;
-    team1Label?: string;
-    team2Label?: string;
-  } | null;
-  matchResult?: TournamentMatchResult;
+  matchResults: TournamentMatchResult[];
 }
 
 export interface UpdateMatchMapResponse {
@@ -64,6 +51,8 @@ export interface UpdateMatchMapResponse {
 export interface TournamentMatch {
   id: number;
   scheduledDate: string;
+  team1Id: number;
+  team2Id: number;
   team1Name: string;
   team2Name: string;
   serverGuid?: string;
@@ -193,6 +182,23 @@ export interface UpdateMatchMapRequest {
 export interface OverrideTeamMappingRequest {
   team1Id: number;
   team2Id: number;
+}
+
+export interface CreateManualResultRequest {
+  mapId: number;
+  team1Id: number;
+  team2Id: number;
+  team1Tickets: number;
+  team2Tickets: number;
+  winningTeamId: number;
+}
+
+export interface UpdateManualResultRequest {
+  team1Id: number;
+  team2Id: number;
+  team1Tickets: number;
+  team2Tickets: number;
+  winningTeamId: number;
 }
 
 class AdminTournamentService {
@@ -445,6 +451,22 @@ class AdminTournamentService {
   // Override team mapping for match result
   async overrideTeamMapping(tournamentId: number, resultId: number, request: OverrideTeamMappingRequest): Promise<TournamentMatchResult> {
     return this.request<TournamentMatchResult>(`/${tournamentId}/match-results/${resultId}/override-teams`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+  }
+
+  // Create manual match result
+  async createManualResult(tournamentId: number, matchId: number, mapId: number, request: CreateManualResultRequest): Promise<TournamentMatchResult> {
+    return this.request<TournamentMatchResult>(`/${tournamentId}/matches/${matchId}/maps/${mapId}/result`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  // Update manual match result
+  async updateManualResult(tournamentId: number, resultId: number, request: UpdateManualResultRequest): Promise<TournamentMatchResult> {
+    return this.request<TournamentMatchResult>(`/${tournamentId}/match-results/${resultId}/manual-update`, {
       method: 'PUT',
       body: JSON.stringify(request),
     });

@@ -201,8 +201,8 @@
                         <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2">
                           <span class="font-mono" :style="{ color: getTextMutedColor() }">{{ map.mapOrder + 1 }}.</span>
                           <span :style="{ color: getAccentColor() }" class="font-medium truncate">{{ map.mapName }}</span>
-                          <span v-if="map.matchResult?.winningTeamName" class="text-green-400 flex-shrink-0">
-                            🏆 {{ map.matchResult.winningTeamName }}
+                          <span v-if="map.matchResults?.[0]?.winningTeamName" class="text-green-400 flex-shrink-0">
+                            🏆 {{ map.matchResults[0].winningTeamName }}
                           </span>
                         </div>
                       </div>
@@ -372,18 +372,7 @@
                 <!-- Map Name & Info -->
                 <td class="p-3">
                   <div class="flex flex-col gap-1">
-                    <button
-                      v-if="map.roundId"
-                      @click="viewRoundReport(map.roundId)"
-                      class="text-sm font-bold hover:underline transition-colors cursor-pointer text-left inline-flex items-center gap-1.5 group"
-                      :style="{ color: getAccentColor() }"
-                    >
-                      {{ map.mapName }}
-                      <svg class="w-3.5 h-3.5 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: getAccentColor() }">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </button>
-                    <span v-else class="text-sm font-bold" :style="{ color: getAccentColor() }">{{ map.mapName }}</span>
+                    <span class="text-sm font-bold" :style="{ color: getAccentColor() }">{{ map.mapName }}</span>
                     <span v-if="map.teamName" class="text-xs" :style="{ color: getTextMutedColor() }">
                       Selected by {{ map.teamName }}
                     </span>
@@ -396,7 +385,7 @@
                     <span class="text-sm font-bold" :style="{ color: getTextColor() }">
                       {{ getTeamScore(map, 1) ?? '-' }}
                     </span>
-                    <span v-if="map.matchResult?.winningTeamName === getTeamName(map, 1)" class="text-lg">🏆</span>
+                    <span v-if="map.matchResults?.[0]?.winningTeamName === getTeamName(map, 1)" class="text-lg">🏆</span>
                   </div>
                 </td>
 
@@ -406,7 +395,7 @@
                     <span class="text-sm font-bold" :style="{ color: getTextColor() }">
                       {{ getTeamScore(map, 2) ?? '-' }}
                     </span>
-                    <span v-if="map.matchResult?.winningTeamName === getTeamName(map, 2)" class="text-lg">🏆</span>
+                    <span v-if="map.matchResults?.[0]?.winningTeamName === getTeamName(map, 2)" class="text-lg">🏆</span>
                   </div>
                 </td>
               </tr>
@@ -415,20 +404,16 @@
         </div>
 
         <!-- Expandable Player Stats Section -->
+        <!-- Note: Player stats are not available in the current API schema. This will be added in a future update. -->
         <div class="space-y-4">
           <div v-for="map in selectedMatch.maps" :key="map.id" class="space-y-2">
-            <!-- Show Stats Toggle (only if stats available) -->
-            <div v-if="map.round?.players && map.round.players.length > 0" class="p-3 bg-slate-800/30 rounded-lg border border-slate-700/50">
-              <button
-                class="text-xs text-slate-400 hover:text-slate-300 transition-colors"
-                @click="toggleMapExpansion(map.id)"
-              >
-                {{ isMapExpanded(map.id) ? '▼ Hide' : '▶ Show' }} {{ map.mapName }} stats
-              </button>
-            </div>
+            <!-- Player stats unavailable - will be added in future update -->
+          </div>
+        </div>
 
-            <!-- Expandable Player Stats Table -->
-            <div v-if="map.round?.players && map.round.players.length > 0 && isMapExpanded(map.id)" class="rounded-lg overflow-hidden border border-slate-700/50">
+        <!-- Expandable Player Stats Table (Disabled until round data available) -->
+        <template v-if="false">
+          <div v-if="false" class="rounded-lg overflow-hidden border border-slate-700/50">
               <table class="w-full border-collapse">
                 <thead>
                   <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
@@ -533,7 +518,7 @@
               </table>
             </div>
           </div>
-        </div>
+        </template>
 
         <!-- Player Comparison Section -->
         <div class="mt-8 space-y-4">
@@ -885,7 +870,7 @@ const allMatchesByWeek = computed(() => {
       week: group.week,
       hideWeekHeader: hasOnlyOneNullWeek,
       matches: group.matches.map(match => {
-        const completedMaps = match.maps.filter(map => map.round);
+        const completedMaps = match.maps.filter(map => map.matchResults?.length > 0);
         const isCompleted = completedMaps.length === match.maps.length && match.maps.length > 0;
         return {
           match,
@@ -1043,15 +1028,16 @@ const getTeamName = (_map: any, teamNumber: 1 | 2): string => {
 };
 
 const getTeamScore = (map: any, teamNumber: 1 | 2): number | undefined => {
-  if (!map.matchResult || !selectedMatch.value) return undefined;
+  const matchResult = map.matchResults?.[0];
+  if (!matchResult || !selectedMatch.value) return undefined;
 
   // Match team by name to get the correct score, in case the order differs
   const tournamentTeamName = teamNumber === 1 ? selectedMatch.value.team1Name : selectedMatch.value.team2Name;
 
-  if (map.matchResult.team1Name === tournamentTeamName) {
-    return map.matchResult.team1Tickets;
-  } else if (map.matchResult.team2Name === tournamentTeamName) {
-    return map.matchResult.team2Tickets;
+  if (matchResult.team1Name === tournamentTeamName) {
+    return matchResult.team1Tickets;
+  } else if (matchResult.team2Name === tournamentTeamName) {
+    return matchResult.team2Tickets;
   }
 
   return undefined;

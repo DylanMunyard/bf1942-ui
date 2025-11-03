@@ -311,21 +311,20 @@
                           <div v-for="map in (match.maps || []).filter((m: any) => m)" :key="map.id" class="flex items-center gap-2">
                             <span class="text-slate-500 font-mono">{{ map.mapOrder + 1 }}.</span>
                             <span class="text-amber-400 font-medium truncate">{{ map.mapName }}</span>
-                            <span v-if="map.roundId" class="text-cyan-400 flex-shrink-0 text-xs">🎮</span>
-                            <span v-if="map.matchResult?.winningTeamName" class="text-emerald-400 flex-shrink-0">
-                              🏆 {{ map.matchResult.winningTeamName }}
+                            <span v-if="map.matchResults?.length > 0" class="text-emerald-400 font-medium">
+                              {{ getResultsAggregation(map) }}
                             </span>
+                            <span v-else class="text-slate-500">—</span>
                           </div>
                         </div>
                       </td>
 
-                      <!-- Round Link Status & Team Mapping -->
+                      <!-- Results Count -->
                       <td class="p-3">
                         <div v-if="(match.maps || []).length > 0" class="text-xs space-y-1">
                           <div v-for="map in (match.maps || []).filter((m: any) => m)" :key="`status-${map.id}`" class="flex items-center gap-1">
-                            <span v-if="!map.roundId" class="text-slate-400">No round</span>
-                            <span v-else-if="needsTeamMapping(map)" class="text-amber-400">⚠️ Map team assignment needed</span>
-                            <span v-else class="text-emerald-400">✓ Complete</span>
+                            <span v-if="!map.matchResults?.length" class="text-slate-400">No results</span>
+                            <span v-else class="text-emerald-400">{{ map.matchResults.length }} round<span v-if="map.matchResults.length !== 1">s</span></span>
                           </div>
                         </div>
                       </td>
@@ -333,6 +332,13 @@
                       <!-- Actions -->
                       <td class="p-3 text-center">
                         <div class="flex items-center justify-end gap-2">
+                          <button
+                            class="px-3 py-1.5 text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 rounded transition-all font-medium"
+                            @click="openEditMapResultsModal(match)"
+                            title="Enter match results for all maps"
+                          >
+                            Results
+                          </button>
                           <button
                             class="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all"
                             @click="editMatch(match.id)"
@@ -355,155 +361,6 @@
                       </td>
                     </tr>
 
-                    <!-- Expanded Map Details Rows (for team mapping and round linking) -->
-                    <template v-for="(originalMap, mapIndex) in (match.maps || []).filter((m: any) => m && m.id)" :key="`detail-${originalMap.id}`">
-                      <tr
-                        v-if="originalMap"
-                        class="bg-slate-900/50 border-b border-slate-700/50 border-l-4 border-l-cyan-500/50"
-                      >
-                      <td colspan="5" class="p-4">
-                        <div class="space-y-2">
-                          <!-- Map Header -->
-                          <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center gap-2">
-                              <span class="text-xs font-mono text-slate-500">{{ originalMap.mapOrder + 1 }}.</span>
-                              <span class="text-sm font-bold text-amber-400">{{ originalMap.mapName }}</span>
-                              <span v-if="originalMap.teamName" class="text-xs text-cyan-400">
-                                Selected by {{ originalMap.teamName }}
-                              </span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                              <button
-                                v-if="originalMap.roundId && originalMap.matchResult"
-                                class="p-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded transition-all"
-                                @click="viewRoundReport(originalMap.roundId)"
-                                title="View round report"
-                              >
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                              </button>
-                              <button
-                                v-if="originalMap.roundId && originalMap.matchResult"
-                                class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
-                                @click="linkRound(match, originalMap)"
-                                title="Change the linked round"
-                              >
-                                Change
-                              </button>
-                              <button
-                                v-if="originalMap.roundId && originalMap.matchResult"
-                                class="p-1.5 bg-slate-500/20 hover:bg-slate-500/30 text-slate-400 border border-slate-500/30 hover:border-slate-500/50 rounded-lg transition-all cursor-pointer"
-                                @click="confirmUnlinkRound(match, originalMap)"
-                                title="Unlink round from this map"
-                              >
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                              <button
-                                v-if="!originalMap.roundId || !originalMap.matchResult"
-                                class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all text-xs font-medium"
-                                @click="linkRound(match, originalMap)"
-                                title="Link completed round to this map"
-                              >
-                                Link Round
-                              </button>
-                            </div>
-                          </div>
-
-                          <!-- Team Mapping Section (only show if round is linked and has match result) -->
-                          <div v-if="originalMap.roundId && originalMap.matchResult" class="border-t border-slate-600/30 pt-2">
-                            <!-- Editing state -->
-                            <div v-if="overridingMapId === originalMap.id" class="flex flex-wrap items-center gap-3">
-                              <div class="flex items-center gap-1.5 flex-1 min-w-48">
-                                <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ originalMap.round?.team1Label || 'Team 1' }}:</label>
-                                <select
-                                  v-model.number="overridingTeam1Id"
-                                  class="flex-1 px-2 py-1 bg-slate-800 border border-slate-600 rounded text-xs text-slate-200 hover:border-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
-                                >
-                                  <option :value="null">Select team</option>
-                                  <option v-for="team in getMatchTeams(match)" :key="team.id" :value="team.id">
-                                    {{ team.name }}
-                                  </option>
-                                </select>
-                                <span v-if="originalMap.round" class="text-slate-500 whitespace-nowrap text-xs">({{ originalMap.round.tickets1 }})</span>
-                                <span v-if="getWinningTeam(originalMap)?.teamNumber === 1" title="Winner">🏆</span>
-                              </div>
-                              <div class="flex items-center gap-1.5 flex-1 min-w-48">
-                                <label class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ originalMap.round?.team2Label || 'Team 2' }}:</label>
-                                <select
-                                  v-model.number="overridingTeam2Id"
-                                  class="flex-1 px-2 py-1 bg-slate-800 border border-slate-600 rounded text-xs text-slate-200 hover:border-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
-                                >
-                                  <option :value="null">Select team</option>
-                                  <option v-for="team in getMatchTeams(match)" :key="team.id" :value="team.id">
-                                    {{ team.name }}
-                                  </option>
-                                </select>
-                                <span v-if="originalMap.round" class="text-slate-500 whitespace-nowrap text-xs">({{ originalMap.round.tickets2 }})</span>
-                                <span v-if="getWinningTeam(originalMap)?.teamNumber === 2" title="Winner">🏆</span>
-                              </div>
-                              <button
-                                class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                @click="cancelOverrideTeamMapping"
-                                :disabled="isOverridingSaving"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-xs font-medium transition-colors flex items-center gap-1"
-                                @click="saveTeamMappingOverride(match, originalMap)"
-                                :disabled="!canSaveTeamMapping() || isOverridingSaving"
-                              >
-                                <svg v-if="isOverridingSaving" class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                </svg>
-                                <span>Save</span>
-                              </button>
-                            </div>
-                            <!-- View state -->
-                            <div v-else class="flex flex-wrap items-center gap-3 text-xs">
-                              <div v-if="originalMap.matchResult" class="flex items-center gap-1.5">
-                                <span class="text-slate-400 font-medium whitespace-nowrap">{{ originalMap.round?.team1Label || 'Team 1' }}:</span>
-                                <span v-if="originalMap.matchResult.team1Name" class="text-emerald-400 font-medium">
-                                  {{ originalMap.matchResult.team1Name }}
-                                </span>
-                                <span v-else class="text-red-400">-</span>
-                                <span v-if="originalMap.round" class="text-slate-500">({{ originalMap.round.tickets1 }})</span>
-                                <span v-if="getWinningTeam(originalMap)?.teamNumber === 1">🏆</span>
-                              </div>
-                              <div v-if="originalMap.matchResult" class="flex items-center gap-1.5">
-                                <span class="text-slate-400 font-medium whitespace-nowrap">{{ originalMap.round?.team2Label || 'Team 2' }}:</span>
-                                <span v-if="originalMap.matchResult.team2Name" class="text-emerald-400 font-medium">
-                                  {{ originalMap.matchResult.team2Name }}
-                                </span>
-                                <span v-else class="text-red-400">-</span>
-                                <span v-if="originalMap.round" class="text-slate-500">({{ originalMap.round.tickets2 }})</span>
-                                <span v-if="getWinningTeam(originalMap)?.teamNumber === 2">🏆</span>
-                              </div>
-                              <div v-if="!originalMap.matchResult" class="text-slate-400 flex-1">
-                                Loading team mapping data...
-                              </div>
-                              <button
-                                v-if="originalMap.matchResult"
-                                :class="[
-                                  'px-1.5 py-0.5 rounded transition-all text-xs font-medium ml-auto',
-                                  needsTeamMapping(originalMap)
-                                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30'
-                                    : 'bg-slate-600/20 hover:bg-slate-600/30 text-slate-300 border border-slate-600/30'
-                                ]"
-                                @click="startOverrideTeamMapping(originalMap)"
-                              >
-                                {{ needsTeamMapping(originalMap) ? 'Assign' : 'Edit' }}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      </tr>
-                    </template>
                   </template>
                 </template>
               </tbody>
@@ -586,17 +443,14 @@
       @added="onMatchAdded"
     />
 
-    <!-- Link Round Modal -->
-    <AddRoundModal
-      v-if="showLinkRoundModal && tournament && linkingMatch && linkingMap"
-      :tournament-id="tournament.id"
-      :game="tournament.game"
-      :default-server-guid="linkingMatch.serverGuid"
-      :default-server-name="linkingMatch.serverName"
-      :default-map-name="linkingMap.mapName"
-      :multi-select="false"
-      @close="showLinkRoundModal = false; linkingMatch = undefined; linkingMap = undefined"
-      @added="onRoundLinked"
+    <!-- Edit Map Results Modal -->
+    <EditMapResultsModal
+      v-if="showEditMapResultsModal && tournament && editingMatchForResults"
+      :is-open="showEditMapResultsModal"
+      :tournament="tournament"
+      :match="editingMatchForResults"
+      @close="showEditMapResultsModal = false; editingMatchForResults = null"
+      @updated="loadTournament"
     />
 
     <!-- Delete Team Confirmation Modal -->
@@ -695,83 +549,6 @@
       </div>
     </div>
 
-    <!-- Unlink Round Confirmation Modal -->
-    <div
-      v-if="unlinkConfirmation"
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="cancelUnlinkRound"
-    >
-      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 max-w-md w-full shadow-2xl">
-        <div class="flex items-start gap-4 mb-6">
-          <div class="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-            <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div class="flex-1">
-            <h3 class="text-xl font-bold text-slate-100 mb-2">
-              Unlink Round?
-            </h3>
-            <p class="text-slate-300 mb-2">
-              Unlink the round from <span class="font-bold text-amber-400">{{ unlinkConfirmation?.map.mapName }}</span>?
-            </p>
-            <p class="text-slate-400 text-sm">
-              You can link a different round later if needed.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-end gap-3">
-          <button
-            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors"
-            @click="cancelUnlinkRound"
-          >
-            Cancel
-          </button>
-          <button
-            class="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-lg font-medium transition-all flex items-center gap-2"
-            :disabled="isDeleting"
-            @click="executeUnlinkRound"
-          >
-            <svg v-if="!isDeleting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            <span>{{ isDeleting ? 'Unlinking...' : 'Unlink Round' }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Team Mapping Warning Toast -->
-    <transition
-      name="toast"
-      @enter="(el) => el.offsetHeight"
-      @after-enter="(el) => el.offsetHeight"
-    >
-      <div v-if="teamMappingWarning" :class="['fixed bottom-6 z-[9999] max-w-md', isDesktop ? 'right-[88px]' : 'right-6']">
-        <div class="bg-gradient-to-r from-amber-500/20 to-amber-600/20 backdrop-blur-md border border-amber-400/40 rounded-lg p-4 flex items-start gap-4 shadow-xl">
-          <div class="flex-shrink-0 pt-0.5">
-            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0-12a9 9 0 110 18 9 9 0 010-18z" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-amber-300 font-medium">Team Assignment Required</p>
-            <p class="text-amber-200/80 text-sm mt-1">{{ teamMappingWarning }}</p>
-          </div>
-          <button
-            class="flex-shrink-0 text-amber-400 hover:text-amber-300 transition-colors"
-            @click="teamMappingWarning = null"
-            title="Dismiss warning"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </transition>
 
   </div>
 </template>
@@ -789,9 +566,9 @@ import {
 } from '@/services/adminTournamentService';
 import AddTournamentModal from '@/components/dashboard/AddTournamentModal.vue';
 import EditTournamentThemeModal from '@/components/dashboard/EditTournamentThemeModal.vue';
-import AddRoundModal from '@/components/dashboard/AddRoundModal.vue';
 import AddTeamModal from '@/components/dashboard/AddTeamModal.vue';
 import AddMatchModal from '@/components/dashboard/AddMatchModal.vue';
+import EditMapResultsModal from '@/components/dashboard/EditMapResultsModal.vue';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -811,20 +588,13 @@ const showEditModal = ref(false);
 const showThemeModal = ref(false);
 const showAddTeamModal = ref(false);
 const showAddMatchModal = ref(false);
-const showLinkRoundModal = ref(false);
+const showEditMapResultsModal = ref(false);
+const editingMatchForResults = ref<TournamentMatch | null>(null);
 const deleteTeamConfirmation = ref<{ id: number; name: string } | null>(null);
 const deleteMatchConfirmation = ref<{ id: number } | null>(null);
-const unlinkConfirmation = ref<{ match: TournamentMatch; map: TournamentMatchMap } | null>(null);
 const isDeleting = ref(false);
 const editingTeam = ref<TournamentTeam | undefined>(undefined);
 const editingMatch = ref<TournamentMatch | undefined>(undefined);
-const linkingMatch = ref<TournamentMatch | undefined>(undefined);
-const linkingMap = ref<TournamentMatchMap | undefined>(undefined);
-const teamMappingWarning = ref<string | null>(null);
-const overridingMapId = ref<number | null>(null);
-const overridingTeam1Id = ref<number | null>(null);
-const overridingTeam2Id = ref<number | null>(null);
-const isOverridingSaving = ref(false);
 
 const tournamentId = parseInt(route.params.id as string);
 
@@ -890,7 +660,6 @@ const renderedRules = computed(() => {
 const loadTournament = async () => {
   loading.value = true;
   error.value = null;
-  teamMappingWarning.value = null;
 
   try {
     if (isNaN(tournamentId)) {
@@ -1098,41 +867,9 @@ const editMatch = async (matchId: number) => {
   }
 };
 
-const linkRound = (match: TournamentMatch, map: TournamentMatchMap) => {
-  linkingMatch.value = match;
-  linkingMap.value = map;
-  showLinkRoundModal.value = true;
-};
-
-const confirmUnlinkRound = (match: TournamentMatch, map: TournamentMatchMap) => {
-  unlinkConfirmation.value = { match, map };
-};
-
-const cancelUnlinkRound = () => {
-  unlinkConfirmation.value = null;
-  isDeleting.value = false;
-};
-
-const executeUnlinkRound = async () => {
-  if (!unlinkConfirmation.value || !tournament.value) return;
-
-  isDeleting.value = true;
-  const { match, map } = unlinkConfirmation.value;
-
-  try {
-    await adminTournamentService.updateMatchMap(tournament.value.id, match.id, map.id, {
-      mapId: map.id,
-      roundId: null,
-      updateRoundId: true
-    });
-    unlinkConfirmation.value = null;
-    await loadTournament();
-  } catch (err) {
-    console.error('Error unlinking round:', err);
-    error.value = err instanceof Error ? err.message : 'Failed to unlink round';
-  } finally {
-    isDeleting.value = false;
-  }
+const openEditMapResultsModal = (match: TournamentMatch) => {
+  editingMatchForResults.value = match;
+  showEditMapResultsModal.value = true;
 };
 
 const confirmDeleteMatch = (matchId: number) => {
@@ -1166,32 +903,6 @@ const onMatchAdded = () => {
   loadTournament();
 };
 
-const onRoundLinked = async (roundId: string) => {
-  if (!linkingMatch.value || !linkingMap.value) return;
-
-  try {
-    // Link the round to the specific map
-    const response = await adminTournamentService.updateMatchMap(tournamentId, linkingMatch.value.id, linkingMap.value.id, {
-      mapId: linkingMap.value.id,
-      roundId,
-      updateRoundId: true,
-    });
-
-    showLinkRoundModal.value = false;
-    linkingMatch.value = undefined;
-    linkingMap.value = undefined;
-    await loadTournament();
-
-    // Capture any team mapping warning from the response (after loading tournament)
-    if (response.teamMappingWarning) {
-      teamMappingWarning.value = response.teamMappingWarning;
-    }
-  } catch (err) {
-    console.error('Error linking round to map:', err);
-    error.value = err instanceof Error ? err.message : 'Failed to link round to map';
-  }
-};
-
 // Helper function to get only the teams participating in the match
 const getMatchTeams = (match: TournamentMatch): TournamentTeam[] => {
   if (!tournament.value) return [];
@@ -1202,94 +913,25 @@ const getMatchTeams = (match: TournamentMatch): TournamentTeam[] => {
 
 // Helper function to get team display name (uses mapped name if available, otherwise uses round label)
 const getTeamDisplayName = (map: TournamentMatchMap, teamNumber: 1 | 2): string => {
+  const result = map.matchResults?.[0];
   if (teamNumber === 1) {
-    return map.matchResult?.team1Name || map.round?.team1Label || 'Team 1';
+    return result?.team1Name || 'Team 1';
   } else {
-    return map.matchResult?.team2Name || map.round?.team2Label || 'Team 2';
+    return result?.team2Name || 'Team 2';
   }
 };
 
-// Helper function to get the correct score by matching team names
-const getMapResultScore = (map: TournamentMatchMap, match: TournamentMatch, teamIndex: 1 | 2): number | undefined => {
-  if (!map.matchResult) return undefined;
+// Helper function to get results aggregation (e.g., "2-0", "1-1")
+const getResultsAggregation = (map: TournamentMatchMap): string => {
+  const results = map.matchResults;
+  if (!results || results.length === 0) return '—';
 
-  const tournamentTeamName = teamIndex === 1 ? match.team1Name : match.team2Name;
+  const team1Id = results[0]?.team1Id;
+  if (!team1Id) return '—';
 
-  // Match based on team name to find the correct ticket count
-  if (map.matchResult.team1Name === tournamentTeamName) {
-    return map.matchResult.team1Tickets;
-  } else if (map.matchResult.team2Name === tournamentTeamName) {
-    return map.matchResult.team2Tickets;
-  }
-
-  return undefined;
-};
-
-// Helper function to determine the winning team
-const getWinningTeam = (map: TournamentMatchMap): { teamNumber: 1 | 2; name: string } | null => {
-  if (!map.round) return null;
-
-  if (map.round.tickets1 > map.round.tickets2) {
-    return { teamNumber: 1, name: getTeamDisplayName(map, 1) };
-  } else if (map.round.tickets2 > map.round.tickets1) {
-    return { teamNumber: 2, name: getTeamDisplayName(map, 2) };
-  }
-  return null; // Tie
-};
-
-// Helper function to check if a map result needs team mapping
-const needsTeamMapping = (map: TournamentMatchMap): boolean => {
-  if (!map.matchResult || !map.round) return false;
-  return map.matchResult.team1Id === null || map.matchResult.team1Id === undefined ||
-         map.matchResult.team2Id === null || map.matchResult.team2Id === undefined;
-};
-
-// Helper function to check if team mapping can be saved (both teams selected)
-const canSaveTeamMapping = (): boolean => {
-  return overridingTeam1Id.value !== null && overridingTeam2Id.value !== null;
-};
-
-// Start editing team mapping for a specific map
-const startOverrideTeamMapping = (map: TournamentMatchMap) => {
-  overridingMapId.value = map.id;
-  overridingTeam1Id.value = map.matchResult?.team1Id ?? null;
-  overridingTeam2Id.value = map.matchResult?.team2Id ?? null;
-};
-
-// Cancel team mapping edit
-const cancelOverrideTeamMapping = () => {
-  overridingMapId.value = null;
-  overridingTeam1Id.value = null;
-  overridingTeam2Id.value = null;
-};
-
-// Save team mapping override
-const saveTeamMappingOverride = async (_match: TournamentMatch, map: TournamentMatchMap) => {
-  if (!tournament.value || !map.matchResult || !canSaveTeamMapping()) return;
-
-  isOverridingSaving.value = true;
-  try {
-    await adminTournamentService.overrideTeamMapping(tournament.value.id, map.matchResult.id, {
-      team1Id: overridingTeam1Id.value!,
-      team2Id: overridingTeam2Id.value!,
-    });
-
-    // Cancel the override UI and reload tournament data
-    cancelOverrideTeamMapping();
-    await loadTournament();
-  } catch (err) {
-    console.error('Error saving team mapping override:', err);
-    const errorMessage = err instanceof Error ? err.message : 'Failed to save team mapping';
-
-    // Show validation errors in the warning toast instead of page error
-    if (errorMessage.includes('cannot be the same') || errorMessage.includes('Team1Id') || errorMessage.includes('Team2Id')) {
-      teamMappingWarning.value = errorMessage;
-    } else {
-      error.value = errorMessage;
-    }
-  } finally {
-    isOverridingSaving.value = false;
-  }
+  const team1Wins = results.filter((r) => r.winningTeamId === team1Id).length;
+  const team2Wins = results.length - team1Wins;
+  return `${team1Wins}-${team2Wins}`;
 };
 
 const handleResize = () => {
