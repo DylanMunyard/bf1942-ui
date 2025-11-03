@@ -128,6 +128,110 @@
 
       <!-- Main Content -->
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
+        <!-- Tournament Leaderboard -->
+        <div v-if="leaderboard && leaderboard.rankings.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+          <!-- Leaderboard Header -->
+          <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+            <h3 class="text-xl font-semibold flex items-center gap-3" :style="{ color: getTextColor() }">
+              🏆 Leaderboard
+              <span class="text-sm font-normal" :style="{ color: getTextMutedColor() }">
+                Cumulative Standings
+              </span>
+            </h3>
+          </div>
+
+          <!-- Leaderboard Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+              <thead>
+                <tr :style="{ backgroundColor: getBackgroundMuteColor() }">
+                  <th class="p-4 text-left font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Rank
+                  </th>
+                  <th class="p-4 text-left font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Team
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Wins
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Ties
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Losses
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Ticket Diff
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Total Rounds
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(ranking, idx) in leaderboard.rankings"
+                  :key="ranking.teamId"
+                  class="group transition-all duration-300 border-b"
+                  :style="{ borderColor: getAccentColor(), backgroundColor: idx % 2 === 0 ? getBackgroundMuteColor() : getBackgroundSoftColor() }"
+                >
+                  <!-- Rank -->
+                  <td class="p-4">
+                    <div class="flex items-center gap-2">
+                      <span v-if="ranking.rank === 1" class="text-xl">🥇</span>
+                      <span v-else-if="ranking.rank === 2" class="text-xl">🥈</span>
+                      <span v-else-if="ranking.rank === 3" class="text-xl">🥉</span>
+                      <span v-else class="text-sm font-bold" :style="{ color: getAccentColor() }">{{ ranking.rank }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Team Name -->
+                  <td class="p-4">
+                    <div class="text-sm font-bold" :style="{ color: getTextColor() }">
+                      {{ ranking.teamName }}
+                    </div>
+                  </td>
+
+                  <!-- Wins -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm font-bold" :style="{ color: getAccentColor() }">
+                      {{ ranking.roundsWon }}
+                    </span>
+                  </td>
+
+                  <!-- Ties -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm" :style="{ color: getTextMutedColor() }">
+                      {{ ranking.roundsTied }}
+                    </span>
+                  </td>
+
+                  <!-- Losses -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm" :style="{ color: getTextMutedColor() }">
+                      {{ ranking.roundsLost }}
+                    </span>
+                  </td>
+
+                  <!-- Ticket Differential -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm font-mono" :style="{ color: ranking.ticketDifferential >= 0 ? getAccentColor() : '#ef4444' }">
+                      {{ ranking.ticketDifferential >= 0 ? '+' : '' }}{{ ranking.ticketDifferential }}
+                    </span>
+                  </td>
+
+                  <!-- Total Rounds -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm font-bold" :style="{ color: getTextColor() }">
+                      {{ ranking.totalRounds }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- Tournament Matches Table -->
         <div v-if="allMatchesByWeek.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
           <!-- Table Header -->
@@ -694,7 +798,8 @@ import { marked } from 'marked';
 import {
   publicTournamentService,
   type PublicTournamentDetail,
-  type PublicTournamentMatch
+  type PublicTournamentMatch,
+  type PublicTournamentLeaderboard
 } from '@/services/publicTournamentService';
 import { notificationService } from '@/services/notificationService';
 import { isValidHex, normalizeHex, getContrastingTextColor, hexToRgb, rgbToHex, calculateLuminance } from '@/utils/colorUtils';
@@ -714,6 +819,8 @@ const selectedMatch = ref<PublicTournamentMatch | null>(null);
 const selectedPlayers = ref<string[]>([]);
 const showRulesModal = ref(false);
 const expandedMaps = ref<Set<string>>(new Set());
+const leaderboard = ref<PublicTournamentLeaderboard | null>(null);
+const selectedWeekForLeaderboard = ref<string | null>(null);
 
 const tournamentId = parseInt(route.params.id as string);
 
@@ -935,6 +1042,17 @@ const allMatchesByWeek = computed(() => {
 });
 
 
+const loadLeaderboard = async (week?: string) => {
+  try {
+    const data = await publicTournamentService.getLeaderboard(tournamentId, week);
+    leaderboard.value = data;
+    selectedWeekForLeaderboard.value = week || null;
+  } catch (err) {
+    console.error('Error loading leaderboard:', err);
+    leaderboard.value = null;
+  }
+};
+
 const loadTournament = async () => {
   loading.value = true;
   error.value = null;
@@ -996,6 +1114,9 @@ const loadTournament = async () => {
     if (data.hasCommunityLogo) {
       loadLogoImage().catch(err => console.debug('Failed to load logo image:', err));
     }
+
+    // Load leaderboard (async, doesn't block rendering)
+    loadLeaderboard().catch(err => console.debug('Failed to load leaderboard:', err));
   } catch (err) {
     console.error('Error loading tournament:', err);
     error.value = err instanceof Error ? err.message : 'Failed to load tournament';

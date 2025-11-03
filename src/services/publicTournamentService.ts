@@ -80,6 +80,24 @@ export interface TournamentTheme {
   borderWidth?: string;
 }
 
+export interface PublicTeamRanking {
+  rank: number;
+  teamId: number;
+  teamName: string;
+  roundsWon: number;
+  roundsTied: number;
+  roundsLost: number;
+  ticketDifferential: number;
+  totalRounds: number;
+}
+
+export interface PublicTournamentLeaderboard {
+  tournamentId: number;
+  tournamentName: string;
+  week: string | null;
+  rankings: PublicTeamRanking[];
+}
+
 export interface PublicTournamentDetail {
   id: number;
   name: string;
@@ -132,6 +150,31 @@ class PublicTournamentService {
   // Get tournament community logo URL
   getTournamentLogoUrl(id: number): string {
     return `${this.baseUrl}/${id}/logo`;
+  }
+
+  async getLeaderboard(idOrName: string | number, week?: string): Promise<PublicTournamentLeaderboard> {
+    let url = `${this.baseUrl}/${idOrName}/leaderboard`;
+    if (week) {
+      url += `?week=${encodeURIComponent(week)}`;
+    }
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch {
+        // Ignore JSON parsing errors
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data: PublicTournamentLeaderboard = await response.json();
+    return data;
   }
 }
 
