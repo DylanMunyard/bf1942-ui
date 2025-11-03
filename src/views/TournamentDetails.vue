@@ -102,11 +102,22 @@
                 <button
                   class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-lg transition-all flex items-center gap-2"
                   @click="showEditModal = true"
+                  title="Edit tournament details"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                   <span>Edit</span>
+                </button>
+                <button
+                  class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-lg transition-all flex items-center gap-2"
+                  @click="showThemeModal = true"
+                  title="Edit tournament theme"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.5a2 2 0 00-1 .267M7 21H5a2 2 0 01-2-2v-4a2 2 0 012-2h2.5m5.5 0a2 2 0 012 2v4a2 2 0 01-2 2m0 0h5a2 2 0 002-2v-4a2 2 0 00-2-2h-2.5" />
+                  </svg>
+                  <span>Theme</span>
                 </button>
                 <button
                   class="px-4 py-2 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white rounded-lg transition-all flex items-center gap-2 font-medium"
@@ -549,6 +560,13 @@
       @added="onTournamentUpdated"
     />
 
+    <!-- Edit Tournament Theme Modal -->
+    <EditTournamentThemeModal
+      v-if="showThemeModal && tournament"
+      :tournament="tournament"
+      @close="showThemeModal = false"
+    />
+
     <!-- Add/Edit Team Modal -->
     <AddTeamModal
       v-if="showAddTeamModal && tournament"
@@ -770,6 +788,7 @@ import {
   type TournamentMatchMap
 } from '@/services/adminTournamentService';
 import AddTournamentModal from '@/components/dashboard/AddTournamentModal.vue';
+import EditTournamentThemeModal from '@/components/dashboard/EditTournamentThemeModal.vue';
 import AddRoundModal from '@/components/dashboard/AddRoundModal.vue';
 import AddTeamModal from '@/components/dashboard/AddTeamModal.vue';
 import AddMatchModal from '@/components/dashboard/AddMatchModal.vue';
@@ -789,6 +808,7 @@ const logoImageUrl = ref<string | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const showEditModal = ref(false);
+const showThemeModal = ref(false);
 const showAddTeamModal = ref(false);
 const showAddMatchModal = ref(false);
 const showLinkRoundModal = ref(false);
