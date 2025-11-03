@@ -43,11 +43,6 @@ export interface TournamentMatchMap {
   matchResults: TournamentMatchResult[];
 }
 
-export interface UpdateMatchMapResponse {
-  response: TournamentMatchMap;
-  teamMappingWarning?: string;
-}
-
 export interface TournamentMatch {
   id: number;
   scheduledDate: string;
@@ -171,14 +166,6 @@ export interface UpdateMatchRequest {
   week?: string | null;
 }
 
-export interface UpdateMatchMapRequest {
-  mapId: number;
-  mapName?: string;
-  roundId?: string | null;
-  updateRoundId: boolean;
-  teamId?: number;
-}
-
 export interface OverrideTeamMappingRequest {
   team1Id: number;
   team2Id: number;
@@ -186,11 +173,12 @@ export interface OverrideTeamMappingRequest {
 
 export interface CreateManualResultRequest {
   mapId: number;
-  team1Id: number;
-  team2Id: number;
-  team1Tickets: number;
-  team2Tickets: number;
-  winningTeamId: number;
+  team1Id?: number;
+  team2Id?: number;
+  team1Tickets?: number;
+  team2Tickets?: number;
+  winningTeamId?: number;
+  roundId?: string; // Optional: When provided alone, backend populates from round data
 }
 
 export interface UpdateManualResultRequest {
@@ -438,9 +426,9 @@ class AdminTournamentService {
     });
   }
 
-  // Update match map (link/unlink round to specific map)
-  async updateMatchMap(tournamentId: number, matchId: number, mapId: number, request: UpdateMatchMapRequest): Promise<UpdateMatchMapResponse> {
-    return this.request<UpdateMatchMapResponse>(`/${tournamentId}/matches/${matchId}/maps/${mapId}`, {
+  // Update match map (name only)
+  async updateMatchMap(tournamentId: number, matchId: number, mapId: number, request: { mapId: number; mapName: string }): Promise<TournamentMatchMap> {
+    return this.request<TournamentMatchMap>(`/${tournamentId}/matches/${matchId}/maps/${mapId}`, {
       method: 'PUT',
       body: JSON.stringify(request),
     });

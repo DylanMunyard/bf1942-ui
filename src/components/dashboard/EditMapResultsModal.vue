@@ -497,7 +497,7 @@ async function saveManualResult(map: TournamentMatchMap): Promise<void> {
         }
       );
     } else {
-      // Create new result
+      // Create new result (with optional roundId)
       updatedResult = await adminTournamentService.createManualResult(
         props.tournament.id,
         props.match.id,
@@ -509,6 +509,7 @@ async function saveManualResult(map: TournamentMatchMap): Promise<void> {
           team1Tickets: formData.value.team1Tickets,
           team2Tickets: formData.value.team2Tickets,
           winningTeamId,
+          roundId: formData.value.roundId,
         }
       );
     }
@@ -579,60 +580,59 @@ async function onRoundLinked(roundId: string): Promise<void> {
   isSaving.value = true;
 
   try {
-    // Link the round to the map
-    const response = await adminTournamentService.updateMatchMap(
+    // POST to create result with roundId - backend will populate teams and scores from round
+    const result = await adminTournamentService.createManualResult(
       props.tournament.id,
       props.match.id,
       map.id,
       {
         mapId: map.id,
         roundId,
-        updateRoundId: true,
       }
     );
 
-    // Check for team mapping warning - if the algorithm couldn't auto-identify teams
-    const responseWithWarning = response as any;
-    if (responseWithWarning.teamMappingWarning) {
-      // Get the newly created result from the response
-      const newResult = responseWithWarning.response?.matchResults?.[responseWithWarning.response.matchResults.length - 1];
+    // Update local state with returned result so UI refreshes immediately
+    const mapIndex = props.match.maps?.findIndex(m => m.id === map.id);
+    if (mapIndex !== undefined && mapIndex !== -1 && props.match.maps) {
+      props.match.maps[mapIndex].matchResults.push(result);
+    }
 
-      if (newResult) {
-        // Show warning to user
-        addNotification({
-          type: 'warning',
-          title: 'Team Mapping Warning',
-          message: `${responseWithWarning.teamMappingWarning}\n\nThe round has been linked, but team names couldn't be auto-identified. Please manually select the correct teams in the form below.`,
-          duration: 8000,
-        });
+    // Refresh parent with new result
+    emit('updated');
 
-        // Open the form to allow manual team mapping
-        editingMapId.value = map.id;
-        editingResult.value = newResult;
-        formData.value = {
-          team1Id: undefined,
-          team1Name: '',
-          team2Id: undefined,
-          team2Name: '',
-          team1Tickets: newResult.team1Tickets || 0,
-          team2Tickets: newResult.team2Tickets || 0,
-          winningTeamId: newResult.winningTeamId,
-          winningTeamName: newResult.winningTeamName || '',
-          roundId: (newResult as any).roundId,
-        };
-      } else {
-        // Warning but no result found - still emit updated to refresh
-        addNotification({
-          type: 'warning',
-          title: 'Team Mapping Warning',
-          message: `${responseWithWarning.teamMappingWarning}\n\nPlease edit the result above to set the correct teams.`,
-          duration: 8000,
-        });
-        emit('updated');
-      }
+    // Check for team mapping warning
+    const resultWithWarning = result as any;
+    if (resultWithWarning.teamMappingWarning) {
+      // Show warning and open form for manual team mapping
+      addNotification({
+        type: 'warning',
+        title: 'Team Mapping Warning',
+        message: `${resultWithWarning.teamMappingWarning}\n\nPlease review and confirm the team assignments below.`,
+        duration: 8000,
+      });
+
+      // Load the result into the editing form so user can review/edit
+      editingMapId.value = map.id;
+      editingResult.value = result;
+      formData.value = {
+        team1Id: result.team1Id,
+        team1Name: result.team1Name || '',
+        team2Id: result.team2Id,
+        team2Name: result.team2Name || '',
+        team1Tickets: result.team1Tickets,
+        team2Tickets: result.team2Tickets,
+        winningTeamId: result.winningTeamId,
+        winningTeamName: result.winningTeamName || '',
+        roundId: (result as any).roundId,
+      };
     } else {
-      // No warning - success
-      emit('updated');
+      // No warning - show success notification
+      addNotification({
+        type: 'success',
+        title: 'Round Linked',
+        message: 'Round successfully linked to result. You can close this modal or link another.',
+        duration: 4000,
+      });
     }
   } catch (error) {
     console.error('Failed to link round:', error);

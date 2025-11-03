@@ -153,28 +153,6 @@
                   </button>
                 </div>
 
-                <!-- Team Selection Row (Optional) -->
-                <div v-if="formData.team1Id && formData.team2Id" class="flex items-center gap-2 ml-8">
-                  <span class="text-xs text-slate-400 flex-shrink-0">Selected by:</span>
-                  <div class="flex items-center gap-2 flex-1">
-                    <button
-                      v-for="team in props.teams.filter(t => t.id === formData.team1Id || t.id === formData.team2Id)"
-                      :key="team.id"
-                      type="button"
-                      :class="[
-                        'flex-1 px-2 py-1 rounded border text-xs font-medium transition-all',
-                        formData.maps[index].teamId === team.id
-                          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                          : 'bg-slate-700/30 border-slate-600/30 text-slate-400 hover:bg-slate-700/50 hover:border-slate-600/50'
-                      ]"
-                      @click="formData.maps[index].teamId = formData.maps[index].teamId === team.id ? null : team.id"
-                      :disabled="loading"
-                    >
-                      {{ team.name }}
-                    </button>
-                  </div>
-                  <span class="text-xs text-slate-500 flex-shrink-0">(Optional)</span>
-                </div>
               </div>
               <button
                 class="w-full px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
@@ -339,14 +317,13 @@ let blurTimeout: number | null = null;
 
 interface MapEntry {
   name: string;
-  teamId: number | null;
 }
 
 const formData = ref({
   scheduledDate: '',
   team1Id: null as number | null,
   team2Id: null as number | null,
-  maps: [{ name: '', teamId: null }] as MapEntry[],
+  maps: [{ name: '' }] as MapEntry[],
   serverGuid: '',
   serverName: '',
   week: null as string | null,
@@ -438,7 +415,7 @@ const selectServer = (server: ServerSearchResult) => {
 };
 
 const addMap = () => {
-  formData.value.maps.push({ name: '', teamId: null });
+  formData.value.maps.push({ name: '' });
 };
 
 const removeMap = (index: number) => {
@@ -458,10 +435,9 @@ onMounted(() => {
 
     formData.value.team1Id = team1?.id || null;
     formData.value.team2Id = team2?.id || null;
-    // Extract maps with their team selections
+    // Extract maps
     formData.value.maps = props.match.maps.map(m => ({
-      name: m.mapName,
-      teamId: m.teamId || null
+      name: m.mapName
     }));
     formData.value.serverGuid = props.match.serverGuid || '';
     formData.value.serverName = props.match.serverName || '';
@@ -495,39 +471,12 @@ const handleSubmit = async () => {
       week: weekValue && weekValue.length > 0 ? weekValue : null,
     };
 
-    let matchId: number;
     if (editMode.value && props.match) {
       console.log('Updating match with data:', requestData);
       await adminTournamentService.updateMatch(props.tournamentId, props.match.id, requestData);
-      matchId = props.match.id;
     } else {
       console.log('Creating match with data:', requestData);
-      const createdMatch = await adminTournamentService.createMatch(props.tournamentId, requestData);
-      matchId = createdMatch.id;
-    }
-
-    // Now update team selections for each map
-    // Get the updated match to get the map IDs
-    const updatedMatch = await adminTournamentService.getMatchDetail(props.tournamentId, matchId);
-
-    // Update team selections for maps (including clearing them if null)
-    const teamUpdatePromises = formData.value.maps
-      .map((mapEntry, index) => {
-        const matchMap = updatedMatch.maps[index];
-        // Only update if teamId differs from the existing value
-        if (matchMap && mapEntry.teamId !== (matchMap.teamId || null)) {
-          return adminTournamentService.updateMatchMap(props.tournamentId, matchId, matchMap.id, {
-            mapId: matchMap.id,
-            teamId: mapEntry.teamId || undefined,
-            updateRoundId: false,
-          });
-        }
-        return null;
-      })
-      .filter(promise => promise !== null);
-
-    if (teamUpdatePromises.length > 0) {
-      await Promise.all(teamUpdatePromises);
+      await adminTournamentService.createMatch(props.tournamentId, requestData);
     }
 
     emit('added');
