@@ -517,7 +517,6 @@
                 </tbody>
               </table>
             </div>
-          </div>
         </template>
 
         <!-- Player Comparison Section -->
