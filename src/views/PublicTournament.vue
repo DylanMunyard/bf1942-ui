@@ -1069,22 +1069,6 @@ const getTeamName = (_map: any, teamNumber: 1 | 2): string => {
   return teamNumber === 1 ? selectedMatch.value.team1Name : selectedMatch.value.team2Name;
 };
 
-const getTeamScore = (map: any, teamNumber: 1 | 2): number | undefined => {
-  const matchResult = map.matchResults?.[0];
-  if (!matchResult || !selectedMatch.value) return undefined;
-
-  // Match team by name to get the correct score, in case the order differs
-  const tournamentTeamName = teamNumber === 1 ? selectedMatch.value.team1Name : selectedMatch.value.team2Name;
-
-  if (matchResult.team1Name === tournamentTeamName) {
-    return matchResult.team1Tickets;
-  } else if (matchResult.team2Name === tournamentTeamName) {
-    return matchResult.team2Tickets;
-  }
-
-  return undefined;
-};
-
 const getTeamPlayers = (map: any, teamNumber: 1 | 2): any[] => {
   if (!map.round?.players) return [];
   const teamName = getTeamName(map, teamNumber);
