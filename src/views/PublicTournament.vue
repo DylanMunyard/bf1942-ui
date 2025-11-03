@@ -537,25 +537,25 @@
 
         <!-- Player Comparison Section -->
         <div class="mt-8 space-y-4">
-          <h3 class="text-lg font-bold text-slate-300">Compare Players</h3>
+          <h3 class="text-lg font-bold" :style="{ color: getAccentColor() }">Compare Players</h3>
 
           <!-- Rosters Table -->
           <div class="overflow-x-auto">
-            <table class="w-full border-collapse">
+            <table class="w-full border-collapse rounded-lg overflow-hidden border-2" :style="{ borderColor: getAccentColor() }">
               <thead>
-                <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
-                  <th class="p-4 text-center font-bold text-lg uppercase tracking-wide border-b border-slate-700/30 bg-cyan-500/10 border-4 border-cyan-400/60">
+                <tr :style="{ backgroundColor: getBackgroundMuteColor() }">
+                  <th class="p-4 text-center font-bold text-lg uppercase tracking-wide border-b border-r-2" :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.1), color: getAccentColor() }">
                     <div class="flex flex-col items-center gap-2">
-                      <span class="text-cyan-400">{{ selectedMatch.team1Name }}</span>
-                      <span class="text-slate-400 text-xs font-normal">
+                      <span>{{ selectedMatch.team1Name }}</span>
+                      <span class="text-xs font-normal" :style="{ color: getTextMutedColor() }">
                         {{ getTeamRoster(selectedMatch, selectedMatch.team1Name).length }} players
                       </span>
                     </div>
                   </th>
-                  <th class="p-4 text-center font-bold text-lg uppercase tracking-wide border-b border-slate-700/30 bg-orange-500/10 border-4 border-orange-400/60">
+                  <th class="p-4 text-center font-bold text-lg uppercase tracking-wide border-b" :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.1), color: getAccentColor() }">
                     <div class="flex flex-col items-center gap-2">
-                      <span class="text-orange-400">{{ selectedMatch.team2Name }}</span>
-                      <span class="text-slate-400 text-xs font-normal">
+                      <span>{{ selectedMatch.team2Name }}</span>
+                      <span class="text-xs font-normal" :style="{ color: getTextMutedColor() }">
                         {{ getTeamRoster(selectedMatch, selectedMatch.team2Name).length }} players
                       </span>
                     </div>
@@ -569,39 +569,68 @@
                     getTeamRoster(selectedMatch, selectedMatch.team2Name).length
                   )"
                   :key="idx"
-                  class="border-b border-slate-700/20 hover:bg-slate-800/30 transition-all"
+                  class="border-b transition-all"
+                  :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }"
+                  @mouseenter="(e) => {
+                    if (e.currentTarget) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.08);
+                    }
+                  }"
+                  @mouseleave="(e) => {
+                    if (e.currentTarget) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = getBackgroundMuteColor();
+                    }
+                  }"
                 >
                   <!-- Team 1 Player -->
-                  <td class="p-3 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
+                  <td class="p-3 border-r-2" :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.05) }">
                     <button
                       v-if="getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx]"
                       class="w-full text-left px-3 py-2 rounded-lg transition-all"
                       :class="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)
-                        ? 'bg-purple-500/20 border-2 border-purple-500/50 text-purple-300 font-bold'
-                        : 'hover:bg-cyan-500/10 text-cyan-400 hover:text-cyan-300'"
+                        ? 'border-2 font-bold'
+                        : ''"
+                      :style="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)
+                        ? {
+                            backgroundColor: getAccentColorWithOpacity(0.2),
+                            borderColor: getAccentColor(),
+                            color: getAccentColor()
+                          }
+                        : {
+                            color: getAccentColor()
+                          }"
                       @click="selectPlayerForComparison(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName, selectedMatch.team1Name)"
                     >
                       <div class="flex items-center justify-between">
                         <span>{{ getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName }}</span>
-                        <svg v-if="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)" class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                        <svg v-if="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" :style="{ color: getAccentColor() }">
                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
                       </div>
                     </button>
                   </td>
                   <!-- Team 2 Player -->
-                  <td class="p-3 bg-orange-500/5 border-l-2 border-l-orange-400/40">
+                  <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.05) }">
                     <button
                       v-if="getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx]"
                       class="w-full text-left px-3 py-2 rounded-lg transition-all"
                       :class="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)
-                        ? 'bg-purple-500/20 border-2 border-purple-500/50 text-purple-300 font-bold'
-                        : 'hover:bg-orange-500/10 text-orange-400 hover:text-orange-300'"
+                        ? 'border-2 font-bold'
+                        : ''"
+                      :style="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)
+                        ? {
+                            backgroundColor: getAccentColorWithOpacity(0.2),
+                            borderColor: getAccentColor(),
+                            color: getAccentColor()
+                          }
+                        : {
+                            color: getAccentColor()
+                          }"
                       @click="selectPlayerForComparison(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName, selectedMatch.team2Name)"
                     >
                       <div class="flex items-center justify-between">
                         <span>{{ getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName }}</span>
-                        <svg v-if="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)" class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                        <svg v-if="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" :style="{ color: getAccentColor() }">
                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
                       </div>
