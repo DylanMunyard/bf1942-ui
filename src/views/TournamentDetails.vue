@@ -236,15 +236,27 @@
                 Schedule and track matches between teams
               </p>
             </div>
-            <button
-              class="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
-              @click="showAddMatchModal = true"
-              :disabled="tournament.teams.length < 2"
-              :title="tournament.teams.length < 2 ? 'Create at least 2 teams first' : ''"
-            >
-              <span class="text-lg">+</span>
-              <span>Schedule</span>
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-lg transition-all flex items-center gap-2"
+                @click="openRecalculateModal"
+                title="Refresh tournament rankings"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Rankings</span>
+              </button>
+              <button
+                class="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                @click="showAddMatchModal = true"
+                :disabled="tournament.teams.length < 2"
+                :title="tournament.teams.length < 2 ? 'Create at least 2 teams first' : ''"
+              >
+                <span class="text-lg">+</span>
+                <span>Schedule</span>
+              </button>
+            </div>
           </div>
 
           <div class="overflow-x-auto">
@@ -549,6 +561,125 @@
       </div>
     </div>
 
+    <!-- Recalculate Leaderboard Modal -->
+    <div
+      v-if="showRecalculateModal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="closeRecalculateModal"
+    >
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+        <div class="flex items-start gap-4 mb-6">
+          <div class="w-12 h-12 bg-cyan-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-slate-100 mb-2">
+              Recalculate Leaderboard
+            </h3>
+            <p class="text-slate-400 text-sm">
+              Choose how you want to recalculate tournament rankings
+            </p>
+          </div>
+        </div>
+
+        <!-- Option 1: Recalculate Everything -->
+        <div class="mb-4 p-3 bg-slate-700/30 rounded-lg border border-slate-600/50 hover:border-slate-600 transition-all cursor-pointer" @click="recalculationMode = 'everything'">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input
+              type="radio"
+              v-model="recalculationMode"
+              value="everything"
+              class="mt-1"
+            >
+            <div>
+              <div class="font-medium text-slate-200">Recalculate Everything</div>
+              <div class="text-xs text-slate-400 mt-1">Recalculates all weeks and cumulative leaderboard</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Option 2: Fix a Specific Week (only show if multiple weeks) -->
+        <div v-if="hasMultipleWeeks" class="mb-4 p-3 bg-slate-700/30 rounded-lg border border-slate-600/50 hover:border-slate-600 transition-all cursor-pointer" @click="recalculationMode = 'specific-week'">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input
+              type="radio"
+              v-model="recalculationMode"
+              value="specific-week"
+              class="mt-1"
+            >
+            <div class="flex-1">
+              <div class="font-medium text-slate-200">Fix a Specific Week</div>
+              <div class="text-xs text-slate-400 mt-1">Recalculate only that week</div>
+              <select
+                v-if="recalculationMode === 'specific-week'"
+                v-model="selectedWeek"
+                class="mt-2 w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
+              >
+                <option :value="null">Select a week...</option>
+                <option v-for="week in availableWeeks" :key="week" :value="week">
+                  {{ week }}
+                </option>
+              </select>
+            </div>
+          </label>
+        </div>
+
+        <!-- Option 3: Recalculate From Week Onwards (only show if multiple weeks) -->
+        <div v-if="hasMultipleWeeks" class="mb-6 p-3 bg-slate-700/30 rounded-lg border border-slate-600/50 hover:border-slate-600 transition-all cursor-pointer" @click="recalculationMode = 'from-week'">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input
+              type="radio"
+              v-model="recalculationMode"
+              value="from-week"
+              class="mt-1"
+            >
+            <div class="flex-1">
+              <div class="font-medium text-slate-200">Recalculate From Week Onwards</div>
+              <div class="text-xs text-slate-400 mt-1">Recalculate from selected week through cumulative</div>
+              <select
+                v-if="recalculationMode === 'from-week'"
+                v-model="fromWeek"
+                class="mt-2 w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
+              >
+                <option :value="null">Select starting week...</option>
+                <option v-for="week in availableWeeks" :key="week" :value="week">
+                  {{ week }}
+                </option>
+              </select>
+            </div>
+          </label>
+        </div>
+
+        <!-- Message Display -->
+        <div v-if="recalculationMessage" class="mb-6 p-3 rounded-lg" :class="recalculationMessage.type === 'success' ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/30' : 'bg-red-500/20 text-red-200 border border-red-500/30'">
+          {{ recalculationMessage.text }}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-3">
+          <button
+            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors"
+            @click="closeRecalculateModal"
+            :disabled="isRecalculating"
+          >
+            Cancel
+          </button>
+          <button
+            class="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+            :disabled="isRecalculating || (recalculationMode === 'specific-week' && !selectedWeek) || (recalculationMode === 'from-week' && !fromWeek)"
+            @click="recalculateLeaderboard"
+          >
+            <svg v-if="!isRecalculating" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span>{{ isRecalculating ? 'Recalculating...' : 'Recalculate' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -595,6 +726,12 @@ const deleteMatchConfirmation = ref<{ id: number } | null>(null);
 const isDeleting = ref(false);
 const editingTeam = ref<TournamentTeam | undefined>(undefined);
 const editingMatch = ref<TournamentMatch | undefined>(undefined);
+const showRecalculateModal = ref(false);
+const recalculationMode = ref<'everything' | 'specific-week' | 'from-week'>('everything');
+const selectedWeek = ref<string | null>(null);
+const fromWeek = ref<string | null>(null);
+const isRecalculating = ref(false);
+const recalculationMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null);
 
 const tournamentId = parseInt(route.params.id as string);
 
@@ -644,6 +781,18 @@ const matchesByWeekGroups = computed(() => {
       if (b.week === null) return -1;
       return (a.week || '').localeCompare(b.week || '');
     });
+});
+
+const availableWeeks = computed(() => {
+  // Get weeks from matchesByWeekGroups, excluding null weeks
+  return matchesByWeekGroups.value
+    .filter(group => group.week !== null)
+    .map(group => group.week as string);
+});
+
+const hasMultipleWeeks = computed(() => {
+  // Check if there are multiple weeks (excluding null)
+  return availableWeeks.value.length > 1;
 });
 
 const renderedRules = computed(() => {
@@ -942,6 +1091,69 @@ const getResultsAggregation = (map: TournamentMatchMap): string => {
 
 const handleResize = () => {
   isDesktop.value = window.innerWidth > 768;
+};
+
+const openRecalculateModal = () => {
+  recalculationMode.value = 'everything';
+  selectedWeek.value = null;
+  fromWeek.value = null;
+  recalculationMessage.value = null;
+  showRecalculateModal.value = true;
+};
+
+const closeRecalculateModal = () => {
+  showRecalculateModal.value = false;
+  recalculationMessage.value = null;
+};
+
+const recalculateLeaderboard = async () => {
+  isRecalculating.value = true;
+  recalculationMessage.value = null;
+
+  try {
+    const { authService } = await import('@/services/authService');
+    await authService.ensureValidToken();
+    const token = localStorage.getItem('authToken');
+
+    const payload: Record<string, string> = {};
+    if (recalculationMode.value === 'specific-week' && selectedWeek.value) {
+      payload.week = selectedWeek.value;
+    } else if (recalculationMode.value === 'from-week' && fromWeek.value) {
+      payload.fromWeek = fromWeek.value;
+    }
+
+    const response = await fetch(`/stats/admin/tournaments/${tournamentId}/leaderboard/recalculate`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to recalculate leaderboard');
+    }
+
+    recalculationMessage.value = {
+      type: 'success',
+      text: 'Leaderboard recalculated successfully'
+    };
+
+    // Close modal after 2 seconds
+    setTimeout(() => {
+      closeRecalculateModal();
+    }, 2000);
+  } catch (err) {
+    console.error('Error recalculating leaderboard:', err);
+    recalculationMessage.value = {
+      type: 'error',
+      text: err instanceof Error ? err.message : 'Failed to recalculate leaderboard'
+    };
+  } finally {
+    isRecalculating.value = false;
+  }
 };
 
 onMounted(() => {
