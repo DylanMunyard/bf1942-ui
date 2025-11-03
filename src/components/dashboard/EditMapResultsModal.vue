@@ -21,16 +21,12 @@
       <div class="px-6 py-4 space-y-6">
         <div v-for="map in props.match.maps || []" :key="map.id" class="border border-slate-700 rounded-lg p-4 bg-slate-800/30">
           <!-- Map Header -->
-          <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-700">
-            <div>
-              <h3 class="text-sm font-bold text-white">{{ map.mapName }}</h3>
-              <p class="text-xs text-slate-400 mt-1">Map {{ map.mapOrder + 1 }} • Aggregation: <span class="text-emerald-400 font-bold">{{ getResultsAggregation(map) }}</span></p>
-            </div>
+          <div class="mb-4 pb-3 border-b border-slate-700">
+            <h3 class="text-sm font-bold text-white">{{ map.mapName }}</h3>
           </div>
 
           <!-- Results Table for this Map -->
           <div class="space-y-3">
-            <p class="text-xs font-semibold text-slate-300">Results ({{ map.matchResults.length }})</p>
 
             <!-- Results Table -->
             <div class="overflow-x-auto">
@@ -53,53 +49,175 @@
                     :key="result.id"
                     class="border-b border-slate-700 hover:bg-slate-800/30 transition"
                   >
-                    <td class="p-2 text-slate-400">{{ index + 1 }}</td>
-                    <td class="p-2 text-white">{{ result.team1Name || '-' }}</td>
-                    <td class="p-2 text-center text-emerald-400 font-medium">{{ result.team1Tickets }}</td>
-                    <td class="p-2 text-white">{{ result.team2Name || '-' }}</td>
-                    <td class="p-2 text-center text-emerald-400 font-medium">{{ result.team2Tickets }}</td>
-                    <td class="p-2 text-center">
-                      <span v-if="result.winningTeamName" class="text-yellow-400 font-bold">🏆 {{ result.winningTeamName }}</span>
-                      <span v-else class="text-slate-500 text-xs">-</span>
-                    </td>
-                    <td class="p-2 text-center flex gap-1 justify-center">
-                      <button
-                        @click="editResult(map, result)"
-                        class="p-1 text-blue-400 hover:text-blue-300 transition text-xs"
-                        title="Edit result"
-                      >
-                        ✎
-                      </button>
-                      <button
-                        @click="deleteResult(map, result.id)"
-                        :disabled="isSaving"
-                        class="p-1 text-red-400 hover:text-red-300 disabled:text-slate-600 transition text-xs"
-                        title="Delete result"
-                      >
-                        ✕
-                      </button>
+                    <!-- Read-only view -->
+                    <template v-if="!editingResult || editingResult.id !== result.id">
+                      <td class="p-2 text-slate-400">{{ index + 1 }}</td>
+                      <td class="p-2 text-white">{{ result.team1Name || '-' }}</td>
+                      <td class="p-2 text-center text-emerald-400 font-medium">{{ result.team1Tickets }}</td>
+                      <td class="p-2 text-white">{{ result.team2Name || '-' }}</td>
+                      <td class="p-2 text-center text-emerald-400 font-medium">{{ result.team2Tickets }}</td>
+                      <td class="p-2 text-center">
+                        <span v-if="result.winningTeamName" class="text-yellow-400 font-bold">🏆 {{ result.winningTeamName }}</span>
+                        <span v-else class="text-slate-500 text-xs">-</span>
+                      </td>
+                      <td class="p-2 text-center flex gap-2 justify-center">
+                        <button
+                          @click="editResult(map, result)"
+                          class="px-3 py-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded transition text-sm"
+                          title="Edit result"
+                        >
+                          ✎ Edit
+                        </button>
+                        <button
+                          @click="deleteResult(map, result.id)"
+                          :disabled="isSaving"
+                          class="px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 disabled:text-slate-600 disabled:hover:bg-transparent rounded transition text-sm"
+                          title="Delete result"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </td>
+                    </template>
+
+                    <!-- Inline edit view -->
+                    <template v-else>
+                      <td colspan="7" class="p-3">
+                        <div class="space-y-3 bg-slate-900/50 p-3 rounded border border-slate-600">
+                          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <!-- Team 1 Dropdown -->
+                            <div>
+                              <label class="text-xs text-slate-400 block mb-1 font-semibold">Team 1</label>
+                              <select
+                                v-model.number="formData.team1Id"
+                                class="w-full px-2 py-1.5 bg-slate-900 border border-slate-600 rounded text-white text-sm"
+                              >
+                                <option :value="undefined">Select team</option>
+                                <option v-for="team in getMatchTeams()" :key="team.id" :value="team.id">
+                                  {{ team.name }}
+                                </option>
+                              </select>
+                            </div>
+
+                            <!-- Team 1 Score -->
+                            <div>
+                              <label class="text-xs text-slate-400 block mb-1 font-semibold">Score</label>
+                              <input
+                                v-model.number="formData.team1Tickets"
+                                type="number"
+                                min="0"
+                                class="w-full px-1.5 py-1 bg-slate-900 border border-slate-600 rounded text-white text-sm text-center"
+                                placeholder="0"
+                              />
+                            </div>
+
+                            <!-- Team 2 Dropdown -->
+                            <div>
+                              <label class="text-xs text-slate-400 block mb-1 font-semibold">Team 2</label>
+                              <select
+                                v-model.number="formData.team2Id"
+                                class="w-full px-2 py-1.5 bg-slate-900 border border-slate-600 rounded text-white text-sm"
+                              >
+                                <option :value="undefined">Select team</option>
+                                <option v-for="team in getMatchTeams()" :key="team.id" :value="team.id">
+                                  {{ team.name }}
+                                </option>
+                              </select>
+                            </div>
+
+                            <!-- Team 2 Score -->
+                            <div>
+                              <label class="text-xs text-slate-400 block mb-1 font-semibold">Score</label>
+                              <input
+                                v-model.number="formData.team2Tickets"
+                                type="number"
+                                min="0"
+                                class="w-full px-1.5 py-1 bg-slate-900 border border-slate-600 rounded text-white text-sm text-center"
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Round Linking -->
+                          <div class="border-t border-slate-600 pt-3">
+                            <div v-if="formData.roundId" class="flex items-center gap-2">
+                              <span class="text-xs text-slate-300">📌 Round: <span class="text-emerald-400 font-medium">{{ formData.roundId }}</span></span>
+                              <button
+                                @click="currentMapForRound = map; showLinkRoundModal = true"
+                                :disabled="isSaving"
+                                class="px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 text-white rounded transition font-medium ml-auto"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                @click="unlinkRoundFromResult()"
+                                :disabled="isSaving"
+                                class="px-2 py-1 text-xs bg-red-600 hover:bg-red-700 disabled:bg-slate-600 text-white rounded transition font-medium"
+                              >
+                                Unlink
+                              </button>
+                            </div>
+                            <div v-else>
+                              <button
+                                @click="currentMapForRound = map; showLinkRoundModal = true"
+                                :disabled="isSaving"
+                                class="px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 text-white rounded transition font-medium"
+                              >
+                                Link Round
+                              </button>
+                            </div>
+                          </div>
+
+                          <!-- Action Buttons -->
+                          <div class="flex gap-2 pt-2 border-t border-slate-600">
+                            <button
+                              @click="saveManualResult(map)"
+                              :disabled="isSaving || !formData.team1Id || !formData.team2Id"
+                              class="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 text-white rounded transition font-medium"
+                            >
+                              {{ isSaving ? 'Saving...' : 'Update' }}
+                            </button>
+                            <button
+                              @click="cancelManualEntry()"
+                              class="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </template>
+                  </tr>
+
+                  <!-- Add New Result Trigger Row -->
+                  <tr v-if="editingMapId !== map.id && !editingResult" class="border-b border-slate-700 bg-slate-800/50">
+                    <td class="p-2 text-slate-400">+</td>
+                    <td colspan="6" class="p-2">
+                      <div class="flex gap-2 items-center justify-center h-full">
+                        <p class="text-xs text-slate-400 font-semibold">Add New Result:</p>
+                        <button
+                          @click="openManualEntry(map)"
+                          class="px-3 py-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded transition text-sm font-medium"
+                          title="Enter a manual result"
+                        >
+                          + Manually
+                        </button>
+                        <span class="text-slate-600">|</span>
+                        <button
+                          @click="currentMapForRound = map; showLinkRoundModal = true"
+                          class="px-3 py-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded transition text-sm font-medium"
+                          title="Link a round from the match"
+                        >
+                          + Link
+                        </button>
+                      </div>
                     </td>
                   </tr>
 
-                  <!-- New Result Row -->
-                  <tr class="border-b border-slate-700 bg-slate-800/50">
+                  <!-- New Result Form Row (only show when adding new result) -->
+                  <tr v-if="editingMapId === map.id && !editingResult" class="border-b border-slate-700 bg-slate-800/50">
                     <td class="p-2 text-slate-400">+</td>
-                    <td colspan="5" class="p-2">
-                      <div v-if="editingMapId !== map.id" class="flex gap-2 h-full items-center justify-start">
-                        <button
-                          @click="openManualEntry(map)"
-                          class="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition font-medium"
-                        >
-                          Enter Manual Result
-                        </button>
-                        <button
-                          @click="currentMapForRound = map; showLinkRoundModal = true"
-                          class="px-2 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded transition font-medium"
-                        >
-                          Link Round
-                        </button>
-                      </div>
-                      <div v-else class="space-y-2">
+                    <td colspan="6" class="p-2">
+                      <div class="space-y-2 bg-slate-900/50 p-3 rounded border border-slate-600">
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           <!-- Team 1 Dropdown -->
                           <div>
@@ -122,7 +240,7 @@
                               v-model.number="formData.team1Tickets"
                               type="number"
                               min="0"
-                              class="w-full px-2 py-1.5 bg-slate-900 border border-slate-600 rounded text-white text-sm"
+                              class="w-full px-1.5 py-1 bg-slate-900 border border-slate-600 rounded text-white text-sm text-center"
                               placeholder="0"
                             />
                           </div>
@@ -148,36 +266,38 @@
                               v-model.number="formData.team2Tickets"
                               type="number"
                               min="0"
-                              class="w-full px-2 py-1.5 bg-slate-900 border border-slate-600 rounded text-white text-sm"
+                              class="w-full px-1.5 py-1 bg-slate-900 border border-slate-600 rounded text-white text-sm text-center"
                               placeholder="0"
                             />
                           </div>
                         </div>
 
-                        <!-- Round Management (when editing existing result) -->
-                        <div v-if="editingResult" class="border-t border-slate-600 pt-2 mt-2">
-                          <p class="text-xs text-slate-400 font-semibold mb-2">Round Management</p>
-                          <div v-if="formData.roundId" class="text-xs text-slate-300 mb-2">
-                            📌 Linked to Round: <span class="text-emerald-400">{{ formData.roundId }}</span>
-                          </div>
-                          <div v-else class="text-xs text-slate-400 mb-2">
-                            No round linked
-                          </div>
-                          <div class="flex gap-2">
+                        <!-- Round Linking (when adding new result) -->
+                        <div class="border-t border-slate-600 pt-2 mt-2">
+                          <div v-if="formData.roundId" class="flex items-center gap-2">
+                            <span class="text-xs text-slate-300">📌 Round: <span class="text-emerald-400 font-medium">{{ formData.roundId }}</span></span>
                             <button
-                              @click="currentMapForRound = editingMapId === null ? null : (props.match.maps || []).find(m => m.id === editingMapId) || null; showLinkRoundModal = true"
+                              @click="currentMapForRound = map; showLinkRoundModal = true"
                               :disabled="isSaving"
-                              class="px-2 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 text-white rounded transition font-medium"
+                              class="px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 text-white rounded transition font-medium ml-auto"
                             >
-                              {{ formData.roundId ? 'Change Round' : 'Link Round' }}
+                              Edit
                             </button>
                             <button
-                              v-if="formData.roundId"
                               @click="unlinkRoundFromResult()"
                               :disabled="isSaving"
                               class="px-2 py-1 text-xs bg-red-600 hover:bg-red-700 disabled:bg-slate-600 text-white rounded transition font-medium"
                             >
                               Unlink
+                            </button>
+                          </div>
+                          <div v-else>
+                            <button
+                              @click="currentMapForRound = map; showLinkRoundModal = true"
+                              :disabled="isSaving"
+                              class="px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 text-white rounded transition font-medium"
+                            >
+                              Link Round
                             </button>
                           </div>
                         </div>
@@ -189,7 +309,7 @@
                             :disabled="isSaving || !formData.team1Id || !formData.team2Id"
                             class="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 text-white rounded transition font-medium"
                           >
-                            {{ isSaving ? 'Saving...' : editingResult ? 'Update' : 'Add Result' }}
+                            {{ isSaving ? 'Saving...' : 'Add Result' }}
                           </button>
                           <button
                             @click="cancelManualEntry()"
@@ -200,13 +320,12 @@
                         </div>
                       </div>
                     </td>
-                    <td class="p-2"></td>
                   </tr>
 
                   <!-- Empty State Message -->
-                  <tr v-if="map.matchResults.length === 0" class="border-b border-slate-700">
+                  <tr v-if="map.matchResults.length === 0 && editingMapId !== map.id" class="border-b border-slate-700">
                     <td colspan="7" class="p-4 text-center text-slate-400 text-sm">
-                      No results yet. Use the row above to add one.
+                      No results yet. Click "Add New Result" below to add one.
                     </td>
                   </tr>
                 </tbody>
@@ -245,6 +364,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import AddRoundModal from './AddRoundModal.vue';
+import { useNotifications } from '@/composables/useNotifications';
 import {
   TournamentDetail,
   TournamentMatch,
@@ -266,6 +386,7 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+const { addNotification } = useNotifications();
 
 const showLinkRoundModal = ref(false);
 const editingMapId = ref<number | null>(null);
@@ -284,18 +405,6 @@ const formData = ref({
   winningTeamName: '',
   roundId: undefined as string | undefined,
 });
-
-function getResultsAggregation(map: TournamentMatchMap): string {
-  const results = map.matchResults;
-  if (!results || results.length === 0) return '—';
-
-  const team1Id = results[0]?.team1Id;
-  if (!team1Id) return '—';
-
-  const team1Wins = results.filter((r) => r.winningTeamId === team1Id).length;
-  const team2Wins = results.length - team1Wins;
-  return `${team1Wins}-${team2Wins}`;
-}
 
 function getMatchTeams() {
   if (!props.tournament) return [];
@@ -356,7 +465,12 @@ function cancelManualEntry(): void {
 
 async function saveManualResult(map: TournamentMatchMap): Promise<void> {
   if (!formData.value.team1Id || !formData.value.team2Id) {
-    alert('Please select both teams');
+    addNotification({
+      type: 'warning',
+      title: 'Incomplete Form',
+      message: 'Please select both teams',
+      duration: 4000,
+    });
     return;
   }
 
@@ -367,9 +481,11 @@ async function saveManualResult(map: TournamentMatchMap): Promise<void> {
       ? formData.value.team1Id
       : formData.value.team2Id;
 
+    let updatedResult: TournamentMatchResult;
+
     if (editingResult.value) {
       // Update existing result - now accepts all fields including team IDs
-      await adminTournamentService.updateManualResult(
+      updatedResult = await adminTournamentService.updateManualResult(
         props.tournament.id,
         editingResult.value.id,
         {
@@ -382,7 +498,7 @@ async function saveManualResult(map: TournamentMatchMap): Promise<void> {
       );
     } else {
       // Create new result
-      await adminTournamentService.createManualResult(
+      updatedResult = await adminTournamentService.createManualResult(
         props.tournament.id,
         props.match.id,
         map.id,
@@ -397,35 +513,59 @@ async function saveManualResult(map: TournamentMatchMap): Promise<void> {
       );
     }
 
+    // Update local state with returned result so UI refreshes immediately
+    const mapIndex = props.match.maps?.findIndex(m => m.id === map.id);
+    if (mapIndex !== undefined && mapIndex !== -1 && props.match.maps) {
+      const resultIndex = props.match.maps[mapIndex].matchResults.findIndex(r => r.id === updatedResult.id);
+      if (resultIndex !== -1) {
+        // Update existing result
+        props.match.maps[mapIndex].matchResults[resultIndex] = updatedResult;
+      } else {
+        // Add new result
+        props.match.maps[mapIndex].matchResults.push(updatedResult);
+      }
+    }
+
     cancelManualEntry();
     emit('updated');
   } catch (error) {
     console.error('Failed to save result:', error);
-    alert('Failed to save result. Please try again.');
+    const errorMessage = error instanceof Error ? error.message : 'There was an error saving the result. Please try again.';
+    addNotification({
+      type: 'error',
+      title: 'Failed to Save Result',
+      message: errorMessage,
+      duration: 5000,
+    });
   } finally {
     isSaving.value = false;
   }
 }
 
-async function deleteResult(_map: TournamentMatchMap, resultId: number): Promise<void> {
+async function deleteResult(map: TournamentMatchMap, resultId: number): Promise<void> {
   if (!confirm('Delete this result?')) return;
 
   isSaving.value = true;
   try {
-    // Call API to delete the result
-    // Note: This endpoint may need to be added to the backend if it doesn't exist
-    const response = await fetch(`/stats/admin/tournaments/${props.tournament.id}/match-results/${resultId}`, {
-      method: 'DELETE',
-    });
+    // Delete via service (handles authentication)
+    await adminTournamentService.deleteMatchResult(props.tournament.id, resultId);
 
-    if (!response.ok) {
-      throw new Error('Failed to delete result');
+    // Remove from local state
+    const resultIndex = map.matchResults.findIndex(r => r.id === resultId);
+    if (resultIndex !== -1) {
+      map.matchResults.splice(resultIndex, 1);
     }
 
     emit('updated');
   } catch (error) {
     console.error('Failed to delete result:', error);
-    alert('Failed to delete result. Please try again.');
+    const errorMessage = error instanceof Error ? error.message : 'There was an error deleting the result. Please try again.';
+    addNotification({
+      type: 'error',
+      title: 'Failed to Delete Result',
+      message: errorMessage,
+      duration: 5000,
+    });
   } finally {
     isSaving.value = false;
   }
@@ -459,11 +599,12 @@ async function onRoundLinked(roundId: string): Promise<void> {
 
       if (newResult) {
         // Show warning to user
-        alert(
-          `⚠️ Team Mapping Warning:\n\n${responseWithWarning.teamMappingWarning}\n\n` +
-          `The round has been linked, but team names couldn't be auto-identified. ` +
-          `Please manually select the correct teams in the form below.`
-        );
+        addNotification({
+          type: 'warning',
+          title: 'Team Mapping Warning',
+          message: `${responseWithWarning.teamMappingWarning}\n\nThe round has been linked, but team names couldn't be auto-identified. Please manually select the correct teams in the form below.`,
+          duration: 8000,
+        });
 
         // Open the form to allow manual team mapping
         editingMapId.value = map.id;
@@ -481,10 +622,12 @@ async function onRoundLinked(roundId: string): Promise<void> {
         };
       } else {
         // Warning but no result found - still emit updated to refresh
-        alert(
-          `⚠️ Team Mapping Warning:\n\n${responseWithWarning.teamMappingWarning}\n\n` +
-          `Please edit the result above to set the correct teams.`
-        );
+        addNotification({
+          type: 'warning',
+          title: 'Team Mapping Warning',
+          message: `${responseWithWarning.teamMappingWarning}\n\nPlease edit the result above to set the correct teams.`,
+          duration: 8000,
+        });
         emit('updated');
       }
     } else {
@@ -493,7 +636,13 @@ async function onRoundLinked(roundId: string): Promise<void> {
     }
   } catch (error) {
     console.error('Failed to link round:', error);
-    alert('Failed to link round. Please try again.');
+    const errorMessage = error instanceof Error ? error.message : 'There was an error linking the round. Please try again.';
+    addNotification({
+      type: 'error',
+      title: 'Failed to Link Round',
+      message: errorMessage,
+      duration: 5000,
+    });
   } finally {
     isSaving.value = false;
   }
@@ -513,29 +662,22 @@ async function linkRoundToExistingResult(roundId: string): Promise<void> {
   isSaving.value = true;
   try {
     console.log(`Linking round ${roundId} to result ${editingResult.value.id}`);
-    const response = await fetch(
-      `/stats/admin/tournaments/${props.tournament.id}/match-results/${editingResult.value.id}/round`,
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roundId }),
-      }
+    // Link via service (handles authentication)
+    const result = await adminTournamentService.linkRoundToResult(
+      props.tournament.id,
+      editingResult.value.id,
+      roundId
     );
-
-    if (!response.ok) {
-      throw new Error('Failed to link round');
-    }
-
-    const result = await response.json();
     console.log('Round link response:', result);
 
     // Check for team mapping warning
-    if (result.teamMappingWarning) {
-      alert(
-        `⚠️ Team Mapping Warning:\n\n${result.teamMappingWarning}\n\n` +
-        `The round has been linked, but team names couldn't be auto-identified. ` +
-        `Please manually select the correct teams in the form.`
-      );
+    if ((result as any).teamMappingWarning) {
+      addNotification({
+        type: 'warning',
+        title: 'Team Mapping Warning',
+        message: `${(result as any).teamMappingWarning}\n\nThe round has been linked, but team names couldn't be auto-identified. Please manually select the correct teams in the form.`,
+        duration: 8000,
+      });
 
       // Update form with the result data from response
       editingResult.value = result;
@@ -548,7 +690,7 @@ async function linkRoundToExistingResult(roundId: string): Promise<void> {
         team2Tickets: result.team2Tickets || 0,
         winningTeamId: result.winningTeamId,
         winningTeamName: result.winningTeamName || '',
-        roundId: result.roundId,
+        roundId: (result as any).roundId,
       };
     } else {
       // Success - update form with response data and refresh
@@ -562,13 +704,19 @@ async function linkRoundToExistingResult(roundId: string): Promise<void> {
         team2Tickets: result.team2Tickets || 0,
         winningTeamId: result.winningTeamId,
         winningTeamName: result.winningTeamName || '',
-        roundId: result.roundId,
+        roundId: (result as any).roundId,
       };
       emit('updated');
     }
   } catch (error) {
     console.error('Failed to link round to result:', error);
-    alert('Failed to link round. Please try again.');
+    const errorMessage = error instanceof Error ? error.message : 'There was an error linking the round. Please try again.';
+    addNotification({
+      type: 'error',
+      title: 'Failed to Link Round',
+      message: errorMessage,
+      duration: 5000,
+    });
   } finally {
     isSaving.value = false;
   }
@@ -579,23 +727,26 @@ async function unlinkRoundFromResult(): Promise<void> {
 
   isSaving.value = true;
   try {
-    const response = await fetch(
-      `/stats/admin/tournaments/${props.tournament.id}/match-results/${editingResult.value.id}/round`,
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roundId: null }),
-      }
+    // Unlink via service (handles authentication)
+    const result = await adminTournamentService.unlinkRoundFromResult(
+      props.tournament.id,
+      editingResult.value.id
     );
 
-    if (!response.ok) {
-      throw new Error('Failed to unlink round');
-    }
+    // Update local state with result
+    editingResult.value = result;
+    formData.value.roundId = (result as any).roundId;
 
     emit('updated');
   } catch (error) {
     console.error('Failed to unlink round:', error);
-    alert('Failed to unlink round. Please try again.');
+    const errorMessage = error instanceof Error ? error.message : 'There was an error unlinking the round. Please try again.';
+    addNotification({
+      type: 'error',
+      title: 'Failed to Unlink Round',
+      message: errorMessage,
+      duration: 5000,
+    });
   } finally {
     isSaving.value = false;
   }

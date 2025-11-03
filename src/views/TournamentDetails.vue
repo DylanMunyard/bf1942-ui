@@ -921,16 +921,22 @@ const getTeamDisplayName = (map: TournamentMatchMap, teamNumber: 1 | 2): string 
   }
 };
 
-// Helper function to get results aggregation (e.g., "2-0", "1-1")
+// Helper function to get results aggregation (e.g., "2-0", "1-1", "1-0-1" with draws)
 const getResultsAggregation = (map: TournamentMatchMap): string => {
   const results = map.matchResults;
   if (!results || results.length === 0) return '—';
 
   const team1Id = results[0]?.team1Id;
-  if (!team1Id) return '—';
+  const team2Id = results[0]?.team2Id;
+  if (!team1Id || !team2Id) return '—';
 
   const team1Wins = results.filter((r) => r.winningTeamId === team1Id).length;
-  const team2Wins = results.length - team1Wins;
+  const team2Wins = results.filter((r) => r.winningTeamId === team2Id).length;
+  const draws = results.filter((r) => r.winningTeamId !== team1Id && r.winningTeamId !== team2Id).length;
+
+  if (draws > 0) {
+    return `${team1Wins}-${team2Wins}-${draws}`;
+  }
   return `${team1Wins}-${team2Wins}`;
 };
 

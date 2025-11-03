@@ -471,6 +471,29 @@ class AdminTournamentService {
       body: JSON.stringify(request),
     });
   }
+
+  // Delete match result
+  async deleteMatchResult(tournamentId: number, resultId: number): Promise<void> {
+    await this.request(`/${tournamentId}/match-results/${resultId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Link round to match result
+  async linkRoundToResult(tournamentId: number, resultId: number, roundId: string): Promise<TournamentMatchResult> {
+    return this.request<TournamentMatchResult>(`/${tournamentId}/match-results/${resultId}/round`, {
+      method: 'PUT',
+      body: JSON.stringify({ roundId }),
+    });
+  }
+
+  // Unlink round from match result
+  async unlinkRoundFromResult(tournamentId: number, resultId: number): Promise<TournamentMatchResult> {
+    return this.request<TournamentMatchResult>(`/${tournamentId}/match-results/${resultId}/round`, {
+      method: 'PUT',
+      body: JSON.stringify({ roundId: null }),
+    });
+  }
 }
 
 export const adminTournamentService = new AdminTournamentService();
