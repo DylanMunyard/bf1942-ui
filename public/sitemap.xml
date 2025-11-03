@@ -37,6 +37,8 @@
     <priority>0.8</priority>
   </url>
 
-  <!-- Add individual server and player pages dynamically via API -->
-  
+  <!-- Tournaments Pages -->
+  <!-- Note: Individual tournament pages (/tournaments/:id) should be generated dynamically
+       from the tournament API and added to this sitemap via a backend service -->
+
 </urlset>
