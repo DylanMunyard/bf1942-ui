@@ -154,11 +154,11 @@
                     <a href="https://bflist.io/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 transition-colors underline">
                       bflist.io
                     </a>
-                    - Special thanks to 
+                    - Special thanks to
                     <a href="https://github.com/sponsors/cetteup" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 transition-colors underline">
                       ceeteup
                     </a>
-                    for providing the APIs that make all server and player data possible.
+                    for providing the APIs that make all server and player data possible, and for answering all my emails so quickly.
                   </p>
                 </div>
 
@@ -189,7 +189,7 @@
                     <a href="/players/Black%20Mamba" class="text-yellow-400 hover:text-yellow-300 transition-colors underline">
                       Black Mamba
                     </a>
-                    for originating the tournaments idea and providing detailed documentation to make it happen.
+                    for originating the <a href="/tournaments/5" class="text-yellow-400 hover:text-yellow-300 transition-colors underline">tournaments</a> idea and providing detailed documentation to make it happen.
                   </p>
                 </div>
               </div>
