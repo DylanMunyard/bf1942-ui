@@ -2,7 +2,7 @@
 *Progressive Disclosure Implementation Strategy*
 
 ## 🎯 User Pain Points Identified
-1. **Information Overload**: Current chart has "too much information" 
+1. **Information Overload**: Current chart has "too much information"
 2. **Missing Key Metrics**: Users want to know activity trends (up/down vs last hour)
 3. **Busy Period Confusion**: Users like the graph but can't easily identify peak times
 4. **Poor Navigation**: Hard to jump from Players page to ServerDetails
@@ -11,7 +11,7 @@
 
 ### Core Principle: Progressive Disclosure
 - **Layer 1**: Critical info at-a-glance (cards)
-- **Layer 2**: Simplified visual patterns (heatmaps/simplified charts) 
+- **Layer 2**: Simplified visual patterns (heatmaps/simplified charts)
 - **Layer 3**: Detailed analytics (current complex chart - on demand)
 
 ## 📊 Available Data Mapping
@@ -54,7 +54,7 @@ Status: "Server heating up!"
 - Trend: Calculate from `playerCountHistory` last 2 data points
 - Color coding: Green (+5%+), Red (-5%+), Yellow (stable)
 
-#### Card B: "Peak Hours Today" 
+#### Card B: "Peak Hours Today"
 ```
 [⏰ BUSY PERIODS]
 Peak Today: 32 players at 8 PM
@@ -72,7 +72,7 @@ Replace complex chart with simple hour-based heatmap:
 
 ```
 QUIET    BUSY     PEAK
-6AM █░░░ 12PM ███░ 6PM █████ 
+6AM █░░░ 12PM ███░ 6PM █████
 7AM █░░░ 1PM  ██░░ 7PM █████
 8AM █░░░ 2PM  ██░░ 8PM █████
 ...
@@ -80,7 +80,7 @@ QUIET    BUSY     PEAK
 
 **Implementation**: 24-hour grid, color intensity based on average player count per hour
 
-### Phase 3: Enhanced Social Engagement 
+### Phase 3: Enhanced Social Engagement
 #### Momentum Indicators
 - "🔥 This server is heating up!" (when trending up)
 - "⚡ Join the action - 12 players just connected!"
@@ -101,13 +101,13 @@ QUIET    BUSY     PEAK
 
 ### Progressive Disclosure Flow
 1. **Glance** (Cards): Answer "Is it active?" and "When's best time?"
-2. **Pattern** (Simple visual): Show daily rhythm at-a-glance  
+2. **Pattern** (Simple visual): Show daily rhythm at-a-glance
 3. **Deep Dive** (Current chart): Full analytics for power users
 
 ### Information Architecture
 ```
 [Activity Cards] <- Always visible, critical info
-     ↓ 
+     ↓
 [Simplified Visual] <- Click to expand, shows patterns
      ↓
 [Detailed Chart] <- Advanced users, full data

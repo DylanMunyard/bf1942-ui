@@ -29,6 +29,13 @@ coverage
 /cypress/videos/
 /cypress/screenshots/
 
+# Playwright
+playwright-report/
+test-results/
+
+# Serena cache
+.serena/cache
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
