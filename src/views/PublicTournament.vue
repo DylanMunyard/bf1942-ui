@@ -143,13 +143,16 @@
               <thead>
                 <tr :style="{ backgroundColor: getBackgroundMuteColor() }">
                   <th class="p-4 text-left font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Rank
+                    Ranking
                   </th>
                   <th class="p-4 text-left font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Team
+                    Team Name
                   </th>
                   <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Wins
+                    Matches Played
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Victories
                   </th>
                   <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
                     Ties
@@ -158,10 +161,25 @@
                     Losses
                   </th>
                   <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Ticket Diff
+                    Rounds Won
                   </th>
                   <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Total Rounds
+                    Rounds Tied
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Rounds Lost
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Tickets For
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Tickets Against
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Ticket Differential
+                  </th>
+                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
+                    Points
                   </th>
                 </tr>
               </thead>
@@ -172,7 +190,7 @@
                   class="group transition-all duration-300 border-b"
                   :style="{ borderColor: getAccentColor(), backgroundColor: idx % 2 === 0 ? getBackgroundMuteColor() : getBackgroundSoftColor() }"
                 >
-                  <!-- Rank -->
+                  <!-- Ranking -->
                   <td class="p-4">
                     <div class="flex items-center gap-2">
                       <span v-if="ranking.rank === 1" class="text-xl">🥇</span>
@@ -189,24 +207,66 @@
                     </div>
                   </td>
 
-                  <!-- Wins -->
+                  <!-- Matches Played -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm" :style="{ color: getTextColor() }">
+                      {{ ranking.matchesPlayed }}
+                    </span>
+                  </td>
+
+                  <!-- Victories -->
                   <td class="p-4 text-center">
                     <span class="text-sm font-bold" :style="{ color: getAccentColor() }">
-                      {{ ranking.roundsWon }}
+                      {{ ranking.victories }}
                     </span>
                   </td>
 
                   <!-- Ties -->
                   <td class="p-4 text-center">
                     <span class="text-sm" :style="{ color: getTextMutedColor() }">
-                      {{ ranking.roundsTied }}
+                      {{ ranking.ties }}
                     </span>
                   </td>
 
                   <!-- Losses -->
                   <td class="p-4 text-center">
                     <span class="text-sm" :style="{ color: getTextMutedColor() }">
+                      {{ ranking.losses }}
+                    </span>
+                  </td>
+
+                  <!-- Rounds Won -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm font-bold" :style="{ color: getAccentColor() }">
+                      {{ ranking.roundsWon }}
+                    </span>
+                  </td>
+
+                  <!-- Rounds Tied -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm" :style="{ color: getTextMutedColor() }">
+                      {{ ranking.roundsTied }}
+                    </span>
+                  </td>
+
+                  <!-- Rounds Lost -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm" :style="{ color: getTextMutedColor() }">
                       {{ ranking.roundsLost }}
+                    </span>
+                  </td>
+
+                  <!-- Tickets For -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm font-mono" :style="{ color: getTextColor() }">
+                      {{ ranking.ticketsFor }}
+                    </span>
+                  </td>
+
+                  <!-- Tickets Against -->
+                  <td class="p-4 text-center">
+                    <span class="text-sm font-mono" :style="{ color: getTextColor() }">
+                      {{ ranking.ticketsAgainst }}
                     </span>
                   </td>
 
@@ -217,10 +277,10 @@
                     </span>
                   </td>
 
-                  <!-- Total Rounds -->
+                  <!-- Points -->
                   <td class="p-4 text-center">
-                    <span class="text-sm font-bold" :style="{ color: getTextColor() }">
-                      {{ ranking.totalRounds }}
+                    <span class="text-sm font-bold" :style="{ color: getAccentColor() }">
+                      {{ ranking.points }}
                     </span>
                   </td>
                 </tr>
