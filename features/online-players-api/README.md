@@ -25,7 +25,7 @@ Returns a list of currently online players with their session information.
       "joinedAt": "ISO_DATE_STRING",
       "currentServer": {
         "serverGuid": "string",
-        "serverName": "string", 
+        "serverName": "string",
         "gameId": "string",
         "mapName": "string",
         "sessionKills": "number",
@@ -40,7 +40,7 @@ Returns a list of currently online players with their session information.
   "lastUpdated": "ISO_DATE_STRING",
   "gameBreakdown": {
     "bf1942": "number",
-    "fh2": "number", 
+    "fh2": "number",
     "bfv": "number"
   }
 }
@@ -81,7 +81,7 @@ Returns just the essential online player data:
 [
   {
     "playerName": "string",
-    "sessionDurationMinutes": "number", 
+    "sessionDurationMinutes": "number",
     "gameId": "string",
     "serverName": "string",
     "mapName": "string",
@@ -144,7 +144,7 @@ Error response format:
 
 1. **Game ID Mapping**: The current frontend expects these specific gameId values:
    - `"42"` for Battlefield 1942
-   - `"FH2"` for Forgotten Hope 2  
+   - `"FH2"` for Forgotten Hope 2
    - `"BFV"` for Battlefield Vietnam
 
 2. **Navigation Integration**: Players can click on:
