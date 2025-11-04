@@ -11,7 +11,11 @@
     "lint": "eslint . --ext .vue,.js,.ts",
     "lint:fix": "eslint . --ext .vue,.js,.ts --fix",
     "typecheck": "vue-tsc --noEmit",
-    "load-test": "node scripts/load-test.js"
+    "load-test": "node scripts/load-test.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",
@@ -31,6 +35,7 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/node": "^20.11.30",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
