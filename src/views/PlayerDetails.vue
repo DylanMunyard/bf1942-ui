@@ -2,11 +2,12 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics, fetchPlayerStats, fetchSimilarPlayers, SimilarPlayersResponse, PlayerComparisonStats } from '../services/playerStatsService';
-import { Session, TrendDataPoint } from '../types/playerStatsTypes';
+import { TrendDataPoint } from '../types/playerStatsTypes';
 // Removed unused imports - BestScores, BestScoreEntry
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import PlayerAchievements from '../components/PlayerAchievements.vue';
+import PlayerRecentSessions from '../components/PlayerRecentSessions.vue';
 import HeroBackButton from '../components/HeroBackButton.vue';
 
 import bf1942Icon from '@/assets/bf1942.webp';
@@ -381,24 +382,6 @@ const fetchData = async () => {
   }
 };
 
-// Function to open the round report page
-const openSessionDetailsModal = (session: Session, event?: Event) => {
-  // Prevent event propagation to stop the modal from closing
-  if (event) {
-    event.stopPropagation();
-  }
-
-  router.push({
-    name: 'round-report',
-    params: {
-      roundId: session.roundId,
-    },
-    query: {
-      players: playerName.value // Include the player name to pin them
-    }
-  });
-};
-
 // Format minutes to hours and minutes
 const formatPlayTime = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
@@ -447,48 +430,6 @@ const formatRelativeTime = (dateString: string): string => {
 const calculateKDR = (kills: number, deaths: number): string => {
   if (deaths === 0) return kills.toString();
   return (kills / deaths).toFixed(2);
-};
-
-// Enhanced K/D styling functions for battle highlights
-const getKDColorClass = (session: any): string => {
-  const kdr = session.totalDeaths === 0 ? session.totalKills : session.totalKills / session.totalDeaths;
-  
-  if (kdr >= 3.0) return 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/60 shadow-purple-500/25';
-  if (kdr >= 2.0) return 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 border-emerald-500/60 shadow-emerald-500/25';
-  if (kdr >= 1.5) return 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-500/60 shadow-blue-500/25';
-  if (kdr >= 1.0) return 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/60 shadow-yellow-500/25';
-  if (kdr >= 0.5) return 'bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/60 shadow-orange-500/25';
-  return 'bg-gradient-to-r from-red-500/20 to-red-700/20 border-red-500/60 shadow-red-500/25';
-};
-
-const getKDTextClass = (session: any): string => {
-  const kdr = session.totalDeaths === 0 ? session.totalKills : session.totalKills / session.totalDeaths;
-  
-  if (kdr >= 3.0) return 'text-purple-300';
-  if (kdr >= 2.0) return 'text-emerald-300';
-  if (kdr >= 1.5) return 'text-blue-300';
-  if (kdr >= 1.0) return 'text-yellow-300';
-  if (kdr >= 0.5) return 'text-orange-300';
-  return 'text-red-300';
-};
-
-
-// Function to get round report route for a session
-const getRoundReportRoute = (session: any) => {
-  if (session.roundId) {
-    return {
-      name: 'round-report',
-      params: {
-        roundId: session.roundId,
-      },
-      query: {
-        players: playerName.value // Include the player name to pin them
-      }
-    };
-  }
-  
-  // Fallback to player details if roundId not found
-  return `/players/${encodeURIComponent(playerName.value)}`;
 };
 
 // Function to navigate to round report using best score data
@@ -1007,155 +948,26 @@ onUnmounted(() => {
           v-else-if="playerStats"
           class="max-w-7xl mx-auto px-3 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
         >
-          <!-- Recent Battles Carousel -->
-          <div 
+          <!-- Recent Rounds Section -->
+          <div
             v-if="playerStats.recentSessions && playerStats.recentSessions.length > 0"
-            class="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-lg rounded-2xl border border-slate-700/50 hover:border-cyan-500/30 transition-all duration-500"
+            class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden"
           >
-            <!-- Background Effects -->
-            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5" />
-            <div class="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 rounded-full blur-2xl animate-pulse" />
-            <div class="absolute -bottom-16 -left-16 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-2xl animate-pulse delay-1000" />
-          
-            <div class="relative z-10 p-4 sm:p-8">
-              <!-- Header -->
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                <div class="space-y-2">
-                  <h3 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    🏆 Recent Battles
-                  </h3>
-                  <p class="text-slate-400 text-sm">
-                    Scroll horizontally to view more battles
-                  </p>
-                </div>
-                <div class="flex items-center gap-2 sm:gap-3">
-                  <router-link
-                    :to="`/players/${encodeURIComponent(playerName)}/sessions`"
-                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium !text-white hover:!text-cyan-100 bg-slate-800/80 hover:bg-slate-700/90 border border-slate-600/70 hover:border-cyan-500/70 rounded-lg transition-all duration-300"
-                  >
-                    View All
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="m9 18 6-6-6-6" />
-                    </svg>
-                  </router-link>
-                </div>
-              </div>
-
-              <!-- Horizontal Scroll Container -->
-              <div class="overflow-x-auto pb-4">
-                <div class="flex gap-4 min-w-max">
-                  <div
-                    v-for="(session, index) in playerStats.recentSessions"
-                    :key="`session-${index}`"
-                    class="flex-none w-80"
-                  >
-                    <!-- Round Card -->
-                    <div 
-                      class="group relative overflow-hidden bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer h-full"
-                      @click="(event) => openSessionDetailsModal(session, event)"
-                    >
-                      <!-- Card Background Effects -->
-                      <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div class="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    
-                    
-                      <div class="relative z-10 p-3 space-y-3">
-                        <!-- Header: Server name only -->
-                        <div class="flex items-center justify-between text-sm">
-                          <div class="flex items-center gap-1 text-white truncate flex-1 min-w-0">
-                            <router-link 
-                              :to="`/servers/${encodeURIComponent(session.serverName)}`" 
-                              class="!text-white hover:!text-cyan-300 transition-colors truncate"
-                            >
-                              {{ session.serverName }}
-                            </router-link>
-                          </div>
-                          <span
-                            v-if="session.isActive"
-                            class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full animate-pulse shrink-0 ml-2"
-                          >
-                            <div class="w-1.5 h-1.5 bg-green-400 rounded-full" />
-                            Online
-                          </span>
-                        </div>
-
-                        <!-- Compact Battle Stats -->
-                        <div
-                          class="p-3 rounded-lg border transition-all duration-300"
-                          :class="getKDColorClass(session)"
-                        >
-                          <div class="space-y-3">
-                            <!-- Upper Stats Row -->
-                            <div class="flex items-center justify-between">
-                              <!-- K/D -->
-                              <div class="text-center">
-                                <div
-                                  class="text-xl font-bold"
-                                  :class="getKDTextClass(session)"
-                                >
-                                  {{ calculateKDR(session.totalKills, session.totalDeaths) }}
-                                </div>
-                                <div class="text-xs text-slate-400">
-                                  K/D
-                                </div>
-                              </div>
-                            
-                              <!-- Compact Stats -->
-                              <div class="flex items-center gap-4 text-sm">
-                                <div class="text-center">
-                                  <div class="font-semibold text-emerald-400">
-                                    {{ session.totalKills }}
-                                  </div>
-                                  <div class="text-xs text-slate-500">
-                                    K
-                                  </div>
-                                </div>
-                                <div class="text-center">
-                                  <div class="font-semibold text-red-400">
-                                    {{ session.totalDeaths }}
-                                  </div>
-                                  <div class="text-xs text-slate-500">
-                                    D
-                                  </div>
-                                </div>
-                                <div class="text-center">
-                                  <div class="font-semibold text-yellow-400">
-                                    {{ session.totalScore }}
-                                  </div>
-                                  <div class="text-xs text-slate-500">
-                                    S
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          
-                            <!-- Lower Row: Time (left) and Map (right) -->
-                            <div class="flex items-center justify-between text-sm">
-                              <router-link 
-                                :to="getRoundReportRoute(session)" 
-                                class="!text-cyan-300 hover:!text-cyan-200 font-medium"
-                              >
-                                {{ formatRelativeTime(session.startTime) }}
-                              </router-link>
-                              <span class="text-slate-300 truncate">{{ session.mapName }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
+              <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
+                🎯 Recent Rounds
+              </h3>
+              <router-link
+                :to="`/players/${encodeURIComponent(playerName)}/sessions`"
+                class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70 rounded-lg border border-slate-600/50"
+              >
+                View All Sessions
+              </router-link>
+            </div>
+            <div class="p-6">
+              <PlayerRecentSessions
+                :sessions="playerStats.recentSessions"
+              />
             </div>
           </div>
 
