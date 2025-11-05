@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100] flex items-center"
+    class="modal-mobile-safe fixed inset-0 bg-black/20 backdrop-blur-sm z-[100] flex items-center"
     @click="$emit('close')"
   >
     <div 

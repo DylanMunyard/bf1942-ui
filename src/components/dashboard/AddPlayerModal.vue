@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000]"
+    class="modal-mobile-safe fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000]"
     @click="handleOverlayClick"
     @mousedown="handleOverlayMouseDown"
   >

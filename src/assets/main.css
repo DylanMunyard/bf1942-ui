@@ -32,3 +32,14 @@ a,
     width: 100%;
   }
 }
+
+/* Global mobile modal utility - accounts for top navbar on mobile */
+@media (max-width: 768px) {
+  .modal-mobile-safe {
+    top: var(--mobile-nav-height, 0) !important;
+  }
+
+  .modal-mobile-safe > div {
+    max-height: calc(100vh - var(--mobile-nav-height, 0) - 2rem) !important;
+  }
+}

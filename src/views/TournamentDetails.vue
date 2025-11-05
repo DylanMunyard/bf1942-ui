@@ -1,7 +1,7 @@
 <template>
   <div class="relative min-h-screen px-3 sm:px-6 pb-12">
     <!-- Background Effects -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="modal-mobile-safe fixed inset-0 overflow-hidden pointer-events-none">
       <div class="absolute top-0 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
       <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
     </div>
@@ -468,7 +468,7 @@
     <!-- Delete Team Confirmation Modal -->
     <div
       v-if="deleteTeamConfirmation"
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      class="modal-mobile-safe fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       @click.self="cancelDeleteTeam"
     >
       <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 max-w-md w-full shadow-2xl">
@@ -516,7 +516,7 @@
     <!-- Delete Match Confirmation Modal -->
     <div
       v-if="deleteMatchConfirmation"
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      class="modal-mobile-safe fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       @click.self="cancelDeleteMatch"
     >
       <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 max-w-md w-full shadow-2xl">
@@ -564,7 +564,7 @@
     <!-- Recalculate Leaderboard Modal -->
     <div
       v-if="showRecalculateModal"
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      class="modal-mobile-safe fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       @click.self="closeRecalculateModal"
     >
       <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 max-w-md w-full shadow-2xl">

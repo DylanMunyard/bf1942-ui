@@ -74,7 +74,7 @@ onUnmounted(() => {
 
   .layout-wrapper {
     margin-right: 0;
-    margin-top: 60px; /* Height of mobile sidebar */
+    margin-top: var(--mobile-nav-height);
     width: 100%;
   }
 }

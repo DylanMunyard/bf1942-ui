@@ -59,6 +59,9 @@
   --color-border-rgb: 60, 60, 60;
 
   --section-gap: 160px;
+
+  /* Mobile navigation height for responsive layout adjustments */
+  --mobile-nav-height: 64px;
 }
 
 /* Dark mode theme */

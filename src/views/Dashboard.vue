@@ -1,7 +1,7 @@
 <template>
   <div class="relative min-h-screen px-3 sm:px-6">
     <!-- Background Effects -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="modal-mobile-safe fixed inset-0 overflow-hidden pointer-events-none">
       <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
       <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
     </div>

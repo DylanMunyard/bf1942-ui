@@ -1044,7 +1044,7 @@ const getTierDotClass = (tier: string): string => {
       <!-- Grouped Achievement Modal -->
       <div
         v-if="showGroupModal && selectedAchievementGroup"
-        class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        class="modal-mobile-safe fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         @click="closeGroupModal"
       >
         <div

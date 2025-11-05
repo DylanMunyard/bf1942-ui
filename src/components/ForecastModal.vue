@@ -75,7 +75,7 @@
   <!-- Mobile: Centered Modal -->
   <div
     v-if="showModal && isMobile"
-    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    class="modal-mobile-safe fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
     @click.stop.prevent="$emit('close')"
   >
     <div 

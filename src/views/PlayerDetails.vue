@@ -2937,7 +2937,7 @@ onUnmounted(() => {
   <!-- Map Statistics Modal -->
   <div
     v-if="showMapModal"
-    class="fixed inset-0 z-50 flex items-start sm:items-center justify-center pt-16 sm:pt-0 p-2 sm:p-4 bg-black/80 backdrop-blur-sm"
+    class="modal-mobile-safe fixed inset-0 z-50 flex items-start sm:items-center justify-center pt-16 sm:pt-0 p-2 sm:p-4 bg-black/80 backdrop-blur-sm"
     @click.self="closeMapModal"
   >
     <div class="relative w-full max-w-7xl max-h-[calc(100vh-4rem)] sm:max-h-[90vh] bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl sm:rounded-2xl border border-slate-700/50 overflow-hidden shadow-2xl">

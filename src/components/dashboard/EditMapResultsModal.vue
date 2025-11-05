@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div v-if="isOpen" class="modal-mobile-safe fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div class="bg-slate-900 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
       <!-- Header -->
       <div class="sticky top-0 bg-slate-800 border-b border-slate-700 px-6 py-4">
