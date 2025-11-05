@@ -370,24 +370,30 @@ onUnmounted(() => {
                     <div
                       v-for="(player, playerIdx) in round.topPlayers.slice(0, 3)"
                       :key="playerIdx"
-                      class="text-xs rounded px-2 py-1 transition-colors"
-                      :class="player.playerName === props.playerName ? 'bg-cyan-500/20 border border-cyan-500/50' : ''"
+                      class="text-xs rounded-lg px-2.5 py-1.5 transition-all duration-200"
+                      :class="player.playerName === props.playerName
+                        ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/20 border border-cyan-400/50 shadow-lg shadow-cyan-500/20'
+                        : ''"
                     >
                       <div class="flex items-center gap-2">
                         <span
-                          class="font-semibold"
-                          :class="player.playerName === props.playerName ? 'text-cyan-400' : 'text-slate-400'"
+                          class="font-bold tabular-nums"
+                          :class="player.playerName === props.playerName
+                            ? 'text-cyan-300 drop-shadow-sm'
+                            : 'text-slate-400'"
                         >
                           {{ playerIdx + 1 }}.
                         </span>
                         <span
-                          class="font-medium truncate max-w-[150px]"
-                          :class="player.playerName === props.playerName ? 'text-cyan-300' : 'text-slate-200'"
+                          class="font-medium truncate max-w-[100px]"
+                          :class="player.playerName === props.playerName
+                            ? 'text-cyan-200 font-semibold'
+                            : 'text-slate-200'"
                           :title="player.playerName"
                         >
                           {{ player.playerName }}
                         </span>
-                        <span class="text-slate-500">/</span>
+                        <span class="text-slate-600">/</span>
                         <span
                           class="font-mono font-semibold"
                           :class="getKDRColor(player.kills, player.deaths)"
