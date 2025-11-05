@@ -370,12 +370,19 @@ onUnmounted(() => {
                     <div
                       v-for="(player, playerIdx) in round.topPlayers.slice(0, 3)"
                       :key="playerIdx"
-                      class="text-xs"
+                      class="text-xs rounded px-2 py-1 transition-colors"
+                      :class="player.playerName === props.playerName ? 'bg-cyan-500/20 border border-cyan-500/50' : ''"
                     >
                       <div class="flex items-center gap-2">
-                        <span class="text-slate-400">{{ playerIdx + 1 }}.</span>
                         <span
-                          class="font-medium text-slate-200 truncate max-w-[150px]"
+                          class="font-semibold"
+                          :class="player.playerName === props.playerName ? 'text-cyan-400' : 'text-slate-400'"
+                        >
+                          {{ playerIdx + 1 }}.
+                        </span>
+                        <span
+                          class="font-medium truncate max-w-[150px]"
+                          :class="player.playerName === props.playerName ? 'text-cyan-300' : 'text-slate-200'"
                           :title="player.playerName"
                         >
                           {{ player.playerName }}
