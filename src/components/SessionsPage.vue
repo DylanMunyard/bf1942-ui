@@ -154,7 +154,7 @@ const fetchData = async () => {
 
     const filters: Record<string, string> = {};
     if (props.playerName) {
-      filters.playerName = props.playerName;
+      filters.playerNames = props.playerName;
     }
     if (props.serverName) {
       filters.serverName = props.serverName;
