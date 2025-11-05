@@ -163,7 +163,7 @@ export async function fetchSessions(
       pageSize,
       sortBy,
       sortOrder,
-      includePlayers: true, // We need player data for session compatibility
+      includeTopPlayers: true, // Include top 3 players for each round
       onlySpecifiedPlayers,
       ...roundFilters
     };
