@@ -198,6 +198,10 @@ watch(() => pageSize.value, () => {
   fetchData();
 });
 
+watch(() => currentPage.value, () => {
+  fetchData();
+});
+
 // Cleanup
 onUnmounted(() => {
   // Cleanup if needed
