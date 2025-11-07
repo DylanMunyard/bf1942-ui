@@ -158,6 +158,13 @@
           </div>
         </div>
 
+        <!-- Latest Matches Empty State -->
+        <div v-else class="backdrop-blur-sm border-2 rounded-xl overflow-hidden p-8 text-center" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+          <div class="text-5xl mb-4 opacity-50">⚡</div>
+          <h3 class="text-xl font-semibold mb-2" :style="{ color: getTextColor() }">No Completed Matches Yet</h3>
+          <p :style="{ color: getTextMutedColor() }">Check back soon as matches are completed. Visit the <router-link :to="`/tournaments/${tournamentId}/matches`" class="underline hover:opacity-80 transition-opacity" :style="{ color: getAccentColor() }">Matches page</router-link> to see the full schedule.</p>
+        </div>
+
         <!-- Tournament Leaderboard -->
         <div v-if="leaderboard && leaderboard.rankings.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
           <!-- Leaderboard Header -->
