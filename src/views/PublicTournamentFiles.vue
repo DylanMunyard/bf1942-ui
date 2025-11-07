@@ -34,7 +34,7 @@
             :href="file.url"
             target="_blank"
             rel="noopener noreferrer"
-            class="block p-4 rounded-lg border-2 transition-all hover:translate-x-1"
+            class="block p-4 rounded-lg border-2"
             :style="{
               borderColor: getAccentColor(),
               backgroundColor: getBackgroundSoftColor(),
