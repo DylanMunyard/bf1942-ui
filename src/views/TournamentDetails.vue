@@ -450,6 +450,7 @@
       v-if="showAddMatchModal && tournament"
       :tournament-id="tournament.id"
       :teams="tournament.teams"
+      :tournament="tournament"
       :match="editingMatch"
       @close="showAddMatchModal = false; editingMatch = undefined"
       @added="onMatchAdded"

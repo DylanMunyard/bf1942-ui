@@ -132,6 +132,7 @@ export interface CreateTournamentRequest {
   forumUrl?: string;
   rules?: string;
   weekDates?: TournamentWeekDate[];
+  files?: CreateTournamentFileRequest[];
   theme: TournamentTheme;
 }
 
@@ -151,6 +152,7 @@ export interface UpdateTournamentRequest {
   forumUrl?: string;
   rules?: string;
   weekDates?: TournamentWeekDate[];
+  files?: CreateTournamentFileRequest[];
   theme?: TournamentTheme;
 }
 
@@ -218,6 +220,18 @@ export interface CreateManualResultRequest {
   team2Tickets?: number;
   winningTeamId?: number;
   roundId?: string; // Optional: When provided alone, backend populates from round data
+}
+
+// Custom error class for validation errors
+export class ValidationError extends Error {
+  constructor(
+    message: string,
+    public errors: Record<string, string[]>,
+    public status: number = 400
+  ) {
+    super(message);
+    this.name = 'ValidationError';
+  }
 }
 
 export interface UpdateManualResultRequest {
@@ -296,11 +310,38 @@ class AdminTournamentService {
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
         const errorData = await response.json();
+        
+        // Check if this is a validation error response (has 'errors' object)
+        if (errorData.errors && typeof errorData.errors === 'object') {
+          const validationErrors: Record<string, string[]> = {};
+          
+          // Extract all validation errors
+          for (const [key, value] of Object.entries(errorData.errors)) {
+            if (Array.isArray(value)) {
+              validationErrors[key] = value as string[];
+            } else if (typeof value === 'string') {
+              validationErrors[key] = [value];
+            }
+          }
+          
+          // Use title if available, otherwise use a default message
+          errorMessage = errorData.title || 'Validation errors occurred';
+          
+          throw new ValidationError(errorMessage, validationErrors, response.status);
+        }
+        
+        // Fallback to message field if available
         if (errorData.message) {
           errorMessage = errorData.message;
+        } else if (errorData.title) {
+          errorMessage = errorData.title;
         }
-      } catch {
-        // Ignore JSON parsing errors
+      } catch (err) {
+        // If we already threw a ValidationError, re-throw it
+        if (err instanceof ValidationError) {
+          throw err;
+        }
+        // Otherwise, ignore JSON parsing errors and use default message
       }
       throw new Error(errorMessage);
     }

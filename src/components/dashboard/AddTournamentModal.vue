@@ -570,20 +570,19 @@ Winners choose first map for next round.</code>
           <!-- Status Dropdown -->
           <div>
             <label class="block text-sm font-medium text-slate-300 mb-2">
-              Status <span class="text-slate-500">(Optional)</span>
+              Status <span class="text-amber-400">*</span>
             </label>
             <select
               v-model="formData.status"
               class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
             >
-              <option :value="undefined">No Status</option>
               <option value="draft">Draft</option>
               <option value="registration">Registration</option>
               <option value="open">Open</option>
               <option value="closed">Closed</option>
             </select>
             <p class="mt-1 text-xs text-slate-500">
-              Tournament status (draft, registration, open, or closed)
+              Default: Draft. Set tournament status (registration, open, or closed when ready)
             </p>
           </div>
 
@@ -604,17 +603,37 @@ Winners choose first map for next round.</code>
           </div>
         </div>
 
-        <!-- Week Dates Editor -->
+        <!-- Week Dates Panel -->
         <div class="border-t border-slate-700/30 pt-6">
-          <div class="flex items-center justify-between gap-4 mb-4">
-            <div>
-              <h3 class="text-sm font-medium text-slate-300">
-                Tournament Weeks <span class="text-slate-500">(Optional)</span>
-              </h3>
-              <p class="text-xs text-slate-500 mt-1">
-                Add week dates to organize your tournament schedule
-              </p>
-            </div>
+          <!-- Collapsible Panel Header -->
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-4 py-3 mb-4 rounded-lg border border-slate-700/50 hover:border-slate-600 hover:bg-slate-800/40 transition-all group"
+            @click="expandedPanels.scheduleAndRules = !expandedPanels.scheduleAndRules"
+          >
+            <span class="text-lg">📅</span>
+            <span class="text-sm font-medium text-slate-300 flex-1 text-left">
+              Tournament Weeks <span class="text-slate-500">(Optional)</span>
+            </span>
+            <span v-if="formData.weekDates.length > 0" class="text-xs bg-cyan-500/30 text-cyan-300 px-2 py-1 rounded">
+              {{ formData.weekDates.length }} week{{ formData.weekDates.length !== 1 ? 's' : '' }}
+            </span>
+            <svg
+              class="w-5 h-5 text-slate-400 transition-transform duration-200 group-hover:text-slate-300"
+              :class="expandedPanels.scheduleAndRules ? 'rotate-0' : '-rotate-90'"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </button>
+
+          <!-- Panel Content -->
+          <div v-if="expandedPanels.scheduleAndRules" class="space-y-4">
+            <p class="text-xs text-slate-500">
+              Add week dates to organize your tournament schedule
+            </p>
             <button
               type="button"
               @click="addWeek"
@@ -622,7 +641,6 @@ Winners choose first map for next round.</code>
             >
               + Add Week
             </button>
-          </div>
 
           <!-- Week Dates List -->
           <div v-if="formData.weekDates.length > 0" class="space-y-2 mb-4">
@@ -708,19 +726,40 @@ Winners choose first map for next round.</code>
               </button>
             </div>
           </div>
+          </div>
         </div>
 
-        <!-- Files Manager -->
+        <!-- Files Manager Panel -->
         <div class="border-t border-slate-700/30 pt-6">
-          <div class="flex items-center justify-between gap-4 mb-4">
-            <div>
-              <h3 class="text-sm font-medium text-slate-300">
-                Tournament Files <span class="text-slate-500">(Optional)</span>
-              </h3>
-              <p class="text-xs text-slate-500 mt-1">
-                Manage tournament-related files (rules, maps, guides, etc.)
-              </p>
-            </div>
+          <!-- Collapsible Panel Header -->
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-4 py-3 mb-4 rounded-lg border border-slate-700/50 hover:border-slate-600 hover:bg-slate-800/40 transition-all group"
+            @click="expandedPanels.filesAndLinks = !expandedPanels.filesAndLinks"
+          >
+            <span class="text-lg">📄</span>
+            <span class="text-sm font-medium text-slate-300 flex-1 text-left">
+              Tournament Files <span class="text-slate-500">(Optional)</span>
+            </span>
+            <span v-if="formData.files.length > 0" class="text-xs bg-blue-500/30 text-blue-300 px-2 py-1 rounded">
+              {{ formData.files.length }} file{{ formData.files.length !== 1 ? 's' : '' }}
+            </span>
+            <svg
+              class="w-5 h-5 text-slate-400 transition-transform duration-200 group-hover:text-slate-300"
+              :class="expandedPanels.filesAndLinks ? 'rotate-0' : '-rotate-90'"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </button>
+
+          <!-- Panel Content -->
+          <div v-if="expandedPanels.filesAndLinks" class="space-y-4">
+            <p class="text-xs text-slate-500">
+              Manage tournament-related files (rules, maps, guides, etc.)
+            </p>
             <button
               type="button"
               @click="addFile"
@@ -728,9 +767,8 @@ Winners choose first map for next round.</code>
             >
               + Add File
             </button>
-          </div>
 
-          <!-- Files List -->
+            <!-- Files List -->
           <div v-if="formData.files.length > 0" class="space-y-2 mb-4">
             <div
               v-for="(file, index) in formData.files"
@@ -815,35 +853,54 @@ Winners choose first map for next round.</code>
               </button>
             </div>
           </div>
+            </div>
         </div>
 
-        <!-- Theme Colors -->
-        <!-- Theme Configuration Section -->
+        <!-- Theme Colors Panel -->
         <div class="border-t border-slate-700/30 pt-6">
-          <div class="flex items-center gap-2 mb-4">
+          <!-- Collapsible Panel Header -->
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-4 py-3 mb-4 rounded-lg border border-slate-700/50 hover:border-slate-600 hover:bg-slate-800/40 transition-all group"
+            @click="expandedPanels.theme = !expandedPanels.theme"
+          >
             <span class="text-lg">🎨</span>
-            <label class="block text-sm font-medium text-slate-300">
+            <span class="text-sm font-medium text-slate-300 flex-1 text-left">
               Theme Configuration <span class="text-slate-500">(Optional)</span>
-            </label>
-            <button
-              v-if="!showThemePreview"
-              type="button"
-              class="ml-auto text-xs px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 rounded transition-all"
-              @click="showThemePreview = true"
-              title="Show live preview"
+            </span>
+            <svg
+              class="w-5 h-5 text-slate-400 transition-transform duration-200 group-hover:text-slate-300"
+              :class="expandedPanels.theme ? 'rotate-0' : '-rotate-90'"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              👁️ Preview
-            </button>
-            <button
-              v-else
-              type="button"
-              class="ml-auto text-xs px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded transition-all"
-              @click="showThemePreview = false"
-              title="Hide preview"
-            >
-              ✕ Close
-            </button>
-          </div>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </button>
+
+          <!-- Panel Content -->
+          <div v-if="expandedPanels.theme" class="space-y-4">
+            <div class="flex items-center gap-2 mb-4">
+              <button
+                v-if="!showThemePreview"
+                type="button"
+                class="ml-auto text-xs px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 rounded transition-all"
+                @click="showThemePreview = true"
+                title="Show live preview"
+              >
+                👁️ Preview
+              </button>
+              <button
+                v-else
+                type="button"
+                class="ml-auto text-xs px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded transition-all"
+                @click="showThemePreview = false"
+                title="Hide preview"
+              >
+                ✕ Close
+              </button>
+            </div>
 
           <p class="text-xs text-slate-400 mb-6">
             Customize 3 core colors to create your unique tournament look. The page will intelligently derive lighter/darker variants.
@@ -1096,13 +1153,39 @@ Winners choose first map for next round.</code>
             </div>
           </div>
         </div>
+          </div>
 
         <!-- Error Message -->
         <div
           v-if="error"
           class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg"
         >
-          <p class="text-sm text-red-400">{{ error }}</p>
+          <div v-if="typeof error === 'string'" class="text-sm text-red-400">
+            {{ error }}
+          </div>
+          <div v-else-if="error && typeof error === 'object' && 'validationErrors' in error" class="space-y-3">
+            <p class="text-sm font-medium text-red-400 mb-2">{{ error.message }}</p>
+            <ul class="space-y-2">
+              <li
+                v-for="(fieldErrors, fieldName) in error.validationErrors"
+                :key="fieldName"
+                class="text-sm"
+              >
+                <div class="font-medium text-red-300 mb-1">
+                  {{ formatFieldName(fieldName) }}:
+                </div>
+                <ul class="ml-4 space-y-1">
+                  <li
+                    v-for="(errorMsg, index) in fieldErrors"
+                    :key="index"
+                    class="text-red-400"
+                  >
+                    • {{ errorMsg }}
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
         </div>
 
       <!-- Actions -->
@@ -1130,7 +1213,7 @@ Winners choose first map for next round.</code>
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { marked } from 'marked';
-import { adminTournamentService, type CreateTournamentRequest, type TournamentDetail } from '@/services/adminTournamentService';
+import { adminTournamentService, type CreateTournamentRequest, type TournamentDetail, ValidationError } from '@/services/adminTournamentService';
 import { isValidHex } from '@/utils/colorUtils';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
@@ -1173,7 +1256,7 @@ const formData = ref({
   discordUrl: '',
   forumUrl: '',
   rules: '',
-  status: undefined as 'draft' | 'registration' | 'open' | 'closed' | undefined,
+  status: 'draft' as 'draft' | 'registration' | 'open' | 'closed',
   gameMode: '',
   weekDates: [] as Array<{ id?: number; week: string; startDate: string; endDate: string }>,
   files: [] as Array<{ id?: number; name: string; url: string; category?: string; uploadedAt?: string }>,
@@ -1185,7 +1268,15 @@ const formData = ref({
 });
 
 const loading = ref(false);
-const error = ref<string | null>(null);
+const error = ref<string | { message: string; validationErrors: Record<string, string[]> } | null>(null);
+
+// Panel collapse states
+const expandedPanels = ref({
+  basicInfo: true,
+  scheduleAndRules: false,
+  filesAndLinks: false,
+  theme: false
+});
 
 // Week Dates management
 const editingWeekIndex = ref<number | null>(null);
@@ -1842,6 +1933,14 @@ const handleSubmit = async () => {
       request.weekDates = formData.value.weekDates;
     }
 
+    if (formData.value.files.length > 0) {
+      request.files = formData.value.files.map(f => ({
+        name: f.name,
+        url: f.url,
+        category: f.category
+      }));
+    }
+
     console.debug('Tournament request theme:', request.theme);
 
     // Handle hero image: only include base64 if uploading new image, or remove flag if removing
@@ -1882,10 +1981,40 @@ const handleSubmit = async () => {
     emit('close');
   } catch (err) {
     console.error('Error saving tournament:', err);
-    error.value = err instanceof Error ? err.message : 'Failed to save tournament';
+    if (err instanceof ValidationError) {
+      error.value = {
+        message: err.message,
+        validationErrors: err.errors
+      };
+    } else {
+      error.value = err instanceof Error ? err.message : 'Failed to save tournament';
+    }
   } finally {
     loading.value = false;
   }
+};
+
+// Helper function to format field names for display
+const formatFieldName = (fieldName: string): string => {
+  // Handle JSON path notation (e.g., "$.weekDates[0].startDate")
+  if (fieldName.startsWith('$.')) {
+    fieldName = fieldName.substring(2);
+  }
+  
+  // Handle array notation (e.g., "weekDates[0].startDate")
+  fieldName = fieldName.replace(/\[\d+\]/g, '');
+  
+  // Split by dots and format each part
+  const parts = fieldName.split('.');
+  const formattedParts = parts.map(part => {
+    // Convert camelCase to Title Case
+    return part
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, str => str.toUpperCase())
+      .trim();
+  });
+  
+  return formattedParts.join(' > ');
 };
 </script>
 

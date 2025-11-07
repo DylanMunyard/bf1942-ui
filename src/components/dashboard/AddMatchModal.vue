@@ -60,15 +60,25 @@
             <label class="block text-sm font-medium text-slate-300 mb-2">
               Week <span class="text-slate-500 text-xs">(Optional)</span>
             </label>
-            <input
+            <select
               v-model="formData.week"
-              type="text"
-              placeholder="e.g., Week 1, Week 2, or leave empty"
-              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-              :disabled="loading"
+              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+              :disabled="loading || availableWeeks.length === 0"
             >
+              <option :value="null">No Week (Unscheduled)</option>
+              <option
+                v-for="week in availableWeeks"
+                :key="week"
+                :value="week"
+              >
+                {{ week }}
+              </option>
+            </select>
             <p class="text-xs text-slate-500 mt-1">
-              Matches without a week will be grouped under "Unscheduled"
+              {{ availableWeeks.length === 0
+                ? 'No week dates defined for this tournament. Define week dates in tournament settings.'
+                : 'Select a week or leave unscheduled. Matches without a week will be grouped under "Unscheduled"'
+              }}
             </p>
           </div>
 
@@ -282,11 +292,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { adminTournamentService, type TournamentTeam, type TournamentMatch } from '@/services/adminTournamentService';
+import { adminTournamentService, type TournamentTeam, type TournamentMatch, type TournamentDetail } from '@/services/adminTournamentService';
 
 interface Props {
   tournamentId: number;
   teams: TournamentTeam[];
+  tournament: TournamentDetail;
   match?: TournamentMatch;
 }
 
@@ -336,6 +347,14 @@ const availableTeamsForTeam1 = computed(() => {
 const availableTeamsForTeam2 = computed(() => {
   // Exclude team 1 from team 2 options
   return props.teams.filter(team => team.id !== formData.value.team1Id);
+});
+
+const availableWeeks = computed(() => {
+  // Extract week names from tournament weekDates
+  if (!props.tournament?.weekDates || props.tournament.weekDates.length === 0) {
+    return [];
+  }
+  return props.tournament.weekDates.map(wd => wd.week).sort();
 });
 
 const isFormValid = computed(() => {
@@ -441,7 +460,7 @@ onMounted(() => {
     }));
     formData.value.serverGuid = props.match.serverGuid || '';
     formData.value.serverName = props.match.serverName || '';
-    formData.value.week = props.match.week || '';
+    formData.value.week = props.match.week || null;
     serverSearchQuery.value = props.match.serverName || '';
   } else {
     // Set default date to now
