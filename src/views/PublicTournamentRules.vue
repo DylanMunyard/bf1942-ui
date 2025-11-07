@@ -67,8 +67,10 @@ import { marked } from 'marked'
 import TournamentHero from '@/components/TournamentHero.vue'
 import { publicTournamentService, type PublicTournamentDetail } from '@/services/publicTournamentService'
 import { isValidHex, normalizeHex, hexToRgb, rgbToHex, calculateLuminance, getContrastingTextColor } from '@/utils/colorUtils'
+import { useTournamentCache } from '@/composables/useTournamentCache'
 
 const route = useRoute()
+const { useTournament } = useTournamentCache()
 const tournament = ref<PublicTournamentDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -158,47 +160,25 @@ const getTextMutedColor = (): string => {
 }
 
 const loadTournament = async () => {
-  loading.value = true
   error.value = null
 
   try {
-    if (isNaN(tournamentId)) {
-      throw new Error('Invalid tournament ID')
+    const { tournament: cachedTournament, heroImageUrl: cachedHeroUrl, logoImageUrl: cachedLogoUrl, error: cacheError, isCacheHit } = await useTournament(tournamentId)
+
+    if (cacheError.value) {
+      throw new Error(cacheError.value)
     }
 
-    const data = await publicTournamentService.getTournamentDetail(tournamentId)
-    tournament.value = data
-    loadHeroImage().catch(err => console.debug('Failed to load hero image:', err))
-    loadLogoImage().catch(err => console.debug('Failed to load logo image:', err))
+    tournament.value = cachedTournament.value
+    heroImageUrl.value = cachedHeroUrl.value
+    logoImageUrl.value = cachedLogoUrl.value
+
+    // Always set loading to false - data is ready either from cache or API
     loading.value = false
   } catch (err) {
     console.error('Error loading tournament:', err)
     error.value = err instanceof Error ? err.message : 'Failed to load tournament'
     loading.value = false
-  }
-}
-
-const loadHeroImage = async () => {
-  try {
-    const response = await fetch(publicTournamentService.getTournamentImageUrl(tournamentId))
-    if (response.ok) {
-      const blob = await response.blob()
-      heroImageUrl.value = URL.createObjectURL(blob)
-    }
-  } catch {
-    console.debug('No hero image available')
-  }
-}
-
-const loadLogoImage = async () => {
-  try {
-    const response = await fetch(publicTournamentService.getTournamentLogoUrl(tournamentId))
-    if (response.ok) {
-      const blob = await response.blob()
-      logoImageUrl.value = URL.createObjectURL(blob)
-    }
-  } catch {
-    console.debug('No logo image available')
   }
 }
 

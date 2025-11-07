@@ -810,12 +810,14 @@ import {
 } from '@/services/publicTournamentService';
 import { notificationService } from '@/services/notificationService';
 import { isValidHex, normalizeHex, getContrastingTextColor, hexToRgb, rgbToHex, calculateLuminance } from '@/utils/colorUtils';
+import { useTournamentCache } from '@/composables/useTournamentCache';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
 
 const router = useRouter();
 const route = useRoute();
+const { useTournament } = useTournamentCache();
 
 const tournament = ref<PublicTournamentDetail | null>(null);
 const heroImageUrl = ref<string | null>(null);
@@ -1177,16 +1179,21 @@ const loadLeaderboard = async (week?: string) => {
 };
 
 const loadTournament = async () => {
-  loading.value = true;
   error.value = null;
 
   try {
-    if (isNaN(tournamentId)) {
-      throw new Error('Invalid tournament ID');
+    const { tournament: cachedTournament, heroImageUrl: cachedHeroUrl, logoImageUrl: cachedLogoUrl, error: cacheError } = await useTournament(tournamentId);
+
+    if (cacheError.value) {
+      throw new Error(cacheError.value);
     }
 
-    const data = await publicTournamentService.getTournamentDetail(tournamentId);
-    tournament.value = data;
+    tournament.value = cachedTournament.value;
+    heroImageUrl.value = cachedHeroUrl.value;
+    logoImageUrl.value = cachedLogoUrl.value;
+
+    const data = cachedTournament.value;
+    if (!data) return;
 
     // Debug logging for theme colors
     console.log('Tournament loaded:', {
@@ -1225,18 +1232,8 @@ const loadTournament = async () => {
       ogDescriptionTag.setAttribute('content', description);
     }
 
-    // Set loading to false BEFORE loading images - images load asynchronously in background
+    // Always set loading to false - data is ready either from cache or API
     loading.value = false;
-
-    // Load hero image if available (async, doesn't block rendering)
-    if (data.hasHeroImage) {
-      loadHeroImage().catch(err => console.debug('Failed to load hero image:', err));
-    }
-
-    // Load logo image if available (async, doesn't block rendering)
-    if (data.hasCommunityLogo) {
-      loadLogoImage().catch(err => console.debug('Failed to load logo image:', err));
-    }
 
     // Load leaderboard (async, doesn't block rendering)
     loadLeaderboard().catch(err => console.debug('Failed to load leaderboard:', err));
@@ -1244,34 +1241,6 @@ const loadTournament = async () => {
     console.error('Error loading tournament:', err);
     error.value = err instanceof Error ? err.message : 'Failed to load tournament';
     loading.value = false;
-  }
-};
-
-const loadHeroImage = async () => {
-  try {
-    const response = await fetch(publicTournamentService.getTournamentImageUrl(tournamentId));
-
-    if (response.ok) {
-      const blob = await response.blob();
-      heroImageUrl.value = URL.createObjectURL(blob);
-    }
-  } catch {
-    // Silently fail - hero image is optional
-    console.debug('No hero image available');
-  }
-};
-
-const loadLogoImage = async () => {
-  try {
-    const response = await fetch(publicTournamentService.getTournamentLogoUrl(tournamentId));
-
-    if (response.ok) {
-      const blob = await response.blob();
-      logoImageUrl.value = URL.createObjectURL(blob);
-    }
-  } catch {
-    // Silently fail - logo image is optional
-    console.debug('No logo image available');
   }
 };
 
