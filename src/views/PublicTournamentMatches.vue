@@ -1,30 +1,244 @@
 <template>
   <div class="min-h-screen pb-12 text-bf-text" :style="{ ...themeVars, backgroundColor: getBackgroundColor() }">
+    <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
       <div class="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
     </div>
 
-    <div v-else-if="error" class="min-h-screen flex items-center justify-center">
-      <div class="text-center">
-        <h1 class="text-4xl font-black mb-4" :style="{ color: getAccentColor() }">Error</h1>
-        <p :style="{ color: getTextMutedColor() }">{{ error }}</p>
+    <!-- Error State -->
+    <div v-else-if="error" class="min-h-screen flex items-center justify-center relative overflow-hidden px-4">
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/5 rounded-full blur-3xl" />
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div class="relative z-10 text-center max-w-lg w-full">
+        <div class="mb-8 flex justify-center">
+          <div class="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500/50 flex items-center justify-center">
+            <svg class="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-black mb-4" :style="{ color: getAccentColor() }">
+          Tournament Not Found
+        </h1>
+
+        <p class="text-lg mb-8" :style="{ color: getTextMutedColor() }">
+          {{ error }}
+        </p>
       </div>
     </div>
 
+    <!-- Tournament Content -->
     <div v-else-if="tournament">
+      <!-- Tournament Hero with Navigation -->
       <TournamentHero
         :tournament="tournament"
         :tournament-id="tournamentId"
         :hero-image-url="heroImageUrl"
         :logo-image-url="logoImageUrl"
-        @open-rules="() => {}"
       />
 
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12">
-        <div class="text-center py-20">
-          <div class="text-6xl mb-6 opacity-50">⚔️</div>
-          <h3 class="text-2xl font-bold mb-3" :style="{ color: getTextColor() }">Matches Coming Soon</h3>
-          <p :style="{ color: getTextMutedColor() }">This page is currently under development.</p>
+      <!-- Main Content -->
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
+        <!-- Tournament Matches Table -->
+        <div v-if="allMatchesByWeek.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+          <!-- Table Header -->
+          <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+            <h3 class="text-xl font-semibold flex items-center gap-3" :style="{ color: getTextColor() }">
+              All Matches
+            </h3>
+          </div>
+
+          <!-- Matches Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+              <!-- Table Body -->
+              <tbody>
+                <!-- Week groups with matches -->
+                <template v-for="weekGroup in allMatchesByWeek" :key="weekGroup.week || 'no-week'">
+                  <!-- Week Header Row -->
+                  <tr v-if="!weekGroup.hideWeekHeader" class="border-b" :style="{ backgroundColor: getBackgroundSoftColor(), borderColor: getAccentColor() }">
+                    <td class="p-4 w-32">
+                      <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getAccentColor() }">
+                        {{ weekGroup.week }}
+                      </span>
+                    </td>
+                    <td colspan="3" class="p-4 text-center">
+                      <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getAccentColor() }">
+                        {{ getWeekDateRange(weekGroup.week, weekGroup.matches) }}
+                      </span>
+                    </td>
+                  </tr>
+
+                  <!-- Match rows -->
+                  <tr
+                    v-for="matchItem in weekGroup.matches"
+                    :key="matchItem.match.id"
+                    class="group transition-all duration-300 border-b"
+                    :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }"
+                  >
+                    <!-- Date -->
+                    <td class="p-3">
+                      <div class="text-xs font-mono" :style="{ color: getTextMutedColor() }">
+                        {{ formatMatchDate(matchItem.match.scheduledDate) }}
+                      </div>
+                    </td>
+
+                    <!-- Team Matchup -->
+                    <td class="p-3">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <button
+                          class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
+                          :class="{ 'font-bold': getMatchWinner(matchItem.match) === 'team1' }"
+                          :style="{ color: getMatchWinner(matchItem.match) === 'team1' ? getAccentColor() : getTextColor() }"
+                          @click="openMatchupModal(matchItem.match)"
+                        >
+                          <div class="flex items-center gap-1">
+                            <span v-if="getMatchWinner(matchItem.match) === 'team1'" class="text-lg">🏆</span>
+                            {{ matchItem.match.team1Name }}
+                          </div>
+                        </button>
+                        <div class="text-xs font-medium" :style="{ color: getTextMutedColor() }">VS</div>
+                        <button
+                          class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
+                          :class="{ 'font-bold': getMatchWinner(matchItem.match) === 'team2' }"
+                          :style="{ color: getMatchWinner(matchItem.match) === 'team2' ? getAccentColor() : getTextColor() }"
+                          @click="openMatchupModal(matchItem.match)"
+                        >
+                          <div class="flex items-center gap-1">
+                            <span v-if="getMatchWinner(matchItem.match) === 'team2'" class="text-lg">🏆</span>
+                            {{ matchItem.match.team2Name }}
+                          </div>
+                        </button>
+                      </div>
+                    </td>
+
+                    <!-- Maps Summary (scores only) -->
+                    <td class="p-3">
+                      <div class="text-xs space-y-0.5">
+                        <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2">
+                          <span class="font-mono" :style="{ color: getTextMutedColor() }">{{ map.mapOrder + 1 }}.</span>
+                          <span v-if="map.matchResults?.length > 0" :style="{ color: getAccentColor() }" class="font-bold">
+                            {{ getFormattedScore(map) }}
+                          </span>
+                          <span v-else :style="{ color: getTextMutedColor() }">—</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="p-3 text-center">
+                      <div class="flex items-center justify-center gap-2">
+                        <button
+                          class="px-3 py-1.5 text-xs font-bold transition-all rounded border-2"
+                          :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.2), color: getAccentColor() }"
+                          @click="openMatchupModal(matchItem.match)"
+                        >
+                          Details
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="allMatchesByWeek.length === 0" class="text-center py-20">
+          <div class="text-8xl mb-6 opacity-50">📅</div>
+          <h3 class="text-2xl font-bold" :style="{ color: getTextColor() }">No Matches Yet</h3>
+          <p class="text-lg" :style="{ color: getTextMutedColor() }">
+            Check back soon for match announcements!
+          </p>
+        </div>
+      </div>
+
+      <!-- Match Details Modal -->
+      <div
+        v-if="selectedMatch"
+        class="modal-mobile-safe fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        @click.self="closeMatchupModal"
+      >
+        <div
+          class="rounded-2xl p-6 max-w-5xl w-full shadow-2xl max-h-[85vh] overflow-y-auto border-2"
+          :style="{
+            background: getBackgroundSoftColor(),
+            backdropFilter: 'blur(10px)',
+            borderColor: getAccentColor(),
+            backgroundColor: getBackgroundSoftColor()
+          }"
+        >
+          <!-- Header -->
+          <div class="flex items-start justify-between mb-6">
+            <div class="flex-1">
+              <h3 class="text-3xl font-bold text-center mb-3" :style="{ color: getAccentColor() }">
+                Match Details
+              </h3>
+            </div>
+            <button
+              class="p-2 rounded-lg transition-colors flex-shrink-0"
+              :style="{ color: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.2) }"
+              @click="closeMatchupModal"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Match Summary -->
+          <div class="mb-8 p-4 rounded-lg" :style="{ backgroundColor: getBackgroundMuteColor(), borderLeft: `4px solid ${getAccentColor()}` }">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="text-center">
+                <p class="text-sm mb-2" :style="{ color: getTextMutedColor() }">{{ formatMatchDate(selectedMatch.scheduledDate) }}</p>
+                <p class="text-xl font-bold" :style="{ color: getTextColor() }">{{ selectedMatch.team1Name }}</p>
+              </div>
+              <p class="text-sm font-mono" :style="{ color: getTextMutedColor() }">{{ getResultsAggregation(selectedMatch) }}</p>
+              <div class="text-center">
+                <p class="text-xl font-bold" :style="{ color: getTextColor() }">{{ selectedMatch.team2Name }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Match Results by Map -->
+          <div class="space-y-6">
+            <div v-for="map in selectedMatch.maps" :key="map.id" class="p-4 rounded-lg border-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }">
+              <!-- Map Name -->
+              <h4 class="text-lg font-bold mb-4" :style="{ color: getAccentColor() }">{{ map.mapName }}</h4>
+
+              <!-- Round Results -->
+              <div class="space-y-3 mb-4">
+                <div
+                  v-for="(result, idx) in map.matchResults"
+                  :key="idx"
+                  class="p-3 rounded flex items-center justify-between"
+                  :style="{ backgroundColor: getBackgroundSoftColor() }"
+                >
+                  <div class="flex items-center gap-4 flex-1">
+                    <span class="text-xs font-bold w-12" :style="{ color: getTextMutedColor() }">ROUND {{ idx + 1 }}</span>
+                    <span class="font-mono font-bold" :style="{ color: getTextColor() }">{{ result.team1Tickets }}</span>
+                    <span :style="{ color: getTextMutedColor() }">—</span>
+                    <span class="font-mono font-bold" :style="{ color: getTextColor() }">{{ result.team2Tickets }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Total for Map -->
+              <div class="p-3 rounded border-t-2 pt-4 font-bold flex items-center justify-between" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+                <span :style="{ color: getAccentColor() }">TOTAL</span>
+                <div class="flex items-center gap-4">
+                  <span class="font-mono" :style="{ color: getAccentColor() }">{{ getResultsAggregation(selectedMatch, map.id).split(' – ')[0] }}</span>
+                  <span :style="{ color: getTextMutedColor() }">—</span>
+                  <span class="font-mono" :style="{ color: getAccentColor() }">{{ getResultsAggregation(selectedMatch, map.id).split(' – ')[1] }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -32,86 +246,191 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import TournamentHero from '@/components/TournamentHero.vue'
-import TournamentPageNav from '@/components/TournamentPageNav.vue'
-import { publicTournamentService, type PublicTournamentDetail } from '@/services/publicTournamentService'
-import { isValidHex, normalizeHex, hexToRgb, rgbToHex, calculateLuminance, getContrastingTextColor } from '@/utils/colorUtils'
-import { useTournamentCache } from '@/composables/useTournamentCache'
+import { publicTournamentService, type PublicTournamentDetail, type PublicTournamentMatch } from '@/services/publicTournamentService'
+
+interface MatchItem {
+  match: PublicTournamentMatch
+}
 
 const route = useRoute()
-const { useTournament } = useTournamentCache()
+
 const tournament = ref<PublicTournamentDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
-const tournamentId = parseInt(route.params.id as string)
 const heroImageUrl = ref<string | null>(null)
 const logoImageUrl = ref<string | null>(null)
+const selectedMatch = ref<PublicTournamentMatch | null>(null)
+const tournamentId = computed(() => route.params.id as string)
 
-const themeVars = computed<Record<string, string>>(() => {
-  const defaults = { background: '#000000', backgroundSoft: '#1a1a1a', backgroundMute: '#2d2d2d', text: '#FFFFFF', textMuted: '#d0d0d0', border: '#FFD700' } as const
-  const bgHex = normalizeHex(tournament.value?.theme?.backgroundColour ?? '') || defaults.background
-  const bg = isValidHex(bgHex) ? bgHex : defaults.background
-  const bgLum = calculateLuminance(bg)
-  const isDark = bgLum < 0.5
+const themeVars = computed(() => ({
+  '--tournament-bg': tournament.value?.theme?.backgroundColour ?? '#1a1a1a',
+  '--tournament-text': tournament.value?.theme?.textColour ?? '#ffffff',
+  '--tournament-accent': tournament.value?.theme?.accentColour ?? '#FFD700',
+}))
 
-  const mixHex = (a: string, b: string, t: number): string => {
-    const ra = hexToRgb(a)
-    const rb = hexToRgb(b)
-    if (!ra || !rb) return a
-    const mix = (x: number, y: number) => Math.round(x + (y - x) * t)
-    return rgbToHex(mix(ra.r, rb.r), mix(ra.g, rb.g), mix(ra.b, rb.b))
-  }
+const getBackgroundColor = (): string => tournament.value?.theme?.backgroundColour ?? '#1a1a1a'
+const getTextColor = (): string => tournament.value?.theme?.textColour ?? '#ffffff'
+const getTextMutedColor = (): string => '#a0a0a0'
+const getAccentColor = (): string => tournament.value?.theme?.accentColour ?? '#FFD700'
+const getBackgroundMuteColor = (): string => tournament.value?.theme?.backgroundColour ? `${tournament.value.theme.backgroundColour}40` : '#2a2a2a'
+const getBackgroundSoftColor = (): string => tournament.value?.theme?.backgroundColour ? `${tournament.value.theme.backgroundColour}20` : '#242424'
 
-  const textHexRaw = normalizeHex(tournament.value?.theme?.textColour ?? '')
-  const borderHexRaw = normalizeHex(tournament.value?.theme?.accentColour ?? '')
-  const text = isValidHex(textHexRaw) ? textHexRaw : getContrastingTextColor(bg)
-  const border = isValidHex(borderHexRaw) ? borderHexRaw : defaults.border
+const getAccentColorWithOpacity = (opacity: number): string => {
+  const color = getAccentColor()
+  const r = parseInt(color.slice(1, 3), 16)
+  const g = parseInt(color.slice(3, 5), 16)
+  const b = parseInt(color.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`
+}
 
-  const backgroundSoft = isDark ? mixHex(bg, '#FFFFFF', 0.08) : mixHex(bg, '#000000', 0.06)
-  const backgroundMute = isDark ? mixHex(bg, '#FFFFFF', 0.16) : mixHex(bg, '#000000', 0.12)
-  const textMuted = isDark ? mixHex(text, bg, 0.35) : mixHex(text, bg, 0.45)
+const allMatchesByWeek = computed(() => {
+  if (!tournament.value?.matches) return []
 
-  return {
-    '--color-background': bg,
-    '--color-background-soft': backgroundSoft,
-    '--color-background-mute': backgroundMute,
-    '--color-text': text,
-    '--color-text-muted': textMuted,
-  }
+  const grouped: Record<string, PublicTournamentMatch[]> = {}
+
+  tournament.value.matches.forEach(match => {
+    const week = match.week || 'Unscheduled'
+    if (!grouped[week]) {
+      grouped[week] = []
+    }
+    grouped[week].push(match)
+  })
+
+  return Object.entries(grouped).map(([week, matches]) => ({
+    week,
+    hideWeekHeader: false,
+    matches: matches.map(m => ({ match: m }))
+  }))
 })
 
-const getAccentColor = (): string => {
-  if (!tournament.value?.theme?.accentColour) return '#FFD700'
-  const normalized = normalizeHex(tournament.value.theme.accentColour)
-  return isValidHex(normalized) ? normalized : '#FFD700'
+const formatMatchDate = (dateStr: string): string => {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' +
+         date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
 }
 
-const getBackgroundColor = (): string => themeVars.value['--color-background'] || '#000000'
-const getTextColor = (): string => themeVars.value['--color-text'] || '#FFFFFF'
-const getTextMutedColor = (): string => themeVars.value['--color-text-muted'] || '#d0d0d0'
+const getMatchWinner = (match: PublicTournamentMatch): 'team1' | 'team2' | 'tie' => {
+  if (!match.maps || match.maps.length === 0) return 'tie'
+
+  let team1RoundsWon = 0
+  let team2RoundsWon = 0
+
+  match.maps.forEach(map => {
+    if (map.matchResults && map.matchResults.length > 0) {
+      const lastRound = map.matchResults[map.matchResults.length - 1]
+      if (lastRound.team1Tickets > lastRound.team2Tickets) team1RoundsWon++
+      else if (lastRound.team2Tickets > lastRound.team1Tickets) team2RoundsWon++
+    }
+  })
+
+  if (team1RoundsWon > team2RoundsWon) return 'team1'
+  if (team2RoundsWon > team1RoundsWon) return 'team2'
+  return 'tie'
+}
+
+const getFormattedScore = (map: any): string => {
+  if (!map.matchResults || map.matchResults.length === 0) return '—'
+
+  const results = map.matchResults
+  const lastRound = results[results.length - 1]
+
+  const team1Tickets = lastRound.team1Tickets
+  const team2Tickets = lastRound.team2Tickets
+
+  return `${team1Tickets} – ${team2Tickets} (${results.length} – ${results.length})`
+}
+
+const getResultsAggregation = (match: PublicTournamentMatch, mapId?: number): string => {
+  if (!match.maps || match.maps.length === 0) return '0 – 0'
+
+  const mapsToUse = mapId ? match.maps.filter(m => m.id === mapId) : match.maps
+
+  let team1Total = 0
+  let team2Total = 0
+
+  mapsToUse.forEach(map => {
+    if (map.matchResults && map.matchResults.length > 0) {
+      const lastRound = map.matchResults[map.matchResults.length - 1]
+      team1Total += lastRound.team1Tickets
+      team2Total += lastRound.team2Tickets
+    }
+  })
+
+  return `${team1Total} – ${team2Total}`
+}
+
+const getWeekDateRange = (week: string, matches: MatchItem[]): string => {
+  if (!matches || matches.length === 0) return week
+
+  const dates = matches
+    .map(m => new Date(m.match.scheduledDate).getTime())
+    .filter(d => !isNaN(d))
+
+  if (dates.length === 0) return week
+
+  const minDate = new Date(Math.min(...dates))
+  const maxDate = new Date(Math.max(...dates))
+
+  const formatDate = (date: Date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+  return `${formatDate(minDate)} - ${formatDate(maxDate)}`
+}
+
+const openMatchupModal = (match: PublicTournamentMatch) => {
+  selectedMatch.value = match
+}
+
+const closeMatchupModal = () => {
+  selectedMatch.value = null
+}
 
 const loadTournament = async () => {
-  error.value = null
   try {
-    const { tournament: cachedTournament, heroImageUrl: cachedHeroUrl, logoImageUrl: cachedLogoUrl, error: cacheError } = await useTournament(tournamentId)
+    loading.value = true
+    error.value = null
 
-    if (cacheError.value) {
-      throw new Error(cacheError.value)
+    const data = await publicTournamentService.getTournamentDetail(parseInt(tournamentId.value))
+    tournament.value = data
+
+    // Load images
+    if (data.hasHeroImage) {
+      loadHeroImage().catch(err => console.debug('Failed to load hero image:', err))
     }
-
-    tournament.value = cachedTournament.value
-    heroImageUrl.value = cachedHeroUrl.value
-    logoImageUrl.value = cachedLogoUrl.value
-
-    // Always set loading to false - data is ready either from cache or API
-    loading.value = false
+    if (data.hasCommunityLogo) {
+      loadLogoImage().catch(err => console.debug('Failed to load logo image:', err))
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load tournament'
+  } finally {
     loading.value = false
   }
 }
 
-onMounted(() => loadTournament())
+const loadHeroImage = async () => {
+  if (tournament.value?.hasHeroImage) {
+    const url = publicTournamentService.getTournamentImageUrl(parseInt(tournamentId.value))
+    heroImageUrl.value = url
+  }
+}
+
+const loadLogoImage = async () => {
+  if (tournament.value?.hasCommunityLogo) {
+    const url = publicTournamentService.getTournamentImageUrl(parseInt(tournamentId.value))
+    logoImageUrl.value = url
+  }
+}
+
+onMounted(() => {
+  loadTournament()
+})
+
+watch(
+  () => route.params.id,
+  () => {
+    loadTournament()
+  }
+)
 </script>

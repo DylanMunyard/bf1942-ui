@@ -4,10 +4,28 @@
       <div class="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
     </div>
 
-    <div v-else-if="error" class="min-h-screen flex items-center justify-center">
-      <div class="text-center">
-        <h1 class="text-4xl font-black mb-4" :style="{ color: getAccentColor() }">Error</h1>
-        <p :style="{ color: getTextMutedColor() }">{{ error }}</p>
+    <div v-else-if="error" class="min-h-screen flex items-center justify-center relative overflow-hidden px-4">
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/5 rounded-full blur-3xl" />
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div class="relative z-10 text-center max-w-lg w-full">
+        <div class="mb-8 flex justify-center">
+          <div class="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500/50 flex items-center justify-center">
+            <svg class="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-black mb-4" :style="{ color: getAccentColor() }">
+          Tournament Not Found
+        </h1>
+
+        <p class="text-lg mb-8" :style="{ color: getTextMutedColor() }">
+          {{ error }}
+        </p>
       </div>
     </div>
 
@@ -17,15 +35,66 @@
         :tournament-id="tournamentId"
         :hero-image-url="heroImageUrl"
         :logo-image-url="logoImageUrl"
-        @open-rules="() => {}"
       />
 
       <!-- Content -->
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12">
-        <div class="text-center py-20">
-          <div class="text-6xl mb-6 opacity-50">👥</div>
-          <h3 class="text-2xl font-bold mb-3" :style="{ color: getTextColor() }">Teams Coming Soon</h3>
-          <p :style="{ color: getTextMutedColor() }">This page is currently under development.</p>
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
+        <!-- Teams Grid -->
+        <div v-if="tournament.teams && tournament.teams.length > 0">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div
+              v-for="team in tournament.teams"
+              :key="team.id"
+              class="backdrop-blur-sm border-2 rounded-xl overflow-hidden transition-all hover:border-opacity-100"
+              :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }"
+            >
+              <!-- Team Header -->
+              <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+                <h3 class="text-lg font-bold" :style="{ color: getAccentColor() }">
+                  {{ team.name }}
+                </h3>
+              </div>
+
+              <!-- Team Content -->
+              <div class="px-6 py-4">
+                <!-- Players List -->
+                <div v-if="team.players && team.players.length > 0" class="space-y-2">
+                  <p class="text-xs font-bold uppercase" :style="{ color: getTextMutedColor() }">
+                    {{ team.players.length }} Player<span v-if="team.players.length !== 1">s</span>
+                  </p>
+                  <ul class="space-y-1">
+                    <li
+                      v-for="(player, idx) in team.players"
+                      :key="idx"
+                      class="text-sm py-1 px-2 rounded"
+                      :style="{ color: getTextColor(), backgroundColor: getBackgroundMuteColor() }"
+                    >
+                      {{ player.playerName }}
+                    </li>
+                  </ul>
+                </div>
+                <div v-else class="text-sm" :style="{ color: getTextMutedColor() }">
+                  No players registered yet
+                </div>
+              </div>
+
+              <!-- Team Meta -->
+              <div class="px-6 py-3 border-t-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }">
+                <p class="text-xs" :style="{ color: getTextMutedColor() }">
+                  Registered: {{ formatDate(team.createdAt) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="text-center py-20">
+          <div class="text-8xl mb-6 opacity-50">👥</div>
+          <h3 class="text-2xl font-bold mb-3" :style="{ color: getTextColor() }">No Teams Registered</h3>
+          <p :style="{ color: getTextMutedColor() }">
+            Teams will appear here once they register for the tournament.
+          </p>
         </div>
       </div>
     </div>
@@ -33,87 +102,82 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import TournamentHero from '@/components/TournamentHero.vue'
 import { publicTournamentService, type PublicTournamentDetail } from '@/services/publicTournamentService'
-import { isValidHex, normalizeHex, hexToRgb, rgbToHex, calculateLuminance, getContrastingTextColor } from '@/utils/colorUtils'
-import { useTournamentCache } from '@/composables/useTournamentCache'
 
 const route = useRoute()
-const { useTournament } = useTournamentCache()
+
 const tournament = ref<PublicTournamentDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
-
-const tournamentId = parseInt(route.params.id as string)
 const heroImageUrl = ref<string | null>(null)
 const logoImageUrl = ref<string | null>(null)
+const tournamentId = computed(() => route.params.id as string)
 
-const themeVars = computed<Record<string, string>>(() => {
-  const defaults = { background: '#000000', backgroundSoft: '#1a1a1a', backgroundMute: '#2d2d2d', text: '#FFFFFF', textMuted: '#d0d0d0', border: '#FFD700' } as const
-  const bgHex = normalizeHex(tournament.value?.theme?.backgroundColour ?? '') || defaults.background
-  const bg = isValidHex(bgHex) ? bgHex : defaults.background
-  const bgLum = calculateLuminance(bg)
-  const isDark = bgLum < 0.5
+const themeVars = computed(() => ({
+  '--tournament-bg': tournament.value?.theme?.backgroundColour ?? '#1a1a1a',
+  '--tournament-text': tournament.value?.theme?.textColour ?? '#ffffff',
+  '--tournament-accent': tournament.value?.theme?.accentColour ?? '#FFD700',
+}))
 
-  const mixHex = (a: string, b: string, t: number): string => {
-    const ra = hexToRgb(a)
-    const rb = hexToRgb(b)
-    if (!ra || !rb) return a
-    const mix = (x: number, y: number) => Math.round(x + (y - x) * t)
-    return rgbToHex(mix(ra.r, rb.r), mix(ra.g, rb.g), mix(ra.b, rb.b))
-  }
+const getBackgroundColor = (): string => tournament.value?.theme?.backgroundColour ?? '#1a1a1a'
+const getTextColor = (): string => tournament.value?.theme?.textColour ?? '#ffffff'
+const getTextMutedColor = (): string => '#a0a0a0'
+const getAccentColor = (): string => tournament.value?.theme?.accentColour ?? '#FFD700'
+const getBackgroundMuteColor = (): string => tournament.value?.theme?.backgroundColour ? `${tournament.value.theme.backgroundColour}40` : '#2a2a2a'
+const getBackgroundSoftColor = (): string => tournament.value?.theme?.backgroundColour ? `${tournament.value.theme.backgroundColour}20` : '#242424'
 
-  const textHexRaw = normalizeHex(tournament.value?.theme?.textColour ?? '')
-  const borderHexRaw = normalizeHex(tournament.value?.theme?.accentColour ?? '')
-  const text = isValidHex(textHexRaw) ? textHexRaw : getContrastingTextColor(bg)
-  const border = isValidHex(borderHexRaw) ? borderHexRaw : defaults.border
-
-  const backgroundSoft = isDark ? mixHex(bg, '#FFFFFF', 0.08) : mixHex(bg, '#000000', 0.06)
-  const backgroundMute = isDark ? mixHex(bg, '#FFFFFF', 0.16) : mixHex(bg, '#000000', 0.12)
-  const textMuted = isDark ? mixHex(text, bg, 0.35) : mixHex(text, bg, 0.45)
-
-  return {
-    '--color-background': bg,
-    '--color-background-soft': backgroundSoft,
-    '--color-background-mute': backgroundMute,
-    '--color-text': text,
-    '--color-text-muted': textMuted,
-  }
-})
-
-const getAccentColor = (): string => {
-  if (!tournament.value?.theme?.accentColour) return '#FFD700'
-  const normalized = normalizeHex(tournament.value.theme.accentColour)
-  return isValidHex(normalized) ? normalized : '#FFD700'
+const formatDate = (dateStr: string): string => {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
-
-const getBackgroundColor = (): string => themeVars.value['--color-background'] || '#000000'
-const getTextColor = (): string => themeVars.value['--color-text'] || '#FFFFFF'
-const getTextMutedColor = (): string => themeVars.value['--color-text-muted'] || '#d0d0d0'
 
 const loadTournament = async () => {
-  error.value = null
-
   try {
-    const { tournament: cachedTournament, heroImageUrl: cachedHeroUrl, logoImageUrl: cachedLogoUrl, error: cacheError } = await useTournament(tournamentId)
+    loading.value = true
+    error.value = null
 
-    if (cacheError.value) {
-      throw new Error(cacheError.value)
+    const data = await publicTournamentService.getTournamentDetail(parseInt(tournamentId.value))
+    tournament.value = data
+
+    // Load images
+    if (data.hasHeroImage) {
+      loadHeroImage().catch(err => console.debug('Failed to load hero image:', err))
     }
-
-    tournament.value = cachedTournament.value
-    heroImageUrl.value = cachedHeroUrl.value
-    logoImageUrl.value = cachedLogoUrl.value
-
-    // Always set loading to false - data is ready either from cache or API
-    loading.value = false
+    if (data.hasCommunityLogo) {
+      loadLogoImage().catch(err => console.debug('Failed to load logo image:', err))
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load tournament'
+  } finally {
     loading.value = false
   }
 }
 
-onMounted(() => loadTournament())
+const loadHeroImage = async () => {
+  if (tournament.value?.hasHeroImage) {
+    const url = publicTournamentService.getTournamentImageUrl(parseInt(tournamentId.value))
+    heroImageUrl.value = url
+  }
+}
+
+const loadLogoImage = async () => {
+  if (tournament.value?.hasCommunityLogo) {
+    const url = publicTournamentService.getTournamentImageUrl(parseInt(tournamentId.value))
+    logoImageUrl.value = url
+  }
+}
+
+onMounted(() => {
+  loadTournament()
+})
+
+watch(
+  () => route.params.id,
+  () => {
+    loadTournament()
+  }
+)
 </script>

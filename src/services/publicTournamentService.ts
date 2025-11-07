@@ -7,6 +7,14 @@ export interface PublicTournamentTeam {
   players: { playerName: string }[];
 }
 
+export interface TournamentFile {
+  id: number;
+  name: string;
+  url: string;
+  category: string | null;
+  uploadedAt: string;
+}
+
 export interface PublicTournamentRoundPlayer {
   playerName: string;
   totalScore: number;
@@ -125,6 +133,7 @@ export interface PublicTournamentDetail {
   matchesByWeek?: PublicTournamentMatchesByWeek[];
   weekDates?: TournamentWeekDate[];
   latestMatches?: PublicTournamentMatch[];
+  files?: TournamentFile[];
   hasHeroImage?: boolean;
   hasCommunityLogo?: boolean;
   game: 'bf1942' | 'fh2' | 'bfvietnam';

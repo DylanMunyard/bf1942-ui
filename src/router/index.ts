@@ -18,6 +18,7 @@ const SystemStats = () => import('../views/SystemStats.vue')
 const DiscordCallback = () => import('../views/DiscordCallback.vue')
 const TournamentDetails = () => import('../views/TournamentDetails.vue')
 const PublicTournament = () => import('../views/PublicTournament.vue')
+const PublicTournamentRankings = () => import('../views/PublicTournamentRankings.vue')
 const PublicTournamentRules = () => import('../views/PublicTournamentRules.vue')
 const PublicTournamentTeams = () => import('../views/PublicTournamentTeams.vue')
 const PublicTournamentMatches = () => import('../views/PublicTournamentMatches.vue')
@@ -225,6 +226,16 @@ const routes: RouteRecordRaw[] = [
       meta: {
         title: (route: RouteLocationNormalized) => `Tournament ${route.params.id} - BF Stats`,
         description: 'View tournament schedule, matches, and results for Battlefield competitions.'
+      }
+    },
+    {
+      path: '/tournaments/:id/rankings',
+      name: 'public-tournament-rankings',
+      component: PublicTournamentRankings,
+      props: true,
+      meta: {
+        title: (route: RouteLocationNormalized) => `Rankings - Tournament ${route.params.id} - BF Stats`,
+        description: 'Tournament team rankings and leaderboard.'
       }
     },
     {

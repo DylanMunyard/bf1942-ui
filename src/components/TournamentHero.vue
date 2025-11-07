@@ -117,11 +117,11 @@
           </router-link>
 
           <router-link
-            :to="`/tournaments/${tournamentId}/teams`"
-            :class="['nav-button', isHeroActive('teams') ? 'nav-button-active' : 'nav-button-inactive']"
-            :style="getButtonStyles('teams')"
+            :to="`/tournaments/${tournamentId}/rankings`"
+            :class="['nav-button', isHeroActive('rankings') ? 'nav-button-active' : 'nav-button-inactive']"
+            :style="getButtonStyles('rankings')"
           >
-            Teams
+            Rankings
           </router-link>
 
           <router-link
@@ -138,6 +138,14 @@
             :style="getButtonStyles('rules')"
           >
             Rules
+          </router-link>
+
+          <router-link
+            :to="`/tournaments/${tournamentId}/teams`"
+            :class="['nav-button', isHeroActive('teams') ? 'nav-button-active' : 'nav-button-inactive']"
+            :style="getButtonStyles('teams')"
+          >
+            Teams
           </router-link>
 
           <router-link
@@ -226,6 +234,7 @@ const isHeroActive = (page: string): boolean => {
   const currentPath = route.path
   const patternMap: Record<string, RegExp> = {
     overview: /^\/tournaments\/\d+$/,
+    rankings: /\/rankings$/,
     teams: /\/teams$/,
     matches: /\/matches$/,
     rules: /\/rules$/,
