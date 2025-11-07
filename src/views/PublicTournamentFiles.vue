@@ -48,7 +48,7 @@
                 </p>
                 <p class="text-xs mt-1" :style="{ color: getTextMutedColor() }">
                   <span v-if="file.category" class="inline-block mr-3">{{ file.category }}</span>
-                  <span>{{ formatDate(file.uploadedAt) }}</span>
+                  <span>Uploaded: {{ formatDate(file.uploadedAt) }}</span>
                 </p>
               </div>
               <svg class="w-5 h-5 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
