@@ -42,7 +42,7 @@
           >
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
-                <p class="font-semibold text-base truncate transition-colors hover:opacity-80" :style="{ color: getAccentColor() }">
+                <p class="font-semibold text-base truncate transition-colors hover:opacity-80" :style="{ color: getTextColor() }">
                   {{ file.name }}
                 </p>
                 <p class="text-xs mt-1" :style="{ color: getTextMutedColor() }">
