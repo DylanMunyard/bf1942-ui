@@ -23,9 +23,6 @@
       <div class="max-w-4xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12">
         <!-- Files List -->
         <div v-if="tournament.files && tournament.files.length > 0" class="space-y-3">
-          <h3 class="text-2xl font-bold mb-6" :style="{ color: getTextColor() }">
-            📁 Tournament Files
-          </h3>
 
           <a
             v-for="file in tournament.files"
