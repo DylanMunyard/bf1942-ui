@@ -34,7 +34,7 @@
 
         <!-- Community Logo Display (below tournament name) -->
         <div v-if="logoImageUrl" class="mb-2 flex justify-center">
-          <img :src="logoImageUrl" alt="Community logo" class="max-h-32 object-contain">
+          <img :src="logoImageUrl" alt="Community logo" class="max-h-64 object-contain">
         </div>
 
         <!-- Organizer Name Display -->
@@ -67,15 +67,8 @@
           </p>
         </div>
 
-        <!-- Server & Links -->
+        <!-- Links -->
         <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white mb-6">
-          <div
-            v-if="tournament.serverName"
-            class="flex items-center gap-2 px-4 py-2 bg-slate-800/60 backdrop-blur-sm rounded-full border border-slate-700/50"
-          >
-            <span class="text-cyan-400">🖥️</span>
-            <span class="font-medium">{{ tournament.serverName }}</span>
-          </div>
           <a
             v-if="tournament.discordUrl"
             :href="tournament.discordUrl"
