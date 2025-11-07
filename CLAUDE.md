@@ -31,3 +31,4 @@ npm run dev          # Start development server
 npm run build        # Build for production
 npx vue-tsc --noEmit # Type check
 ```
+- When working on a change, do not commit or push unless explicitly asked.

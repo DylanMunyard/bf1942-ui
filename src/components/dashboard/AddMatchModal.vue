@@ -163,6 +163,27 @@
                   </button>
                 </div>
 
+                <!-- Team Selection Row -->
+                <div v-if="formData.team1Id && formData.team2Id" class="flex items-center gap-2 ml-8">
+                  <span class="text-xs text-slate-400 flex-shrink-0">Selected by:</span>
+                  <div class="flex items-center gap-2 flex-1">
+                    <button
+                      v-for="team in props.teams.filter(t => t.id === formData.team1Id || t.id === formData.team2Id)"
+                      :key="team.id"
+                      @click="formData.maps[index].teamId = formData.maps[index].teamId === team.id ? null : team.id"
+                      :disabled="loading"
+                      :class="[
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                        formData.maps[index].teamId === team.id
+                          ? 'bg-cyan-600 border-cyan-500 text-white'
+                          : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-600/50'
+                      ]"
+                    >
+                      {{ team.name }}
+                    </button>
+                  </div>
+                </div>
+
               </div>
               <button
                 class="w-full px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
@@ -328,6 +349,7 @@ let blurTimeout: number | null = null;
 
 interface MapEntry {
   name: string;
+  teamId?: number | null;
 }
 
 const formData = ref({
@@ -456,7 +478,8 @@ onMounted(() => {
     formData.value.team2Id = team2?.id || null;
     // Extract maps
     formData.value.maps = props.match.maps.map(m => ({
-      name: m.mapName
+      name: m.mapName,
+      teamId: m.teamId || null
     }));
     formData.value.serverGuid = props.match.serverGuid || '';
     formData.value.serverName = props.match.serverName || '';
@@ -484,7 +507,12 @@ const handleSubmit = async () => {
       scheduledDate: new Date(formData.value.scheduledDate).toISOString(),
       team1Id: formData.value.team1Id!,
       team2Id: formData.value.team2Id!,
-      mapNames: formData.value.maps.map(map => map.name.trim()).filter(name => name.length > 0),
+      maps: formData.value.maps
+        .filter(map => map.name.trim().length > 0)
+        .map(map => ({
+          mapName: map.name.trim(),
+          ...(map.teamId && { teamId: map.teamId })
+        })),
       serverGuid: formData.value.serverGuid.trim() || undefined,
       serverName: serverName || undefined,
       week: weekValue && weekValue.length > 0 ? weekValue : null,
