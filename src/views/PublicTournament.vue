@@ -622,11 +622,6 @@
             Select one more player from the other team to compare
           </div>
         </div>
-
-        <!-- Future: Add comments section, more details, etc. -->
-        <div class="mt-8 p-4 border-2 rounded-lg text-center text-sm" :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.08), color: getTextMutedColor() }">
-          More details and match comments coming soon...
-        </div>
       </div>
     </div>
   </div>
