@@ -62,6 +62,37 @@
               >
             </div>
 
+            <!-- Status & Game Mode Badges -->
+            <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
+              <!-- Tournament Status Badge -->
+              <div
+                v-if="tournament.status"
+                class="px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all"
+                :style="{
+                  borderColor: getAccentColor(),
+                  backgroundColor: getAccentColor() + '20',
+                  color: getAccentColor()
+                }"
+              >
+                <span v-if="tournament.status === 'registration'">📝 Registration</span>
+                <span v-else-if="tournament.status === 'open'">🔓 Open</span>
+                <span v-else-if="tournament.status === 'closed'">🔒 Closed</span>
+              </div>
+
+              <!-- Game Mode Badge -->
+              <div
+                v-if="tournament.gameMode"
+                class="px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all"
+                :style="{
+                  borderColor: getAccentColor(),
+                  backgroundColor: getAccentColor() + '15',
+                  color: getAccentColor()
+                }"
+              >
+                🎮 {{ tournament.gameMode }}
+              </div>
+            </div>
+
             <!-- Game Icon & Info -->
             <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white mb-8">
               <!-- Game Icon Badge -->
@@ -128,6 +159,72 @@
 
       <!-- Main Content -->
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
+        <!-- Latest Matches Section -->
+        <div v-if="tournament.latestMatches && tournament.latestMatches.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+          <!-- Latest Matches Header -->
+          <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+            <h3 class="text-xl font-semibold" :style="{ color: getTextColor() }">
+              ⚡ Latest Matches
+            </h3>
+          </div>
+
+          <!-- Latest Matches List -->
+          <div class="divide-y" :style="{ borderColor: getAccentColor() }">
+            <div
+              v-for="match in tournament.latestMatches.slice(0, 2)"
+              :key="match.id"
+              class="p-4 sm:p-6 hover:bg-opacity-50 transition-all cursor-pointer last:divide-y-0"
+              :style="{ backgroundColor: getBackgroundMuteColor(), borderBottomColor: getAccentColor() }"
+              @click="openMatchupModal(match)"
+            >
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <!-- Match Date -->
+                <div class="text-xs sm:text-sm font-mono" :style="{ color: getTextMutedColor() }">
+                  {{ formatMatchDate(match.scheduledDate) }}
+                </div>
+
+                <!-- Teams & Score -->
+                <div class="flex-1 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <div class="text-sm sm:text-base font-semibold" :style="{ color: getAccentColor() }">
+                    {{ match.team1Name }}
+                  </div>
+                  <div class="text-xs sm:text-sm font-medium" :style="{ color: getTextMutedColor() }">
+                    vs
+                  </div>
+                  <div class="text-sm sm:text-base font-semibold" :style="{ color: getAccentColor() }">
+                    {{ match.team2Name }}
+                  </div>
+                </div>
+
+                <!-- Server & Maps Count -->
+                <div class="flex items-center gap-4 text-xs sm:text-sm" :style="{ color: getTextMutedColor() }">
+                  <div v-if="match.serverName" class="flex items-center gap-1">
+                    <span>🖥️</span>
+                    <span>{{ match.serverName }}</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span>🗺️</span>
+                    <span>{{ match.maps?.length ?? 0 }} map<span v-if="(match.maps?.length ?? 0) !== 1">s</span></span>
+                  </div>
+                </div>
+
+                <!-- View Button -->
+                <button
+                  class="px-3 py-1.5 text-xs sm:text-sm font-medium rounded transition-all self-start sm:self-auto"
+                  :style="{
+                    backgroundColor: getAccentColor() + '20',
+                    color: getAccentColor(),
+                    border: `1px solid ${getAccentColor()}`
+                  }"
+                  @click.stop="openMatchupModal(match)"
+                >
+                  View Details
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Tournament Leaderboard -->
         <div v-if="leaderboard && leaderboard.rankings.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
           <!-- Leaderboard Header -->
