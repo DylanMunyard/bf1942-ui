@@ -34,7 +34,7 @@
 
         <!-- Community Logo Display (below tournament name) -->
         <div v-if="logoImageUrl" class="mb-2 flex justify-center">
-          <img :src="logoImageUrl" alt="Community logo" class="max-h-64 object-contain">
+          <img :src="logoImageUrl" alt="Community logo" class="max-h-32 object-contain">
         </div>
 
         <!-- Organizer Name Display -->
