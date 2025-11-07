@@ -198,13 +198,13 @@ const getStatusColor = (status: string): string => {
 const getStatusTextColor = (status: string): string => {
   switch (status) {
     case 'registration':
-      return '#93c5fd'
+      return '#FFFFFF'
     case 'open':
-      return '#6ee7b7'
+      return '#FFFFFF'
     case 'closed':
-      return '#fca5a5'
+      return '#FFFFFF'
     default:
-      return '#d1d5db'
+      return '#FFFFFF'
   }
 }
 
