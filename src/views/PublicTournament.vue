@@ -91,7 +91,7 @@
       <!-- Main Content -->
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
         <!-- Latest Matches Section -->
-        <div v-if="tournament.latestMatches && tournament.latestMatches.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+        <div v-if="computedLatestMatches && computedLatestMatches.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
           <!-- Latest Matches Header -->
           <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
             <h3 class="text-xl font-semibold" :style="{ color: getTextColor() }">
@@ -102,7 +102,7 @@
           <!-- Latest Matches List -->
           <div class="divide-y" :style="{ borderColor: getAccentColor() }">
             <div
-              v-for="match in tournament.latestMatches.slice(0, 2)"
+              v-for="match in computedLatestMatches"
               :key="match.id"
               class="p-4 sm:p-6 hover:bg-opacity-50 transition-all cursor-pointer last:divide-y-0"
               :style="{ backgroundColor: getBackgroundMuteColor(), borderBottomColor: getAccentColor() }"
@@ -1067,6 +1067,25 @@ interface MatchWithStatus {
   status: 'upcoming' | 'completed';
   isCompleted: boolean;
 }
+
+// Compute latest matches - use API-provided latestMatches or derive from matches array
+const computedLatestMatches = computed(() => {
+  // If API provides latestMatches, use it
+  if (tournament.value?.latestMatches && tournament.value.latestMatches.length > 0) {
+    return tournament.value.latestMatches.slice(0, 2);
+  }
+
+  // Otherwise, derive from all matches by finding completed matches
+  if (!tournament.value?.matches) return [];
+
+  const completedMatches = tournament.value.matches.filter(match => {
+    const completedMaps = match.maps.filter(map => map.matchResults?.length > 0);
+    return completedMaps.length === match.maps.length && match.maps.length > 0;
+  });
+
+  // Return the most recent 2 completed matches (assuming createdAt is ordered)
+  return completedMatches.slice(-2).reverse();
+});
 
 const allMatchesByWeek = computed(() => {
   if (!tournament.value?.matchesByWeek) return [];
