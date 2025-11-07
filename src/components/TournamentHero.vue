@@ -133,14 +133,6 @@
           </router-link>
 
           <router-link
-            :to="`/tournaments/${tournamentId}/rules`"
-            :class="['nav-button', isHeroActive('rules') ? 'nav-button-active' : 'nav-button-inactive']"
-            :style="getButtonStyles('rules')"
-          >
-            Rules
-          </router-link>
-
-          <router-link
             :to="`/tournaments/${tournamentId}/teams`"
             :class="['nav-button', isHeroActive('teams') ? 'nav-button-active' : 'nav-button-inactive']"
             :style="getButtonStyles('teams')"
@@ -237,7 +229,6 @@ const isHeroActive = (page: string): boolean => {
     rankings: /\/rankings$/,
     teams: /\/teams$/,
     matches: /\/matches$/,
-    rules: /\/rules$/,
     files: /\/files$/,
     stats: /\/stats$/,
   }
