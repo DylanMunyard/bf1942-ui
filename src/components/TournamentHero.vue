@@ -1,7 +1,7 @@
 <template>
   <div class="relative overflow-hidden" :style="{ background: '#1a1a1a' }">
     <!-- Background Hero Image -->
-    <div v-if="heroImageUrl" class="absolute inset-0">
+    <div v-if="heroImageUrl" class="absolute inset-0 z-0">
       <img
         :src="heroImageUrl"
         :alt="tournament.name"
@@ -16,7 +16,7 @@
     </div>
 
     <!-- Decorative Elements -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
       <div class="absolute top-0 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
       <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
     </div>

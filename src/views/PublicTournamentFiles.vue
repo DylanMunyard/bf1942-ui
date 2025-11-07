@@ -71,83 +71,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import TournamentHero from '@/components/TournamentHero.vue'
-import { publicTournamentService, type PublicTournamentDetail } from '@/services/publicTournamentService'
+import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
 
-const route = useRoute()
-
-const tournament = ref<PublicTournamentDetail | null>(null)
-const loading = ref(true)
-const error = ref<string | null>(null)
-const heroImageUrl = ref<string | null>(null)
-const logoImageUrl = ref<string | null>(null)
-const tournamentId = computed(() => route.params.id as string)
-
-const themeVars = computed(() => ({
-  '--tournament-bg': tournament.value?.theme?.backgroundColour ?? '#1a1a1a',
-  '--tournament-text': tournament.value?.theme?.textColour ?? '#ffffff',
-  '--tournament-accent': tournament.value?.theme?.accentColour ?? '#FFD700',
-}))
-
-const getBackgroundColor = (): string => tournament.value?.theme?.backgroundColour ?? '#1a1a1a'
-const getTextColor = (): string => tournament.value?.theme?.textColour ?? '#ffffff'
-const getTextMutedColor = (): string => '#a0a0a0'
-const getAccentColor = (): string => tournament.value?.theme?.accentColour ?? '#FFD700'
-const getBackgroundMuteColor = (): string => tournament.value?.theme?.backgroundColour ? `${tournament.value.theme.backgroundColour}40` : '#2a2a2a'
-const getBackgroundSoftColor = (): string => tournament.value?.theme?.backgroundColour ? `${tournament.value.theme.backgroundColour}20` : '#242424'
+const {
+  tournament,
+  loading,
+  error,
+  heroImageUrl,
+  logoImageUrl,
+  tournamentId,
+  themeVars,
+  getBackgroundColor,
+  getTextColor,
+  getTextMutedColor,
+  getAccentColor,
+  getBackgroundSoftColor,
+} = usePublicTournamentPage()
 
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr)
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' +
          date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
 }
-
-const loadTournament = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const data = await publicTournamentService.getTournamentDetail(parseInt(tournamentId.value))
-    tournament.value = data
-
-    // Load images
-    if (data.hasHeroImage) {
-      loadHeroImage().catch(err => console.debug('Failed to load hero image:', err))
-    }
-    if (data.hasCommunityLogo) {
-      loadLogoImage().catch(err => console.debug('Failed to load logo image:', err))
-    }
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load tournament'
-  } finally {
-    loading.value = false
-  }
-}
-
-const loadHeroImage = async () => {
-  if (tournament.value?.hasHeroImage) {
-    const url = publicTournamentService.getTournamentImageUrl(parseInt(tournamentId.value))
-    heroImageUrl.value = url
-  }
-}
-
-const loadLogoImage = async () => {
-  if (tournament.value?.hasCommunityLogo) {
-    const url = publicTournamentService.getTournamentImageUrl(parseInt(tournamentId.value))
-    logoImageUrl.value = url
-  }
-}
-
-onMounted(() => {
-  loadTournament()
-})
-
-watch(
-  () => route.params.id,
-  () => {
-    loadTournament()
-  }
-)
 </script>

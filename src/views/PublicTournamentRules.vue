@@ -60,23 +60,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed } from 'vue'
 import { marked } from 'marked'
 import TournamentHero from '@/components/TournamentHero.vue'
-import { publicTournamentService, type PublicTournamentDetail } from '@/services/publicTournamentService'
 import { isValidHex, normalizeHex, hexToRgb, rgbToHex, calculateLuminance, getContrastingTextColor } from '@/utils/colorUtils'
-import { useTournamentCache } from '@/composables/useTournamentCache'
+import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
 
-const route = useRoute()
-const { useTournament } = useTournamentCache()
-const tournament = ref<PublicTournamentDetail | null>(null)
-const loading = ref(true)
-const error = ref<string | null>(null)
-
-const tournamentId = parseInt(route.params.id as string)
-const heroImageUrl = ref<string | null>(null)
-const logoImageUrl = ref<string | null>(null)
+const {
+  tournament,
+  loading,
+  error,
+  heroImageUrl,
+  logoImageUrl,
+  tournamentId,
+} = usePublicTournamentPage()
 
 const renderedRules = computed(() => {
   if (!tournament.value?.rules || !tournament.value.rules.trim()) {
@@ -157,33 +154,6 @@ const getTextColor = (): string => {
 const getTextMutedColor = (): string => {
   return themeVars.value['--color-text-muted'] || '#d0d0d0'
 }
-
-const loadTournament = async () => {
-  error.value = null
-
-  try {
-    const { tournament: cachedTournament, heroImageUrl: cachedHeroUrl, logoImageUrl: cachedLogoUrl, error: cacheError, isCacheHit } = await useTournament(tournamentId)
-
-    if (cacheError.value) {
-      throw new Error(cacheError.value)
-    }
-
-    tournament.value = cachedTournament.value
-    heroImageUrl.value = cachedHeroUrl.value
-    logoImageUrl.value = cachedLogoUrl.value
-
-    // Always set loading to false - data is ready either from cache or API
-    loading.value = false
-  } catch (err) {
-    console.error('Error loading tournament:', err)
-    error.value = err instanceof Error ? err.message : 'Failed to load tournament'
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  loadTournament()
-})
 </script>
 
 <style scoped>

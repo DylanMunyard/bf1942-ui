@@ -246,45 +246,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed } from 'vue'
 import TournamentHero from '@/components/TournamentHero.vue'
-import { publicTournamentService, type PublicTournamentDetail, type PublicTournamentMatch } from '@/services/publicTournamentService'
+import { publicTournamentService, type PublicTournamentMatch } from '@/services/publicTournamentService'
+import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
 
 interface MatchItem {
   match: PublicTournamentMatch
 }
 
-const route = useRoute()
+const {
+  tournament,
+  loading,
+  error,
+  heroImageUrl,
+  logoImageUrl,
+  tournamentId,
+  themeVars,
+  getBackgroundColor,
+  getTextColor,
+  getTextMutedColor,
+  getAccentColor,
+  getBackgroundMuteColor,
+  getBackgroundSoftColor,
+  getAccentColorWithOpacity,
+} = usePublicTournamentPage()
 
-const tournament = ref<PublicTournamentDetail | null>(null)
-const loading = ref(true)
-const error = ref<string | null>(null)
-const heroImageUrl = ref<string | null>(null)
-const logoImageUrl = ref<string | null>(null)
 const selectedMatch = ref<PublicTournamentMatch | null>(null)
-const tournamentId = computed(() => route.params.id as string)
-
-const themeVars = computed(() => ({
-  '--tournament-bg': tournament.value?.theme?.backgroundColour ?? '#1a1a1a',
-  '--tournament-text': tournament.value?.theme?.textColour ?? '#ffffff',
-  '--tournament-accent': tournament.value?.theme?.accentColour ?? '#FFD700',
-}))
-
-const getBackgroundColor = (): string => tournament.value?.theme?.backgroundColour ?? '#1a1a1a'
-const getTextColor = (): string => tournament.value?.theme?.textColour ?? '#ffffff'
-const getTextMutedColor = (): string => '#a0a0a0'
-const getAccentColor = (): string => tournament.value?.theme?.accentColour ?? '#FFD700'
-const getBackgroundMuteColor = (): string => tournament.value?.theme?.backgroundColour ? `${tournament.value.theme.backgroundColour}40` : '#2a2a2a'
-const getBackgroundSoftColor = (): string => tournament.value?.theme?.backgroundColour ? `${tournament.value.theme.backgroundColour}20` : '#242424'
-
-const getAccentColorWithOpacity = (opacity: number): string => {
-  const color = getAccentColor()
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`
-}
 
 const allMatchesByWeek = computed(() => {
   if (!tournament.value?.matchesByWeek) return []
@@ -381,51 +369,4 @@ const openMatchupModal = (match: PublicTournamentMatch) => {
 const closeMatchupModal = () => {
   selectedMatch.value = null
 }
-
-const loadTournament = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const data = await publicTournamentService.getTournamentDetail(parseInt(tournamentId.value))
-    tournament.value = data
-
-    // Load images
-    if (data.hasHeroImage) {
-      loadHeroImage().catch(err => console.debug('Failed to load hero image:', err))
-    }
-    if (data.hasCommunityLogo) {
-      loadLogoImage().catch(err => console.debug('Failed to load logo image:', err))
-    }
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load tournament'
-  } finally {
-    loading.value = false
-  }
-}
-
-const loadHeroImage = async () => {
-  if (tournament.value?.hasHeroImage) {
-    const url = publicTournamentService.getTournamentImageUrl(parseInt(tournamentId.value))
-    heroImageUrl.value = url
-  }
-}
-
-const loadLogoImage = async () => {
-  if (tournament.value?.hasCommunityLogo) {
-    const url = publicTournamentService.getTournamentImageUrl(parseInt(tournamentId.value))
-    logoImageUrl.value = url
-  }
-}
-
-onMounted(() => {
-  loadTournament()
-})
-
-watch(
-  () => route.params.id,
-  () => {
-    loadTournament()
-  }
-)
 </script>

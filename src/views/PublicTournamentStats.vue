@@ -31,21 +31,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import TournamentHero from '@/components/TournamentHero.vue'
-import { publicTournamentService, type PublicTournamentDetail } from '@/services/publicTournamentService'
+import { computed } from 'vue'
 import { isValidHex, normalizeHex, hexToRgb, rgbToHex, calculateLuminance, getContrastingTextColor } from '@/utils/colorUtils'
-import { useTournamentCache } from '@/composables/useTournamentCache'
+import TournamentHero from '@/components/TournamentHero.vue'
+import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
 
-const route = useRoute()
-const { useTournament } = useTournamentCache()
-const tournament = ref<PublicTournamentDetail | null>(null)
-const loading = ref(true)
-const error = ref<string | null>(null)
-const tournamentId = parseInt(route.params.id as string)
-const heroImageUrl = ref<string | null>(null)
-const logoImageUrl = ref<string | null>(null)
+const {
+  tournament,
+  loading,
+  error,
+  heroImageUrl,
+  logoImageUrl,
+  tournamentId,
+} = usePublicTournamentPage()
 
 const themeVars = computed<Record<string, string>>(() => {
   const defaults = { background: '#000000', backgroundSoft: '#1a1a1a', backgroundMute: '#2d2d2d', text: '#FFFFFF', textMuted: '#d0d0d0', border: '#FFD700' } as const
@@ -89,27 +87,4 @@ const getAccentColor = (): string => {
 const getBackgroundColor = (): string => themeVars.value['--color-background'] || '#000000'
 const getTextColor = (): string => themeVars.value['--color-text'] || '#FFFFFF'
 const getTextMutedColor = (): string => themeVars.value['--color-text-muted'] || '#d0d0d0'
-
-const loadTournament = async () => {
-  error.value = null
-  try {
-    const { tournament: cachedTournament, heroImageUrl: cachedHeroUrl, logoImageUrl: cachedLogoUrl, error: cacheError } = await useTournament(tournamentId)
-
-    if (cacheError.value) {
-      throw new Error(cacheError.value)
-    }
-
-    tournament.value = cachedTournament.value
-    heroImageUrl.value = cachedHeroUrl.value
-    logoImageUrl.value = cachedLogoUrl.value
-
-    // Always set loading to false - data is ready either from cache or API
-    loading.value = false
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load tournament'
-    loading.value = false
-  }
-}
-
-onMounted(() => loadTournament())
 </script>
