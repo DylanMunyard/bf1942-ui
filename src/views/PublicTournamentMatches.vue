@@ -43,109 +43,98 @@
 
       <!-- Main Content -->
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
-        <!-- Tournament Matches Table -->
-        <div v-if="allMatchesByWeek.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
-          <!-- Table Header -->
-          <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
-            <h3 class="text-xl font-semibold flex items-center gap-3" :style="{ color: getTextColor() }">
-              All Matches
-            </h3>
-          </div>
+        <!-- Tournament Matches -->
+        <div v-if="allMatchesByWeek.length > 0" class="space-y-6">
+          <!-- Week groups with match cards -->
+          <template v-for="weekGroup in allMatchesByWeek" :key="weekGroup.week || 'no-week'">
+            <!-- Week Header -->
+            <div v-if="!weekGroup.hideWeekHeader" class="mt-8 mb-4">
+              <h3 class="text-lg font-bold uppercase tracking-wide" :style="{ color: getAccentColor() }">
+                {{ weekGroup.week }}
+              </h3>
+              <p class="text-sm mt-1" :style="{ color: getTextMutedColor() }">
+                {{ getWeekDateRange(weekGroup.week, weekGroup.matches) }}
+              </p>
+            </div>
 
-          <!-- Matches Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse">
-              <!-- Table Body -->
-              <tbody>
-                <!-- Week groups with matches -->
-                <template v-for="weekGroup in allMatchesByWeek" :key="weekGroup.week || 'no-week'">
-                  <!-- Week Header Row -->
-                  <tr v-if="!weekGroup.hideWeekHeader" class="border-b" :style="{ backgroundColor: getBackgroundSoftColor(), borderColor: getAccentColor() }">
-                    <td class="p-4 w-32">
-                      <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getAccentColor() }">
-                        {{ weekGroup.week }}
-                      </span>
-                    </td>
-                    <td colspan="3" class="p-4 text-center">
-                      <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getAccentColor() }">
-                        {{ getWeekDateRange(weekGroup.week, weekGroup.matches) }}
-                      </span>
-                    </td>
-                  </tr>
+            <!-- Match cards -->
+            <div class="space-y-3">
+              <div
+                v-for="matchItem in weekGroup.matches"
+                :key="matchItem.match.id"
+                class="backdrop-blur-sm border-2 rounded-xl overflow-hidden transition-all hover:border-opacity-100 cursor-pointer"
+                :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }"
+                @click="openMatchupModal(matchItem.match)"
+              >
+                <div class="p-4 sm:p-6">
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <!-- Match Date -->
+                    <div class="text-xs sm:text-sm font-mono" :style="{ color: getTextMutedColor() }">
+                      {{ formatMatchDate(matchItem.match.scheduledDate) }}
+                    </div>
 
-                  <!-- Match rows -->
-                  <tr
-                    v-for="matchItem in weekGroup.matches"
-                    :key="matchItem.match.id"
-                    class="group transition-all duration-300 border-b"
-                    :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }"
-                  >
-                    <!-- Date -->
-                    <td class="p-3">
-                      <div class="text-xs font-mono" :style="{ color: getTextMutedColor() }">
-                        {{ formatMatchDate(matchItem.match.scheduledDate) }}
+                    <!-- Teams & Winner -->
+                    <div class="flex-1 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                      <div
+                        class="text-sm sm:text-base font-semibold flex items-center gap-1 px-2 py-1 rounded"
+                        :style="{
+                          color: getMatchWinner(matchItem.match) === 'team1' ? getAccentColor() : getTextColor(),
+                          backgroundColor: getMatchWinner(matchItem.match) === 'team1' ? getAccentColor() + '15' : 'transparent'
+                        }"
+                      >
+                        <span v-if="getMatchWinner(matchItem.match) === 'team1'" class="text-lg">🏆</span>
+                        {{ matchItem.match.team1Name }}
                       </div>
-                    </td>
-
-                    <!-- Team Matchup -->
-                    <td class="p-3">
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <button
-                          class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
-                          :class="{ 'font-bold': getMatchWinner(matchItem.match) === 'team1' }"
-                          :style="{ color: getMatchWinner(matchItem.match) === 'team1' ? getAccentColor() : getTextColor() }"
-                          @click="openMatchupModal(matchItem.match)"
-                        >
-                          <div class="flex items-center gap-1">
-                            <span v-if="getMatchWinner(matchItem.match) === 'team1'" class="text-lg">🏆</span>
-                            {{ matchItem.match.team1Name }}
-                          </div>
-                        </button>
-                        <div class="text-xs font-medium" :style="{ color: getTextMutedColor() }">VS</div>
-                        <button
-                          class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
-                          :class="{ 'font-bold': getMatchWinner(matchItem.match) === 'team2' }"
-                          :style="{ color: getMatchWinner(matchItem.match) === 'team2' ? getAccentColor() : getTextColor() }"
-                          @click="openMatchupModal(matchItem.match)"
-                        >
-                          <div class="flex items-center gap-1">
-                            <span v-if="getMatchWinner(matchItem.match) === 'team2'" class="text-lg">🏆</span>
-                            {{ matchItem.match.team2Name }}
-                          </div>
-                        </button>
+                      <div class="text-xs sm:text-sm font-medium" :style="{ color: getTextMutedColor() }">
+                        vs
                       </div>
-                    </td>
-
-                    <!-- Maps Summary (scores only) -->
-                    <td class="p-3">
-                      <div class="text-xs space-y-0.5">
-                        <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2">
-                          <span class="font-mono" :style="{ color: getTextMutedColor() }">{{ map.mapOrder + 1 }}.</span>
-                          <span v-if="map.matchResults?.length > 0" :style="{ color: getAccentColor() }" class="font-bold">
-                            {{ getFormattedScore(map) }}
-                          </span>
-                          <span v-else :style="{ color: getTextMutedColor() }">—</span>
-                        </div>
+                      <div
+                        class="text-sm sm:text-base font-semibold flex items-center gap-1 px-2 py-1 rounded"
+                        :style="{
+                          color: getMatchWinner(matchItem.match) === 'team2' ? getAccentColor() : getTextColor(),
+                          backgroundColor: getMatchWinner(matchItem.match) === 'team2' ? getAccentColor() + '15' : 'transparent'
+                        }"
+                      >
+                        <span v-if="getMatchWinner(matchItem.match) === 'team2'" class="text-lg">🏆</span>
+                        {{ matchItem.match.team2Name }}
                       </div>
-                    </td>
+                    </div>
 
-                    <!-- Actions -->
-                    <td class="p-3 text-center">
-                      <div class="flex items-center justify-center gap-2">
-                        <button
-                          class="px-3 py-1.5 text-xs font-bold transition-all rounded border-2"
-                          :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.2), color: getAccentColor() }"
-                          @click="openMatchupModal(matchItem.match)"
-                        >
-                          Details
-                        </button>
+                    <!-- Score Summary -->
+                    <div class="text-sm sm:text-base font-bold" :style="{ color: getAccentColor() }">
+                      {{ getResultsAggregation(matchItem.match) }}
+                    </div>
+
+                    <!-- View Button -->
+                    <button
+                      class="px-3 py-1.5 text-xs sm:text-sm font-medium rounded transition-all self-start sm:self-auto"
+                      :style="{
+                        backgroundColor: getAccentColor() + '20',
+                        color: getAccentColor(),
+                        border: `1px solid ${getAccentColor()}`
+                      }"
+                      @click.stop="openMatchupModal(matchItem.match)"
+                    >
+                      Details
+                    </button>
+                  </div>
+
+                  <!-- Maps breakdown -->
+                  <div v-if="matchItem.match.maps.length > 0" class="mt-4 pt-4 border-t-2" :style="{ borderColor: getAccentColor() }">
+                    <div class="text-xs space-y-2">
+                      <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center justify-between">
+                        <span class="font-mono" :style="{ color: getTextMutedColor() }">Map {{ map.mapOrder + 1 }}</span>
+                        <span v-if="map.matchResults?.length > 0" :style="{ color: getAccentColor() }" class="font-bold">
+                          {{ getFormattedScore(map) }}
+                        </span>
+                        <span v-else :style="{ color: getTextMutedColor() }">—</span>
                       </div>
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
 
         <!-- Empty State -->
