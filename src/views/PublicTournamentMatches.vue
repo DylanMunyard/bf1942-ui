@@ -287,23 +287,18 @@ const getAccentColorWithOpacity = (opacity: number): string => {
 }
 
 const allMatchesByWeek = computed(() => {
-  if (!tournament.value?.matches) return []
+  if (!tournament.value?.matchesByWeek) return []
 
-  const grouped: Record<string, PublicTournamentMatch[]> = {}
+  // Check if there's only one week group with null week value
+  const hasOnlyOneNullWeek = tournament.value.matchesByWeek.length === 1 && tournament.value.matchesByWeek[0].week === null
 
-  tournament.value.matches.forEach(match => {
-    const week = match.week || 'Unscheduled'
-    if (!grouped[week]) {
-      grouped[week] = []
-    }
-    grouped[week].push(match)
-  })
-
-  return Object.entries(grouped).map(([week, matches]) => ({
-    week,
-    hideWeekHeader: false,
-    matches: matches.map(m => ({ match: m }))
-  }))
+  return tournament.value.matchesByWeek
+    .map(group => ({
+      week: group.week,
+      hideWeekHeader: hasOnlyOneNullWeek,
+      matches: group.matches.map(match => ({ match }))
+    }))
+    .filter(group => group.matches.length > 0)
 })
 
 const formatMatchDate = (dateStr: string): string => {
@@ -362,14 +357,14 @@ const getResultsAggregation = (match: PublicTournamentMatch, mapId?: number): st
   return `${team1Total} – ${team2Total}`
 }
 
-const getWeekDateRange = (week: string, matches: MatchItem[]): string => {
-  if (!matches || matches.length === 0) return week
+const getWeekDateRange = (week: string | null, matches: MatchItem[]): string => {
+  if (!matches || matches.length === 0) return week || 'Unscheduled'
 
   const dates = matches
     .map(m => new Date(m.match.scheduledDate).getTime())
     .filter(d => !isNaN(d))
 
-  if (dates.length === 0) return week
+  if (dates.length === 0) return week || 'Unscheduled'
 
   const minDate = new Date(Math.min(...dates))
   const maxDate = new Date(Math.max(...dates))
