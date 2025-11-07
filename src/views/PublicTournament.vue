@@ -86,7 +86,6 @@
         :tournament-id="tournamentId"
         :hero-image-url="heroImageUrl"
         :logo-image-url="logoImageUrl"
-        @open-rules="openRulesModal"
       />
 
       <!-- Main Content -->
@@ -437,65 +436,6 @@
       </div>
     </div>
 
-    <!-- Tournament Rules Modal -->
-    <div
-      v-if="showRulesModal && tournament && tournament.rules && tournament.rules.trim()"
-      class="modal-mobile-safe fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="closeRulesModal"
-    >
-      <div
-        class="rounded-2xl p-6 max-w-4xl w-full shadow-2xl max-h-[85vh] overflow-y-auto border-2"
-        :style="{
-          background: getBackgroundSoftColor(),
-          backdropFilter: 'blur(10px)',
-          borderColor: getAccentColor(),
-          backgroundColor: getBackgroundSoftColor()
-        }"
-      >
-        <!-- Header -->
-        <div class="flex items-start justify-between mb-6">
-          <div class="flex-1">
-            <h3 class="text-3xl font-bold text-center mb-3" :style="{ color: getAccentColor() }">
-              Tournament Rules
-            </h3>
-          </div>
-          <button
-            class="p-2 rounded-lg transition-colors flex-shrink-0"
-            :style="{ color: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.2) }"
-            @click="closeRulesModal"
-            @mouseenter="(e) => {
-              if (e.currentTarget) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.35);
-              }
-            }"
-            @mouseleave="(e) => {
-              if (e.currentTarget) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.2);
-              }
-            }"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Rules Content -->
-        <div
-          class="prose prose-invert prose-sm max-w-none"
-          :style="{
-            '--rule-primary': getAccentColor(),
-            '--rule-secondary': getAccentColor(),
-          } as Record<string, string>"
-        >
-          <div
-            v-html="renderedRules"
-            class="text-white markdown-rules"
-          />
-        </div>
-      </div>
-    </div>
-
     <!-- Match Details Modal -->
     <div
       v-if="selectedMatch"
@@ -799,7 +739,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { marked } from 'marked';
 import TournamentHero from '@/components/TournamentHero.vue';
 import TournamentPageNav from '@/components/TournamentPageNav.vue';
 import {
@@ -826,23 +765,11 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const selectedMatch = ref<PublicTournamentMatch | null>(null);
 const selectedPlayers = ref<string[]>([]);
-const showRulesModal = ref(false);
 const expandedMaps = ref<Set<string>>(new Set());
 const leaderboard = ref<PublicTournamentLeaderboard | null>(null);
 const selectedWeekForLeaderboard = ref<string | null>(null);
 
 const tournamentId = parseInt(route.params.id as string);
-
-const renderedRules = computed(() => {
-  if (!tournament.value?.rules || !tournament.value.rules.trim()) {
-    return '';
-  }
-  try {
-    return marked(tournament.value.rules, { breaks: true });
-  } catch {
-    return '<p class="text-red-400">Invalid markdown in rules</p>';
-  }
-});
 
 // Helper function to get themed accent color
 const getThemedAccentColor = (): string => {
@@ -1328,14 +1255,6 @@ const comparePlayers = () => {
       }
     });
   }
-};
-
-const openRulesModal = () => {
-  showRulesModal.value = true;
-};
-
-const closeRulesModal = () => {
-  showRulesModal.value = false;
 };
 
 // Watch tournament data and update page title when it loads

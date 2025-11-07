@@ -96,14 +96,6 @@
             <span class="text-orange-400">📋</span>
             <span class="font-medium text-orange-300">Forum</span>
           </a>
-          <button
-            v-if="tournament.rules && tournament.rules.trim()"
-            @click="$emit('open-rules')"
-            class="flex items-center gap-2 px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 backdrop-blur-sm rounded-full border border-amber-500/50 hover:border-amber-400/70 transition-all"
-          >
-            <span class="text-amber-400">📜</span>
-            <span class="font-medium text-amber-300">Rules</span>
-          </button>
         </div>
 
         <!-- Navigation Buttons -->
@@ -130,6 +122,14 @@
             :style="getButtonStyles('matches')"
           >
             Matches
+          </router-link>
+
+          <router-link
+            :to="`/tournaments/${tournamentId}/rules`"
+            :class="['nav-button', isHeroActive('rules') ? 'nav-button-active' : 'nav-button-inactive']"
+            :style="getButtonStyles('rules')"
+          >
+            Rules
           </router-link>
 
           <router-link
@@ -174,9 +174,6 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-defineEmits<{
-  'open-rules': []
-}>()
 
 const route = useRoute()
 
@@ -229,6 +226,7 @@ const isHeroActive = (page: string): boolean => {
     rankings: /\/rankings$/,
     teams: /\/teams$/,
     matches: /\/matches$/,
+    rules: /\/rules$/,
     files: /\/files$/,
     stats: /\/stats$/,
   }

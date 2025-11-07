@@ -17,7 +17,6 @@
         :tournament-id="tournamentId"
         :hero-image-url="heroImageUrl"
         :logo-image-url="logoImageUrl"
-        @open-rules="() => {}"
       />
 
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12">

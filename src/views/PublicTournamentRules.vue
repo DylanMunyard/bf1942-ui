@@ -31,7 +31,6 @@
         :tournament-id="tournamentId"
         :hero-image-url="heroImageUrl"
         :logo-image-url="logoImageUrl"
-        @open-rules="() => {}"
       />
 
       <!-- Rules Content -->
