@@ -225,6 +225,187 @@
           </div>
         </div>
 
+        <!-- Weeks Section -->
+        <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+          <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
+            <div>
+              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
+                Tournament Weeks
+              </h2>
+              <p class="text-slate-400 text-sm mt-1">
+                Define week schedules and date ranges
+              </p>
+            </div>
+            <button
+              class="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+              @click="showAddWeekModal = true"
+            >
+              <span class="text-lg">+</span>
+              <span>Add Week</span>
+            </button>
+          </div>
+
+          <div class="p-4 sm:p-6">
+            <!-- Weeks Table -->
+            <table v-if="tournament.weekDates && tournament.weekDates.length > 0" class="w-full border-collapse">
+              <thead>
+                <tr class="bg-slate-700/30 border-b border-slate-700/50">
+                  <th class="p-3 text-left text-sm font-bold uppercase tracking-wide text-cyan-400">Week</th>
+                  <th class="p-3 text-left text-sm font-bold uppercase tracking-wide text-cyan-400">Start Date</th>
+                  <th class="p-3 text-left text-sm font-bold uppercase tracking-wide text-cyan-400">End Date</th>
+                  <th class="p-3 text-right text-sm font-bold uppercase tracking-wide text-cyan-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="week in tournament.weekDates" :key="week.id" class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30">
+                  <td class="p-3">
+                    <span class="text-sm font-bold text-cyan-400">{{ week.week }}</span>
+                  </td>
+                  <td class="p-3">
+                    <span class="text-sm text-slate-300">{{ formatDate(week.startDate) }}</span>
+                  </td>
+                  <td class="p-3">
+                    <span class="text-sm text-slate-300">{{ formatDate(week.endDate) }}</span>
+                  </td>
+                  <td class="p-3 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        class="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all"
+                        @click="editWeek(week)"
+                        title="Edit week"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
+                        @click="confirmDeleteWeek(week.id!, week.week)"
+                        title="Delete week"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-12">
+              <div class="text-6xl mb-4">📅</div>
+              <h3 class="text-xl font-bold text-slate-300 mb-2">No Weeks Defined</h3>
+              <p class="text-slate-400 mb-6">
+                Create weeks to organize your tournament schedule
+              </p>
+              <button
+                class="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all"
+                @click="showAddWeekModal = true"
+              >
+                Add First Week
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Files Section -->
+        <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+          <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
+            <div>
+              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+                Tournament Files
+              </h2>
+              <p class="text-slate-400 text-sm mt-1">
+                Share documents, rules, and resources
+              </p>
+            </div>
+            <button
+              class="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+              @click="showAddFileModal = true"
+            >
+              <span class="text-lg">+</span>
+              <span>Add File</span>
+            </button>
+          </div>
+
+          <div class="p-4 sm:p-6">
+            <!-- Files Table -->
+            <table v-if="tournament.files && tournament.files.length > 0" class="w-full border-collapse">
+              <thead>
+                <tr class="bg-slate-700/30 border-b border-slate-700/50">
+                  <th class="p-3 text-left text-sm font-bold uppercase tracking-wide text-amber-400">Name</th>
+                  <th class="p-3 text-left text-sm font-bold uppercase tracking-wide text-amber-400">Category</th>
+                  <th class="p-3 text-left text-sm font-bold uppercase tracking-wide text-amber-400">Uploaded</th>
+                  <th class="p-3 text-right text-sm font-bold uppercase tracking-wide text-amber-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="file in tournament.files" :key="file.id" class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30">
+                  <td class="p-3">
+                    <a
+                      :href="file.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-sm font-medium text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-2"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-4-6h6m0 0v6m0-6L10 17" />
+                      </svg>
+                      {{ file.name }}
+                    </a>
+                  </td>
+                  <td class="p-3">
+                    <span v-if="file.category" class="text-sm text-slate-400">{{ file.category }}</span>
+                    <span v-else class="text-sm text-slate-500 italic">—</span>
+                  </td>
+                  <td class="p-3">
+                    <span class="text-sm text-slate-400">{{ formatDate(file.uploadedAt) }}</span>
+                  </td>
+                  <td class="p-3 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        class="p-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 rounded-lg transition-all"
+                        @click="editFile(file)"
+                        title="Edit file"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
+                        @click="confirmDeleteFile(file.id, file.name)"
+                        title="Delete file"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-12">
+              <div class="text-6xl mb-4">📄</div>
+              <h3 class="text-xl font-bold text-slate-300 mb-2">No Files Shared</h3>
+              <p class="text-slate-400 mb-6">
+                Add files like rules, schedules, or guides for your tournament
+              </p>
+              <button
+                class="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg font-medium transition-all"
+                @click="showAddFileModal = true"
+              >
+                Add First File
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Matches Section -->
         <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
           <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
@@ -248,10 +429,10 @@
                 <span>Rankings</span>
               </button>
               <button
-                class="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                class="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 @click="showAddMatchModal = true"
-                :disabled="tournament.teams.length < 2"
-                :title="tournament.teams.length < 2 ? 'Create at least 2 teams first' : ''"
+                :disabled="!tournament || tournament.teams.length < 2"
+                :title="!tournament ? 'Loading tournament...' : tournament.teams.length < 2 ? 'Create at least 2 teams first' : ''"
               >
                 <span class="text-lg">+</span>
                 <span>Schedule</span>
@@ -275,13 +456,13 @@
                     <td colspan="4" class="p-4">
                       <div class="flex items-center justify-between">
                         <span class="text-sm font-bold uppercase tracking-wide text-slate-400">
-                          {{ getWeekDateRange(weekGroup.matches) }}
+                          {{ getWeekDateRange(weekGroup.week, weekGroup.matches) }}
                         </span>
                         <button
-                          class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-1"
+                          class="px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50 rounded-lg transition-all text-xs font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                           @click="addMatchForWeek"
-                          :disabled="tournament.teams.length < 2"
-                          :title="tournament.teams.length < 2 ? 'Create at least 2 teams first' : ''"
+                          :disabled="!tournament || tournament.teams.length < 2"
+                          :title="!tournament ? 'Loading tournament...' : tournament.teams.length < 2 ? 'Create at least 2 teams first' : ''"
                         >
                           <span class="text-base">+</span>
                           <span>Match</span>
@@ -464,6 +645,24 @@
       :match="editingMatchForResults"
       @close="showEditMapResultsModal = false; editingMatchForResults = null"
       @updated="loadTournament"
+    />
+
+    <!-- Add/Edit Week Modal -->
+    <AddWeekModal
+      v-if="showAddWeekModal && tournament"
+      :tournament-id="tournament.id"
+      :week="editingWeek"
+      @close="showAddWeekModal = false; editingWeek = undefined"
+      @added="onWeekAdded"
+    />
+
+    <!-- Add/Edit File Modal -->
+    <AddFileModal
+      v-if="showAddFileModal && tournament"
+      :tournament-id="tournament.id"
+      :file="editingFile"
+      @close="showAddFileModal = false; editingFile = undefined"
+      @added="onFileAdded"
     />
 
     <!-- Delete Team Confirmation Modal -->
@@ -682,11 +881,107 @@
       </div>
     </div>
 
+    <!-- Delete Week Confirmation Modal -->
+    <div
+      v-if="deleteWeekConfirmation"
+      class="modal-mobile-safe fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="cancelDeleteWeek"
+    >
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+        <div class="flex items-start gap-4 mb-6">
+          <div class="w-12 h-12 bg-cyan-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-slate-100 mb-2">
+              Delete Week?
+            </h3>
+            <p class="text-slate-300 mb-2">
+              Delete week <span class="font-bold text-cyan-400">{{ deleteWeekConfirmation.name }}</span>?
+            </p>
+            <p class="text-slate-400 text-sm">
+              This action cannot be undone.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3">
+          <button
+            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors"
+            @click="cancelDeleteWeek"
+          >
+            Cancel
+          </button>
+          <button
+            class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+            :disabled="isProcessingWeek"
+            @click="executeDeleteWeek"
+          >
+            <svg v-if="!isProcessingWeek" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span>{{ isProcessingWeek ? 'Deleting...' : 'Delete Week' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete File Confirmation Modal -->
+    <div
+      v-if="deleteFileConfirmation"
+      class="modal-mobile-safe fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="cancelDeleteFile"
+    >
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+        <div class="flex items-start gap-4 mb-6">
+          <div class="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-slate-100 mb-2">
+              Delete File?
+            </h3>
+            <p class="text-slate-300 mb-2">
+              Delete file <span class="font-bold text-amber-400">{{ deleteFileConfirmation.name }}</span>?
+            </p>
+            <p class="text-slate-400 text-sm">
+              This action cannot be undone.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3">
+          <button
+            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors"
+            @click="cancelDeleteFile"
+          >
+            Cancel
+          </button>
+          <button
+            class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+            :disabled="isProcessingFile"
+            @click="executeDeleteFile"
+          >
+            <svg v-if="!isProcessingFile" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span>{{ isProcessingFile ? 'Deleting...' : 'Delete File' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { marked } from 'marked';
 import {
@@ -694,13 +989,17 @@ import {
   type TournamentDetail,
   type TournamentTeam,
   type TournamentMatch,
-  type TournamentMatchMap
+  type TournamentMatchMap,
+  type TournamentWeekDate,
+  type TournamentFile
 } from '@/services/adminTournamentService';
 import AddTournamentModal from '@/components/dashboard/AddTournamentModal.vue';
 import EditTournamentThemeModal from '@/components/dashboard/EditTournamentThemeModal.vue';
 import AddTeamModal from '@/components/dashboard/AddTeamModal.vue';
 import AddMatchModal from '@/components/dashboard/AddMatchModal.vue';
 import EditMapResultsModal from '@/components/dashboard/EditMapResultsModal.vue';
+import AddWeekModal from '@/components/dashboard/AddWeekModal.vue';
+import AddFileModal from '@/components/dashboard/AddFileModal.vue';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -733,6 +1032,18 @@ const selectedWeek = ref<string | null>(null);
 const fromWeek = ref<string | null>(null);
 const isRecalculating = ref(false);
 const recalculationMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null);
+
+// Week management
+const showAddWeekModal = ref(false);
+const editingWeek = ref<TournamentWeekDate | undefined>(undefined);
+const deleteWeekConfirmation = ref<{ id: number; name: string } | null>(null);
+const isProcessingWeek = ref(false);
+
+// File management
+const showAddFileModal = ref(false);
+const editingFile = ref<TournamentFile | undefined>(undefined);
+const deleteFileConfirmation = ref<{ id: number; name: string } | null>(null);
+const isProcessingFile = ref(false);
 
 const tournamentId = parseInt(route.params.id as string);
 
@@ -938,7 +1249,24 @@ const formatMatchDate = (dateString: string): string => {
   });
 };
 
-const getWeekDateRange = (matches: TournamentMatch[]): string => {
+const getWeekDateRange = (week: string | null, matches?: TournamentMatch[]): string => {
+  // Try to use week dates if available
+  if (tournament.value?.weekDates && week) {
+    const weekDate = tournament.value.weekDates.find(w => w.week === week);
+    if (weekDate) {
+      const formatDateRange = (date: Date) => {
+        return date.toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric'
+        });
+      };
+      const startDate = new Date(weekDate.startDate);
+      const endDate = new Date(weekDate.endDate);
+      return `${formatDateRange(startDate)} - ${formatDateRange(endDate)}`;
+    }
+  }
+
+  // Fallback: calculate from matches if week dates not available
   if (!matches || matches.length === 0) return '';
 
   const dates = matches.map(m => new Date(m.scheduledDate));
@@ -1000,11 +1328,87 @@ const onTeamAdded = () => {
   loadTournament();
 };
 
+// Week management
+const editWeek = (week: TournamentWeekDate) => {
+  editingWeek.value = { ...week };
+  showAddWeekModal.value = true;
+};
+
+const confirmDeleteWeek = (weekId: number, weekName: string) => {
+  deleteWeekConfirmation.value = { id: weekId, name: weekName };
+};
+
+const cancelDeleteWeek = () => {
+  deleteWeekConfirmation.value = null;
+  isProcessingWeek.value = false;
+};
+
+const executeDeleteWeek = async () => {
+  if (!deleteWeekConfirmation.value) return;
+
+  isProcessingWeek.value = true;
+  try {
+    await adminTournamentService.deleteWeek(tournamentId, deleteWeekConfirmation.value.id);
+    deleteWeekConfirmation.value = null;
+    await loadTournament();
+  } catch (err) {
+    console.error('Error deleting week:', err);
+    error.value = err instanceof Error ? err.message : 'Failed to delete week';
+  } finally {
+    isProcessingWeek.value = false;
+  }
+};
+
+const onWeekAdded = () => {
+  showAddWeekModal.value = false;
+  editingWeek.value = undefined;
+  loadTournament();
+};
+
+// File management
+const editFile = (file: TournamentFile) => {
+  editingFile.value = { ...file };
+  showAddFileModal.value = true;
+};
+
+const confirmDeleteFile = (fileId: number, fileName: string) => {
+  deleteFileConfirmation.value = { id: fileId, name: fileName };
+};
+
+const cancelDeleteFile = () => {
+  deleteFileConfirmation.value = null;
+  isProcessingFile.value = false;
+};
+
+const executeDeleteFile = async () => {
+  if (!deleteFileConfirmation.value) return;
+
+  isProcessingFile.value = true;
+  try {
+    await adminTournamentService.deleteFile(tournamentId, deleteFileConfirmation.value.id);
+    deleteFileConfirmation.value = null;
+    await loadTournament();
+  } catch (err) {
+    console.error('Error deleting file:', err);
+    error.value = err instanceof Error ? err.message : 'Failed to delete file';
+  } finally {
+    isProcessingFile.value = false;
+  }
+};
+
+const onFileAdded = () => {
+  showAddFileModal.value = false;
+  editingFile.value = undefined;
+  loadTournament();
+};
+
 // Matches management
 const addMatchForWeek = () => {
   // Clear any editing state and open the add match modal
+  console.log('Opening add match modal');
   editingMatch.value = undefined;
   showAddMatchModal.value = true;
+  console.log('showAddMatchModal set to:', showAddMatchModal.value);
 };
 
 const editMatch = async (matchId: number) => {
@@ -1156,6 +1560,14 @@ const recalculateLeaderboard = async () => {
     isRecalculating.value = false;
   }
 };
+
+// Watch for modal visibility changes to help with debugging
+watch(showAddMatchModal, (newVal) => {
+  console.log('showAddMatchModal changed to:', newVal, 'tournament loaded:', !!tournament.value);
+  if (newVal && tournament.value) {
+    console.log('Modal should now be visible');
+  }
+});
 
 onMounted(() => {
   loadTournament();

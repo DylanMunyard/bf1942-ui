@@ -616,6 +616,50 @@ class AdminTournamentService {
       body: JSON.stringify({ roundId: null }),
     });
   }
+
+
+  // Week management
+  async createWeek(tournamentId: number, weekData: Omit<TournamentWeekDate, 'id'>): Promise<TournamentWeekDate> {
+    return this.request<TournamentWeekDate>(`/${tournamentId}/weeks`, {
+      method: 'POST',
+      body: JSON.stringify(weekData),
+    });
+  }
+
+  async updateWeek(tournamentId: number, weekId: number, weekData: Omit<TournamentWeekDate, 'id'>): Promise<TournamentWeekDate> {
+    return this.request<TournamentWeekDate>(`/${tournamentId}/weeks/${weekId}`, {
+      method: 'PUT',
+      body: JSON.stringify(weekData),
+    });
+  }
+
+  async deleteWeek(tournamentId: number, weekId: number): Promise<void> {
+    return this.request<void>(`/${tournamentId}/weeks/${weekId}`, {
+      method: 'DELETE',
+    });
+  }
+
+
+  // File management
+  async createFile(tournamentId: number, fileData: Omit<TournamentFile, 'id'>): Promise<TournamentFile> {
+    return this.request<TournamentFile>(`/${tournamentId}/files`, {
+      method: 'POST',
+      body: JSON.stringify(fileData),
+    });
+  }
+
+  async updateFile(tournamentId: number, fileId: number, fileData: Partial<Omit<TournamentFile, 'id'>>): Promise<TournamentFile> {
+    return this.request<TournamentFile>(`/${tournamentId}/files/${fileId}`, {
+      method: 'PUT',
+      body: JSON.stringify(fileData),
+    });
+  }
+
+  async deleteFile(tournamentId: number, fileId: number): Promise<void> {
+    return this.request<void>(`/${tournamentId}/files/${fileId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const adminTournamentService = new AdminTournamentService();

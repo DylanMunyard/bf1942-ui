@@ -6,15 +6,75 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="p-6 max-w-4xl mx-auto mt-20">
-      <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
-        <p class="text-red-400 mb-4">{{ error }}</p>
-        <button
-          class="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors"
-          @click="router.push('/servers/bf1942')"
-        >
-          Back to Servers
-        </button>
+    <div v-else-if="error" class="min-h-screen flex items-center justify-center relative overflow-hidden px-4">
+      <!-- Background decorative elements -->
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/5 rounded-full blur-3xl" />
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <!-- Error content -->
+      <div class="relative z-10 text-center max-w-lg w-full">
+        <!-- Error icon -->
+        <div class="mb-8 flex justify-center">
+          <div class="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500/50 flex items-center justify-center">
+            <svg class="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Error heading -->
+        <h1 class="text-4xl md:text-5xl font-black mb-4" :style="{ color: getAccentColor() }">
+          Tournament Not Found
+        </h1>
+
+        <!-- Error message -->
+        <p class="text-lg mb-8" :style="{ color: getTextMutedColor() }">
+          {{ error }}
+        </p>
+
+        <!-- Description -->
+        <p class="text-sm mb-12" :style="{ color: getTextMutedColor() }">
+          The tournament you're looking for isn't here .. or it might be coming soon, so stay tuned
+        </p>
+
+        <!-- Decorative divider -->
+        <div class="flex items-center justify-center gap-4 mb-12">
+          <div class="h-px w-12" :style="{ backgroundColor: getAccentColorWithOpacity(0.3) }" />
+          <div class="w-2 h-2 rotate-45" :style="{ backgroundColor: getAccentColor() }" />
+          <div class="h-px w-12" :style="{ backgroundColor: getAccentColorWithOpacity(0.3) }" />
+        </div>
+
+        <!-- Action button -->
+        <div class="flex justify-center">
+          <button
+            class="px-8 py-3 rounded-lg font-medium transition-all border-2"
+            :style="{
+              borderColor: getAccentColor(),
+              backgroundColor: getAccentColor(),
+              color: getBackgroundColor()
+            }"
+            @mouseenter="(e) => {
+              if (e.currentTarget) {
+                (e.currentTarget as HTMLElement).style.opacity = '0.9';
+              }
+            }"
+            @mouseleave="(e) => {
+              if (e.currentTarget) {
+                (e.currentTarget as HTMLElement).style.opacity = '1';
+              }
+            }"
+            @click="router.push('/servers')"
+          >
+            <span class="flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8m0 8l-6-2m6 2l6-2" />
+              </svg>
+              Browse Servers
+            </span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -411,7 +471,7 @@
                     </td>
                     <td colspan="3" class="p-4 text-center">
                       <span class="text-sm font-bold uppercase tracking-wide" :style="{ color: getAccentColor() }">
-                        {{ getWeekDateRange(weekGroup.matches) }}
+                        {{ getWeekDateRange(weekGroup.week, weekGroup.matches) }}
                       </span>
                     </td>
                   </tr>
@@ -1136,10 +1196,28 @@ const formatMatchDate = (dateString: string): string => {
   });
 };
 
-const getWeekDateRange = (matches: MatchWithStatus[]): string => {
+const getWeekDateRange = (week: string | null, matches?: MatchWithStatus[]): string => {
+  // Try to use week dates if available
+  if (tournament.value?.weekDates && week) {
+    const weekDate = tournament.value.weekDates.find(w => w.week === week);
+    if (weekDate) {
+      const formatDate = (date: Date) => {
+        return date.toLocaleDateString(undefined, {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        });
+      };
+      const startDate = new Date(weekDate.startDate);
+      const endDate = new Date(weekDate.endDate);
+      return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+    }
+  }
+
+  // Fallback: calculate from matches if week dates not available
   if (!matches || matches.length === 0) return '';
 
-  // Get all scheduled dates from all matches
   const dates = matches.flatMap(m => m.match.maps.map(_map => new Date(m.match.scheduledDate)));
 
   if (dates.length === 0) return '';

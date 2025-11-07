@@ -70,6 +70,13 @@ export interface PublicTournamentMatchesByWeek {
   matches: PublicTournamentMatch[];
 }
 
+export interface TournamentWeekDate {
+  id?: number;
+  week: string;
+  startDate: string;
+  endDate: string;
+}
+
 export interface TournamentTheme {
   backgroundColour?: string;
   textColour?: string;
@@ -116,6 +123,7 @@ export interface PublicTournamentDetail {
   teams: PublicTournamentTeam[];
   matches: PublicTournamentMatch[];
   matchesByWeek?: PublicTournamentMatchesByWeek[];
+  weekDates?: TournamentWeekDate[];
   latestMatches?: PublicTournamentMatch[];
   hasHeroImage?: boolean;
   hasCommunityLogo?: boolean;
