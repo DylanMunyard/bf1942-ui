@@ -80,142 +80,14 @@
 
     <!-- Tournament Content -->
     <div v-else-if="tournament">
-      <!-- Hero Banner Section -->
-      <div class="relative overflow-hidden" :style="{
-        background: '#1a1a1a'
-      }">
-        <!-- Background Hero Image -->
-        <div
-          v-if="heroImageUrl"
-          class="absolute inset-0"
-        >
-          <img
-            :src="heroImageUrl"
-            :alt="tournament.name"
-            class="w-full h-full object-cover opacity-30"
-          >
-          <div :style="{
-            background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7))'
-          }" class="absolute inset-0" />
-        </div>
-
-        <!-- Decorative Elements -->
-        <div class="absolute inset-0 overflow-hidden pointer-events-none">
-          <div class="absolute top-0 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
-          <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
-        </div>
-
-        <!-- Hero Content -->
-        <div class="relative z-10 px-4 sm:px-6 py-8 sm:py-10">
-          <div class="max-w-6xl mx-auto">
-            <!-- Tournament Name -->
-            <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-center mb-6 leading-tight" :style="{ color: getAccentColor() }">
-              {{ tournament.name }}
-            </h1>
-
-            <!-- Community Logo Display (below tournament name) -->
-            <div v-if="logoImageUrl" class="mb-6 flex justify-center">
-              <img
-                :src="logoImageUrl"
-                alt="Community logo"
-                class="max-h-16 object-contain"
-              >
-            </div>
-
-            <!-- Status & Game Mode Badges -->
-            <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
-              <!-- Tournament Status Badge -->
-              <div
-                v-if="tournament.status"
-                class="px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all"
-                :style="{
-                  borderColor: getAccentColor(),
-                  backgroundColor: getAccentColor() + '20',
-                  color: getAccentColor()
-                }"
-              >
-                <span v-if="tournament.status === 'registration'">📝 Registration</span>
-                <span v-else-if="tournament.status === 'open'">🔓 Open</span>
-                <span v-else-if="tournament.status === 'closed'">🔒 Closed</span>
-              </div>
-
-              <!-- Game Mode Badge -->
-              <div
-                v-if="tournament.gameMode"
-                class="px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all"
-                :style="{
-                  borderColor: getAccentColor(),
-                  backgroundColor: getAccentColor() + '15',
-                  color: getAccentColor()
-                }"
-              >
-                🎮 {{ tournament.gameMode }}
-              </div>
-            </div>
-
-            <!-- Game Icon & Info -->
-            <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white mb-8">
-              <!-- Game Icon Badge -->
-              <div
-                class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-cover bg-center border-4 border-amber-500/30 shadow-2xl flex-shrink-0"
-                :style="{ backgroundImage: getGameIcon() }"
-              />
-              <div class="flex items-center gap-2 px-4 py-2 bg-slate-800/60 backdrop-blur-sm rounded-full border border-slate-700/50">
-                <span class="text-amber-400">👤</span>
-                <router-link
-                  :to="`/players/${tournament.organizer}`"
-                  class="font-medium text-amber-300 hover:text-amber-200 transition-colors"
-                >
-                  {{ tournament.organizer }}
-                </router-link>
-              </div>
-              <div v-if="tournament.serverName" class="flex items-center gap-2 px-4 py-2 bg-slate-800/60 backdrop-blur-sm rounded-full border border-slate-700/50">
-                <span class="text-cyan-400">🖥️</span>
-                <span class="font-medium">{{ tournament.serverName }}</span>
-              </div>
-              <div class="flex items-center gap-2 px-4 py-2 bg-slate-800/60 backdrop-blur-sm rounded-full border border-slate-700/50">
-                <span class="text-emerald-400">⚔️</span>
-                <span class="font-medium">{{ tournament.matchesByWeek?.reduce((sum, w) => sum + w.matches.length, 0) ?? 0 }} Matches</span>
-              </div>
-              <a
-                v-if="tournament.discordUrl"
-                :href="tournament.discordUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="flex items-center gap-2 px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 backdrop-blur-sm rounded-full border border-indigo-500/50 hover:border-indigo-400/70 transition-all"
-              >
-                <span class="text-indigo-400">💬</span>
-                <span class="font-medium text-indigo-300">Discord</span>
-              </a>
-              <a
-                v-if="tournament.forumUrl"
-                :href="tournament.forumUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="flex items-center gap-2 px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 backdrop-blur-sm rounded-full border border-orange-500/50 hover:border-orange-400/70 transition-all"
-              >
-                <span class="text-orange-400">📋</span>
-                <span class="font-medium text-orange-300">Forum</span>
-              </a>
-              <button
-                v-if="tournament.rules && tournament.rules.trim()"
-                @click="openRulesModal"
-                class="flex items-center gap-2 px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 backdrop-blur-sm rounded-full border border-amber-500/50 hover:border-amber-400/70 transition-all"
-              >
-                <span class="text-amber-400">📜</span>
-                <span class="font-medium text-amber-300">Rules</span>
-              </button>
-            </div>
-
-            <!-- Decorative Divider -->
-            <div class="flex items-center justify-center gap-4 mb-8">
-              <div class="h-px w-20 bg-gradient-to-r from-transparent to-amber-500/50" />
-              <div class="w-2 h-2 rotate-45 bg-amber-500" />
-              <div class="h-px w-20 bg-gradient-to-l from-transparent to-amber-500/50" />
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Tournament Hero with Navigation -->
+      <TournamentHero
+        :tournament="tournament"
+        :tournament-id="tournamentId"
+        :hero-image-url="heroImageUrl"
+        :logo-image-url="logoImageUrl"
+        @open-rules="openRulesModal"
+      />
 
       <!-- Main Content -->
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
@@ -245,13 +117,15 @@
 
                 <!-- Teams & Score -->
                 <div class="flex-1 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                  <div class="text-sm sm:text-base font-semibold" :style="{ color: getAccentColor() }">
+                  <div class="text-sm sm:text-base font-semibold flex items-center gap-1" :style="{ color: getMatchWinner(match) === 'team1' ? getAccentColor() : getTextColor() }">
+                    <span v-if="getMatchWinner(match) === 'team1'" class="text-lg">🏆</span>
                     {{ match.team1Name }}
                   </div>
                   <div class="text-xs sm:text-sm font-medium" :style="{ color: getTextMutedColor() }">
                     vs
                   </div>
-                  <div class="text-sm sm:text-base font-semibold" :style="{ color: getAccentColor() }">
+                  <div class="text-sm sm:text-base font-semibold flex items-center gap-1" :style="{ color: getMatchWinner(match) === 'team2' ? getAccentColor() : getTextColor() }">
+                    <span v-if="getMatchWinner(match) === 'team2'" class="text-lg">🏆</span>
                     {{ match.team2Name }}
                   </div>
                 </div>
@@ -303,7 +177,7 @@
                     Ranking
                   </th>
                   <th class="p-4 text-left font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Team Name
+                    Team
                   </th>
                   <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
                     Matches Played
@@ -495,32 +369,37 @@
                       <div class="flex items-center gap-2 flex-wrap">
                         <button
                           class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
+                          :class="{ 'font-bold': getMatchWinner(matchItem.match) === 'team1' }"
+                          :style="{ color: getMatchWinner(matchItem.match) === 'team1' ? getAccentColor() : getTextColor() }"
                           @click="openMatchupModal(matchItem.match)"
                         >
-                          <div class="text-sm font-bold" :style="{ color: getTextColor() }">
+                          <div class="flex items-center gap-1">
+                            <span v-if="getMatchWinner(matchItem.match) === 'team1'" class="text-lg">🏆</span>
                             {{ matchItem.match.team1Name }}
                           </div>
                         </button>
                         <div class="text-xs font-medium" :style="{ color: getTextMutedColor() }">VS</div>
                         <button
                           class="text-left px-2 py-1 rounded transition-all hover:bg-slate-700/30"
+                          :class="{ 'font-bold': getMatchWinner(matchItem.match) === 'team2' }"
+                          :style="{ color: getMatchWinner(matchItem.match) === 'team2' ? getAccentColor() : getTextColor() }"
                           @click="openMatchupModal(matchItem.match)"
                         >
-                          <div class="text-sm font-bold" :style="{ color: getTextColor() }">
+                          <div class="flex items-center gap-1">
+                            <span v-if="getMatchWinner(matchItem.match) === 'team2'" class="text-lg">🏆</span>
                             {{ matchItem.match.team2Name }}
                           </div>
                         </button>
                       </div>
                     </td>
 
-                    <!-- Maps Summary -->
+                    <!-- Maps Summary (scores only) -->
                     <td class="p-3">
                       <div class="text-xs space-y-0.5">
-                        <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2 flex-wrap">
+                        <div v-for="map in matchItem.match.maps" :key="map.id" class="flex items-center gap-2">
                           <span class="font-mono" :style="{ color: getTextMutedColor() }">{{ map.mapOrder + 1 }}.</span>
-                          <span :style="{ color: getAccentColor() }" class="font-medium truncate">{{ map.mapName }}</span>
                           <span v-if="map.matchResults?.length > 0" :style="{ color: getAccentColor() }" class="font-bold">
-                            {{ getResultsAggregation(map, matchItem.match.team1Name, matchItem.match.team2Name) }}
+                            {{ getFormattedScore(map) }}
                           </span>
                           <span v-else :style="{ color: getTextMutedColor() }">—</span>
                         </div>
@@ -683,7 +562,7 @@
             </thead>
             <tbody>
               <!-- Group results by map -->
-              <template v-for="(map, mapIndex) in selectedMatch.maps" :key="map.id">
+              <template v-for="map in selectedMatch.maps" :key="map.id">
                 <!-- Map Header Row -->
                 <tr :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }" class="border-b">
                   <td colspan="3" class="p-3">
@@ -734,6 +613,23 @@
                   </td>
                 </tr>
 
+                <!-- Total ticket score row -->
+                <tr v-if="map.matchResults && map.matchResults.length > 0" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }" class="border-b font-bold">
+                  <td class="p-3" :style="{ color: getTextMutedColor() }">
+                    <div class="text-xs font-mono">Total</div>
+                  </td>
+                  <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
+                    <div class="text-sm font-bold" :style="{ color: getAccentColor() }">
+                      {{ map.matchResults.reduce((sum, r) => sum + (r.team1Tickets || 0), 0) }}
+                    </div>
+                  </td>
+                  <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
+                    <div class="text-sm font-bold" :style="{ color: getAccentColor() }">
+                      {{ map.matchResults.reduce((sum, r) => sum + (r.team2Tickets || 0), 0) }}
+                    </div>
+                  </td>
+                </tr>
+
                 <!-- Empty state if no results for this map -->
                 <tr v-if="!map.matchResults || map.matchResults.length === 0" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }" class="border-b">
                   <td colspan="3" class="p-3 text-center" :style="{ color: getTextMutedColor() }">
@@ -754,112 +650,7 @@
         </div>
 
         <!-- Expandable Player Stats Table (Disabled until round data available) -->
-        <template v-if="false">
-          <div v-if="false" class="rounded-lg overflow-hidden border border-slate-700/50">
-              <table class="w-full border-collapse">
-                <thead>
-                  <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95">
-                    <th class="p-2 border-b border-slate-700/30" />
-                    <!-- Team 1 Stats -->
-                    <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-l-4 border-l-cyan-400/60 min-w-[120px]">
-                      <span class="font-mono">{{ getTeamName(map, 1) }} - Player</span>
-                    </th>
-                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
-                      <span class="font-mono">S</span>
-                    </th>
-                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5">
-                      <span class="font-mono">K</span>
-                    </th>
-                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-cyan-500/5 border-r-4 border-r-cyan-400/60">
-                      <span class="font-mono">D</span>
-                    </th>
-                    <!-- Team 2 Stats -->
-                    <th class="p-2 text-left font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5 border-l-4 border-l-orange-400/60 min-w-[120px]">
-                      <span class="font-mono">{{ getTeamName(map, 2) }} - Player</span>
-                    </th>
-                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                      <span class="font-mono">S</span>
-                    </th>
-                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                      <span class="font-mono">K</span>
-                    </th>
-                    <th class="p-2 text-center font-bold text-xs uppercase text-slate-300 border-b border-slate-700/30 bg-orange-500/5">
-                      <span class="font-mono">D</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(_, idx) in Math.max(getTeamPlayers(map, 1).length, getTeamPlayers(map, 2).length)"
-                    :key="idx"
-                    class="group transition-all duration-300 hover:bg-slate-800/30 border-b border-slate-700/10"
-                  >
-                    <td class="p-2 text-slate-500 text-xs font-mono">
-                      {{ idx + 1 }}
-                    </td>
-                    <!-- Team 1 Player -->
-                    <template v-if="getTeamPlayers(map, 1)[idx]">
-                      <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40">
-                        <router-link
-                          :to="`/players/${getTeamPlayers(map, 1)[idx].playerName}`"
-                          class="text-cyan-400 hover:text-cyan-300 font-medium text-xs truncate block"
-                        >
-                          {{ getTeamPlayers(map, 1)[idx].playerName }}
-                        </router-link>
-                      </td>
-                      <td class="p-2 text-center bg-cyan-500/5">
-                        <span class="text-slate-200 font-bold text-xs font-mono">
-                          {{ getTeamPlayers(map, 1)[idx].totalScore.toLocaleString() }}
-                        </span>
-                      </td>
-                      <td class="p-2 text-center bg-cyan-500/5">
-                        <span class="text-slate-300 text-xs font-mono">
-                          {{ getTeamPlayers(map, 1)[idx].totalKills }}
-                        </span>
-                      </td>
-                      <td class="p-2 text-center bg-cyan-500/5 border-r-2 border-r-cyan-400/40">
-                        <span class="text-slate-300 text-xs font-mono">
-                          {{ getTeamPlayers(map, 1)[idx].totalDeaths }}
-                        </span>
-                      </td>
-                    </template>
-                    <template v-else>
-                      <td class="p-2 bg-cyan-500/5 border-l-2 border-l-cyan-400/40" colspan="4" />
-                    </template>
-                    <!-- Team 2 Player -->
-                    <template v-if="getTeamPlayers(map, 2)[idx]">
-                      <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40">
-                        <router-link
-                          :to="`/players/${getTeamPlayers(map, 2)[idx].playerName}`"
-                          class="text-orange-400 hover:text-orange-300 font-medium text-xs truncate block"
-                        >
-                          {{ getTeamPlayers(map, 2)[idx].playerName }}
-                        </router-link>
-                      </td>
-                      <td class="p-2 text-center bg-orange-500/5">
-                        <span class="text-slate-200 font-bold text-xs font-mono">
-                          {{ getTeamPlayers(map, 2)[idx].totalScore.toLocaleString() }}
-                        </span>
-                      </td>
-                      <td class="p-2 text-center bg-orange-500/5">
-                        <span class="text-slate-300 text-xs font-mono">
-                          {{ getTeamPlayers(map, 2)[idx].totalKills }}
-                        </span>
-                      </td>
-                      <td class="p-2 text-center bg-orange-500/5">
-                        <span class="text-slate-300 text-xs font-mono">
-                          {{ getTeamPlayers(map, 2)[idx].totalDeaths }}
-                        </span>
-                      </td>
-                    </template>
-                    <template v-else>
-                      <td class="p-2 bg-orange-500/5 border-l-2 border-l-orange-400/40" colspan="4" />
-                    </template>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-        </template>
+        <!-- This section is disabled and will be implemented in a future update when player stats are available -->
 
         <!-- Player Comparison Section -->
         <div class="mt-8 space-y-4">
@@ -1009,6 +800,8 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { marked } from 'marked';
+import TournamentHero from '@/components/TournamentHero.vue';
+import TournamentPageNav from '@/components/TournamentPageNav.vue';
 import {
   publicTournamentService,
   type PublicTournamentDetail,
@@ -1055,7 +848,72 @@ const getThemedAccentColor = (): string => {
   return colors.accent;
 };
 
-// Helper function to get results aggregation (e.g., "Team A 2-0 Team B", "Team A 1-1 Team B")
+// Helper function to determine match winner
+const getMatchWinner = (match: PublicTournamentMatch): 'team1' | 'team2' | 'tie' | null => {
+  if (!match.maps || match.maps.length === 0) return null;
+
+  let team1Wins = 0;
+  let team2Wins = 0;
+
+  for (const map of match.maps) {
+    if (!map.matchResults || map.matchResults.length === 0) continue;
+
+    for (const result of map.matchResults) {
+      if (result.winningTeamId === result.team1Id) {
+        team1Wins++;
+      } else if (result.winningTeamId === result.team2Id) {
+        team2Wins++;
+      }
+    }
+  }
+
+  if (team1Wins > team2Wins) return 'team1';
+  if (team2Wins > team1Wins) return 'team2';
+  if (team1Wins === team2Wins && team1Wins > 0) return 'tie';
+  return null;
+};
+
+// Helper function to get formatted score with both ticket and round scores: "[Tickets] ([Rounds])"
+const getFormattedScore = (map: any, matchTeam1Name?: string, matchTeam2Name?: string): string => {
+  const results = map.matchResults;
+  if (!results || results.length === 0) return '—';
+
+  const team1Id = results[0]?.team1Id;
+  const team2Id = results[0]?.team2Id;
+  if (!team1Id || !team2Id) return '—';
+
+  // Calculate round scores (wins/losses)
+  const team1RoundWins = results.filter((r: any) => r.winningTeamId === team1Id).length;
+  const team2RoundWins = results.filter((r: any) => r.winningTeamId === team2Id).length;
+  const draws = results.filter((r: any) => r.winningTeamId !== team1Id && r.winningTeamId !== team2Id).length;
+
+  // Calculate ticket scores
+  let team1Tickets = 0;
+  let team2Tickets = 0;
+  for (const result of results) {
+    team1Tickets += result.team1Tickets || 0;
+    team2Tickets += result.team2Tickets || 0;
+  }
+
+  // Format round score
+  let roundScore: string;
+  if (draws > 0) {
+    roundScore = `${team1RoundWins}-${team2RoundWins}-${draws}`;
+  } else {
+    roundScore = `${team1RoundWins}-${team2RoundWins}`;
+  }
+
+  // Format as "[Tickets] ([Rounds])"
+  const scoreStr = `${team1Tickets}-${team2Tickets} (${roundScore})`;
+
+  // Add team names if provided
+  if (matchTeam1Name && matchTeam2Name) {
+    return `${matchTeam1Name} ${scoreStr} ${matchTeam2Name}`;
+  }
+  return scoreStr;
+};
+
+// Helper function to get results aggregation (e.g., "Team A 2-0 Team B", "Team A 1-1 Team B") - kept for backward compatibility
 const getResultsAggregation = (map: any, matchTeam1Name?: string, matchTeam2Name?: string): string => {
   const results = map.matchResults;
   if (!results || results.length === 0) return '—';
@@ -1158,6 +1016,13 @@ const getAccentColor = (): string => {
   return isValidHex(normalized) ? normalized : '#FFD700';
 };
 
+const getAccentTextColor = (): string => {
+  const accent = getAccentColor();
+  const lum = calculateLuminance(accent);
+  // If accent is light, use dark text; if dark, use light text
+  return lum > 0.5 ? '#000000' : '#FFFFFF';
+};
+
 const getAccentColorWithOpacity = (opacity: number): string => {
   const accent = getAccentColor();
   const rgb = hexToRgb(accent);
@@ -1183,6 +1048,32 @@ const getTextColor = (): string => {
 
 const getTextMutedColor = (): string => {
   return themeVars.value['--color-text-muted'] || '#d0d0d0';
+};
+
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'registration':
+      return '#FFEB3B'; // Yellow
+    case 'open':
+      return '#4CAF50'; // Green
+    case 'closed':
+      return '#EF4444'; // Red
+    default:
+      return '#FFD700'; // Golden (fallback)
+  }
+};
+
+const getStatusTextColor = (status: string): string => {
+  switch (status) {
+    case 'registration':
+      return '#000000'; // Black text on yellow
+    case 'open':
+      return '#FFFFFF'; // White text on green
+    case 'closed':
+      return '#FFFFFF'; // White text on red
+    default:
+      return '#000000'; // Black text (fallback)
+  }
 };
 
 const formatMatchDate = (dateString: string): string => {
@@ -1382,17 +1273,6 @@ const loadLogoImage = async () => {
     // Silently fail - logo image is optional
     console.debug('No logo image available');
   }
-};
-
-const getGameIcon = (): string => {
-  if (!tournament.value) return `url('${bf1942Icon}')`;
-
-  const iconMap: Record<string, string> = {
-    'bf1942': `url('${bf1942Icon}')`,
-    'fh2': `url('${fh2Icon}')`,
-    'bfvietnam': `url('${bfvIcon}')`
-  };
-  return iconMap[tournament.value.game] || `url('${bf1942Icon}')`;
 };
 
 const openMatchupModal = (match: PublicTournamentMatch) => {

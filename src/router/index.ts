@@ -18,6 +18,11 @@ const SystemStats = () => import('../views/SystemStats.vue')
 const DiscordCallback = () => import('../views/DiscordCallback.vue')
 const TournamentDetails = () => import('../views/TournamentDetails.vue')
 const PublicTournament = () => import('../views/PublicTournament.vue')
+const PublicTournamentRules = () => import('../views/PublicTournamentRules.vue')
+const PublicTournamentTeams = () => import('../views/PublicTournamentTeams.vue')
+const PublicTournamentMatches = () => import('../views/PublicTournamentMatches.vue')
+const PublicTournamentStats = () => import('../views/PublicTournamentStats.vue')
+const PublicTournamentFiles = () => import('../views/PublicTournamentFiles.vue')
 
 const routes: RouteRecordRaw[] = [
     {
@@ -220,6 +225,56 @@ const routes: RouteRecordRaw[] = [
       meta: {
         title: (route: RouteLocationNormalized) => `Tournament ${route.params.id} - BF Stats`,
         description: 'View tournament schedule, matches, and results for Battlefield competitions.'
+      }
+    },
+    {
+      path: '/tournaments/:id/rules',
+      name: 'public-tournament-rules',
+      component: PublicTournamentRules,
+      props: true,
+      meta: {
+        title: (route: RouteLocationNormalized) => `Tournament Rules - ${route.params.id} - BF Stats`,
+        description: 'Tournament rules and guidelines.'
+      }
+    },
+    {
+      path: '/tournaments/:id/teams',
+      name: 'public-tournament-teams',
+      component: PublicTournamentTeams,
+      props: true,
+      meta: {
+        title: (route: RouteLocationNormalized) => `Teams - Tournament ${route.params.id} - BF Stats`,
+        description: 'Registered teams and rosters.'
+      }
+    },
+    {
+      path: '/tournaments/:id/matches',
+      name: 'public-tournament-matches',
+      component: PublicTournamentMatches,
+      props: true,
+      meta: {
+        title: (route: RouteLocationNormalized) => `Matches - Tournament ${route.params.id} - BF Stats`,
+        description: 'Tournament matches and results.'
+      }
+    },
+    {
+      path: '/tournaments/:id/stats',
+      name: 'public-tournament-stats',
+      component: PublicTournamentStats,
+      props: true,
+      meta: {
+        title: (route: RouteLocationNormalized) => `Player Stats - Tournament ${route.params.id} - BF Stats`,
+        description: 'Player statistics for the tournament.'
+      }
+    },
+    {
+      path: '/tournaments/:id/files',
+      name: 'public-tournament-files',
+      component: PublicTournamentFiles,
+      props: true,
+      meta: {
+        title: (route: RouteLocationNormalized) => `Files - Tournament ${route.params.id} - BF Stats`,
+        description: 'Tournament files, maps, and resources.'
       }
     },
     {
