@@ -33,16 +33,16 @@
             :href="file.url"
             target="_blank"
             rel="noopener noreferrer"
-            class="block p-4 rounded-lg border-2"
+            class="block p-4 rounded-lg transition-all duration-200 hover:shadow-lg"
             :style="{
-              borderColor: getAccentColor(),
               backgroundColor: getBackgroundSoftColor(),
-              color: getAccentColor()
+              color: getTextColor(),
+              boxShadow: `0 2px 8px rgba(0, 0, 0, 0.15)`
             }"
           >
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
-                <p class="font-semibold text-base truncate hover:underline">
+                <p class="font-semibold text-base truncate transition-colors hover:opacity-80" :style="{ color: getAccentColor() }">
                   {{ file.name }}
                 </p>
                 <p class="text-xs mt-1" :style="{ color: getTextMutedColor() }">
@@ -50,7 +50,7 @@
                   <span>Uploaded: {{ formatDate(file.uploadedAt) }}</span>
                 </p>
               </div>
-              <svg class="w-5 h-5 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 flex-shrink-0 transition-all duration-200 hover:opacity-100" style="opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24" :style="{ color: getAccentColor() }">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </div>

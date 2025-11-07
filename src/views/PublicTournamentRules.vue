@@ -164,7 +164,7 @@ const getTextMutedColor = (): string => {
 .markdown-rules :deep(h4),
 .markdown-rules :deep(h5),
 .markdown-rules :deep(h6) {
-  color: var(--rule-primary);
+  color: var(--color-text);
   font-weight: 700;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
@@ -178,7 +178,7 @@ const getTextMutedColor = (): string => {
 
 .markdown-rules :deep(strong) {
   font-weight: 700;
-  color: var(--rule-primary);
+  color: var(--color-text);
 }
 
 .markdown-rules :deep(em) {
@@ -210,10 +210,10 @@ const getTextMutedColor = (): string => {
   background: linear-gradient(135deg, var(--rule-primary)15, var(--rule-secondary)10);
   padding: 0.25rem 0.5rem;
   border-radius: 0.375rem;
-  color: var(--rule-primary);
+  color: var(--color-text);
   font-family: 'Monaco', 'Menlo', monospace;
   font-weight: 600;
-  border: 1px solid rgba(var(--rule-primary), 0.2);
+  border: 1px solid var(--rule-primary);
 }
 
 .markdown-rules :deep(blockquote) {
@@ -228,14 +228,14 @@ const getTextMutedColor = (): string => {
 }
 
 .markdown-rules :deep(a) {
-  color: var(--rule-primary);
+  color: var(--color-text);
   text-decoration: underline;
   font-weight: 600;
   transition: all 0.2s ease;
 }
 
 .markdown-rules :deep(a:hover) {
-  color: var(--rule-secondary);
+  color: var(--color-text);
   text-decoration: none;
 }
 
@@ -257,7 +257,7 @@ const getTextMutedColor = (): string => {
   padding: 1rem;
   text-align: left;
   font-weight: 700;
-  color: var(--rule-primary);
+  color: var(--color-text);
   border-bottom: 2px solid var(--rule-primary);
   font-size: 0.875rem;
   text-transform: uppercase;

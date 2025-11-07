@@ -208,6 +208,12 @@ const getStatusTextColor = (status: string): string => {
   }
 }
 
+const getTextColor = (): string => {
+  if (!props.tournament?.theme?.textColour) return '#FFFFFF'
+  const normalized = normalizeHex(props.tournament.theme.textColour)
+  return isValidHex(normalized) ? normalized : '#FFFFFF'
+}
+
 const getTextMutedColor = (): string => {
   return '#d0d0d0'
 }
@@ -229,11 +235,14 @@ const isHeroActive = (page: string): boolean => {
 const getButtonStyles = (page: string): Record<string, string> => {
   const active = isHeroActive(page)
   const accentColor = getAccentColor()
-  const textColor = getAccentTextColor()
+  const textColor = getTextColor()
+
+  // For active buttons, use a contrasting text color based on the accent background
+  const activeTextColor = getAccentTextColor()
 
   return {
     backgroundColor: active ? accentColor : accentColor + '10',
-    color: active ? textColor : accentColor,
+    color: active ? activeTextColor : textColor,
     border: active ? `2px solid ${accentColor}` : `1px solid ${accentColor}30`,
     boxShadow: active ? `0 4px 12px ${accentColor}40` : 'none',
   }
