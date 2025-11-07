@@ -565,6 +565,258 @@ Winners choose first map for next round.</code>
           </div>
         </div>
 
+        <!-- Status & Game Mode -->
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Status Dropdown -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Status <span class="text-slate-500">(Optional)</span>
+            </label>
+            <select
+              v-model="formData.status"
+              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+            >
+              <option :value="undefined">No Status</option>
+              <option value="draft">Draft</option>
+              <option value="registration">Registration</option>
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
+            </select>
+            <p class="mt-1 text-xs text-slate-500">
+              Tournament status (draft, registration, open, or closed)
+            </p>
+          </div>
+
+          <!-- Game Mode -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Game Mode <span class="text-slate-500">(Optional)</span>
+            </label>
+            <input
+              v-model="formData.gameMode"
+              type="text"
+              placeholder="e.g., CTF, Conquest"
+              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+            >
+            <p class="mt-1 text-xs text-slate-500">
+              Game mode for this tournament
+            </p>
+          </div>
+        </div>
+
+        <!-- Week Dates Editor -->
+        <div class="border-t border-slate-700/30 pt-6">
+          <div class="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h3 class="text-sm font-medium text-slate-300">
+                Tournament Weeks <span class="text-slate-500">(Optional)</span>
+              </h3>
+              <p class="text-xs text-slate-500 mt-1">
+                Add week dates to organize your tournament schedule
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="addWeek"
+              class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-sm font-medium transition-colors"
+            >
+              + Add Week
+            </button>
+          </div>
+
+          <!-- Week Dates List -->
+          <div v-if="formData.weekDates.length > 0" class="space-y-2 mb-4">
+            <div
+              v-for="(week, index) in formData.weekDates"
+              :key="index"
+              class="flex items-center justify-between gap-3 p-3 bg-slate-800/40 border border-slate-700/50 rounded-lg"
+            >
+              <div class="flex-1">
+                <div class="text-sm font-medium text-slate-200">{{ week.week }}</div>
+                <div class="text-xs text-slate-400 mt-1">
+                  {{ week.startDate }} to {{ week.endDate }}
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="editWeek(index)"
+                  class="p-2 text-cyan-400 hover:bg-cyan-500/20 rounded transition-colors"
+                  title="Edit week"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  @click="deleteWeek(index)"
+                  class="p-2 text-red-400 hover:bg-red-500/20 rounded transition-colors"
+                  title="Delete week"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Week Form Modal -->
+          <div v-if="showWeekForm" class="mb-4 p-4 bg-slate-800/60 border border-slate-700/50 rounded-lg space-y-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Week Name</label>
+              <input
+                v-model="editingWeekData.week"
+                type="text"
+                placeholder="e.g., Week 1"
+                class="w-full px-3 py-2 bg-slate-800 border border-slate-700/50 rounded text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              >
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Start Date</label>
+                <input
+                  v-model="editingWeekData.startDate"
+                  type="date"
+                  class="w-full px-3 py-2 bg-slate-800 border border-slate-700/50 rounded text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                >
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">End Date</label>
+                <input
+                  v-model="editingWeekData.endDate"
+                  type="date"
+                  class="w-full px-3 py-2 bg-slate-800 border border-slate-700/50 rounded text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="saveWeek"
+                class="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-sm font-medium transition-colors"
+              >
+                Save Week
+              </button>
+              <button
+                type="button"
+                @click="showWeekForm = false"
+                class="flex-1 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Files Manager -->
+        <div class="border-t border-slate-700/30 pt-6">
+          <div class="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h3 class="text-sm font-medium text-slate-300">
+                Tournament Files <span class="text-slate-500">(Optional)</span>
+              </h3>
+              <p class="text-xs text-slate-500 mt-1">
+                Manage tournament-related files (rules, maps, guides, etc.)
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="addFile"
+              class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors"
+            >
+              + Add File
+            </button>
+          </div>
+
+          <!-- Files List -->
+          <div v-if="formData.files.length > 0" class="space-y-2 mb-4">
+            <div
+              v-for="(file, index) in formData.files"
+              :key="index"
+              class="flex items-center justify-between gap-3 p-3 bg-slate-800/40 border border-slate-700/50 rounded-lg"
+            >
+              <div class="flex-1">
+                <div class="text-sm font-medium text-slate-200">{{ file.name }}</div>
+                <div class="text-xs text-slate-400 mt-1">
+                  {{ file.url }}
+                  <span v-if="file.category" class="text-slate-500"> • {{ file.category }}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="editFile(index)"
+                  class="p-2 text-cyan-400 hover:bg-cyan-500/20 rounded transition-colors"
+                  title="Edit file"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  @click="deleteFile(index)"
+                  class="p-2 text-red-400 hover:bg-red-500/20 rounded transition-colors"
+                  title="Delete file"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- File Form Modal -->
+          <div v-if="showFileForm" class="mb-4 p-4 bg-slate-800/60 border border-slate-700/50 rounded-lg space-y-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">File Name</label>
+              <input
+                v-model="editingFileData.name"
+                type="text"
+                placeholder="e.g., Tournament Rules"
+                class="w-full px-3 py-2 bg-slate-800 border border-slate-700/50 rounded text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              >
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">File URL</label>
+              <input
+                v-model="editingFileData.url"
+                type="url"
+                placeholder="https://..."
+                class="w-full px-3 py-2 bg-slate-800 border border-slate-700/50 rounded text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              >
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Category</label>
+              <input
+                v-model="editingFileData.category"
+                type="text"
+                placeholder="e.g., Rules, Maps"
+                class="w-full px-3 py-2 bg-slate-800 border border-slate-700/50 rounded text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="saveFile"
+                class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors"
+              >
+                Save File
+              </button>
+              <button
+                type="button"
+                @click="showFileForm = false"
+                class="flex-1 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Theme Colors -->
         <!-- Theme Configuration Section -->
         <div class="border-t border-slate-700/30 pt-6">
@@ -921,6 +1173,10 @@ const formData = ref({
   discordUrl: '',
   forumUrl: '',
   rules: '',
+  status: undefined as 'draft' | 'registration' | 'open' | 'closed' | undefined,
+  gameMode: '',
+  weekDates: [] as Array<{ id?: number; week: string; startDate: string; endDate: string }>,
+  files: [] as Array<{ id?: number; name: string; url: string; category?: string; uploadedAt?: string }>,
   theme: {
     backgroundColour: '#000000',
     textColour: '#FFFFFF',
@@ -930,6 +1186,16 @@ const formData = ref({
 
 const loading = ref(false);
 const error = ref<string | null>(null);
+
+// Week Dates management
+const editingWeekIndex = ref<number | null>(null);
+const editingWeekData = ref({ week: '', startDate: '', endDate: '' });
+const showWeekForm = ref(false);
+
+// Files management
+const editingFileIndex = ref<number | null>(null);
+const editingFileData = ref({ name: '', url: '', category: '' });
+const showFileForm = ref(false);
 
 // Player search state
 const playerSuggestions = ref<PlayerSearchResult[]>([]);
@@ -1043,6 +1309,10 @@ onMounted(() => {
       discordUrl: props.tournament.discordUrl || '',
       forumUrl: props.tournament.forumUrl || '',
       rules: props.tournament.rules || '',
+      status: props.tournament.status || undefined,
+      gameMode: props.tournament.gameMode || '',
+      weekDates: props.tournament.weekDates ? [...props.tournament.weekDates] : [],
+      files: props.tournament.files ? [...props.tournament.files] : [],
       theme: props.tournament.theme,
     };
 
@@ -1442,6 +1712,88 @@ const applyPreset = (presetName: string) => {
   }
 };
 
+// Week Dates management functions
+const addWeek = () => {
+  editingWeekIndex.value = null;
+  editingWeekData.value = { week: '', startDate: '', endDate: '' };
+  showWeekForm.value = true;
+};
+
+const editWeek = (index: number) => {
+  editingWeekIndex.value = index;
+  const week = formData.value.weekDates[index];
+  editingWeekData.value = {
+    week: week.week,
+    startDate: week.startDate,
+    endDate: week.endDate
+  };
+  showWeekForm.value = true;
+};
+
+const deleteWeek = (index: number) => {
+  formData.value.weekDates.splice(index, 1);
+};
+
+const saveWeek = () => {
+  if (!editingWeekData.value.week || !editingWeekData.value.startDate || !editingWeekData.value.endDate) {
+    error.value = 'Please fill in all week fields';
+    return;
+  }
+
+  if (editingWeekIndex.value !== null) {
+    // Update existing week
+    formData.value.weekDates[editingWeekIndex.value] = { ...editingWeekData.value };
+  } else {
+    // Add new week
+    formData.value.weekDates.push({ ...editingWeekData.value });
+  }
+
+  showWeekForm.value = false;
+  editingWeekIndex.value = null;
+  editingWeekData.value = { week: '', startDate: '', endDate: '' };
+};
+
+// Files management functions
+const addFile = () => {
+  editingFileIndex.value = null;
+  editingFileData.value = { name: '', url: '', category: '' };
+  showFileForm.value = true;
+};
+
+const editFile = (index: number) => {
+  editingFileIndex.value = index;
+  const file = formData.value.files[index];
+  editingFileData.value = {
+    name: file.name,
+    url: file.url,
+    category: file.category || ''
+  };
+  showFileForm.value = true;
+};
+
+const deleteFile = (index: number) => {
+  formData.value.files.splice(index, 1);
+};
+
+const saveFile = () => {
+  if (!editingFileData.value.name || !editingFileData.value.url) {
+    error.value = 'Please fill in name and URL fields';
+    return;
+  }
+
+  if (editingFileIndex.value !== null) {
+    // Update existing file
+    formData.value.files[editingFileIndex.value] = { ...editingFileData.value };
+  } else {
+    // Add new file
+    formData.value.files.push({ ...editingFileData.value });
+  }
+
+  showFileForm.value = false;
+  editingFileIndex.value = null;
+  editingFileData.value = { name: '', url: '', category: '' };
+};
+
 const handleSubmit = async () => {
   loading.value = true;
   error.value = null;
@@ -1476,6 +1828,18 @@ const handleSubmit = async () => {
 
     if (formData.value.rules?.trim()) {
       request.rules = formData.value.rules.trim();
+    }
+
+    if (formData.value.status) {
+      request.status = formData.value.status;
+    }
+
+    if (formData.value.gameMode?.trim()) {
+      request.gameMode = formData.value.gameMode.trim();
+    }
+
+    if (formData.value.weekDates.length > 0) {
+      request.weekDates = formData.value.weekDates;
     }
 
     console.debug('Tournament request theme:', request.theme);

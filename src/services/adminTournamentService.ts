@@ -131,6 +131,7 @@ export interface CreateTournamentRequest {
   discordUrl?: string;
   forumUrl?: string;
   rules?: string;
+  weekDates?: TournamentWeekDate[];
   theme: TournamentTheme;
 }
 
