@@ -84,10 +84,17 @@ export interface PublicTeamRanking {
   rank: number;
   teamId: number;
   teamName: string;
+  matchesPlayed: number;
+  victories: number;
+  ties: number;
+  losses: number;
   roundsWon: number;
   roundsTied: number;
   roundsLost: number;
+  ticketsFor: number;
+  ticketsAgainst: number;
   ticketDifferential: number;
+  points: number;
   totalRounds: number;
 }
 
@@ -104,9 +111,12 @@ export interface PublicTournamentDetail {
   organizer: string;
   createdAt: string;
   anticipatedRoundCount?: number;
+  status?: 'registration' | 'open' | 'closed';
+  gameMode?: string;
   teams: PublicTournamentTeam[];
   matches: PublicTournamentMatch[];
   matchesByWeek?: PublicTournamentMatchesByWeek[];
+  latestMatches?: PublicTournamentMatch[];
   hasHeroImage?: boolean;
   hasCommunityLogo?: boolean;
   game: 'bf1942' | 'fh2' | 'bfvietnam';

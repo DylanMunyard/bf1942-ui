@@ -72,15 +72,35 @@ export interface TournamentTheme {
   borderWidth?: string;
 }
 
+export interface TournamentFile {
+  id: number;
+  name: string;
+  url: string;
+  category?: string;
+  uploadedAt: string;
+}
+
+export interface TournamentWeekDate {
+  id?: number;
+  week: string;
+  startDate: string;
+  endDate: string;
+}
+
 export interface TournamentDetail {
   id: number;
   name: string;
   organizer: string;
   createdAt: string;
   anticipatedRoundCount?: number;
+  status?: 'draft' | 'registration' | 'open' | 'closed';
+  gameMode?: string;
   teams: TournamentTeam[];
   matches: TournamentMatch[];
   matchesByWeek?: TournamentMatchesByWeek[];
+  latestMatches?: TournamentMatch[];
+  weekDates?: TournamentWeekDate[];
+  files?: TournamentFile[];
   heroImageBase64?: string;
   heroImageContentType?: string;
   communityLogoBase64?: string;
@@ -101,6 +121,8 @@ export interface CreateTournamentRequest {
   organizer: string;
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   anticipatedRoundCount?: number;
+  status?: 'draft' | 'registration' | 'open' | 'closed';
+  gameMode?: string;
   heroImageBase64?: string;
   heroImageContentType?: string;
   communityLogoBase64?: string;
@@ -117,6 +139,8 @@ export interface UpdateTournamentRequest {
   organizer?: string;
   game?: 'bf1942' | 'fh2' | 'bfvietnam';
   anticipatedRoundCount?: number;
+  status?: 'draft' | 'registration' | 'open' | 'closed';
+  gameMode?: string;
   heroImageBase64?: string;
   heroImageContentType?: string;
   communityLogoBase64?: string;
@@ -125,7 +149,21 @@ export interface UpdateTournamentRequest {
   discordUrl?: string;
   forumUrl?: string;
   rules?: string;
+  weekDates?: TournamentWeekDate[];
   theme?: TournamentTheme;
+}
+
+// File management interfaces
+export interface CreateTournamentFileRequest {
+  name: string;
+  url: string;
+  category?: string;
+}
+
+export interface UpdateTournamentFileRequest {
+  name?: string;
+  url?: string;
+  category?: string;
 }
 
 // Teams interfaces
@@ -316,6 +354,60 @@ class AdminTournamentService {
   // Delete tournament (owned by current user only)
   async deleteTournament(id: number): Promise<void> {
     await this.request(`/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Recalculate leaderboard
+  async recalculateLeaderboard(
+    id: number,
+    options?: { week?: string; fromWeek?: string }
+  ): Promise<void> {
+    const payload: Record<string, string> = {};
+    if (options?.week) {
+      payload.week = options.week;
+    }
+    if (options?.fromWeek) {
+      payload.fromWeek = options.fromWeek;
+    }
+
+    await this.request(`/${id}/leaderboard/recalculate`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // ===== Tournament Files Management =====
+
+  // Create tournament file
+  async createTournamentFile(
+    tournamentId: number,
+    request: CreateTournamentFileRequest
+  ): Promise<TournamentFile> {
+    return this.request<TournamentFile>(`/${tournamentId}/files`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  // Update tournament file
+  async updateTournamentFile(
+    tournamentId: number,
+    fileId: number,
+    request: UpdateTournamentFileRequest
+  ): Promise<TournamentFile> {
+    return this.request<TournamentFile>(
+      `/${tournamentId}/files/${fileId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(request),
+      }
+    );
+  }
+
+  // Delete tournament file
+  async deleteTournamentFile(tournamentId: number, fileId: number): Promise<void> {
+    await this.request(`/${tournamentId}/files/${fileId}`, {
       method: 'DELETE',
     });
   }
