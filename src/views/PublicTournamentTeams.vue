@@ -50,7 +50,7 @@
             >
               <!-- Team Header -->
               <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
-                <h3 class="text-lg font-bold" :style="{ color: getAccentColor() }">
+                <h3 class="text-lg font-bold" :style="{ color: getTextColor() }">
                   {{ team.name }}
                 </h3>
               </div>
@@ -72,7 +72,7 @@
                       <router-link
                         :to="`/players/${encodeURIComponent(player.playerName)}`"
                         class="hover:underline transition-colors"
-                        :style="{ color: getAccentColor() }"
+                        :style="{ color: getTextColor() }"
                       >
                         {{ player.playerName }}
                       </router-link>
