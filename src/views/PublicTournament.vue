@@ -91,71 +91,26 @@
       <!-- Main Content -->
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
         <!-- Latest Matches Section -->
-        <div v-if="computedLatestMatches && computedLatestMatches.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+        <div v-if="computedLatestMatches && computedLatestMatches.length > 0">
           <!-- Latest Matches Header -->
-          <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
+          <div class="mb-6">
             <h3 class="text-xl font-semibold" :style="{ color: getTextColor() }">
               ⚡ Latest Matches
             </h3>
           </div>
 
-          <!-- Latest Matches List -->
-          <div class="divide-y" :style="{ borderColor: getAccentColor() }">
-            <div
-              v-for="match in computedLatestMatches"
-              :key="match.id"
-              class="p-4 sm:p-6 hover:bg-opacity-50 transition-all cursor-pointer last:divide-y-0"
-              :style="{ backgroundColor: getBackgroundMuteColor(), borderBottomColor: getAccentColor() }"
-              @click="openMatchupModal(match)"
-            >
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <!-- Match Date -->
-                <div class="text-xs sm:text-sm font-mono" :style="{ color: getTextMutedColor() }">
-                  {{ formatMatchDate(match.scheduledDate) }}
-                </div>
-
-                <!-- Teams & Score -->
-                <div class="flex-1 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                  <div class="text-sm sm:text-base font-semibold flex items-center gap-1" :style="{ color: getMatchWinner(match) === 'team1' ? getAccentColor() : getTextColor() }">
-                    <span v-if="getMatchWinner(match) === 'team1'" class="text-lg">🏆</span>
-                    {{ match.team1Name }}
-                  </div>
-                  <div class="text-xs sm:text-sm font-medium" :style="{ color: getTextMutedColor() }">
-                    vs
-                  </div>
-                  <div class="text-sm sm:text-base font-semibold flex items-center gap-1" :style="{ color: getMatchWinner(match) === 'team2' ? getAccentColor() : getTextColor() }">
-                    <span v-if="getMatchWinner(match) === 'team2'" class="text-lg">🏆</span>
-                    {{ match.team2Name }}
-                  </div>
-                </div>
-
-                <!-- Server & Maps Count -->
-                <div class="flex items-center gap-4 text-xs sm:text-sm" :style="{ color: getTextMutedColor() }">
-                  <div v-if="match.serverName" class="flex items-center gap-1">
-                    <span>🖥️</span>
-                    <span>{{ match.serverName }}</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <span>🗺️</span>
-                    <span>{{ match.maps?.length ?? 0 }} map<span v-if="(match.maps?.length ?? 0) !== 1">s</span></span>
-                  </div>
-                </div>
-
-                <!-- View Button -->
-                <button
-                  class="px-3 py-1.5 text-xs sm:text-sm font-medium rounded transition-all self-start sm:self-auto"
-                  :style="{
-                    backgroundColor: getAccentColor() + '20',
-                    color: getAccentColor(),
-                    border: `1px solid ${getAccentColor()}`
-                  }"
-                  @click.stop="openMatchupModal(match)"
-                >
-                  View Details
-                </button>
-              </div>
-            </div>
-          </div>
+          <!-- Matches Table Component -->
+          <TournamentMatchesTable
+            :matches="computedLatestMatches"
+            :group-by-week="false"
+            :accent-color="getAccentColor()"
+            :text-color="getTextColor()"
+            :text-muted-color="getTextMutedColor()"
+            :background-color="getBackgroundColor()"
+            :background-soft-color="getBackgroundSoftColor()"
+            :background-mute-color="getBackgroundMuteColor()"
+            @match-selected="openMatchupModal"
+          />
         </div>
 
         <!-- Latest Matches Empty State -->
@@ -168,462 +123,33 @@
           <p :style="{ color: getTextMutedColor() }">Check back soon as matches are completed. Visit the <router-link :to="`/tournaments/${tournamentId}/matches`" class="underline hover:opacity-80 transition-opacity" :style="{ color: getAccentColor() }">Matches page</router-link> to see the full schedule.</p>
         </div>
 
-        <!-- Tournament Leaderboard -->
-        <div v-if="leaderboard && leaderboard.rankings.length > 0" class="backdrop-blur-sm border-2 rounded-xl overflow-hidden" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
-          <!-- Leaderboard Header -->
-          <div class="px-6 py-4 border-b-2" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
-            <h3 class="text-xl font-semibold" :style="{ color: getTextColor() }">
-              🏆 Leaderboard
-            </h3>
-          </div>
-
-          <!-- Leaderboard Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse">
-              <thead>
-                <tr :style="{ backgroundColor: getBackgroundMuteColor() }">
-                  <th class="p-4 text-left font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Ranking
-                  </th>
-                  <th class="p-4 text-left font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Team
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Matches Played
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Victories
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Ties
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Losses
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Rounds Won
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Rounds Tied
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Rounds Lost
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Tickets For
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Tickets Against
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Ticket Differential
-                  </th>
-                  <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                    Points
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(ranking, idx) in leaderboard.rankings"
-                  :key="ranking.teamId"
-                  class="group transition-all duration-300 border-b"
-                  :style="{ borderColor: getAccentColor(), backgroundColor: idx % 2 === 0 ? getBackgroundMuteColor() : getBackgroundSoftColor() }"
-                >
-                  <!-- Ranking -->
-                  <td class="p-4">
-                    <div class="flex items-center gap-2">
-                      <span v-if="ranking.rank === 1" class="text-xl">🥇</span>
-                      <span v-else-if="ranking.rank === 2" class="text-xl">🥈</span>
-                      <span v-else-if="ranking.rank === 3" class="text-xl">🥉</span>
-                      <span v-else class="text-sm font-bold" :style="{ color: getAccentColor() }">{{ ranking.rank }}</span>
-                    </div>
-                  </td>
-
-                  <!-- Team Name -->
-                  <td class="p-4">
-                    <div class="text-sm font-bold" :style="{ color: getTextColor() }">
-                      {{ ranking.teamName }}
-                    </div>
-                  </td>
-
-                  <!-- Matches Played -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm" :style="{ color: getTextColor() }">
-                      {{ ranking.matchesPlayed }}
-                    </span>
-                  </td>
-
-                  <!-- Victories -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm font-bold" :style="{ color: getAccentColor() }">
-                      {{ ranking.victories }}
-                    </span>
-                  </td>
-
-                  <!-- Ties -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm" :style="{ color: getTextMutedColor() }">
-                      {{ ranking.ties }}
-                    </span>
-                  </td>
-
-                  <!-- Losses -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm" :style="{ color: getTextMutedColor() }">
-                      {{ ranking.losses }}
-                    </span>
-                  </td>
-
-                  <!-- Rounds Won -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm font-bold" :style="{ color: getAccentColor() }">
-                      {{ ranking.roundsWon }}
-                    </span>
-                  </td>
-
-                  <!-- Rounds Tied -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm" :style="{ color: getTextMutedColor() }">
-                      {{ ranking.roundsTied }}
-                    </span>
-                  </td>
-
-                  <!-- Rounds Lost -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm" :style="{ color: getTextMutedColor() }">
-                      {{ ranking.roundsLost }}
-                    </span>
-                  </td>
-
-                  <!-- Tickets For -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm font-mono" :style="{ color: getTextColor() }">
-                      {{ ranking.ticketsFor }}
-                    </span>
-                  </td>
-
-                  <!-- Tickets Against -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm font-mono" :style="{ color: getTextColor() }">
-                      {{ ranking.ticketsAgainst }}
-                    </span>
-                  </td>
-
-                  <!-- Ticket Differential -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm font-mono" :style="{ color: ranking.ticketDifferential >= 0 ? getAccentColor() : '#ef4444' }">
-                      {{ ranking.ticketDifferential >= 0 ? '+' : '' }}{{ ranking.ticketDifferential }}
-                    </span>
-                  </td>
-
-                  <!-- Points -->
-                  <td class="p-4 text-center">
-                    <span class="text-sm font-bold" :style="{ color: getAccentColor() }">
-                      {{ ranking.points }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <!-- Tournament Rankings Table Component -->
+        <TournamentRankingsTable
+          :leaderboard="leaderboard"
+          title="Tournament Rankings"
+          :logo-image-url="logoImageUrl"
+          :accent-color="getAccentColor()"
+          :text-color="getTextColor()"
+          :text-muted-color="getTextMutedColor()"
+          :background-soft-color="getBackgroundSoftColor()"
+          :background-mute-color="getBackgroundMuteColor()"
+        />
 
       </div>
     </div>
 
-    <!-- Match Details Modal -->
-    <div
-      v-if="selectedMatch"
-      class="modal-mobile-safe fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      @click.self="closeMatchupModal"
-    >
-      <div
-        class="rounded-2xl p-6 max-w-5xl w-full shadow-2xl max-h-[85vh] overflow-y-auto border-2"
-        :style="{
-          background: getBackgroundSoftColor(),
-          backdropFilter: 'blur(10px)',
-          borderColor: getAccentColor(),
-          backgroundColor: getBackgroundSoftColor()
-        }"
-      >
-        <!-- Header -->
-        <div class="flex items-start justify-between mb-6">
-          <div class="flex-1">
-            <h3 class="text-3xl font-bold text-center mb-3" :style="{ color: getAccentColor() }">
-              Match Details
-            </h3>
-            <div class="flex items-center justify-center gap-4 text-sm flex-wrap" :style="{ color: getTextColor() }">
-              <span>{{ selectedMatch.team1Name }} vs {{ selectedMatch.team2Name }}</span>
-              <span>📅 {{ formatMatchDate(selectedMatch.scheduledDate) }}</span>
-              <span v-if="selectedMatch.serverName">🖥️ {{ selectedMatch.serverName }}</span>
-            </div>
-          </div>
-          <button
-            class="p-2 rounded-lg transition-colors flex-shrink-0"
-            :style="{ color: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.2) }"
-            @click="closeMatchupModal"
-            @mouseenter="(e) => {
-              if (e.currentTarget) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.35);
-              }
-            }"
-            @mouseleave="(e) => {
-              if (e.currentTarget) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.2);
-              }
-            }"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Maps and Results Table -->
-        <div class="rounded-lg overflow-hidden border-2" :style="{ borderColor: getAccentColor() }">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr :style="{ backgroundColor: getBackgroundMuteColor() }">
-                <th class="p-3 text-left font-bold text-xs uppercase border-b" :style="{ color: getTextColor(), borderColor: getAccentColor() }">
-                  Round
-                </th>
-                <th class="p-3 text-left font-bold text-xs uppercase border-b border-l-4" :style="{ color: getTextColor(), borderColor: getAccentColor(), borderLeftColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.1) }">
-                  {{ selectedMatch.team1Name }}
-                </th>
-                <th class="p-3 text-left font-bold text-xs uppercase border-b border-l-4" :style="{ color: getTextColor(), borderColor: getAccentColor(), borderLeftColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.1) }">
-                  {{ selectedMatch.team2Name }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Group results by map -->
-              <template v-for="map in selectedMatch.maps" :key="map.id">
-                <!-- Map Header Row -->
-                <tr :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }" class="border-b">
-                  <td colspan="3" class="p-3">
-                    <div class="flex items-center gap-3">
-                      <span class="text-sm font-bold" :style="{ color: getAccentColor() }">
-                        {{ map.mapName }}
-                      </span>
-                      <span v-if="map.teamName" class="text-xs" :style="{ color: getTextMutedColor() }">
-                        (Selected by {{ map.teamName }})
-                      </span>
-                      <span v-if="map.matchResults?.length > 0" class="text-xs font-bold ml-auto" :style="{ color: getAccentColor() }">
-                        {{ getResultsAggregation(map, selectedMatch.team1Name, selectedMatch.team2Name) }}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- Rounds for this map -->
-                <tr
-                  v-for="(result, roundIndex) in map.matchResults"
-                  :key="`${map.id}-${result.id}`"
-                  class="border-b transition-all group"
-                  :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }"
-                >
-                  <!-- Round number -->
-                  <td class="p-3" :style="{ color: getTextMutedColor() }">
-                    <div class="text-xs font-mono">Round {{ roundIndex + 1 }}</div>
-                  </td>
-
-                  <!-- Team 1 Score -->
-                  <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm font-bold" :style="{ color: getTextColor() }">
-                        {{ result.team1Tickets }}
-                      </span>
-                      <span v-if="result.winningTeamId === result.team1Id" class="text-lg">🏆</span>
-                    </div>
-                  </td>
-
-                  <!-- Team 2 Score -->
-                  <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm font-bold" :style="{ color: getTextColor() }">
-                        {{ result.team2Tickets }}
-                      </span>
-                      <span v-if="result.winningTeamId === result.team2Id" class="text-lg">🏆</span>
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- Total ticket score row -->
-                <tr v-if="map.matchResults && map.matchResults.length > 0" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }" class="border-b font-bold">
-                  <td class="p-3" :style="{ color: getTextMutedColor() }">
-                    <div class="text-xs font-mono">Total</div>
-                  </td>
-                  <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
-                    <div class="text-sm font-bold" :style="{ color: getAccentColor() }">
-                      {{ map.matchResults.reduce((sum, r) => sum + (r.team1Tickets || 0), 0) }}
-                    </div>
-                  </td>
-                  <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
-                    <div class="text-sm font-bold" :style="{ color: getAccentColor() }">
-                      {{ map.matchResults.reduce((sum, r) => sum + (r.team2Tickets || 0), 0) }}
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- Empty state if no results for this map -->
-                <tr v-if="!map.matchResults || map.matchResults.length === 0" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }" class="border-b">
-                  <td colspan="3" class="p-3 text-center" :style="{ color: getTextMutedColor() }">
-                    <span class="text-xs">No results yet</span>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Expandable Player Stats Section -->
-        <!-- Note: Player stats are not available in the current API schema. This will be added in a future update. -->
-        <div class="space-y-4">
-          <div v-for="map in selectedMatch.maps" :key="map.id" class="space-y-2">
-            <!-- Player stats unavailable - will be added in future update -->
-          </div>
-        </div>
-
-        <!-- Expandable Player Stats Table (Disabled until round data available) -->
-        <!-- This section is disabled and will be implemented in a future update when player stats are available -->
-
-        <!-- Player Comparison Section -->
-        <div class="mt-8 space-y-4">
-          <h3 class="text-lg font-bold" :style="{ color: getAccentColor() }">Compare Players</h3>
-
-          <!-- Rosters Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse rounded-lg overflow-hidden border-2" :style="{ borderColor: getAccentColor() }">
-              <thead>
-                <tr :style="{ backgroundColor: getBackgroundMuteColor() }">
-                  <th class="p-4 text-center font-bold text-lg uppercase tracking-wide border-b border-r-2" :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.1), color: getAccentColor() }">
-                    <div class="flex flex-col items-center gap-2">
-                      <span>{{ selectedMatch.team1Name }}</span>
-                      <span class="text-xs font-normal" :style="{ color: getTextMutedColor() }">
-                        {{ getTeamRoster(selectedMatch, selectedMatch.team1Name).length }} players
-                      </span>
-                    </div>
-                  </th>
-                  <th class="p-4 text-center font-bold text-lg uppercase tracking-wide border-b" :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.1), color: getAccentColor() }">
-                    <div class="flex flex-col items-center gap-2">
-                      <span>{{ selectedMatch.team2Name }}</span>
-                      <span class="text-xs font-normal" :style="{ color: getTextMutedColor() }">
-                        {{ getTeamRoster(selectedMatch, selectedMatch.team2Name).length }} players
-                      </span>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(_, idx) in Math.max(
-                    getTeamRoster(selectedMatch, selectedMatch.team1Name).length,
-                    getTeamRoster(selectedMatch, selectedMatch.team2Name).length
-                  )"
-                  :key="idx"
-                  class="border-b transition-all"
-                  :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundMuteColor() }"
-                  @mouseenter="(e) => {
-                    if (e.currentTarget) {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.08);
-                    }
-                  }"
-                  @mouseleave="(e) => {
-                    if (e.currentTarget) {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = getBackgroundMuteColor();
-                    }
-                  }"
-                >
-                  <!-- Team 1 Player -->
-                  <td class="p-3 border-r-2" :style="{ borderColor: getAccentColor(), backgroundColor: getAccentColorWithOpacity(0.05) }">
-                    <button
-                      v-if="getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx]"
-                      class="w-full text-left px-3 py-2 rounded-lg transition-all"
-                      :class="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)
-                        ? 'border-2 font-bold'
-                        : ''"
-                      :style="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)
-                        ? {
-                            backgroundColor: getAccentColorWithOpacity(0.2),
-                            borderColor: getAccentColor(),
-                            color: getAccentColor()
-                          }
-                        : {
-                            color: getAccentColor()
-                          }"
-                      @click="selectPlayerForComparison(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName, selectedMatch.team1Name)"
-                    >
-                      <div class="flex items-center justify-between">
-                        <span>{{ getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName }}</span>
-                        <svg v-if="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team1Name)[idx].playerName)" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" :style="{ color: getAccentColor() }">
-                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                      </div>
-                    </button>
-                  </td>
-                  <!-- Team 2 Player -->
-                  <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.05) }">
-                    <button
-                      v-if="getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx]"
-                      class="w-full text-left px-3 py-2 rounded-lg transition-all"
-                      :class="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)
-                        ? 'border-2 font-bold'
-                        : ''"
-                      :style="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)
-                        ? {
-                            backgroundColor: getAccentColorWithOpacity(0.2),
-                            borderColor: getAccentColor(),
-                            color: getAccentColor()
-                          }
-                        : {
-                            color: getAccentColor()
-                          }"
-                      @click="selectPlayerForComparison(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName, selectedMatch.team2Name)"
-                    >
-                      <div class="flex items-center justify-between">
-                        <span>{{ getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName }}</span>
-                        <svg v-if="isPlayerSelected(getTeamRoster(selectedMatch, selectedMatch.team2Name)[idx].playerName)" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" :style="{ color: getAccentColor() }">
-                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                      </div>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Compare Button -->
-          <div v-if="selectedPlayers.length === 2" class="text-center">
-            <button
-              class="px-8 py-4 font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-3 mx-auto"
-              :style="{ backgroundColor: getAccentColor(), color: getBackgroundColor() }"
-              @click="comparePlayers"
-              @mouseenter="(e) => {
-                if (e.currentTarget) {
-                  (e.currentTarget as HTMLElement).style.opacity = '0.8';
-                }
-              }"
-              @mouseleave="(e) => {
-                if (e.currentTarget) {
-                  (e.currentTarget as HTMLElement).style.opacity = '1';
-                }
-              }"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              <span>Compare {{ selectedPlayers[0] }} vs {{ selectedPlayers[1] }}</span>
-              <span>⚡</span>
-            </button>
-          </div>
-          <div v-else-if="selectedPlayers.length === 1" class="text-center text-slate-400 text-sm">
-            Select one more player from the other team to compare
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Match Details Modal Component -->
+    <MatchDetailsModal
+      :match="selectedMatch"
+      :accent-color="getAccentColor()"
+      :text-color="getTextColor()"
+      :text-muted-color="getTextMutedColor()"
+      :background-color="getBackgroundColor()"
+      :background-soft-color="getBackgroundSoftColor()"
+      :background-mute-color="getBackgroundMuteColor()"
+      @close="closeMatchupModal"
+      @compare-players="comparePlayers"
+    />
   </div>
 </template>
 
@@ -632,6 +158,9 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import TournamentHero from '@/components/TournamentHero.vue';
 import TournamentPageNav from '@/components/TournamentPageNav.vue';
+import TournamentMatchesTable from '@/components/TournamentMatchesTable.vue';
+import TournamentRankingsTable from '@/components/TournamentRankingsTable.vue';
+import MatchDetailsModal from '@/components/MatchDetailsModal.vue';
 import {
   publicTournamentService,
   type PublicTournamentDetail,
