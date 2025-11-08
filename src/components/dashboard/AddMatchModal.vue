@@ -151,7 +151,19 @@
                     :disabled="loading"
                   >
                   <button
+                    type="button"
+                    class="p-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30 hover:border-purple-500/50 rounded-lg transition-all"
+                    @click="openImageSelector(index)"
+                    :disabled="loading"
+                    :title="formData.maps[index].imagePath ? 'Change map image' : 'Select map image'"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <button
                     v-if="formData.maps.length > 1"
+                    type="button"
                     class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
                     @click="removeMap(index)"
                     :disabled="loading"
@@ -161,6 +173,27 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
+                </div>
+
+                <!-- Image Preview Row -->
+                <div v-if="formData.maps[index].imagePath" class="flex items-center gap-2 ml-8 mb-2">
+                  <span class="text-xs text-slate-400 flex-shrink-0">Image:</span>
+                  <div class="flex items-center gap-2 flex-1">
+                    <div class="flex-1 px-3 py-1.5 bg-slate-700/30 border border-slate-600 rounded-lg text-xs text-slate-300 truncate">
+                      {{ formData.maps[index].imagePath }}
+                    </div>
+                    <button
+                      type="button"
+                      class="p-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-slate-200 rounded-lg transition-all"
+                      @click="clearMapImage(index)"
+                      :disabled="loading"
+                      title="Clear image"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Team Selection Row -->
@@ -309,11 +342,20 @@
       </div>
     </div>
   </div>
+
+  <!-- Map Image Selector Modal -->
+  <MapImageSelectorModal
+    v-if="showImageSelector"
+    :tournament-id="tournamentId"
+    @close="showImageSelector = false"
+    @image-selected="onImageSelected"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { adminTournamentService, type TournamentTeam, type TournamentMatch, type TournamentDetail } from '@/services/adminTournamentService';
+import MapImageSelectorModal from './MapImageSelectorModal.vue';
 
 interface Props {
   tournamentId: number;
@@ -343,6 +385,8 @@ const serverSearchQuery = ref('');
 const serverSuggestions = ref<ServerSearchResult[]>([]);
 const showServerDropdown = ref(false);
 const isServerSearching = ref(false);
+const showImageSelector = ref(false);
+const selectedMapIndex = ref<number | null>(null);
 
 let serverSearchTimeout: number | null = null;
 let blurTimeout: number | null = null;
@@ -350,6 +394,7 @@ let blurTimeout: number | null = null;
 interface MapEntry {
   name: string;
   teamId?: number | null;
+  imagePath?: string | null;
 }
 
 const formData = ref({
@@ -463,6 +508,21 @@ const removeMap = (index: number) => {
   formData.value.maps.splice(index, 1);
 };
 
+const openImageSelector = (mapIndex: number) => {
+  selectedMapIndex.value = mapIndex;
+  showImageSelector.value = true;
+};
+
+const onImageSelected = (imagePath: string) => {
+  if (selectedMapIndex.value !== null) {
+    formData.value.maps[selectedMapIndex.value].imagePath = imagePath;
+  }
+};
+
+const clearMapImage = (mapIndex: number) => {
+  formData.value.maps[mapIndex].imagePath = null;
+};
+
 onMounted(() => {
   if (props.match) {
     // Convert ISO date to datetime-local format
@@ -479,7 +539,8 @@ onMounted(() => {
     // Extract maps
     formData.value.maps = props.match.maps.map(m => ({
       name: m.mapName,
-      teamId: m.teamId || null
+      teamId: m.teamId || null,
+      imagePath: (m as any).imagePath || null
     }));
     formData.value.serverGuid = props.match.serverGuid || '';
     formData.value.serverName = props.match.serverName || '';
@@ -511,7 +572,8 @@ const handleSubmit = async () => {
         .filter(map => map.name.trim().length > 0)
         .map(map => ({
           mapName: map.name.trim(),
-          ...(map.teamId && { teamId: map.teamId })
+          ...(map.teamId && { teamId: map.teamId }),
+          ...(map.imagePath && { imagePath: map.imagePath })
         })),
       serverGuid: formData.value.serverGuid.trim() || undefined,
       serverName: serverName || undefined,
