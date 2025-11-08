@@ -5,7 +5,7 @@
     @click.self="emit('close')"
   >
     <div
-      class="rounded-2xl p-6 max-w-5xl w-full shadow-2xl max-h-[85vh] overflow-y-auto border-2"
+      class="rounded-2xl p-6 w-[95vw] max-w-7xl shadow-2xl max-h-[90vh] overflow-y-auto border-2"
       :style="{
         background: backgroundSoftColor,
         backdropFilter: 'blur(10px)',
@@ -13,14 +13,13 @@
         backgroundColor: backgroundSoftColor
       }"
     >
-      <!-- Header -->
-      <div class="flex items-start justify-between mb-6">
+      <!-- Header with Close Button -->
+      <div class="flex items-start justify-between mb-8">
         <div class="flex-1">
-          <h3 class="text-3xl font-bold text-center mb-3" :style="{ color: accentColor }">
-            Match Details
-          </h3>
-          <div class="flex items-center justify-center gap-4 text-sm flex-wrap" :style="{ color: textColor }">
-            <span>{{ match.team1Name }} vs {{ match.team2Name }}</span>
+          <h2 class="text-2xl md:text-4xl font-bold mb-3" :style="{ color: accentColor }">
+            {{ match.team1Name }} <span :style="{ color: textMutedColor }">vs</span> {{ match.team2Name }}
+          </h2>
+          <div class="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm" :style="{ color: textMutedColor }">
             <span>📅 {{ formatMatchDate(match.scheduledDate) }}</span>
             <span v-if="match.serverName">🖥️ {{ match.serverName }}</span>
           </div>
@@ -46,97 +45,104 @@
         </button>
       </div>
 
-      <!-- Maps and Results Table -->
-      <div class="rounded-lg overflow-hidden border-2" :style="{ borderColor: accentColor }">
-        <table class="w-full border-collapse">
-          <thead>
-            <tr :style="{ backgroundColor: backgroundMuteColor }">
-              <th class="p-3 text-left font-bold text-xs uppercase border-b" :style="{ color: textColor, borderColor: accentColor }">
-              </th>
-              <th class="p-3 text-left font-bold text-xs uppercase border-b border-l-4" :style="{ color: textColor, borderColor: accentColor, borderLeftColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.1) }">
-                {{ match.team1Name }}
-              </th>
-              <th class="p-3 text-left font-bold text-xs uppercase border-b border-l-4" :style="{ color: textColor, borderColor: accentColor, borderLeftColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.1) }">
-                {{ match.team2Name }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Group results by map -->
-            <template v-for="map in match.maps" :key="map.id">
-              <!-- Map Header Row - without the summary score -->
-              <tr :style="{ borderColor: accentColor, backgroundColor: backgroundSoftColor }" class="border-b">
-                <td colspan="3" class="p-3">
-                  <div class="flex items-center gap-3">
-                    <span class="text-sm font-bold" :style="{ color: accentColor }">
-                      {{ map.mapName }}
-                    </span>
-                    <span v-if="map.teamName" class="text-xs" :style="{ color: textMutedColor }">
-                      (Selected by {{ map.teamName }})
-                    </span>
-                  </div>
-                </td>
-              </tr>
+      <!-- Maps Section -->
+      <div class="space-y-4 mb-8">
+        <template v-for="map in match.maps" :key="map.id">
+          <!-- Map Card with Left/Right Layout -->
+          <div class="rounded-xl border-2 p-4" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.05) }">
+            <!-- Map Title and Selection Info -->
+            <div class="mb-4">
+              <h3 class="text-xl font-bold" :style="{ color: accentColor }">
+                {{ map.mapName }}
+              </h3>
+              <p v-if="map.teamName" class="text-xs mt-1" :style="{ color: textMutedColor }">
+                🎯 Selected by <span class="font-semibold">{{ map.teamName }}</span>
+              </p>
+            </div>
 
-              <!-- Rounds for this map -->
-              <tr
-                v-for="(result, roundIndex) in map.matchResults"
-                :key="`${map.id}-${result.id}`"
-                class="border-b transition-all group"
-                :style="{ borderColor: accentColor, backgroundColor: backgroundMuteColor }"
-              >
-                <!-- Round number -->
-                <td class="p-3" :style="{ color: textMutedColor }">
-                  <div class="text-xs font-mono">Round {{ roundIndex + 1 }}</div>
-                </td>
-
-                <!-- Team 1 Score -->
-                <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold" :style="{ color: textColor }">
-                      {{ getTeamTickets(match, result, 'team1') }}
-                    </span>
-                    <span v-if="result.winningTeamId === getTeamIdForColumn(match, 'team1')" class="text-lg">🏆</span>
-                  </div>
-                </td>
-
-                <!-- Team 2 Score -->
-                <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold" :style="{ color: textColor }">
-                      {{ getTeamTickets(match, result, 'team2') }}
-                    </span>
-                    <span v-if="result.winningTeamId === getTeamIdForColumn(match, 'team2')" class="text-lg">🏆</span>
-                  </div>
-                </td>
-              </tr>
-
-              <!-- Empty state if no results for this map -->
-              <tr v-if="!map.matchResults || map.matchResults.length === 0" :style="{ borderColor: accentColor, backgroundColor: backgroundMuteColor }" class="border-b">
-                <td colspan="3" class="p-3 text-center" :style="{ color: textMutedColor }">
-                  <span class="text-xs">No results yet</span>
-                </td>
-              </tr>
-            </template>
-
-            <!-- Total Row (Sum of all rounds across all maps) -->
-            <tr v-if="hasResults" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.15) }" class="border-t-4 font-bold">
-              <td class="p-4" :style="{ color: accentColor, borderColor: accentColor }">
-                <div class="text-xs font-mono uppercase">Total</div>
-              </td>
-              <td class="p-4" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
-                <div class="text-lg font-bold" :style="{ color: accentColor }">
-                  {{ calculateGrandTotal().team1 }}
+            <!-- Left/Right Layout: Image on Left, Results on Right -->
+            <div class="flex gap-4">
+              <!-- Left: Map Image (128px) -->
+              <div class="flex-shrink-0">
+                <div v-if="getMapImageUrl(map)" class="rounded-lg overflow-hidden border-2 w-32 h-32" :style="{ borderColor: accentColor }">
+                  <img :src="getMapImageUrl(map)" :alt="map.mapName" class="w-full h-full object-cover" loading="lazy" />
                 </div>
-              </td>
-              <td class="p-4" :style="{ backgroundColor: getAccentColorWithOpacity(0.08) }">
-                <div class="text-lg font-bold" :style="{ color: accentColor }">
-                  {{ calculateGrandTotal().team2 }}
+                <div v-else class="rounded-lg border-2 w-32 h-32 flex items-center justify-center" :style="{ borderColor: accentColor, backgroundColor: backgroundMuteColor, color: textMutedColor }">
+                  <span class="text-xs text-center px-2">No image</span>
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+
+              <!-- Right: Round Results -->
+              <div class="flex-1">
+                <div v-if="map.matchResults && map.matchResults.length > 0" class="space-y-2">
+                  <div v-for="(result, roundIndex) in map.matchResults" :key="`${map.id}-${result.id}`" class="rounded-lg p-3 flex items-center justify-between" :style="{ backgroundColor: backgroundMuteColor }">
+                    <!-- Round Counter (subtle) -->
+                    <span class="text-xs font-mono px-2 py-1 rounded" :style="{ color: textMutedColor, backgroundColor: getAccentColorWithOpacity(0.15) }">
+                      R{{ roundIndex + 1 }}
+                    </span>
+
+                    <!-- Team 1 Score -->
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-bold" :style="{ color: textColor }">{{ getTeamTickets(result, 'team1') }}</span>
+                      <span v-if="result.winningTeamId === getTeamIdForColumn('team1')" class="text-lg animate-pulse">🏆</span>
+                    </div>
+
+                    <!-- Team 2 Score -->
+                    <div class="flex items-center gap-2">
+                      <span v-if="result.winningTeamId === getTeamIdForColumn('team2')" class="text-lg animate-pulse">🏆</span>
+                      <span class="text-sm font-bold" :style="{ color: textColor }">{{ getTeamTickets(result, 'team2') }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Map Subtotal -->
+                  <div class="rounded-lg p-3 border-t-2 mt-2" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.1) }">
+                    <div class="flex items-center justify-between text-sm font-bold">
+                      <span :style="{ color: accentColor }">Total</span>
+                      <div class="flex gap-4">
+                        <span :style="{ color: accentColor }">{{ calculateMapTotal(map).team1 }}</span>
+                        <span>-</span>
+                        <span :style="{ color: accentColor }">{{ calculateMapTotal(map).team2 }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- No Results State -->
+                <div v-else class="text-center py-4" :style="{ color: textMutedColor }">
+                  <p class="text-xs">No rounds recorded yet</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Match Summary Footer -->
+      <div v-if="hasResults" class="rounded-xl p-6 border-4 mb-8" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.1) }">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div class="flex-1">
+            <h4 class="text-sm font-bold uppercase mb-3" :style="{ color: textMutedColor }">Match Summary</h4>
+            <div class="flex flex-col md:flex-row gap-4 md:gap-8">
+              <!-- Team 1 Total -->
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-bold" :style="{ color: textMutedColor }">{{ match.team1Name }}</span>
+                <span class="text-3xl md:text-4xl font-bold" :style="{ color: accentColor }">{{ calculateGrandTotal().team1 }}</span>
+              </div>
+
+              <!-- Match Winner -->
+              <div v-if="getMatchWinner()" class="flex items-center gap-2">
+                <span class="text-4xl">🏆</span>
+                <span class="text-sm font-bold uppercase" :style="{ color: accentColor }">{{ getMatchWinner() }} Wins</span>
+              </div>
+
+              <!-- Team 2 Total -->
+              <div class="flex items-center gap-3">
+                <span class="text-3xl md:text-4xl font-bold" :style="{ color: accentColor }">{{ calculateGrandTotal().team2 }}</span>
+                <span class="text-sm font-bold" :style="{ color: textMutedColor }">{{ match.team2Name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Expandable Player Stats Section -->
@@ -163,7 +169,7 @@
                   <div class="flex flex-col items-center gap-2">
                     <span>{{ match.team1Name }}</span>
                     <span class="text-xs font-normal" :style="{ color: textMutedColor }">
-                      {{ getTeamRoster(match, match.team1Name).length }} players
+                      {{ getTeamRoster(match.team1Name).length }} players
                     </span>
                   </div>
                 </th>
@@ -171,7 +177,7 @@
                   <div class="flex flex-col items-center gap-2">
                     <span>{{ match.team2Name }}</span>
                     <span class="text-xs font-normal" :style="{ color: textMutedColor }">
-                      {{ getTeamRoster(match, match.team2Name).length }} players
+                      {{ getTeamRoster(match.team2Name).length }} players
                     </span>
                   </div>
                 </th>
@@ -180,8 +186,8 @@
             <tbody>
               <tr
                 v-for="(_, idx) in Math.max(
-                  getTeamRoster(match, match.team1Name).length,
-                  getTeamRoster(match, match.team2Name).length
+                  getTeamRoster(match.team1Name).length,
+                  getTeamRoster(match.team2Name).length
                 )"
                 :key="idx"
                 class="border-b transition-all"
@@ -200,12 +206,12 @@
                 <!-- Team 1 Player -->
                 <td class="p-3 border-r-2" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.05) }">
                   <button
-                    v-if="getTeamRoster(match, match.team1Name)[idx]"
+                    v-if="getTeamRoster(match.team1Name)[idx]"
                     class="w-full text-left px-3 py-2 rounded-lg transition-all"
-                    :class="isPlayerSelected(getTeamRoster(match, match.team1Name)[idx].playerName)
+                    :class="isPlayerSelected(getTeamRoster(match.team1Name)[idx].playerName)
                       ? 'border-2 font-bold'
                       : ''"
-                    :style="isPlayerSelected(getTeamRoster(match, match.team1Name)[idx].playerName)
+                    :style="isPlayerSelected(getTeamRoster(match.team1Name)[idx].playerName)
                       ? {
                           backgroundColor: getAccentColorWithOpacity(0.2),
                           borderColor: accentColor,
@@ -214,11 +220,11 @@
                       : {
                           color: accentColor
                         }"
-                    @click="selectPlayerForComparison(getTeamRoster(match, match.team1Name)[idx].playerName, match.team1Name)"
+                    @click="selectPlayerForComparison(getTeamRoster(match.team1Name)[idx].playerName)"
                   >
                     <div class="flex items-center justify-between">
-                      <span>{{ getTeamRoster(match, match.team1Name)[idx].playerName }}</span>
-                      <svg v-if="isPlayerSelected(getTeamRoster(match, match.team1Name)[idx].playerName)" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" :style="{ color: accentColor }">
+                      <span>{{ getTeamRoster(match.team1Name)[idx].playerName }}</span>
+                      <svg v-if="isPlayerSelected(getTeamRoster(match.team1Name)[idx].playerName)" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" :style="{ color: accentColor }">
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                       </svg>
                     </div>
@@ -227,12 +233,12 @@
                 <!-- Team 2 Player -->
                 <td class="p-3" :style="{ backgroundColor: getAccentColorWithOpacity(0.05) }">
                   <button
-                    v-if="getTeamRoster(match, match.team2Name)[idx]"
+                    v-if="getTeamRoster(match.team2Name)[idx]"
                     class="w-full text-left px-3 py-2 rounded-lg transition-all"
-                    :class="isPlayerSelected(getTeamRoster(match, match.team2Name)[idx].playerName)
+                    :class="isPlayerSelected(getTeamRoster(match.team2Name)[idx].playerName)
                       ? 'border-2 font-bold'
                       : ''"
-                    :style="isPlayerSelected(getTeamRoster(match, match.team2Name)[idx].playerName)
+                    :style="isPlayerSelected(getTeamRoster(match.team2Name)[idx].playerName)
                       ? {
                           backgroundColor: getAccentColorWithOpacity(0.2),
                           borderColor: accentColor,
@@ -241,11 +247,11 @@
                       : {
                           color: accentColor
                         }"
-                    @click="selectPlayerForComparison(getTeamRoster(match, match.team2Name)[idx].playerName, match.team2Name)"
+                    @click="selectPlayerForComparison(getTeamRoster(match.team2Name)[idx].playerName)"
                   >
                     <div class="flex items-center justify-between">
-                      <span>{{ getTeamRoster(match, match.team2Name)[idx].playerName }}</span>
-                      <svg v-if="isPlayerSelected(getTeamRoster(match, match.team2Name)[idx].playerName)" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" :style="{ color: accentColor }">
+                      <span>{{ getTeamRoster(match.team2Name)[idx].playerName }}</span>
+                      <svg v-if="isPlayerSelected(getTeamRoster(match.team2Name)[idx].playerName)" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" :style="{ color: accentColor }">
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                       </svg>
                     </div>
@@ -343,15 +349,68 @@ const formatMatchDate = (dateString: string): string => {
   return date.toLocaleDateString('en-US', options)
 }
 
-// Helper: Get team roster/players
-const getTeamRoster = (match: PublicTournamentMatch, teamName: string) => {
-  const players: Array<{ playerName: string; teamName: string }> = []
-  match.maps.forEach(map => {
-    map.matchResults?.forEach(result => {
-      // For now, we'll return empty since the API doesn't provide player names in matchResults
-      // This can be enhanced when player data becomes available
+// Helper: Get map image URL
+const getMapImageUrl = (map: any): string | undefined => {
+  if (!map.imagePath) return undefined
+  return `/stats/assets/tournaments/${map.imagePath}`
+}
+
+// Helper: Calculate total tickets for a specific map
+const calculateMapTotal = (map: any) => {
+  if (!props.match?.maps) {
+    return { team1: 0, team2: 0 }
+  }
+
+  const team1Id = getTeamIdForColumn('team1')
+
+  let team1Total = 0
+  let team2Total = 0
+
+  if (map.matchResults) {
+    map.matchResults.forEach((roundResult: any) => {
+      if (roundResult.team1Id === team1Id) {
+        team1Total += roundResult.team1Tickets || 0
+        team2Total += roundResult.team2Tickets || 0
+      } else {
+        team1Total += roundResult.team2Tickets || 0
+        team2Total += roundResult.team1Tickets || 0
+      }
     })
-  })
+  }
+
+  return { team1: team1Total, team2: team2Total }
+}
+
+// Helper: Get match winner
+const getMatchWinner = (): string | null => {
+  if (!props.match?.maps) return null
+
+  let team1Wins = 0
+  let team2Wins = 0
+
+  for (const map of props.match.maps) {
+    if (!map.matchResults || map.matchResults.length === 0) continue
+
+    for (const result of map.matchResults) {
+      if (result.winningTeamId === getTeamIdForColumn('team1')) {
+        team1Wins++
+      } else if (result.winningTeamId === getTeamIdForColumn('team2')) {
+        team2Wins++
+      }
+    }
+  }
+
+  if (team1Wins > team2Wins) return props.match.team1Name
+  if (team2Wins > team1Wins) return props.match.team2Name
+  if (team1Wins === team2Wins && team1Wins > 0) return 'Tie'
+  return null
+}
+
+// Helper: Get team roster/players
+const getTeamRoster = (_teamName: string) => {
+  const players: Array<{ playerName: string; teamName: string }> = []
+  // For now, we'll return empty since the API doesn't provide player names in matchResults
+  // This can be enhanced when player data becomes available
   return players
 }
 
@@ -361,8 +420,8 @@ const isPlayerSelected = (playerName: string): boolean => {
 }
 
 // Helper: Select player for comparison
-const selectPlayerForComparison = (playerName: string, teamName: string) => {
-  const playerKey = playerName // In a full implementation, you'd include team context
+const selectPlayerForComparison = (playerName: string) => {
+  const playerKey = playerName
 
   const index = selectedPlayers.value.indexOf(playerKey)
   if (index > -1) {
@@ -373,14 +432,12 @@ const selectPlayerForComparison = (playerName: string, teamName: string) => {
 }
 
 // Helper: Get the team ID for a specific column (team1 or team2)
-const getTeamIdForColumn = (match: PublicTournamentMatch | null, column: 'team1' | 'team2'): number | undefined => {
-  if (!match) return undefined
-  // team1 column shows match.team1Name, so find the ID of that team
-  // team2 column shows match.team2Name, so find the ID of that team
-  const targetName = column === 'team1' ? match.team1Name : match.team2Name
+const getTeamIdForColumn = (column: 'team1' | 'team2'): number | undefined => {
+  if (!props.match) return undefined
+  const targetName = column === 'team1' ? props.match.team1Name : props.match.team2Name
 
   // Find this team's ID from any round result
-  for (const map of match.maps) {
+  for (const map of props.match.maps) {
     if (map.matchResults && map.matchResults.length > 0) {
       const result = map.matchResults[0]
       if (result.team1Name === targetName) return result.team1Id
@@ -391,10 +448,10 @@ const getTeamIdForColumn = (match: PublicTournamentMatch | null, column: 'team1'
 }
 
 // Helper: Get the correct ticket count for a specific team column in a result
-const getTeamTickets = (match: PublicTournamentMatch | null, result: any, column: 'team1' | 'team2'): number => {
-  if (!match) return 0
+const getTeamTickets = (result: any, column: 'team1' | 'team2'): number => {
+  if (!props.match) return 0
 
-  const targetTeamId = getTeamIdForColumn(match, column)
+  const targetTeamId = getTeamIdForColumn(column)
   if (!targetTeamId) return 0
 
   // Find which position this team is in for this particular result
@@ -440,7 +497,6 @@ const calculateGrandTotal = () => {
   // Determine which team is "team1" based on match-level team names
   const isATeam1 = teamA.name === props.match.team1Name
   const team1Id = isATeam1 ? teamA.id : teamB.id
-  const team2Id = isATeam1 ? teamB.id : teamA.id
 
   let team1Total = 0
   let team2Total = 0

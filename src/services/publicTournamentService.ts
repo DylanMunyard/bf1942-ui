@@ -58,6 +58,7 @@ export interface PublicTournamentMatchMap {
   mapOrder: number;
   teamId?: number;
   teamName?: string;
+  imagePath?: string;
   matchResults: PublicTournamentMatchResult[];
 }
 
