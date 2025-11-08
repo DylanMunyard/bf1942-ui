@@ -114,7 +114,7 @@
 
                 <!-- No Results State -->
                 <div v-else class="text-center py-4" :style="{ color: textMutedColor }">
-                  <p class="text-xs">No rounds recorded yet</p>
+                  <p class="text-xs">Waiting for results</p>
                 </div>
               </div>
             </div>
