@@ -276,6 +276,7 @@ interface ImageData {
 
 interface Props {
   tournamentId: number;
+  initialFolder?: string; // Optional: pre-select folder from image path
 }
 
 const props = defineProps<Props>();
@@ -392,8 +393,20 @@ const confirmSelection = () => {
   }
 };
 
-// Fetch folders on mount
-fetchFolders();
+// Initialize: fetch folders or load initial folder if provided
+const initializeModal = async () => {
+  if (props.initialFolder) {
+    // Skip folder selection and go straight to images
+    selectedFolder.value = props.initialFolder;
+    await loadImagesFromFolder(props.initialFolder, 1);
+    step.value = 'images';
+  } else {
+    // Start with folder selection
+    await fetchFolders();
+  }
+};
+
+initializeModal();
 </script>
 
 <style scoped>

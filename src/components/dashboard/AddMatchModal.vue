@@ -347,6 +347,7 @@
   <MapImageSelectorModal
     v-if="showImageSelector"
     :tournament-id="tournamentId"
+    :initial-folder="currentMapImageFolder"
     @close="showImageSelector = false"
     @image-selected="onImageSelected"
   />
@@ -422,6 +423,11 @@ const availableWeeks = computed(() => {
     return [];
   }
   return props.tournament.weekDates.map(wd => wd.week).sort();
+});
+
+const currentMapImageFolder = computed(() => {
+  if (selectedMapIndex.value === null) return undefined;
+  return getFolderFromImagePath(formData.value.maps[selectedMapIndex.value].imagePath);
 });
 
 const isFormValid = computed(() => {
@@ -511,6 +517,16 @@ const removeMap = (index: number) => {
 const openImageSelector = (mapIndex: number) => {
   selectedMapIndex.value = mapIndex;
   showImageSelector.value = true;
+};
+
+// Helper to extract folder path from image path
+const getFolderFromImagePath = (imagePath: string | null | undefined): string | undefined => {
+  if (!imagePath) return undefined;
+  // Extract directory by removing the filename
+  const parts = imagePath.split('/');
+  if (parts.length <= 1) return undefined;
+  // Remove the last part (filename) and rejoin
+  return parts.slice(0, -1).join('/');
 };
 
 const onImageSelected = (imagePath: string) => {
