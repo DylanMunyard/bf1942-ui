@@ -63,9 +63,15 @@
             <!-- Left/Right Layout: Image on Left, Results on Right -->
             <div class="flex gap-4">
               <!-- Left: Map Image (128px) -->
-              <div class="flex-shrink-0">
-                <div v-if="getMapImageUrl(map)" class="rounded-lg overflow-hidden border-2 w-32 h-32" :style="{ borderColor: accentColor }">
+              <div class="flex-shrink-0 relative group">
+                <div v-if="getMapImageUrl(map)" class="rounded-lg overflow-hidden border-2 w-32 h-32 cursor-pointer" :style="{ borderColor: accentColor }" @click="openFullscreenImage(getMapImageUrl(map), map.mapName)">
                   <img :src="getMapImageUrl(map)" :alt="map.mapName" class="w-full h-full object-cover" loading="lazy" />
+                  <!-- Magnifying glass overlay -->
+                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-colors rounded-lg">
+                    <svg class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
                 </div>
                 <div v-else class="rounded-lg border-2 w-32 h-32 flex items-center justify-center" :style="{ borderColor: accentColor, backgroundColor: backgroundMuteColor, color: textMutedColor }">
                   <span class="text-xs text-center px-2">No image</span>
@@ -293,6 +299,37 @@
         </div>
       </div>
     </div>
+
+    <!-- Full-screen Image Modal -->
+    <div
+      v-if="fullscreenImage"
+      class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click="fullscreenImage = null"
+    >
+      <div class="relative max-w-7xl max-h-[90vh] flex flex-col items-center gap-4" @click.stop>
+        <!-- Image -->
+        <img
+          :src="fullscreenImage.url"
+          :alt="fullscreenImage.mapName"
+          class="max-w-full max-h-[85vh] rounded-xl object-contain"
+        />
+
+        <!-- Map Name -->
+        <div class="text-center text-white">
+          <h3 class="text-2xl font-bold">{{ fullscreenImage.mapName }}</h3>
+        </div>
+
+        <!-- Close Button -->
+        <button
+          class="absolute top-4 right-4 p-3 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
+          @click="fullscreenImage = null"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -318,6 +355,7 @@ const emit = defineEmits<{
 }>()
 
 const selectedPlayers = ref<string[]>([])
+const fullscreenImage = ref<{ url: string; mapName: string } | null>(null)
 
 // Check if match has any results
 const hasResults = computed(() => {
@@ -463,6 +501,13 @@ const getTeamTickets = (result: any, column: 'team1' | 'team2'): number => {
     return result.team2Tickets || 0
   }
   return 0
+}
+
+// Helper: Open full-screen image viewer
+const openFullscreenImage = (imageUrl: string | undefined, mapName: string) => {
+  if (imageUrl) {
+    fullscreenImage.value = { url: imageUrl, mapName }
+  }
 }
 
 // Helper: Calculate grand total across all rounds and maps
