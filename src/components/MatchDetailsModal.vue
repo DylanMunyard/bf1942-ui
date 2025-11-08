@@ -100,14 +100,14 @@
                   </div>
 
                   <!-- Map Subtotal -->
-                  <div class="rounded-lg p-3 border-t-2 mt-2" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.1) }">
-                    <div class="flex items-center justify-between text-sm font-bold">
-                      <span :style="{ color: accentColor }">Total</span>
-                      <div class="flex gap-4">
-                        <span :style="{ color: accentColor }">{{ calculateMapTotal(map).team1 }}</span>
-                        <span>-</span>
-                        <span :style="{ color: accentColor }">{{ calculateMapTotal(map).team2 }}</span>
-                      </div>
+                  <div class="grid grid-cols-2 gap-0 text-xs rounded-lg overflow-hidden border-t-2 mt-2" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.1) }">
+                    <!-- Team 1 Total -->
+                    <div class="flex flex-col items-center justify-center py-2 px-2 font-bold">
+                      <span :style="{ color: accentColor }">{{ calculateMapTotal(map).team1 }}</span>
+                    </div>
+                    <!-- Team 2 Total -->
+                    <div class="flex flex-col items-center justify-center py-2 px-2 font-bold">
+                      <span :style="{ color: accentColor }">{{ calculateMapTotal(map).team2 }}</span>
                     </div>
                   </div>
                 </div>
