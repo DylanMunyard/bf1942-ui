@@ -63,18 +63,15 @@
             <!-- Left/Right Layout: Image on Left, Results on Right -->
             <div class="flex gap-4">
               <!-- Left: Map Image (128px) -->
-              <div class="flex-shrink-0 relative group">
-                <div v-if="getMapImageUrl(map)" class="rounded-lg overflow-hidden border-2 w-32 h-32 cursor-pointer" :style="{ borderColor: accentColor }" @click="openFullscreenImage(getMapImageUrl(map), map.mapName)">
-                  <img :src="getMapImageUrl(map)" :alt="map.mapName" class="w-full h-full object-cover" loading="lazy" />
+              <div v-if="getMapImageUrl(map)" class="flex-shrink-0 relative group">
+                <div class="rounded-lg overflow-hidden border-2 w-32 h-32 cursor-pointer" :style="{ borderColor: accentColor }" @click="openFullscreenImage(getMapImageUrl(map), map.mapName)" @error="handleImageLoadError">
+                  <img :src="getMapImageUrl(map)" :alt="map.mapName" class="w-full h-full object-cover" loading="lazy" @error="handleImageLoadError" />
                   <!-- Magnifying glass overlay -->
                   <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-colors rounded-lg">
                     <svg class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
-                </div>
-                <div v-else class="rounded-lg border-2 w-32 h-32 flex items-center justify-center" :style="{ borderColor: accentColor, backgroundColor: backgroundMuteColor, color: textMutedColor }">
-                  <span class="text-xs text-center px-2">No image</span>
                 </div>
               </div>
 
@@ -507,6 +504,14 @@ const getTeamTickets = (result: any, column: 'team1' | 'team2'): number => {
 const openFullscreenImage = (imageUrl: string | undefined, mapName: string) => {
   if (imageUrl) {
     fullscreenImage.value = { url: imageUrl, mapName }
+  }
+}
+
+// Helper: Handle image load errors
+const handleImageLoadError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  if (img && img.parentElement) {
+    img.parentElement.style.display = 'none'
   }
 }
 
