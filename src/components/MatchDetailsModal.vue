@@ -76,28 +76,23 @@
               <div class="flex-1">
                 <div v-if="map.matchResults && map.matchResults.length > 0" class="space-y-0">
                   <!-- Team Names Header -->
-                  <div class="flex items-center justify-between text-xs font-bold mb-2 px-3 py-2" :style="{ color: accentColor }">
-                    <span class="flex-1">{{ match.team1Name }}</span>
-                    <span class="flex-1 text-right">{{ match.team2Name }}</span>
+                  <div class="grid grid-cols-2 gap-0 text-xs font-bold mb-2" :style="{ color: accentColor }">
+                    <span class="text-center">{{ match.team1Name }}</span>
+                    <span class="text-center">{{ match.team2Name }}</span>
                   </div>
 
                   <!-- Round Results -->
-                  <div v-for="(result, roundIndex) in map.matchResults" :key="`${map.id}-${result.id}`" class="rounded-lg p-3 flex items-center justify-between text-xs" :style="{ backgroundColor: backgroundMuteColor }">
-                    <!-- Round Counter (subtle) -->
-                    <span class="font-mono px-2 py-1 rounded flex-shrink-0" :style="{ color: textMutedColor, backgroundColor: getAccentColorWithOpacity(0.15) }">
-                      R{{ roundIndex + 1 }}
-                    </span>
-
+                  <div v-for="result in map.matchResults" :key="`${map.id}-${result.id}`" class="grid grid-cols-2 gap-0 text-xs rounded-lg overflow-hidden mb-1">
                     <!-- Team 1 Score -->
-                    <div class="flex items-center gap-1.5 flex-1">
+                    <div class="flex flex-col items-center justify-center gap-0.5 py-2 px-2" :style="{ backgroundColor: backgroundMuteColor }">
                       <span class="font-bold" :style="{ color: textColor }">{{ getTeamTickets(result, 'team1') }}</span>
-                      <span v-if="result.winningTeamId === getTeamIdForColumn('team1')" class="text-lg animate-pulse">🏆</span>
+                      <span v-if="result.winningTeamId === getTeamIdForColumn('team1')" class="text-sm animate-pulse">🏆</span>
                     </div>
 
                     <!-- Team 2 Score -->
-                    <div class="flex items-center gap-1.5 justify-end flex-1">
-                      <span v-if="result.winningTeamId === getTeamIdForColumn('team2')" class="text-lg animate-pulse">🏆</span>
+                    <div class="flex flex-col items-center justify-center gap-0.5 py-2 px-2" :style="{ backgroundColor: backgroundMuteColor }">
                       <span class="font-bold" :style="{ color: textColor }">{{ getTeamTickets(result, 'team2') }}</span>
+                      <span v-if="result.winningTeamId === getTeamIdForColumn('team2')" class="text-sm animate-pulse">🏆</span>
                     </div>
                   </div>
 
