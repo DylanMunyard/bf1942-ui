@@ -137,7 +137,7 @@
               <!-- Match Winner -->
               <div v-if="getMatchWinner()" class="flex items-center gap-2">
                 <span class="text-4xl">🏆</span>
-                <span class="text-sm font-bold uppercase" :style="{ color: accentColor }">{{ getMatchWinner() }} Wins</span>
+                <span class="text-sm font-bold uppercase" :style="{ color: accentColor }">{{ getMatchWinner() }}</span>
               </div>
 
               <!-- Team 2 Total -->
@@ -422,24 +422,15 @@ const calculateMapTotal = (map: any) => {
 const getMatchWinner = (): string | null => {
   if (!props.match?.maps) return null
 
-  let team1Wins = 0
-  let team2Wins = 0
+  const grandTotal = calculateGrandTotal()
 
-  for (const map of props.match.maps) {
-    if (!map.matchResults || map.matchResults.length === 0) continue
-
-    for (const result of map.matchResults) {
-      if (result.winningTeamId === getTeamIdForColumn('team1')) {
-        team1Wins++
-      } else if (result.winningTeamId === getTeamIdForColumn('team2')) {
-        team2Wins++
-      }
-    }
+  if (grandTotal.team1 > grandTotal.team2) {
+    return props.match.team1Name
+  } else if (grandTotal.team2 > grandTotal.team1) {
+    return props.match.team2Name
   }
 
-  if (team1Wins > team2Wins) return props.match.team1Name
-  if (team2Wins > team1Wins) return props.match.team2Name
-  if (team1Wins === team2Wins && team1Wins > 0) return 'Tie'
+  // If tickets are equal, there's no winner (true tie)
   return null
 }
 
