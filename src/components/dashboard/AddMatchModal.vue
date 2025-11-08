@@ -42,45 +42,51 @@
 
         <!-- Form -->
         <template v-else>
-          <!-- Scheduled Date -->
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">
-              Scheduled Date & Time <span class="text-red-400">*</span>
-            </label>
-            <input
-              v-model="formData.scheduledDate"
-              type="datetime-local"
-              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-              :disabled="loading"
-            >
+          <!-- Scheduled Date & Week Row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Scheduled Date -->
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">
+                Scheduled Date & Time <span class="text-red-400">*</span>
+              </label>
+              <input
+                v-model="dateTimeString"
+                type="datetime-local"
+                class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                :disabled="loading"
+                @change="onDateTimeInputChange"
+              >
+            </div>
+
+            <!-- Week -->
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">
+                Week <span class="text-slate-500 text-xs">(Optional)</span>
+              </label>
+              <select
+                v-model="formData.week"
+                class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                :disabled="loading || availableWeeks.length === 0"
+              >
+                <option :value="null">No Week (Unscheduled)</option>
+                <option
+                  v-for="week in availableWeeks"
+                  :key="week"
+                  :value="week"
+                >
+                  {{ week }}
+                </option>
+              </select>
+            </div>
           </div>
 
-          <!-- Week -->
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">
-              Week <span class="text-slate-500 text-xs">(Optional)</span>
-            </label>
-            <select
-              v-model="formData.week"
-              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-              :disabled="loading || availableWeeks.length === 0"
-            >
-              <option :value="null">No Week (Unscheduled)</option>
-              <option
-                v-for="week in availableWeeks"
-                :key="week"
-                :value="week"
-              >
-                {{ week }}
-              </option>
-            </select>
-            <p class="text-xs text-slate-500 mt-1">
-              {{ availableWeeks.length === 0
-                ? 'No week dates defined for this tournament. Define week dates in tournament settings.'
-                : 'Select a week or leave unscheduled. Matches without a week will be grouped under "Unscheduled"'
-              }}
-            </p>
-          </div>
+          <!-- Week Helper Text -->
+          <p class="text-xs text-slate-500 -mt-2">
+            {{ availableWeeks.length === 0
+              ? 'No week dates defined for this tournament. Define week dates in tournament settings.'
+              : 'Select a week or leave unscheduled. Matches without a week will be grouped under "Unscheduled"'
+            }}
+          </p>
 
           <!-- Teams Section -->
           <div>
@@ -295,7 +301,7 @@
       <div class="sticky bottom-0 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-t border-slate-700/50 p-6">
         <!-- Validation Messages -->
         <div v-if="!isFormValid && !loading" class="mb-4 space-y-1">
-          <p v-if="!formData.scheduledDate" class="text-xs text-amber-400 flex items-center gap-1">
+          <p v-if="!dateTimeString" class="text-xs text-amber-400 flex items-center gap-1">
             <span>⚠</span>
             <span>Please select a scheduled date and time</span>
           </p>
@@ -348,6 +354,7 @@
     v-if="showImageSelector"
     :tournament-id="tournamentId"
     :initial-folder="currentMapImageFolder"
+    :initial-image-path="currentMapImagePath"
     @close="showImageSelector = false"
     @image-selected="onImageSelected"
   />
@@ -388,6 +395,7 @@ const showServerDropdown = ref(false);
 const isServerSearching = ref(false);
 const showImageSelector = ref(false);
 const selectedMapIndex = ref<number | null>(null);
+const dateTimeString = ref('');
 
 let serverSearchTimeout: number | null = null;
 let blurTimeout: number | null = null;
@@ -399,7 +407,6 @@ interface MapEntry {
 }
 
 const formData = ref({
-  scheduledDate: '',
   team1Id: null as number | null,
   team2Id: null as number | null,
   maps: [{ name: '' }] as MapEntry[],
@@ -407,6 +414,41 @@ const formData = ref({
   serverName: '',
   week: null as string | null,
 });
+
+/**
+ * Helper function: rounds a date to the next clean 30 or 00 minute mark.
+ * If current time is :00-:29, rounds to :30. If :30-:59, rounds to next hour :00.
+ */
+const roundToNextCleanTime = (date: Date): Date => {
+  const rounded = new Date(date);
+  const minutes = rounded.getMinutes();
+
+  if (minutes < 30) {
+    // Round to :30
+    rounded.setMinutes(30, 0, 0);
+  } else {
+    // Round to next hour :00
+    rounded.setHours(rounded.getHours() + 1);
+    rounded.setMinutes(0, 0, 0);
+  }
+
+  return rounded;
+};
+
+/**
+ * Convert Date to datetime-local string format (YYYY-MM-DDTHH:mm)
+ */
+const dateToDatetimeLocal = (date: Date): string => {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 16);
+};
+
+/**
+ * Convert datetime-local string to Date
+ */
+const datetimeLocalToDate = (dateTimeStr: string): Date => {
+  return new Date(dateTimeStr);
+};
 
 const availableTeamsForTeam1 = computed(() => {
   return props.teams;
@@ -430,9 +472,14 @@ const currentMapImageFolder = computed(() => {
   return getFolderFromImagePath(formData.value.maps[selectedMapIndex.value].imagePath);
 });
 
+const currentMapImagePath = computed(() => {
+  if (selectedMapIndex.value === null) return undefined;
+  return formData.value.maps[selectedMapIndex.value].imagePath || undefined;
+});
+
 const isFormValid = computed(() => {
   return (
-    formData.value.scheduledDate &&
+    dateTimeString.value.length > 0 &&
     formData.value.team1Id !== null &&
     formData.value.team2Id !== null &&
     formData.value.team1Id !== formData.value.team2Id &&
@@ -539,12 +586,16 @@ const clearMapImage = (mapIndex: number) => {
   formData.value.maps[mapIndex].imagePath = null;
 };
 
+const onDateTimeInputChange = () => {
+  // Handler for datetime-local input change - ensures date is properly synced
+  // The ref is automatically updated by v-model
+};
+
 onMounted(() => {
   if (props.match) {
-    // Convert ISO date to datetime-local format
+    // Use existing match date
     const date = new Date(props.match.scheduledDate);
-    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    formData.value.scheduledDate = localDate.toISOString().slice(0, 16);
+    dateTimeString.value = dateToDatetimeLocal(date);
 
     // Find team IDs from team names
     const team1 = props.teams.find(t => t.name === props.match!.team1Name);
@@ -563,10 +614,10 @@ onMounted(() => {
     formData.value.week = props.match.week || null;
     serverSearchQuery.value = props.match.serverName || '';
   } else {
-    // Set default date to now
+    // Set default date to next clean 30 or 00 minute mark
     const now = new Date();
-    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-    formData.value.scheduledDate = localDate.toISOString().slice(0, 16);
+    const rounded = roundToNextCleanTime(now);
+    dateTimeString.value = dateToDatetimeLocal(rounded);
   }
 });
 
@@ -580,8 +631,9 @@ const handleSubmit = async () => {
 
     // Both create and update now use the same payload structure
     const weekValue = formData.value.week ? formData.value.week.trim() : null;
+    const scheduledDate = datetimeLocalToDate(dateTimeString.value);
     const requestData = {
-      scheduledDate: new Date(formData.value.scheduledDate).toISOString(),
+      scheduledDate: scheduledDate.toISOString(),
       team1Id: formData.value.team1Id!,
       team2Id: formData.value.team2Id!,
       maps: formData.value.maps

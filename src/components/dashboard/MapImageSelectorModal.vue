@@ -277,6 +277,7 @@ interface ImageData {
 interface Props {
   tournamentId: number;
   initialFolder?: string; // Optional: pre-select folder from image path
+  initialImagePath?: string; // Optional: pre-select image by path
 }
 
 const props = defineProps<Props>();
@@ -358,6 +359,14 @@ const loadImagesFromFolder = async (folder: string, page: number) => {
     currentPage.value = data.page;
     totalPages.value = data.totalPages;
     totalItems.value = data.totalItems;
+
+    // Auto-select the image if initialImagePath is provided
+    if (props.initialImagePath && page === 1) {
+      const imageToSelect = images.value.find(img => img.relativePath === props.initialImagePath);
+      if (imageToSelect) {
+        selectedImage.value = imageToSelect;
+      }
+    }
   } catch (error) {
     console.error('Error fetching images:', error);
     imageError.value = error instanceof Error ? error.message : 'Failed to load images';
