@@ -156,7 +156,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { isValidHex, normalizeHex, calculateLuminance } from '@/utils/colorUtils'
+import { isValidHex, normalizeHex, calculateLuminance, hexToRgb } from '@/utils/colorUtils'
 import type { PublicTournamentDetail } from '@/services/publicTournamentService'
 
 interface Props {
@@ -235,16 +235,21 @@ const isHeroActive = (page: string): boolean => {
 const getButtonStyles = (page: string): Record<string, string> => {
   const active = isHeroActive(page)
   const accentColor = getAccentColor()
-  const textColor = getTextColor()
 
   // For active buttons, use a contrasting text color based on the accent background
   const activeTextColor = getAccentTextColor()
 
+  // Convert accent color to rgba for semi-transparent background
+  const rgb = hexToRgb(accentColor)
+  const inactiveBackground = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)` : accentColor + '10'
+  const inactiveBorder = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)` : accentColor + '30'
+  const activeShadow = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)` : accentColor + '40'
+
   return {
-    backgroundColor: active ? accentColor : accentColor + '10',
-    color: active ? activeTextColor : textColor,
-    border: active ? `2px solid ${accentColor}` : `1px solid ${accentColor}30`,
-    boxShadow: active ? `0 4px 12px ${accentColor}40` : 'none',
+    backgroundColor: active ? accentColor : inactiveBackground,
+    color: active ? activeTextColor : accentColor,
+    border: active ? `2px solid ${accentColor}` : `1px solid ${inactiveBorder}`,
+    boxShadow: active ? `0 4px 12px ${activeShadow}` : 'none',
   }
 }
 </script>

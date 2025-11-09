@@ -74,6 +74,12 @@ const {
   logoImageUrl,
   tournamentId,
   themeVars,
+  getBackgroundColor,
+  getBackgroundSoftColor,
+  getBackgroundMuteColor,
+  getTextColor,
+  getTextMutedColor,
+  getAccentColor,
 } = usePublicTournamentPage()
 
 const leaderboard = ref<PublicTournamentLeaderboard | null>(null)
@@ -100,28 +106,4 @@ watch(
   }
 )
 
-// Local color functions to ensure consistency with PublicTournament.vue
-const getBackgroundColor = (): string => {
-  return themeVars.value['--color-background'] || '#000000'
-}
-
-const getBackgroundSoftColor = (): string => {
-  return themeVars.value['--color-background-soft'] || '#1a1a1a'
-}
-
-const getBackgroundMuteColor = (): string => {
-  return themeVars.value['--color-background-mute'] || '#2d2d2d'
-}
-
-const getTextColor = (): string => {
-  return themeVars.value['--color-text'] || '#FFFFFF'
-}
-
-const getTextMutedColor = (): string => {
-  return themeVars.value['--color-text-muted'] || '#d0d0d0'
-}
-
-const getAccentColor = (): string => {
-  return themeVars.value['--tournament-accent'] || '#FFD700'
-}
 </script>

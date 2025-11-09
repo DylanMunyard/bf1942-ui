@@ -1,6 +1,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTournamentCache } from './useTournamentCache'
+import { isValidHex, normalizeHex, hexToRgb, rgbToHex, calculateLuminance, getContrastingTextColor } from '@/utils/colorUtils'
 import type { PublicTournamentDetail } from '@/services/publicTournamentService'
 
 /**
@@ -21,21 +22,78 @@ export function usePublicTournamentPage() {
   // Computed
   const tournamentId = computed(() => route.params.id as string)
 
-  const themeVars = computed(() => ({
-    '--tournament-bg': tournament.value?.theme?.backgroundColour ?? '#1a1a1a',
-    '--tournament-text': tournament.value?.theme?.textColour ?? '#ffffff',
-    '--tournament-accent': tournament.value?.theme?.accentColour ?? '#FFD700',
-  }))
+  const themeVars = computed<Record<string, string>>(() => {
+    const defaults = {
+      background: '#000000',
+      backgroundSoft: '#1a1a1a',
+      backgroundMute: '#2d2d2d',
+      text: '#FFFFFF',
+      textMuted: '#d0d0d0',
+      border: '#FFD700',
+    } as const
+
+    const bgHex = normalizeHex(tournament.value?.theme?.backgroundColour ?? '') || defaults.background
+    const textHexRaw = normalizeHex(tournament.value?.theme?.textColour ?? '')
+    const borderHexRaw = normalizeHex(tournament.value?.theme?.accentColour ?? '')
+
+    const bg = isValidHex(bgHex) ? bgHex : defaults.background
+    const bgLum = calculateLuminance(bg)
+    const isDark = bgLum < 0.5
+
+    const mixHex = (a: string, b: string, t: number): string => {
+      const ra = hexToRgb(a)
+      const rb = hexToRgb(b)
+      if (!ra || !rb) return a
+      const mix = (x: number, y: number) => Math.round(x + (y - x) * t)
+      return rgbToHex(mix(ra.r, rb.r), mix(ra.g, rb.g), mix(ra.b, rb.b))
+    }
+
+    const text = isValidHex(textHexRaw) ? textHexRaw : getContrastingTextColor(bg)
+    const border = isValidHex(borderHexRaw) ? borderHexRaw : defaults.border
+
+    const backgroundSoft = isDark ? mixHex(bg, '#FFFFFF', 0.08) : mixHex(bg, '#000000', 0.06)
+    const backgroundMute = isDark ? mixHex(bg, '#FFFFFF', 0.16) : mixHex(bg, '#000000', 0.12)
+    const textMuted = isDark ? mixHex(text, bg, 0.35) : mixHex(text, bg, 0.45)
+
+    return {
+      '--color-background': bg,
+      '--color-background-soft': backgroundSoft,
+      '--color-background-mute': backgroundMute,
+      '--color-text': text,
+      '--color-text-muted': textMuted,
+      '--color-heading': text,
+      '--color-border': border,
+      '--color-primary': border,
+      '--tournament-accent': border,
+    }
+  })
 
   // Theme color getters
-  const getBackgroundColor = (): string => tournament.value?.theme?.backgroundColour ?? '#1a1a1a'
-  const getTextColor = (): string => tournament.value?.theme?.textColour ?? '#ffffff'
-  const getTextMutedColor = (): string => '#a0a0a0'
-  const getAccentColor = (): string => tournament.value?.theme?.accentColour ?? '#FFD700'
-  const getBackgroundMuteColor = (): string =>
-    tournament.value?.theme?.backgroundColour ? `${tournament.value.theme.backgroundColour}40` : '#2a2a2a'
-  const getBackgroundSoftColor = (): string =>
-    tournament.value?.theme?.backgroundColour ? `${tournament.value.theme.backgroundColour}20` : '#242424'
+  const getBackgroundColor = (): string => {
+    return themeVars.value['--color-background'] || '#000000'
+  }
+
+  const getBackgroundSoftColor = (): string => {
+    return themeVars.value['--color-background-soft'] || '#1a1a1a'
+  }
+
+  const getBackgroundMuteColor = (): string => {
+    return themeVars.value['--color-background-mute'] || '#2d2d2d'
+  }
+
+  const getTextColor = (): string => {
+    return themeVars.value['--color-text'] || '#FFFFFF'
+  }
+
+  const getTextMutedColor = (): string => {
+    return themeVars.value['--color-text-muted'] || '#d0d0d0'
+  }
+
+  const getAccentColor = (): string => {
+    if (!tournament.value?.theme?.accentColour) return '#FFD700'
+    const normalized = normalizeHex(tournament.value.theme.accentColour)
+    return isValidHex(normalized) ? normalized : '#FFD700'
+  }
 
   // Helper for opacity colors
   const getAccentColorWithOpacity = (opacity: number): string => {
