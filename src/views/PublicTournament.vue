@@ -157,6 +157,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { usePlayerComparison } from '@/composables/usePlayerComparison';
 import TournamentHero from '@/components/TournamentHero.vue';
 import TournamentPageNav from '@/components/TournamentPageNav.vue';
 import TournamentMatchesTable from '@/components/TournamentMatchesTable.vue';
@@ -178,6 +179,7 @@ import bfvIcon from '@/assets/bfv.webp';
 const router = useRouter();
 const route = useRoute();
 const { useTournament } = useTournamentCache();
+const { comparePlayers } = usePlayerComparison();
 
 const tournament = ref<PublicTournamentDetail | null>(null);
 const heroImageUrl = ref<string | null>(null);
@@ -683,18 +685,6 @@ const selectPlayerForComparison = (playerName: string, teamName: string) => {
 
 const isPlayerSelected = (playerName: string): boolean => {
   return selectedPlayers.value.includes(playerName);
-};
-
-const comparePlayers = () => {
-  if (selectedPlayers.value.length === 2) {
-    router.push({
-      path: '/players/compare',
-      query: {
-        player1: selectedPlayers.value[0],
-        player2: selectedPlayers.value[1]
-      }
-    });
-  }
 };
 
 // Watch tournament data and update page title when it loads

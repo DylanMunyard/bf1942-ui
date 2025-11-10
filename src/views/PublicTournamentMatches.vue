@@ -76,6 +76,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { usePlayerComparison } from '@/composables/usePlayerComparison'
 import TournamentHero from '@/components/TournamentHero.vue'
 import TournamentMatchesTable from '@/components/TournamentMatchesTable.vue'
 import MatchDetailsModal from '@/components/MatchDetailsModal.vue'
@@ -85,6 +86,8 @@ import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
 interface MatchItem {
   match: PublicTournamentMatch
 }
+
+const { comparePlayers } = usePlayerComparison()
 
 const {
   tournament,
@@ -210,12 +213,6 @@ const openMatchupModal = (match: PublicTournamentMatch) => {
 
 const closeMatchupModal = () => {
   selectedMatch.value = null
-}
-
-const comparePlayers = (players: string[]) => {
-  // Player comparison functionality can be implemented when needed
-  // For now, this is a placeholder for future player comparison features
-  console.log('Compare players:', players)
 }
 
 </script>
