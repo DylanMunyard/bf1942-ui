@@ -141,6 +141,7 @@
     <!-- Match Details Modal Component -->
     <MatchDetailsModal
       :match="selectedMatch"
+      :teams="tournament?.teams || []"
       :accent-color="getAccentColor()"
       :text-color="getTextColor()"
       :text-muted-color="getTextMutedColor()"

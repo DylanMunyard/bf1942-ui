@@ -334,8 +334,15 @@
 import { ref, computed } from 'vue'
 import type { PublicTournamentMatch } from '@/services/publicTournamentService'
 
+interface Team {
+  id: number
+  name: string
+  players: Array<{ playerName: string }>
+}
+
 interface Props {
   match: PublicTournamentMatch | null
+  teams: Team[]
   accentColor: string
   textColor: string
   textMutedColor: string
@@ -435,11 +442,9 @@ const getMatchWinner = (): string | null => {
 }
 
 // Helper: Get team roster/players
-const getTeamRoster = (_teamName: string) => {
-  const players: Array<{ playerName: string; teamName: string }> = []
-  // For now, we'll return empty since the API doesn't provide player names in matchResults
-  // This can be enhanced when player data becomes available
-  return players
+const getTeamRoster = (teamName: string) => {
+  const team = props.teams.find(t => t.name === teamName)
+  return team?.players || []
 }
 
 // Helper: Check if player is selected
