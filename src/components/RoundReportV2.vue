@@ -174,8 +174,6 @@ const generateTimeCheckpoints = () => {
   const totalDuration = endTime - startTime;
   const totalMinutes = Math.ceil(totalDuration / (1000 * 60));
   
-  console.log('Generating checkpoints:', { totalMinutes, startTime, endTime, totalDuration });
-  
   // Create checkpoints every minute
   for (let minute = 0; minute <= totalMinutes; minute++) {
     const targetTime = startTime + (minute * 60 * 1000);
@@ -213,12 +211,9 @@ const generateTimeCheckpoints = () => {
       minutes: minute
     });
   }
-  
-  console.log('Generated checkpoints:', checkpoints);
-  
+
   // If no checkpoints were generated, create some sample ones for testing
   if (checkpoints.length === 0 && batchUpdateEvents.value.length > 0) {
-    console.log('No checkpoints generated, creating samples');
     const sampleCount = Math.min(10, batchUpdateEvents.value.length);
     for (let i = 0; i < sampleCount; i++) {
       const batchIndex = Math.floor((i / (sampleCount - 1)) * (batchUpdateEvents.value.length - 1));
