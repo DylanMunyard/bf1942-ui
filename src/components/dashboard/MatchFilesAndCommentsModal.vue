@@ -52,32 +52,44 @@
               </div>
 
               <!-- Compact Link Input -->
-              <div class="flex gap-2">
-                <input
-                  v-model="newFile.url"
-                  type="url"
-                  placeholder="https://..."
-                  class="flex-1 px-3 py-2 bg-slate-900/40 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded-lg"
-                  :disabled="isProcessing"
-                  @input="autoFillFileDetails"
-                  @keydown.enter.prevent="addNewFile"
-                >
-                <input
-                  v-model="newFile.tags"
-                  type="text"
-                  placeholder="gameplay"
-                  class="w-24 px-2 py-2 bg-slate-900/60 text-slate-200 placeholder-slate-500 text-xs focus:outline-none border border-slate-700/50 rounded-lg"
-                  :disabled="isProcessing"
-                  @keydown.enter.prevent="addNewFile"
-                >
-                <button
-                  @click="addNewFile"
-                  :disabled="isProcessing || !newFile.url.trim()"
-                  class="px-3 py-2 bg-slate-900/40 hover:bg-slate-800/60 text-cyan-400 hover:text-cyan-300 text-xs rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Add link (or press Enter)"
-                >
-                  +
-                </button>
+              <div class="space-y-2">
+                <div class="flex gap-2">
+                  <input
+                    v-model="newFile.url"
+                    type="url"
+                    placeholder="https://..."
+                    class="flex-1 px-3 py-2 bg-slate-900/40 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded-lg"
+                    :disabled="isProcessing"
+                    @input="autoFillFileDetails"
+                    @keydown.enter.prevent="addNewFile"
+                  >
+                  <button
+                    @click="addNewFile"
+                    :disabled="isProcessing || !newFile.url.trim()"
+                    class="px-3 py-2 bg-slate-900/40 hover:bg-slate-800/60 text-cyan-400 hover:text-cyan-300 text-xs rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Add link (or press Enter)"
+                  >
+                    +
+                  </button>
+                </div>
+                <div class="flex gap-2">
+                  <input
+                    v-model="newFile.name"
+                    type="text"
+                    placeholder="File name (auto-filled)"
+                    class="flex-1 px-3 py-2 bg-slate-900/40 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded-lg"
+                    :disabled="isProcessing"
+                    @keydown.enter.prevent="addNewFile"
+                  >
+                  <input
+                    v-model="newFile.tags"
+                    type="text"
+                    placeholder="gameplay"
+                    class="w-24 px-2 py-2 bg-slate-900/60 text-slate-200 placeholder-slate-500 text-xs focus:outline-none border border-slate-700/50 rounded-lg"
+                    :disabled="isProcessing"
+                    @keydown.enter.prevent="addNewFile"
+                  >
+                </div>
               </div>
             </div>
 
@@ -419,7 +431,10 @@ const loadFilesAndComments = async () => {
 };
 
 const autoFillFileDetails = () => {
-  if (!newFile.value.url.trim()) return;
+  if (!newFile.value.url.trim()) {
+    newFile.value.name = '';
+    return;
+  }
 
   try {
     const url = new URL(newFile.value.url.trim());
