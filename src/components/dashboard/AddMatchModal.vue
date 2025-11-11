@@ -294,6 +294,120 @@
               {{ formData.serverGuid ? 'Server found and linked. Edit to search again.' : 'No server linked - name only will be saved.' }}
             </p>
           </div>
+
+          <!-- Files Section -->
+          <div class="space-y-3 bg-slate-800/30 border border-slate-700/30 rounded-lg p-4">
+            <div>
+              <h3 class="text-sm font-medium text-slate-300">📎 Files & Links (Optional)</h3>
+              <p class="text-xs text-slate-500 mt-1">
+                Add match recordings, map packs, or other relevant links. You can add multiple links before saving.
+              </p>
+            </div>
+
+            <!-- Files List -->
+            <div v-if="formData.files.length > 0" class="space-y-2 bg-slate-900/40 rounded-lg p-3">
+              <div v-for="(file, idx) in formData.files" :key="idx" class="flex items-start gap-3 p-2 bg-slate-800/50 rounded border border-slate-700/30">
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs text-slate-400">{{ file.name }}</p>
+                  <p class="text-xs text-slate-500 truncate">{{ file.url }}</p>
+                  <p v-if="file.tags" class="text-xs text-slate-400 mt-1">Tags: {{ file.tags }}</p>
+                </div>
+                <button
+                  @click="removeFile(idx)"
+                  :disabled="loading"
+                  class="flex-shrink-0 px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Add File Form -->
+            <div class="space-y-2 bg-slate-900/40 rounded-lg p-3">
+              <!-- File Name Input -->
+              <input
+                v-model="newFile.name"
+                type="text"
+                placeholder="File name (e.g., 'Match Recording')"
+                class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                :disabled="loading"
+              >
+
+              <!-- File URL Input -->
+              <input
+                v-model="newFile.url"
+                type="url"
+                placeholder="URL (https://...)"
+                class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                :disabled="loading"
+              >
+
+              <!-- File Tags Input -->
+              <input
+                v-model="newFile.tags"
+                type="text"
+                placeholder="Tags (comma separated, e.g., 'recording,gameplay')"
+                class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                :disabled="loading"
+              >
+
+              <!-- Add File Button -->
+              <button
+                @click="addFile"
+                :disabled="loading || !newFile.name.trim() || !newFile.url.trim()"
+                class="w-full px-3 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-xs rounded font-medium transition-colors"
+              >
+                + Add File
+              </button>
+            </div>
+          </div>
+
+          <!-- Comments Section -->
+          <div class="space-y-3 bg-slate-800/30 border border-slate-700/30 rounded-lg p-4">
+            <div>
+              <h3 class="text-sm font-medium text-slate-300">💬 Comments (Optional)</h3>
+              <p class="text-xs text-slate-500 mt-1">
+                Add organizer notes or comments about this match.
+              </p>
+            </div>
+
+            <!-- Comments List -->
+            <div v-if="formData.comments.length > 0" class="space-y-2 bg-slate-900/40 rounded-lg p-3">
+              <div v-for="(comment, idx) in formData.comments" :key="idx" class="flex items-start gap-3 p-2 bg-slate-800/50 rounded border border-slate-700/30">
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs text-slate-300 break-words">{{ comment.content }}</p>
+                </div>
+                <button
+                  @click="removeComment(idx)"
+                  :disabled="loading"
+                  class="flex-shrink-0 px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Comment Form -->
+            <div class="space-y-2 bg-slate-900/40 rounded-lg p-3">
+              <!-- Comment Text Area -->
+              <textarea
+                v-model="newComment"
+                placeholder="Add a comment..."
+                class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all resize-none"
+                rows="2"
+                :disabled="loading"
+              />
+
+              <!-- Add Comment Button -->
+              <button
+                @click="addComment"
+                :disabled="loading || !newComment.trim()"
+                class="w-full px-3 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-xs rounded font-medium transition-colors"
+              >
+                + Add Comment
+              </button>
+            </div>
+          </div>
         </template>
       </div>
 
@@ -362,7 +476,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { adminTournamentService, type TournamentTeam, type TournamentMatch, type TournamentDetail } from '@/services/adminTournamentService';
+import { adminTournamentService, type TournamentTeam, type TournamentMatch, type TournamentDetail, type CreateMatchFileRequest, type CreateMatchCommentRequest } from '@/services/adminTournamentService';
 import MapImageSelectorModal from './MapImageSelectorModal.vue';
 
 interface Props {
@@ -396,6 +510,8 @@ const isServerSearching = ref(false);
 const showImageSelector = ref(false);
 const selectedMapIndex = ref<number | null>(null);
 const dateTimeString = ref('');
+const newFile = ref({ name: '', url: '', tags: '' });
+const newComment = ref('');
 
 let serverSearchTimeout: number | null = null;
 let blurTimeout: number | null = null;
@@ -406,6 +522,16 @@ interface MapEntry {
   imagePath?: string | null;
 }
 
+interface FileEntry {
+  name: string;
+  url: string;
+  tags: string;
+}
+
+interface CommentEntry {
+  content: string;
+}
+
 const formData = ref({
   team1Id: null as number | null,
   team2Id: null as number | null,
@@ -413,6 +539,8 @@ const formData = ref({
   serverGuid: '',
   serverName: '',
   week: null as string | null,
+  files: [] as FileEntry[],
+  comments: [] as CommentEntry[],
 });
 
 /**
@@ -621,6 +749,34 @@ onMounted(() => {
   }
 });
 
+const addFile = () => {
+  if (newFile.value.name.trim() && newFile.value.url.trim()) {
+    formData.value.files.push({
+      name: newFile.value.name.trim(),
+      url: newFile.value.url.trim(),
+      tags: newFile.value.tags.trim(),
+    });
+    newFile.value = { name: '', url: '', tags: '' };
+  }
+};
+
+const removeFile = (index: number) => {
+  formData.value.files.splice(index, 1);
+};
+
+const addComment = () => {
+  if (newComment.value.trim()) {
+    formData.value.comments.push({
+      content: newComment.value.trim(),
+    });
+    newComment.value = '';
+  }
+};
+
+const removeComment = (index: number) => {
+  formData.value.comments.splice(index, 1);
+};
+
 const handleSubmit = async () => {
   loading.value = true;
   error.value = null;
@@ -648,12 +804,32 @@ const handleSubmit = async () => {
       week: weekValue && weekValue.length > 0 ? weekValue : null,
     };
 
+    let matchId: number;
     if (editMode.value && props.match) {
       console.log('Updating match with data:', requestData);
       await adminTournamentService.updateMatch(props.tournamentId, props.match.id, requestData);
+      matchId = props.match.id;
     } else {
       console.log('Creating match with data:', requestData);
-      await adminTournamentService.createMatch(props.tournamentId, requestData);
+      const createdMatch = await adminTournamentService.createMatch(props.tournamentId, requestData);
+      matchId = createdMatch.id;
+    }
+
+    // Create files and comments
+    for (const file of formData.value.files) {
+      const fileRequest: CreateMatchFileRequest = {
+        name: file.name,
+        url: file.url,
+        tags: file.tags,
+      };
+      await adminTournamentService.createMatchFile(props.tournamentId, matchId, fileRequest);
+    }
+
+    for (const comment of formData.value.comments) {
+      const commentRequest: CreateMatchCommentRequest = {
+        content: comment.content,
+      };
+      await adminTournamentService.createMatchComment(props.tournamentId, matchId, commentRequest);
     }
 
     emit('added');

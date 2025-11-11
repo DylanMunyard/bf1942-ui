@@ -533,6 +533,15 @@
                             Results
                           </button>
                           <button
+                            class="p-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30 hover:border-purple-500/50 rounded-lg transition-all"
+                            @click="openMatchFilesAndCommentsModal(match)"
+                            title="Add files and comments"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                          <button
                             class="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all"
                             @click="editMatch(match.id)"
                             title="Edit match"
@@ -645,6 +654,15 @@
       :match="editingMatchForResults"
       @close="showEditMapResultsModal = false; editingMatchForResults = null"
       @updated="loadTournament"
+    />
+
+    <!-- Match Files and Comments Modal -->
+    <MatchFilesAndCommentsModal
+      v-if="showMatchFilesAndCommentsModal && tournament && editingMatchForFilesAndComments"
+      :tournament-id="tournament.id"
+      :match="editingMatchForFilesAndComments"
+      @close="showMatchFilesAndCommentsModal = false; editingMatchForFilesAndComments = null"
+      @saved="loadTournament"
     />
 
     <!-- Add/Edit Week Modal -->
@@ -998,6 +1016,7 @@ import EditTournamentThemeModal from '@/components/dashboard/EditTournamentTheme
 import AddTeamModal from '@/components/dashboard/AddTeamModal.vue';
 import AddMatchModal from '@/components/dashboard/AddMatchModal.vue';
 import EditMapResultsModal from '@/components/dashboard/EditMapResultsModal.vue';
+import MatchFilesAndCommentsModal from '@/components/dashboard/MatchFilesAndCommentsModal.vue';
 import AddWeekModal from '@/components/dashboard/AddWeekModal.vue';
 import AddFileModal from '@/components/dashboard/AddFileModal.vue';
 import bf1942Icon from '@/assets/bf1942.webp';
@@ -1021,6 +1040,8 @@ const showAddTeamModal = ref(false);
 const showAddMatchModal = ref(false);
 const showEditMapResultsModal = ref(false);
 const editingMatchForResults = ref<TournamentMatch | null>(null);
+const showMatchFilesAndCommentsModal = ref(false);
+const editingMatchForFilesAndComments = ref<TournamentMatch | null>(null);
 const deleteTeamConfirmation = ref<{ id: number; name: string } | null>(null);
 const deleteMatchConfirmation = ref<{ id: number } | null>(null);
 const isDeleting = ref(false);
@@ -1424,6 +1445,11 @@ const editMatch = async (matchId: number) => {
 const openEditMapResultsModal = (match: TournamentMatch) => {
   editingMatchForResults.value = match;
   showEditMapResultsModal.value = true;
+};
+
+const openMatchFilesAndCommentsModal = (match: TournamentMatch) => {
+  editingMatchForFilesAndComments.value = match;
+  showMatchFilesAndCommentsModal.value = true;
 };
 
 const confirmDeleteMatch = (matchId: number) => {

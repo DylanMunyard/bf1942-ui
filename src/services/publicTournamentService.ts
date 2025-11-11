@@ -121,6 +121,29 @@ export interface PublicTournamentLeaderboard {
   rankings: PublicTeamRanking[];
 }
 
+export interface MatchFile {
+  id: number;
+  name: string;
+  url: string;
+  tags: string;
+  uploadedAt: string;
+}
+
+export interface MatchComment {
+  id: number;
+  content: string;
+  createdByUserEmail: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MatchFilesAndComments {
+  tournamentId: number;
+  matchId: number;
+  files: MatchFile[];
+  comments: MatchComment[];
+}
+
 export interface PublicTournamentDetail {
   id: number;
   name: string;
@@ -141,6 +164,7 @@ export interface PublicTournamentDetail {
   serverGuid?: string;
   serverName?: string;
   discordUrl?: string;
+  youTubeUrl?: string;
   forumUrl?: string;
   rules?: string;
   theme: TournamentTheme;
@@ -203,6 +227,35 @@ class PublicTournamentService {
 
     const data: PublicTournamentLeaderboard = await response.json();
     return data;
+  }
+
+  async getMatchFilesAndComments(tournamentId: number, matchId: number): Promise<MatchFilesAndComments> {
+    const url = `${this.baseUrl}/${tournamentId}/matches/${matchId}/files-and-comments`;
+
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        // Silently fail on error
+        return {
+          tournamentId,
+          matchId,
+          files: [],
+          comments: []
+        };
+      }
+
+      const data: MatchFilesAndComments = await response.json();
+      return data;
+    } catch {
+      // Silently fail on network errors
+      return {
+        tournamentId,
+        matchId,
+        files: [],
+        comments: []
+      };
+    }
   }
 }
 

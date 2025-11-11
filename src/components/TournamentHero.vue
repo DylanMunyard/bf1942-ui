@@ -68,26 +68,36 @@
         </div>
 
         <!-- Links -->
-        <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white mb-6">
+        <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-white mb-6">
           <a
             v-if="tournament.discordUrl"
             :href="tournament.discordUrl"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex items-center gap-2 px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 backdrop-blur-sm rounded-full border border-indigo-500/50 hover:border-indigo-400/70 transition-all"
+            title="Join our Discord server"
+            class="p-2 bg-indigo-500/20 hover:bg-indigo-500/30 backdrop-blur-sm rounded-full border border-indigo-500/50 hover:border-indigo-400/70 transition-all flex items-center justify-center"
           >
-            <span class="text-indigo-400">💬</span>
-            <span class="font-medium text-indigo-300">Discord</span>
+            <img :src="discordLogo" alt="Discord" class="w-6 h-6 object-contain">
+          </a>
+          <a
+            v-if="tournament.youTubeUrl"
+            :href="tournament.youTubeUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Visit our YouTube channel"
+            class="p-2 bg-red-500/20 hover:bg-red-500/30 backdrop-blur-sm rounded-full border border-red-500/50 hover:border-red-400/70 transition-all flex items-center justify-center"
+          >
+            <img :src="youtubeLogo" alt="YouTube" class="w-6 h-6 object-contain">
           </a>
           <a
             v-if="tournament.forumUrl"
             :href="tournament.forumUrl"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex items-center gap-2 px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 backdrop-blur-sm rounded-full border border-orange-500/50 hover:border-orange-400/70 transition-all"
+            title="Visit our forum"
+            class="p-3 bg-orange-500/20 hover:bg-orange-500/30 backdrop-blur-sm rounded-full border border-orange-500/50 hover:border-orange-400/70 transition-all"
           >
-            <span class="text-orange-400">📋</span>
-            <span class="font-medium text-orange-300">Forum</span>
+            <span class="text-orange-400 text-xl">📋</span>
           </a>
         </div>
 
@@ -158,6 +168,8 @@
 import { useRoute } from 'vue-router'
 import { isValidHex, normalizeHex, calculateLuminance, hexToRgb } from '@/utils/colorUtils'
 import type { PublicTournamentDetail } from '@/services/publicTournamentService'
+import discordLogo from '@/assets/discord.webp'
+import youtubeLogo from '@/assets/youtube-logo.webp'
 
 interface Props {
   tournament: PublicTournamentDetail

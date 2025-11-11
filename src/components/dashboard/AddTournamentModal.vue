@@ -355,38 +355,50 @@ Winners choose first map for next round.</code>
           </p>
         </div>
 
-        <!-- Row 2: Discord URL + Forum URL -->
-        <div class="grid grid-cols-2 gap-4">
-          <!-- Discord URL -->
-          <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            Discord URL <span class="text-slate-500">(Optional)</span>
+        <!-- Row 2: Social Media Links -->
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-3">
+            Social Media Links <span class="text-slate-500">(Optional)</span>
           </label>
-          <input
-            v-model="formData.discordUrl"
-            type="url"
-            placeholder="https://discord.gg/..."
-            class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-          >
-          <p class="mt-1 text-xs text-slate-500">
-            Link to your tournament Discord server
-          </p>
-        </div>
+          <div class="space-y-3">
+            <!-- Discord Link -->
+            <div class="flex items-center gap-3">
+              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center overflow-hidden">
+                <img :src="discordLogo" alt="Discord" class="w-6 h-6 object-contain">
+              </div>
+              <input
+                v-model="formData.discordUrl"
+                type="url"
+                placeholder="https://discord.gg/..."
+                class="flex-1 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+              >
+            </div>
 
-          <!-- Forum URL -->
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">
-              Forum URL <span class="text-slate-500">(Optional)</span>
-            </label>
-            <input
-              v-model="formData.forumUrl"
-              type="url"
-              placeholder="https://..."
-              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-            >
-            <p class="mt-1 text-xs text-slate-500">
-              Link to your tournament forum or discussion page
-            </p>
+            <!-- YouTube Link -->
+            <div class="flex items-center gap-3">
+              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center overflow-hidden">
+                <img :src="youtubeLogo" alt="YouTube" class="w-6 h-6 object-contain">
+              </div>
+              <input
+                v-model="formData.youTubeUrl"
+                type="url"
+                placeholder="https://youtube.com/@..."
+                class="flex-1 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all"
+              >
+            </div>
+
+            <!-- Forum Link -->
+            <div class="flex items-center gap-3">
+              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
+                <span class="text-orange-400 text-lg">📋</span>
+              </div>
+              <input
+                v-model="formData.forumUrl"
+                type="url"
+                placeholder="https://..."
+                class="flex-1 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
+              >
+            </div>
           </div>
         </div>
 
@@ -1218,6 +1230,8 @@ import { isValidHex } from '@/utils/colorUtils';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
+import discordLogo from '@/assets/discord.webp';
+import youtubeLogo from '@/assets/youtube-logo.webp';
 
 interface PlayerSearchResult {
   playerName: string;
@@ -1254,6 +1268,7 @@ const formData = ref({
   anticipatedRoundCount: undefined as number | undefined,
   serverGuid: undefined as string | undefined,
   discordUrl: '',
+  youTubeUrl: '',
   forumUrl: '',
   rules: '',
   status: 'draft' as 'draft' | 'registration' | 'open' | 'closed',
@@ -1398,6 +1413,7 @@ onMounted(() => {
       anticipatedRoundCount: props.tournament.anticipatedRoundCount,
       serverGuid: props.tournament.serverGuid,
       discordUrl: props.tournament.discordUrl || '',
+      youTubeUrl: props.tournament.youTubeUrl || '',
       forumUrl: props.tournament.forumUrl || '',
       rules: props.tournament.rules || '',
       status: props.tournament.status || undefined,
@@ -1911,6 +1927,10 @@ const handleSubmit = async () => {
 
     if (formData.value.discordUrl?.trim()) {
       request.discordUrl = formData.value.discordUrl.trim();
+    }
+
+    if (formData.value.youTubeUrl?.trim()) {
+      request.youTubeUrl = formData.value.youTubeUrl.trim();
     }
 
     if (formData.value.forumUrl?.trim()) {

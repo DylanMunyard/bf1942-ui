@@ -142,6 +142,7 @@
     <MatchDetailsModal
       :match="selectedMatch"
       :teams="tournament?.teams || []"
+      :tournament-id="tournamentId"
       :accent-color="getAccentColor()"
       :text-color="getTextColor()"
       :text-muted-color="getTextMutedColor()"

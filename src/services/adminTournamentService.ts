@@ -11,6 +11,7 @@ export interface TournamentListItem {
   serverGuid?: string;
   serverName?: string;
   discordUrl?: string;
+  youTubeUrl?: string;
   forumUrl?: string;
   theme?: TournamentTheme;
 }
@@ -110,6 +111,7 @@ export interface TournamentDetail {
   serverGuid?: string;
   serverName?: string;
   discordUrl?: string;
+  youTubeUrl?: string;
   forumUrl?: string;
   rules?: string;
   theme: TournamentTheme;
@@ -130,6 +132,7 @@ export interface CreateTournamentRequest {
   communityLogoContentType?: string;
   serverGuid?: string;
   discordUrl?: string;
+  youTubeUrl?: string;
   forumUrl?: string;
   rules?: string;
   weekDates?: TournamentWeekDate[];
@@ -150,6 +153,7 @@ export interface UpdateTournamentRequest {
   communityLogoContentType?: string;
   serverGuid?: string;
   discordUrl?: string;
+  youTubeUrl?: string;
   forumUrl?: string;
   rules?: string;
   weekDates?: TournamentWeekDate[];
@@ -168,6 +172,51 @@ export interface UpdateTournamentFileRequest {
   name?: string;
   url?: string;
   category?: string;
+}
+
+// Match files and comments interfaces
+export interface CreateMatchFileRequest {
+  name: string;
+  url: string;
+  tags: string;
+}
+
+export interface UpdateMatchFileRequest {
+  name?: string;
+  url?: string;
+  tags?: string;
+}
+
+export interface MatchFile {
+  id: number;
+  name: string;
+  url: string;
+  tags: string;
+  uploadedAt: string;
+}
+
+export interface CreateMatchCommentRequest {
+  content: string;
+}
+
+export interface UpdateMatchCommentRequest {
+  content: string;
+}
+
+export interface MatchComment {
+  id: number;
+  content: string;
+  createdByUserId: number;
+  createdByUserEmail: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminMatchFilesAndComments {
+  tournamentId: number;
+  matchId: number;
+  files: MatchFile[];
+  comments: MatchComment[];
 }
 
 // Teams interfaces
@@ -192,7 +241,11 @@ export interface CreateMatchRequest {
   scheduledDate: string;
   team1Id: number;
   team2Id: number;
-  mapNames: string[];
+  maps: Array<{
+    mapName: string;
+    teamId?: number;
+    imagePath?: string;
+  }>;
   serverGuid?: string;
   serverName?: string;
   week?: string | null;
@@ -202,7 +255,11 @@ export interface UpdateMatchRequest {
   scheduledDate?: string;
   team1Id?: number;
   team2Id?: number;
-  mapNames?: string[];
+  maps?: Array<{
+    mapName: string;
+    teamId?: number;
+    imagePath?: string;
+  }>;
   serverGuid?: string;
   serverName?: string;
   week?: string | null;
@@ -660,6 +717,93 @@ class AdminTournamentService {
     return this.request<void>(`/${tournamentId}/files/${fileId}`, {
       method: 'DELETE',
     });
+  }
+
+  // Match files management
+  async createMatchFile(
+    tournamentId: number,
+    matchId: number,
+    request: CreateMatchFileRequest
+  ): Promise<MatchFile> {
+    return this.request<MatchFile>(`/${tournamentId}/matches/${matchId}/files`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async updateMatchFile(
+    tournamentId: number,
+    matchId: number,
+    fileId: number,
+    request: UpdateMatchFileRequest
+  ): Promise<MatchFile> {
+    return this.request<MatchFile>(
+      `/${tournamentId}/matches/${matchId}/files/${fileId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(request),
+      }
+    );
+  }
+
+  async deleteMatchFile(
+    tournamentId: number,
+    matchId: number,
+    fileId: number
+  ): Promise<void> {
+    await this.request(`/${tournamentId}/matches/${matchId}/files/${fileId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Get match files and comments
+  async getMatchFilesAndComments(
+    tournamentId: number,
+    matchId: number
+  ): Promise<AdminMatchFilesAndComments> {
+    return this.request<AdminMatchFilesAndComments>(
+      `/${tournamentId}/matches/${matchId}/files-and-comments`
+    );
+  }
+
+  // Match comments management
+  async createMatchComment(
+    tournamentId: number,
+    matchId: number,
+    request: CreateMatchCommentRequest
+  ): Promise<MatchComment> {
+    return this.request<MatchComment>(`/${tournamentId}/matches/${matchId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async updateMatchComment(
+    tournamentId: number,
+    matchId: number,
+    commentId: number,
+    request: UpdateMatchCommentRequest
+  ): Promise<MatchComment> {
+    return this.request<MatchComment>(
+      `/${tournamentId}/matches/${matchId}/comments/${commentId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(request),
+      }
+    );
+  }
+
+  async deleteMatchComment(
+    tournamentId: number,
+    matchId: number,
+    commentId: number
+  ): Promise<void> {
+    await this.request(
+      `/${tournamentId}/matches/${matchId}/comments/${commentId}`,
+      {
+        method: 'DELETE',
+      }
+    );
   }
 }
 

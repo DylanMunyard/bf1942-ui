@@ -161,6 +161,124 @@
       <!-- Expandable Player Stats Table (Disabled until round data available) -->
       <!-- This section is disabled and will be implemented in a future update when player stats are available -->
 
+      <!-- Files and Comments Section -->
+      <div v-if="hasFilesOrComments" class="mt-8 space-y-4">
+        <!-- Toggle Button for Mobile -->
+        <button
+          class="md:hidden w-full px-4 py-3 rounded-lg font-bold flex items-center justify-between transition-colors"
+          :style="{ backgroundColor: getAccentColorWithOpacity(0.1), color: accentColor }"
+          @click="filesCommentsExpanded = !filesCommentsExpanded"
+          @mouseenter="(e) => {
+            if (e.currentTarget) {
+              (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.2);
+            }
+          }"
+          @mouseleave="(e) => {
+            if (e.currentTarget) {
+              (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.1);
+            }
+          }"
+        >
+          <span>📎 Files & Comments</span>
+          <svg
+            class="w-5 h-5 transition-transform"
+            :style="{ transform: filesCommentsExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </button>
+
+        <!-- Files and Comments Content (collapsible on mobile) -->
+        <div v-if="filesCommentsExpanded" class="space-y-6">
+          <!-- Loading State -->
+          <div v-if="isLoadingFilesAndComments" class="text-center py-6">
+            <div class="inline-block animate-spin">
+              <svg class="w-8 h-8" :style="{ color: accentColor }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Files Section -->
+          <div v-if="matchFiles.length > 0 && !isLoadingFilesAndComments">
+            <h3 class="text-lg font-bold mb-3" :style="{ color: accentColor }">
+              📎 Files
+            </h3>
+            <div class="space-y-3">
+              <div v-for="file in matchFiles" :key="file.id" class="rounded-lg p-4 border-2" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.05) }">
+                <!-- File Name and Link -->
+                <div class="mb-2">
+                  <a
+                    :href="file.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-bold text-lg transition-opacity hover:opacity-80"
+                    :style="{ color: accentColor }"
+                  >
+                    {{ file.name }} ↗️
+                  </a>
+                </div>
+
+                <!-- File Date and Tags -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs" :style="{ color: textMutedColor }"
+                    >📅 {{ formatFileDate(file.uploadedAt) }}</span
+                  >
+                  <div v-if="file.tags" class="flex flex-wrap gap-2">
+                    <span
+                      v-for="(tag, idx) in file.tags.split(',')"
+                      :key="`${file.id}-tag-${idx}`"
+                      class="text-xs px-2 py-1 rounded-full"
+                      :style="{ backgroundColor: getAccentColorWithOpacity(0.15), color: accentColor }"
+                    >
+                      {{ tag.trim() }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comments Section -->
+          <div v-if="matchComments.length > 0 && !isLoadingFilesAndComments">
+            <h3 class="text-lg font-bold mb-3" :style="{ color: accentColor }">💬 Comments</h3>
+            <div class="space-y-3">
+              <div v-for="comment in matchComments" :key="comment.id" class="rounded-lg p-4 border-2" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.05) }">
+                <!-- Comment Content with URL Parsing -->
+                <div class="mb-2" :style="{ color: textColor }">
+                  <span v-for="(part, idx) in parseCommentContent(comment.content)" :key="idx">
+                    <a
+                      v-if="part.url"
+                      :href="part.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="transition-opacity hover:opacity-80"
+                      :style="{ color: accentColor, textDecoration: 'underline' }"
+                    >
+                      {{ part.text }}
+                    </a>
+                    <span v-else>{{ part.text }}</span>
+                  </span>
+                </div>
+
+                <!-- Comment Metadata -->
+                <div class="flex flex-col gap-1 text-xs" :style="{ color: textMutedColor }">
+                  <span>⏰ {{ formatCommentDate(comment.createdAt) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Player Comparison Section -->
       <div class="mt-8 space-y-4">
         <h3 class="text-lg font-bold" :style="{ color: accentColor }">Compare Players</h3>
@@ -331,8 +449,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { PublicTournamentMatch } from '@/services/publicTournamentService'
+import { ref, computed, watch } from 'vue'
+import type { PublicTournamentMatch, MatchFile, MatchComment } from '@/services/publicTournamentService'
+import { publicTournamentService } from '@/services/publicTournamentService'
 
 interface Team {
   id: number
@@ -343,6 +462,7 @@ interface Team {
 interface Props {
   match: PublicTournamentMatch | null
   teams: Team[]
+  tournamentId: number | string
   accentColor: string
   textColor: string
   textMutedColor: string
@@ -360,11 +480,42 @@ const emit = defineEmits<{
 
 const selectedPlayers = ref<string[]>([])
 const fullscreenImage = ref<{ url: string; mapName: string } | null>(null)
+const matchFiles = ref<MatchFile[]>([])
+const matchComments = ref<MatchComment[]>([])
+const isLoadingFilesAndComments = ref(false)
+const filesCommentsExpanded = ref(true)
+
+// Fetch files and comments when match changes
+watch(() => props.match?.id, async (matchId) => {
+  if (!matchId) {
+    matchFiles.value = []
+    matchComments.value = []
+    return
+  }
+
+  isLoadingFilesAndComments.value = true
+  try {
+    const tournamentId = typeof props.tournamentId === 'string' ? parseInt(props.tournamentId) : props.tournamentId
+    const data = await publicTournamentService.getMatchFilesAndComments(tournamentId, matchId)
+    matchFiles.value = data.files
+    // Sort comments by createdAt descending (newest first)
+    matchComments.value = data.comments.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  } finally {
+    isLoadingFilesAndComments.value = false
+  }
+})
 
 // Check if match has any results
 const hasResults = computed(() => {
   if (!props.match?.maps) return false
   return props.match.maps.some(map => map.matchResults && map.matchResults.length > 0)
+})
+
+// Check if we have files or comments
+const hasFilesOrComments = computed(() => {
+  return matchFiles.value.length > 0 || matchComments.value.length > 0
 })
 
 // Helper: Get accent color with opacity
@@ -568,5 +719,66 @@ const calculateGrandTotal = () => {
     team1: team1Total,
     team2: team2Total
   }
+}
+
+// Helper: Format file upload date
+const formatFileDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return dateString
+
+  const options: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }
+  return date.toLocaleDateString('en-US', options)
+}
+
+// Helper: Format comment date
+const formatCommentDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return dateString
+
+  const options: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }
+  return date.toLocaleDateString('en-US', options)
+}
+
+// Helper: Parse comment content and render URLs as links
+const parseCommentContent = (content: string): Array<{ text: string; url?: string }> => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const parts: Array<{ text: string; url?: string }> = []
+
+  let lastIndex = 0
+  let match
+
+  const tempRegex = new RegExp(urlRegex)
+  while ((match = tempRegex.exec(content)) !== null) {
+    // Add text before the URL
+    if (match.index > lastIndex) {
+      parts.push({ text: content.substring(lastIndex, match.index) })
+    }
+
+    // Add the URL
+    parts.push({ text: match[0], url: match[0] })
+    lastIndex = match.index + match[0].length
+  }
+
+  // Add remaining text
+  if (lastIndex < content.length) {
+    parts.push({ text: content.substring(lastIndex) })
+  }
+
+  // If no URLs found, return the entire content
+  if (parts.length === 0) {
+    return [{ text: content }]
+  }
+
+  return parts
 }
 </script>
