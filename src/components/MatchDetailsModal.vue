@@ -161,117 +161,195 @@
       <!-- Expandable Player Stats Table (Disabled until round data available) -->
       <!-- This section is disabled and will be implemented in a future update when player stats are available -->
 
-      <!-- Files and Comments Section -->
-      <div v-if="hasFilesOrComments" class="mt-8 space-y-4">
-        <!-- Toggle Button for Mobile -->
+      <!-- Files and Comments Section - Compact Pro Gamer Design -->
+      <div v-if="hasFilesOrComments" class="mt-4 md:mt-6">
+        <!-- Compact Toggle Button for Mobile -->
         <button
-          class="md:hidden w-full px-4 py-3 rounded-lg font-bold flex items-center justify-between transition-colors"
-          :style="{ backgroundColor: getAccentColorWithOpacity(0.1), color: accentColor }"
+          class="md:hidden w-full px-4 py-2 rounded-lg font-semibold text-sm flex items-center justify-between transition-all duration-300 backdrop-blur-sm border-2 group"
+          :style="{
+            borderColor: accentColor,
+            backgroundColor: getAccentColorWithOpacity(0.08),
+            color: accentColor
+          }"
           @click="filesCommentsExpanded = !filesCommentsExpanded"
           @mouseenter="(e) => {
             if (e.currentTarget) {
-              (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.2);
+              (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.15);
             }
           }"
           @mouseleave="(e) => {
             if (e.currentTarget) {
-              (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.1);
+              (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.08);
             }
           }"
         >
-          <span>📎 Files & Comments</span>
+          <span class="flex items-center gap-1.5 text-base">
+            <span class="group-hover:scale-110 transition-transform">📎</span>
+            Files & Comments
+          </span>
           <svg
-            class="w-5 h-5 transition-transform"
+            class="w-4 h-4 transition-transform duration-300 group-hover:scale-110"
             :style="{ transform: filesCommentsExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </button>
 
         <!-- Files and Comments Content (collapsible on mobile) -->
-        <div v-if="filesCommentsExpanded" class="space-y-6">
-          <!-- Loading State -->
+        <div v-if="filesCommentsExpanded" class="space-y-3 mt-3 md:mt-4">
+          <!-- Loading State Compact -->
           <div v-if="isLoadingFilesAndComments" class="text-center py-6">
-            <div class="inline-block animate-spin">
-              <svg class="w-8 h-8" :style="{ color: accentColor }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
+            <div class="inline-flex flex-col items-center gap-2">
+              <div class="relative w-8 h-8">
+                <svg class="w-full h-full animate-spin" :style="{ color: accentColor }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              </div>
+              <p class="text-xs font-medium" :style="{ color: textMutedColor }">Loading...</p>
             </div>
           </div>
 
-          <!-- Files Section -->
-          <div v-if="matchFiles.length > 0 && !isLoadingFilesAndComments">
-            <h3 class="text-lg font-bold mb-3" :style="{ color: accentColor }">
-              📎 Files
-            </h3>
-            <div class="space-y-3">
-              <div v-for="file in matchFiles" :key="file.id" class="rounded-lg p-4 border-2" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.05) }">
-                <!-- File Name and Link -->
-                <div class="mb-2">
+          <!-- Files Section Compact -->
+          <div v-if="matchFiles.length > 0 && !isLoadingFilesAndComments" class="space-y-2">
+            <div class="flex items-center gap-1.5 md:gap-2 mb-2 md:mb-3 px-1">
+              <span class="text-lg md:text-xl">📎</span>
+              <h3 class="text-sm md:text-base font-bold" :style="{ color: accentColor }">Files</h3>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full" :style="{ backgroundColor: getAccentColorWithOpacity(0.2), color: accentColor }">
+                {{ matchFiles.length }}
+              </span>
+            </div>
+
+            <div class="space-y-2">
+              <div
+                v-for="file in matchFiles"
+                :key="file.id"
+                class="group relative rounded-lg border-2 overflow-hidden transition-all duration-300 hover:shadow-md backdrop-blur-sm"
+                :style="{
+                  borderColor: accentColor,
+                  backgroundColor: getAccentColorWithOpacity(0.04)
+                }"
+                @mouseenter="(e) => {
+                  if (e.currentTarget) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.08);
+                  }
+                }"
+                @mouseleave="(e) => {
+                  if (e.currentTarget) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.04);
+                  }
+                }"
+              >
+                <!-- Gradient Top Border on Hover -->
+                <div
+                  class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  :style="{ backgroundImage: `linear-gradient(90deg, ${accentColor}, ${accentColor}80)` }"
+                />
+
+                <div class="p-2.5 md:p-3">
+                  <!-- File Name and Link Compact -->
                   <a
                     :href="file.url"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="font-bold text-lg transition-opacity hover:opacity-80"
+                    class="inline-flex items-center gap-1.5 font-semibold text-xs md:text-sm transition-all duration-300 group/link break-all"
                     :style="{ color: accentColor }"
                   >
-                    {{ file.name }} ↗️
+                    <span class="group-hover/link:translate-x-0.5 transition-transform duration-300 truncate">{{ file.name }}</span>
+                    <svg class="w-3.5 h-3.5 flex-shrink-0 opacity-0 group-hover/link:opacity-100 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
                   </a>
-                </div>
 
-                <!-- File Date and Tags -->
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="text-xs" :style="{ color: textMutedColor }"
-                    >📅 {{ formatFileDate(file.uploadedAt) }}</span
-                  >
-                  <div v-if="file.tags" class="flex flex-wrap gap-2">
-                    <span
-                      v-for="(tag, idx) in file.tags.split(',')"
-                      :key="`${file.id}-tag-${idx}`"
-                      class="text-xs px-2 py-1 rounded-full"
-                      :style="{ backgroundColor: getAccentColorWithOpacity(0.15), color: accentColor }"
-                    >
-                      {{ tag.trim() }}
+                  <!-- File Metadata Inline Compact -->
+                  <div class="flex flex-wrap items-center gap-1.5 mt-1.5 md:gap-2 md:mt-2">
+                    <span class="text-xs font-medium px-2 py-0.5 rounded" :style="{ backgroundColor: getAccentColorWithOpacity(0.1), color: textMutedColor }">
+                      {{ formatFileDate(file.uploadedAt) }}
                     </span>
+                    <div v-if="file.tags" class="flex flex-wrap gap-1">
+                      <span
+                        v-for="(tag, idx) in file.tags.split(',').slice(0, 2)"
+                        :key="`${file.id}-tag-${idx}`"
+                        class="text-xs font-medium px-1.5 py-0.5 rounded border transition-all duration-300 cursor-default"
+                        :style="{
+                          backgroundColor: getAccentColorWithOpacity(0.1),
+                          borderColor: accentColor,
+                          color: accentColor
+                        }"
+                      >
+                        {{ tag.trim() }}
+                      </span>
+                      <span v-if="file.tags.split(',').length > 2" class="text-xs font-medium px-1.5 py-0.5" :style="{ color: textMutedColor }">+{{ file.tags.split(',').length - 2 }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Comments Section -->
-          <div v-if="matchComments.length > 0 && !isLoadingFilesAndComments">
-            <h3 class="text-lg font-bold mb-3" :style="{ color: accentColor }">💬 Comments</h3>
-            <div class="space-y-3">
-              <div v-for="comment in matchComments" :key="comment.id" class="rounded-lg p-4 border-2" :style="{ borderColor: accentColor, backgroundColor: getAccentColorWithOpacity(0.05) }">
-                <!-- Comment Content with URL Parsing -->
-                <div class="mb-2" :style="{ color: textColor }">
+          <!-- Comments Section Compact -->
+          <div v-if="matchComments.length > 0 && !isLoadingFilesAndComments" class="space-y-2">
+            <div class="flex items-center gap-1.5 md:gap-2 mb-2 md:mb-3 px-1">
+              <span class="text-lg md:text-xl">💬</span>
+              <h3 class="text-sm md:text-base font-bold" :style="{ color: accentColor }">Comments</h3>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full" :style="{ backgroundColor: getAccentColorWithOpacity(0.2), color: accentColor }">
+                {{ matchComments.length }}
+              </span>
+            </div>
+
+            <div class="space-y-2 max-h-[300px] md:max-h-[500px] overflow-y-auto">
+              <div
+                v-for="comment in matchComments"
+                :key="comment.id"
+                class="group relative rounded-lg border-2 overflow-hidden transition-all duration-300 hover:shadow-md backdrop-blur-sm p-2.5 md:p-3"
+                :style="{
+                  borderColor: accentColor,
+                  backgroundColor: getAccentColorWithOpacity(0.04)
+                }"
+                @mouseenter="(e) => {
+                  if (e.currentTarget) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.08);
+                  }
+                }"
+                @mouseleave="(e) => {
+                  if (e.currentTarget) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = getAccentColorWithOpacity(0.04);
+                  }
+                }"
+              >
+                <!-- Gradient Left Border on Hover -->
+                <div
+                  class="absolute left-0 top-0 bottom-0 w-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  :style="{ backgroundImage: `linear-gradient(180deg, ${accentColor}, ${accentColor}80)` }"
+                />
+
+                <!-- Comment Content Compact -->
+                <div class="mb-1.5 text-xs md:text-sm leading-snug whitespace-pre-wrap break-words" :style="{ color: textColor }">
                   <span v-for="(part, idx) in parseCommentContent(comment.content)" :key="idx">
                     <a
                       v-if="part.url"
                       :href="part.url"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="transition-opacity hover:opacity-80"
-                      :style="{ color: accentColor, textDecoration: 'underline' }"
+                      class="font-semibold transition-all duration-300 hover:opacity-80 inline-flex items-center gap-0.5"
+                      :style="{ color: accentColor }"
                     >
                       {{ part.text }}
+                      <svg class="w-2.5 h-2.5 opacity-0 hover:opacity-100 transition-opacity flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
                     </a>
                     <span v-else>{{ part.text }}</span>
                   </span>
                 </div>
 
-                <!-- Comment Metadata -->
-                <div class="flex flex-col gap-1 text-xs" :style="{ color: textMutedColor }">
-                  <span>⏰ {{ formatCommentDate(comment.createdAt) }}</span>
+                <!-- Comment Metadata Compact -->
+                <div class="flex items-center gap-1 text-xs font-medium" :style="{ color: textMutedColor }">
+                  <span>⏰</span>
+                  <span>{{ formatCommentDate(comment.createdAt) }}</span>
                 </div>
               </div>
             </div>

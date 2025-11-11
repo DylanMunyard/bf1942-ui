@@ -87,36 +87,90 @@
                 v-for="file in existingFiles"
                 :key="file.id"
                 :class="[
-                  'flex items-start gap-3 p-2 rounded border transition-all',
-                  file.isNew ? 'bg-cyan-900/20 border-cyan-500/50 animate-pulse-once' : 'bg-slate-800/50 border-slate-700/30 group hover:bg-slate-800/70'
+                  'rounded border transition-all p-3',
+                  editingFileId === file.id ? 'bg-slate-900/60 border-cyan-500/50' : (file.isNew ? 'bg-cyan-900/20 border-cyan-500/50 animate-pulse-once' : 'bg-slate-800/50 border-slate-700/30 group hover:bg-slate-800/70')
                 ]"
               >
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <a
-                      :href="file.url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="text-xs text-cyan-400 hover:text-cyan-300 font-medium break-all"
-                    >
-                      {{ file.name }} ↗️
-                    </a>
-                    <span v-if="file.isNew" class="text-xs px-2 py-0.5 bg-cyan-500/30 text-cyan-300 rounded">Unsaved</span>
+                <!-- View Mode -->
+                <div v-if="editingFileId !== file.id" class="flex items-start gap-3">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <a
+                        :href="file.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-xs text-cyan-400 hover:text-cyan-300 font-medium break-all"
+                      >
+                        {{ file.name }} ↗️
+                      </a>
+                      <span v-if="file.isNew" class="text-xs px-2 py-0.5 bg-cyan-500/30 text-cyan-300 rounded">Unsaved</span>
+                    </div>
+                    <p class="text-xs text-slate-500 truncate mt-0.5">{{ file.url }}</p>
+                    <p v-if="file.tags" class="text-xs text-slate-400 mt-1">{{ file.tags }}</p>
                   </div>
-                  <p class="text-xs text-slate-500 truncate mt-0.5">{{ file.url }}</p>
-                  <p v-if="file.tags" class="text-xs text-slate-400 mt-1">{{ file.tags }}</p>
+                  <div class="flex-shrink-0 flex gap-2">
+                    <button
+                      @click="startEditFile(file)"
+                      :disabled="isProcessing"
+                      class="px-2 py-1 text-xs text-slate-400 hover:text-cyan-400 transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                      title="Edit file"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      @click="deleteExistingFile(file.id)"
+                      :disabled="isProcessing"
+                      :class="[
+                        'px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50',
+                        file.isNew ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      ]"
+                      title="Delete file"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
-                <button
-                  @click="deleteExistingFile(file.id)"
-                  :disabled="isProcessing"
-                  :class="[
-                    'flex-shrink-0 px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50',
-                    file.isNew ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                  ]"
-                  title="Delete file"
-                >
-                  ✕
-                </button>
+
+                <!-- Edit Mode -->
+                <div v-else class="space-y-2">
+                  <input
+                    v-model="editingFile.name"
+                    type="text"
+                    placeholder="File name"
+                    class="w-full px-2 py-1 bg-slate-800/50 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded border border-slate-600/50"
+                    :disabled="isProcessing"
+                  />
+                  <input
+                    v-model="editingFile.url"
+                    type="url"
+                    placeholder="https://..."
+                    class="w-full px-2 py-1 bg-slate-800/50 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded border border-slate-600/50"
+                    :disabled="isProcessing"
+                  />
+                  <input
+                    v-model="editingFile.tags"
+                    type="text"
+                    placeholder="gameplay"
+                    class="w-full px-2 py-1 bg-slate-800/50 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded border border-slate-600/50"
+                    :disabled="isProcessing"
+                  />
+                  <div class="flex justify-end gap-2">
+                    <button
+                      @click="cancelEditFile"
+                      :disabled="isProcessing"
+                      class="px-2 py-1 text-xs text-slate-400 hover:text-slate-300 transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      @click="saveEditFile(file.id as number)"
+                      :disabled="isProcessing"
+                      class="px-2 py-1 text-xs bg-cyan-600 hover:bg-cyan-700 text-white rounded transition-colors disabled:opacity-50"
+                    >
+                      {{ isProcessing ? 'Saving...' : 'Save' }}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -164,28 +218,68 @@
                 v-for="comment in existingComments"
                 :key="comment.id"
                 :class="[
-                  'flex items-start gap-3 p-2 rounded border transition-all',
-                  comment.isNew ? 'bg-cyan-900/20 border-cyan-500/50 animate-pulse-once' : 'bg-slate-800/50 border-slate-700/30 group hover:bg-slate-800/70'
+                  'rounded border transition-all p-3',
+                  editingCommentId === comment.id ? 'bg-slate-900/60 border-cyan-500/50' : (comment.isNew ? 'bg-cyan-900/20 border-cyan-500/50 animate-pulse-once' : 'bg-slate-800/50 border-slate-700/30 group hover:bg-slate-800/70')
                 ]"
               >
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <p class="text-xs text-slate-300 break-words whitespace-pre-wrap flex-1">{{ comment.content }}</p>
-                    <span v-if="comment.isNew" class="flex-shrink-0 text-xs px-2 py-0.5 bg-cyan-500/30 text-cyan-300 rounded">Unsaved</span>
+                <!-- View Mode -->
+                <div v-if="editingCommentId !== comment.id" class="flex items-start gap-3">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <p class="text-xs text-slate-300 break-words whitespace-pre-wrap flex-1">{{ comment.content }}</p>
+                      <span v-if="comment.isNew" class="flex-shrink-0 text-xs px-2 py-0.5 bg-cyan-500/30 text-cyan-300 rounded">Unsaved</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">{{ formatCommentDate(comment.createdAt) }}</p>
                   </div>
-                  <p class="text-xs text-slate-500 mt-1">{{ formatCommentDate(comment.createdAt) }}</p>
+                  <div class="flex-shrink-0 flex gap-2">
+                    <button
+                      @click="startEditComment(comment)"
+                      :disabled="isProcessing"
+                      class="px-2 py-1 text-xs text-slate-400 hover:text-cyan-400 transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                      title="Edit comment"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      @click="deleteExistingComment(comment.id)"
+                      :disabled="isProcessing"
+                      :class="[
+                        'px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50',
+                        comment.isNew ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      ]"
+                      title="Delete comment"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
-                <button
-                  @click="deleteExistingComment(comment.id)"
-                  :disabled="isProcessing"
-                  :class="[
-                    'flex-shrink-0 px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50',
-                    comment.isNew ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                  ]"
-                  title="Delete comment"
-                >
-                  ✕
-                </button>
+
+                <!-- Edit Mode -->
+                <div v-else class="space-y-2">
+                  <textarea
+                    v-model="editingComment"
+                    placeholder="Comment..."
+                    class="w-full px-2 py-1 bg-slate-800/50 text-slate-200 placeholder-slate-500 text-xs resize-none focus:outline-none rounded border border-slate-600/50"
+                    :disabled="isProcessing"
+                    rows="3"
+                  />
+                  <div class="flex justify-end gap-2">
+                    <button
+                      @click="cancelEditComment"
+                      :disabled="isProcessing"
+                      class="px-2 py-1 text-xs text-slate-400 hover:text-slate-300 transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      @click="saveEditComment(comment.id as number)"
+                      :disabled="isProcessing"
+                      class="px-2 py-1 text-xs bg-cyan-600 hover:bg-cyan-700 text-white rounded transition-colors disabled:opacity-50"
+                    >
+                      {{ isProcessing ? 'Saving...' : 'Save' }}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -269,6 +363,12 @@ const newFile = ref({ name: '', url: '', tags: 'gameplay' });
 const newComment = ref('');
 const recentlyAddedCommentId = ref<string | null>(null);
 const recentlyAddedFileId = ref<string | null>(null);
+
+// Edit state
+const editingFileId = ref<number | null>(null);
+const editingFile = ref({ name: '', url: '', tags: '' });
+const editingCommentId = ref<number | null>(null);
+const editingComment = ref('');
 
 const formatMatchDate = (dateString: string): string => {
   const date = new Date(dateString);
@@ -450,6 +550,98 @@ const deleteExistingComment = async (commentId: number | string) => {
     existingComments.value = existingComments.value.filter(c => c.id !== commentId);
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to delete comment';
+  } finally {
+    isProcessing.value = false;
+  }
+};
+
+const startEditFile = (file: DisplayFile) => {
+  editingFileId.value = file.id as number;
+  editingFile.value = {
+    name: file.name,
+    url: file.url,
+    tags: file.tags,
+  };
+};
+
+const cancelEditFile = () => {
+  editingFileId.value = null;
+  editingFile.value = { name: '', url: '', tags: '' };
+};
+
+const saveEditFile = async (fileId: number) => {
+  if (!props.match || !editingFile.value.url.trim()) {
+    error.value = 'URL is required';
+    return;
+  }
+
+  isProcessing.value = true;
+  error.value = null;
+
+  try {
+    const updatedFile = await adminTournamentService.updateMatchFile(
+      props.tournamentId,
+      props.match.id,
+      fileId,
+      {
+        name: editingFile.value.name.trim(),
+        url: editingFile.value.url.trim(),
+        tags: editingFile.value.tags.trim(),
+      }
+    );
+
+    const index = existingFiles.value.findIndex(f => f.id === fileId);
+    if (index !== -1) {
+      existingFiles.value[index] = { ...updatedFile, isNew: false } as DisplayFile;
+    }
+
+    editingFileId.value = null;
+    editingFile.value = { name: '', url: '', tags: '' };
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to update file';
+  } finally {
+    isProcessing.value = false;
+  }
+};
+
+const startEditComment = (comment: DisplayComment) => {
+  editingCommentId.value = comment.id as number;
+  editingComment.value = comment.content;
+};
+
+const cancelEditComment = () => {
+  editingCommentId.value = null;
+  editingComment.value = '';
+};
+
+const saveEditComment = async (commentId: number) => {
+  if (!props.match || !editingComment.value.trim()) {
+    error.value = 'Comment cannot be empty';
+    return;
+  }
+
+  isProcessing.value = true;
+  error.value = null;
+
+  try {
+    const updatedComment = await adminTournamentService.updateMatchComment(
+      props.tournamentId,
+      props.match.id,
+      commentId,
+      {
+        content: editingComment.value.trim(),
+      }
+    );
+
+    const index = existingComments.value.findIndex(c => c.id === commentId);
+    if (index !== -1) {
+      existingComments.value[index] = { ...updatedComment, isNew: false } as DisplayComment;
+    }
+
+    editingCommentId.value = null;
+    editingComment.value = '';
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to update comment';
   } finally {
     isProcessing.value = false;
   }
