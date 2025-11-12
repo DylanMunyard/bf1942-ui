@@ -75,7 +75,7 @@
             target="_blank"
             rel="noopener noreferrer"
             title="Join our Discord server"
-            class="p-2 bg-indigo-500/20 hover:bg-indigo-500/30 backdrop-blur-sm transition-all flex items-center justify-center"
+            class="p-2 backdrop-blur-sm transition-all flex items-center justify-center"
           >
             <img :src="discordLogo" alt="Discord" class="w-6 h-6 object-contain">
           </a>
@@ -85,7 +85,7 @@
             target="_blank"
             rel="noopener noreferrer"
             title="Visit our YouTube channel"
-            class="p-2 bg-red-500/20 hover:bg-red-500/30 backdrop-blur-sm transition-all flex items-center justify-center"
+            class="p-2 backdrop-blur-sm transition-all flex items-center justify-center"
           >
             <img :src="youtubeLogo" alt="YouTube" class="w-6 h-6 object-contain">
           </a>
@@ -95,7 +95,7 @@
             target="_blank"
             rel="noopener noreferrer"
             title="Visit our forum"
-            class="p-3 bg-orange-500/20 hover:bg-orange-500/30 backdrop-blur-sm transition-all"
+            class="p-3 backdrop-blur-sm transition-all"
           >
             <span class="text-orange-400 text-xl">📋</span>
           </a>
