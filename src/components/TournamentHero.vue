@@ -90,6 +90,16 @@
             <img :src="youtubeLogo" alt="YouTube" class="w-6 h-6 object-contain">
           </a>
           <a
+            v-if="tournament.twitchUrl"
+            :href="tournament.twitchUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Visit our Twitch channel"
+            class="p-2 backdrop-blur-sm transition-all flex items-center justify-center"
+          >
+            <img :src="twitchLogo" alt="Twitch" class="w-6 h-6 object-contain">
+          </a>
+          <a
             v-if="tournament.forumUrl"
             :href="tournament.forumUrl"
             target="_blank"
@@ -170,6 +180,7 @@ import { isValidHex, normalizeHex, calculateLuminance, hexToRgb } from '@/utils/
 import type { PublicTournamentDetail } from '@/services/publicTournamentService'
 import discordLogo from '@/assets/discord.webp'
 import youtubeLogo from '@/assets/youtube-logo.webp'
+import twitchLogo from '@/assets/twitch.webp'
 
 interface Props {
   tournament: PublicTournamentDetail

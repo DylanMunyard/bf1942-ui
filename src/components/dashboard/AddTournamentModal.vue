@@ -387,6 +387,19 @@ Winners choose first map for next round.</code>
               >
             </div>
 
+            <!-- Twitch Link -->
+            <div class="flex items-center gap-3">
+              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center overflow-hidden">
+                <img :src="twitchLogo" alt="Twitch" class="w-6 h-6 object-contain">
+              </div>
+              <input
+                v-model="formData.twitchUrl"
+                type="url"
+                placeholder="https://twitch.tv/..."
+                class="flex-1 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+              >
+            </div>
+
             <!-- Forum Link -->
             <div class="flex items-center gap-3">
               <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
@@ -1232,6 +1245,7 @@ import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
 import discordLogo from '@/assets/discord.webp';
 import youtubeLogo from '@/assets/youtube-logo.webp';
+import twitchLogo from '@/assets/twitch.webp';
 
 interface PlayerSearchResult {
   playerName: string;
@@ -1269,6 +1283,7 @@ const formData = ref({
   serverGuid: undefined as string | undefined,
   discordUrl: '',
   youTubeUrl: '',
+  twitchUrl: '',
   forumUrl: '',
   rules: '',
   status: 'draft' as 'draft' | 'registration' | 'open' | 'closed',
@@ -1414,6 +1429,7 @@ onMounted(() => {
       serverGuid: props.tournament.serverGuid,
       discordUrl: props.tournament.discordUrl || '',
       youTubeUrl: props.tournament.youTubeUrl || '',
+      twitchUrl: props.tournament.twitchUrl || '',
       forumUrl: props.tournament.forumUrl || '',
       rules: props.tournament.rules || '',
       status: props.tournament.status || undefined,
@@ -1931,6 +1947,10 @@ const handleSubmit = async () => {
 
     if (formData.value.youTubeUrl?.trim()) {
       request.youTubeUrl = formData.value.youTubeUrl.trim();
+    }
+
+    if (formData.value.twitchUrl?.trim()) {
+      request.twitchUrl = formData.value.twitchUrl.trim();
     }
 
     if (formData.value.forumUrl?.trim()) {

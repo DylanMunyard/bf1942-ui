@@ -112,6 +112,7 @@ export interface TournamentDetail {
   serverName?: string;
   discordUrl?: string;
   youTubeUrl?: string;
+  twitchUrl?: string;
   forumUrl?: string;
   rules?: string;
   theme: TournamentTheme;
@@ -133,6 +134,7 @@ export interface CreateTournamentRequest {
   serverGuid?: string;
   discordUrl?: string;
   youTubeUrl?: string;
+  twitchUrl?: string;
   forumUrl?: string;
   rules?: string;
   weekDates?: TournamentWeekDate[];
@@ -154,6 +156,7 @@ export interface UpdateTournamentRequest {
   serverGuid?: string;
   discordUrl?: string;
   youTubeUrl?: string;
+  twitchUrl?: string;
   forumUrl?: string;
   rules?: string;
   weekDates?: TournamentWeekDate[];

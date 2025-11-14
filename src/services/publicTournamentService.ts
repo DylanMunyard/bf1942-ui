@@ -165,6 +165,7 @@ export interface PublicTournamentDetail {
   serverName?: string;
   discordUrl?: string;
   youTubeUrl?: string;
+  twitchUrl?: string;
   forumUrl?: string;
   rules?: string;
   theme: TournamentTheme;
