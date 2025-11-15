@@ -836,7 +836,10 @@ onUnmounted(() => {
             :player-name="playerName"
             :player-stats="playerStats"
           />
-
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>

@@ -569,7 +569,7 @@ const sortPlayersBy = (field: string) => {
 }
 
 .team-table-container {
-  @apply bg-slate-900/40;
+  background-color: rgb(15 23 42 / 0.4);
   overflow: hidden;
 }
 
