@@ -41,4 +41,8 @@
   <!-- Note: Individual tournament pages (/tournaments/:id) should be generated dynamically
        from the tournament API and added to this sitemap via a backend service -->
 
+  <!-- Round Report Pages -->
+  <!-- Note: Round report pages (/rounds/:id/report) are excluded from indexing via robots meta tag
+       and should not be added to the sitemap -->
+
 </urlset>

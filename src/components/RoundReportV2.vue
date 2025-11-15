@@ -808,6 +808,15 @@ const updatePageTitle = () => {
     ogDescriptionTag.setAttribute('content', description);
   }
 
+  // Prevent search engine indexing of round report pages
+  let robotsTag = document.querySelector('meta[name="robots"]');
+  if (!robotsTag) {
+    robotsTag = document.createElement('meta');
+    robotsTag.setAttribute('name', 'robots');
+    document.head.appendChild(robotsTag);
+  }
+  robotsTag.setAttribute('content', 'noindex, nofollow');
+
   // Update notification service's original title
   import('../services/notificationService').then(({ notificationService }) => {
     notificationService.updateOriginalTitle();
