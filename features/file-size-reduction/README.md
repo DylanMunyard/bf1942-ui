@@ -14,7 +14,7 @@ Extract large sections from monolithic components into smaller, focused feature 
 
 ## Refactoring Results
 
-### PlayerDetails.vue Refactoring
+### 1. PlayerDetails.vue Refactoring ✅
 
 **Before:**
 - `PlayerDetails.vue`: 3,210 lines (too large to load in one LLM context window)
@@ -27,6 +27,23 @@ Extract large sections from monolithic components into smaller, focused feature 
 - `PlayerDetails/TopServersSection.vue`: 972 lines
 
 **Total lines:** 3,516 lines across 5 files (vs. 3,210 in 1 file)
+
+### 2. PlayerComparison.vue Refactoring ✅
+
+**Before:**
+- `PlayerComparison.vue`: 2,487 lines
+
+**After:**
+- `PlayerComparison.vue`: 621 lines (**75% reduction**)
+- `PlayerComparison/ComparisonHeader.vue`: 398 lines
+- `PlayerComparison/ComparisonStatsTable.vue`: 1,419 lines
+- `PlayerComparison/ComparisonAchievements.vue`: 224 lines
+
+**Total lines:** 2,662 lines across 4 files (vs. 2,487 in 1 file)
+
+**Commits:** 3 incremental commits (one per component extraction)
+
+### Notes on Line Count
 
 The slight increase in total lines is due to:
 - Proper TypeScript interfaces for props
@@ -135,11 +152,10 @@ When extracting components, handle shared code by:
 
 ## Future Refactoring Candidates
 
-Based on initial analysis:
-1. `PlayerComparison.vue` - 2,487 lines
-2. `AddTournamentModal.vue` - 2,178 lines
-3. `LandingPageV2.vue` - 2,116 lines
-4. `TournamentDetails.vue` - 1,774 lines
+Remaining large files:
+1. `AddTournamentModal.vue` - 2,178 lines
+2. `LandingPageV2.vue` - 2,116 lines
+3. `TournamentDetails.vue` - 1,774 lines
 
 ## Testing Considerations
 
