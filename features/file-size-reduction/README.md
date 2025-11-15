@@ -43,6 +43,22 @@ Extract large sections from monolithic components into smaller, focused feature 
 
 **Commits:** 3 incremental commits (one per component extraction)
 
+### 3. AddTournamentModal.vue Refactoring ✅
+
+**Before:**
+- `AddTournamentModal.vue`: 2,178 lines
+
+**After:**
+- `AddTournamentModal.vue`: 1,286 lines (**41% reduction**)
+- `AddTournament/MarkdownHelpModal.vue`: 143 lines
+- `AddTournament/WeekDatesPanel.vue`: 207 lines
+- `AddTournament/FilesManagerPanel.vue`: 209 lines
+- `AddTournament/ThemeColorsPanel.vue`: 461 lines
+
+**Total lines:** 2,306 lines across 5 files (vs. 2,178 in 1 file)
+
+**Commits:** 4 incremental commits (one per component extraction)
+
 ### Notes on Line Count
 
 The slight increase in total lines is due to:
@@ -153,9 +169,8 @@ When extracting components, handle shared code by:
 ## Future Refactoring Candidates
 
 Remaining large files:
-1. `AddTournamentModal.vue` - 2,178 lines
-2. `LandingPageV2.vue` - 2,116 lines
-3. `TournamentDetails.vue` - 1,774 lines
+1. `LandingPageV2.vue` - 2,116 lines
+2. `TournamentDetails.vue` - 1,774 lines
 
 ## Testing Considerations
 
