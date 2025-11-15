@@ -59,6 +59,40 @@ Extract large sections from monolithic components into smaller, focused feature 
 
 **Commits:** 4 incremental commits (one per component extraction)
 
+### 4. LandingPageV2.vue Refactoring ✅
+
+**Before:**
+- `LandingPageV2.vue`: 2,116 lines (too large to load in one LLM context window)
+
+**After:**
+- `LandingPageV2.vue`: 1,663 lines (**21% reduction**)
+- `LandingPage/PlayerHistorySection.vue`: 282 lines
+- `LandingPage/GameTrendsSection.vue`: 286 lines
+
+**Total lines:** 2,231 lines across 3 files (vs. 2,116 in 1 file)
+
+**Commits:** 3 incremental commits (one per component extraction + shared utility)
+
+**Components extracted:**
+1. **PlayerHistorySection.vue** - Player activity history with chart
+   - Collapsible section with toggle
+   - Period selector (24h, 3 days, 7 days, 1 month, 3 months, this year, all time)
+   - Rolling window selector for data aggregation
+   - Integration with PlayerHistoryChart component
+   - Loading/error states
+   - Watches for game filter changes
+
+2. **GameTrendsSection.vue** - 24-hour player forecast
+   - Vertical bar chart showing predicted player counts
+   - Chronological forecast sorting across day boundaries
+   - Current hour highlighting
+   - Hour display formatting (UTC to local time)
+   - Loading/error states
+   - Exposes fetchGameTrends method via defineExpose
+
+**Shared utilities added:**
+- `formatPlayTime` function added to `src/utils/timeUtils.ts` (eliminates duplication across components)
+
 ### Notes on Line Count
 
 The slight increase in total lines is due to:
@@ -136,6 +170,22 @@ src/
    - Sortable map performance table
    - Time range filtering
 
+5. **PlayerHistorySection.vue** (282 lines) - LandingPage feature folder
+   - Player activity history toggle button
+   - Collapsible chart display
+   - Period selector with dropdown for longer periods
+   - Rolling window configuration
+   - Fetches and displays player population trends per game
+   - Watches game filter changes to refetch data
+
+6. **GameTrendsSection.vue** (286 lines) - LandingPage feature folder
+   - 24-hour player forecast bar chart
+   - Current hour highlighting
+   - Forecast data sorted chronologically
+   - UTC to local time conversion
+   - Loading and error state handling
+   - Exposed fetchGameTrends method for parent control
+
 ## Guidelines for Future Refactoring
 
 ### When to Extract
@@ -169,8 +219,8 @@ When extracting components, handle shared code by:
 ## Future Refactoring Candidates
 
 Remaining large files:
-1. `LandingPageV2.vue` - 2,116 lines
-2. `TournamentDetails.vue` - 1,774 lines
+1. `TournamentDetails.vue` - 1,774 lines
+2. `LandingPageV2.vue` - 1,663 lines (partially refactored, could extract player search and server table components)
 
 ## Testing Considerations
 
