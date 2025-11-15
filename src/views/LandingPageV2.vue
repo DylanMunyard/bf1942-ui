@@ -307,219 +307,16 @@
         </div>
 
         <!-- Player History Section -->
-        <div class="border-b border-slate-700/30">
-          <!-- Toggle Button -->
-          <div class="p-3">
-            <button
-              class="w-full flex items-center justify-between p-3 bg-slate-800/30 hover:bg-slate-700/50 rounded-lg border border-slate-700/50 transition-all duration-300 group"
-              @click="togglePlayerHistory"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center">
-                  <span class="text-slate-900 text-sm font-bold">📈</span>
-                </div>
-                <div class="text-left">
-                  <div class="text-sm font-medium text-slate-200">
-                    Player Activity History
-                  </div>
-                  <div class="text-xs text-slate-400">
-                    {{ getActiveGameName() }} population trends
-                  </div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-slate-400 hidden sm:block">{{ showPlayerHistory ? 'Hide' : 'Show' }}</span>
-                <div
-                  class="transform transition-transform duration-300"
-                  :class="{ 'rotate-180': showPlayerHistory }"
-                >
-                  <svg
-                    class="w-5 h-5 text-slate-400 group-hover:text-cyan-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </button>
-          </div>
-
-          <!-- Collapsible History Content -->
-          <div 
-            v-if="showPlayerHistory" 
-            class="px-3 pb-3 space-y-3 animate-in slide-in-from-top duration-300"
-          >
-            <!-- Enhanced Period Selector -->
-            <div class="flex justify-center gap-1 bg-slate-800/30 rounded-lg p-1">
-              <!-- Short periods -->
-              <button
-                v-for="period in ['1d', '3d', '7d']"
-                :key="period"
-                :class="[
-                  'px-3 py-1 text-xs font-medium rounded-md transition-all duration-200',
-                  historyPeriod === period
-                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                ]"
-                @click="changePeriod(period as '1d' | '3d' | '7d')"
-              >
-                {{ period === '1d' ? '24h' : period === '3d' ? '3 days' : '7 days' }}
-              </button>
-              
-              <!-- Longer periods dropdown -->
-              <div class="relative">
-                <button
-                  :class="[
-                    'px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1',
-                    historyPeriod === 'longer'
-                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                  ]"
-                  @click="toggleLongerDropdown"
-                >
-                  {{ getLongerPeriodLabel() }}
-                  <svg
-                    class="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-                
-                <!-- Dropdown menu -->
-                <div
-                  v-if="showLongerDropdown"
-                  class="absolute top-full mt-1 right-0 bg-slate-800/95 backdrop-blur-lg rounded-lg border border-slate-700/50 shadow-xl z-50 min-w-[120px]"
-                >
-                  <button
-                    v-for="period in [{ id: '1month', label: '1 Month' }, { id: '3months', label: '3 Months' }, { id: 'thisyear', label: 'This Year' }, { id: 'alltime', label: 'All Time' }]"
-                    :key="period.id"
-                    :class="[
-                      'w-full text-left px-3 py-2 text-xs hover:bg-slate-700/50 transition-colors first:rounded-t-lg last:rounded-b-lg',
-                      longerPeriod === period.id ? 'text-cyan-400 bg-cyan-500/10' : 'text-slate-300'
-                    ]"
-                    @click="selectLongerPeriod(period.id as '1month' | '3months' | 'thisyear' | 'alltime')"
-                  >
-                    {{ period.label }}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Chart Container -->
-            <div class="bg-slate-800/20 rounded-lg p-4">
-              <PlayerHistoryChart
-                :chart-data="playerHistoryData"
-                :insights="playerHistoryInsights"
-                :period="getCurrentPeriod()"
-                :rolling-window="historyRollingWindow"
-                :loading="historyLoading"
-                :error="historyError"
-                @rolling-window-change="changeRollingWindow"
-              />
-            </div>
-          </div>
-        </div>
+        <PlayerHistorySection
+          :active-filter="activeFilter"
+          :game-types="gameTypes"
+        />
 
         <!-- Game Trends Section -->
-        <div class="border-b border-slate-700/30">
-          <div class="p-3">
-            <!-- Game Trends -->
-            <div 
-              v-if="gameTrends && !trendsLoading" 
-              class="bg-slate-800/30 rounded-lg p-4 space-y-4"
-            >
-              <!-- Forecast Chart - Vertical Bar Display -->
-              <div class="space-y-3">
-                <div class="flex items-center gap-2">
-                  <div class="w-5 h-5 bg-gradient-to-r from-purple-400 to-pink-500 rounded flex items-center justify-center">
-                    <span class="text-slate-900 text-xs font-bold">📊</span>
-                  </div>
-                  <span class="text-xs font-bold text-purple-400 uppercase tracking-wide">Forecast</span>
-                </div>
-                
-                <!-- Vertical bars like Google Maps busy indicator -->
-                <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
-                  <div 
-                    v-for="(forecast, index) in processedForecast" 
-                    :key="index"
-                    class="flex flex-col items-center gap-1 flex-1 max-w-[60px] group cursor-pointer"
-                  >
-                    <!-- Vertical bar -->
-                    <div
-                      class="w-6 rounded-t transition-[background-color,transform,box-shadow] duration-300 hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/30 will-change-transform"
-                      :class="forecast.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500 hover:from-cyan-200 hover:to-cyan-400' : 'bg-gradient-to-t from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400'"
-                      :style="{
-                        height: Math.max(8, (forecast.predictedPlayers / gameTrends.maxPredictedPlayers) * 80) + 'px'
-                      }"
-                      :title="`${formatHourDisplayFixed(forecast.hourOfDay, forecast.isCurrentHour, index)}: ${Math.round(forecast.predictedPlayers)} players${forecast.isCurrentHour && forecast.actualPlayers ? ` (${forecast.actualPlayers} actual)` : ''}`"
-                    />
-                    <!-- Time label -->
-                    <div
-                      class="text-xs font-mono text-center transition-colors duration-300 group-hover:text-slate-200"
-                      :class="forecast.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'"
-                    >
-                      {{ formatHourDisplayFixed(forecast.hourOfDay, forecast.isCurrentHour, index) }}
-                    </div>
-                    <!-- Player count -->
-                    <div class="text-xs text-center transition-colors duration-300 group-hover:text-slate-200">
-                      <div
-                        v-if="forecast.isCurrentHour"
-                        class="text-cyan-400 font-bold group-hover:text-cyan-300"
-                      >
-                        {{ forecast.actualPlayers || Math.round(forecast.predictedPlayers) }}
-                      </div>
-                      <div
-                        v-else
-                        class="text-slate-300 font-semibold"
-                      >
-                        {{ Math.round(forecast.predictedPlayers) }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Trends Loading State -->
-            <div 
-              v-else-if="trendsLoading" 
-              class="bg-slate-800/30 rounded-lg p-4"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
-                <span class="text-sm text-slate-400">Loading activity trends...</span>
-              </div>
-            </div>
-
-            <!-- Trends Error State -->
-            <div 
-              v-else-if="trendsError" 
-              class="bg-red-500/10 border border-red-500/20 rounded-lg p-4"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
-                  <span class="text-red-400 text-xs">⚠️</span>
-                </div>
-                <span class="text-sm text-red-400">{{ trendsError }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <GameTrendsSection
+          ref="gameTrendsRef"
+          :active-filter="activeFilter"
+        />
 
         <!-- Loading State -->
         <div
@@ -1067,10 +864,9 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchAllServers, fetchServerBusyIndicators, type ServerBusyIndicatorResult, type ServerHourlyTimelineEntry, type BusyLevel } from '../services/serverDetailsService'
 import { ServerSummary } from '../types/server'
-import { PlayerHistoryDataPoint, PlayerHistoryInsights } from '../types/playerStatsTypes'
 import PlayersPanel from '../components/PlayersPanel.vue'
-import PlayerHistoryChart from '../components/PlayerHistoryChart.vue'
-import { fetchPlayerOnlineHistory } from '../services/playerStatsService'
+import PlayerHistorySection from '../components/LandingPage/PlayerHistorySection.vue'
+import GameTrendsSection from '../components/LandingPage/GameTrendsSection.vue'
 import { formatTimeRemaining } from '../utils/timeUtils'
 import ForecastModal from '../components/ForecastModal.vue'
 
@@ -1078,44 +874,6 @@ import bf1942Icon from '@/assets/bf1942.webp'
 import fh2Icon from '@/assets/fh2.webp'
 import bfvIcon from '@/assets/bfv.webp'
 import discordIcon from '@/assets/discord.webp'
-
-interface GameTrendsInsights {
-  currentHourPredictedPlayers: number
-  currentActualPlayers: number
-  activityComparisonStatus: 'busier_than_usual' | 'quieter_than_usual' | 'as_usual'
-  currentStatus: 'very_busy' | 'busy' | 'moderate' | 'quiet' | 'very_quiet'
-  trendDirection: 'increasing_significantly' | 'increasing' | 'stable' | 'decreasing' | 'decreasing_significantly'
-  nextHourPredictedPlayers: number
-  maxPredictedPlayers: number
-  forecast: {
-    hourOfDay: number
-    dayOfWeek: number
-    predictedPlayers: number
-    dataPoints: number
-    isCurrentHour?: boolean
-    actualPlayers?: number
-    delta?: number
-  }[]
-  next24HourPeaks: {
-    hourOfDay: number
-    dayOfWeek: number
-    predictedPlayers: number
-  }[]
-  generatedAt: string
-  recommendationMessage: string
-}
-
-interface GameTrendsResponse {
-  currentActivity: {
-    game: string
-    serverGuid: string
-    currentPlayers: number
-    latestActivity: string
-    currentMapName: string
-  }[]
-  insights: GameTrendsInsights
-  generatedAt: string
-}
 
 interface PlayerSearchResult {
   playerName: string
@@ -1191,24 +949,11 @@ let blurTimeout: number | null = null
 const showPlayersPanel = ref(false)
 const selectedServer = ref<ServerSummary | null>(null)
 
-// Player history state
-const showPlayerHistory = ref(false)
-const playerHistoryData = ref<PlayerHistoryDataPoint[]>([])
-const playerHistoryInsights = ref<PlayerHistoryInsights | null>(null)
-const historyPeriod = ref<'1d' | '3d' | '7d' | 'longer'>('1d')
-const longerPeriod = ref<'1month' | '3months' | 'thisyear' | 'alltime'>('1month')
-const historyRollingWindow = ref('7d')
-const historyLoading = ref(false)
-const historyError = ref<string | null>(null)
-const showLongerDropdown = ref(false)
-
 // Installation links dropdown state
 const showInstallDropdown = ref(false)
 
-// Game trends state
-const gameTrends = ref<GameTrendsInsights | null>(null)
-const trendsLoading = ref(false)
-const trendsError = ref<string | null>(null)
+// Game trends component ref
+const gameTrendsRef = ref<InstanceType<typeof GameTrendsSection> | null>(null)
 
 // Per-server trends state (busy indicator + hourly timeline)
 const serverTrendsByGuid = ref<Record<string, ServerBusyIndicatorResult>>({})
@@ -1245,45 +990,6 @@ const filteredServers = computed(() => {
   })
 })
 
-const processedForecast = computed(() => {
-  if (!gameTrends.value?.forecast) return []
-  
-  const forecast = [...gameTrends.value.forecast]
-  
-  // Find the current hour entry
-  const currentHourEntry = forecast.find(f => f.isCurrentHour)
-  if (!currentHourEntry) return forecast
-  
-  const currentDay = currentHourEntry.dayOfWeek;
-  
-  // Sort the forecast array chronologically
-  return forecast.sort((a, b) => {
-    // If both entries are from the same day, sort by hour
-    if (a.dayOfWeek === b.dayOfWeek) {
-      return a.hourOfDay - b.hourOfDay
-    }
-    
-    // If one entry is from the current day and the other is from the next day
-    if (a.dayOfWeek === currentDay && b.dayOfWeek === (currentDay % 7) + 1) {
-      return -1 // Current day comes first
-    }
-    if (b.dayOfWeek === currentDay && a.dayOfWeek === (currentDay % 7) + 1) {
-      return 1 // Current day comes first
-    }
-    
-    // If one entry is from the previous day and the other is from the current day
-    const prevDay = currentDay === 1 ? 7 : currentDay - 1
-    if (a.dayOfWeek === prevDay && b.dayOfWeek === currentDay) {
-      return -1 // Previous day comes first
-    }
-    if (b.dayOfWeek === prevDay && a.dayOfWeek === currentDay) {
-      return 1 // Previous day comes first
-    }
-    
-    // Default: sort by day of week
-    return a.dayOfWeek - b.dayOfWeek
-  })
-})
 
 const getTimezoneOffset = (timezone: string | undefined): number => {
   if (!timezone) return 999 // Sort servers without timezone to the end
@@ -1677,29 +1383,6 @@ const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isI
   }
 }
 
-const fetchGameTrends = async (isInitialLoad = false) => {
-  // Only show loading state on initial load to prevent flashing
-  if (isInitialLoad) {
-    trendsLoading.value = true
-  }
-  trendsError.value = null
-  
-  try {
-    const response = await fetch(`/stats/GameTrends/landing-summary?game=${activeFilter.value}`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch game trends')
-    }
-
-    const data: GameTrendsResponse = await response.json()
-    gameTrends.value = data.insights
-  } catch (err) {
-    trendsError.value = 'Failed to load game trends'
-  } finally {
-    if (isInitialLoad) {
-      trendsLoading.value = false
-    }
-  }
-}
 
 // Helper: fetch per-server busy indicators without blocking main render
 const fetchAndAttachServerTrends = async () => {
@@ -1810,132 +1493,7 @@ const getBusyLevelLabel = (level: BusyLevel): string => {
   }
 }
 
-const fetchPlayerHistory = async () => {
-  historyLoading.value = true
-  historyError.value = null
-  
-  try {
-    const currentPeriod = getCurrentPeriod()
-    const apiPeriod = getCurrentPeriodForAPI()
 
-    const response = await fetchPlayerOnlineHistory(
-      activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam',
-      apiPeriod,
-      getRollingWindowDays(historyRollingWindow.value)
-    )
-
-    // Set the response data - only update if we have valid data
-    if (response.dataPoints && response.dataPoints.length > 0) {
-      playerHistoryData.value = response.dataPoints
-    }
-    if (response.insights) {
-      playerHistoryInsights.value = response.insights
-    }
-  } catch (err) {
-    historyError.value = 'Failed to load player history'
-    // Only clear data on error, not during normal updates
-    if (playerHistoryData.value.length === 0) {
-      playerHistoryData.value = []
-      playerHistoryInsights.value = null
-    }
-  } finally {
-    historyLoading.value = false
-  }
-}
-
-const togglePlayerHistory = () => {
-  showPlayerHistory.value = !showPlayerHistory.value
-  if (showPlayerHistory.value && playerHistoryData.value.length === 0) {
-    fetchPlayerHistory()
-  }
-}
-
-const changePeriod = (period: '1d' | '3d' | '7d') => {
-  historyPeriod.value = period
-  showLongerDropdown.value = false
-  fetchPlayerHistory()
-}
-
-const changeRollingWindow = (rollingWindow: string) => {
-  historyRollingWindow.value = rollingWindow
-  fetchPlayerHistory()
-}
-
-// Convert rolling window string to numerical days
-const getRollingWindowDays = (rollingWindow: string): number => {
-  switch (rollingWindow) {
-    case '7d':
-      return 7
-    case '14d':
-      return 14
-    case '30d':
-      return 30
-    default:
-      return 7
-  }
-}
-
-const toggleLongerDropdown = () => {
-  showLongerDropdown.value = !showLongerDropdown.value
-}
-
-const selectLongerPeriod = (period: '1month' | '3months' | 'thisyear' | 'alltime') => {
-  longerPeriod.value = period
-  historyPeriod.value = 'longer'
-  showLongerDropdown.value = false
-  fetchPlayerHistory()
-}
-
-const getLongerPeriodLabel = () => {
-  if (historyPeriod.value !== 'longer') return 'More'
-  const labels = {
-    '1month': '1 Month',
-    '3months': '3 Months', 
-    'thisyear': 'This Year',
-    'alltime': 'All Time'
-  }
-  return labels[longerPeriod.value]
-}
-
-const getCurrentPeriod = () => {
-  return historyPeriod.value === 'longer' ? longerPeriod.value : historyPeriod.value
-}
-
-const getCurrentPeriodForAPI = (): string => {
-  if (historyPeriod.value === 'longer') {
-    // Return the longer period value directly
-    return longerPeriod.value
-  }
-  // Return the actual period value for 1d, 3d, 7d
-  return historyPeriod.value
-}
-
-const getActiveGameName = () => {
-  const gameType = gameTypes.find(g => g.id === activeFilter.value)
-  return gameType?.name || 'Game'
-}
-
-const formatHourDisplayFixed = (hourUTC: number, isCurrentHour?: boolean, forecastIndex?: number) => {
-  // If we have the isCurrentHour flag from the API, use it directly
-  if (isCurrentHour !== undefined) {
-    if (isCurrentHour) return 'Now'
-  }
-  
-  // Convert UTC hour to local time
-  const now = new Date()
-  const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hourUTC, 0, 0))
-  const localHour = utcDate.getHours()
-  
-  // Format the hour as 12-hour time with am/pm
-  const formatHour = (hour: number) => {
-    if (hour === 0) return '12am'
-    if (hour < 12) return `${hour}am`
-    if (hour === 12) return '12pm'
-    return `${hour - 12}pm`
-  }
-  
-  return formatHour(localHour)
-}
 
 // Update SEO meta tags when server data changes
 const updateSeoMetaTags = () => {
@@ -1982,28 +1540,17 @@ watch(activeFilter, (newFilter) => {
   // Reset per-server trends when switching games to avoid stale badges
   serverTrendsByGuid.value = {}
   fetchServersForGame(newFilter as 'bf1942' | 'fh2' | 'bfvietnam', true)
-  // Also refresh player history if it's visible
-  if (showPlayerHistory.value) {
-    fetchPlayerHistory()
-  }
   // Refresh game trends
-  fetchGameTrends(true)
+  gameTrendsRef.value?.fetchGameTrends(true)
 })
 
 // Lifecycle
 onMounted(() => {
   fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', true)
-  fetchGameTrends(true)
-  
+  gameTrendsRef.value?.fetchGameTrends(true)
+
   refreshTimer.value = window.setInterval(() => {
     fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', false)
-    
-    // Only fetch trends if we're at a new hour
-    const now = new Date()
-    const lastFetchTime = gameTrends.value ? new Date(gameTrends.value.generatedAt) : null
-    if (!lastFetchTime || now.getUTCHours() !== lastFetchTime.getUTCHours()) {
-      fetchGameTrends()
-    }
   }, 300000)
   
   // Close dropdown on outside click
