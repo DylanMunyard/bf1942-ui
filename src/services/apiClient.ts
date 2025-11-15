@@ -1,4 +1,5 @@
 import { authService } from './authService';
+import { logger } from './loggerService';
 
 export interface ApiClientOptions extends RequestInit {
   requiresAuth?: boolean;
@@ -25,13 +26,25 @@ class ApiClient {
       }
     }
 
-    const response = await fetch(url, fetchOptions);
+    let response: Response;
+
+    try {
+      response = await fetch(url, fetchOptions);
+    } catch (error) {
+      // Network error (no response received)
+      logger.error('Network request failed', error as Error, {
+        url,
+        method: fetchOptions.method || 'GET',
+        requiresAuth,
+      });
+      throw error;
+    }
 
     // Handle 401 errors by attempting token refresh
     if (response.status === 401 && requiresAuth) {
-      console.log('Received 401, attempting token refresh...');
+      logger.info('Received 401, attempting token refresh', { url });
       const refreshed = await authService.refreshToken();
-      
+
       if (refreshed) {
         // Retry the request with new token
         const newToken = localStorage.getItem('authToken');
@@ -44,8 +57,27 @@ class ApiClient {
         }
       } else {
         // Refresh failed, logout user
+        logger.warn('Token refresh failed, logging out user', { url });
         await authService.logout();
         throw new Error('Session expired. Please login again.');
+      }
+    }
+
+    // Log 4xx and 5xx errors
+    if (response.status >= 400) {
+      const logData = {
+        url,
+        method: fetchOptions.method || 'GET',
+        status: response.status,
+        statusText: response.statusText,
+        requiresAuth,
+      };
+
+      if (response.status >= 500) {
+        logger.error('Server error response', undefined, logData);
+      } else if (response.status >= 400 && response.status !== 401) {
+        // 401 already handled above
+        logger.warn('Client error response', logData);
       }
     }
 
