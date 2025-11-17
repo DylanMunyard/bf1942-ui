@@ -66,7 +66,7 @@
                 <span v-if="ranking.rank === 1" class="text-xl">🥇</span>
                 <span v-else-if="ranking.rank === 2" class="text-xl">🥈</span>
                 <span v-else-if="ranking.rank === 3" class="text-xl">🥉</span>
-                <span v-else class="text-sm font-bold" :style="{ color: accentColor }">{{ ranking.rank }}</span>
+                <span v-else class="text-sm font-bold" :style="{ color: textColor }">{{ ranking.rank }}</span>
               </div>
             </td>
 
@@ -86,42 +86,42 @@
 
             <!-- Victories -->
             <td class="p-4 text-center">
-              <span class="text-sm font-bold" :style="{ color: accentColor }">
+              <span class="text-sm font-bold" :style="{ color: textColor }">
                 {{ ranking.victories }}
               </span>
             </td>
 
             <!-- Ties -->
             <td class="p-4 text-center">
-              <span class="text-sm" :style="{ color: textMutedColor }">
+              <span class="text-sm" :style="{ color: textColor }">
                 {{ ranking.ties }}
               </span>
             </td>
 
             <!-- Losses -->
             <td class="p-4 text-center">
-              <span class="text-sm" :style="{ color: textMutedColor }">
+              <span class="text-sm" :style="{ color: textColor }">
                 {{ ranking.losses }}
               </span>
             </td>
 
             <!-- Rounds Won -->
             <td class="p-4 text-center">
-              <span class="text-sm font-bold" :style="{ color: accentColor }">
+              <span class="text-sm font-bold" :style="{ color: textColor }">
                 {{ ranking.roundsWon }}
               </span>
             </td>
 
             <!-- Rounds Tied -->
             <td class="p-4 text-center">
-              <span class="text-sm" :style="{ color: textMutedColor }">
+              <span class="text-sm" :style="{ color: textColor }">
                 {{ ranking.roundsTied }}
               </span>
             </td>
 
             <!-- Rounds Lost -->
             <td class="p-4 text-center">
-              <span class="text-sm" :style="{ color: textMutedColor }">
+              <span class="text-sm" :style="{ color: textColor }">
                 {{ ranking.roundsLost }}
               </span>
             </td>
@@ -142,14 +142,14 @@
 
             <!-- Ticket Differential -->
             <td class="p-4 text-center">
-              <span class="text-sm font-mono" :style="{ color: ranking.ticketDifferential >= 0 ? accentColor : '#ef4444' }">
+              <span class="text-sm font-mono" :style="{ color: ranking.ticketDifferential > 0 ? '#22c55e' : ranking.ticketDifferential === 0 ? '#eab308' : '#ef4444' }">
                 {{ ranking.ticketDifferential >= 0 ? '+' : '' }}{{ ranking.ticketDifferential }}
               </span>
             </td>
 
             <!-- Points -->
             <td class="p-4 text-center">
-              <span class="text-sm font-bold" :style="{ color: accentColor }">
+              <span class="text-sm font-bold" :style="{ color: textColor }">
                 {{ ranking.points }}
               </span>
             </td>
