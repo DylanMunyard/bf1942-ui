@@ -35,3 +35,8 @@ npx playwright test  # Run E2E tests
 - `src/` - Vue 3 + TypeScript application
 - `e2e/` - Playwright E2E tests
 - `features/` - Feature documentation and design decisions
+
+## Tech Stack
+
+- Vue 3 + TypeScript
+- Tailwind CSS (in progress)
