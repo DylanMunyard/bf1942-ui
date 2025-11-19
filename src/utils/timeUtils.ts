@@ -70,9 +70,26 @@ export function formatShortAbsoluteTime(utcTimestamp: string): string {
  */
 export function formatTimeRemaining(timeValue: number): string {
   if (!timeValue || timeValue < 0) return '-'
-  
+
   const minutes = Math.floor(timeValue / 60)
   const seconds = timeValue % 60
-  
+
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+/**
+ * Format play time in minutes to a human-readable string
+ * e.g., 90 minutes becomes "1 hour 30 minutes", 45 minutes becomes "45 minutes"
+ */
+export function formatPlayTime(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = Math.floor(minutes % 60);
+
+  if (hours === 0) {
+    return `${remainingMinutes} minutes`;
+  } else if (hours === 1) {
+    return `${hours} hour ${remainingMinutes} minutes`;
+  } else {
+    return `${hours} hours ${remainingMinutes} minutes`;
+  }
 }

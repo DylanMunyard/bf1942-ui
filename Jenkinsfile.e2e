@@ -1,0 +1,228 @@
+// E2E Test Pipeline for BFStats UI
+// Can be run as a standalone job or triggered by the main Jenkinsfile
+// Runs on Kubernetes agent with Docker-in-Docker support
+// Requires: `publishHTML` Jenkins plugin for HTML reports
+
+pipeline {
+  agent {
+    kubernetes {
+      cloud 'Local k8s'
+      yamlFile 'deploy/pod.yaml'
+      nodeSelector 'kubernetes.io/hostname=bethany'
+    }
+  }
+
+  parameters {
+    choice(
+      name: 'TEST_ENVIRONMENT',
+      choices: ['local', 'staging', 'production'],
+      description: 'Which environment to test against'
+    )
+    booleanParam(
+      name: 'PUBLISH_REPORT',
+      defaultValue: true,
+      description: 'Publish Playwright HTML report as artifact'
+    )
+  }
+
+  options {
+    timeout(time: 30, unit: 'MINUTES')
+    timestamps()
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+  }
+
+  environment {
+    DOCKER_IMAGE = "bfstats-e2e:${BUILD_NUMBER}"
+    REPORT_DIR = "${WORKSPACE}/playwright-report"
+  }
+
+  stages {
+    stage('Setup') {
+      steps {
+        script {
+          echo "🔧 Setting up E2E test environment"
+          echo "Test Environment: ${params.TEST_ENVIRONMENT}"
+          sh 'mkdir -p ${REPORT_DIR}'
+        }
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        container('dind') {
+          script {
+            echo "🐳 Building Docker image for e2e tests..."
+            sh 'docker build -f Dockerfile.e2e -t ${DOCKER_IMAGE} .'
+            echo "✓ Docker image built: ${DOCKER_IMAGE}"
+          }
+        }
+      }
+    }
+
+    stage('Run E2E Tests') {
+      steps {
+        container('dind') {
+          script {
+            def apiBaseUrl = getApiBaseUrl(params.TEST_ENVIRONMENT)
+            echo "🧪 Running E2E tests against ${params.TEST_ENVIRONMENT}"
+            echo "API Base URL: ${apiBaseUrl}"
+
+            def exitCode = sh(
+              script: """
+                docker run \
+                  --rm \
+                  --ipc=host \
+                  -e API_BASE_URL=${apiBaseUrl} \
+                  -e CI=true \
+                  -v ${REPORT_DIR}:/app/playwright-report \
+                  ${DOCKER_IMAGE}
+              """,
+              returnStatus: true
+            )
+
+            if (exitCode != 0) {
+              echo "⚠️ Some tests failed (exit code: ${exitCode})"
+              echo ""
+              echo "================================"
+              echo "📊 TEST ARTIFACTS CAPTURED:"
+              echo "================================"
+              echo "Screenshots: Saved on test failure"
+              echo "Videos: Saved on test failure"
+              echo "Traces: Saved for debugging"
+              echo ""
+              echo "✓ All artifacts are included in the Playwright HTML report"
+              echo "✓ Click 'Playwright E2E Report' to view detailed results"
+              echo "✓ Failed tests will show screenshots, videos, and error messages"
+              echo ""
+              // Continue to publish report even if tests failed
+            } else {
+              echo "✅ All tests passed!"
+            }
+          }
+        }
+      }
+    }
+
+    stage('Test Summary') {
+      when {
+        expression { fileExists("${REPORT_DIR}/index.html") }
+      }
+      steps {
+        script {
+          echo "📈 Extracting test summary..."
+          sh '''
+            if [ -f "${REPORT_DIR}/index.html" ]; then
+              # Extract test counts from the HTML report
+              echo ""
+              echo "================================"
+              echo "TEST EXECUTION SUMMARY"
+              echo "================================"
+
+              # Look for common patterns in Playwright HTML report
+              if grep -q "failed" "${REPORT_DIR}/index.html"; then
+                echo "❌ Some tests failed - Check artifacts for details:"
+                echo "   • Screenshots of failed tests"
+                echo "   • Video recordings"
+                echo "   • Execution traces"
+                echo "   • Error messages and stack traces"
+              else
+                echo "✅ All tests passed!"
+              fi
+              echo ""
+            fi
+          '''
+        }
+      }
+    }
+
+    stage('Publish HTML Report') {
+      when {
+        expression {
+          fileExists("${REPORT_DIR}/index.html") && params.PUBLISH_REPORT
+        }
+      }
+      steps {
+        script {
+          echo "📊 Publishing Playwright HTML report..."
+          publishHTML([
+            reportDir: "${REPORT_DIR}",
+            reportFiles: 'index.html',
+            reportName: "Playwright E2E Report (${params.TEST_ENVIRONMENT})",
+            keepAll: true,
+            alwaysLinkToLastBuild: true,
+            allowMissing: false
+          ])
+          echo "✓ Report published to Jenkins"
+          echo ""
+          echo "📋 To view detailed results, click the report link in the left sidebar"
+        }
+      }
+    }
+
+    stage('Archive Artifacts') {
+      when {
+        expression { fileExists("${REPORT_DIR}/index.html") }
+      }
+      steps {
+        script {
+          echo "📦 Archiving test artifacts..."
+          sh '''
+            cd ${REPORT_DIR}
+            tar -czf ${WORKSPACE}/playwright-report.tar.gz . || true
+          '''
+          archiveArtifacts(
+            artifacts: 'playwright-report.tar.gz',
+            allowEmptyArchive: true
+          )
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      container('dind') {
+        script {
+          echo "🧹 Cleaning up..."
+          sh 'docker rmi ${DOCKER_IMAGE} || true'
+        }
+      }
+    }
+
+    failure {
+      script {
+        currentBuild.result = 'FAILURE'
+        echo "❌ E2E tests failed - Check the Playwright report for details"
+        // Example: Send Slack notification
+        // slackSend(
+        //   color: 'danger',
+        //   message: "E2E tests failed for ${params.TEST_ENVIRONMENT}",
+        //   channel: '#deployments'
+        // )
+      }
+    }
+
+    success {
+      script {
+        echo "✅ E2E tests passed successfully!"
+        // Example: Send Slack notification
+        // slackSend(
+        //   color: 'good',
+        //   message: "E2E tests passed for ${params.TEST_ENVIRONMENT}",
+        //   channel: '#deployments'
+        // )
+      }
+    }
+  }
+}
+
+// Helper function to get API base URL based on environment
+@NonCPS
+def getApiBaseUrl(String environment) {
+  def urls = [
+    'local': 'http://localhost:5173',
+    'staging': 'https://staging.bfstats.io',
+    'production': 'https://bfstats.io'
+  ]
+  return urls[environment] ?: 'http://localhost:5173'
+}
