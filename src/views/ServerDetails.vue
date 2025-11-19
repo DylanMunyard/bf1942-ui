@@ -139,7 +139,7 @@ const fetchInsightsAsync = async () => {
 
   try {
     const days = getPeriodInDays();
-    serverInsights.value = await fetchServerInsights(serverName.value, days);
+    serverInsights.value = await fetchServerInsights(serverName.value, days, historyRollingWindow.value);
   } catch (err) {
     console.error('Error fetching server insights:', err);
     insightsError.value = 'Failed to load server insights.';
