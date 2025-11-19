@@ -266,12 +266,19 @@ export async function fetchServerLeaderboards(
  */
 export async function fetchServerInsights(
   serverName: string,
-  period: number = 1
+  period: number = 1,
+  rollingWindow: string = '7d'
 ): Promise<ServerInsights> {
   try {
+    // Convert rolling window to days (e.g., '7d' -> 7)
+    const rollingWindowDays = parseInt(rollingWindow.replace('d', ''));
+    
     // Make the request to the API endpoint
     const response = await axios.get<ServerInsights>(`/stats/servers/${encodeURIComponent(serverName)}/insights`, {
-      params: { days: period }
+      params: { 
+        days: period,
+        rollingWindowDays: rollingWindowDays
+      }
     });
 
     // Return the response data

@@ -21,7 +21,7 @@
       v-else-if="chartData.length > 0"
       class="space-y-4"
     >
-      <!-- Main Chart Container -->
+      <!-- Main Chart Container with Rolling Average Overlay -->
       <div class="relative h-64 bg-slate-800/30 rounded-lg border border-slate-700/50 p-4">
         <!-- Loading Overlay -->
         <div
@@ -35,58 +35,37 @@
             </div>
           </div>
         </div>
-        
+
         <Line
           :key="`chart-${chartData.length}-${period}-${rollingWindow}`"
           :data="mainChartData"
           :options="chartOptions"
         />
       </div>
-      
-      <!-- Trend Flow Visualization (when rolling average available) -->
-      <div 
+
+      <!-- Rolling Window Toggle (above the chart) -->
+      <div
         v-if="props.insights?.rollingAverage && props.insights.rollingAverage.length > 0"
-        class="mt-3 bg-slate-800/20 rounded-lg border border-slate-700/30 p-3 relative"
+        class="flex items-center gap-2"
       >
-        <!-- Loading Overlay for Trend Flow -->
-        <div
-          v-if="loading"
-          class="absolute inset-0 bg-slate-800/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10"
-        >
-          <div class="flex flex-col items-center gap-2">
-            <div class="w-6 h-6 border-2 border-purple-500/30 border-t-purple-400 rounded-full animate-spin" />
-            <div class="text-purple-400 text-xs font-medium">
-              Updating trend...
-            </div>
-          </div>
+        <div class="text-xs text-slate-400 font-medium">
+          Rolling Average:
         </div>
-        
-        <!-- Rolling Window Toggle -->
-        <div class="flex items-center gap-2 mb-3">
-          <div class="text-xs text-slate-400 font-medium">
-            Rolling Average:
-          </div>
-          <div class="flex gap-1">
-            <button
-              v-for="option in rollingWindowOptions"
-              :key="option.value"
-              class="px-2 py-1 text-xs font-medium transition-all duration-200 rounded border"
-              :class="{
-                'text-white bg-gradient-to-r from-purple-500 to-pink-500 border-purple-400/50 shadow-sm': props.rollingWindow === option.value,
-                'text-slate-400 bg-slate-700/30 border-slate-600/50 hover:text-purple-400 hover:bg-slate-600/50 hover:border-purple-500/50': props.rollingWindow !== option.value
-              }"
-              :disabled="props.loading"
-              @click="handleRollingWindowChange(option.value)"
-            >
-              {{ option.label }}
-            </button>
-          </div>
+        <div class="flex gap-1">
+          <button
+            v-for="option in rollingWindowOptions"
+            :key="option.value"
+            class="px-2 py-1 text-xs font-medium transition-all duration-200 rounded border"
+            :class="{
+              'text-white bg-gradient-to-r from-purple-500 to-pink-500 border-purple-400/50 shadow-sm': props.rollingWindow === option.value,
+              'text-slate-400 bg-slate-700/30 border-slate-600/50 hover:text-purple-400 hover:bg-slate-600/50 hover:border-purple-500/50': props.rollingWindow !== option.value
+            }"
+            :disabled="props.loading"
+            @click="handleRollingWindowChange(option.value)"
+          >
+            {{ option.label }}
+          </button>
         </div>
-        <TrendFlow 
-          :key="`trend-${props.insights?.rollingAverage?.length || 0}-${props.rollingWindow}`"
-          :rolling-data="props.insights.rollingAverage"
-          :period="props.period || ''"
-        />
       </div>
     </div>
 
@@ -103,20 +82,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Line } from 'vue-chartjs'
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  PointElement, 
-  LineElement, 
-  Title, 
-  Tooltip, 
-  Legend, 
-  Filler 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
 } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { PlayerHistoryDataPoint, PlayerHistoryInsights } from '../types/playerStatsTypes'
-import TrendFlow from './TrendFlow.vue'
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, annotationPlugin)
@@ -250,7 +228,7 @@ const getWeekendAnnotations = () => {
   return annotations
 }
 
-// Main chart data configuration (clean, no overlays)
+// Main chart data configuration with rolling average overlay
 const mainChartData = computed(() => {
   if (props.chartData.length === 0) {
     return { labels: [], datasets: [] }
@@ -260,27 +238,27 @@ const mainChartData = computed(() => {
   const labels = props.chartData.map(point => {
     // Ensure the timestamp is properly parsed as UTC
     const utcDate = new Date(point.timestamp.endsWith('Z') ? point.timestamp : point.timestamp + 'Z')
-    
+
     // Format in user's local timezone with day name
-    return utcDate.toLocaleDateString(undefined, { 
+    return utcDate.toLocaleDateString(undefined, {
       weekday: 'short',
-      month: 'short', 
-      day: 'numeric' 
-    }) + ' ' + utcDate.toLocaleTimeString(undefined, { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+      month: 'short',
+      day: 'numeric'
+    }) + ' ' + utcDate.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit'
     })
   })
 
   // Create gradient datasets based on proximity to min/max
   const dataPoints = props.chartData.map(point => point.totalPlayers)
   const range = peakPlayers.value - minPlayers.value
-  
+
   // Create point colors based on value ranges
   const pointColors = dataPoints.map(value => {
     const normalizedValue = (value - minPlayers.value) / Math.max(range, 1)
     if (value === peakPlayers.value) return '#ef4444' // Red for peak
-    if (value === minPlayers.value) return '#3b82f6' // Blue for minimum  
+    if (value === minPlayers.value) return '#3b82f6' // Blue for minimum
     if (normalizedValue > 0.8) return '#f59e0b' // Amber for high
     if (normalizedValue < 0.2) return '#06b6d4' // Cyan for low
     return '#10b981' // Green for normal
@@ -304,7 +282,24 @@ const mainChartData = computed(() => {
     }
   ]
 
-  // Keep main chart clean - rolling average will be shown separately below
+  // Add rolling average overlay if available
+  if (props.insights?.rollingAverage && props.insights.rollingAverage.length > 0) {
+    const rollingAverageValues = props.insights.rollingAverage.map(point => point.average)
+    datasets.push({
+      label: `Rolling Average (${props.rollingWindow})`,
+      data: rollingAverageValues,
+      borderColor: '#a78bfa', // Purple/Violet
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: 0.6, // Slightly smoother curve
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      borderWidth: 2.5, // Slightly thicker
+      borderDash: [5, 5], // Dashed line
+      opacity: 0.6, // Lower opacity
+      order: 1
+    } as any)
+  }
 
   return {
     labels,
@@ -339,54 +334,56 @@ const chartOptions = computed(() => ({
       bodyColor: '#cbd5e1',
       borderColor: '#475569',
       borderWidth: 1,
+      padding: 12,
       callbacks: {
         title: (context: any) => {
           const point = props.chartData[context[0].dataIndex]
           // Ensure the timestamp is properly parsed as UTC
           const utcDate = new Date(point.timestamp.endsWith('Z') ? point.timestamp : point.timestamp + 'Z')
-          return utcDate.toLocaleDateString(undefined, { 
+          return utcDate.toLocaleDateString(undefined, {
             weekday: 'long',
-            month: 'short', 
-            day: 'numeric' 
-          }) + ' ' + utcDate.toLocaleTimeString(undefined, { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+            month: 'short',
+            day: 'numeric'
+          }) + ' ' + utcDate.toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit'
           })
         },
         label: (context: any) => {
+          const datasetLabel = context.dataset.label
           const value = context.parsed.y
-          const peak = peakPlayers.value
-          const avg = averagePlayers.value
-          const lowest = minPlayers.value
-          
-          // Determine status with simple emojis
-          let status = ''
-          if (value === peak) status = ' 🔥 Peak!'
-          else if (value === lowest) status = ' 💤 Quietest'
-          else if (value >= avg * 1.2) status = ' 🚀 Busy'
-          else if (value <= avg * 0.8) status = ' 😴 Quiet'
-          else status = ' ⚡ Normal'
-          
-          const lines = [`${value} players online${status}`]
-          
-          // Add simple comparisons
-          if (value !== peak) {
-            const diffFromPeak = peak - value
-            lines.push(`${diffFromPeak} less than peak (${peak})`)
+
+          // For "Players Online" (raw data)
+          if (datasetLabel === 'Players Online') {
+            const peak = peakPlayers.value
+            const avg = averagePlayers.value
+            const lowest = minPlayers.value
+
+            // Determine status with simple emojis
+            let status = ''
+            if (value === peak) status = ' 🔥 Peak!'
+            else if (value === lowest) status = ' 💤 Quietest'
+            else if (value >= avg * 1.2) status = ' 🚀 Busy'
+            else if (value <= avg * 0.8) status = ' 😴 Quiet'
+            else status = ' ⚡ Normal'
+
+            const lines = [`Raw players: ${value}${status}`]
+
+            // Add rolling average if available
+            if (props.insights?.rollingAverage && props.insights.rollingAverage[context.dataIndex] !== undefined) {
+              const rollingAvgDataPoint = props.insights.rollingAverage[context.dataIndex]
+              lines.push(`${props.rollingWindow} rolling avg: ${rollingAvgDataPoint.average.toFixed(1)}`)
+            }
+
+            return lines
           }
-          
-          if (value !== avg && Math.abs(value - avg) > 1) {
-            const diffFromAvg = value - avg
-            const comparison = diffFromAvg > 0 ? 'more' : 'less'
-            lines.push(`${Math.abs(diffFromAvg)} ${comparison} than average (${avg})`)
+
+          // For rolling average line - don't show label since it's already shown in Players Online tooltip
+          if (datasetLabel?.includes('Rolling Average')) {
+            return ''
           }
-          
-          if (value !== lowest) {
-            const diffFromLowest = value - lowest
-            lines.push(`${diffFromLowest} more than quietest (${lowest})`)
-          }
-          
-          return lines
+
+          return `${value}`
         }
       }
     },
