@@ -26,6 +26,7 @@ const playerName = ref(route.params.playerName as string);
 const playerStats = ref<PlayerTimeStatistics | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const showTrendCharts = ref(false);
 
 // New state for map stats
 const expandedServerId = ref<string | null>(null);
@@ -47,7 +48,7 @@ const mapStatsSortField = ref('totalScore');
 const mapStatsSortDirection = ref('desc');
 
 // Best Scores state
-const selectedBestScoresTab = ref<'allTime' | 'last30Days' | 'thisWeek'>('allTime');
+const selectedBestScoresTab = ref<'allTime' | 'last30Days' | 'thisWeek'>('thisWeek');
 const bestScoresTabOptions = [
   { key: 'allTime' as const, label: 'All Time' },
   { key: 'last30Days' as const, label: '30 Days' },
@@ -171,32 +172,6 @@ const similarPlayers = computed(() => similarPlayersData.value?.similarPlayers |
 // --- End Similar Players ---
 
 // Computed properties for trend charts
-const kdTrendChartData = computed(() => {
-  if (!playerStats.value?.recentStats?.kdRatioTrend) return { labels: [], datasets: [] };
-
-  const trend = playerStats.value.recentStats.kdRatioTrend;
-  const labels = trend.map((point: TrendDataPoint) => new Date(point.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-  const data = trend.map((point: TrendDataPoint) => point.value);
-
-  return {
-    labels,
-    datasets: [{
-      label: 'K/D Ratio',
-      data,
-      borderColor: '#ff6b35',
-      backgroundColor: 'rgba(255, 107, 53, 0.1)',
-      borderWidth: 2,
-      fill: true,
-      tension: 0.4,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-      pointBackgroundColor: '#ff6b35',
-      pointBorderColor: '#ffffff',
-      pointBorderWidth: 1,
-    }]
-  };
-});
-
 const killRateTrendChartData = computed(() => {
   if (!playerStats.value?.recentStats?.killRateTrend) return { labels: [], datasets: [] };
 
@@ -223,9 +198,35 @@ const killRateTrendChartData = computed(() => {
   };
 });
 
-const tickerChartOptions = computed(() => {
+const kdRatioTrendChartData = computed(() => {
+  if (!playerStats.value?.recentStats?.kdRatioTrend) return { labels: [], datasets: [] };
+
+  const trend = playerStats.value.recentStats.kdRatioTrend;
+  const labels = trend.map((point: TrendDataPoint) => new Date(point.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+  const data = trend.map((point: TrendDataPoint) => point.value);
+
+  return {
+    labels,
+    datasets: [{
+      label: 'K/D Ratio',
+      data,
+      borderColor: '#a855f7',
+      backgroundColor: 'rgba(168, 85, 247, 0.1)',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      pointBackgroundColor: '#a855f7',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 1,
+    }]
+  };
+});
+
+const microChartOptions = computed(() => {
   const computedStyles = window.getComputedStyle(document.documentElement);
-  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') || 
+  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') ||
                     document.documentElement.classList.contains('dark-mode') ||
                     (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
@@ -261,10 +262,10 @@ const tickerChartOptions = computed(() => {
         bodyColor: '#ffffff',
         borderColor: isDarkMode ? '#9c27b0' : '#666666',
         borderWidth: 1,
-        cornerRadius: 6,
+        cornerRadius: 4,
         displayColors: false,
-        titleFont: { size: 10, weight: 'bold' as const },
-        bodyFont: { size: 9 },
+        titleFont: { size: 8, weight: 'bold' as const },
+        bodyFont: { size: 7 },
         callbacks: {
           title: function(context: any[]) {
             return context[0].label;
@@ -273,9 +274,11 @@ const tickerChartOptions = computed(() => {
             const label = context.dataset.label;
             const value = context.parsed.y;
             if (label === 'Kill Rate') {
-              return `${value.toFixed(3)} kills/min`;
+              return `${value.toFixed(3)} k/min`;
+            } else if (label === 'K/D Ratio') {
+              return `${value.toFixed(2)}`;
             }
-            return `${label}: ${value.toFixed(3)}`;
+            return `${value.toFixed(2)}`;
           }
         }
       }
@@ -283,41 +286,14 @@ const tickerChartOptions = computed(() => {
     elements: {
       point: {
         radius: 0,
-        hoverRadius: 4
+        hoverRadius: 2
       },
       line: {
-        borderWidth: 2
+        borderWidth: 1
       }
     }
   };
 });
-
-// Computed properties for gauge data
-const currentKDRatio = computed(() => {
-  if (!playerStats.value?.recentStats?.kdRatioTrend?.length) return 0;
-  return playerStats.value.recentStats.kdRatioTrend[playerStats.value.recentStats.kdRatioTrend.length - 1].value;
-});
-
-const currentKillRate = computed(() => {
-  if (!playerStats.value?.recentStats?.killRateTrend?.length) return 0;
-  return playerStats.value.recentStats.killRateTrend[playerStats.value.recentStats.killRateTrend.length - 1].value;
-});
-
-const getGaugeColor = (value: number, type: 'kdr' | 'killrate') => {
-  if (type === 'kdr') {
-    if (value >= 3.0) return '#4CAF50'; // Excellent (green)
-    if (value >= 2.0) return '#8BC34A'; // Great (light green)
-    if (value >= 1.5) return '#FFC107'; // Good (yellow)
-    if (value >= 1.0) return '#FF9800'; // Average (orange)
-    return '#F44336'; // Below average (red)
-  } else { // killrate
-    if (value >= 1.2) return '#4CAF50'; // Excellent (green)
-    if (value >= 0.8) return '#8BC34A'; // Great (light green)
-    if (value >= 0.6) return '#FFC107'; // Good (yellow)
-    if (value >= 0.4) return '#FF9800'; // Average (orange)
-    return '#F44336'; // Below average (red)
-  }
-};
 
 // Function to fetch map stats for a server
 const fetchMapStats = async (serverGuid: string) => {
@@ -445,129 +421,6 @@ const navigateToRoundReport = (roundId: string) => {
   });
 };
 
-// Computed property to sort activity hours chronologically by local hour (0-23)
-const sortedLocalActivityHours = computed(() => {
-  if (!playerStats.value?.insights?.activityByHour) return [];
-
-  // Create a new array with local hour information
-  const hoursWithLocalTime = playerStats.value.insights.activityByHour.map(hourData => ({
-    ...hourData,
-    localHour: convertToLocalHour(hourData.hour)
-  }));
-
-  // Sort by local hour (0-23)
-  return [...hoursWithLocalTime].sort((a, b) => a.localHour - b.localHour);
-});
-
-// Function to convert UTC hour to local hour
-const convertToLocalHour = (utcHour: number): number => {
-  const now = new Date();
-  const localDate = new Date(now.setUTCHours(utcHour, 0, 0, 0));
-  return localDate.getHours();
-};
-
-// Chart data for player activity by hour
-const activityChartData = computed(() => {
-  if (!playerStats.value?.insights?.activityByHour) return { labels: [], datasets: [] };
-
-  // Convert hours to readable labels (00:00, 01:00, etc.)
-  const labels = sortedLocalActivityHours.value.map(hourData => 
-    `${hourData.localHour.toString().padStart(2, '0')}:00`
-  );
-
-  // Get activity values in minutes
-  const data = sortedLocalActivityHours.value.map(hourData => hourData.minutesActive);
-
-  return {
-    labels,
-    datasets: [
-      {
-        label: 'Activity (minutes)',
-        backgroundColor: 'rgba(156, 39, 176, 0.1)',
-        borderColor: 'rgba(156, 39, 176, 0.8)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointBackgroundColor: 'rgba(156, 39, 176, 1)',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        data
-      }
-    ]
-  };
-});
-
-// Chart options for the compact player activity chart
-const activityChartOptions = computed(() => {
-  // Get computed styles to access CSS variables
-  const computedStyles = window.getComputedStyle(document.documentElement);
-  const isDarkMode = computedStyles.getPropertyValue('--color-background').trim().includes('26, 16, 37') || 
-                    document.documentElement.classList.contains('dark-mode') ||
-                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      intersect: false,
-      mode: 'index' as const
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        display: false,
-        grid: {
-          display: false
-        }
-      },
-      x: {
-        display: false,
-        grid: {
-          display: false
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        display: false
-      },
-      tooltip: {
-        enabled: true,
-        backgroundColor: isDarkMode ? 'rgba(35, 21, 53, 0.95)' : 'rgba(0, 0, 0, 0.8)',
-        titleColor: isDarkMode ? '#ffffff' : '#ffffff',
-        bodyColor: isDarkMode ? '#ffffff' : '#ffffff',
-        borderColor: isDarkMode ? '#9c27b0' : '#666666',
-        borderWidth: 1,
-        cornerRadius: 6,
-        displayColors: true,
-        titleFont: {
-          size: 12,
-          weight: 'bold' as const
-        },
-        bodyFont: {
-          size: 11
-        },
-        callbacks: {
-          title: function(context: any) {
-            return `${context[0].label}`;
-          },
-          label: function(context: any) {
-            return `${context.parsed.y} minutes active`;
-          }
-        }
-      }
-    },
-    elements: {
-      point: {
-        radius: 0,
-        hoverRadius: 4
-      }
-    }
-  };
-});
-
 // Function to change sort field and direction for map stats
 const changeMapStatsSort = (field: string) => {
   if (mapStatsSortField.value === field) {
@@ -637,14 +490,6 @@ const currentBestScores = computed(() => {
 onMounted(() => {
   fetchData();
 });
-
-// Add this helper function to the <script setup> section:
-const daysBetween = (start: string, end: string): number => {
-  const startDate = new Date(start.endsWith('Z') ? start : start + 'Z');
-  const endDate = new Date(end.endsWith('Z') ? end : end + 'Z');
-  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-  return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-};
 
 // Color helper for similarity score
 // Enhanced similarity color function with more gradients
@@ -801,6 +646,60 @@ onUnmounted(() => {
           
           <!-- Player Stats Summary -->
           <div class="flex items-center gap-6 text-slate-300 flex-wrap">
+            <!-- K/D Ratio with Hover Trends -->
+            <div class="relative" @mouseenter="showTrendCharts = true" @mouseleave="showTrendCharts = false">
+              <div class="flex items-center gap-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg px-4 py-2 hover:border-purple-500/60 transition-all duration-200 cursor-pointer">
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
+                    {{ calculateKDR(playerStats?.totalKills || 0, playerStats?.totalDeaths || 0) }}
+                  </div>
+                  <div class="text-xs text-slate-400 font-medium">K/D</div>
+                </div>
+                <div class="w-px h-8 bg-gradient-to-b from-purple-500/50 to-transparent" />
+                <div class="flex gap-4 text-sm">
+                  <div class="text-center">
+                    <div class="font-bold text-green-400">{{ playerStats?.totalKills?.toLocaleString() }}</div>
+                    <div class="text-xs text-slate-400">K</div>
+                  </div>
+                  <div class="text-center">
+                    <div class="font-bold text-red-400">{{ playerStats?.totalDeaths?.toLocaleString() }}</div>
+                    <div class="text-xs text-slate-400">D</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Trend Charts - Show on Hover (stays visible while hovering) -->
+              <div
+                v-if="showTrendCharts"
+                class="absolute left-0 top-full mt-2 bg-slate-900 border border-slate-700 rounded-lg p-3 w-80 z-50 shadow-2xl transition-all duration-200"
+                @mouseenter="showTrendCharts = true"
+                @mouseleave="showTrendCharts = false"
+              >
+                <div class="space-y-2">
+                  <!-- Kill Rate Trend Mini -->
+                  <div class="space-y-1">
+                    <div class="text-xs font-semibold text-slate-300">Kill Rate Trend</div>
+                    <div class="h-10 -mx-1">
+                      <Line
+                        :data="killRateTrendChartData"
+                        :options="microChartOptions"
+                      />
+                    </div>
+                  </div>
+                  <!-- K/D Ratio Trend Mini -->
+                  <div class="space-y-1">
+                    <div class="text-xs font-semibold text-slate-300">K/D Trend</div>
+                    <div class="h-10 -mx-1">
+                      <Line
+                        :data="kdRatioTrendChartData"
+                        :options="microChartOptions"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -972,559 +871,76 @@ onUnmounted(() => {
           </div>
 
           <!-- Best Scores Section -->
-          <div 
+          <div
             v-if="playerStats?.bestScores && (playerStats.bestScores.allTime?.length > 0 || playerStats.bestScores.last30Days?.length > 0 || playerStats.bestScores.thisWeek?.length > 0)"
-            class="relative bg-gradient-to-br from-amber-900/20 via-slate-800/80 to-slate-900/80 backdrop-blur-lg rounded-2xl border border-amber-500/30 shadow-2xl"
+            class="relative bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-xl border border-slate-700/50 mt-8"
           >
-            <!-- Spectacular Background Effects -->
-            <div class="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-orange-500/10" />
-            <div class="absolute top-0 left-1/3 w-96 h-96 bg-gradient-to-br from-amber-500/20 to-transparent rounded-full blur-3xl animate-pulse" />
-            <div class="absolute bottom-0 right-1/4 w-64 h-64 bg-gradient-to-br from-yellow-500/15 to-orange-500/15 rounded-full blur-2xl animate-pulse delay-700" />
-            <div class="absolute top-1/2 left-0 w-32 h-32 bg-amber-400/20 rounded-full blur-xl animate-ping delay-300" />
-          
-            <!-- Crown decoration -->
-            <div class="absolute top-4 right-8 text-4xl md:text-6xl opacity-20 animate-bounce">
-              👑
-            </div>
-          
-            <div class="relative z-10 p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-              <!-- Header with dramatic styling - More compact on mobile -->
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6">
-                <div class="space-y-2">
-                  <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-lg sm:text-2xl animate-spin-slow">
-                      🏆
-                    </div>
-                    <h3 class="text-2xl sm:text-4xl lg:text-5xl font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400 bg-clip-text text-transparent drop-shadow-lg">
-                      Best Scores
-                    </h3>
-                  </div>
-                  <p class="text-amber-200/90 text-sm sm:text-lg font-medium">
-                    Your greatest battlefield achievements
-                  </p>
-                </div>
-              
-                <!-- Tab Controls with premium styling - More compact on mobile -->
-                <div class="flex items-center bg-slate-900/70 backdrop-blur-sm rounded-xl sm:rounded-2xl p-1 sm:p-2 border border-amber-500/20 shadow-xl">
-                  <div
+            <div class="relative z-10 p-4 sm:p-6 lg:p-8 space-y-4">
+              <!-- Sleek, minimal header -->
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-slate-200">Best Scores This Week</h3>
+                <div class="flex gap-2 bg-slate-900/60 rounded-lg p-1 border border-slate-700/50">
+                  <button
                     v-for="tab in bestScoresTabOptions"
                     :key="tab.key"
-                    class="relative flex items-center gap-1 sm:gap-2 px-2 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm lg:text-base cursor-pointer transition-all duration-300 group"
+                    class="px-3 py-1 text-xs font-medium rounded transition-colors duration-200"
                     :class="{
-                      'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 shadow-lg transform scale-105': selectedBestScoresTab === tab.key,
-                      'text-amber-300 hover:text-amber-200 hover:bg-amber-500/10': selectedBestScoresTab !== tab.key
+                      'bg-slate-700 text-slate-100': selectedBestScoresTab === tab.key,
+                      'text-slate-400 hover:text-slate-300': selectedBestScoresTab !== tab.key
                     }"
                     @click="changeBestScoresTab(tab.key)"
                   >
-                    <span>{{ tab.label }}</span>
-                    <div 
-                      v-if="selectedBestScoresTab === tab.key"
-                      class="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-400/20 rounded-lg sm:rounded-xl animate-pulse"
-                    />
-                  </div>
+                    {{ tab.label }}
+                  </button>
                 </div>
               </div>
 
               <!-- Best Scores Content -->
-              <div class="space-y-3 sm:space-y-4">
-                <!-- No scores message -->
+              <div v-if="currentBestScores.length === 0" class="py-8 text-center text-slate-400">
+                No scores recorded for this period
+              </div>
+
+              <!-- Condensed Score List -->
+              <div v-else class="space-y-2">
                 <div
-                  v-if="currentBestScores.length === 0"
-                  class="flex flex-col items-center justify-center py-8 sm:py-16 text-center space-y-3 sm:space-y-4"
+                  v-for="(score, index) in currentBestScores.slice(0, 10)"
+                  :key="`${score.roundId}-${index}`"
+                  class="flex items-center gap-4 p-3 bg-slate-800/40 hover:bg-slate-800/60 rounded-lg border border-slate-700/30 hover:border-slate-700/60 transition-colors duration-200 cursor-pointer group"
+                  @click="navigateToRoundReport(score.roundId)"
                 >
-                  <div class="text-4xl sm:text-8xl opacity-30">
-                    🎯
-                  </div>
-                  <p class="text-lg sm:text-xl font-semibold text-amber-300">
-                    No scores recorded yet
-                  </p>
-                  <p class="text-amber-200/70 text-sm sm:text-base">
-                    Start playing to build your legendary scores!
-                  </p>
-                </div>
-
-                <!-- Mobile: Horizontal Scroll Layout / Desktop: Grid Layout -->
-                <div v-else>
-                  <!-- Mobile Horizontal Scroll (< lg screens) -->
-                  <div class="lg:hidden">
-                    <div class="overflow-x-auto pb-4 scrollbar-hide best-scores-scroll-container">
-                      <div class="flex gap-3 min-w-max px-1 pt-4 pb-2">
-                        <div
-                          v-for="(score, index) in currentBestScores.slice(0, 6)"
-                          :key="`${score.roundId}-${index}`"
-                          class="group relative bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-xl border border-amber-500/20 hover:border-amber-400/50 transition-all duration-500 hover:scale-105 cursor-pointer flex-none w-72"
-                          @click="navigateToRoundReport(score.roundId)"
-                        >
-                          <!-- Mobile Card Content - More Compact -->
-                          <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-                        
-                          <!-- Rank badge - smaller on mobile -->
-                          <div class="absolute -top-3 -right-3 w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center font-black text-slate-900 text-sm shadow-lg z-20">
-                            {{ index + 1 }}
-                          </div>
-                        
-                          <div class="relative z-10 p-4 space-y-3">
-                            <!-- Compact Score Header -->
-                            <div class="flex items-center justify-between">
-                              <div class="space-y-1">
-                                <div class="text-2xl font-black text-amber-300">
-                                  {{ score.score.toLocaleString() }}
-                                </div>
-                                <div class="text-xs text-amber-200/70">
-                                  SCORE
-                                </div>
-                              </div>
-                              <div class="text-right space-y-1">
-                                <div class="text-lg font-bold text-emerald-400">
-                                  {{ calculateKDR(score.kills, score.deaths) }}
-                                </div>
-                                <div class="text-xs text-slate-400">
-                                  K/D
-                                </div>
-                              </div>
-                            </div>
-
-                            <!-- Compact Stats Row -->
-                            <div class="flex items-center justify-between py-2 px-3 bg-slate-900/50 rounded-lg border border-slate-700/50">
-                              <div class="flex items-center gap-3">
-                                <div class="text-center">
-                                  <div class="text-sm font-bold text-emerald-400">
-                                    {{ score.kills }}
-                                  </div>
-                                  <div class="text-xs text-slate-500">
-                                    K
-                                  </div>
-                                </div>
-                                <div class="w-px h-6 bg-slate-600" />
-                                <div class="text-center">
-                                  <div class="text-sm font-bold text-red-400">
-                                    {{ score.deaths }}
-                                  </div>
-                                  <div class="text-xs text-slate-500">
-                                    D
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="text-lg opacity-50">
-                                ⚔️
-                              </div>
-                            </div>
-
-                            <!-- Map & Server Info - Compact -->
-                            <div class="space-y-2">
-                              <div class="text-xs text-amber-300 font-semibold truncate">
-                                {{ score.mapName }}
-                              </div>
-                              <div class="text-xs text-slate-400 truncate">
-                                {{ score.serverName }}
-                              </div>
-                              <div class="flex items-center gap-1 text-xs text-slate-500">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="10"
-                                  height="10"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                  />
-                                  <polyline points="12,6 12,12 16,14" />
-                                </svg>
-                                <span>{{ formatRelativeTime(score.timestamp) }}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  
-                    <!-- Show More Button for Mobile -->
-                    <div 
-                      v-if="currentBestScores.length > 6"
-                      class="text-center pt-3"
-                    >
-                      <router-link
-                        :to="`/players/${encodeURIComponent(playerName)}/achievements`"
-                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 hover:border-amber-400/50 rounded-lg transition-all duration-300"
-                      >
-                        <span>View All {{ currentBestScores.length }} Scores</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path d="m9 18 6-6-6-6" />
-                        </svg>
-                      </router-link>
-                    </div>
+                  <!-- Rank badge -->
+                  <div class="flex-shrink-0 w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center font-bold text-sm text-slate-200">
+                    {{ index + 1 }}
                   </div>
 
-                  <!-- Desktop Grid Layout (lg+ screens) -->
-                  <div class="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 p-3 sm:p-6 pt-6">
-                    <div
-                      v-for="(score, index) in currentBestScores"
-                      :key="`${score.roundId}-${index}`"
-                      class="group relative bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-2xl border border-amber-500/20 hover:border-amber-400/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer"
-                      @click="navigateToRoundReport(score.roundId)"
-                    >
-                      <!-- Card background effects -->
-                      <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div class="absolute top-0 right-0 w-24 h-24 bg-amber-400/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    
-                      <!-- Rank badge -->
-                      <div class="absolute -top-5 -right-5 w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center font-black text-slate-900 text-base shadow-xl z-20">
-                        {{ index + 1 }}
-                      </div>
-                    
-                      <!-- Hover overlay -->
-                      <div class="absolute inset-0 bg-gradient-to-t from-amber-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
-                    
-                      <!-- Click indicator -->
-                      <div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-                        <div class="w-8 h-8 bg-amber-500/20 rounded-full flex items-center justify-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            class="text-amber-400"
-                          >
-                            <path d="m9 18 6-6-6-6" />
-                          </svg>
-                        </div>
-                      </div>
+                  <!-- Score -->
+                  <div class="flex-shrink-0 w-24">
+                    <div class="text-sm font-bold text-slate-100">{{ score.score.toLocaleString() }}</div>
+                    <div class="text-xs text-slate-500">SCORE</div>
+                  </div>
 
-                      <div class="relative z-10 p-6 space-y-4">
-                        <!-- Score Header -->
-                        <div class="flex items-center justify-between">
-                          <div class="space-y-1">
-                            <div class="text-3xl font-black text-amber-300">
-                              {{ score.score.toLocaleString() }}
-                            </div>
-                            <div class="text-sm text-amber-200/70">
-                              SCORE
-                            </div>
-                          </div>
-                          <div class="text-right space-y-1">
-                            <div class="text-lg font-bold text-emerald-400">
-                              {{ calculateKDR(score.kills, score.deaths) }}
-                            </div>
-                            <div class="text-sm text-slate-400">
-                              K/D
-                            </div>
-                          </div>
-                        </div>
+                  <!-- K/D -->
+                  <div class="flex-shrink-0">
+                    <div class="text-sm font-bold text-cyan-400">{{ calculateKDR(score.kills, score.deaths) }}</div>
+                    <div class="text-xs text-slate-500">K/D</div>
+                  </div>
 
-                        <!-- Stats Row -->
-                        <div class="flex items-center justify-between py-3 px-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-                          <div class="flex items-center gap-4">
-                            <div class="text-center">
-                              <div class="text-lg font-bold text-emerald-400">
-                                {{ score.kills }}
-                              </div>
-                              <div class="text-xs text-slate-500">
-                                KILLS
-                              </div>
-                            </div>
-                            <div class="w-px h-8 bg-slate-600" />
-                            <div class="text-center">
-                              <div class="text-lg font-bold text-red-400">
-                                {{ score.deaths }}
-                              </div>
-                              <div class="text-xs text-slate-500">
-                                DEATHS
-                              </div>
-                            </div>
-                          </div>
-                          <div class="text-2xl opacity-50">
-                            ⚔️
-                          </div>
-                        </div>
+                  <!-- Kills/Deaths -->
+                  <div class="flex-shrink-0 text-sm">
+                    <span class="text-green-400 font-semibold">{{ score.kills }}</span>
+                    <span class="text-slate-500 mx-1">/</span>
+                    <span class="text-red-400 font-semibold">{{ score.deaths }}</span>
+                  </div>
 
-                        <!-- Map & Server Info -->
-                        <div class="space-y-3">
-                          <div class="space-y-1">
-                            <div class="text-sm text-amber-300 font-semibold">
-                              {{ score.mapName }}
-                            </div>
-                            <div class="text-xs text-slate-400 truncate">
-                              {{ score.serverName }}
-                            </div>
-                          </div>
-                        
-                          <!-- Timestamp -->
-                          <div class="flex items-center gap-2 text-xs text-slate-500">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <circle
-                                cx="12"
-                                cy="12"
-                                r="10"
-                              />
-                              <polyline points="12,6 12,12 16,14" />
-                            </svg>
-                            <span>{{ formatRelativeTime(score.timestamp) }}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <!-- Map -->
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm text-slate-300 truncate">{{ score.mapName }}</div>
+                    <div class="text-xs text-slate-500 truncate">{{ score.serverName }}</div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Performance Analytics Section -->
-          <div 
-            v-if="playerStats?.recentStats"
-            class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8"
-          >
-            <!-- Section Background Effects -->
-            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5" />
-            <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl" />
-          
-            <div class="relative z-10 p-4 sm:p-8 space-y-4 sm:space-y-8">
-              <!-- Section Header -->
-              <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div class="space-y-2">
-                  <h3 class="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    📊 Performance Analytics
-                  </h3>
-                  <p class="text-slate-400">
-                    Real-time battlefield performance metrics
-                  </p>
-                </div>
-                <div class="px-4 py-2 bg-slate-800/50 rounded-lg border border-slate-700">
-                  <p class="text-cyan-400 font-semibold">
-                    {{ Math.ceil((new Date(playerStats.recentStats.analysisPeriodEnd).getTime() - new Date(playerStats.recentStats.analysisPeriodStart).getTime()) / (1000 * 60 * 60 * 24)) }} days analysis
-                  </p>
-                  <p class="text-slate-500 text-sm">
-                    {{ playerStats.recentStats.totalRoundsAnalyzed }} rounds tracked
-                  </p>
-                </div>
-              </div>
-            
-              <!-- Performance Metrics Grid -->
-              <div class="space-y-8">
-                <!-- Trend Charts -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
-                  <!-- K/D Ratio Card -->
-                  <div class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-orange-500/50 transition-all duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                    <div class="relative z-10 p-3 sm:p-6 space-y-3 sm:space-y-4">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                          <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
-                            <span class="text-2xl">📈</span>
-                          </div>
-                          <div>
-                            <h4 class="text-lg font-bold text-white">
-                              K/D Ratio
-                            </h4>
-                            <p class="text-slate-400 text-sm">
-                              Kill/Death Performance
-                            </p>
-                          </div>
-                        </div>
-                        <div class="text-right">
-                          <div
-                            class="text-3xl font-bold"
-                            :style="{ color: getGaugeColor(currentKDRatio, 'kdr') }"
-                          >
-                            {{ currentKDRatio.toFixed(3) }}
-                          </div>
-                          <div class="text-slate-400 text-sm">
-                            Current Ratio
-                          </div>
-                        </div>
-                      </div>
-                    
-                      <div class="h-20 -mx-2">
-                        <Line
-                          :data="kdTrendChartData"
-                          :options="tickerChartOptions"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                
-                  <!-- Kill Rate Card -->
-                  <div class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-green-500/50 transition-all duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                    <div class="relative z-10 p-3 sm:p-6 space-y-3 sm:space-y-4">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                          <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                            <span class="text-2xl">⚡</span>
-                          </div>
-                          <div>
-                            <h4 class="text-lg font-bold text-white">
-                              Kill Rate
-                            </h4>
-                            <p class="text-slate-400 text-sm">
-                              Kills per Minute
-                            </p>
-                          </div>
-                        </div>
-                        <div class="text-right">
-                          <div
-                            class="text-3xl font-bold"
-                            :style="{ color: getGaugeColor(currentKillRate, 'killrate') }"
-                          >
-                            {{ currentKillRate.toFixed(2) }}
-                          </div>
-                          <div class="text-slate-400 text-sm">
-                            k/min
-                          </div>
-                        </div>
-                      </div>
-                    
-                      <div class="h-20 -mx-2">
-                        <Line
-                          :data="killRateTrendChartData"
-                          :options="tickerChartOptions"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              
-                <!-- Total Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
-                  <!-- Total Kills -->
-                  <div class="group relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-green-500/50 transition-all duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-2xl" />
-                  
-                    <div class="relative z-10 p-3 sm:p-6">
-                      <div class="flex items-center gap-4">
-                        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-3xl transform group-hover:scale-110 transition-transform duration-300">
-                          🎯
-                        </div>
-                        <div class="space-y-1">
-                          <div class="text-4xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                            {{ playerStats.totalKills.toLocaleString() }}
-                          </div>
-                          <div class="text-slate-400 font-medium">
-                            Total Eliminations
-                          </div>
-                          <div class="text-green-400 text-sm">
-                            +{{ Math.round(currentKillRate * 60 * 24) }} avg daily
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                
-                  <!-- Total Deaths -->
-                  <div class="group relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-red-500/50 transition-all duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-br from-red-500/5 to-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl" />
-                  
-                    <div class="relative z-10 p-3 sm:p-6">
-                      <div class="flex items-center gap-4">
-                        <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center text-3xl transform group-hover:scale-110 transition-transform duration-300">
-                          💀
-                        </div>
-                        <div class="space-y-1">
-                          <div class="text-4xl font-bold bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">
-                            {{ playerStats.totalDeaths.toLocaleString() }}
-                          </div>
-                          <div class="text-slate-400 font-medium">
-                            Total Deaths
-                          </div>
-                          <div class="text-red-400 text-sm">
-                            {{ ((playerStats.totalDeaths / playerStats.totalKills) * 100).toFixed(1) }}% of kills
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              
-                <!-- Activity Timeline Chart -->
-                <div 
-                  v-if="playerStats.insights && playerStats.insights.activityByHour && playerStats.insights.activityByHour.length > 0"
-                  class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-purple-500/50 transition-all duration-300"
-                >
-                  <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
-                  <div class="relative z-10 p-3 sm:p-6 space-y-3 sm:space-y-4">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                          <span class="text-2xl">⏰</span>
-                        </div>
-                        <div>
-                          <h4 class="text-lg font-bold text-white">
-                            Typical online hours
-                          </h4>
-                          <p class="text-slate-400 text-sm">
-                            Last {{ daysBetween(playerStats.insights.startPeriod, playerStats.insights.endPeriod) }} days
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  
-                    <!-- Activity Chart -->
-                    <div class="relative overflow-hidden bg-slate-900/50 rounded-lg border border-slate-600/30">
-                      <!-- Time Period Background Zones -->
-                      <div class="absolute inset-0 flex">
-                        <div class="flex-1 bg-gradient-to-b from-blue-500/5 to-blue-600/5" />
-                        <div class="flex-1 bg-gradient-to-b from-yellow-500/5 to-orange-600/5" />
-                        <div class="flex-1 bg-gradient-to-b from-purple-500/5 to-indigo-600/5" />
-                      </div>
-                    
-                      <!-- Chart -->
-                      <div class="relative z-10 p-4 h-32">
-                        <Line
-                          :data="activityChartData"
-                          :options="activityChartOptions"
-                        />
-                      </div>
-                    </div>
-                  
-                    <!-- Time Period Labels - Below Chart -->
-                    <div class="flex px-4 pb-2">
-                      <div class="flex-1 flex justify-center">
-                        <span class="text-xs text-slate-500">🌙 Night</span>
-                      </div>
-                      <div class="flex-1 flex justify-center">
-                        <span class="text-xs text-slate-500">☀️ Day</span>
-                      </div>
-                      <div class="flex-1 flex justify-center">
-                        <span class="text-xs text-slate-500">🌆 Evening</span>
-                      </div>
-                    </div>
+                  <!-- Time -->
+                  <div class="flex-shrink-0 text-right text-xs text-slate-500">
+                    {{ formatRelativeTime(score.timestamp) }}
                   </div>
                 </div>
               </div>
