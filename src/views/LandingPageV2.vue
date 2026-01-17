@@ -1685,7 +1685,7 @@ const fetchGameTrends = async (isInitialLoad = false) => {
   trendsError.value = null
   
   try {
-    const response = await fetch(`/stats/GameTrends/landing-summary?game=${activeFilter.value}`)
+    const response = await fetch(`/stats/v2/game-trends/landing-summary?game=${activeFilter.value}`)
     if (!response.ok) {
       throw new Error('Failed to fetch game trends')
     }

@@ -310,7 +310,7 @@ export async function fetchPlayerOnlineHistory(
 ): Promise<PlayerHistoryResponse> {
   try {
     const response = await axios.get<PlayerHistoryResponse>(
-      `/stats/LiveServers/${game}/players-online-history`,
+      `/stats/v2/liveservers/${game}/players-online-history`,
       {
         params: { period, rollingWindowDays: rollingWindow }
       }

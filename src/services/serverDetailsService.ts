@@ -249,7 +249,7 @@ export async function fetchServerLeaderboards(
       params.set('minPlayersForWeighting', minPlayersForWeighting.toString());
     }
 
-    const url = `/stats/servers/${encodeURIComponent(serverName)}/leaderboards?${params.toString()}`;
+    const url = `/stats/v2/servers/${encodeURIComponent(serverName)}/leaderboards?${params.toString()}`;
     const response = await axios.get<LeaderboardsData>(url);
     return response.data;
   } catch (err) {
@@ -451,7 +451,7 @@ export async function fetchServerBusyIndicators(serverGuids: string[]): Promise<
 
   // Build query string with repeated keys
   const query = serverGuids.map(g => `serverGuids=${encodeURIComponent(g)}`).join('&');
-  const url = `/stats/GameTrends/busy-indicator?${query}`;
+  const url = `/stats/v2/game-trends/busy-indicator?${query}`;
 
   try {
     const response = await axios.get<ServerBusyIndicatorResponse>(url);
