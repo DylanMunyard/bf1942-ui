@@ -1057,7 +1057,7 @@ onUnmounted(() => {
                                 players: playerName
                               }
                             }"
-                            :title="`View round report for best score on ${server.highestScoreMapName || server.mapName} (${formatRelativeTime((server.highestScoreStartTime || server.bestScoreDate) ?? '')})`"
+                            :title="`View round report for best score${server.bestScoreDate ? ` (${formatRelativeTime(server.bestScoreDate)})` : ''}`"
                           >
                             {{ server.highestScore?.toLocaleString() }}
                             <svg

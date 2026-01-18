@@ -187,8 +187,6 @@ export interface PlayerServerStats {
   mapName?: string;
   // New fields for best score round report navigation
   highestScoreRoundId?: string;
-  highestScoreMapName?: string;
-  highestScoreStartTime?: string;
 }
 
 export interface TeamKillerMetric {
