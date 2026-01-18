@@ -1377,8 +1377,8 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Player Achievements Section -->
-          <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8">
+          <!-- Player Achievements Section - HIDDEN: Achievement system deferred pending redesign -->
+          <div v-if="false" class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8">
             <!-- Background Effects -->
             <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-orange-500/5 to-red-500/5" />
             <div class="absolute top-0 left-0 w-64 h-64 bg-gradient-to-br from-yellow-500/10 to-transparent rounded-full blur-3xl" />
