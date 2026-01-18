@@ -166,7 +166,7 @@
                       <span class="text-slate-500 group-hover:text-blue-400 transition-colors">↗</span>
                     </a>
                     <a
-                      href="https://bf1942.online/play-now"
+                      href="https://bf1942.online/guide/installation"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="flex items-center gap-3 p-3 hover:bg-slate-700/50 rounded-lg transition-all duration-200 group"
