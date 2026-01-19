@@ -2,13 +2,14 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics, fetchPlayerStats } from '../services/playerStatsService';
-import { TrendDataPoint } from '../types/playerStatsTypes';
+import { TrendDataPoint, PlayerAchievementGroup } from '../types/playerStatsTypes';
 // Removed unused imports - BestScores, BestScoreEntry
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
-import PlayerAchievements from '../components/PlayerAchievements.vue';
+import PlayerAchievementSummary from '../components/PlayerAchievementSummary.vue';
 import PlayerRecentSessions from '../components/PlayerRecentSessions.vue';
 import HeroBackButton from '../components/HeroBackButton.vue';
+import PlayerAchievementHeroBadges from '../components/PlayerAchievementHeroBadges.vue';
 
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
@@ -27,6 +28,9 @@ const playerStats = ref<PlayerTimeStatistics | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const showTrendCharts = ref(false);
+const achievementGroups = ref<PlayerAchievementGroup[]>([]);
+const achievementGroupsLoading = ref(false);
+const achievementGroupsError = ref<string | null>(null);
 
 // New state for map stats
 const expandedServerId = ref<string | null>(null);
@@ -246,6 +250,7 @@ watch(selectedTimeRange, async () => {
 const fetchData = async () => {
   isLoading.value = true;
   error.value = null;
+  fetchAchievementGroups();
   try {
     playerStats.value = await fetchPlayerStats(playerName.value);
   } catch (err) {
@@ -253,6 +258,22 @@ const fetchData = async () => {
     console.error(err);
   } finally {
     isLoading.value = false;
+  }
+};
+
+const fetchAchievementGroups = async () => {
+  achievementGroupsLoading.value = true;
+  achievementGroupsError.value = null;
+  try {
+    const response = await fetch(`/stats/gamification/player/${encodeURIComponent(playerName.value)}/achievement-groups`);
+    if (!response.ok) throw new Error('Failed to fetch achievement groups');
+    achievementGroups.value = await response.json();
+  } catch (err) {
+    console.error('Error fetching achievement groups:', err);
+    achievementGroupsError.value = 'Failed to load achievements.';
+    achievementGroups.value = [];
+  } finally {
+    achievementGroupsLoading.value = false;
   }
 };
 
@@ -465,6 +486,10 @@ onUnmounted(() => {
             <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400">
               {{ playerName }}
             </h1>
+            <PlayerAchievementHeroBadges
+              :player-name="playerName"
+              :achievement-groups="achievementGroups"
+            />
             <!-- Currently in game badge with server info -->
             <div
               v-if="playerStats?.isActive && playerStats?.currentServer"
@@ -1267,8 +1292,8 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Player Achievements Section - HIDDEN: Achievement system deferred pending redesign -->
-          <div v-if="false" class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8">
+          <!-- Player Achievements Section -->
+          <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 mt-8">
             <!-- Background Effects -->
             <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-orange-500/5 to-red-500/5" />
             <div class="absolute top-0 left-0 w-64 h-64 bg-gradient-to-br from-yellow-500/10 to-transparent rounded-full blur-3xl" />
@@ -1315,9 +1340,11 @@ onUnmounted(() => {
               <div class="relative">
                 <div class="absolute inset-0 bg-gradient-to-r from-slate-800/30 to-slate-900/30 rounded-xl" />
                 <div class="relative z-10 p-6 rounded-xl border border-slate-700/30">
-                  <PlayerAchievements
+                  <PlayerAchievementSummary
                     :player-name="playerName"
-                    :player-stats="playerStats"
+                    :achievement-groups="achievementGroups"
+                    :loading="achievementGroupsLoading"
+                    :error="achievementGroupsError"
                   />
                 </div>
               </div>

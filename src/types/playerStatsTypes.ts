@@ -263,6 +263,17 @@ export interface PlayerAchievementSummary {
   lastCalculated: string; // DateTime in ISO format
 }
 
+export interface PlayerAchievementGroup {
+  achievementId: string;
+  achievementName: string;
+  achievementType: string;
+  tier: string;
+  game: string;
+  count: number;
+  latestValue: number;
+  latestAchievedAt: string; // DateTime in ISO format
+}
+
 export interface Achievement {
   playerName: string;
   achievementType: string; // 'kill_streak', 'badge', 'milestone', 'ranking', 'round_placement', 'team_victory'
