@@ -159,7 +159,7 @@ const getLeftBorderColor = (session: Session): string => {
             class="group border-l-4 border-b border-slate-700/30 hover:bg-slate-800/40 transition-all duration-150 cursor-pointer"
             :class="[
               getLeftBorderColor(session),
-              session.isActive && index === 0 ? 'bg-emerald-500/5' : ''
+              session.isActive && index === 0 ? 'bg-gradient-to-r from-emerald-500/10 via-emerald-400/5 to-transparent border-l-emerald-400 shadow-lg shadow-emerald-500/10 animate-pulse' : ''
             ]"
             @click="navigateToRoundReport(session)"
           >
@@ -169,15 +169,15 @@ const getLeftBorderColor = (session: Session): string => {
                 <div class="flex items-center gap-2">
                   <span
                     class="text-sm font-bold"
-                    :class="session.isActive && index === 0 ? 'text-emerald-400' : getMapAccentColor(session.mapName)"
+                    :class="session.isActive && index === 0 ? 'text-emerald-300 drop-shadow-sm' : getMapAccentColor(session.mapName)"
                   >
                     {{ session.mapName }}
                   </span>
                   <span
                     v-if="session.isActive && index === 0"
-                    class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wide px-1.5 py-0.5 bg-emerald-500/20 rounded"
+                    class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider px-2 py-1 bg-emerald-500/30 border border-emerald-400/50 rounded-full animate-pulse shadow-sm shadow-emerald-400/20"
                   >
-                    Live
+                    🔴 LIVE
                   </span>
                 </div>
                 <span class="text-xs text-slate-500 font-medium">
