@@ -591,6 +591,24 @@
             <!-- Table Header -->
             <thead class="sticky top-0 z-10">
               <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+                <!-- Rank Column Header -->
+                <th class="p-1.5 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-yellow-500/50"
+                    @click="sortBy('rank')"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-yellow-400 text-xs">🏆</span>
+                    <span class="font-mono font-bold">RANK</span>
+                    <span
+                      class="text-xs transition-transform duration-200"
+                      :class="{
+                        'text-yellow-400 opacity-100': sortField === 'rank',
+                        'opacity-50': sortField !== 'rank',
+                        'rotate-0': sortField === 'rank' && sortDirection === 'asc',
+                        'rotate-180': sortField === 'rank' && sortDirection === 'desc'
+                      }"
+                    >▲</span>
+                  </div>
+                </th>
                 <th class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
                   <!-- Desktop Layout: Horizontal -->
                   <div class="hidden lg:flex items-center justify-between gap-2">
@@ -656,6 +674,22 @@
                   <!-- Mobile Layout: Vertical -->
                   <div class="flex lg:hidden flex-col gap-2">
                     <div class="flex items-center justify-between">
+                      <div
+                        class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-yellow-500/50"
+                        @click="sortBy('rank')"
+                      >
+                        <span class="text-yellow-400 text-xs">🏆</span>
+                        <span class="font-mono font-bold">RANK</span>
+                        <span
+                          class="text-xs transition-transform duration-200"
+                          :class="{
+                            'text-yellow-400 opacity-100': sortField === 'rank',
+                            'opacity-50': sortField !== 'rank',
+                            'rotate-0': sortField === 'rank' && sortDirection === 'asc',
+                            'rotate-180': sortField === 'rank' && sortDirection === 'desc'
+                          }"
+                        >▲</span>
+                      </div>
                       <div
                         class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50"
                         @click="sortBy('name')"
@@ -814,6 +848,26 @@
                 class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
                 :class="getServerStatusClass(server)"
               >
+                <!-- Rank -->
+                <td class="p-1.5">
+                  <div class="flex items-center justify-center">
+                    <div class="text-center">
+                      <div
+                        v-if="getServerRank(server.guid)"
+                        class="text-yellow-400 font-bold text-xs font-mono"
+                      >
+                        #{{ getServerRank(server.guid) }}
+                      </div>
+                      <div
+                        v-else
+                        class="text-slate-500 text-xs font-mono"
+                      >
+                        -
+                      </div>
+                    </div>
+                  </div>
+                </td>
+
                 <!-- Server Name -->
                 <td class="p-1.5">
                   <router-link 
@@ -1065,9 +1119,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchAllServers, fetchServerBusyIndicators, type ServerBusyIndicatorResult, type ServerHourlyTimelineEntry, type BusyLevel } from '../services/serverDetailsService'
+import { fetchAllServers, fetchServerBusyIndicators, fetchServerRankings, type ServerBusyIndicatorResult, type ServerHourlyTimelineEntry, type BusyLevel } from '../services/serverDetailsService'
 import { ServerSummary } from '../types/server'
-import { PlayerHistoryDataPoint, PlayerHistoryInsights } from '../types/playerStatsTypes'
+import { PlayerHistoryDataPoint, PlayerHistoryInsights, ServerRank } from '../types/playerStatsTypes'
 import PlayersPanel from '../components/PlayersPanel.vue'
 import PlayerHistoryChart from '../components/PlayerHistoryChart.vue'
 import { fetchPlayerOnlineHistory } from '../services/playerStatsService'
@@ -1216,11 +1270,22 @@ const serverTrendsByGuid = ref<Record<string, ServerBusyIndicatorResult>>({})
 // Per-server modal state
 const serverModalStates = ref<Record<string, boolean>>({})
 
+// Server rankings state
+const serverRankings = ref<ServerRank[]>([])
+const rankingsLoading = ref(false)
+const rankingsError = ref<string | null>(null)
+
 // Helper to determine if modal should open upward (for rows near bottom)
 const shouldOpenUpward = (index: number) => {
   const totalRows = sortedServers.value.length
   // Open upward if in the last 3 rows
   return index >= totalRows - 3
+}
+
+// Helper to get server rank
+const getServerRank = (serverGuid: string): number | null => {
+  const ranking = serverRankings.value.find(r => r.serverGuid === serverGuid)
+  return ranking ? ranking.rank : null
 }
 
 // Computed properties
@@ -1299,10 +1364,10 @@ const getTimezoneOffset = (timezone: string | undefined): number => {
 
 const sortedServers = computed(() => {
   const filtered = [...filteredServers.value]
-  
+
   return filtered.sort((a, b) => {
     let aVal, bVal
-    
+
     switch (sortField.value) {
       case 'name':
         aVal = a.name.toLowerCase()
@@ -1329,11 +1394,18 @@ const sortedServers = computed(() => {
         aVal = Math.abs(getTimezoneOffset(a.timezone))
         bVal = Math.abs(getTimezoneOffset(b.timezone))
         break
+      case 'rank':
+        // Sort by server rank (lower rank number = higher ranking)
+        const aRank = getServerRank(a.guid) || 999999
+        const bRank = getServerRank(b.guid) || 999999
+        aVal = aRank
+        bVal = bRank
+        break
       default:
         aVal = a.numPlayers
         bVal = b.numPlayers
     }
-    
+
     if (sortDirection.value === 'asc') {
       return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
     } else {
@@ -1576,8 +1648,8 @@ const sortBy = (field: string) => {
   } else {
     sortField.value = field
     // Default sorting directions
-    if (field === 'numPlayers') {
-      sortDirection.value = 'desc'
+    if (field === 'numPlayers' || field === 'rank') {
+      sortDirection.value = 'asc' // Lower numbers first (higher rank = lower number)
     } else if (field === 'timezone') {
       sortDirection.value = 'asc' // Closest timezone first
     } else {
@@ -1660,7 +1732,7 @@ const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isI
     loading.value = true
   }
   error.value = null
-  
+
   try {
     const serverData = await fetchAllServers(gameType)
     servers.value = serverData.sort((a, b) => b.numPlayers - a.numPlayers)
@@ -1668,12 +1740,32 @@ const fetchServersForGame = async (gameType: 'bf1942' | 'fh2' | 'bfvietnam', isI
     updateSeoMetaTags()
     // Fire-and-forget: fetch per-server busy indicators for active servers (>=5 players)
     fetchAndAttachServerTrends()
+    // Fire-and-forget: fetch server rankings
+    fetchServerRankingsData()
   } catch (err) {
     error.value = 'Failed to fetch server data. Please try again.'
   } finally {
     if (isInitialLoad) {
       loading.value = false
     }
+  }
+}
+
+const fetchServerRankingsData = async () => {
+  rankingsLoading.value = true
+  rankingsError.value = null
+
+  try {
+    const serverGuids = servers.value.map(s => s.guid)
+    if (serverGuids.length > 0) {
+      const rankings = await fetchServerRankings(serverGuids, 60) // Last 60 days for more data
+      serverRankings.value = rankings
+    }
+  } catch (err) {
+    rankingsError.value = 'Failed to load server rankings'
+    console.error('Error fetching server rankings:', err)
+  } finally {
+    rankingsLoading.value = false
   }
 }
 
@@ -1979,8 +2071,9 @@ watch([servers, activeFilter], () => {
 
 // Watch for game filter changes and fetch new data
 watch(activeFilter, (newFilter) => {
-  // Reset per-server trends when switching games to avoid stale badges
+  // Reset per-server trends and rankings when switching games to avoid stale data
   serverTrendsByGuid.value = {}
+  serverRankings.value = []
   fetchServersForGame(newFilter as 'bf1942' | 'fh2' | 'bfvietnam', true)
   // Also refresh player history if it's visible
   if (showPlayerHistory.value) {

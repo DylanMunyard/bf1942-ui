@@ -375,6 +375,13 @@ export interface PlayerHistoryResponse {
   lastUpdated: string;
 }
 
+// Server ranking by total playtime
+export interface ServerRank {
+  serverGuid: string;
+  rank: number;
+  totalPlayTimeMinutes: number;
+}
+
 export interface PlayerOnlineHistoryResponse {
   dataPoints: PlayerHistoryDataPoint[];
   period: string;

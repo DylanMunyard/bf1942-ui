@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ServerSummary } from '../types/server';
+import { ServerRank } from '../types/playerStatsTypes';
 
 // Define interfaces for the API response
 
@@ -328,6 +329,32 @@ export async function fetchRoundReport(roundId: string): Promise<RoundReport> {
   } catch (err) {
     console.error('Error fetching round report:', err);
     throw new Error('Failed to get round report');
+  }
+}
+
+/**
+ * Fetches server rankings by total playtime for the last N days
+ * @param serverGuids List of server GUIDs to get rankings for
+ * @param days Number of days to look back (default: 30)
+ * @returns List of server rankings
+ */
+export async function fetchServerRankings(
+  serverGuids: string[],
+  days: number = 30
+): Promise<ServerRank[]> {
+  try {
+    const params = new URLSearchParams();
+    serverGuids.forEach(guid => params.append('serverGuids', guid));
+    params.set('days', days.toString());
+
+    const response = await axios.get<ServerRank[]>(
+      `/stats/servers/rankings?${params.toString()}`
+    );
+
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching server rankings:', err);
+    throw new Error('Failed to get server rankings');
   }
 }
 
