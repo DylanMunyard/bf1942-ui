@@ -36,6 +36,7 @@ const liveServerError = ref<string | null>(null);
 const showPlayersModal = ref(false);
 const currentLeaderboardPeriod = ref<'week' | 'month' | 'alltime'>('week');
 const minPlayersForWeighting = ref(15);
+const minRoundsForKillBoards = ref(20);
 const historyRollingWindow = ref('7d');
 const historyPeriod = ref<'1d' | '3d' | '7d' | 'longer'>('7d');
 const longerPeriod = ref<'1month' | '3months' | 'thisyear' | 'alltime'>('1month');
@@ -157,7 +158,8 @@ const fetchLeaderboardsAsync = async () => {
     leaderboardsData.value = await fetchServerLeaderboards(
       serverName.value,
       currentLeaderboardPeriod.value,
-      minPlayersForWeighting.value
+      minPlayersForWeighting.value,
+      minRoundsForKillBoards.value
     );
   } catch (err) {
     console.error('Error fetching server leaderboards:', err);
@@ -276,7 +278,8 @@ const handleLeaderboardPeriodChange = async (period: 'week' | 'month' | 'alltime
     leaderboardsData.value = await fetchServerLeaderboards(
       serverName.value,
       period,
-      minPlayersForWeighting.value
+      minPlayersForWeighting.value,
+      minRoundsForKillBoards.value
     );
   } catch (err) {
     console.error('Error fetching leaderboards for period:', period, err);
@@ -298,7 +301,8 @@ const handleMinPlayersUpdate = async (value: number) => {
     leaderboardsData.value = await fetchServerLeaderboards(
       serverName.value,
       currentLeaderboardPeriod.value,
-      value
+      value,
+      minRoundsForKillBoards.value
     );
   } catch (err) {
     console.error('Error refreshing leaderboards with new min players:', err);

@@ -28,6 +28,8 @@ const playerStats = ref<PlayerTimeStatistics | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const showTrendCharts = ref(false);
+const trendChartHideTimeout = ref<NodeJS.Timeout | null>(null);
+const trendChartHoverCount = ref(0);
 const showLastOnline = ref(false);
 const achievementGroups = ref<PlayerAchievementGroup[]>([]);
 const achievementGroupsLoading = ref(false);
@@ -165,10 +167,11 @@ const microChartOptions = computed(() => {
         bodyColor: '#ffffff',
         borderColor: isDarkMode ? '#9c27b0' : '#666666',
         borderWidth: 1,
-        cornerRadius: 4,
+        cornerRadius: 6,
         displayColors: false,
-        titleFont: { size: 8, weight: 'bold' as const },
-        bodyFont: { size: 7 },
+        padding: 8,
+        titleFont: { size: 12, weight: 'bold' as const },
+        bodyFont: { size: 11 },
         callbacks: {
           title: function(context: any[]) {
             return context[0].label;
@@ -353,6 +356,28 @@ const changeMapStatsSort = (field: string) => {
   }
 };
 
+// Functions to handle sticky trend chart hover behavior using hover counter
+const enterTrendChartArea = () => {
+  trendChartHoverCount.value++;
+  showTrendCharts.value = true;
+  // Clear any pending hide timeout
+  if (trendChartHideTimeout.value) {
+    clearTimeout(trendChartHideTimeout.value);
+    trendChartHideTimeout.value = null;
+  }
+};
+
+const leaveTrendChartArea = () => {
+  trendChartHoverCount.value = Math.max(0, trendChartHoverCount.value - 1);
+  // Only hide if no areas are being hovered
+  if (trendChartHoverCount.value === 0) {
+    trendChartHideTimeout.value = setTimeout(() => {
+      showTrendCharts.value = false;
+      trendChartHideTimeout.value = null;
+    }, 800); // Longer delay for moving between charts
+  }
+};
+
 
 
 // Computed property to sort map stats
@@ -459,6 +484,11 @@ const closeTooltipOnClickOutside = (event: MouseEvent) => {
 onUnmounted(() => {
   document.body.style.overflow = 'unset';
   document.removeEventListener('click', closeTooltipOnClickOutside);
+
+  // Clear any pending trend chart hide timeout
+  if (trendChartHideTimeout.value) {
+    clearTimeout(trendChartHideTimeout.value);
+  }
 });
 
 </script>
@@ -522,7 +552,7 @@ onUnmounted(() => {
           <!-- Player Stats Summary -->
           <div class="flex items-center gap-6 text-slate-300 flex-wrap">
             <!-- K/D Ratio with Hover Trends -->
-            <div class="relative" @mouseenter="showTrendCharts = true" @mouseleave="showTrendCharts = false">
+            <div class="relative" @mouseenter="enterTrendChartArea" @mouseleave="leaveTrendChartArea">
               <div class="flex items-center gap-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg px-4 py-2 hover:border-purple-500/60 transition-all duration-200 cursor-pointer">
                 <div class="text-center">
                   <div class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
@@ -547,14 +577,15 @@ onUnmounted(() => {
               <div
                 v-if="showTrendCharts"
                 class="absolute left-0 top-full mt-2 bg-slate-900 border border-slate-700 rounded-lg p-3 w-80 z-50 shadow-2xl transition-all duration-200"
-                @mouseenter="showTrendCharts = true"
-                @mouseleave="showTrendCharts = false"
+                @mouseenter="enterTrendChartArea"
+                @mouseleave="leaveTrendChartArea"
               >
+                <!-- Chart content wrapper -->
                 <div class="space-y-2">
                   <!-- Kill Rate Trend Mini -->
                   <div class="space-y-1">
                     <div class="text-xs font-semibold text-slate-300">Kill Rate Trend</div>
-                    <div class="h-10 -mx-1">
+                    <div class="h-10 -mx-1 trend-chart-container">
                       <Line
                         :data="killRateTrendChartData"
                         :options="microChartOptions"
@@ -564,7 +595,7 @@ onUnmounted(() => {
                   <!-- K/D Ratio Trend Mini -->
                   <div class="space-y-1">
                     <div class="text-xs font-semibold text-slate-300">K/D Trend</div>
-                    <div class="h-10 -mx-1">
+                    <div class="h-10 -mx-1 trend-chart-container">
                       <Line
                         :data="kdRatioTrendChartData"
                         :options="microChartOptions"
@@ -1679,6 +1710,11 @@ onUnmounted(() => {
 /* Chart.js container positioning */
 .relative .absolute {
   pointer-events: none;
+}
+
+/* Ensure trend chart containers allow mouse events to bubble up */
+.trend-chart-container canvas {
+  pointer-events: auto !important;
 }
 
 /* Performance node colors for timeline */

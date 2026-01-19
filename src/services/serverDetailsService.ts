@@ -222,12 +222,14 @@ export async function fetchServerDetails(
  * @param serverName The name of the server to fetch leaderboards for
  * @param timePeriod The time period: 'week', 'month', or 'alltime'
  * @param minPlayersForWeighting Optional minimum players required for weighted placements
+ * @param minRoundsForKillBoards Optional minimum rounds required for kill rate and K/D ratio leaderboards
  * @returns Server leaderboards data
  */
 export async function fetchServerLeaderboards(
   serverName: string,
   timePeriod: 'week' | 'month' | 'alltime',
-  minPlayersForWeighting?: number
+  minPlayersForWeighting?: number,
+  minRoundsForKillBoards?: number
 ): Promise<LeaderboardsData> {
   try {
     const params = new URLSearchParams();
@@ -248,6 +250,10 @@ export async function fetchServerLeaderboards(
 
     if (minPlayersForWeighting !== undefined) {
       params.set('minPlayersForWeighting', minPlayersForWeighting.toString());
+    }
+
+    if (minRoundsForKillBoards !== undefined) {
+      params.set('minRoundsForKillBoards', minRoundsForKillBoards.toString());
     }
 
     const url = `/stats/v2/servers/${encodeURIComponent(serverName)}/leaderboards?${params.toString()}`;
