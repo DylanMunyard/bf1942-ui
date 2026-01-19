@@ -312,6 +312,29 @@ const handleMinPlayersUpdate = async (value: number) => {
   }
 };
 
+// Handle min rounds for kill boards update
+const handleMinRoundsUpdate = async (value: number) => {
+  minRoundsForKillBoards.value = value;
+
+  // Refetch leaderboards with new min rounds value
+  isLeaderboardsLoading.value = true;
+  leaderboardsError.value = null;
+
+  try {
+    leaderboardsData.value = await fetchServerLeaderboards(
+      serverName.value,
+      currentLeaderboardPeriod.value,
+      minPlayersForWeighting.value,
+      value
+    );
+  } catch (err) {
+    console.error('Error refreshing leaderboards with new min rounds:', err);
+    leaderboardsError.value = 'Failed to refresh leaderboards.';
+  } finally {
+    isLeaderboardsLoading.value = false;
+  }
+};
+
 // Handle rolling window change for player history chart
 const handleRollingWindowChange = async (rollingWindow: string) => {
   historyRollingWindow.value = rollingWindow;
@@ -1259,7 +1282,9 @@ const closeForecastOverlay = () => {
                   :server-name="serverName"
                   :server-guid="serverDetails.serverGuid"
                   :min-players-for-weighting="minPlayersForWeighting"
+                  :min-rounds-for-kill-boards="minRoundsForKillBoards"
                   @update-min-players-for-weighting="handleMinPlayersUpdate"
+                  @update-min-rounds-for-kill-boards="handleMinRoundsUpdate"
                   @period-change="handleLeaderboardPeriodChange"
                 />
               </div>

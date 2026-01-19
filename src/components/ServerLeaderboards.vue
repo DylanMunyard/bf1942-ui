@@ -11,21 +11,30 @@ const props = defineProps<{
   serverName: string;
   serverGuid?: string;
   minPlayersForWeighting?: number;
+  minRoundsForKillBoards?: number;
 }>();
 
 const emit = defineEmits<{
   updateMinPlayersForWeighting: [value: number];
+  updateMinRoundsForKillBoards: [value: number];
   periodChange: [period: 'week' | 'month' | 'alltime'];
 }>();
 
 const selectedTimePeriod = ref<'week' | 'month' | 'alltime'>('week');
 const showWeightedPlacements = ref(true);
 const localMinPlayersForWeighting = ref(props.minPlayersForWeighting || 15);
+const localMinRoundsForKillBoards = ref(props.minRoundsForKillBoards || 20);
 
-// Watch for minPlayersForWeighting prop changes
+// Watch for prop changes
 watch(() => props.minPlayersForWeighting, (newValue) => {
   if (newValue !== undefined) {
     localMinPlayersForWeighting.value = newValue;
+  }
+});
+
+watch(() => props.minRoundsForKillBoards, (newValue) => {
+  if (newValue !== undefined) {
+    localMinRoundsForKillBoards.value = newValue;
   }
 });
 
@@ -41,6 +50,11 @@ const togglePlacementType = () => {
 const updateMinPlayersWeighting = (value: number) => {
   localMinPlayersForWeighting.value = value;
   emit('updateMinPlayersForWeighting', value);
+};
+
+const updateMinRoundsForKillBoards = (value: number) => {
+  localMinRoundsForKillBoards.value = value;
+  emit('updateMinRoundsForKillBoards', value);
 };
 
 const currentMostActivePlayers = computed(() => {
@@ -433,9 +447,28 @@ const placementTypeSubtitle = computed(() => {
               <span v-else>All Time</span>
             </button>
           </div>
+
+          <!-- Min Rounds Control -->
+          <div class="min-rounds-control">
+            <label class="min-rounds-label">Min Rounds:</label>
+            <select
+              :value="localMinRoundsForKillBoards"
+              class="min-rounds-select"
+              @change="updateMinRoundsForKillBoards(parseInt(($event.target as HTMLSelectElement).value))"
+            >
+              <option value="5">5+</option>
+              <option value="10">10+</option>
+              <option value="15">15+</option>
+              <option value="20">20+</option>
+              <option value="25">25+</option>
+              <option value="30">30+</option>
+              <option value="50">50+</option>
+              <option value="100">100+</option>
+            </select>
+          </div>
         </div>
       </div>
-      
+
       <!-- Top K/D Ratios -->
       <div
         v-if="currentTopKDRatios.length > 0"
@@ -505,9 +538,28 @@ const placementTypeSubtitle = computed(() => {
               <span v-else>All Time</span>
             </button>
           </div>
+
+          <!-- Min Rounds Control -->
+          <div class="min-rounds-control">
+            <label class="min-rounds-label">Min Rounds:</label>
+            <select
+              :value="localMinRoundsForKillBoards"
+              class="min-rounds-select"
+              @change="updateMinRoundsForKillBoards(parseInt(($event.target as HTMLSelectElement).value))"
+            >
+              <option value="5">5+</option>
+              <option value="10">10+</option>
+              <option value="15">15+</option>
+              <option value="20">20+</option>
+              <option value="25">25+</option>
+              <option value="30">30+</option>
+              <option value="50">50+</option>
+              <option value="100">100+</option>
+            </select>
+          </div>
         </div>
       </div>
-      
+
       <!-- Top Kill Rates -->
       <div
         v-if="currentTopKillRates.length > 0"
@@ -640,6 +692,37 @@ const placementTypeSubtitle = computed(() => {
   border-color: rgba(255, 215, 0, 0.5);
   outline: none;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.min-rounds-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.min-rounds-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.min-rounds-select {
+  padding: 0.25rem 0.5rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.375rem;
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.min-rounds-select:hover,
+.min-rounds-select:focus {
+  border-color: rgba(239, 68, 68, 0.5);
+  outline: none;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
 }
 
 .section-controls {
@@ -826,8 +909,18 @@ const placementTypeSubtitle = computed(() => {
     justify-content: space-between;
     width: 100%;
   }
-  
+
   .min-players-select {
+    flex: 1;
+    max-width: 80px;
+  }
+
+  .min-rounds-control {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .min-rounds-select {
     flex: 1;
     max-width: 80px;
   }
