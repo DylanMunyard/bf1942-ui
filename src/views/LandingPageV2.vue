@@ -854,9 +854,28 @@
                     <div class="text-center">
                       <div
                         v-if="getServerRank(server.guid)"
-                        class="text-yellow-400 font-bold text-xs font-mono"
+                        class="text-yellow-400 font-bold text-xs font-mono cursor-pointer hover:text-yellow-300 transition-colors relative group"
+                        @click.stop="toggleRankTooltip(server.guid)"
                       >
                         #{{ getServerRank(server.guid) }}
+
+                        <!-- Rank Tooltip -->
+                        <div
+                          v-if="rankTooltipServer === server.guid"
+                          class="absolute z-50 left-full top-1/2 transform -translate-y-1/2 ml-2 px-3 py-2 bg-slate-800/95 backdrop-blur-lg rounded-lg border border-slate-600/50 shadow-xl text-xs text-left whitespace-nowrap"
+                        >
+                          <div class="text-yellow-400 font-semibold mb-1">
+                            Ranked #{{ getServerRank(server.guid) }} by total playtime
+                          </div>
+                          <div class="text-slate-300">
+                            {{ formatTotalPlayTime(getServerTotalPlayTime(server.guid)) }}
+                          </div>
+                          <div class="text-slate-400 text-[10px] mt-1">
+                            Last 60 days
+                          </div>
+                          <!-- Tooltip arrow -->
+                          <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800/95"></div>
+                        </div>
                       </div>
                       <div
                         v-else
@@ -1275,6 +1294,9 @@ const serverRankings = ref<ServerRank[]>([])
 const rankingsLoading = ref(false)
 const rankingsError = ref<string | null>(null)
 
+// Rank tooltip state
+const rankTooltipServer = ref<string | null>(null)
+
 // Helper to determine if modal should open upward (for rows near bottom)
 const shouldOpenUpward = (index: number) => {
   const totalRows = sortedServers.value.length
@@ -1286,6 +1308,31 @@ const shouldOpenUpward = (index: number) => {
 const getServerRank = (serverGuid: string): number | null => {
   const ranking = serverRankings.value.find(r => r.serverGuid === serverGuid)
   return ranking ? ranking.rank : null
+}
+
+// Helper to get server total playtime
+const getServerTotalPlayTime = (serverGuid: string): number => {
+  const ranking = serverRankings.value.find(r => r.serverGuid === serverGuid)
+  return ranking ? ranking.totalPlayTimeMinutes : 0
+}
+
+// Format total playtime nicely
+const formatTotalPlayTime = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) {
+    return `${hours} hour${hours !== 1 ? 's' : ''} total playtime`
+  }
+  const days = Math.floor(hours / 24)
+  const remainingHours = hours % 24
+  if (remainingHours === 0) {
+    return `${days} day${days !== 1 ? 's' : ''} total playtime`
+  }
+  return `${days} day${days !== 1 ? 's' : ''}, ${remainingHours} hour${remainingHours !== 1 ? 's' : ''} total playtime`
+}
+
+// Toggle rank tooltip
+const toggleRankTooltip = (serverGuid: string) => {
+  rankTooltipServer.value = rankTooltipServer.value === serverGuid ? null : serverGuid
 }
 
 // Computed properties
@@ -1880,6 +1927,8 @@ const closeAllModals = () => {
   Object.keys(serverModalStates.value).forEach(guid => {
     serverModalStates.value[guid] = false
   })
+  // Close rank tooltip
+  rankTooltipServer.value = null
 }
 
 const formatTimelineTooltip = (entry: ServerHourlyTimelineEntry): string => {
