@@ -616,12 +616,13 @@ Winners choose first map for next round.</code>
             <label class="block text-sm font-medium text-slate-300 mb-2">
               Game Mode <span class="text-slate-500">(Optional)</span>
             </label>
-            <input
+            <select
               v-model="formData.gameMode"
-              type="text"
-              placeholder="e.g., CTF, Conquest"
-              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+              class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
             >
+              <option value="Conquest">Conquest</option>
+              <option value="CTF">CTF</option>
+            </select>
             <p class="mt-1 text-xs text-slate-500">
               Game mode for this tournament
             </p>
@@ -1287,7 +1288,7 @@ const formData = ref({
   forumUrl: '',
   rules: '',
   status: 'draft' as 'draft' | 'registration' | 'open' | 'closed',
-  gameMode: '',
+  gameMode: 'Conquest',
   weekDates: [] as Array<{ id?: number; week: string; startDate: string; endDate: string }>,
   files: [] as Array<{ id?: number; name: string; url: string; category?: string; uploadedAt?: string }>,
   theme: {
