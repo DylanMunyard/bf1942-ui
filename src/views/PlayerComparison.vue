@@ -58,6 +58,13 @@ interface AveragePingData {
   averagePing: number;
 }
 
+interface HourlyOverlap {
+  hour: number;
+  player1Minutes: number;
+  player2Minutes: number;
+  overlapMinutes: number;
+}
+
 interface BucketTotal {
   bucket: 'Last30Days' | 'Last6Months' | 'LastYear' | 'AllTime';
   player1Totals: PerformanceStats & { playTimeMinutes?: number };
@@ -89,17 +96,6 @@ interface ServerDetails {
   org: string;
 }
 
-interface ActivityByHour {
-  formattedHour: string;
-  hour: number;
-  minutesActive: number;
-}
-
-interface ActivityHoursData {
-  player1ActivityHours: ActivityByHour[];
-  player2ActivityHours: ActivityByHour[];
-}
-
 interface ComparisonData {
   player1: string;
   player2: string;
@@ -108,6 +104,7 @@ interface ComparisonData {
   averagePing: AveragePingData[];
   mapPerformance: MapPerformance[];
   headToHead: HeadToHeadEncounter[];
+  hourlyOverlap?: HourlyOverlap[];
   serverDetails?: ServerDetails;
   commonServers?: ServerDetails[];
   player1MilestoneAchievements?: MilestoneAchievement[];
@@ -134,12 +131,6 @@ const player2InputRef = ref<HTMLInputElement | null>(null);
 const comparisonData = ref<ComparisonData | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
-
-// Activity hours state
-const activityHoursData = ref<ActivityHoursData | null>(null);
-const activityHoursLoading = ref(false);
-const activityHoursError = ref<string | null>(null);
-const showRawActivityData = ref(false);
 
 // Theme detection state
 const isDarkMode = ref(false);
@@ -185,39 +176,6 @@ const timePeriodOptions = [
   { value: 'AllTime', label: 'All Time' },
 ] as const;
 
-// Function to fetch activity hours for both players
-const fetchActivityHours = async (player1: string, player2: string) => {
-  if (!player1 || !player2) {
-    activityHoursData.value = null;
-    return;
-  }
-  
-  activityHoursLoading.value = true;
-  activityHoursError.value = null;
-  
-  try {
-    const url = `/stats/players/compare/activity-hours?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}`;
-    console.log(`Fetching activity hours from: ${url}`);
-    
-    const response = await fetch(url);
-    console.log(`Activity hours response status: ${response.status}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch activity hours data');
-    }
-    
-    const data = await response.json();
-    console.log('Activity hours data:', data);
-    
-    activityHoursData.value = data;
-  } catch (err: any) {
-    console.error('Error fetching activity hours:', err);
-    activityHoursError.value = err.message;
-  } finally {
-    activityHoursLoading.value = false;
-  }
-};
-
 const fetchComparisonData = async (player1: string, player2: string, includeServerGuid: boolean = true, specificServerGuid?: string) => {
   if (!player1 || !player2) {
     comparisonData.value = null;
@@ -258,9 +216,6 @@ const fetchComparisonData = async (player1: string, player2: string, includeServ
     }
     
     comparisonData.value = data;
-    
-    // Fetch activity hours data asynchronously (don't block the main comparison)
-    fetchActivityHours(player1, player2);
     
     // Update URL for sharing/bookmarking (but don't rely on it for functionality)
     const query: Record<string, string> = { player1, player2 };
@@ -507,6 +462,107 @@ const player2AveragePing = computed(() => {
   return player2Data?.averagePing || 0;
 });
 
+const hourlyOverlap = computed(() => {
+  const overlapData = comparisonData.value?.hourlyOverlap ?? [];
+  const byHour = new Map<number, HourlyOverlap>();
+  for (const entry of overlapData) {
+    byHour.set(entry.hour, entry);
+  }
+  return Array.from({ length: 24 }, (_, hour) =>
+    byHour.get(hour) ?? { hour, player1Minutes: 0, player2Minutes: 0, overlapMinutes: 0 }
+  );
+});
+
+const hourlyOverlapChartData = computed(() => {
+  if (!comparisonData.value?.hourlyOverlap?.length) return null;
+  const labels = hourlyOverlap.value.map(entry => `${entry.hour.toString().padStart(2, '0')}:00`);
+  return {
+    labels,
+    datasets: [
+      {
+        label: comparisonData.value?.player1 ?? 'Player 1',
+        data: hourlyOverlap.value.map(entry => entry.player1Minutes),
+        borderColor: '#22d3ee',
+        backgroundColor: 'rgba(34, 211, 238, 0.2)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 3
+      },
+      {
+        label: comparisonData.value?.player2 ?? 'Player 2',
+        data: hourlyOverlap.value.map(entry => entry.player2Minutes),
+        borderColor: '#fb923c',
+        backgroundColor: 'rgba(251, 146, 60, 0.15)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 3
+      },
+      {
+        label: 'Overlap',
+        data: hourlyOverlap.value.map(entry => entry.overlapMinutes),
+        borderColor: '#a855f7',
+        backgroundColor: 'rgba(168, 85, 247, 0.25)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 3
+      }
+    ]
+  };
+});
+
+const hourlyOverlapChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {
+    intersect: false,
+    mode: 'index' as const
+  },
+  scales: {
+    x: {
+      grid: {
+        color: isDarkMode.value ? 'rgba(148, 163, 184, 0.1)' : 'rgba(15, 23, 42, 0.08)'
+      },
+      ticks: {
+        color: isDarkMode.value ? '#94a3b8' : '#475569',
+        maxRotation: 0,
+        autoSkip: true,
+        maxTicksLimit: 12
+      }
+    },
+    y: {
+      grid: {
+        color: isDarkMode.value ? 'rgba(148, 163, 184, 0.1)' : 'rgba(15, 23, 42, 0.08)'
+      },
+      ticks: {
+        color: isDarkMode.value ? '#94a3b8' : '#475569',
+        callback: (value: string | number) => `${Math.round(Number(value))}m`
+      }
+    }
+  },
+  plugins: {
+    legend: {
+      position: 'top' as const,
+      labels: {
+        color: isDarkMode.value ? '#e2e8f0' : '#0f172a',
+        usePointStyle: true,
+        pointStyle: 'circle'
+      }
+    },
+    tooltip: {
+      backgroundColor: isDarkMode.value ? 'rgba(30, 41, 59, 0.95)' : 'rgba(15, 23, 42, 0.95)',
+      titleColor: '#ffffff',
+      bodyColor: '#ffffff',
+      displayColors: true,
+      callbacks: {
+        label: (context: any) => `${context.dataset.label}: ${Math.round(context.parsed.y)}m`
+      }
+    }
+  }
+}));
+
 const getPerformanceData = (bucket: string) => {
   if (!comparisonData.value?.bucketTotals) return null;
   return comparisonData.value.bucketTotals.find(bt => bt.bucket === bucket);
@@ -648,251 +704,6 @@ const sortedHeadToHead = computed(() => {
     return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
   });
 });
-
-// Function to convert UTC hour to local hour
-const convertToLocalHour = (utcHour: number): number => {
-  const now = new Date();
-  const localDate = new Date(now.setUTCHours(utcHour, 0, 0, 0));
-  return localDate.getHours();
-};
-
-// Helper to sort activity hours by local time
-const getSortedActivityHours = (activityHours: ActivityByHour[]) => {
-  if (!activityHours) return [];
-  
-  // Create a new array with local hour information
-  const hoursWithLocalTime = activityHours.map(hourData => ({
-    ...hourData,
-    localHour: convertToLocalHour(hourData.hour)
-  }));
-
-  // Sort by local hour (0-23)
-  return [...hoursWithLocalTime].sort((a, b) => a.localHour - b.localHour);
-};
-
-// Combined activity chart data for both players
-const combinedActivityChartData = computed(() => {
-  if (!activityHoursData.value?.player1ActivityHours || !activityHoursData.value?.player2ActivityHours) {
-    return { labels: [], datasets: [] };
-  }
-
-  const player1Sorted = getSortedActivityHours(activityHoursData.value.player1ActivityHours);
-  const player2Sorted = getSortedActivityHours(activityHoursData.value.player2ActivityHours);
-  
-  // Create labels for all 24 hours
-  const labels = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
-  
-  // Create data arrays with zeros for missing hours
-  const player1Data = new Array(24).fill(0);
-  const player2Data = new Array(24).fill(0);
-  
-  // Fill in actual data
-  player1Sorted.forEach(hourData => {
-    player1Data[hourData.localHour] = hourData.minutesActive;
-  });
-  
-  player2Sorted.forEach(hourData => {
-    player2Data[hourData.localHour] = hourData.minutesActive;
-  });
-
-  // Show raw data or combined overlap view
-  if (showRawActivityData.value) {
-    return {
-      labels,
-      datasets: [
-        {
-          label: comparisonData.value?.player1 || 'Player 1',
-          backgroundColor: 'rgba(156, 39, 176, 0.1)',
-          borderColor: 'rgba(156, 39, 176, 1)',
-          borderWidth: 3,
-          fill: false,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          pointBackgroundColor: 'rgba(156, 39, 176, 1)',
-          pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          data: player1Data
-        },
-        {
-          label: comparisonData.value?.player2 || 'Player 2',
-          backgroundColor: 'rgba(33, 150, 243, 0.1)',
-          borderColor: 'rgba(33, 150, 243, 1)',
-          borderWidth: 3,
-          fill: false,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          pointBackgroundColor: 'rgba(33, 150, 243, 1)',
-          pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          data: player2Data
-        }
-      ]
-    };
-  }
-
-  // Calculate combined activity potential (normalized to 0-1 scale for each player, then combined)
-  const maxPlayer1 = Math.max(...player1Data);
-  const maxPlayer2 = Math.max(...player2Data);
-  
-  const combinedActivityData = player1Data.map((p1Activity, index) => {
-    const p2Activity = player2Data[index];
-    
-    // Normalize each player's activity to 0-1 scale
-    const p1Normalized = maxPlayer1 > 0 ? p1Activity / maxPlayer1 : 0;
-    const p2Normalized = maxPlayer2 > 0 ? p2Activity / maxPlayer2 : 0;
-    
-    // Combined likelihood: geometric mean gives better representation of overlap
-    // Scale back up to meaningful values (0-100 for percentage-like display)
-    return Math.sqrt(p1Normalized * p2Normalized) * 100;
-  });
-
-  return {
-    labels,
-    datasets: [
-      {
-        label: 'Overlap Potential',
-        backgroundColor: (ctx: any) => {
-          const canvas = ctx.chart.ctx;
-          const gradient = canvas.createLinearGradient(0, 0, 0, 200);
-          gradient.addColorStop(0, 'rgba(156, 39, 176, 0.4)');
-          gradient.addColorStop(0.5, 'rgba(103, 58, 183, 0.3)');
-          gradient.addColorStop(1, 'rgba(156, 39, 176, 0.1)');
-          return gradient;
-        },
-        borderColor: 'rgba(156, 39, 176, 0.8)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointBackgroundColor: 'rgba(156, 39, 176, 0.9)',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        data: combinedActivityData
-      }
-    ]
-  };
-});
-
-// Chart options for the combined activity chart
-const combinedActivityChartOptions = computed(() => {
-  // Get colors directly from CSS custom properties
-  const computedStyle = getComputedStyle(document.documentElement);
-  const cssTextColor = computedStyle.getPropertyValue('--color-text').trim();
-  const cssHeadingColor = computedStyle.getPropertyValue('--color-heading').trim();
-  
-  // Use the actual CSS colors, fallback to manual detection
-  const textColor = cssHeadingColor || (isDarkMode.value ? '#ffffff' : '#2c3e50');
-  const gridColor = isDarkMode.value ? 'rgba(235, 235, 235, 0.15)' : 'rgba(60, 60, 60, 0.12)';
-  
-  console.log('Chart options:', {
-    isDarkMode: isDarkMode.value,
-    cssTextColor,
-    cssHeadingColor,
-    finalTextColor: textColor
-  });
-  
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      intersect: false,
-      mode: 'index' as const
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        display: false,
-        grid: {
-          display: false
-        }
-      },
-      x: {
-        display: true,
-        grid: {
-          display: true,
-          color: gridColor
-        },
-        ticks: {
-          color: textColor,
-          font: {
-            size: 10
-          },
-          maxTicksLimit: 6
-        },
-        title: {
-          display: false
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top' as const,
-        labels: {
-          color: textColor,
-          usePointStyle: false,
-          padding: 20,
-          font: {
-            size: 14,
-            weight: 'bold' as const
-          }
-        }
-      },
-      tooltip: {
-        enabled: true,
-        backgroundColor: isDarkMode.value ? 'rgba(35, 21, 53, 0.95)' : 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#ffffff',
-        bodyColor: '#ffffff',
-        borderColor: isDarkMode.value ? '#7e57c2' : '#2196F3',
-        borderWidth: 1,
-        cornerRadius: 6,
-        displayColors: true,
-        titleFont: {
-          size: 12,
-          weight: 'bold' as const
-        },
-        bodyFont: {
-          size: 11
-        },
-        callbacks: {
-          title: function(context: any) {
-            return `${context[0].label}`;
-          },
-          label: function(context: any) {
-            if (showRawActivityData.value) {
-              return `${context.dataset.label}: ${context.parsed.y} minutes active`;
-            }
-            
-            const value = context.parsed.y;
-            let likelihood;
-            if (value < 25) {
-              likelihood = 'Unlikely';
-            } else if (value < 70) {
-              likelihood = 'Possible';
-            } else {
-              likelihood = 'Most Likely';
-            }
-            
-            return `${context.dataset.label}: ${likelihood}`;
-          }
-        }
-      }
-    },
-    elements: {
-      point: {
-        radius: 0,
-        hoverRadius: 4
-      }
-    }
-  };
-});
-
-
-
-
 
 // Modal state for milestone achievements
 const showMilestoneAchievementsModal = ref(false);
@@ -1568,113 +1379,31 @@ const formatRelativeTime = (dateString: string): string => {
         </div>
       </div>
 
-      <!-- Typical Online Hours -->
+      <!-- Playtime Overlap -->
       <div
-        v-if="activityHoursData?.player1ActivityHours && activityHoursData?.player2ActivityHours"
+        v-if="comparisonData.hourlyOverlap && comparisonData.hourlyOverlap.length > 0"
         class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden"
       >
         <div class="p-6 border-b border-slate-700/50">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
-              🕰️ Typical Online Hours
-            </h3>
-            <button 
-              class="px-4 py-2 bg-slate-700/60 hover:bg-slate-600/80 border border-slate-600/50 hover:border-purple-500/50 text-slate-300 hover:text-white rounded-lg transition-all duration-300 font-medium text-sm flex items-center gap-2" 
-              :title="showRawActivityData ? 'Show overlap potential' : 'Show individual activity'"
-              @click="showRawActivityData = !showRawActivityData"
-            >
-              <span>{{ showRawActivityData ? '🔀 Show Overlap' : '📊 Show Individual' }}</span>
-            </button>
-          </div>
+          <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
+            ⏱️ Playtime Overlap (Last 30 Days)
+          </h3>
         </div>
-        <div class="p-6">
-          <!-- Loading State -->
-          <div
-            v-if="activityHoursLoading"
-            class="flex items-center justify-center py-12"
-          >
-            <div class="text-center space-y-4">
-              <div class="w-8 h-8 border-2 border-purple-500/30 border-t-purple-400 rounded-full animate-spin mx-auto" />
-              <p class="text-slate-400">
-                Loading activity data...
-              </p>
-            </div>
+        <div class="p-6 space-y-3">
+          <div class="h-64">
+            <Line
+              v-if="hourlyOverlapChartData"
+              :key="chartKey"
+              :data="hourlyOverlapChartData"
+              :options="hourlyOverlapChartOptions"
+            />
           </div>
-          
-          <!-- Error State -->
-          <div
-            v-else-if="activityHoursError"
-            class="text-center py-12"
-          >
-            <div class="text-red-400 font-medium">
-              {{ activityHoursError }}
-            </div>
-          </div>
-          
-          <!-- Activity Chart -->
-          <div
-            v-else
-            class="space-y-6"
-          >
-            <!-- Chart Container -->
-            <div class="relative">
-              <div class="h-64 relative border border-slate-700/50 rounded-xl overflow-hidden bg-gradient-to-r from-slate-800/60 to-slate-900/60">
-                <!-- Background zones for time periods -->
-                <div class="absolute inset-0 flex pointer-events-none">
-                  <div
-                    class="flex-[8] bg-gradient-to-r from-purple-500/10 to-purple-500/5"
-                    title="Early (00:00 - 08:00)"
-                  />
-                  <div
-                    class="flex-[8] bg-gradient-to-r from-blue-500/10 to-blue-500/5"
-                    title="Day (08:00 - 16:00)"
-                  />
-                  <div
-                    class="flex-[8] bg-gradient-to-r from-indigo-500/10 to-indigo-500/5"
-                    title="Night (16:00 - 24:00)"
-                  />
-                </div>
-                <div class="relative z-10 h-full p-2">
-                  <Line
-                    :key="chartKey"
-                    :data="combinedActivityChartData"
-                    :options="combinedActivityChartOptions"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <!-- Time period labels -->
-            <div class="grid grid-cols-3 gap-4 text-center">
-              <div class="space-y-1">
-                <div class="text-sm font-bold text-purple-400">
-                  Early Hours
-                </div>
-                <div class="text-xs text-slate-400 font-mono">
-                  12AM - 8AM
-                </div>
-              </div>
-              <div class="space-y-1">
-                <div class="text-sm font-bold text-blue-400">
-                  Day Hours
-                </div>
-                <div class="text-xs text-slate-400 font-mono">
-                  8AM - 4PM
-                </div>
-              </div>
-              <div class="space-y-1">
-                <div class="text-sm font-bold text-indigo-400">
-                  Night Hours
-                </div>
-                <div class="text-xs text-slate-400 font-mono">
-                  4PM - 12AM
-                </div>
-              </div>
-            </div>
-          </div>
+          <p class="text-xs text-slate-500">
+            Overlap is calculated from simultaneous session time, grouped by hour (UTC).
+          </p>
         </div>
       </div>
-        
+
       <!-- Performance Over Time -->
       <div
         v-if="comparisonData.bucketTotals && comparisonData.bucketTotals.length > 0"

@@ -16,7 +16,7 @@
               System Statistics
             </h1>
             <p class="text-slate-300 text-lg sm:text-xl leading-relaxed">
-              Real-time data volume metrics across analytical and operational databases
+              Real-time data volume metrics across the platform
             </p>
           </div>
         </div>
@@ -56,40 +56,7 @@
         </div>
 
         <!-- Data Grid -->
-        <div v-else-if="stats" class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-          <!-- ClickHouse Card -->
-          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-blue-500/30 overflow-hidden transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10">
-            <div class="p-6 sm:p-8">
-              <div class="flex items-center gap-3 mb-6">
-                <div class="h-3 w-3 rounded-full bg-blue-500 animate-pulse"></div>
-                <h2 class="text-2xl font-semibold text-blue-400">ClickHouse</h2>
-                <span class="text-sm text-slate-500 ml-auto">Analytics Engine</span>
-              </div>
-
-              <div class="space-y-8">
-                <div class="group">
-                  <div class="text-5xl sm:text-6xl font-mono font-bold text-white transition-all duration-300 group-hover:text-blue-400">
-                    {{ formatNumber(stats.clickHouseMetrics.roundsTracked) }}
-                  </div>
-                  <div class="text-sm text-slate-400 mt-2 flex items-center gap-2">
-                    Rounds Tracked
-                    <span class="group-hover:opacity-100 opacity-0 transition-opacity text-xs text-slate-500" title="Total completed game rounds across all servers">ℹ️</span>
-                  </div>
-                </div>
-
-                <div class="group">
-                  <div class="text-5xl sm:text-6xl font-mono font-bold text-white transition-all duration-300 group-hover:text-blue-400">
-                    {{ formatNumber(stats.clickHouseMetrics.playerMetricsTracked) }}
-                  </div>
-                  <div class="text-sm text-slate-400 mt-2 flex items-center gap-2">
-                    Player Metrics Tracked
-                    <span class="group-hover:opacity-100 opacity-0 transition-opacity text-xs text-slate-500" title="Time-series snapshots of player stats">ℹ️</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        <div v-else-if="stats" class="grid grid-cols-1 gap-6 sm:gap-8">
           <!-- SQLite Card -->
           <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-green-500/30 overflow-hidden transition-all duration-300 hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10">
             <div class="p-6 sm:p-8">
@@ -132,7 +99,7 @@
               <ul class="space-y-2 text-slate-400 text-sm">
                 <li>• Server stats scraped every 30 seconds</li>
                 <li>• Built entirely with AI/LLMs (learning exercise in prompt engineering)</li>
-                <li>• ClickHouse for analytics, SQLite for operational data</li>
+                <li>• SQLite for analytics and operational data</li>
                 <li>• Hosted on Azure Kubernetes Service</li>
               </ul>
             </div>
@@ -222,10 +189,6 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 
 interface SystemStats {
-  clickHouseMetrics: {
-    roundsTracked: number;
-    playerMetricsTracked: number;
-  };
   sqliteMetrics: {
     serversTracked: number;
     playersTracked: number;

@@ -189,49 +189,6 @@ export interface PlayerServerStats {
   highestScoreRoundId?: string;
 }
 
-export interface TeamKillerMetric {
-  serverName: string;
-  serverGuid: string;
-  playerName: string;
-  teamName: string;
-  mapName: string;
-  currentScore: number;
-  currentKills: number;
-  currentDeaths: number;
-  unexplainedDropsLast10Min: number;
-  totalPenaltiesLast10Min: number;
-  tkProbability: number;
-  lastActivity: string; // ISO date string
-}
-
-export interface PlayerComparisonStats {
-  playerName: string;
-  totalKills: number;
-  totalDeaths: number;
-  totalPlayTimeMinutes: number;
-  killDeathRatio: number;
-  killsPerMinute: number;
-  favoriteServerName: string;
-  favoriteServerPlayTimeMinutes: number;
-  gameIds: string[];
-  temporalOverlapMinutes: number;
-  typicalOnlineHours: number[];
-  serverPings: Record<string, number>;
-  mapDominanceScores: Record<string, number>;
-  temporalNonOverlapScore: number;
-}
-
-export interface SimilarPlayer extends PlayerComparisonStats {
-  similarityScore: number;
-  similarityReasons: string[];
-}
-
-export interface SimilarPlayersResponse {
-  targetPlayer: string;
-  targetPlayerStats: PlayerComparisonStats;
-  similarPlayers: SimilarPlayer[];
-}
-
 export interface SessionObservation {
   deaths: number;
   kills: number;

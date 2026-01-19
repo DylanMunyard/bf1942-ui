@@ -5,8 +5,6 @@ import {
   PlayerListItem,
   SessionDetails,
   SessionListItem,
-  TeamKillerMetric,
-  SimilarPlayersResponse,
   InitialData,
   PlayerHistoryResponse
 } from '../types/playerStatsTypes';
@@ -217,44 +215,6 @@ export async function fetchPlayerSessions(
   return fetchSessions(page, pageSize, filtersWithPlayer, sortBy, sortOrder);
 }
 
-
-/**
- * Fetches team killer metrics from the analytics API
- * @returns List of team killer metrics
- */
-export async function fetchTeamKillerMetrics(): Promise<TeamKillerMetric[]> {
-  try {
-    const response = await axios.get<TeamKillerMetric[]>(
-      '/stats/realtimeanalytics/teamkillers'
-    );
-    return response.data;
-  } catch (err) {
-    console.error('Error fetching team killer metrics:', err);
-    throw new Error('Failed to get team killer metrics');
-  }
-}
-
-/**
- * Fetch players with similar statistics to the specified player.
- * The backend computes a similarity score and provides reasons for the match.
- * @param playerName The player to find neighbours for
- * @param mode The detection mode: 'default' for similar players, 'aliasdetection' for aliases
- * @returns Full response with target player stats and similar players.
- */
-export async function fetchSimilarPlayers(playerName: string, mode: 'default' | 'aliasdetection' = 'default'): Promise<SimilarPlayersResponse> {
-  try {
-    const response = await axios.get<SimilarPlayersResponse>(
-      `/stats/players/${encodeURIComponent(playerName)}/similar`,
-      {
-        params: { mode }
-      }
-    );
-    return response.data;
-  } catch (err) {
-    console.error('Error fetching similar players:', err);
-    throw new Error('Failed to get similar players');
-  }
-}
 
 // Cache for initial data
 let initialDataCache: InitialData | null = null;
