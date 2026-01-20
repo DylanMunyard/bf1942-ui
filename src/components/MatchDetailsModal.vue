@@ -217,7 +217,7 @@
           <div v-if="matchFiles.length > 0 && !isLoadingFilesAndComments" class="space-y-2">
             <div class="flex items-center gap-1.5 md:gap-2 mb-2 md:mb-3 px-1">
               <span class="text-lg md:text-xl">📎</span>
-              <h3 class="text-sm md:text-base font-bold" :style="{ color: accentColor }">Files</h3>
+              <h3 class="text-sm md:text-base font-bold" :style="{ color: accentColor }">Recordings</h3>
               <span class="text-xs font-bold px-2 py-0.5 rounded-full" :style="{ backgroundColor: getAccentColorWithOpacity(0.2), color: accentColor }">
                 {{ matchFiles.length }}
               </span>
