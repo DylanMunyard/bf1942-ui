@@ -1,98 +1,75 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import type { Achievement, PlayerAchievementGroup } from '@/types/playerStatsTypes';
+import { ref, computed, onMounted } from 'vue';
+import type { Achievement } from '@/types/playerStatsTypes';
 import { getAchievementImageFromObject } from '@/utils/achievementImageUtils';
 import AchievementModal from './AchievementModal.vue';
 
 const props = defineProps<{
   playerName: string;
-  achievementGroups: PlayerAchievementGroup[];
 }>();
 
-const milestoneTypes = new Set(['milestone', 'round_placement']);
 const selectedAchievement = ref<Achievement | null>(null);
 const showModal = ref(false);
+const heroAchievements = ref<Achievement[]>([]);
+const isLoading = ref(false);
+const error = ref<string | null>(null);
+
 type BadgeKind = 'recent' | 'milestone';
 
 const headerBadges = computed(() => {
-  const latestGroups = [...props.achievementGroups]
-    .sort((a, b) => new Date(b.latestAchievedAt).getTime() - new Date(a.latestAchievedAt).getTime())
+  if (heroAchievements.value.length === 0) {
+    return [];
+  }
+
+  // Find the milestone (should be the first one if it exists)
+  const milestone = heroAchievements.value.find(a =>
+    a.achievementType?.toLowerCase() === 'milestone' &&
+    a.achievementId?.startsWith('total_kills_')
+  );
+
+  // Get the other achievements
+  const otherAchievements = heroAchievements.value
+    .filter(a => a !== milestone)
     .slice(0, 5);
 
-  const highestMilestoneGroup = props.achievementGroups
-    .filter(group => milestoneTypes.has(group.achievementType.toLowerCase()))
-    .sort((a, b) => b.latestValue - a.latestValue)[0];
-
-  const recent = latestGroups.map(group => ({
-    achievement: mapGroupToAchievement(group),
+  const result = otherAchievements.map(achievement => ({
+    achievement,
     kind: 'recent' as BadgeKind
   }));
 
-  if (!highestMilestoneGroup) {
-    return recent;
+  // Add milestone at the beginning if it exists
+  if (milestone) {
+    result.unshift({
+      achievement: milestone,
+      kind: 'milestone' as BadgeKind
+    });
   }
 
-  const milestoneAchievement = mapGroupToAchievement(highestMilestoneGroup);
-  const duplicateIndex = recent.findIndex(item =>
-    item.achievement.achievementId === milestoneAchievement.achievementId &&
-    item.achievement.achievedAt === milestoneAchievement.achievedAt
-  );
-
-  if (duplicateIndex >= 0) {
-    const updated = [...recent];
-    updated[duplicateIndex] = { achievement: milestoneAchievement, kind: 'milestone' as BadgeKind };
-    return updated;
-  }
-
-  return [...recent, { achievement: milestoneAchievement, kind: 'milestone' as BadgeKind }];
+  return result;
 });
 
 const getAchievementImage = (achievementId: string, tier?: string): string => {
   return getAchievementImageFromObject({ achievementId, tier });
 };
 
-const mapGroupToAchievement = (group: PlayerAchievementGroup): Achievement => {
-  return {
-    playerName: props.playerName,
-    achievementId: group.achievementId,
-    achievementName: group.achievementName,
-    achievementType: group.achievementType,
-    tier: group.tier,
-    value: group.latestValue,
-    achievedAt: group.latestAchievedAt,
-    processedAt: group.latestAchievedAt,
-    serverGuid: '',
-    mapName: '',
-    roundId: '',
-    metadata: '',
-    game: group.game,
-    version: group.latestAchievedAt
-  };
-};
-
-const fetchLatestAchievement = async (achievementId: string): Promise<Achievement | null> => {
+const fetchHeroAchievements = async () => {
+  isLoading.value = true;
+  error.value = null;
   try {
-    const params = new URLSearchParams({
-      playerName: props.playerName,
-      achievementId,
-      sortBy: 'AchievedAt',
-      sortOrder: 'desc',
-      page: '1',
-      pageSize: '1'
-    });
-    const response = await fetch(`/stats/gamification/achievements?${params}`);
-    if (!response.ok) return null;
-    const data = await response.json();
-    return data.items?.[0] ?? null;
+    const response = await fetch(`/stats/gamification/player/${encodeURIComponent(props.playerName)}/hero-achievements`);
+    if (!response.ok) throw new Error('Failed to fetch hero achievements');
+    heroAchievements.value = await response.json();
   } catch (err: unknown) {
-    console.warn('Failed to fetch achievement details:', err);
-    return null;
+    console.error('Error fetching hero achievements:', err);
+    error.value = 'Failed to load achievements.';
+    heroAchievements.value = [];
+  } finally {
+    isLoading.value = false;
   }
 };
 
-const openAchievementModal = async (achievement: Achievement) => {
-  const detailed = await fetchLatestAchievement(achievement.achievementId);
-  selectedAchievement.value = detailed ?? achievement;
+const openAchievementModal = (achievement: Achievement) => {
+  selectedAchievement.value = achievement;
   showModal.value = true;
 };
 
@@ -101,10 +78,29 @@ const closeModal = () => {
   selectedAchievement.value = null;
 };
 
+onMounted(() => {
+  fetchHeroAchievements();
+});
+
 </script>
 
 <template>
-  <div v-if="headerBadges.length > 0" class="flex items-center gap-2 flex-wrap">
+  <!-- Loading State -->
+  <div v-if="isLoading" class="flex items-center gap-2">
+    <div
+      v-for="n in 6"
+      :key="n"
+      class="w-9 h-9 bg-slate-900/40 rounded-none animate-pulse"
+    />
+  </div>
+
+  <!-- Error State -->
+  <div v-else-if="error" class="text-xs text-red-400 opacity-60">
+    Achievements unavailable
+  </div>
+
+  <!-- Achievement Badges -->
+  <div v-else-if="headerBadges.length > 0" class="flex items-center gap-2 flex-wrap">
     <button
       v-for="item in headerBadges"
       :key="`${item.kind}-${item.achievement.achievementId}-${item.achievement.achievedAt}`"
@@ -119,6 +115,11 @@ const closeModal = () => {
         class="w-6 h-6 object-contain group-hover:scale-110 transition-transform duration-200"
       >
     </button>
+  </div>
+
+  <!-- No Achievements -->
+  <div v-else class="text-xs text-slate-500 opacity-60">
+    No achievements
   </div>
 
   <AchievementModal

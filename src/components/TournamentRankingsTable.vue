@@ -40,13 +40,13 @@
               Rounds Lost
             </th>
             <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: textColor, borderColor: accentColor }">
-              Tickets For
+              {{ ticketsForLabel }}
             </th>
             <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: textColor, borderColor: accentColor }">
-              Tickets Against
+              {{ ticketsAgainstLabel }}
             </th>
             <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: textColor, borderColor: accentColor }">
-              Ticket Differential
+              {{ ticketDifferentialLabel }}
             </th>
             <th class="p-4 text-center font-bold text-xs uppercase border-b" :style="{ color: textColor, borderColor: accentColor }">
               Points
@@ -172,12 +172,14 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { PublicTournamentLeaderboard } from '@/services/publicTournamentService'
 
 interface Props {
   leaderboard: PublicTournamentLeaderboard | null
   title?: string
   logoImageUrl?: string | null
+  gameMode?: string | null
   accentColor: string
   textColor: string
   textMutedColor: string
@@ -185,5 +187,12 @@ interface Props {
   backgroundMuteColor: string
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+// CTF mode uses different terminology for tickets/flags
+const isCTF = computed(() => props.gameMode?.toLowerCase() === 'ctf')
+
+const ticketsForLabel = computed(() => isCTF.value ? 'Flags Captured' : 'Tickets For')
+const ticketsAgainstLabel = computed(() => isCTF.value ? 'Flags Lost' : 'Tickets Against')
+const ticketDifferentialLabel = computed(() => isCTF.value ? 'Flag Caps – Flags Lost' : 'Ticket Differential')
 </script>

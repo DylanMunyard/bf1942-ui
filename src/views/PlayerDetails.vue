@@ -545,7 +545,6 @@ onUnmounted(() => {
             </h1>
             <PlayerAchievementHeroBadges
               :player-name="playerName"
-              :achievement-groups="achievementGroups"
             />
           </div>
           

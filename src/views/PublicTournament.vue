@@ -189,6 +189,7 @@
           :leaderboard="leaderboard"
           title="Tournament Rankings"
           :logo-image-url="logoImageUrl"
+          :game-mode="tournament?.gameMode"
           :accent-color="getAccentColor()"
           :text-color="getTextColor()"
           :text-muted-color="getTextMutedColor()"
