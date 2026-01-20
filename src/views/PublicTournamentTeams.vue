@@ -56,8 +56,8 @@
 
               <div class="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
-                  class="px-6 py-3 text-white font-medium rounded-lg transition-all hover:scale-105"
-                  :style="{ backgroundColor: getAccentColor() }"
+                  class="px-6 py-3 font-medium rounded-lg transition-all hover:scale-105"
+                  :style="{ backgroundColor: getAccentColor(), color: getAccentTextColor }"
                   @click="showCreateTeamModal = true"
                 >
                   Create a Team
@@ -101,8 +101,8 @@
 
             <div class="flex flex-col sm:flex-row gap-3 justify-center">
               <button
-                class="px-6 py-3 text-white font-medium rounded-lg transition-all hover:scale-105"
-                :style="{ backgroundColor: getAccentColor() }"
+                class="px-6 py-3 font-medium rounded-lg transition-all hover:scale-105"
+                :style="{ backgroundColor: getAccentColor(), color: getAccentTextColor }"
                 @click="showCreateTeamModal = true"
               >
                 Create a Team
@@ -329,6 +329,24 @@ const {
   loadTournament,
   clearCache,
 } = usePublicTournamentPage()
+
+// Computed property for accent text color (black on light accents, white on dark accents)
+const getAccentTextColor = computed(() => {
+  const accent = getAccentColor()
+  if (!accent) return '#FFFFFF'
+
+  // Simple luminance calculation
+  const hex = accent.replace('#', '')
+  const r = parseInt(hex.substr(0, 2), 16)
+  const g = parseInt(hex.substr(2, 2), 16)
+  const b = parseInt(hex.substr(4, 2), 16)
+
+  // Calculate luminance using the formula: (0.299*R + 0.587*G + 0.114*B)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+  // If accent color is light (high luminance), use dark text; if dark, use light text
+  return luminance > 0.5 ? '#000000' : '#FFFFFF'
+})
 
 const { isAuthenticated, loginWithDiscord } = useAuth()
 

@@ -13,8 +13,8 @@
         :style="{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}88)` }"
       >
         <div>
-          <h3 class="text-xl font-bold text-white">Join a Team</h3>
-          <p class="text-sm text-white/80 mt-1">Select a team to join</p>
+          <h3 class="text-xl font-bold" :style="{ color: accentTextColor }">Join a Team</h3>
+          <p class="text-sm mt-1" :style="{ color: accentTextColor, opacity: 0.8 }">Select a team to join</p>
         </div>
         <button
           class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xl transition-colors"
@@ -124,8 +124,8 @@
                   <button
                     type="button"
                     :disabled="!newPlayerName.trim() || isLinkingPlayerName"
-                    class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 self-start"
-                    :style="{ backgroundColor: accentColor }"
+                    class="px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 self-start"
+                    :style="{ backgroundColor: accentColor, color: accentTextColor }"
                     @click="handleLinkPlayerName"
                   >
                     {{ isLinkingPlayerName ? '...' : 'Link' }}
@@ -157,8 +157,8 @@
             <button
               type="submit"
               :disabled="isSubmitting || !isFormValid"
-              class="flex-1 px-4 py-3 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              :style="{ backgroundColor: accentColor }"
+              class="flex-1 px-4 py-3 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              :style="{ backgroundColor: accentColor, color: accentTextColor }"
             >
               <span v-if="isSubmitting" class="flex items-center justify-center gap-2">
                 <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -191,6 +191,24 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   rules: '',
   accentColor: '#06b6d4',
+});
+
+// Computed property for accent text color (black on light accents, white on dark accents)
+const accentTextColor = computed(() => {
+  const accent = props.accentColor;
+  if (!accent) return '#FFFFFF';
+
+  // Simple luminance calculation
+  const hex = accent.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+
+  // Calculate luminance using the formula: (0.299*R + 0.587*G + 0.114*B)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  // If accent color is light (high luminance), use dark text; if dark, use light text
+  return luminance > 0.5 ? '#000000' : '#FFFFFF';
 });
 
 const emit = defineEmits<{

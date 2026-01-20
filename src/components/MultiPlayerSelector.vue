@@ -3,11 +3,14 @@
     <!-- Current Players Display -->
     <div v-if="currentPlayers.length > 0">
       <div class="flex items-center justify-between mb-2">
-        <label class="block text-sm font-medium text-slate-300">
+        <label class="block text-sm font-medium" :style="{ color: textMutedColor }">
           Current Players ({{ currentPlayers.length }})
         </label>
         <button
-          class="text-xs text-red-400 hover:text-red-300 transition-colors"
+          class="text-xs transition-colors"
+          :style="{ color: '#ef4444' }"
+          @mouseenter="$el.style.color = '#fca5a5'"
+          @mouseleave="$el.style.color = '#ef4444'"
           @click="$emit('clearAllPlayers')"
           :disabled="loading"
         >
@@ -16,17 +19,21 @@
       </div>
 
       <!-- Added Players List -->
-      <div class="max-h-32 overflow-y-auto bg-slate-800/30 border border-slate-700/30 rounded-lg p-2">
+      <div class="max-h-32 overflow-y-auto rounded-lg p-2" :style="{ backgroundColor: backgroundMuteColor + '80', borderColor: accentColor + '30', borderWidth: '1px', borderStyle: 'solid' }">
         <div class="flex flex-wrap gap-2">
           <div
             v-for="(player, index) in currentPlayers"
             :key="index"
-            class="flex items-center gap-1.5 px-2.5 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-sm"
+            class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm"
+            :style="{ backgroundColor: props.accentColor + '33', borderColor: props.accentColor + '50', borderWidth: '1px', borderStyle: 'solid' }"
           >
-            <span class="text-cyan-400">👤</span>
-            <span class="text-slate-200 font-medium">{{ player }}</span>
+            <span :style="{ color: props.accentColor }">👤</span>
+            <span class="font-medium" :style="{ color: accentTextColor }">{{ player }}</span>
             <button
-              class="text-red-400 hover:text-red-300 transition-colors ml-1"
+              class="transition-colors ml-1"
+              :style="{ color: '#ef4444' }"
+              @mouseenter="$el.style.color = '#fca5a5'"
+              @mouseleave="$el.style.color = '#ef4444'"
               @click="$emit('removePlayer', index)"
               :disabled="loading"
               title="Remove player"
@@ -47,7 +54,16 @@
           v-model="playerSearchQuery"
           type="text"
           :placeholder="placeholder"
-          class="w-full px-4 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+          class="w-full px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 transition-all"
+          :style="{
+            backgroundColor: backgroundColor + '95',
+            borderColor: accentColor + '30',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+            color: textColor,
+            '--tw-ring-color': accentColor + '50'
+          }"
+          :class="{ 'focus:ring-2': true }"
           :disabled="loading"
           @input="debouncedPlayerSearch"
           @focus="showPlayerDropdown = true"
@@ -55,19 +71,25 @@
       </div>
 
       <!-- Player Search Results -->
-      <div v-if="showPlayerDropdown && playerSearchResults.length > 0" class="bg-slate-800/60 border border-slate-700/50 rounded-lg max-h-64 overflow-y-auto">
-        <div class="p-2 border-b border-slate-700/30 flex items-center justify-between text-xs text-slate-400">
+      <div v-if="showPlayerDropdown && playerSearchResults.length > 0" class="rounded-lg max-h-64 overflow-y-auto" :style="{ backgroundColor: backgroundColor + '95', borderColor: accentColor + '30', borderWidth: '1px', borderStyle: 'solid' }">
+        <div class="p-2 flex items-center justify-between text-xs" :style="{ borderColor: accentColor + '20', borderBottomWidth: '1px', borderBottomStyle: 'solid', color: textMutedColor }">
           <span>{{ selectedPlayerNames.length }} selected</span>
           <div class="flex gap-2">
             <button
-              class="px-2 py-1 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded transition-colors"
+              class="px-2 py-1 rounded transition-colors"
+              :style="{ color: accentColor }"
+              @mouseenter="$el.style.color = accentColor; $el.style.backgroundColor = accentColor + '1a'"
+              @mouseleave="$el.style.color = accentColor; $el.style.backgroundColor = 'transparent'"
               @click="selectAllVisiblePlayers"
             >
               Select All
             </button>
             <button
               v-if="selectedPlayerNames.length > 0"
-              class="px-2 py-1 text-slate-400 hover:text-slate-300 hover:bg-slate-700/50 rounded transition-colors"
+              class="px-2 py-1 rounded transition-colors"
+              :style="{ color: textMutedColor }"
+              @mouseenter="$el.style.color = textColor; $el.style.backgroundColor = backgroundMuteColor + '80'"
+              @mouseleave="$el.style.color = textMutedColor; $el.style.backgroundColor = 'transparent'"
               @click="selectedPlayerNames = []"
             >
               Clear
@@ -77,18 +99,24 @@
         <div
           v-for="player in playerSearchResults"
           :key="player.playerName"
-          class="p-3 border-b border-slate-700/30 hover:bg-slate-700/50 cursor-pointer transition-all last:border-b-0 flex items-center gap-3"
+          class="p-3 cursor-pointer transition-all last:border-b-0 flex items-center gap-3"
+          :style="{ borderColor: accentColor + '20', borderBottomWidth: '1px', borderBottomStyle: 'solid' }"
+          @mouseenter="$el.style.backgroundColor = backgroundMuteColor + '80'"
+          @mouseleave="$el.style.backgroundColor = 'transparent'"
           @click="togglePlayerSelection(player.playerName)"
         >
           <div
             class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0"
-            :class="isPlayerSelected(player.playerName)
-              ? 'border-cyan-400 bg-cyan-400'
-              : 'border-slate-600 bg-transparent hover:border-slate-500'"
+            :style="isPlayerSelected(player.playerName)
+              ? { borderColor: accentColor, backgroundColor: accentColor }
+              : { borderColor: textMutedColor, backgroundColor: 'transparent' }"
+            @mouseenter="!isPlayerSelected(player.playerName) && ($el.style.borderColor = accentColor)"
+            @mouseleave="!isPlayerSelected(player.playerName) && ($el.style.borderColor = textMutedColor)"
           >
             <svg
               v-if="isPlayerSelected(player.playerName)"
-              class="w-3 h-3 text-slate-900"
+              class="w-3 h-3"
+              :style="{ color: accentTextColor }"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -97,10 +125,10 @@
             </svg>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="font-medium text-slate-200 text-sm truncate">
+            <div class="font-medium text-sm truncate" :style="{ color: textColor }">
               {{ player.playerName }}
             </div>
-            <div class="text-xs text-slate-400 mt-0.5">
+            <div class="text-xs mt-0.5" :style="{ color: textMutedColor }">
               {{ formatPlayerStats(player) }}
             </div>
           </div>
@@ -109,20 +137,27 @@
 
       <!-- Loading State -->
       <div v-if="searchingPlayers" class="text-center py-4">
-        <div class="w-6 h-6 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin mx-auto" />
-        <p class="text-slate-400 text-xs mt-2">Searching...</p>
+        <div class="w-6 h-6 border-4 rounded-full animate-spin mx-auto"
+             :style="{ borderColor: accentColor + '30', borderTopColor: accentColor }" />
+        <p class="text-xs mt-2" :style="{ color: textMutedColor }">Searching...</p>
       </div>
 
       <!-- No Results -->
-      <div v-if="showPlayerDropdown && !searchingPlayers && playerSearchQuery.length >= 2 && playerSearchResults.length === 0" class="text-center py-8 bg-slate-800/30 border border-slate-700/30 rounded-lg">
+      <div v-if="showPlayerDropdown && !searchingPlayers && playerSearchQuery.length >= 2 && playerSearchResults.length === 0" class="text-center py-8 rounded-lg" :style="{ backgroundColor: backgroundMuteColor + '80', borderColor: accentColor + '30', borderWidth: '1px', borderStyle: 'solid' }">
         <span class="text-4xl mb-2 block">🔍</span>
-        <p class="text-slate-400 text-sm">No players found</p>
+        <p class="text-sm" :style="{ color: textMutedColor }">No players found</p>
       </div>
 
       <!-- Add Selected Button -->
       <button
         v-if="selectedPlayerNames.length > 0"
-        class="w-full px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all text-sm flex items-center justify-center gap-2"
+        class="w-full px-4 py-2 rounded-lg font-medium transition-all text-sm flex items-center justify-center gap-2"
+        :style="{
+          background: `linear-gradient(90deg, ${props.accentColor}, ${props.accentColor}dd)`,
+          color: accentTextColor
+        }"
+        @mouseenter="$el.style.background = `linear-gradient(90deg, ${props.accentColor}dd, ${props.accentColor}cc)`"
+        @mouseleave="$el.style.background = `linear-gradient(90deg, ${props.accentColor}, ${props.accentColor}dd)`"
         @click="addSelectedPlayers"
         :disabled="loading"
       >
@@ -130,20 +165,26 @@
       </button>
     </div>
 
-    <p class="mt-2 text-xs text-slate-500">
+    <p class="mt-2 text-xs" :style="{ color: textMutedColor }">
       {{ helpText }}
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 interface Props {
   currentPlayers: string[];
   placeholder?: string;
   helpText?: string;
   loading?: boolean;
+  // Theme colors
+  accentColor?: string;
+  textColor?: string;
+  textMutedColor?: string;
+  backgroundColor?: string;
+  backgroundMuteColor?: string;
 }
 
 interface PlayerSearchResult {
@@ -158,6 +199,30 @@ const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Search for players by name...',
   helpText: 'Search for players and select multiple to add them to the team. Great for adding clan members!',
   loading: false,
+  // Theme color defaults
+  accentColor: '#06b6d4',
+  textColor: '#FFFFFF',
+  textMutedColor: '#9ca3af',
+  backgroundColor: '#1a1a1a',
+  backgroundMuteColor: '#2d2d2d',
+});
+
+// Computed property for accent text color (black on light accents, white on dark accents)
+const accentTextColor = computed(() => {
+  const accent = props.accentColor;
+  if (!accent) return '#FFFFFF';
+
+  // Simple luminance calculation
+  const hex = accent.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+
+  // Calculate luminance using the formula: (0.299*R + 0.587*G + 0.114*B)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  // If accent color is light (high luminance), use dark text; if dark, use light text
+  return luminance > 0.5 ? '#000000' : '#FFFFFF';
 });
 
 const emit = defineEmits<{
