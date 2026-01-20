@@ -14,7 +14,7 @@ const groups = ref<PlayerAchievementGroup[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 
-const milestoneTypes = new Set(['milestone', 'round_placement']);
+const milestoneTypes = new Set(['milestone']);
 
 const isUsingExternalGroups = computed(() => Array.isArray(props.achievementGroups));
 
