@@ -191,18 +191,29 @@
                   </p>
                   <ul class="space-y-1">
                     <li
-                      v-for="(player, idx) in team.players"
+                      v-for="(player, idx) in sortedPlayers(team.players)"
                       :key="idx"
-                      class="text-sm py-1 px-2 rounded"
+                      class="text-sm py-1 px-2 rounded flex items-center gap-2"
                       :style="{ backgroundColor: getBackgroundMuteColor() }"
                     >
                       <router-link
                         :to="`/players/${encodeURIComponent(player.playerName)}`"
-                        class="hover:underline transition-colors"
+                        class="hover:underline transition-colors flex-1"
                         :style="{ color: getTextColor() }"
                       >
                         {{ player.playerName }}
                       </router-link>
+                      <span
+                        v-if="player.isLeader"
+                        class="text-xs px-1.5 py-0.5 rounded-full font-medium"
+                        :style="{
+                          backgroundColor: getAccentColor() + '20',
+                          color: getAccentColor(),
+                          border: `1px solid ${getAccentColor()}40`
+                        }"
+                      >
+                        👑 Leader
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -420,6 +431,17 @@ const handleDiscordLogin = async () => {
   } finally {
     isLoginLoading.value = false
   }
+}
+
+// Sort players with leaders first
+const sortedPlayers = (players: { playerName: string; isLeader?: boolean }[]) => {
+  return [...players].sort((a, b) => {
+    // Leaders come first
+    if (a.isLeader && !b.isLeader) return -1
+    if (!a.isLeader && b.isLeader) return 1
+    // Then sort alphabetically by player name
+    return a.playerName.localeCompare(b.playerName)
+  })
 }
 
 const formatDate = (dateStr: string): string => {

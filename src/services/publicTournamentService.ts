@@ -4,7 +4,7 @@ export interface PublicTournamentTeam {
   id: number;
   name: string;
   createdAt: string;
-  players: { playerName: string }[];
+  players: { playerName: string; isLeader?: boolean }[];
 }
 
 export interface TournamentFile {
