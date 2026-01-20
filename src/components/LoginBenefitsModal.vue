@@ -23,93 +23,44 @@
         >
           <div
             v-if="isOpen"
-            class="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl border border-slate-700/50 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            style="box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(6, 182, 212, 0.2)"
+            class="relative bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
             @click.stop
           >
             <!-- Close Button -->
             <button
-              class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-800/80 hover:bg-slate-700 border border-slate-600 text-slate-400 hover:text-white transition-all duration-200"
+              class="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors duration-200"
               @click="close"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
 
-            <!-- Header -->
-            <div class="relative p-8 pb-6 border-b border-slate-700/50">
-              <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50" />
-              <div class="relative">
-                <h2 class="text-3xl font-bold text-slate-200 mb-2">
-                  What you get with an account
-                </h2>
-                <p class="text-slate-400">
-                  Sign in to track your stats and save your preferences
+            <!-- Content -->
+            <div class="p-6">
+              <h2 class="text-xl font-semibold text-slate-200 mb-4">
+                Sign in to play with friends
+              </h2>
+
+              <div class="space-y-3 text-sm text-slate-300">
+                <p>
+                  Add your buddies so you can see when they're online.
+                </p>
+                <p>
+                  Link your in-game profile to make things easier.
+                </p>
+                <p>
+                  Register for tournaments when you want to compete.
+                </p>
+                <p class="text-slate-400 text-xs mt-4">
+                  We use Discord to verify your identity and link your email for account management.
                 </p>
               </div>
-            </div>
 
-            <!-- Features Grid -->
-            <div class="p-8 space-y-4">
-              <!-- Feature 1: Player Profiles -->
-              <div class="flex gap-4 p-4 rounded-lg bg-slate-800/40 border border-slate-700/30">
-                <div class="flex-shrink-0 w-10 h-10 rounded bg-slate-700/50 flex items-center justify-center text-lg">
-                  👤
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-slate-200 mb-1">Link your player names</h3>
-                  <p class="text-slate-400 text-sm">
-                    Connect your in-game names to see your stats and match history in one place.
-                  </p>
-                </div>
-              </div>
-
-              <!-- Feature 2: Favorite Servers -->
-              <div class="flex gap-4 p-4 rounded-lg bg-slate-800/40 border border-slate-700/30">
-                <div class="flex-shrink-0 w-10 h-10 rounded bg-slate-700/50 flex items-center justify-center text-lg">
-                  ⭐
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-slate-200 mb-1">Bookmark servers</h3>
-                  <p class="text-slate-400 text-sm">
-                    Save your favorite servers so you can find them quickly next time.
-                  </p>
-                </div>
-              </div>
-
-              <!-- Feature 3: Squad Management -->
-              <div class="flex gap-4 p-4 rounded-lg bg-slate-800/40 border border-slate-700/30">
-                <div class="flex-shrink-0 w-10 h-10 rounded bg-slate-700/50 flex items-center justify-center text-lg">
-                  👥
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-slate-200 mb-1">Organize squads</h3>
-                  <p class="text-slate-400 text-sm">
-                    Group players together and compare stats with your regular teammates.
-                  </p>
-                </div>
-              </div>
-
-              <!-- Feature 4: Personal Dashboard -->
-              <div class="flex gap-4 p-4 rounded-lg bg-slate-800/40 border border-slate-700/30">
-                <div class="flex-shrink-0 w-10 h-10 rounded bg-slate-700/50 flex items-center justify-center text-lg">
-                  📊
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-slate-200 mb-1">Personal dashboard</h3>
-                  <p class="text-slate-400 text-sm">
-                    View your recent matches and stats without having to search for them.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- CTA Footer -->
-            <div class="p-8 pt-6 border-t border-slate-700/50 bg-slate-800/30">
-              <div class="flex justify-end">
+              <!-- Sign In Button -->
+              <div class="mt-6">
                 <button
-                  class="flex items-center gap-2 px-5 py-2.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-lg transition-colors duration-200"
+                  class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded transition-colors duration-200"
                   @click="handleSignIn"
                 >
                   <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">

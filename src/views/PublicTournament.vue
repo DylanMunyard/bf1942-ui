@@ -90,6 +90,67 @@
 
       <!-- Main Content -->
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
+        <!-- Registration Open Banner -->
+        <div
+          v-if="tournament.status === 'registration'"
+          class="relative overflow-hidden rounded-xl border-2 p-6 sm:p-8"
+          :style="{
+            borderColor: getAccentColor(),
+            backgroundColor: getAccentColorWithOpacity(0.1)
+          }"
+        >
+          <!-- Background decoration -->
+          <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div
+              class="absolute -top-12 -right-12 w-48 h-48 rounded-full blur-3xl"
+              :style="{ backgroundColor: getAccentColorWithOpacity(0.15) }"
+            />
+            <div
+              class="absolute -bottom-12 -left-12 w-48 h-48 rounded-full blur-3xl"
+              :style="{ backgroundColor: getAccentColorWithOpacity(0.1) }"
+            />
+          </div>
+
+          <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            <!-- Icon -->
+            <div
+              class="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center"
+              :style="{ backgroundColor: getAccentColorWithOpacity(0.2) }"
+            >
+              <svg class="w-7 h-7" :style="{ color: getAccentColor() }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-grow">
+              <h3 class="text-xl sm:text-2xl font-bold mb-1" :style="{ color: getAccentColor() }">
+                Team Registrations Are Open!
+              </h3>
+              <p class="text-sm sm:text-base" :style="{ color: getTextMutedColor() }">
+                Ready to compete? Register your team now or join an existing one to participate in this tournament.
+              </p>
+            </div>
+
+            <!-- CTA Button -->
+            <router-link
+              :to="`/tournaments/${tournamentId}/teams`"
+              class="flex-shrink-0 px-6 py-3 rounded-lg font-semibold transition-all hover:opacity-90"
+              :style="{
+                backgroundColor: getAccentColor(),
+                color: getAccentTextColor()
+              }"
+            >
+              <span class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                View Teams
+              </span>
+            </router-link>
+          </div>
+        </div>
+
         <!-- Latest Matches Section -->
         <div v-if="computedLatestMatches && computedLatestMatches.length > 0">
           <!-- Latest Matches Header -->
