@@ -4,7 +4,7 @@
     class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[1000] p-4"
   >
     <div
-      class="bg-slate-800/95 backdrop-blur-md border border-slate-700/50 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+      class="bg-slate-800/95 backdrop-blur-md border border-slate-700/50 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
       @click.stop
     >
       <!-- Header -->
@@ -48,11 +48,11 @@
             <label class="block text-sm font-medium text-slate-300 mb-2">
               Select Team <span class="text-red-400">*</span>
             </label>
-            <div class="space-y-2 max-h-48 overflow-y-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-1">
               <label
                 v-for="team in availableTeams"
                 :key="team.id"
-                class="flex items-center gap-3 p-3 bg-slate-900/40 border border-slate-600 rounded-lg cursor-pointer hover:border-cyan-500/50 transition-colors"
+                class="flex items-center gap-3 p-4 bg-slate-900/40 border border-slate-600 rounded-lg cursor-pointer hover:border-cyan-500/50 transition-colors"
                 :class="{ 'border-cyan-500 bg-cyan-500/10': selectedTeamId === team.id }"
               >
                 <input

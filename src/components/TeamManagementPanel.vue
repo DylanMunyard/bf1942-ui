@@ -23,23 +23,15 @@
 
     <!-- Add Player Form (Leader Only) -->
     <div v-if="isLeader" class="px-6 py-4 border-b-2" :style="{ borderColor: accentColor + '44' }">
-      <form class="flex gap-3" @submit.prevent="handleAddPlayer">
-        <div class="flex-1">
-          <PlayerSearch
-            v-model="newPlayerName"
-            placeholder="Search player to add..."
-            @select="handlePlayerSelected"
-          />
-        </div>
-        <button
-          type="submit"
-          :disabled="!newPlayerName.trim() || isAddingPlayer"
-          class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 self-start"
-          :style="{ backgroundColor: accentColor }"
-        >
-          {{ isAddingPlayer ? 'Adding...' : 'Add' }}
-        </button>
-      </form>
+      <MultiPlayerSelector
+        :current-players="teamDetails?.players?.map(p => p.playerName) || []"
+        :loading="isAddingPlayer"
+        placeholder="Search players to add..."
+        help-text="Search for players and select multiple to add them to your team. Great for adding clan members!"
+        @add-players="handleAddMultiplePlayers"
+        @remove-player="handleRemovePlayerFromSelector"
+        @clear-all-players="handleClearAllPlayers"
+      />
       <div v-if="addPlayerError" class="text-red-400 text-sm mt-2">{{ addPlayerError }}</div>
     </div>
 
@@ -105,14 +97,49 @@
 
     <!-- Leave Team (Non-Leaders) -->
     <div v-if="!isLeader" class="px-6 py-4 border-t-2" :style="{ borderColor: accentColor + '44' }">
-      <button
-        class="w-full px-4 py-2 text-sm font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg transition-colors"
-        :disabled="isLeavingTeam"
-        @click="handleLeaveTeam"
-      >
-        {{ isLeavingTeam ? 'Leaving...' : 'Leave Team' }}
-      </button>
-      <div v-if="leaveError" class="text-red-400 text-sm mt-2 text-center">{{ leaveError }}</div>
+      <!-- Warning Message (shown when confirming) -->
+      <div v-if="leaveState === 'confirming'" class="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg animate-fade-in">
+        <div class="flex items-start gap-3">
+          <div class="text-red-400 text-xl">⚠️</div>
+          <div class="flex-1">
+            <p class="text-sm text-red-200/80 mb-2">Leaving this team will:</p>
+            <ul class="text-sm text-red-200/80 space-y-1 ml-4">
+              <li>• Remove you from the tournament</li>
+              <li>• Free up your spot for another player</li>
+            </ul>
+            <p class="text-sm text-red-200/80 mt-2">You can rejoin the team or join another team while registration is open.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div v-if="leaveState === 'error'" class="mb-4 p-3 bg-red-500/20 border border-red-500/40 rounded-lg">
+        <div class="flex items-center gap-2 text-red-300 text-sm">
+          <span>❌</span>
+          <span>{{ leaveError }}</span>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <button
+          class="flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
+          :class="getLeaveButtonClasses()"
+          :disabled="leaveState === 'leaving'"
+          @click="handleLeaveTeam"
+        >
+          {{ getLeaveButtonText() }}
+        </button>
+
+        <button
+          v-if="leaveState === 'confirming'"
+          class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-600/20 hover:bg-gray-600/30 border border-gray-500/30 rounded-lg transition-colors"
+          @click="cancelLeave"
+        >
+          Cancel
+        </button>
+      </div>
+
+      <div v-if="leaveError && leaveState !== 'error'" class="text-red-400 text-sm mt-2 text-center">{{ leaveError }}</div>
     </div>
 
     <!-- Delete Team (Leaders Only) -->
@@ -143,7 +170,7 @@
         <button
           class="flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
           :class="getDeleteButtonClasses()"
-          :disabled="isDeletingTeam"
+          :disabled="deleteState === 'deleting'"
           @click="handleDeleteTeam"
         >
           {{ getDeleteButtonText() }}
@@ -165,7 +192,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
-import PlayerSearch from '@/components/PlayerSearch.vue';
+import MultiPlayerSelector from '@/components/MultiPlayerSelector.vue';
 import { teamRegistrationService, type TeamDetailsResponse } from '@/services/teamRegistrationService';
 
 interface Props {
@@ -197,13 +224,12 @@ const teamDetails = ref<TeamDetailsResponse | null>(null);
 const isLoading = ref(false);
 const loadError = ref('');
 
-const newPlayerName = ref('');
 const isAddingPlayer = ref(false);
 const addPlayerError = ref('');
 
 const isRemovingPlayer = ref<string | null>(null);
 
-const isLeavingTeam = ref(false);
+const leaveState = ref<'idle' | 'confirming' | 'leaving' | 'error'>('idle');
 const leaveError = ref('');
 
 const deleteState = ref<'idle' | 'confirming' | 'deleting' | 'error'>('idle');
@@ -221,24 +247,52 @@ const loadTeamDetails = async () => {
   }
 };
 
-const handlePlayerSelected = (player: { playerName: string }) => {
-  newPlayerName.value = player.playerName;
-};
-
-const handleAddPlayer = async () => {
-  if (!newPlayerName.value.trim() || isAddingPlayer.value) return;
+const handleAddMultiplePlayers = async (players: string[]) => {
+  if (players.length === 0 || isAddingPlayer.value) return;
   isAddingPlayer.value = true;
   addPlayerError.value = '';
 
   try {
-    await teamRegistrationService.addPlayer(props.tournamentId, {
-      playerName: newPlayerName.value.trim(),
-    });
-    newPlayerName.value = '';
+    // Add players one by one (could be optimized to batch API calls if available)
+    const addPromises = players.map(playerName =>
+      teamRegistrationService.addPlayer(props.tournamentId, { playerName: playerName.trim() })
+    );
+
+    await Promise.all(addPromises);
     await loadTeamDetails();
     emit('teamUpdated');
   } catch (error) {
-    addPlayerError.value = error instanceof Error ? error.message : 'Failed to add player';
+    addPlayerError.value = error instanceof Error ? error.message : 'Failed to add players';
+  } finally {
+    isAddingPlayer.value = false;
+  }
+};
+
+const handleRemovePlayerFromSelector = async (index: number) => {
+  if (!teamDetails.value?.players) return;
+  const playerName = teamDetails.value.players[index]?.playerName;
+  if (playerName) {
+    await handleRemovePlayer(playerName);
+  }
+};
+
+const handleClearAllPlayers = async () => {
+  if (!teamDetails.value?.players) return;
+
+  isAddingPlayer.value = true;
+  addPlayerError.value = '';
+
+  try {
+    // Remove all players
+    const removePromises = teamDetails.value.players.map(player =>
+      teamRegistrationService.removePlayer(props.tournamentId, player.playerName)
+    );
+
+    await Promise.all(removePromises);
+    await loadTeamDetails();
+    emit('teamUpdated');
+  } catch (error) {
+    addPlayerError.value = error instanceof Error ? error.message : 'Failed to remove players';
   } finally {
     isAddingPlayer.value = false;
   }
@@ -262,19 +316,74 @@ const handleRemovePlayer = async (playerName: string) => {
 };
 
 const handleLeaveTeam = async () => {
-  if (isLeavingTeam.value) return;
-  if (!confirm('Are you sure you want to leave this team?')) return;
+  if (leaveState.value === 'leaving') return;
 
-  isLeavingTeam.value = true;
+  if (leaveState.value === 'idle') {
+    // First click - show confirmation
+    leaveState.value = 'confirming';
+    leaveError.value = '';
+    return;
+  }
+
+  if (leaveState.value === 'confirming') {
+    // Second click - proceed with leaving
+    leaveState.value = 'leaving';
+    leaveError.value = '';
+
+    try {
+      await teamRegistrationService.leaveTeam(props.tournamentId, props.teamId);
+      emit('leftTeam');
+    } catch (error) {
+      leaveError.value = error instanceof Error ? error.message : 'Failed to leave team';
+      leaveState.value = 'error';
+    }
+  } else if (leaveState.value === 'error') {
+    // Retry after error
+    leaveState.value = 'leaving';
+    leaveError.value = '';
+
+    try {
+      await teamRegistrationService.leaveTeam(props.tournamentId, props.teamId);
+      emit('leftTeam');
+    } catch (error) {
+      leaveError.value = error instanceof Error ? error.message : 'Failed to leave team';
+      leaveState.value = 'error';
+    }
+  }
+};
+
+const cancelLeave = () => {
+  leaveState.value = 'idle';
   leaveError.value = '';
+};
 
-  try {
-    await teamRegistrationService.leaveTeam(props.tournamentId, props.teamId);
-    emit('leftTeam');
-  } catch (error) {
-    leaveError.value = error instanceof Error ? error.message : 'Failed to leave team';
-  } finally {
-    isLeavingTeam.value = false;
+const getLeaveButtonText = (): string => {
+  switch (leaveState.value) {
+    case 'idle':
+      return 'Leave Team';
+    case 'confirming':
+      return 'Confirm Leave';
+    case 'leaving':
+      return 'Leaving...';
+    case 'error':
+      return 'Try Again';
+    default:
+      return 'Leave Team';
+  }
+};
+
+const getLeaveButtonClasses = (): string => {
+  switch (leaveState.value) {
+    case 'idle':
+      return 'text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30';
+    case 'confirming':
+      return 'text-white bg-red-600 hover:bg-red-700 border border-red-600 animate-pulse';
+    case 'leaving':
+      return 'text-red-400 bg-red-500/10 border border-red-500/30 opacity-50 cursor-not-allowed';
+    case 'error':
+      return 'text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30';
+    default:
+      return 'text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30';
   }
 };
 
@@ -362,6 +471,9 @@ onMounted(() => {
 watch(
   () => props.teamId,
   () => {
+    // Reset leave state when switching teams
+    leaveState.value = 'idle';
+    leaveError.value = '';
     loadTeamDetails();
   }
 );

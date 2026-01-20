@@ -299,7 +299,6 @@ import JoinTeamModal from '@/components/JoinTeamModal.vue'
 import TeamManagementPanel from '@/components/TeamManagementPanel.vue'
 import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
 import { useAuth } from '@/composables/useAuth'
-import { useTournamentCache } from '@/composables/useTournamentCache'
 import { teamRegistrationService, type RegistrationStatusResponse } from '@/services/teamRegistrationService'
 
 const {
@@ -317,10 +316,10 @@ const {
   getBackgroundMuteColor,
   getBackgroundSoftColor,
   loadTournament,
+  clearCache,
 } = usePublicTournamentPage()
 
 const { isAuthenticated, loginWithDiscord } = useAuth()
-const { clearCache } = useTournamentCache()
 
 // Registration state
 const registrationStatus = ref<RegistrationStatusResponse | null>(null)

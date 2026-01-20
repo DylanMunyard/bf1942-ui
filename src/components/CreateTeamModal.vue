@@ -4,7 +4,7 @@
     class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[1000] p-4"
   >
     <div
-      class="bg-slate-800/95 backdrop-blur-md border border-slate-700/50 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+      class="bg-slate-800/95 backdrop-blur-md border border-slate-700/50 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
       @click.stop
     >
       <!-- Header -->

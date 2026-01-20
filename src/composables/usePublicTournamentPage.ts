@@ -10,7 +10,7 @@ import type { PublicTournamentDetail } from '@/services/publicTournamentService'
  */
 export function usePublicTournamentPage() {
   const route = useRoute()
-  const { useTournament } = useTournamentCache()
+  const { useTournament, clearCache } = useTournamentCache()
 
   // Refs
   const tournament = ref<PublicTournamentDetail | null>(null)
@@ -162,5 +162,6 @@ export function usePublicTournamentPage() {
 
     // Methods
     loadTournament,
+    clearCache,
   }
 }
