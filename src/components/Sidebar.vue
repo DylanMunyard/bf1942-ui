@@ -13,7 +13,7 @@
       </div>
       
       <!-- Navigation Menu -->
-      <nav class="flex-1 py-6 space-y-3 overflow-y-auto">
+      <nav class="flex-1 py-6 space-y-3 overflow-visible">
         <!-- Dashboard Link -->
         <router-link
           v-if="isAuthenticated"
@@ -142,8 +142,8 @@
           </div>
           
           <!-- Enhanced Promotional Tooltip -->
-          <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50">
-            <div class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 p-4 shadow-2xl min-w-80">
+          <div class="absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-[60]">
+            <div class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 p-4 shadow-2xl min-w-72 max-w-xs">
               <div class="flex items-center gap-4 mb-3">
                 <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-cyan-500/20 border border-purple-500/40 flex items-center justify-center animate-pulse">
                   <div
@@ -161,7 +161,7 @@
                 </div>
               </div>
               <p class="text-slate-300 text-sm leading-relaxed">
-                Explore the battlefield like never before. Dive deep into server activity, map statistics, and uncover the stories behind every game session.
+                Explore the battlefield like never before. Dive deep into server activity and map statistics.
               </p>
             </div>
             <!-- Arrow -->
