@@ -1,0 +1,211 @@
+<template>
+  <div class="p-6">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="space-y-4">
+      <div class="animate-pulse">
+        <div class="h-8 bg-slate-700/50 rounded w-1/3 mb-2"></div>
+        <div class="h-4 bg-slate-700/30 rounded w-1/4"></div>
+      </div>
+      <div class="h-32 bg-slate-700/30 rounded-lg animate-pulse"></div>
+      <div class="h-48 bg-slate-700/30 rounded-lg animate-pulse"></div>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="text-center py-8">
+      <div class="text-red-400 mb-2">{{ error }}</div>
+      <button @click="loadData" class="text-cyan-400 hover:text-cyan-300 text-sm">
+        Try again
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div v-else-if="playerData" class="space-y-6">
+      <!-- Header -->
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-3xl">👤</span>
+          <h2 class="text-2xl font-bold text-slate-200">{{ playerData.playerName }}</h2>
+        </div>
+        <div class="text-sm text-slate-400">
+          {{ gameLabel }} &bull; Last {{ playerData.dateRange.days }} days
+        </div>
+      </div>
+
+      <!-- Overall Stats -->
+      <div class="bg-slate-800/30 rounded-lg p-4">
+        <h3 class="text-sm font-medium text-slate-300 mb-3">Overall Statistics</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="text-center">
+            <div class="text-2xl font-bold text-cyan-400">{{ formatNumber(playerData.overallStats.totalScore) }}</div>
+            <div class="text-xs text-slate-400 mt-1">Total Score</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-slate-200">{{ playerData.overallStats.kdRatio.toFixed(2) }}</div>
+            <div class="text-xs text-slate-400 mt-1">K/D Ratio</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-slate-200">{{ playerData.overallStats.uniqueServers }}</div>
+            <div class="text-xs text-slate-400 mt-1">Servers</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-slate-200">{{ playerData.overallStats.uniqueMaps }}</div>
+            <div class="text-xs text-slate-400 mt-1">Maps</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- #1 Rankings Section -->
+      <div v-if="playerData.numberOneRankings.length > 0" class="bg-slate-800/30 rounded-lg p-4">
+        <h3 class="text-sm font-medium text-slate-300 mb-3">
+          <span class="text-yellow-400">#1</span> Rankings
+        </h3>
+        <div class="flex flex-wrap gap-2">
+          <div
+            v-for="ranking in playerData.numberOneRankings"
+            :key="`${ranking.mapName}-${ranking.serverGuid}`"
+            class="px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm"
+            :title="`${ranking.mapName} on ${ranking.serverName} - ${formatNumber(ranking.totalScore)} score`"
+          >
+            <span class="text-yellow-300">{{ ranking.mapName }}</span>
+            <button
+              @click="handleNavigateToServer(ranking.serverGuid)"
+              class="text-slate-500 hover:text-cyan-400 text-xs ml-1 transition-colors"
+            >
+              ({{ truncateServerName(ranking.serverName) }})
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map Rankings -->
+      <div v-if="playerData.mapGroups.length > 0">
+        <h3 class="text-sm font-medium text-slate-300 mb-3">Rankings by Map</h3>
+        <div class="space-y-3">
+          <details
+            v-for="mapGroup in playerData.mapGroups"
+            :key="mapGroup.mapName"
+            class="bg-slate-800/30 rounded-lg overflow-hidden group"
+            :open="expandedMaps.has(mapGroup.mapName)"
+          >
+            <summary
+              @click.prevent="toggleMapExpanded(mapGroup.mapName)"
+              class="px-4 py-3 cursor-pointer hover:bg-slate-700/30 transition-colors flex items-center justify-between"
+            >
+              <div class="flex items-center gap-3">
+                <span class="text-slate-200 font-medium">{{ mapGroup.mapName }}</span>
+                <span
+                  v-if="mapGroup.bestRank === 1"
+                  class="inline-flex items-center justify-center px-1.5 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded font-medium"
+                >
+                  #1
+                </span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-sm text-cyan-400 group-open:hidden">{{ formatNumber(mapGroup.aggregatedScore) }}</span>
+                <span
+                  v-if="mapGroup.bestRank && mapGroup.bestRank > 1"
+                  class="text-sm text-slate-400 group-open:hidden"
+                >
+                  Best: #{{ mapGroup.bestRank }}
+                </span>
+                <svg class="w-5 h-5 text-slate-400 transform transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </summary>
+            <div class="px-4 pb-4 border-t border-slate-700/30">
+              <div class="mt-3">
+                <PlayerMapServerTable
+                  :server-stats="mapGroup.serverStats"
+                  @navigate-to-server="handleNavigateToServer"
+                />
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, watch, onMounted, computed } from 'vue';
+import { fetchPlayerMapRankings, type PlayerMapRankingsResponse, type GameType } from '../../services/dataExplorerService';
+import PlayerMapServerTable from './PlayerMapServerTable.vue';
+
+const props = defineProps<{
+  playerName: string;
+  game?: GameType;
+}>();
+
+const emit = defineEmits<{
+  'navigate-to-server': [serverGuid: string];
+}>();
+
+const handleNavigateToServer = (serverGuid: string) => {
+  emit('navigate-to-server', serverGuid);
+};
+
+const playerData = ref<PlayerMapRankingsResponse | null>(null);
+const isLoading = ref(false);
+const error = ref<string | null>(null);
+const expandedMaps = ref<Set<string>>(new Set());
+
+const gameLabel = computed(() => {
+  switch (playerData.value?.game?.toLowerCase()) {
+    case 'bf1942': return 'Battlefield 1942';
+    case 'fh2': return 'Forgotten Hope 2';
+    case 'bfvietnam': return 'Battlefield Vietnam';
+    default: return playerData.value?.game || 'Unknown';
+  }
+});
+
+const loadData = async () => {
+  if (!props.playerName) return;
+
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    playerData.value = await fetchPlayerMapRankings(props.playerName, props.game || 'bf1942');
+    // Auto-expand first map with a #1 ranking, or just the first map
+    if (playerData.value && playerData.value.mapGroups.length > 0) {
+      const firstNumberOne = playerData.value.mapGroups.find(mg => mg.bestRank === 1);
+      if (firstNumberOne) {
+        expandedMaps.value.add(firstNumberOne.mapName);
+      } else {
+        expandedMaps.value.add(playerData.value.mapGroups[0].mapName);
+      }
+    }
+    // Update document title
+    if (playerData.value?.playerName) {
+      document.title = `${playerData.value.playerName} - Player Explorer | BF Stats`;
+    }
+  } catch (err) {
+    console.error('Error loading player data:', err);
+    error.value = 'Failed to load player details';
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const toggleMapExpanded = (mapName: string) => {
+  if (expandedMaps.value.has(mapName)) {
+    expandedMaps.value.delete(mapName);
+  } else {
+    expandedMaps.value.add(mapName);
+  }
+};
+
+const formatNumber = (num: number): string => {
+  return num.toLocaleString();
+};
+
+const truncateServerName = (name: string): string => {
+  return name.length > 20 ? name.substring(0, 20) + '...' : name;
+};
+
+onMounted(loadData);
+watch(() => props.playerName, loadData);
+watch(() => props.game, loadData);
+</script>

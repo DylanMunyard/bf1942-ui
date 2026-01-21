@@ -18,6 +18,12 @@
       </button>
     </div>
 
+    <!-- No Data State -->
+    <div v-else-if="mapDetail === null" class="text-center py-8">
+      <div class="text-slate-400 mb-2">No data available for this map</div>
+      <div class="text-sm text-slate-500">This map may not have been played recently or data is not yet available.</div>
+    </div>
+
     <!-- Content -->
     <div v-else-if="mapDetail" class="space-y-6">
       <!-- Header -->
@@ -47,6 +53,11 @@
           />
         </div>
       </div>
+
+      <!-- Player Rankings -->
+      <div class="bg-slate-800/30 rounded-lg p-4">
+        <MapPlayerRankings :map-name="mapDetail.mapName" />
+      </div>
     </div>
   </div>
 </template>
@@ -56,6 +67,7 @@ import { ref, watch, onMounted } from 'vue';
 import { fetchMapDetail, type MapDetail } from '../../services/dataExplorerService';
 import WinStatsBar from './WinStatsBar.vue';
 import ServerRotationTable from './ServerRotationTable.vue';
+import MapPlayerRankings from './MapPlayerRankings.vue';
 
 const props = defineProps<{
   mapName: string;
@@ -77,6 +89,7 @@ const loadData = async () => {
 
   try {
     mapDetail.value = await fetchMapDetail(props.mapName);
+    // mapDetail will be null if the map has no data (404 response)
   } catch (err) {
     console.error('Error loading map detail:', err);
     error.value = 'Failed to load map details';

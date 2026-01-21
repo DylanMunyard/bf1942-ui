@@ -1,12 +1,12 @@
 <template>
   <div class="overflow-x-auto">
-    <table class="w-full text-sm">
+    <table class="w-full text-sm table-fixed">
       <thead>
-        <tr class="text-slate-400 text-left border-b border-slate-700/50">
-          <th class="pb-2 font-medium">Server</th>
-          <th class="pb-2 font-medium text-center">Status</th>
-          <th class="pb-2 font-medium text-right">Rounds</th>
-          <th class="pb-2 font-medium w-32 hidden sm:table-cell">Win Stats</th>
+        <tr class="text-slate-400 text-left border-b border-slate-700/50 whitespace-nowrap">
+          <th class="pb-2 pr-2 font-medium">Server</th>
+          <th class="pb-2 px-2 font-medium text-center w-14">Status</th>
+          <th class="pb-2 px-2 font-medium text-right w-16">Rounds</th>
+          <th class="pb-2 pl-3 font-medium w-24 hidden sm:table-cell">Win Stats</th>
         </tr>
       </thead>
       <tbody>
@@ -16,16 +16,16 @@
           class="border-b border-slate-700/30 hover:bg-slate-700/20 cursor-pointer transition-colors"
           @click="emit('navigate', server.serverGuid)"
         >
-          <td class="py-2">
-            <div class="flex items-center gap-2">
-              <span class="text-slate-200">{{ server.serverName }}</span>
-              <span class="text-xs px-1.5 py-0.5 bg-slate-700 rounded text-slate-400">
+          <td class="py-2 pr-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-slate-200 truncate">{{ server.serverName }}</span>
+              <span class="text-xs px-1.5 py-0.5 bg-slate-700 rounded text-slate-400 flex-shrink-0">
                 {{ getGameLabel(server.game) }}
               </span>
-              <span class="text-cyan-400 text-xs">→</span>
+              <span class="text-cyan-400 text-xs flex-shrink-0">→</span>
             </div>
           </td>
-          <td class="py-2 text-center">
+          <td class="py-2 px-2 text-center">
             <div
               :class="[
                 'inline-flex w-2.5 h-2.5 rounded-full',
@@ -34,8 +34,8 @@
               :title="server.isOnline ? 'Online' : 'Offline'"
             />
           </td>
-          <td class="py-2 text-right text-slate-400">{{ server.totalRoundsOnMap }}</td>
-          <td class="py-2 hidden sm:table-cell">
+          <td class="py-2 px-2 text-right text-slate-400 tabular-nums">{{ server.totalRoundsOnMap }}</td>
+          <td class="py-2 pl-3 hidden sm:table-cell">
             <div class="h-2 rounded-full overflow-hidden bg-slate-700/50 flex">
               <div
                 class="bg-red-500"

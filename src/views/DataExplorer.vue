@@ -16,6 +16,7 @@
             :search-query="debouncedSearchQuery"
             :selected-item="selectedItem"
             @select="handleSelect"
+            @game-change="handleGameChange"
           />
         </div>
 
@@ -38,14 +39,22 @@
                   @navigate-to-server="handleNavigateToServer"
                 />
               </template>
+              <!-- Player Detail -->
+              <template v-if="currentMode === 'players' && selectedPlayerName && !isServerMapView">
+                <PlayerDetailPanel
+                  :player-name="selectedPlayerName"
+                  :game="selectedGame"
+                  @navigate-to-server="handleNavigateToServerFromPlayer"
+                />
+              </template>
               <!-- Empty State -->
               <template v-if="!selectedItem && !isServerMapView">
                 <div class="flex flex-col items-center justify-center h-64 text-slate-400">
                   <div class="text-4xl mb-4">
-                    {{ currentMode === 'servers' ? '🖥️' : '🗺️' }}
+                    {{ modeEmoji }}
                   </div>
                   <p class="text-lg">
-                    Select a {{ currentMode === 'servers' ? 'server' : 'map' }} to view details
+                    {{ emptyStateText }}
                   </p>
                 </div>
               </template>
@@ -89,17 +98,41 @@ import DetailPanel from '../components/data-explorer/DetailPanel.vue';
 import ServerDetailPanel from '../components/data-explorer/ServerDetailPanel.vue';
 import MapDetailPanel from '../components/data-explorer/MapDetailPanel.vue';
 import ServerMapDetailPanel from '../components/data-explorer/ServerMapDetailPanel.vue';
+import PlayerDetailPanel from '../components/data-explorer/PlayerDetailPanel.vue';
+import type { GameType } from '../services/dataExplorerService';
 
 const route = useRoute();
 const router = useRouter();
 
 // Mode state
-const currentMode = ref<'servers' | 'maps'>('servers');
+const currentMode = ref<'servers' | 'maps' | 'players'>('servers');
 
-// Search state
-const searchQuery = ref('');
-const debouncedSearchQuery = ref('');
+// Game state (for player detail)
+const selectedGame = ref<GameType>('bf1942');
+
+// Search state - separate queries per mode
+const searchQueries = ref({
+  servers: '',
+  maps: '',
+  players: ''
+});
+const debouncedSearchQueries = ref({
+  servers: '',
+  maps: '',
+  players: ''
+});
 let searchTimeout: number | null = null;
+
+// Computed search query for current mode
+const searchQuery = computed({
+  get: () => searchQueries.value[currentMode.value],
+  set: (value: string) => {
+    searchQueries.value[currentMode.value] = value;
+  }
+});
+
+// Computed debounced search query for current mode
+const debouncedSearchQuery = computed(() => debouncedSearchQueries.value[currentMode.value]);
 
 // Selection state
 const selectedItem = ref<string | null>(null);
@@ -112,6 +145,9 @@ const serverMapMapName = ref<string | null>(null);
 // Flag to prevent mode watcher from resetting selection during cross-navigation
 let isCrossNavigating = false;
 
+// Flag to prevent mode watcher from firing during initial route load
+let isInitialLoad = true;
+
 // Computed selection based on mode
 const selectedServerGuid = computed(() =>
   currentMode.value === 'servers' ? selectedItem.value : null
@@ -121,15 +157,47 @@ const selectedMapName = computed(() =>
   currentMode.value === 'maps' ? selectedItem.value : null
 );
 
-// Debounce search
-watch(searchQuery, (newValue) => {
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
+const selectedPlayerName = computed(() =>
+  currentMode.value === 'players' ? selectedItem.value : null
+);
+
+// Mode emoji and text
+const modeEmoji = computed(() => {
+  switch (currentMode.value) {
+    case 'servers': return '🖥️';
+    case 'maps': return '🗺️';
+    case 'players': return '👤';
+    default: return '🖥️';
   }
-  searchTimeout = setTimeout(() => {
-    debouncedSearchQuery.value = newValue;
-  }, 300) as unknown as number;
 });
+
+const emptyStateText = computed(() => {
+  switch (currentMode.value) {
+    case 'servers': return 'Select a server to view details';
+    case 'maps': return 'Select a map to view details';
+    case 'players': return 'Search for a player to view their rankings';
+    default: return 'Select an item to view details';
+  }
+});
+
+// Handle game change from MasterList
+const handleGameChange = (game: GameType) => {
+  selectedGame.value = game;
+};
+
+// Debounce search - watches the current mode's search query
+watch(
+  () => searchQueries.value[currentMode.value],
+  (newValue) => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    const mode = currentMode.value; // Capture current mode
+    searchTimeout = setTimeout(() => {
+      debouncedSearchQueries.value[mode] = newValue;
+    }, 300) as unknown as number;
+  }
+);
 
 // Handle route changes
 const updateFromRoute = () => {
@@ -140,7 +208,8 @@ const updateFromRoute = () => {
   if (serverMapMatch) {
     isServerMapView.value = true;
     serverMapGuid.value = serverMapMatch[1];
-    serverMapMapName.value = decodeURIComponent(serverMapMatch[2]);
+    // Vue Router decodes params automatically, use route.params for consistency
+    serverMapMapName.value = route.params.mapName as string;
     // Keep server selected in the master list for context
     currentMode.value = 'servers';
     selectedItem.value = serverMapMatch[1];
@@ -152,12 +221,18 @@ const updateFromRoute = () => {
   serverMapGuid.value = null;
   serverMapMapName.value = null;
 
-  if (path.startsWith('/explore/maps/')) {
+  if (path.startsWith('/explore/players/')) {
+    currentMode.value = 'players';
+    selectedItem.value = route.params.playerName as string;
+  } else if (path.startsWith('/explore/maps/')) {
     currentMode.value = 'maps';
-    selectedItem.value = decodeURIComponent(route.params.mapName as string);
+    selectedItem.value = route.params.mapName as string;
   } else if (path.startsWith('/explore/servers/')) {
     currentMode.value = 'servers';
     selectedItem.value = route.params.serverGuid as string;
+  } else if (path === '/explore/players') {
+    currentMode.value = 'players';
+    selectedItem.value = null;
   } else if (path === '/explore/maps') {
     currentMode.value = 'maps';
     selectedItem.value = null;
@@ -171,7 +246,13 @@ const updateFromRoute = () => {
 watch(() => route.fullPath, updateFromRoute);
 
 // Initialize from route
-onMounted(updateFromRoute);
+onMounted(() => {
+  updateFromRoute();
+  // Allow mode watcher to fire after initial load is complete
+  nextTick(() => {
+    isInitialLoad = false;
+  });
+});
 
 // Handle selection
 const handleSelect = (item: string | null) => {
@@ -184,14 +265,18 @@ const handleSelect = (item: string | null) => {
   if (item) {
     if (currentMode.value === 'servers') {
       router.push({ name: 'explore-server-detail', params: { serverGuid: item } });
-    } else {
-      router.push({ name: 'explore-map-detail', params: { mapName: encodeURIComponent(item) } });
+    } else if (currentMode.value === 'maps') {
+      router.push({ name: 'explore-map-detail', params: { mapName: item } });
+    } else if (currentMode.value === 'players') {
+      router.push({ name: 'explore-player-detail', params: { playerName: item } });
     }
   } else {
     if (currentMode.value === 'servers') {
       router.push({ name: 'explore-servers' });
-    } else {
+    } else if (currentMode.value === 'maps') {
       router.push({ name: 'explore-maps' });
+    } else if (currentMode.value === 'players') {
+      router.push({ name: 'explore-players' });
     }
   }
 };
@@ -252,14 +337,27 @@ const handleNavigateBackToMap = (mapName: string) => {
   });
 };
 
+// Handle navigation to server from player detail panel
+const handleNavigateToServerFromPlayer = (serverGuid: string) => {
+  isCrossNavigating = true;
+  currentMode.value = 'servers';
+  selectedItem.value = serverGuid;
+  router.push({ name: 'explore-server-detail', params: { serverGuid } });
+  nextTick(() => {
+    isCrossNavigating = false;
+  });
+};
+
 // Watch mode changes and update route
 watch(currentMode, (newMode, oldMode) => {
-  if (newMode !== oldMode && !isCrossNavigating && !isServerMapView.value) {
+  if (newMode !== oldMode && !isCrossNavigating && !isServerMapView.value && !isInitialLoad) {
     selectedItem.value = null;
     if (newMode === 'servers') {
       router.push({ name: 'explore-servers' });
-    } else {
+    } else if (newMode === 'maps') {
       router.push({ name: 'explore-maps' });
+    } else if (newMode === 'players') {
+      router.push({ name: 'explore-players' });
     }
   }
 });

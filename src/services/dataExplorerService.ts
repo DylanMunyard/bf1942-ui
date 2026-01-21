@@ -27,6 +27,9 @@ export interface ServerSummary {
 export interface ServerListResponse {
   servers: ServerSummary[];
   totalCount: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
 }
 
 export interface MapRotationItem {
@@ -102,13 +105,19 @@ export interface MapDetail {
 export type GameType = 'bf1942' | 'fh2' | 'bfvietnam';
 
 /**
- * Fetches all servers with summary information
+ * Fetches paginated servers with summary information
  * @param game - Game filter: bf1942 (default), fh2, or bfvietnam
+ * @param page - Page number (1-based, default 1)
+ * @param pageSize - Number of results per page (default 50)
  */
-export async function fetchServers(game: GameType = 'bf1942'): Promise<ServerListResponse> {
+export async function fetchServers(
+  game: GameType = 'bf1942',
+  page: number = 1,
+  pageSize: number = 50
+): Promise<ServerListResponse> {
   try {
     const response = await axios.get<ServerListResponse>('/stats/data-explorer/servers', {
-      params: { game }
+      params: { game, page, pageSize }
     });
     return response.data;
   } catch (err) {
@@ -151,13 +160,18 @@ export async function fetchMaps(game: GameType = 'bf1942'): Promise<MapListRespo
  * @param mapName - The map name
  * @param game - Game filter: bf1942 (default), fh2, or bfvietnam
  */
-export async function fetchMapDetail(mapName: string, game: GameType = 'bf1942'): Promise<MapDetail> {
+export async function fetchMapDetail(mapName: string, game: GameType = 'bf1942'): Promise<MapDetail | null> {
   try {
     const response = await axios.get<MapDetail>(`/stats/data-explorer/maps/${encodeURIComponent(mapName)}`, {
       params: { game }
     });
     return response.data;
-  } catch (err) {
+  } catch (err: any) {
+    // Handle 404 as "no data available" instead of an error
+    if (err.response?.status === 404) {
+      console.log(`Map '${mapName}' not found for game '${game}' - no data available`);
+      return null;
+    }
     console.error('Error fetching map detail:', err);
     throw new Error('Failed to get map detail');
   }
@@ -223,6 +237,72 @@ export interface ServerMapSession {
   topPlayers?: TopPlayer[];
 }
 
+// Player Search Types
+
+export interface PlayerSearchResult {
+  playerName: string;
+  totalScore: number;
+  totalKills: number;
+  totalDeaths: number;
+  kdRatio: number;
+  totalRounds: number;
+  uniqueMaps: number;
+  uniqueServers: number;
+}
+
+export interface PlayerSearchResponse {
+  players: PlayerSearchResult[];
+  totalCount: number;
+  query: string;
+}
+
+// Player Map Rankings Types
+
+export interface PlayerOverallStats {
+  totalScore: number;
+  totalKills: number;
+  totalDeaths: number;
+  kdRatio: number;
+  totalRounds: number;
+  uniqueServers: number;
+  uniqueMaps: number;
+}
+
+export interface PlayerServerStats {
+  serverGuid: string;
+  serverName: string;
+  totalScore: number;
+  totalKills: number;
+  totalDeaths: number;
+  kdRatio: number;
+  totalRounds: number;
+  rank: number;
+}
+
+export interface PlayerMapGroup {
+  mapName: string;
+  aggregatedScore: number;
+  serverStats: PlayerServerStats[];
+  bestRank: number | null;
+  bestRankServer: string | null;
+}
+
+export interface NumberOneRanking {
+  mapName: string;
+  serverName: string;
+  serverGuid: string;
+  totalScore: number;
+}
+
+export interface PlayerMapRankingsResponse {
+  playerName: string;
+  game: string;
+  overallStats: PlayerOverallStats;
+  mapGroups: PlayerMapGroup[];
+  numberOneRankings: NumberOneRanking[];
+  dateRange: DateRange;
+}
+
 export interface ServerMapDetail {
   serverGuid: string;
   serverName: string;
@@ -278,5 +358,119 @@ export async function fetchServerMapSessions(
   } catch (err) {
     console.error('Error fetching server-map sessions:', err);
     throw new Error('Failed to get server-map sessions');
+  }
+}
+
+/**
+ * Search for players by name prefix
+ * Requires at least 3 characters. Returns top 50 matches by score.
+ * @param query - Search query (min 3 characters)
+ * @param game - Game filter: bf1942 (default), fh2, or bfvietnam
+ */
+export async function searchPlayers(
+  query: string,
+  game: GameType = 'bf1942'
+): Promise<PlayerSearchResponse> {
+  try {
+    const response = await axios.get<PlayerSearchResponse>('/stats/data-explorer/players/search', {
+      params: { query, game }
+    });
+    return response.data;
+  } catch (err) {
+    console.error('Error searching players:', err);
+    throw new Error('Failed to search players');
+  }
+}
+
+/**
+ * Fetches player map rankings with per-server breakdown
+ * @param playerName - The player name
+ * @param game - Game filter: bf1942 (default), fh2, or bfvietnam
+ * @param days - Number of days to look back (default 60)
+ */
+export async function fetchPlayerMapRankings(
+  playerName: string,
+  game: GameType = 'bf1942',
+  days: number = 60
+): Promise<PlayerMapRankingsResponse> {
+  try {
+    const response = await axios.get<PlayerMapRankingsResponse>(
+      `/stats/data-explorer/players/${encodeURIComponent(playerName)}/maps`,
+      { params: { game, days } }
+    );
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching player map rankings:', err);
+    throw new Error('Failed to get player map rankings');
+  }
+}
+
+// Map Player Rankings Types
+
+export interface MapPlayerRanking {
+  rank: number;
+  playerName: string;
+  totalScore: number;
+  totalKills: number;
+  totalDeaths: number;
+  kdRatio: number;
+  killsPerMinute: number;
+  totalRounds: number;
+  playTimeMinutes: number;
+  uniqueServers: number;
+}
+
+export type MapRankingSortBy = 'score' | 'kills' | 'kdRatio' | 'killRate';
+
+export interface MapPlayerRankingsResponse {
+  mapName: string;
+  game: string;
+  rankings: MapPlayerRanking[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  dateRange: DateRange;
+}
+
+/**
+ * Fetches paginated player rankings for a specific map (aggregated across all servers)
+ * @param mapName - The map name
+ * @param game - Game filter: bf1942 (default), fh2, or bfvietnam
+ * @param page - Page number (1-based)
+ * @param pageSize - Number of results per page
+ * @param search - Optional player name search filter
+ * @param serverGuid - Optional server GUID filter
+ * @param days - Number of days to look back (default 60)
+ * @param sortBy - Sort field: score (default), kills, kdRatio, killRate
+ */
+export async function fetchMapPlayerRankings(
+  mapName: string,
+  game: GameType = 'bf1942',
+  page: number = 1,
+  pageSize: number = 10,
+  search?: string,
+  serverGuid?: string,
+  days: number = 60,
+  sortBy: MapRankingSortBy = 'score'
+): Promise<MapPlayerRankingsResponse> {
+  try {
+    const response = await axios.get<MapPlayerRankingsResponse>(
+      `/stats/data-explorer/maps/${encodeURIComponent(mapName)}/rankings`,
+      {
+        params: {
+          game,
+          page,
+          pageSize,
+          search: search || undefined,
+          serverGuid: serverGuid || undefined,
+          days,
+          sortBy
+        }
+      }
+    );
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching map player rankings:', err);
+    throw new Error('Failed to get map player rankings');
   }
 }

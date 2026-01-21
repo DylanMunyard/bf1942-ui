@@ -262,6 +262,25 @@ const routes: RouteRecordRaw[] = [
             title: (route: RouteLocationNormalized) => `${decodeURIComponent(route.params.mapName as string)} - Map Explorer | BF Stats`,
             description: (route: RouteLocationNormalized) => `Detailed statistics for ${decodeURIComponent(route.params.mapName as string)} including servers playing this map and win rates.`
           }
+        },
+        {
+          path: 'players',
+          name: 'explore-players',
+          component: DataExplorer,
+          meta: {
+            title: 'Player Explorer - BF Stats',
+            description: 'Search for Battlefield players and view their rankings across maps and servers.'
+          }
+        },
+        {
+          path: 'players/:playerName',
+          name: 'explore-player-detail',
+          component: DataExplorer,
+          props: true,
+          meta: {
+            title: (route: RouteLocationNormalized) => `${decodeURIComponent(route.params.playerName as string)} - Player Explorer | BF Stats`,
+            description: (route: RouteLocationNormalized) => `Map rankings and server statistics for ${decodeURIComponent(route.params.playerName as string)}. See where they rank #1 across servers.`
+          }
         }
       ]
     },

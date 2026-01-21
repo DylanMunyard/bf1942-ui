@@ -4,7 +4,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
       <div>
         <h1 class="text-2xl font-bold text-slate-200">Data Explorer</h1>
-        <p class="text-slate-400 text-sm mt-1">Browse servers and maps with detailed statistics</p>
+        <p class="text-slate-400 text-sm mt-1">Browse servers, maps, and players with detailed statistics</p>
       </div>
 
       <!-- Mode Toggle -->
@@ -31,6 +31,17 @@
         >
           Maps
         </button>
+        <button
+          @click="emit('update:mode', 'players')"
+          :class="[
+            'px-4 py-2 rounded-md text-sm font-medium transition-all duration-200',
+            mode === 'players'
+              ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+          ]"
+        >
+          Players
+        </button>
       </div>
     </div>
 
@@ -43,7 +54,7 @@
         :value="search"
         @input="emit('update:search', ($event.target as HTMLInputElement).value)"
         type="text"
-        :placeholder="`Search ${mode}...`"
+        :placeholder="searchPlaceholder"
         class="w-full pl-12 pr-4 py-2.5 bg-slate-800/80 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
       >
     </div>
@@ -51,13 +62,22 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  mode: 'servers' | 'maps';
+import { computed } from 'vue';
+
+const props = defineProps<{
+  mode: 'servers' | 'maps' | 'players';
   search: string;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:mode', value: 'servers' | 'maps'): void;
+  (e: 'update:mode', value: 'servers' | 'maps' | 'players'): void;
   (e: 'update:search', value: string): void;
 }>();
+
+const searchPlaceholder = computed(() => {
+  if (props.mode === 'players') {
+    return 'Search players (min 3 characters)...';
+  }
+  return `Search ${props.mode}...`;
+});
 </script>
