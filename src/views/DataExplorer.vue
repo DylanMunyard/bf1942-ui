@@ -45,6 +45,7 @@
                   :player-name="selectedPlayerName"
                   :game="selectedGame"
                   @navigate-to-server="handleNavigateToServerFromPlayer"
+                  @navigate-to-map="handleNavigateToMapFromPlayer"
                 />
               </template>
               <!-- Empty State -->
@@ -343,6 +344,17 @@ const handleNavigateToServerFromPlayer = (serverGuid: string) => {
   currentMode.value = 'servers';
   selectedItem.value = serverGuid;
   router.push({ name: 'explore-server-detail', params: { serverGuid } });
+  nextTick(() => {
+    isCrossNavigating = false;
+  });
+};
+
+// Handle navigation to map from player detail panel
+const handleNavigateToMapFromPlayer = (mapName: string) => {
+  isCrossNavigating = true;
+  currentMode.value = 'maps';
+  selectedItem.value = mapName;
+  router.push({ name: 'explore-map-detail', params: { mapName } });
   nextTick(() => {
     isCrossNavigating = false;
   });

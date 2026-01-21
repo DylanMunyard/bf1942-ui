@@ -132,6 +132,15 @@
             >
               <div class="flex items-center gap-3">
                 <span class="text-slate-200 font-medium">{{ mapGroup.mapName }}</span>
+                <button
+                  @click.stop="handleNavigateToMap(mapGroup.mapName)"
+                  class="ml-2 text-slate-400 hover:text-cyan-400 transition-colors"
+                  title="View map details"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
                 <span
                   v-if="mapGroup.bestRank === 1"
                   class="inline-flex items-center justify-center px-1.5 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded font-medium"
@@ -179,10 +188,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'navigate-to-server': [serverGuid: string];
+  'navigate-to-map': [mapName: string];
 }>();
 
 const handleNavigateToServer = (serverGuid: string) => {
   emit('navigate-to-server', serverGuid);
+};
+
+const handleNavigateToMap = (mapName: string) => {
+  emit('navigate-to-map', mapName);
 };
 
 const playerData = ref<PlayerMapRankingsResponse | null>(null);
