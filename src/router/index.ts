@@ -235,6 +235,16 @@ const routes: RouteRecordRaw[] = [
           }
         },
         {
+          path: 'servers/:serverGuid/maps/:mapName',
+          name: 'explore-server-map-detail',
+          component: DataExplorer,
+          props: true,
+          meta: {
+            title: (route: RouteLocationNormalized) => `${decodeURIComponent(route.params.mapName as string)} on Server - Data Explorer | BF Stats`,
+            description: (route: RouteLocationNormalized) => `Detailed statistics for ${decodeURIComponent(route.params.mapName as string)} played on this server, including player leaderboards and win rates.`
+          }
+        },
+        {
           path: 'maps',
           name: 'explore-maps',
           component: DataExplorer,

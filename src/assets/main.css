@@ -43,3 +43,47 @@ a,
     max-height: calc(100vh - var(--mobile-nav-height, 0) - 2rem) !important;
   }
 }
+
+/* Animated rainbow gradient border for Data Explorer menu item */
+@keyframes gradient-rotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-rotate {
+  animation: gradient-rotate 3s ease infinite;
+}
+
+/* Glow effect for Data Explorer */
+.data-explorer-glow {
+  box-shadow: 
+    0 0 15px rgba(168, 85, 247, 0.4),
+    0 0 30px rgba(168, 85, 247, 0.2),
+    0 0 45px rgba(236, 72, 153, 0.1);
+}
+
+.data-explorer-glow:hover {
+  box-shadow: 
+    0 0 20px rgba(168, 85, 247, 0.6),
+    0 0 40px rgba(168, 85, 247, 0.4),
+    0 0 60px rgba(236, 72, 153, 0.2);
+}
+
+.data-explorer-glow-mobile {
+  box-shadow: 
+    0 0 10px rgba(168, 85, 247, 0.4),
+    0 0 20px rgba(168, 85, 247, 0.2);
+}
+
+.data-explorer-glow-mobile:hover {
+  box-shadow: 
+    0 0 15px rgba(168, 85, 247, 0.6),
+    0 0 30px rgba(168, 85, 247, 0.3);
+}

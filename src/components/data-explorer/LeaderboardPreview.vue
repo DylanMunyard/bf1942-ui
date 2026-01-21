@@ -19,7 +19,14 @@
           <td class="py-1.5">
             <span :class="getRankClass(index)">{{ index + 1 }}</span>
           </td>
-          <td class="py-1.5 text-slate-200">{{ player.playerName }}</td>
+          <td class="py-1.5">
+            <router-link
+              :to="getPlayerDetailsRoute(player.playerName)"
+              class="text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              {{ player.playerName }}
+            </router-link>
+          </td>
           <td class="py-1.5 text-right text-slate-300">{{ player.totalScore.toLocaleString() }}</td>
           <td class="py-1.5 text-right text-slate-400">{{ player.totalKills.toLocaleString() }}</td>
           <td class="py-1.5 text-right text-slate-400">{{ player.kdRatio.toFixed(2) }}</td>
@@ -39,6 +46,11 @@ import type { TopPlayer } from '../../services/dataExplorerService';
 defineProps<{
   players: TopPlayer[];
 }>();
+
+const getPlayerDetailsRoute = (playerName: string) => ({
+  name: 'player-details',
+  params: { playerName: encodeURIComponent(playerName) }
+});
 
 const getRankClass = (index: number): string => {
   const base = 'inline-flex items-center justify-center w-5 h-5 rounded text-xs font-medium';

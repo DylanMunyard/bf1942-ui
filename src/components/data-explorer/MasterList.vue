@@ -2,12 +2,32 @@
   <div class="bg-slate-800/50 rounded-xl border border-slate-700/50 overflow-hidden">
     <!-- List Header -->
     <div class="px-4 py-3 border-b border-slate-700/50 bg-slate-800/30">
-      <span class="text-slate-300 font-medium">
-        {{ mode === 'servers' ? 'Servers' : 'Maps' }}
-        <span class="text-slate-500 text-sm ml-2">
-          ({{ filteredItems.length }})
+      <div class="flex items-center justify-between">
+        <span class="text-slate-300 font-medium">
+          {{ mode === 'servers' ? 'Servers' : 'Maps' }}
+          <span class="text-slate-500 text-sm ml-2">
+            ({{ filteredItems.length }})
+          </span>
         </span>
-      </span>
+
+        <!-- Game Toggle -->
+        <div class="flex items-center gap-1 bg-slate-900/50 rounded-lg p-0.5">
+          <button
+            v-for="game in games"
+            :key="game.id"
+            @click="selectedGame = game.id"
+            :class="[
+              'px-2 py-1 rounded text-xs font-medium transition-all duration-200',
+              selectedGame === game.id
+                ? 'bg-slate-700 text-white'
+                : 'text-slate-400 hover:text-slate-200'
+            ]"
+            :title="game.name"
+          >
+            {{ game.label }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -60,7 +80,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { fetchServers, fetchMaps, type ServerSummary, type MapSummary } from '../../services/dataExplorerService';
+import { fetchServers, fetchMaps, type ServerSummary, type MapSummary, type GameType } from '../../services/dataExplorerService';
 import ServerListItem from './ServerListItem.vue';
 import MapListItem from './MapListItem.vue';
 
@@ -73,6 +93,14 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'select', item: string | null): void;
 }>();
+
+// Game toggle state
+const games = [
+  { id: 'bf1942' as GameType, label: 'BF42', name: 'Battlefield 1942' },
+  { id: 'fh2' as GameType, label: 'FH2', name: 'Forgotten Hope 2' },
+  { id: 'bfvietnam' as GameType, label: 'BFV', name: 'Battlefield Vietnam' },
+];
+const selectedGame = ref<GameType>('bf1942');
 
 // Data state
 const servers = ref<ServerSummary[]>([]);
@@ -110,10 +138,10 @@ const loadData = async () => {
 
   try {
     if (props.mode === 'servers') {
-      const response = await fetchServers();
+      const response = await fetchServers(selectedGame.value);
       servers.value = response.servers;
     } else {
-      const response = await fetchMaps();
+      const response = await fetchMaps(selectedGame.value);
       maps.value = response.maps;
     }
   } catch (err) {
@@ -124,14 +152,12 @@ const loadData = async () => {
   }
 };
 
-// Load data on mount and mode change
+// Load data on mount
 onMounted(loadData);
-watch(() => props.mode, () => {
-  // Only reload if we don't have data for this mode
-  if (props.mode === 'servers' && servers.value.length === 0) {
-    loadData();
-  } else if (props.mode === 'maps' && maps.value.length === 0) {
-    loadData();
-  }
-});
+
+// Reload when mode changes
+watch(() => props.mode, loadData);
+
+// Reload when game filter changes
+watch(selectedGame, loadData);
 </script>

@@ -122,33 +122,46 @@
           </div>
         </router-link>
 
-        <!-- Player Comparison Link -->
+        <!-- Data Explorer Link - Featured -->
         <router-link
-          to="/players/compare"
-          class="group relative flex flex-col items-center justify-center w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
-          active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
+          to="/explore"
+          class="group relative flex flex-col items-center justify-center w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:shadow-xl data-explorer-glow overflow-visible"
+          active-class="!shadow-xl"
         >
-          <div
-            class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-            :style="{ backgroundImage: `url(${compareIcon})` }"
-          />
+          <!-- Animated rainbow border -->
+          <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 via-blue-500 via-cyan-500 via-green-500 via-yellow-500 to-pink-500 opacity-75 animate-gradient-rotate pointer-events-none" style="padding: 2px; background-size: 200% 200%;">
+            <div class="w-full h-full rounded-[10px] bg-gradient-to-br from-slate-700/90 to-slate-800/90" />
+          </div>
           
-          <!-- Enhanced Tooltip -->
-          <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+          <!-- Icon container -->
+          <div class="relative z-10 pointer-events-none">
+            <div
+              class="w-8 h-8 rounded-lg bg-cover bg-center bg-no-repeat opacity-90 group-hover:opacity-100 transition-all duration-300 group-hover:scale-125"
+              :style="{ backgroundImage: `url(${explorerIcon})` }"
+            />
+          </div>
+          
+          <!-- Enhanced Promotional Tooltip -->
+          <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50">
             <div class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 p-4 shadow-2xl min-w-80">
               <div class="flex items-center gap-4 mb-3">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 flex items-center justify-center">
+                <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-cyan-500/20 border border-purple-500/40 flex items-center justify-center animate-pulse">
                   <div
-                    class="w-8 h-8 rounded-full bg-cover bg-center bg-no-repeat"
-                    :style="{ backgroundImage: `url(${compareIcon})` }"
+                    class="w-10 h-10 rounded-lg bg-cover bg-center bg-no-repeat"
+                    :style="{ backgroundImage: `url(${explorerIcon})` }"
                   />
                 </div>
-                <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
-                  Compare
+                <div>
+                  <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400">
+                    Data Explorer
+                  </div>
+                  <div class="text-xs text-purple-400 font-medium uppercase tracking-wider">
+                    ✨ New Feature
+                  </div>
                 </div>
               </div>
               <p class="text-slate-300 text-sm leading-relaxed">
-                Compare two players' performance statistics side-by-side
+                Explore the battlefield like never before. Dive deep into server activity, map statistics, and uncover the stories behind every game session.
               </p>
             </div>
             <!-- Arrow -->
@@ -209,15 +222,19 @@
           />
         </router-link>
 
-        <!-- Player Comparison Link -->
+        <!-- Data Explorer Link - Featured -->
         <router-link
-          to="/players/compare"
-          class="group flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105"
-          active-class="!border-cyan-500 !bg-gradient-to-br !from-cyan-500/20 !to-blue-500/20 !shadow-lg !shadow-cyan-500/30"
+          to="/explore"
+          class="group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm transition-all duration-300 hover:scale-110 data-explorer-glow-mobile"
+          active-class="!shadow-lg"
         >
+          <!-- Animated rainbow border -->
+          <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 via-blue-500 via-cyan-500 via-green-500 via-yellow-500 to-pink-500 opacity-75 animate-gradient-rotate" style="padding: 2px; background-size: 200% 200%;">
+            <div class="w-full h-full rounded-[10px] bg-gradient-to-br from-slate-700/90 to-slate-800/90" />
+          </div>
           <div
-            class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-cover bg-center bg-no-repeat opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-            :style="{ backgroundImage: `url(${compareIcon})` }"
+            class="relative z-10 w-5 h-5 sm:w-6 sm:h-6 rounded bg-cover bg-center bg-no-repeat opacity-90 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300"
+            :style="{ backgroundImage: `url(${explorerIcon})` }"
           />
         </router-link>
       </nav>
@@ -233,7 +250,7 @@ import { useAuth } from '@/composables/useAuth';
 import dashboardIcon from '@/assets/achievements/dashboard-sidemenu.webp';
 import serversIcon from '@/assets/servers.webp';
 import playersIcon from '@/assets/players.webp';
-import compareIcon from '@/assets/player_vs_player.webp';
+import explorerIcon from '@/assets/menu-item-data-explorer.webp';
 
 const route = useRoute();
 const { isAuthenticated } = useAuth();

@@ -75,7 +75,13 @@
               <span class="text-slate-200 font-medium">{{ mapStats.mapName }}</span>
               <div class="flex items-center gap-3">
                 <span v-if="mapStats.topPlayers.length > 0" class="text-sm text-slate-400 group-open:hidden">
-                  <span class="text-yellow-400">#1</span> {{ mapStats.topPlayers[0].playerName }}
+                  <span class="text-yellow-400">#1</span>
+                  <router-link
+                    :to="getPlayerDetailsRoute(mapStats.topPlayers[0].playerName)"
+                    class="text-cyan-400 hover:text-cyan-300 transition-colors"
+                  >
+                    {{ mapStats.topPlayers[0].playerName }}
+                  </router-link>
                 </span>
                 <svg class="w-5 h-5 text-slate-400 transform transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -101,6 +107,11 @@ import WinStatsBar from './WinStatsBar.vue';
 import MapRotationTable from './MapRotationTable.vue';
 import ActivityHeatmap from './ActivityHeatmap.vue';
 import LeaderboardPreview from './LeaderboardPreview.vue';
+
+const getPlayerDetailsRoute = (playerName: string) => ({
+  name: 'player-details',
+  params: { playerName: encodeURIComponent(playerName) }
+});
 
 const props = defineProps<{
   serverGuid: string;
