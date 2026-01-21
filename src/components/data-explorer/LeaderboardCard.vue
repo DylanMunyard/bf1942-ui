@@ -42,12 +42,12 @@
                 <span :class="getRankClass(entry.rank)">{{ entry.rank }}</span>
               </td>
               <td class="py-2 truncate max-w-[100px] sm:max-w-[120px]">
-                <router-link
-                  :to="getPlayerRoute(entry.playerName)"
-                  class="text-cyan-400 hover:text-cyan-300 transition-colors"
+                <button
+                  @click="navigateToPlayer(entry.playerName)"
+                  class="text-cyan-400 hover:text-cyan-300 transition-colors text-left"
                 >
                   {{ entry.playerName }}
-                </router-link>
+                </button>
               </td>
               <td class="py-2 text-right text-cyan-400 font-medium">
                 {{ formatPrimaryValue(entry) }}
@@ -109,7 +109,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import type { MapPlayerRanking, MapRankingSortBy } from '../../services/dataExplorerService';
+
+const router = useRouter();
 
 const props = defineProps<{
   title: string;
@@ -128,10 +131,12 @@ const emit = defineEmits<{
   (e: 'retry'): void;
 }>();
 
-const getPlayerRoute = (playerName: string) => ({
-  name: 'explore-player-detail',
-  params: { playerName }
-});
+const navigateToPlayer = (playerName: string) => {
+  router.push({
+    name: 'explore-player-detail',
+    params: { playerName }
+  });
+};
 
 const primaryColumnHeader = computed(() => {
   switch (props.sortType) {

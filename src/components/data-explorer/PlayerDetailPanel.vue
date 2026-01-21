@@ -12,8 +12,27 @@
 
     <!-- Error State -->
     <div v-else-if="error" class="text-center py-8">
-      <div class="text-red-400 mb-2">{{ error }}</div>
-      <button @click="loadData" class="text-cyan-400 hover:text-cyan-300 text-sm">
+      <div class="text-slate-400 mb-4">{{ error }}</div>
+      <div class="mb-4">
+        <p class="text-slate-500 text-sm mb-3">Try selecting a different time period:</p>
+        <div class="flex gap-2 justify-center">
+          <button
+            v-for="option in timeRangeOptions"
+            :key="option.value"
+            :class="[
+              'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
+              selectedTimeRange === option.value
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg'
+                : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 border border-slate-600'
+            ]"
+            @click="changeTimeRange(option.value)"
+            :disabled="isLoading"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+      <button @click="loadData()" class="text-cyan-400 hover:text-cyan-300 text-sm">
         Try again
       </button>
     </div>
@@ -22,12 +41,32 @@
     <div v-else-if="playerData" class="space-y-6">
       <!-- Header -->
       <div>
-        <div class="flex items-center gap-3 mb-2">
+        <div class="flex items-center gap-3 mb-4">
           <span class="text-3xl">👤</span>
           <h2 class="text-2xl font-bold text-slate-200">{{ playerData.playerName }}</h2>
         </div>
-        <div class="text-sm text-slate-400">
-          {{ gameLabel }} &bull; Last {{ playerData.dateRange.days }} days
+
+        <!-- Time Range Selector -->
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-slate-400">
+            {{ gameLabel }} &bull; Last {{ playerData.dateRange.days }} days
+          </div>
+          <div class="flex gap-2">
+            <button
+              v-for="option in timeRangeOptions"
+              :key="option.value"
+              :class="[
+                'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
+                selectedTimeRange === option.value
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg'
+                  : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 border border-slate-600'
+              ]"
+              @click="changeTimeRange(option.value)"
+              :disabled="isLoading"
+            >
+              {{ option.label }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -151,6 +190,14 @@ const isLoading = ref(false);
 const error = ref<string | null>(null);
 const expandedMaps = ref<Set<string>>(new Set());
 
+// Time range selection
+const selectedTimeRange = ref<number>(60); // Default to 60 days
+const timeRangeOptions = [
+  { value: 60, label: '60 days' },
+  { value: 180, label: '180 days' },
+  { value: 365, label: '365 days' }
+];
+
 const gameLabel = computed(() => {
   switch (playerData.value?.game?.toLowerCase()) {
     case 'bf1942': return 'Battlefield 1942';
@@ -160,54 +207,50 @@ const gameLabel = computed(() => {
   }
 });
 
-const loadData = async () => {
+const loadData = async (days?: number) => {
   if (!props.playerName) return;
 
+  const timeRange = days || selectedTimeRange.value;
   isLoading.value = true;
   error.value = null;
 
-  // Try different time periods in order of preference
-  const timePeriods = [60, 180, 365]; // days
+  try {
+    console.log(`Loading player data for ${props.playerName} with ${timeRange} days`);
+    playerData.value = await fetchPlayerMapRankings(props.playerName, props.game || 'bf1942', timeRange);
 
-  for (const days of timePeriods) {
-    try {
-      console.log(`Trying to load player data for ${props.playerName} with ${days} days`);
-      playerData.value = await fetchPlayerMapRankings(props.playerName, props.game || 'bf1942', days);
-
-      // If we got data, break out of the loop
-      if (playerData.value && playerData.value.mapGroups.length > 0) {
-        // Auto-expand first map with a #1 ranking, or just the first map
-        const firstNumberOne = playerData.value.mapGroups.find(mg => mg.bestRank === 1);
-        if (firstNumberOne) {
-          expandedMaps.value.add(firstNumberOne.mapName);
-        } else {
-          expandedMaps.value.add(playerData.value.mapGroups[0].mapName);
-        }
-        // Update document title
-        if (playerData.value?.playerName) {
-          document.title = `${playerData.value.playerName} - Player Explorer | BF Stats`;
-        }
-        break; // Success, stop trying other periods
+    // Clear expanded maps and set up new ones if we have data
+    expandedMaps.value.clear();
+    if (playerData.value && playerData.value.mapGroups.length > 0) {
+      // Auto-expand first map with a #1 ranking, or just the first map
+      const firstNumberOne = playerData.value.mapGroups.find(mg => mg.bestRank === 1);
+      if (firstNumberOne) {
+        expandedMaps.value.add(firstNumberOne.mapName);
+      } else {
+        expandedMaps.value.add(playerData.value.mapGroups[0].mapName);
       }
-    } catch (err: any) {
-      console.error(`Error loading player data for ${days} days:`, err);
-
-      // If it's not a 404 (player not found), it's a real error
-      if (err.message !== 'PLAYER_NOT_FOUND') {
-        error.value = 'Failed to load player details';
-        isLoading.value = false;
-        return;
+      // Update document title
+      if (playerData.value?.playerName) {
+        document.title = `${playerData.value.playerName} - Player Explorer | BF Stats`;
       }
+    } else {
+      error.value = `No data available for this player in the last ${timeRange} days`;
+    }
+  } catch (err: any) {
+    console.error(`Error loading player data for ${timeRange} days:`, err);
 
-      // If it's the last time period and still 404, show no data message
-      if (days === timePeriods[timePeriods.length - 1]) {
-        error.value = 'No data available for this player';
-      }
-      // Continue to next time period if this was a 404
+    if (err.message === 'PLAYER_NOT_FOUND') {
+      error.value = `No data available for this player in the last ${timeRange} days`;
+    } else {
+      error.value = 'Failed to load player details';
     }
   }
 
   isLoading.value = false;
+};
+
+const changeTimeRange = (days: number) => {
+  selectedTimeRange.value = days;
+  loadData(days);
 };
 
 const toggleMapExpanded = (mapName: string) => {
@@ -227,6 +270,6 @@ const truncateServerName = (name: string): string => {
 };
 
 onMounted(loadData);
-watch(() => props.playerName, loadData);
-watch(() => props.game, loadData);
+watch(() => props.playerName, () => loadData());
+watch(() => props.game, () => loadData());
 </script>

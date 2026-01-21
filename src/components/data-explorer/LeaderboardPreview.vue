@@ -48,7 +48,7 @@ defineProps<{
 }>();
 
 const getPlayerDetailsRoute = (playerName: string) => ({
-  name: 'player-details',
+  name: 'explore-player-detail',
   params: { playerName }
 });
 

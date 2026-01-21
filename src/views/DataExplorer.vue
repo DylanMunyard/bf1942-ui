@@ -351,13 +351,16 @@ const handleNavigateToServerFromPlayer = (serverGuid: string) => {
 // Watch mode changes and update route
 watch(currentMode, (newMode, oldMode) => {
   if (newMode !== oldMode && !isCrossNavigating && !isServerMapView.value && !isInitialLoad) {
-    selectedItem.value = null;
-    if (newMode === 'servers') {
-      router.push({ name: 'explore-servers' });
-    } else if (newMode === 'maps') {
-      router.push({ name: 'explore-maps' });
-    } else if (newMode === 'players') {
-      router.push({ name: 'explore-players' });
+    // Only navigate to list view if we're not already viewing a specific item
+    // This prevents the mode change from overriding navigation to detail pages
+    if (!selectedItem.value) {
+      if (newMode === 'servers') {
+        router.push({ name: 'explore-servers' });
+      } else if (newMode === 'maps') {
+        router.push({ name: 'explore-maps' });
+      } else if (newMode === 'players') {
+        router.push({ name: 'explore-players' });
+      }
     }
   }
 });

@@ -48,7 +48,7 @@ import type { LeaderboardEntry } from '../../services/dataExplorerService';
 export type LeaderboardType = 'score' | 'kills' | 'kdRatio' | 'killRate';
 
 const getPlayerDetailsRoute = (playerName: string) => ({
-  name: 'player-details',
+  name: 'explore-player-detail',
   params: { playerName }
 });
 
