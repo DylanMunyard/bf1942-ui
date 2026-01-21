@@ -51,11 +51,34 @@ const days = [
   { index: 6, label: 'Sat' },
 ];
 
-// Create a lookup map
+// Get timezone offset in hours (positive = ahead of UTC, negative = behind UTC)
+const timezoneOffsetHours = computed(() => {
+  // getTimezoneOffset returns minutes and is inverted (UTC-5 returns 300)
+  return -new Date().getTimezoneOffset() / 60;
+});
+
+// Convert UTC day+hour to local day+hour
+const utcToLocal = (utcDay: number, utcHour: number): { day: number; hour: number } => {
+  let localHour = utcHour + timezoneOffsetHours.value;
+  let localDay = utcDay;
+
+  if (localHour >= 24) {
+    localHour -= 24;
+    localDay = (localDay + 1) % 7;
+  } else if (localHour < 0) {
+    localHour += 24;
+    localDay = (localDay + 6) % 7; // Same as (localDay - 1 + 7) % 7
+  }
+
+  return { day: localDay, hour: localHour };
+};
+
+// Create a lookup map with local times as keys
 const patternMap = computed(() => {
   const map = new Map<string, ActivityPattern>();
   props.patterns.forEach(p => {
-    map.set(`${p.dayOfWeek}-${p.hourOfDay}`, p);
+    const local = utcToLocal(p.dayOfWeek, p.hourOfDay);
+    map.set(`${local.day}-${local.hour}`, p);
   });
   return map;
 });
@@ -86,8 +109,9 @@ const getCellColor = (dayOfWeek: number, hourOfDay: number): string => {
 
 const getCellTooltip = (dayOfWeek: number, hourOfDay: number): string => {
   const pattern = patternMap.value.get(`${dayOfWeek}-${hourOfDay}`);
-  if (!pattern) return `${days[dayOfWeek].label} ${hourOfDay}:00 - No data`;
-  return `${days[dayOfWeek].label} ${hourOfDay}:00 - Avg: ${pattern.avgPlayers.toFixed(1)} players`;
+  const timeStr = `${hourOfDay.toString().padStart(2, '0')}:00`;
+  if (!pattern) return `${days[dayOfWeek].label} ${timeStr} - No data`;
+  return `${days[dayOfWeek].label} ${timeStr} - Avg: ${pattern.avgPlayers.toFixed(1)} players`;
 };
 </script>
 

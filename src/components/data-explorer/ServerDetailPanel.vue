@@ -56,7 +56,7 @@
 
       <!-- Activity Heatmap -->
       <div v-if="serverDetail.activityPatterns.length > 0">
-        <h3 class="text-sm font-medium text-slate-300 mb-3">Activity Patterns (UTC)</h3>
+        <h3 class="text-sm font-medium text-slate-300 mb-3">Activity Patterns (Local Time)</h3>
         <div class="bg-slate-800/30 rounded-lg p-4">
           <ActivityHeatmap :patterns="serverDetail.activityPatterns" />
         </div>
