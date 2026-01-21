@@ -142,6 +142,10 @@ const loadData = async () => {
 
   try {
     serverDetail.value = await fetchServerDetail(props.serverGuid);
+    // Update document title with actual server name
+    if (serverDetail.value?.name) {
+      document.title = `${serverDetail.value.name} - Data Explorer | BF Stats`;
+    }
   } catch (err) {
     console.error('Error loading server detail:', err);
     error.value = 'Failed to load server details';

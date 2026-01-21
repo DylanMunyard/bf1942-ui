@@ -496,6 +496,10 @@ const loadData = async (isRefresh = false) => {
 
   try {
     detail.value = await fetchServerMapDetail(props.serverGuid, props.mapName, selectedDays.value);
+    // Update document title with actual server and map names
+    if (detail.value?.serverName && detail.value?.mapName) {
+      document.title = `${detail.value.mapName} on ${detail.value.serverName} - Data Explorer | BF Stats`;
+    }
   } catch (err) {
     console.error('Error loading server-map detail:', err);
     error.value = 'Failed to load server-map details';
