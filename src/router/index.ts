@@ -23,6 +23,7 @@ const PublicTournamentTeams = () => import('../views/PublicTournamentTeams.vue')
 const PublicTournamentMatches = () => import('../views/PublicTournamentMatches.vue')
 const PublicTournamentStats = () => import('../views/PublicTournamentStats.vue')
 const PublicTournamentFiles = () => import('../views/PublicTournamentFiles.vue')
+const DataExplorer = () => import('../views/DataExplorer.vue')
 
 const routes: RouteRecordRaw[] = [
     {
@@ -203,6 +204,56 @@ const routes: RouteRecordRaw[] = [
         title: (route: RouteLocationNormalized) => `${route.params.playerName} Achievements & Awards - BF Stats`,
         description: (route: RouteLocationNormalized) => `All achievements, badges, and awards earned by ${route.params.playerName}. View unlocked content, milestones, and battlefield accomplishments.`
       }
+    },
+    {
+      path: '/explore',
+      name: 'explore',
+      component: DataExplorer,
+      redirect: '/explore/servers',
+      meta: {
+        title: 'Data Explorer - Browse Servers & Maps | BF Stats',
+        description: 'Explore Battlefield 1942, FH2, and Battlefield Vietnam servers and maps. View win statistics, activity patterns, and detailed game analytics.'
+      },
+      children: [
+        {
+          path: 'servers',
+          name: 'explore-servers',
+          component: DataExplorer,
+          meta: {
+            title: 'Server Explorer - BF Stats',
+            description: 'Browse all Battlefield servers with detailed statistics, win rates, and activity patterns.'
+          }
+        },
+        {
+          path: 'servers/:serverGuid',
+          name: 'explore-server-detail',
+          component: DataExplorer,
+          props: true,
+          meta: {
+            title: (route: RouteLocationNormalized) => `Server ${route.params.serverGuid} - Data Explorer | BF Stats`,
+            description: 'Detailed server analytics including map rotation, win statistics, and activity heatmap.'
+          }
+        },
+        {
+          path: 'maps',
+          name: 'explore-maps',
+          component: DataExplorer,
+          meta: {
+            title: 'Map Explorer - BF Stats',
+            description: 'Browse all Battlefield maps with server counts, play statistics, and win rates.'
+          }
+        },
+        {
+          path: 'maps/:mapName',
+          name: 'explore-map-detail',
+          component: DataExplorer,
+          props: true,
+          meta: {
+            title: (route: RouteLocationNormalized) => `${decodeURIComponent(route.params.mapName as string)} - Map Explorer | BF Stats`,
+            description: (route: RouteLocationNormalized) => `Detailed statistics for ${decodeURIComponent(route.params.mapName as string)} including servers playing this map and win rates.`
+          }
+        }
+      ]
     },
     {
       path: '/rounds/:roundId/report',
