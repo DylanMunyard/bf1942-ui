@@ -376,7 +376,7 @@ const emit = defineEmits<{
 
 const getPlayerDetailsRoute = (playerName: string) => ({
   name: 'player-details',
-  params: { playerName: encodeURIComponent(playerName) }
+  params: { playerName }
 });
 
 const detail = ref<ServerMapDetail | null>(null);

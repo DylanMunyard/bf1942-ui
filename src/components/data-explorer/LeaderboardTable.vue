@@ -49,7 +49,7 @@ export type LeaderboardType = 'score' | 'kills' | 'kdRatio' | 'killRate';
 
 const getPlayerDetailsRoute = (playerName: string) => ({
   name: 'player-details',
-  params: { playerName: encodeURIComponent(playerName) }
+  params: { playerName }
 });
 
 const props = defineProps<{

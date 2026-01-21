@@ -278,8 +278,8 @@ const routes: RouteRecordRaw[] = [
           component: DataExplorer,
           props: true,
           meta: {
-            title: (route: RouteLocationNormalized) => `${decodeURIComponent(route.params.playerName as string)} - Player Explorer | BF Stats`,
-            description: (route: RouteLocationNormalized) => `Map rankings and server statistics for ${decodeURIComponent(route.params.playerName as string)}. See where they rank #1 across servers.`
+            title: (route: RouteLocationNormalized) => `${route.params.playerName as string} - Player Explorer | BF Stats`,
+            description: (route: RouteLocationNormalized) => `Map rankings and server statistics for ${route.params.playerName as string}. See where they rank #1 across servers.`
           }
         }
       ]

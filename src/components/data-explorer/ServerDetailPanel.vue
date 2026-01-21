@@ -110,7 +110,7 @@ import LeaderboardPreview from './LeaderboardPreview.vue';
 
 const getPlayerDetailsRoute = (playerName: string) => ({
   name: 'player-details',
-  params: { playerName: encodeURIComponent(playerName) }
+  params: { playerName }
 });
 
 const props = defineProps<{

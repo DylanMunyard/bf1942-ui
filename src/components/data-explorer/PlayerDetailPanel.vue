@@ -166,27 +166,48 @@ const loadData = async () => {
   isLoading.value = true;
   error.value = null;
 
-  try {
-    playerData.value = await fetchPlayerMapRankings(props.playerName, props.game || 'bf1942');
-    // Auto-expand first map with a #1 ranking, or just the first map
-    if (playerData.value && playerData.value.mapGroups.length > 0) {
-      const firstNumberOne = playerData.value.mapGroups.find(mg => mg.bestRank === 1);
-      if (firstNumberOne) {
-        expandedMaps.value.add(firstNumberOne.mapName);
-      } else {
-        expandedMaps.value.add(playerData.value.mapGroups[0].mapName);
+  // Try different time periods in order of preference
+  const timePeriods = [60, 180, 365]; // days
+
+  for (const days of timePeriods) {
+    try {
+      console.log(`Trying to load player data for ${props.playerName} with ${days} days`);
+      playerData.value = await fetchPlayerMapRankings(props.playerName, props.game || 'bf1942', days);
+
+      // If we got data, break out of the loop
+      if (playerData.value && playerData.value.mapGroups.length > 0) {
+        // Auto-expand first map with a #1 ranking, or just the first map
+        const firstNumberOne = playerData.value.mapGroups.find(mg => mg.bestRank === 1);
+        if (firstNumberOne) {
+          expandedMaps.value.add(firstNumberOne.mapName);
+        } else {
+          expandedMaps.value.add(playerData.value.mapGroups[0].mapName);
+        }
+        // Update document title
+        if (playerData.value?.playerName) {
+          document.title = `${playerData.value.playerName} - Player Explorer | BF Stats`;
+        }
+        break; // Success, stop trying other periods
       }
+    } catch (err: any) {
+      console.error(`Error loading player data for ${days} days:`, err);
+
+      // If it's not a 404 (player not found), it's a real error
+      if (err.message !== 'PLAYER_NOT_FOUND') {
+        error.value = 'Failed to load player details';
+        isLoading.value = false;
+        return;
+      }
+
+      // If it's the last time period and still 404, show no data message
+      if (days === timePeriods[timePeriods.length - 1]) {
+        error.value = 'No data available for this player';
+      }
+      // Continue to next time period if this was a 404
     }
-    // Update document title
-    if (playerData.value?.playerName) {
-      document.title = `${playerData.value.playerName} - Player Explorer | BF Stats`;
-    }
-  } catch (err) {
-    console.error('Error loading player data:', err);
-    error.value = 'Failed to load player details';
-  } finally {
-    isLoading.value = false;
   }
+
+  isLoading.value = false;
 };
 
 const toggleMapExpanded = (mapName: string) => {

@@ -399,8 +399,15 @@ export async function fetchPlayerMapRankings(
       { params: { game, days } }
     );
     return response.data;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error fetching player map rankings:', err);
+
+    // Check if it's a 404 (player not found/no data)
+    if (err.response?.status === 404) {
+      throw new Error('PLAYER_NOT_FOUND');
+    }
+
+    // For other errors, throw the original error message
     throw new Error('Failed to get player map rankings');
   }
 }

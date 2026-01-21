@@ -49,7 +49,7 @@ defineProps<{
 
 const getPlayerDetailsRoute = (playerName: string) => ({
   name: 'player-details',
-  params: { playerName: encodeURIComponent(playerName) }
+  params: { playerName }
 });
 
 const getRankClass = (index: number): string => {

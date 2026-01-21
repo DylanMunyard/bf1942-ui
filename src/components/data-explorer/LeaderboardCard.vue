@@ -130,7 +130,7 @@ const emit = defineEmits<{
 
 const getPlayerRoute = (playerName: string) => ({
   name: 'explore-player-detail',
-  params: { playerName: encodeURIComponent(playerName) }
+  params: { playerName }
 });
 
 const primaryColumnHeader = computed(() => {
