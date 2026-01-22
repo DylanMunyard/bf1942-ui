@@ -445,6 +445,7 @@ export interface ServerEngagementStat {
   value: string;
   label: string;
   context?: string;
+  message: string;  // Complete engaging message for CTA display
 }
 
 export interface ServerEngagementStats {
@@ -455,6 +456,7 @@ export interface PlayerEngagementStat {
   value: string;
   label: string;
   context?: string;
+  message: string;  // Complete engaging message for CTA display
 }
 
 export interface PlayerEngagementStats {

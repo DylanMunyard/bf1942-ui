@@ -310,7 +310,7 @@ const fetchEngagementStatsAsync = async () => {
     console.error('Error fetching player engagement stats:', err);
     // Use minimal fallback
     playerEngagementStats.value = [
-      { value: '0', label: 'stats available', context: 'Keep playing!' }
+      { value: '0', label: 'stats available', context: 'Keep playing!', message: 'Break down every map, matchup, and streak in Data Explorer' }
     ];
   }
 };
@@ -808,12 +808,11 @@ onUnmounted(() => {
                     Explore Advanced Analytics
                   </h3>
                   <p class="text-slate-300 text-sm mb-4 transition-all duration-500 ease-in-out">
-                    <span v-if="currentEngagementStat">
-                      Track <strong class="text-cyan-400">{{ currentEngagementStat.value }}</strong> {{ currentEngagementStat.label }}
-                      <span v-if="currentEngagementStat.context" class="text-slate-400">• {{ currentEngagementStat.context }}</span>
+                    <span v-if="currentEngagementStat && currentEngagementStat.message">
+                      {{ currentEngagementStat.message }}
                     </span>
                     <span v-else>
-                      Discover detailed performance analytics and competitive insights
+                      Break down every map, matchup, and streak in Data Explorer
                     </span>
                   </p>
 
