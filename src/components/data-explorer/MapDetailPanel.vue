@@ -37,6 +37,13 @@
         </div>
       </div>
 
+      <!-- Activity Heatmap -->
+      <div v-if="activityPatterns && activityPatterns.length > 0" class="bg-slate-800/30 rounded-lg p-4">
+        <h3 class="text-sm font-medium text-slate-300 mb-3">When is this map played?</h3>
+        <p class="text-xs text-slate-500 mb-3">Average player count when this map is in rotation (times shown in your local timezone)</p>
+        <ActivityHeatmap :patterns="activityPatternsForHeatmap" />
+      </div>
+
       <!-- Aggregated Win Stats -->
       <div class="bg-slate-800/30 rounded-lg p-4">
         <h3 class="text-sm font-medium text-slate-300 mb-3">Overall Win Statistics</h3>
@@ -63,11 +70,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
-import { fetchMapDetail, type MapDetail } from '../../services/dataExplorerService';
+import { ref, watch, onMounted, computed } from 'vue';
+import {
+  fetchMapDetail,
+  fetchMapActivityPatterns,
+  type MapDetail,
+  type MapActivityPattern,
+  type ActivityPattern
+} from '../../services/dataExplorerService';
 import WinStatsBar from './WinStatsBar.vue';
 import ServerRotationTable from './ServerRotationTable.vue';
 import MapPlayerRankings from './MapPlayerRankings.vue';
+import ActivityHeatmap from './ActivityHeatmap.vue';
 
 const props = defineProps<{
   mapName: string;
@@ -78,8 +92,19 @@ const emit = defineEmits<{
 }>();
 
 const mapDetail = ref<MapDetail | null>(null);
+const activityPatterns = ref<MapActivityPattern[]>([]);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+
+// Convert MapActivityPattern to ActivityPattern for the heatmap component
+const activityPatternsForHeatmap = computed<ActivityPattern[]>(() => {
+  return activityPatterns.value.map(p => ({
+    dayOfWeek: p.dayOfWeek,
+    hourOfDay: p.hourOfDay,
+    avgPlayers: p.avgPlayers,
+    medianPlayers: p.avgPlayers // Use avgPlayers as fallback for medianPlayers
+  }));
+});
 
 const loadData = async () => {
   if (!props.mapName) return;
@@ -88,8 +113,14 @@ const loadData = async () => {
   error.value = null;
 
   try {
-    mapDetail.value = await fetchMapDetail(props.mapName);
-    // mapDetail will be null if the map has no data (404 response)
+    // Fetch map detail and activity patterns in parallel
+    const [detail, patterns] = await Promise.all([
+      fetchMapDetail(props.mapName),
+      fetchMapActivityPatterns(props.mapName)
+    ]);
+
+    mapDetail.value = detail;
+    activityPatterns.value = patterns?.activityPatterns ?? [];
   } catch (err) {
     console.error('Error loading map detail:', err);
     error.value = 'Failed to load map details';

@@ -315,6 +315,7 @@ export interface ServerMapDetail {
   topByKills: LeaderboardEntry[];
   topByKdRatio: LeaderboardEntry[];
   topByKillRate: LeaderboardEntry[];
+  activityPatterns: ActivityPattern[];
   dateRange: DateRange;
 }
 
@@ -479,5 +480,47 @@ export async function fetchMapPlayerRankings(
   } catch (err) {
     console.error('Error fetching map player rankings:', err);
     throw new Error('Failed to get map player rankings');
+  }
+}
+
+// Map Activity Patterns Types
+
+export interface MapActivityPattern {
+  dayOfWeek: number;
+  hourOfDay: number;
+  avgPlayers: number;
+  timesPlayed: number;
+}
+
+export interface MapActivityPatternsResponse {
+  mapName: string;
+  game: string;
+  activityPatterns: MapActivityPattern[];
+  totalDataPoints: number;
+}
+
+/**
+ * Fetches activity patterns for a specific map showing when it's typically played.
+ * @param mapName - The map name
+ * @param game - Game filter: bf1942 (default), fh2, or bfvietnam
+ */
+export async function fetchMapActivityPatterns(
+  mapName: string,
+  game: GameType = 'bf1942'
+): Promise<MapActivityPatternsResponse | null> {
+  try {
+    const response = await axios.get<MapActivityPatternsResponse>(
+      `/stats/data-explorer/maps/${encodeURIComponent(mapName)}/activity-patterns`,
+      { params: { game } }
+    );
+    return response.data;
+  } catch (err: any) {
+    // Handle 404 as "no data available" instead of an error
+    if (err.response?.status === 404) {
+      console.log(`No activity patterns found for map '${mapName}' in game '${game}'`);
+      return null;
+    }
+    console.error('Error fetching map activity patterns:', err);
+    throw new Error('Failed to get map activity patterns');
   }
 }

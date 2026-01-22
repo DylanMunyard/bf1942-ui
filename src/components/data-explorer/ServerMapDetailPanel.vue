@@ -45,7 +45,13 @@
               detail.isServerOnline ? 'bg-green-400 shadow-lg shadow-green-400/50' : 'bg-slate-500'
             ]"
           />
-          <h2 class="text-2xl font-bold text-slate-200">{{ detail.mapName }}</h2>
+          <router-link
+            :to="getMapDetailsRoute(detail.mapName)"
+            class="text-2xl font-bold text-slate-200 hover:text-cyan-400 transition-colors"
+            :title="`View details for ${detail.mapName}`"
+          >
+            {{ detail.mapName }}
+          </router-link>
         </div>
         <!-- Breadcrumb / Context -->
         <div class="flex items-center gap-2 text-sm text-slate-400 ml-11">
@@ -132,6 +138,13 @@
             <div class="text-xs text-slate-400 mt-1">Peak Players</div>
           </div>
         </div>
+      </div>
+
+      <!-- Activity Heatmap -->
+      <div v-if="detail.activityPatterns?.length > 0" class="bg-slate-800/30 rounded-lg p-4">
+        <h3 class="text-sm font-medium text-slate-300 mb-3">When is this map played?</h3>
+        <p class="text-xs text-slate-500 mb-3">Times shown in your local timezone</p>
+        <ActivityHeatmap :patterns="activityPatternsForHeatmap" />
       </div>
 
       <!-- Win Stats -->
@@ -362,6 +375,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { fetchServerMapDetail, fetchServerMapSessions, type ServerMapDetail, type LeaderboardEntry, type ServerMapSession } from '../../services/dataExplorerService';
 import WinStatsBar from './WinStatsBar.vue';
 import LeaderboardTable from './LeaderboardTable.vue';
+import ActivityHeatmap from './ActivityHeatmap.vue';
 
 const props = defineProps<{
   serverGuid: string;
@@ -377,6 +391,11 @@ const emit = defineEmits<{
 const getPlayerDetailsRoute = (playerName: string) => ({
   name: 'explore-player-detail',
   params: { playerName }
+});
+
+const getMapDetailsRoute = (mapName: string) => ({
+  name: 'explore-map-detail',
+  params: { mapName }
 });
 
 const detail = ref<ServerMapDetail | null>(null);
@@ -402,6 +421,9 @@ const filteredByScore = computed(() => filterByMinRounds(detail.value?.topByScor
 const filteredByKills = computed(() => filterByMinRounds(detail.value?.topByKills ?? []));
 const filteredByKdRatio = computed(() => filterByMinRounds(detail.value?.topByKdRatio ?? []));
 const filteredByKillRate = computed(() => filterByMinRounds(detail.value?.topByKillRate ?? []));
+
+// Activity patterns for heatmap (already in correct format from API)
+const activityPatternsForHeatmap = computed(() => detail.value?.activityPatterns ?? []);
 
 const getGameLabel = (game: string): string => {
   switch (game.toLowerCase()) {
