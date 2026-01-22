@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { ServerDetails, ServerInsights, ServerMapsInsights, LeaderboardsData, fetchServerDetails, fetchServerInsights, fetchServerMapsInsights, fetchServerLeaderboards, fetchLiveServerData, ServerBusyIndicator, ServerHourlyTimelineEntry, fetchServerBusyIndicators } from '../services/serverDetailsService';
+import { fetchServerEngagementStats, type ServerEngagementStats } from '../services/dataExplorerService';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { countryCodeToName } from '../types/countryCodes';
 import { ServerSummary } from '../types/server';
@@ -13,6 +14,7 @@ import { formatDate } from '../utils/date';
 import HeroBackButton from '../components/HeroBackButton.vue';
 import ForecastModal from '../components/ForecastModal.vue';
 import discordIcon from '@/assets/discord.webp';
+import dataExplorerImage from '@/assets/menu-item-data-explorer.webp';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
@@ -58,6 +60,15 @@ const serverHourlyTimeline = ref<ServerHourlyTimelineEntry[]>([]);
 const isBusyIndicatorLoading = ref(false);
 const busyIndicatorError = ref<string | null>(null);
 const showForecastOverlay = ref(false);
+
+// Engagement stats for dynamic content
+const serverEngagementStats = ref<ServerEngagementStats['stats']>([]);
+const currentEngagementStatIndex = ref(0);
+
+// Computed property for current engagement stat
+const currentEngagementStat = computed(() => {
+  return serverEngagementStats.value[currentEngagementStatIndex.value] || null;
+});
 
 // Fetch live server data asynchronously (non-blocking)
 const fetchLiveServerDataAsync = async () => {
@@ -107,6 +118,27 @@ const fetchBusyIndicatorData = async () => {
   }
 };
 
+// Fetch engagement stats for dynamic content
+const fetchEngagementStatsAsync = async () => {
+  if (!serverDetails.value?.serverGuid) return;
+
+  try {
+    const response = await fetchServerEngagementStats(serverDetails.value.serverGuid);
+    serverEngagementStats.value = response.stats;
+
+    // Start rotating through stats every 6 seconds
+    setInterval(() => {
+      currentEngagementStatIndex.value = (currentEngagementStatIndex.value + 1) % serverEngagementStats.value.length;
+    }, 6000);
+  } catch (err) {
+    console.error('Error fetching server engagement stats:', err);
+    // Use minimal fallback
+    serverEngagementStats.value = [
+      { value: '0', label: 'rounds this month', context: 'Check back later' }
+    ];
+  }
+};
+
 // Fetch server details, insights, and leaderboards in parallel
 const fetchData = async () => {
   if (!serverName.value) return;
@@ -121,6 +153,7 @@ const fetchData = async () => {
     // Fetch live server data and busy indicator data asynchronously after server details are loaded
     fetchLiveServerDataAsync();
     fetchBusyIndicatorData();
+    fetchEngagementStatsAsync();
 
     // Now fetch leaderboards (non-blocking)
     // Player history and maps will be loaded when user expands those sections
@@ -791,6 +824,52 @@ const closeForecastOverlay = () => {
             v-else-if="serverDetails"
             class="space-y-6"
           >
+            <!-- Data Explorer Call-to-Action Section -->
+            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+              <div class="p-6">
+                <div class="flex flex-col lg:flex-row items-center gap-6">
+                  <!-- Data Explorer Image -->
+                  <div class="flex-shrink-0">
+                    <div class="relative group">
+                      <div class="absolute -inset-2 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-xl blur-lg opacity-25 group-hover:opacity-40 transition-opacity duration-300"></div>
+                      <img
+                        :src="dataExplorerImage"
+                        alt="Data Explorer"
+                        class="relative w-20 h-20 lg:w-24 lg:h-24 rounded-xl object-cover shadow-2xl"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Content -->
+                  <div class="flex-1 text-center lg:text-left">
+                    <h3 class="text-xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+                      Explore Advanced Analytics
+                    </h3>
+                    <p class="text-slate-300 text-sm mb-4 transition-all duration-500 ease-in-out">
+                      <span v-if="currentEngagementStat">
+                        Discover <strong class="text-cyan-400">{{ currentEngagementStat.value }}</strong> {{ currentEngagementStat.label }}
+                        <span v-if="currentEngagementStat.context" class="text-slate-400">• {{ currentEngagementStat.context }}</span>
+                      </span>
+                      <span v-else>
+                        Dive deeper with detailed server statistics and player analytics
+                      </span>
+                    </p>
+
+                    <!-- CTA Button -->
+                    <router-link
+                      :to="{ name: 'explore-server-detail', params: { serverGuid: serverDetails?.serverGuid } }"
+                      class="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white rounded-md transition-all duration-200 font-medium text-sm shadow-sm hover:shadow-md"
+                    >
+                      <span>View in Data Explorer</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-0.5">
+                        <path d="m9 18 6-6-6-6"/>
+                      </svg>
+                    </router-link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Recent Rounds Section -->
             <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
               <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">

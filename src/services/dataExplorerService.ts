@@ -440,6 +440,55 @@ export interface MapPlayerRankingsResponse {
   dateRange: DateRange;
 }
 
+// Engagement Stats for encouraging exploration
+export interface ServerEngagementStat {
+  value: string;
+  label: string;
+  context?: string;
+}
+
+export interface ServerEngagementStats {
+  stats: ServerEngagementStat[];
+}
+
+export interface PlayerEngagementStat {
+  value: string;
+  label: string;
+  context?: string;
+}
+
+export interface PlayerEngagementStats {
+  stats: PlayerEngagementStat[];
+}
+
+/**
+ * Fetch randomized engagement statistics for a server to encourage exploration
+ */
+export async function fetchServerEngagementStats(serverGuid: string): Promise<ServerEngagementStats> {
+  try {
+    const response = await axios.get<ServerEngagementStats>(`/stats/data-explorer/engagement/server/${encodeURIComponent(serverGuid)}`);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching server engagement stats:', err);
+    throw new Error('Failed to get server engagement stats');
+  }
+}
+
+/**
+ * Fetch randomized engagement statistics for a player to encourage exploration
+ */
+export async function fetchPlayerEngagementStats(playerName: string, game: GameType = 'bf1942'): Promise<PlayerEngagementStats> {
+  try {
+    const response = await axios.get<PlayerEngagementStats>(`/stats/data-explorer/engagement/player/${encodeURIComponent(playerName)}`, {
+      params: { game }
+    });
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching player engagement stats:', err);
+    throw new Error('Failed to get player engagement stats');
+  }
+}
+
 /**
  * Fetches paginated player rankings for a specific map (aggregated across all servers)
  * @param mapName - The map name

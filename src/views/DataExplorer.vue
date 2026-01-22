@@ -246,6 +246,7 @@ const updateFromRoute = () => {
 // Watch route changes
 watch(() => route.fullPath, updateFromRoute);
 
+
 // Initialize from route
 onMounted(() => {
   updateFromRoute();
