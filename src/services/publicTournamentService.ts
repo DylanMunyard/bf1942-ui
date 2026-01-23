@@ -1,9 +1,11 @@
-import { normalizeHex, isValidHex, getContrastingTextColor, generateComplementaryColor } from '@/utils/colorUtils';
+import { TeamRecruitmentStatus } from './teamRegistrationService';
 
 export interface PublicTournamentTeam {
   id: number;
   name: string;
   createdAt: string;
+  leaderPlayerName?: string;
+  recruitmentStatus: TeamRecruitmentStatus;
   players: { playerName: string; isLeader?: boolean }[];
 }
 

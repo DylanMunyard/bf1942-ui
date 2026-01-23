@@ -1,5 +1,42 @@
 import { apiClient } from './apiClient';
 
+// Team recruitment status enum (matches backend)
+export enum TeamRecruitmentStatus {
+  Open = 0,
+  Closed = 1,
+  LookingForBTeam = 2
+}
+
+// Helper to get display text for recruitment status
+export const getRecruitmentStatusText = (status: TeamRecruitmentStatus): string => {
+  switch (status) {
+    case TeamRecruitmentStatus.Open:
+      return 'Recruiting';
+    case TeamRecruitmentStatus.Closed:
+      return 'Not Recruiting';
+    case TeamRecruitmentStatus.LookingForBTeam:
+      return 'Looking for B Team';
+    default:
+      return 'Unknown';
+  }
+};
+
+// Helper to get recruitment status message for team cards
+export const getRecruitmentStatusMessage = (status: TeamRecruitmentStatus, leaderName?: string): string => {
+  switch (status) {
+    case TeamRecruitmentStatus.Open:
+      return 'Looking for members (full-time, backup, etc.)';
+    case TeamRecruitmentStatus.Closed:
+      return 'Not currently recruiting new members';
+    case TeamRecruitmentStatus.LookingForBTeam:
+      return leaderName 
+        ? `Looking to start a second team. Contact ${leaderName} on Discord to discuss.`
+        : 'Looking to start a second team. Contact the team leader on Discord to discuss.';
+    default:
+      return '';
+  }
+};
+
 // Player name linking
 export interface LinkedPlayerName {
   id: number;
@@ -56,6 +93,7 @@ export interface TeamDetailsResponse {
   teamName: string;
   tag?: string;
   createdAt: string;
+  recruitmentStatus: TeamRecruitmentStatus;
   players: TeamPlayerInfo[];
 }
 
@@ -72,6 +110,8 @@ export interface AvailableTeam {
   name: string;
   tag?: string;
   playerCount: number;
+  recruitmentStatus: TeamRecruitmentStatus;
+  leaderPlayerName?: string;
 }
 
 class TeamRegistrationService {
@@ -228,6 +268,26 @@ class TeamRegistrationService {
   async deleteTeam(tournamentId: number): Promise<void> {
     const response = await apiClient.delete(
       `${this.baseUrl}/${tournamentId}/my-team`,
+      { requiresAuth: true }
+    );
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch {
+        // Ignore JSON parsing errors
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
+  async updateRecruitmentStatus(tournamentId: number, recruitmentStatus: TeamRecruitmentStatus): Promise<void> {
+    const response = await apiClient.put(
+      `${this.baseUrl}/${tournamentId}/my-team/recruitment-status`,
+      { recruitmentStatus },
       { requiresAuth: true }
     );
     if (!response.ok) {

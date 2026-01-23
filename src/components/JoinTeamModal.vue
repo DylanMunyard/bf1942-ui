@@ -87,22 +87,46 @@
               <label
                 v-for="team in availableTeams"
                 :key="team.id"
-                class="flex items-center gap-3 p-4 bg-slate-900/40 border border-slate-600 rounded-lg cursor-pointer hover:border-cyan-500/50 transition-colors"
-                :class="{ 'border-cyan-500 bg-cyan-500/10': selectedTeamId === team.id }"
+                class="flex flex-col gap-2 p-4 border rounded-lg transition-colors"
+                :class="getTeamCardClasses(team)"
+                @click.prevent="handleTeamClick(team)"
               >
-                <input
-                  v-model="selectedTeamId"
-                  type="radio"
-                  :value="team.id"
-                  class="w-4 h-4 text-cyan-500"
-                  required
-                >
-                <div class="flex-1">
-                  <div class="flex items-center gap-2">
-                    <span class="text-white font-medium">{{ team.name }}</span>
-                    <span v-if="team.tag" class="text-xs text-slate-400">{{ team.tag }}</span>
+                <div class="flex items-center gap-3">
+                  <input
+                    v-model="selectedTeamId"
+                    type="radio"
+                    :value="team.id"
+                    :disabled="!isTeamOpen(team)"
+                    class="w-4 h-4 text-cyan-500"
+                    required
+                  >
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium" :class="isTeamOpen(team) ? 'text-white' : 'text-slate-500'">{{ team.name }}</span>
+                      <span v-if="team.tag" class="text-xs text-slate-400">{{ team.tag }}</span>
+                    </div>
+                    <span class="text-xs text-slate-400">{{ team.playerCount }} player{{ team.playerCount !== 1 ? 's' : '' }}</span>
                   </div>
-                  <span class="text-xs text-slate-400">{{ team.playerCount }} player{{ team.playerCount !== 1 ? 's' : '' }}</span>
+                </div>
+                
+                <!-- Recruitment Status Badge -->
+                <div class="flex items-center gap-2">
+                  <span 
+                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium"
+                    :style="getRecruitmentStatusStyle(team.recruitmentStatus)"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: getRecruitmentDotColor(team.recruitmentStatus) }"></span>
+                    {{ getRecruitmentStatusText(team.recruitmentStatus) }}
+                  </span>
+                </div>
+                
+                <!-- Status Message for Non-Open Teams -->
+                <div 
+                  v-if="!isTeamOpen(team)" 
+                  class="text-xs mt-1 p-2 rounded bg-slate-800/50"
+                  :class="team.recruitmentStatus === TeamRecruitmentStatus.Closed ? 'text-red-300' : 'text-amber-300'"
+                >
+                  {{ getTeamStatusMessage(team) }}
                 </div>
               </label>
             </div>
@@ -215,7 +239,7 @@
 import { ref, computed, watch } from 'vue';
 import { marked } from 'marked';
 import PlayerSearch from '@/components/PlayerSearch.vue';
-import { teamRegistrationService, type JoinTeamRequest, type AvailableTeam, type LinkedPlayerName } from '@/services/teamRegistrationService';
+import { teamRegistrationService, TeamRecruitmentStatus, getRecruitmentStatusText, getRecruitmentStatusMessage, type JoinTeamRequest, type AvailableTeam, type LinkedPlayerName } from '@/services/teamRegistrationService';
 
 interface Props {
   isVisible: boolean;
@@ -287,11 +311,88 @@ const isSubmitting = ref(false);
 const errorMessage = ref('');
 
 const isFormValid = computed(() => {
+  const selectedTeam = availableTeams.value.find(t => t.id === selectedTeamId.value);
   return (
     selectedTeamId.value !== null &&
-    form.value.playerName !== ''
+    form.value.playerName !== '' &&
+    selectedTeam && isTeamOpen(selectedTeam)
   );
 });
+
+// Helper functions for recruitment status
+const isTeamOpen = (team: AvailableTeam): boolean => {
+  return team.recruitmentStatus === TeamRecruitmentStatus.Open;
+};
+
+const getTeamCardClasses = (team: AvailableTeam): string => {
+  if (!isTeamOpen(team)) {
+    return 'bg-slate-900/20 border-slate-700/50 cursor-not-allowed opacity-70';
+  }
+  if (selectedTeamId.value === team.id) {
+    return 'bg-slate-900/40 border-cyan-500 bg-cyan-500/10 cursor-pointer';
+  }
+  return 'bg-slate-900/40 border-slate-600 cursor-pointer hover:border-cyan-500/50';
+};
+
+const handleTeamClick = (team: AvailableTeam) => {
+  if (isTeamOpen(team)) {
+    selectedTeamId.value = team.id;
+  }
+};
+
+const getTeamStatusMessage = (team: AvailableTeam): string => {
+  if (team.recruitmentStatus === TeamRecruitmentStatus.Closed) {
+    return 'This team is not currently recruiting new members.';
+  }
+  if (team.recruitmentStatus === TeamRecruitmentStatus.LookingForBTeam) {
+    return team.leaderPlayerName
+      ? `Looking to start a second team. Contact ${team.leaderPlayerName} on Discord to discuss.`
+      : 'Looking to start a second team. Contact the team leader on Discord to discuss.';
+  }
+  return '';
+};
+
+const getRecruitmentStatusStyle = (status: TeamRecruitmentStatus) => {
+  switch (status) {
+    case TeamRecruitmentStatus.Open:
+      return {
+        backgroundColor: '#10b98133',
+        color: '#10b981',
+        border: '1px solid #10b98155'
+      };
+    case TeamRecruitmentStatus.Closed:
+      return {
+        backgroundColor: '#ef444433',
+        color: '#ef4444',
+        border: '1px solid #ef444455'
+      };
+    case TeamRecruitmentStatus.LookingForBTeam:
+      return {
+        backgroundColor: '#f59e0b33',
+        color: '#f59e0b',
+        border: '1px solid #f59e0b55'
+      };
+    default:
+      return {
+        backgroundColor: props.accentColor + '33',
+        color: props.accentColor,
+        border: `1px solid ${props.accentColor}55`
+      };
+  }
+};
+
+const getRecruitmentDotColor = (status: TeamRecruitmentStatus) => {
+  switch (status) {
+    case TeamRecruitmentStatus.Open:
+      return '#10b981';
+    case TeamRecruitmentStatus.Closed:
+      return '#ef4444';
+    case TeamRecruitmentStatus.LookingForBTeam:
+      return '#f59e0b';
+    default:
+      return props.accentColor;
+  }
+};
 
 const loadData = async () => {
   isLoading.value = true;

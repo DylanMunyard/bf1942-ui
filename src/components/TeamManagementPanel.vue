@@ -21,6 +21,41 @@
       </div>
     </div>
 
+    <!-- Recruitment Status Selector (Leader Only) -->
+    <div v-if="isLeader" class="px-6 py-4 border-b-2" :style="{ borderColor: accentColor + '44' }">
+      <div class="mb-2 flex items-center gap-2">
+        <h4 class="text-sm font-semibold" :style="{ color: textColor }">Recruitment Status</h4>
+        <span 
+          class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium"
+          :style="getRecruitmentStatusStyle(teamDetails?.recruitmentStatus ?? TeamRecruitmentStatus.Open)"
+        >
+          <span class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: getRecruitmentDotColor(teamDetails?.recruitmentStatus ?? TeamRecruitmentStatus.Open) }"></span>
+          {{ getRecruitmentStatusText(teamDetails?.recruitmentStatus ?? TeamRecruitmentStatus.Open) }}
+        </span>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button
+          v-for="status in recruitmentStatusOptions"
+          :key="status.value"
+          :disabled="isUpdatingStatus || teamDetails?.recruitmentStatus === status.value"
+          class="flex flex-col items-start p-3 rounded-lg border-2 transition-all text-left"
+          :class="getStatusButtonClasses(status.value)"
+          :style="teamDetails?.recruitmentStatus === status.value ? getStatusButtonActiveStyle(status.value) : {}"
+          @click="handleUpdateRecruitmentStatus(status.value)"
+        >
+          <span class="text-sm font-medium" :style="{ color: teamDetails?.recruitmentStatus === status.value ? getRecruitmentDotColor(status.value) : textColor }">
+            {{ status.label }}
+          </span>
+          <span class="text-xs mt-1" :style="{ color: textMutedColor }">
+            {{ status.description }}
+          </span>
+        </button>
+      </div>
+      
+      <div v-if="recruitmentStatusError" class="text-red-400 text-sm mt-2">{{ recruitmentStatusError }}</div>
+    </div>
+
     <!-- Add Player Form (Leader Only) -->
     <div v-if="isLeader" class="px-6 py-4 border-b-2" :style="{ borderColor: accentColor + '44' }">
       <MultiPlayerSelector
@@ -198,7 +233,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
 import MultiPlayerSelector from '@/components/MultiPlayerSelector.vue';
-import { teamRegistrationService, type TeamDetailsResponse } from '@/services/teamRegistrationService';
+import { teamRegistrationService, TeamRecruitmentStatus, getRecruitmentStatusText, type TeamDetailsResponse } from '@/services/teamRegistrationService';
 
 interface Props {
   tournamentId: number;
@@ -240,6 +275,28 @@ const leaveError = ref('');
 const deleteState = ref<'idle' | 'confirming' | 'deleting' | 'error'>('idle');
 const deleteError = ref('');
 
+const isUpdatingStatus = ref(false);
+const recruitmentStatusError = ref('');
+
+// Recruitment status options
+const recruitmentStatusOptions = [
+  {
+    value: TeamRecruitmentStatus.Open,
+    label: 'Open',
+    description: 'Accepting new members'
+  },
+  {
+    value: TeamRecruitmentStatus.Closed,
+    label: 'Closed',
+    description: 'Not recruiting'
+  },
+  {
+    value: TeamRecruitmentStatus.LookingForBTeam,
+    label: 'Looking for B Team',
+    description: 'Starting a second team'
+  }
+];
+
 const loadTeamDetails = async () => {
   isLoading.value = true;
   loadError.value = '';
@@ -249,6 +306,82 @@ const loadTeamDetails = async () => {
     loadError.value = error instanceof Error ? error.message : 'Failed to load team details';
   } finally {
     isLoading.value = false;
+  }
+};
+
+// Recruitment status helpers
+const getRecruitmentStatusStyle = (status: TeamRecruitmentStatus) => {
+  switch (status) {
+    case TeamRecruitmentStatus.Open:
+      return {
+        backgroundColor: '#10b98133',
+        color: '#10b981',
+        border: '1px solid #10b98155'
+      };
+    case TeamRecruitmentStatus.Closed:
+      return {
+        backgroundColor: '#ef444433',
+        color: '#ef4444',
+        border: '1px solid #ef444455'
+      };
+    case TeamRecruitmentStatus.LookingForBTeam:
+      return {
+        backgroundColor: '#f59e0b33',
+        color: '#f59e0b',
+        border: '1px solid #f59e0b55'
+      };
+    default:
+      return {
+        backgroundColor: props.accentColor + '33',
+        color: props.accentColor,
+        border: `1px solid ${props.accentColor}55`
+      };
+  }
+};
+
+const getRecruitmentDotColor = (status: TeamRecruitmentStatus) => {
+  switch (status) {
+    case TeamRecruitmentStatus.Open:
+      return '#10b981';
+    case TeamRecruitmentStatus.Closed:
+      return '#ef4444';
+    case TeamRecruitmentStatus.LookingForBTeam:
+      return '#f59e0b';
+    default:
+      return props.accentColor;
+  }
+};
+
+const getStatusButtonClasses = (status: TeamRecruitmentStatus): string => {
+  const isActive = teamDetails.value?.recruitmentStatus === status;
+  if (isActive) {
+    return 'cursor-default';
+  }
+  return 'cursor-pointer hover:bg-slate-700/30 border-slate-600/50';
+};
+
+const getStatusButtonActiveStyle = (status: TeamRecruitmentStatus) => {
+  const color = getRecruitmentDotColor(status);
+  return {
+    backgroundColor: color + '22',
+    borderColor: color
+  };
+};
+
+const handleUpdateRecruitmentStatus = async (status: TeamRecruitmentStatus) => {
+  if (isUpdatingStatus.value || teamDetails.value?.recruitmentStatus === status) return;
+  
+  isUpdatingStatus.value = true;
+  recruitmentStatusError.value = '';
+  
+  try {
+    await teamRegistrationService.updateRecruitmentStatus(props.tournamentId, status);
+    await loadTeamDetails();
+    emit('teamUpdated');
+  } catch (error) {
+    recruitmentStatusError.value = error instanceof Error ? error.message : 'Failed to update recruitment status';
+  } finally {
+    isUpdatingStatus.value = false;
   }
 };
 

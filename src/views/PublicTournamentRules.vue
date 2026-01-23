@@ -60,11 +60,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { marked } from 'marked'
 import TournamentHero from '@/components/TournamentHero.vue'
 import { isValidHex, normalizeHex, hexToRgb, rgbToHex, calculateLuminance, getContrastingTextColor } from '@/utils/colorUtils'
 import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
+import { notificationService } from '@/services/notificationService'
 
 const {
   tournament,
@@ -154,6 +155,15 @@ const getTextColor = (): string => {
 const getTextMutedColor = (): string => {
   return themeVars.value['--color-text-muted'] || '#d0d0d0'
 }
+
+// Watch tournament data and update page title when it loads
+watch(tournament, (newTournament) => {
+  if (newTournament) {
+    const fullTitle = `Rules - ${newTournament.name} - BF Stats`
+    document.title = fullTitle
+    notificationService.updateOriginalTitle()
+  }
+})
 </script>
 
 <style scoped>

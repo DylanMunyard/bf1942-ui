@@ -326,6 +326,16 @@
                     Manage
                   </button>
                 </div>
+                
+                <!-- Recruitment Status Badge -->
+                <div 
+                  v-if="isTournamentInRegistration()"
+                  class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                  :style="getRecruitmentStatusStyle(team.recruitmentStatus)"
+                >
+                  <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: getRecruitmentDotColor(team.recruitmentStatus) }"></span>
+                  {{ getRecruitmentStatusText(team.recruitmentStatus) }}
+                </div>
               </div>
 
               <!-- Team Content -->
@@ -457,7 +467,8 @@ import JoinTeamModal from '@/components/JoinTeamModal.vue'
 import TeamManagementPanel from '@/components/TeamManagementPanel.vue'
 import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
 import { useAuth } from '@/composables/useAuth'
-import { teamRegistrationService, type RegistrationStatusResponse } from '@/services/teamRegistrationService'
+import { teamRegistrationService, TeamRecruitmentStatus, getRecruitmentStatusText, getRecruitmentStatusMessage, type RegistrationStatusResponse } from '@/services/teamRegistrationService'
+import { notificationService } from '@/services/notificationService'
 
 const {
   tournament,
@@ -557,6 +568,49 @@ const isTournamentInRegistration = () => {
   return tournament.value?.status?.toLowerCase() === 'registration'
 }
 
+// Helper functions for recruitment status styling
+const getRecruitmentStatusStyle = (status: TeamRecruitmentStatus) => {
+  switch (status) {
+    case TeamRecruitmentStatus.Open:
+      return {
+        backgroundColor: '#10b98133',
+        color: '#10b981',
+        border: '1px solid #10b98155'
+      }
+    case TeamRecruitmentStatus.Closed:
+      return {
+        backgroundColor: '#ef444433',
+        color: '#ef4444',
+        border: '1px solid #ef444455'
+      }
+    case TeamRecruitmentStatus.LookingForBTeam:
+      return {
+        backgroundColor: '#f59e0b33',
+        color: '#f59e0b',
+        border: '1px solid #f59e0b55'
+      }
+    default:
+      return {
+        backgroundColor: getAccentColor() + '33',
+        color: getAccentColor(),
+        border: `1px solid ${getAccentColor()}55`
+      }
+  }
+}
+
+const getRecruitmentDotColor = (status: TeamRecruitmentStatus) => {
+  switch (status) {
+    case TeamRecruitmentStatus.Open:
+      return '#10b981'
+    case TeamRecruitmentStatus.Closed:
+      return '#ef4444'
+    case TeamRecruitmentStatus.LookingForBTeam:
+      return '#f59e0b'
+    default:
+      return getAccentColor()
+  }
+}
+
 const handleTeamCreated = async () => {
   showCreateTeamModal.value = false
   // Clear tournament cache to ensure fresh data is loaded
@@ -647,6 +701,15 @@ watch(
     }
   }
 )
+
+// Watch tournament data and update page title when it loads
+watch(tournament, (newTournament) => {
+  if (newTournament) {
+    const fullTitle = `Teams - ${newTournament.name} - BF Stats`
+    document.title = fullTitle
+    notificationService.updateOriginalTitle()
+  }
+})
 
 onMounted(() => {
   if (isAuthenticated.value) {

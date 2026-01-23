@@ -76,13 +76,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { usePlayerComparison } from '@/composables/usePlayerComparison'
 import TournamentHero from '@/components/TournamentHero.vue'
 import TournamentMatchesTable from '@/components/TournamentMatchesTable.vue'
 import MatchDetailsModal from '@/components/MatchDetailsModal.vue'
 import { publicTournamentService, type PublicTournamentMatch } from '@/services/publicTournamentService'
 import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
+import { notificationService } from '@/services/notificationService'
 
 interface MatchItem {
   match: PublicTournamentMatch
@@ -215,5 +216,14 @@ const openMatchupModal = (match: PublicTournamentMatch) => {
 const closeMatchupModal = () => {
   selectedMatch.value = null
 }
+
+// Watch tournament data and update page title when it loads
+watch(tournament, (newTournament) => {
+  if (newTournament) {
+    const fullTitle = `Matches - ${newTournament.name} - BF Stats`
+    document.title = fullTitle
+    notificationService.updateOriginalTitle()
+  }
+})
 
 </script>

@@ -68,8 +68,10 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue'
 import TournamentHero from '@/components/TournamentHero.vue'
 import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
+import { notificationService } from '@/services/notificationService'
 
 const {
   tournament,
@@ -91,4 +93,13 @@ const formatDate = (dateStr: string): string => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' +
          date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
 }
+
+// Watch tournament data and update page title when it loads
+watch(tournament, (newTournament) => {
+  if (newTournament) {
+    const fullTitle = `Files - ${newTournament.name} - BF Stats`
+    document.title = fullTitle
+    notificationService.updateOriginalTitle()
+  }
+})
 </script>

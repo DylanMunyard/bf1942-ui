@@ -31,10 +31,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { isValidHex, normalizeHex, hexToRgb, rgbToHex, calculateLuminance, getContrastingTextColor } from '@/utils/colorUtils'
 import TournamentHero from '@/components/TournamentHero.vue'
 import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
+import { notificationService } from '@/services/notificationService'
 
 const {
   tournament,
@@ -87,4 +88,13 @@ const getAccentColor = (): string => {
 const getBackgroundColor = (): string => themeVars.value['--color-background'] || '#000000'
 const getTextColor = (): string => themeVars.value['--color-text'] || '#FFFFFF'
 const getTextMutedColor = (): string => themeVars.value['--color-text-muted'] || '#d0d0d0'
+
+// Watch tournament data and update page title when it loads
+watch(tournament, (newTournament) => {
+  if (newTournament) {
+    const fullTitle = `Stats - ${newTournament.name} - BF Stats`
+    document.title = fullTitle
+    notificationService.updateOriginalTitle()
+  }
+})
 </script>

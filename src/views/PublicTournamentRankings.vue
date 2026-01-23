@@ -66,6 +66,7 @@ import TournamentHero from '@/components/TournamentHero.vue'
 import TournamentRankingsTable from '@/components/TournamentRankingsTable.vue'
 import { publicTournamentService, type PublicTournamentLeaderboard } from '@/services/publicTournamentService'
 import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
+import { notificationService } from '@/services/notificationService'
 
 const {
   tournament,
@@ -106,5 +107,14 @@ watch(
     loadLeaderboard()
   }
 )
+
+// Watch tournament data and update page title when it loads
+watch(tournament, (newTournament) => {
+  if (newTournament) {
+    const fullTitle = `Rankings - ${newTournament.name} - BF Stats`
+    document.title = fullTitle
+    notificationService.updateOriginalTitle()
+  }
+})
 
 </script>
