@@ -457,6 +457,7 @@
             :tournament-id="parseInt(tournamentId)"
             :team-id="registrationStatus.teamMembership.teamId"
             :is-leader="registrationStatus.teamMembership.isLeader"
+            :membership-status="registrationStatus.teamMembership.membershipStatus"
             :accent-color="getAccentColor()"
             :text-color="getTextColor()"
             :text-muted-color="getTextMutedColor()"
@@ -530,6 +531,9 @@ const showCreateTeamModal = ref(false)
 const showJoinTeamModal = ref(false)
 const showManageTeamModal = ref(false)
 
+// Team details for leaders (to show pending members)
+const leaderTeamDetails = ref<{ players: { playerName: string; isLeader: boolean; membershipStatus?: MembershipStatus | null }[] } | null>(null)
+
 // Discord login state
 const isLoginLoading = ref(false)
 
@@ -544,13 +548,48 @@ const renderedRegistrationRules = computed(() => {
   }
 })
 
-// Sort teams so user's team appears first
+// Sort teams so user's team appears first, and inject pending members for leaders or self for pending users
 const sortedTeams = computed(() => {
   if (!tournament.value?.teams) return []
   const userTeamId = registrationStatus.value?.teamMembership?.teamId
-  if (!userTeamId) return tournament.value.teams
+  const userMembership = registrationStatus.value?.teamMembership
+  const isLeader = registrationStatus.value?.teamMembership?.isLeader
+  
+  // Clone teams to avoid mutating original
+  let teams = tournament.value.teams.map(team => ({ ...team, players: [...team.players] }))
+  
+  if (userTeamId && userMembership) {
+    const userTeam = teams.find(t => t.id === userTeamId)
+    if (userTeam) {
+      // If user is a leader and we have team details, merge in all pending members
+      if (isLeader && leaderTeamDetails.value?.players) {
+        for (const player of leaderTeamDetails.value.players) {
+          const existsInList = userTeam.players.some(p => p.playerName === player.playerName)
+          if (!existsInList) {
+            userTeam.players.push({
+              playerName: player.playerName,
+              isLeader: player.isLeader,
+              membershipStatus: player.membershipStatus ?? MembershipStatus.Approved
+            })
+          }
+        }
+      } else {
+        // For non-leaders: just inject themselves if pending and not in the list
+        const isUserInList = userTeam.players.some(p => p.playerName === userMembership.playerName)
+        if (!isUserInList) {
+          userTeam.players.push({
+            playerName: userMembership.playerName,
+            isLeader: userMembership.isLeader,
+            membershipStatus: userMembership.membershipStatus ?? MembershipStatus.Pending
+          })
+        }
+      }
+    }
+  }
+  
+  if (!userTeamId) return teams
 
-  return [...tournament.value.teams].sort((a, b) => {
+  return teams.sort((a, b) => {
     if (a.id === userTeamId) return -1
     if (b.id === userTeamId) return 1
     return 0
@@ -569,8 +608,20 @@ const loadRegistrationStatus = async () => {
   if (!isAuthenticated.value || !tournamentId.value) return
 
   registrationStatusError.value = false
+  leaderTeamDetails.value = null
+  
   try {
     registrationStatus.value = await teamRegistrationService.getRegistrationStatus(parseInt(tournamentId.value))
+    
+    // If user is a team leader, also fetch team details to get pending members
+    if (registrationStatus.value?.teamMembership?.isLeader) {
+      try {
+        const details = await teamRegistrationService.getTeamDetails(parseInt(tournamentId.value))
+        leaderTeamDetails.value = details
+      } catch {
+        // Silently fail - leader just won't see pending members in the list
+      }
+    }
   } catch (err) {
     // API might not exist yet or user might not have access
     registrationStatus.value = null
@@ -655,6 +706,7 @@ const handleTeamJoined = async (_teamId: number, teamName: string, isPending: bo
 const handleTeamUpdated = async () => {
   // Clear tournament cache to ensure fresh data is loaded
   clearCache(parseInt(tournamentId.value))
+  await loadRegistrationStatus() // Reload team details for leaders to refresh pending members
   await loadTournament()
 }
 

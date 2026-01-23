@@ -1,4 +1,10 @@
-import { TeamRecruitmentStatus } from './teamRegistrationService';
+import { TeamRecruitmentStatus, MembershipStatus } from './teamRegistrationService';
+
+export interface PublicTournamentTeamPlayer {
+  playerName: string;
+  isLeader?: boolean;
+  membershipStatus?: MembershipStatus;
+}
 
 export interface PublicTournamentTeam {
   id: number;
@@ -6,7 +12,7 @@ export interface PublicTournamentTeam {
   createdAt: string;
   leaderPlayerName?: string;
   recruitmentStatus: TeamRecruitmentStatus;
-  players: { playerName: string; isLeader?: boolean }[];
+  players: PublicTournamentTeamPlayer[];
 }
 
 export interface TournamentFile {

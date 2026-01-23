@@ -3,6 +3,24 @@
     class="backdrop-blur-sm border-2 rounded-xl"
     :style="{ borderColor: accentColor, backgroundColor: backgroundColor }"
   >
+    <!-- Pending Approval Banner (for non-leaders who are pending) -->
+    <div
+      v-if="!isLeader && props.membershipStatus === MembershipStatus.Pending"
+      class="px-6 py-4 border-b-2 border-amber-500/30 bg-amber-500/10"
+    >
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-amber-500/20 border-2 border-amber-500/50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <p class="font-semibold text-amber-400">Awaiting Approval</p>
+          <p class="text-sm text-amber-200/70">The team leader needs to approve your join request</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Header -->
     <div
       class="px-6 py-4 border-b-2"
@@ -15,6 +33,7 @@
         </h3>
         <p class="text-sm mt-1" :style="{ color: textMutedColor }">
           <span v-if="isLeader">Team Leader</span>
+          <span v-else-if="props.membershipStatus === MembershipStatus.Pending" class="text-amber-400">Pending Approval</span>
           <span v-else>Team Member</span>
           &middot; {{ approvedPlayers.length }} player{{ approvedPlayers.length !== 1 ? 's' : '' }}
           <span v-if="isLeader && pendingPlayers.length > 0" class="ml-2 text-amber-400">
@@ -310,6 +329,7 @@ interface Props {
   tournamentId: number;
   teamId: number;
   isLeader: boolean;
+  membershipStatus?: MembershipStatus | null;
   accentColor?: string;
   textColor?: string;
   textMutedColor?: string;
