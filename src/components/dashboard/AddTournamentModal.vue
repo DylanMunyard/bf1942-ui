@@ -589,6 +589,57 @@ Winners choose first map for next round.</code>
           </div>
         </div>
 
+        <!-- Registration Rules (Markdown) -->
+        <div>
+          <div class="flex items-center justify-between gap-4 mb-2">
+            <label class="block text-sm font-medium text-slate-300">
+              Registration Rules <span class="text-slate-500">(Optional)</span>
+            </label>
+            <button
+              type="button"
+              @click="showMarkdownHelp = true"
+              class="text-xs px-3 py-1 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-slate-200 rounded transition-colors"
+              title="Show markdown syntax help"
+            >
+              ? Help
+            </button>
+          </div>
+          <p class="text-xs text-slate-500 mb-2">
+            Shown to users when they register for the tournament
+          </p>
+
+          <textarea
+            v-model="formData.registrationRules"
+            placeholder="# Registration Info&#10;&#10;Write registration instructions in markdown..."
+            class="w-full h-48 px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all resize-none"
+          />
+
+          <!-- Preview Toggle and Display -->
+          <div class="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              @click="showRegistrationRulesPreview = !showRegistrationRulesPreview"
+              class="text-xs px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-slate-200 rounded transition-colors flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              {{ showRegistrationRulesPreview ? 'Hide' : 'Show' }} Preview
+            </button>
+          </div>
+
+          <!-- Markdown Preview (Below Editor) -->
+          <div v-if="showRegistrationRulesPreview && (formData.registrationRules && formData.registrationRules.trim())" class="mt-4 bg-slate-800/40 border border-slate-700/50 rounded-lg p-4 overflow-y-auto max-h-64">
+            <div class="prose prose-invert prose-sm max-w-none">
+              <div
+                v-html="renderedRegistrationRulesMarkdown"
+                class="text-slate-300 markdown-content"
+              />
+            </div>
+          </div>
+        </div>
+
         <!-- Status & Game Mode -->
         <div class="grid grid-cols-2 gap-4">
           <!-- Status Dropdown -->
@@ -1286,6 +1337,7 @@ const formData = ref({
   twitchUrl: '',
   forumUrl: '',
   rules: '',
+  registrationRules: '',
   status: 'draft' as 'draft' | 'registration' | 'open' | 'closed',
   gameMode: 'Conquest',
   weekDates: [] as Array<{ id?: number; week: string; startDate: string; endDate: string }>,
@@ -1352,6 +1404,7 @@ const removeCommunityLogo = ref(false);
 
 // Rules editor state
 const showRulesPreview = ref(false);
+const showRegistrationRulesPreview = ref(false);
 const showMarkdownHelp = ref(false);
 
 // Theme color input state
@@ -1367,6 +1420,17 @@ const renderedMarkdown = computed(() => {
   }
   try {
     return marked(formData.value.rules, { breaks: true });
+  } catch {
+    return '<p class="text-red-400">Invalid markdown</p>';
+  }
+});
+
+const renderedRegistrationRulesMarkdown = computed(() => {
+  if (!formData.value.registrationRules || !formData.value.registrationRules.trim()) {
+    return '';
+  }
+  try {
+    return marked(formData.value.registrationRules, { breaks: true });
   } catch {
     return '<p class="text-red-400">Invalid markdown</p>';
   }
@@ -1432,6 +1496,7 @@ onMounted(() => {
       twitchUrl: props.tournament.twitchUrl || '',
       forumUrl: props.tournament.forumUrl || '',
       rules: props.tournament.rules || '',
+      registrationRules: props.tournament.registrationRules || '',
       status: props.tournament.status || undefined,
       gameMode: props.tournament.gameMode || '',
       weekDates: props.tournament.weekDates ? [...props.tournament.weekDates] : [],
@@ -1959,6 +2024,10 @@ const handleSubmit = async () => {
 
     if (formData.value.rules?.trim()) {
       request.rules = formData.value.rules.trim();
+    }
+
+    if (formData.value.registrationRules?.trim()) {
+      request.registrationRules = formData.value.registrationRules.trim();
     }
 
     if (formData.value.status) {

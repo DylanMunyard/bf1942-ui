@@ -43,6 +43,41 @@
 
         <!-- Form -->
         <form v-else class="space-y-5" @submit.prevent="handleSubmit">
+          <!-- Registration Rules (Collapsible) -->
+          <div v-if="registrationRules" class="border border-slate-700/50 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              class="w-full flex items-center justify-between px-4 py-3 bg-slate-800/40 hover:bg-slate-800/60 transition-colors"
+              @click="showRegistrationRules = !showRegistrationRules"
+            >
+              <span class="text-sm font-medium text-slate-300">Registration Info</span>
+              <svg
+                class="w-5 h-5 text-slate-400 transition-transform"
+                :class="{ 'rotate-180': showRegistrationRules }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          <div
+            v-if="showRegistrationRules"
+            class="px-4 py-3 bg-slate-900/40 border-t border-slate-700/50"
+          >
+            <div
+              class="prose prose-sm prose-invert max-w-none markdown-rules"
+              :style="{
+                '--color-text': '#e2e8f0',
+                '--color-text-muted': '#94a3b8',
+                '--rule-primary': accentColor,
+                '--rule-secondary': accentColor,
+              } as Record<string, string>"
+              v-html="renderedRegistrationRules"
+            />
+          </div>
+        </div>
+
           <!-- Team Selection -->
           <div>
             <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -178,19 +213,31 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { marked } from 'marked';
 import PlayerSearch from '@/components/PlayerSearch.vue';
 import { teamRegistrationService, type JoinTeamRequest, type AvailableTeam, type LinkedPlayerName } from '@/services/teamRegistrationService';
 
 interface Props {
   isVisible: boolean;
   tournamentId: number;
-  rules?: string;
+  registrationRules?: string;
   accentColor?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  rules: '',
+  registrationRules: '',
   accentColor: '#06b6d4',
+});
+
+// Registration rules display
+const showRegistrationRules = ref(false);
+const renderedRegistrationRules = computed(() => {
+  if (!props.registrationRules) return '';
+  try {
+    return marked(props.registrationRules, { breaks: true });
+  } catch {
+    return '';
+  }
 });
 
 // Computed property for accent text color (black on light accents, white on dark accents)
@@ -346,3 +393,133 @@ watch(
   }
 );
 </script>
+
+<style scoped>
+/* Markdown rules styling */
+.markdown-rules :deep(h1),
+.markdown-rules :deep(h2),
+.markdown-rules :deep(h3),
+.markdown-rules :deep(h4),
+.markdown-rules :deep(h5),
+.markdown-rules :deep(h6) {
+  color: var(--color-text);
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-rules :deep(p) {
+  margin-bottom: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.markdown-rules :deep(strong) {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.markdown-rules :deep(em) {
+  color: var(--rule-secondary);
+  font-style: italic;
+}
+
+.markdown-rules :deep(ul) {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  padding-left: 0;
+}
+
+.markdown-rules :deep(ol) {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  padding-left: 0;
+}
+
+.markdown-rules :deep(li) {
+  margin-bottom: 0.5rem;
+  color: var(--color-text-muted);
+  margin-left: 1rem;
+}
+
+.markdown-rules :deep(code) {
+  background: linear-gradient(135deg, var(--rule-primary)15, var(--rule-secondary)10);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  color: var(--color-text);
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  border: 1px solid var(--rule-primary);
+}
+
+.markdown-rules :deep(blockquote) {
+  border-left: 4px solid var(--rule-primary);
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-bottom: 1rem;
+  color: var(--color-text-muted);
+  background: linear-gradient(to right, var(--rule-primary)08, transparent);
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+}
+
+.markdown-rules :deep(a) {
+  color: var(--color-text);
+  text-decoration: underline;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.markdown-rules :deep(a:hover) {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.markdown-rules :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+  border: 2px solid var(--rule-primary);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.markdown-rules :deep(thead) {
+  background: linear-gradient(to right, var(--rule-primary)30, var(--rule-secondary)20);
+  backdrop-filter: blur(0.5rem);
+}
+
+.markdown-rules :deep(th) {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--color-text);
+  border-bottom: 2px solid var(--rule-primary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.markdown-rules :deep(td) {
+  padding: 0.75rem 1rem;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--rule-primary)20;
+}
+
+.markdown-rules :deep(tbody tr) {
+  background-color: transparent;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.markdown-rules :deep(tbody tr:nth-child(even)) {
+  background-color: var(--rule-primary)08;
+}
+
+.markdown-rules :deep(tbody tr:hover) {
+  background-color: var(--rule-primary)15;
+  box-shadow: inset 0 0 16px var(--rule-primary)15;
+}
+</style>

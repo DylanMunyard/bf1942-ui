@@ -168,6 +168,7 @@ export interface PublicTournamentDetail {
   twitchUrl?: string;
   forumUrl?: string;
   rules?: string;
+  registrationRules?: string;
   theme: TournamentTheme;
 }
 

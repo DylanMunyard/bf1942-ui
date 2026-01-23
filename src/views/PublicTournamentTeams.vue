@@ -41,8 +41,73 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
         <!-- Registration Section (for authenticated users) -->
         <div v-if="isAuthenticated && registrationStatus">
+          <!-- Already on a team - show registered status with manage option -->
+          <div v-if="registrationStatus.teamMembership">
+            <div
+              class="backdrop-blur-sm border-2 rounded-xl p-4 sm:p-5"
+              :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }"
+            >
+              <!-- Main row: info left, actions right -->
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+                    :style="{ backgroundColor: getAccentColor() + '22', border: `2px solid ${getAccentColor()}` }"
+                  >
+                    ✓
+                  </div>
+                  <div>
+                    <h2 class="text-lg font-bold" :style="{ color: getTextColor() }">
+                      You're Registered
+                    </h2>
+                    <p class="text-sm" :style="{ color: getTextMutedColor() }">
+                      Playing for <span class="font-semibold" :style="{ color: getAccentColor() }">{{ registrationStatus.teamMembership.teamName }}</span>
+                      <span v-if="registrationStatus.teamMembership.isLeader" class="opacity-75"> · Leader</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 sm:gap-3">
+                  <button
+                    v-if="tournament?.registrationRules"
+                    class="text-sm font-medium px-3 py-2 rounded-lg transition-all"
+                    :style="{ backgroundColor: showRegistrationRules ? getAccentColor() + '33' : 'transparent', color: getAccentColor(), border: `1px solid ${getAccentColor()}66` }"
+                    @click="showRegistrationRules = !showRegistrationRules"
+                  >
+                    {{ showRegistrationRules ? 'Hide' : 'View' }} Info
+                  </button>
+                  <button
+                    class="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:scale-105"
+                    :style="{ backgroundColor: getAccentColor(), color: getAccentTextColor }"
+                    @click="showManageTeamModal = true"
+                  >
+                    Manage Team
+                  </button>
+                </div>
+              </div>
+
+              <!-- Expandable registration rules -->
+              <div
+                v-if="showRegistrationRules && tournament?.registrationRules"
+                class="mt-4 p-4 rounded-lg border"
+                :style="{ backgroundColor: getBackgroundMuteColor(), borderColor: getAccentColor() + '44' }"
+              >
+                <div
+                  class="prose prose-invert prose-sm max-w-none markdown-rules"
+                  :style="{
+                    '--color-text': getTextColor(),
+                    '--color-text-muted': getTextMutedColor(),
+                    '--rule-primary': getAccentColor(),
+                    '--rule-secondary': getAccentColor(),
+                  } as Record<string, string>"
+                  v-html="renderedRegistrationRules"
+                />
+              </div>
+            </div>
+          </div>
+
           <!-- Not on a team - show registration options -->
-          <div v-if="!registrationStatus.teamMembership && registrationStatus.isRegistrationOpen" class="text-center">
+          <div v-else-if="registrationStatus.isRegistrationOpen" class="text-center">
             <div
               class="inline-block backdrop-blur-sm border-2 rounded-xl p-6 sm:p-8"
               :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }"
@@ -50,9 +115,36 @@
               <h2 class="text-xl sm:text-2xl font-bold mb-2" :style="{ color: getTextColor() }">
                 Registration Open
               </h2>
-              <p class="mb-6" :style="{ color: getTextMutedColor() }">
+              <p class="mb-4" :style="{ color: getTextMutedColor() }">
                 Join the tournament by creating a new team or joining an existing one
               </p>
+
+              <!-- Registration Rules Toggle -->
+              <div v-if="tournament?.registrationRules" class="mb-6">
+                <button
+                  class="text-sm font-medium px-4 py-2 rounded-lg transition-all"
+                  :style="{ backgroundColor: showRegistrationRules ? getAccentColor() + '33' : 'transparent', color: getAccentColor(), border: `1px solid ${getAccentColor()}66` }"
+                  @click="showRegistrationRules = !showRegistrationRules"
+                >
+                  {{ showRegistrationRules ? 'Hide' : 'View' }} Registration Info
+                </button>
+                <div
+                  v-if="showRegistrationRules"
+                  class="mt-4 text-left p-4 rounded-lg border"
+                  :style="{ backgroundColor: getBackgroundMuteColor(), borderColor: getAccentColor() + '44' }"
+                >
+                  <div
+                    class="prose prose-invert prose-sm max-w-none markdown-rules"
+                    :style="{
+                      '--color-text': getTextColor(),
+                      '--color-text-muted': getTextMutedColor(),
+                      '--rule-primary': getAccentColor(),
+                      '--rule-secondary': getAccentColor(),
+                    } as Record<string, string>"
+                    v-html="renderedRegistrationRules"
+                  />
+                </div>
+              </div>
 
               <div class="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
@@ -74,7 +166,7 @@
           </div>
 
           <!-- Registration closed message (only show if not on a team and registration is closed) -->
-          <div v-else-if="!registrationStatus.teamMembership && !registrationStatus.isRegistrationOpen" class="text-center">
+          <div v-else class="text-center">
             <div
               class="inline-block backdrop-blur-sm border-2 rounded-xl p-6"
               :style="{ borderColor: getTextMutedColor() + '44', backgroundColor: getBackgroundSoftColor() }"
@@ -95,9 +187,36 @@
             <h2 class="text-xl sm:text-2xl font-bold mb-2" :style="{ color: getTextColor() }">
               Registration Open
             </h2>
-            <p class="mb-6" :style="{ color: getTextMutedColor() }">
+            <p class="mb-4" :style="{ color: getTextMutedColor() }">
               Join the tournament by creating a new team or joining an existing one
             </p>
+
+            <!-- Registration Rules Toggle -->
+            <div v-if="tournament?.registrationRules" class="mb-6">
+              <button
+                class="text-sm font-medium px-4 py-2 rounded-lg transition-all"
+                :style="{ backgroundColor: showRegistrationRules ? getAccentColor() + '33' : 'transparent', color: getAccentColor(), border: `1px solid ${getAccentColor()}66` }"
+                @click="showRegistrationRules = !showRegistrationRules"
+              >
+                {{ showRegistrationRules ? 'Hide' : 'View' }} Registration Info
+              </button>
+              <div
+                v-if="showRegistrationRules"
+                class="mt-4 text-left p-4 rounded-lg border"
+                :style="{ backgroundColor: getBackgroundMuteColor(), borderColor: getAccentColor() + '44' }"
+              >
+                <div
+                  class="prose prose-invert prose-sm max-w-none markdown-rules"
+                  :style="{
+                    '--color-text': getTextColor(),
+                    '--color-text-muted': getTextMutedColor(),
+                    '--rule-primary': getAccentColor(),
+                    '--rule-secondary': getAccentColor(),
+                  } as Record<string, string>"
+                  v-html="renderedRegistrationRules"
+                />
+              </div>
+            </div>
 
             <div class="flex flex-col sm:flex-row gap-3 justify-center">
               <button
@@ -127,9 +246,36 @@
             <h2 class="text-xl sm:text-2xl font-bold mb-2" :style="{ color: getTextColor() }">
               Registration Open
             </h2>
-            <p class="mb-8" :style="{ color: getTextMutedColor() }">
+            <p class="mb-4" :style="{ color: getTextMutedColor() }">
               Sign in with Discord to register for this tournament
             </p>
+
+            <!-- Registration Rules Toggle -->
+            <div v-if="tournament?.registrationRules" class="mb-6">
+              <button
+                class="text-sm font-medium px-4 py-2 rounded-lg transition-all"
+                :style="{ backgroundColor: showRegistrationRules ? getAccentColor() + '33' : 'transparent', color: getAccentColor(), border: `1px solid ${getAccentColor()}66` }"
+                @click="showRegistrationRules = !showRegistrationRules"
+              >
+                {{ showRegistrationRules ? 'Hide' : 'View' }} Registration Info
+              </button>
+              <div
+                  v-if="showRegistrationRules"
+                  class="mt-4 text-left p-4 rounded-lg border"
+                  :style="{ backgroundColor: getBackgroundMuteColor(), borderColor: getAccentColor() + '44' }"
+                >
+                  <div
+                    class="prose prose-invert prose-sm max-w-none markdown-rules"
+                    :style="{
+                      '--color-text': getTextColor(),
+                      '--color-text-muted': getTextMutedColor(),
+                      '--rule-primary': getAccentColor(),
+                      '--rule-secondary': getAccentColor(),
+                    } as Record<string, string>"
+                    v-html="renderedRegistrationRules"
+                  />
+                </div>
+              </div>
 
             <!-- Enhanced Discord Sign-in Button -->
             <div class="flex justify-center">
@@ -251,7 +397,7 @@
     <CreateTeamModal
       :is-visible="showCreateTeamModal"
       :tournament-id="parseInt(tournamentId)"
-      :rules="tournament?.rules"
+      :registration-rules="tournament?.registrationRules"
       :accent-color="getAccentColor()"
       @close="showCreateTeamModal = false"
       @success="handleTeamCreated"
@@ -260,7 +406,7 @@
     <JoinTeamModal
       :is-visible="showJoinTeamModal"
       :tournament-id="parseInt(tournamentId)"
-      :rules="tournament?.rules"
+      :registration-rules="tournament?.registrationRules"
       :accent-color="getAccentColor()"
       @close="showJoinTeamModal = false"
       @success="handleTeamJoined"
@@ -303,6 +449,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { marked } from 'marked'
 import TournamentHero from '@/components/TournamentHero.vue'
 import LoginButton from '@/components/LoginButton.vue'
 import CreateTeamModal from '@/components/CreateTeamModal.vue'
@@ -359,6 +506,17 @@ const showManageTeamModal = ref(false)
 
 // Discord login state
 const isLoginLoading = ref(false)
+
+// Registration rules display
+const showRegistrationRules = ref(false)
+const renderedRegistrationRules = computed(() => {
+  if (!tournament.value?.registrationRules) return ''
+  try {
+    return marked(tournament.value.registrationRules, { breaks: true })
+  } catch {
+    return ''
+  }
+})
 
 // Sort teams so user's team appears first
 const sortedTeams = computed(() => {
@@ -496,3 +654,133 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+/* Markdown rules styling */
+.markdown-rules :deep(h1),
+.markdown-rules :deep(h2),
+.markdown-rules :deep(h3),
+.markdown-rules :deep(h4),
+.markdown-rules :deep(h5),
+.markdown-rules :deep(h6) {
+  color: var(--color-text);
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-rules :deep(p) {
+  margin-bottom: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.markdown-rules :deep(strong) {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.markdown-rules :deep(em) {
+  color: var(--rule-secondary);
+  font-style: italic;
+}
+
+.markdown-rules :deep(ul) {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  padding-left: 0;
+}
+
+.markdown-rules :deep(ol) {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  padding-left: 0;
+}
+
+.markdown-rules :deep(li) {
+  margin-bottom: 0.5rem;
+  color: var(--color-text-muted);
+  margin-left: 1rem;
+}
+
+.markdown-rules :deep(code) {
+  background: linear-gradient(135deg, var(--rule-primary)15, var(--rule-secondary)10);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  color: var(--color-text);
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  border: 1px solid var(--rule-primary);
+}
+
+.markdown-rules :deep(blockquote) {
+  border-left: 4px solid var(--rule-primary);
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-bottom: 1rem;
+  color: var(--color-text-muted);
+  background: linear-gradient(to right, var(--rule-primary)08, transparent);
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+}
+
+.markdown-rules :deep(a) {
+  color: var(--color-text);
+  text-decoration: underline;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.markdown-rules :deep(a:hover) {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.markdown-rules :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+  border: 2px solid var(--rule-primary);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.markdown-rules :deep(thead) {
+  background: linear-gradient(to right, var(--rule-primary)30, var(--rule-secondary)20);
+  backdrop-filter: blur(0.5rem);
+}
+
+.markdown-rules :deep(th) {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--color-text);
+  border-bottom: 2px solid var(--rule-primary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.markdown-rules :deep(td) {
+  padding: 0.75rem 1rem;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--rule-primary)20;
+}
+
+.markdown-rules :deep(tbody tr) {
+  background-color: transparent;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.markdown-rules :deep(tbody tr:nth-child(even)) {
+  background-color: var(--rule-primary)08;
+}
+
+.markdown-rules :deep(tbody tr:hover) {
+  background-color: var(--rule-primary)15;
+  box-shadow: inset 0 0 16px var(--rule-primary)15;
+}
+</style>

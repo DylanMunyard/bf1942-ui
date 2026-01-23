@@ -137,6 +137,7 @@ export interface CreateTournamentRequest {
   twitchUrl?: string;
   forumUrl?: string;
   rules?: string;
+  registrationRules?: string;
   weekDates?: TournamentWeekDate[];
   files?: CreateTournamentFileRequest[];
   theme: TournamentTheme;
@@ -159,6 +160,7 @@ export interface UpdateTournamentRequest {
   twitchUrl?: string;
   forumUrl?: string;
   rules?: string;
+  registrationRules?: string;
   weekDates?: TournamentWeekDate[];
   files?: CreateTournamentFileRequest[];
   theme?: TournamentTheme;
