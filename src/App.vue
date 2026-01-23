@@ -81,6 +81,12 @@ provide('toggleDarkMode', toggleDarkMode);
 </script>
 
 <template>
+  <div class="maintenance-banner">
+    <span class="maintenance-icon">⚠️</span>
+    <span class="maintenance-text">
+      <strong>Maintenance in Progress</strong> — We're performing system maintenance. Some features may be unavailable. We'll be back shortly!
+    </span>
+  </div>
   <DashboardLayout />
 </template>
 
@@ -244,5 +250,65 @@ a:hover {
   background-color: var(--color-primary);
   color: white;
   border-color: var(--color-primary);
+}
+
+/* Maintenance Banner */
+.maintenance-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #1a1a1a;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.maintenance-icon {
+  font-size: 20px;
+  animation: shake 1s ease-in-out infinite;
+}
+
+.maintenance-text {
+  text-align: center;
+}
+
+.maintenance-text strong {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.5);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+/* Offset the rest of the page content to account for fixed banner */
+body {
+  padding-top: 48px;
 }
 </style>
