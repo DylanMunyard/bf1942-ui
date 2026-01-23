@@ -1,6 +1,7 @@
 export interface TournamentListItem {
   id: number;
   name: string;
+  slug?: string;
   organizer: string;
   createdAt: string;
   anticipatedRoundCount?: number;
@@ -92,6 +93,7 @@ export interface TournamentWeekDate {
 export interface TournamentDetail {
   id: number;
   name: string;
+  slug?: string;
   organizer: string;
   createdAt: string;
   anticipatedRoundCount?: number;
@@ -122,6 +124,7 @@ export interface TournamentDetail {
 
 export interface CreateTournamentRequest {
   name: string;
+  slug?: string;
   organizer: string;
   game: 'bf1942' | 'fh2' | 'bfvietnam';
   anticipatedRoundCount?: number;
@@ -145,6 +148,7 @@ export interface CreateTournamentRequest {
 
 export interface UpdateTournamentRequest {
   name?: string;
+  slug?: string;
   organizer?: string;
   game?: 'bf1942' | 'fh2' | 'bfvietnam';
   anticipatedRoundCount?: number;

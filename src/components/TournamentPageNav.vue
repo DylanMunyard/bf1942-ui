@@ -4,7 +4,7 @@
       <!-- Navigation Buttons -->
       <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         <router-link
-          :to="`/tournaments/${tournamentId}`"
+          :to="`/t/${tournamentId}`"
           :class="['nav-button', isActive('overview') ? 'nav-button-active' : 'nav-button-inactive']"
           :style="getButtonStyles('overview')"
         >
@@ -12,7 +12,7 @@
         </router-link>
 
         <router-link
-          :to="`/tournaments/${tournamentId}/teams`"
+          :to="`/t/${tournamentId}/teams`"
           :class="['nav-button', isActive('teams') ? 'nav-button-active' : 'nav-button-inactive']"
           :style="getButtonStyles('teams')"
         >
@@ -20,7 +20,7 @@
         </router-link>
 
         <router-link
-          :to="`/tournaments/${tournamentId}/matches`"
+          :to="`/t/${tournamentId}/matches`"
           :class="['nav-button', isActive('matches') ? 'nav-button-active' : 'nav-button-inactive']"
           :style="getButtonStyles('matches')"
         >
@@ -28,7 +28,7 @@
         </router-link>
 
         <router-link
-          :to="`/tournaments/${tournamentId}/rules`"
+          :to="`/t/${tournamentId}/rules`"
           :class="['nav-button', isActive('rules') ? 'nav-button-active' : 'nav-button-inactive']"
           :style="getButtonStyles('rules')"
         >
@@ -36,7 +36,7 @@
         </router-link>
 
         <router-link
-          :to="`/tournaments/${tournamentId}/files`"
+          :to="`/t/${tournamentId}/files`"
           :class="['nav-button', isActive('files') ? 'nav-button-active' : 'nav-button-inactive']"
           :style="getButtonStyles('files')"
         >
@@ -44,7 +44,7 @@
         </router-link>
 
         <router-link
-          :to="`/tournaments/${tournamentId}/stats`"
+          :to="`/t/${tournamentId}/stats`"
           :class="['nav-button', isActive('stats') ? 'nav-button-active' : 'nav-button-inactive']"
           :style="getButtonStyles('stats')"
         >
@@ -92,7 +92,7 @@ const getBackgroundSoftColor = (): string => {
 const isActive = (page: string): boolean => {
   const currentPath = route.path
   const patternMap: Record<string, RegExp> = {
-    overview: /^\/tournaments\/\d+$/,
+    overview: /^\/t\/[^/]+$/,
     teams: /\/teams$/,
     matches: /\/matches$/,
     rules: /\/rules$/,

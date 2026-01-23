@@ -156,7 +156,7 @@
                     <a href="/players/Black%20Mamba" class="text-yellow-400 hover:text-yellow-300 transition-colors underline">
                       Black Mamba
                     </a>
-                    for originating the <a href="/tournaments/5" class="text-yellow-400 hover:text-yellow-300 transition-colors underline">tournaments</a> idea and providing detailed documentation to make it happen.
+                    for originating the <a href="/t/5" class="text-yellow-400 hover:text-yellow-300 transition-colors underline">tournaments</a> idea and providing detailed documentation to make it happen.
                   </p>
                 </div>
               </div>

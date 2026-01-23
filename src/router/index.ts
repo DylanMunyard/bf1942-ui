@@ -298,7 +298,7 @@ const routes: RouteRecordRaw[] = [
       }
     },
     {
-      path: '/tournaments/:id',
+      path: '/t/:id',
       name: 'public-tournament',
       component: PublicTournament,
       props: true,
@@ -308,7 +308,7 @@ const routes: RouteRecordRaw[] = [
       }
     },
     {
-      path: '/tournaments/:id/rankings',
+      path: '/t/:id/rankings',
       name: 'public-tournament-rankings',
       component: PublicTournamentRankings,
       props: true,
@@ -318,7 +318,7 @@ const routes: RouteRecordRaw[] = [
       }
     },
     {
-      path: '/tournaments/:id/rules',
+      path: '/t/:id/rules',
       name: 'public-tournament-rules',
       component: PublicTournamentRules,
       props: true,
@@ -328,7 +328,7 @@ const routes: RouteRecordRaw[] = [
       }
     },
     {
-      path: '/tournaments/:id/teams',
+      path: '/t/:id/teams',
       name: 'public-tournament-teams',
       component: PublicTournamentTeams,
       props: true,
@@ -338,7 +338,7 @@ const routes: RouteRecordRaw[] = [
       }
     },
     {
-      path: '/tournaments/:id/matches',
+      path: '/t/:id/matches',
       name: 'public-tournament-matches',
       component: PublicTournamentMatches,
       props: true,
@@ -348,7 +348,7 @@ const routes: RouteRecordRaw[] = [
       }
     },
     {
-      path: '/tournaments/:id/stats',
+      path: '/t/:id/stats',
       name: 'public-tournament-stats',
       component: PublicTournamentStats,
       props: true,
@@ -358,7 +358,7 @@ const routes: RouteRecordRaw[] = [
       }
     },
     {
-      path: '/tournaments/:id/files',
+      path: '/t/:id/files',
       name: 'public-tournament-files',
       component: PublicTournamentFiles,
       props: true,
@@ -366,6 +366,15 @@ const routes: RouteRecordRaw[] = [
         title: (route: RouteLocationNormalized) => `Files - Tournament ${route.params.id} - BF Stats`,
         description: 'Tournament files, maps, and resources.'
       }
+    },
+    // Legacy route redirects for backwards compatibility
+    {
+      path: '/tournaments/:id',
+      redirect: to => `/t/${to.params.id}`
+    },
+    {
+      path: '/tournaments/:id/:subpage',
+      redirect: to => `/t/${to.params.id}/${to.params.subpage}`
     },
     {
       path: '/admin/tournaments/:id',

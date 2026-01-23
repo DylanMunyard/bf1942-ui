@@ -16,4 +16,5 @@ Disallow: /*.json$
 # Allow important pages
 Allow: /servers/
 Allow: /players/
+Allow: /t/
 Allow: /tournaments/

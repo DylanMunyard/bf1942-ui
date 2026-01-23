@@ -121,7 +121,7 @@
                 </button>
                 <button
                   class="px-4 py-2 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white rounded-lg transition-all flex items-center gap-2 font-medium"
-                  @click="router.push(`/tournaments/${tournament.id}`)"
+                  @click="router.push(`/t/${tournament.slug || tournament.id}`)"
                   title="View public tournament page"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

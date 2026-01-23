@@ -134,7 +134,7 @@
 
             <!-- CTA Button -->
             <router-link
-              :to="`/tournaments/${tournamentId}/teams`"
+              :to="`/t/${tournamentId}/teams`"
               class="flex-shrink-0 px-6 py-3 rounded-lg font-semibold transition-all hover:opacity-90"
               :style="{
                 backgroundColor: getAccentColor(),
@@ -181,7 +181,7 @@
           </div>
           <div v-else class="text-5xl mb-4 opacity-50">⚡</div>
           <h3 class="text-xl font-semibold mb-2" :style="{ color: getTextColor() }">No Completed Matches Yet</h3>
-          <p :style="{ color: getTextMutedColor() }">Check back soon as matches are completed. Visit the <router-link :to="`/tournaments/${tournamentId}/matches`" class="underline hover:opacity-80 transition-opacity" :style="{ color: getAccentColor() }">Matches page</router-link> to see the full schedule.</p>
+          <p :style="{ color: getTextMutedColor() }">Check back soon as matches are completed. Visit the <router-link :to="`/t/${tournamentId}/matches`" class="underline hover:opacity-80 transition-opacity" :style="{ color: getAccentColor() }">Matches page</router-link> to see the full schedule.</p>
         </div>
 
         <!-- Tournament Rankings Table Component -->

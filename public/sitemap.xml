@@ -38,8 +38,9 @@
   </url>
 
   <!-- Tournaments Pages -->
-  <!-- Note: Individual tournament pages (/tournaments/:id) should be generated dynamically
-       from the tournament API and added to this sitemap via a backend service -->
+  <!-- Note: Individual tournament pages (/t/:id) should be generated dynamically
+       from the tournament API and added to this sitemap via a backend service.
+       Legacy /tournaments/:id URLs redirect to /t/:id for backwards compatibility -->
 
   <!-- Round Report Pages -->
   <!-- Note: Round report pages (/rounds/:id/report) are excluded from indexing via robots meta tag

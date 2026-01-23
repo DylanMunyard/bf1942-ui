@@ -186,6 +186,23 @@ Winners choose first map for next round.</code>
           </div>
         </div>
 
+        <!-- URL Slug -->
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">
+            URL Slug <span class="text-slate-500">(Optional)</span>
+          </label>
+          <input
+            v-model="formData.slug"
+            type="text"
+            placeholder="e.g., summer-league-2024"
+            class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+            @input="onSlugInput"
+          >
+          <p class="mt-1 text-xs text-slate-500">
+            A short, memorable identifier for URLs. Use lowercase letters, numbers, and hyphens only. Leave blank to use the tournament ID.
+          </p>
+        </div>
+
         <!-- Organizer (with player search) -->
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -1287,7 +1304,7 @@ Winners choose first map for next round.</code>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { marked } from 'marked';
 import { adminTournamentService, type CreateTournamentRequest, type TournamentDetail, ValidationError } from '@/services/adminTournamentService';
 import { isValidHex } from '@/utils/colorUtils';
@@ -1328,6 +1345,7 @@ const editMode = ref(!!props.tournament);
 
 const formData = ref({
   name: '',
+  slug: '',
   organizer: '',
   game: 'bf1942' as 'bf1942' | 'fh2' | 'bfvietnam',
   anticipatedRoundCount: undefined as number | undefined,
@@ -1351,6 +1369,32 @@ const formData = ref({
 
 const loading = ref(false);
 const error = ref<string | { message: string; validationErrors: Record<string, string[]> } | null>(null);
+
+// Track if user has manually edited the slug
+const slugManuallyEdited = ref(false);
+
+// Generate slug from tournament name
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// Watch for name changes and auto-populate slug (only in create mode and if not manually edited)
+watch(() => formData.value.name, (newName) => {
+  if (!editMode.value && !slugManuallyEdited.value) {
+    formData.value.slug = generateSlug(newName);
+  }
+});
+
+// Track manual slug edits
+function onSlugInput() {
+  slugManuallyEdited.value = true;
+}
 
 // Panel collapse states
 const expandedPanels = ref({
@@ -1487,6 +1531,7 @@ onMounted(() => {
     // Edit mode - populate form
     formData.value = {
       name: props.tournament.name,
+      slug: props.tournament.slug || '',
       organizer: props.tournament.organizer,
       game: props.tournament.game,
       anticipatedRoundCount: props.tournament.anticipatedRoundCount,
@@ -2004,6 +2049,10 @@ const handleSubmit = async () => {
 
     if (formData.value.serverGuid) {
       request.serverGuid = formData.value.serverGuid;
+    }
+
+    if (formData.value.slug?.trim()) {
+      request.slug = formData.value.slug.trim();
     }
 
     if (formData.value.discordUrl?.trim()) {
