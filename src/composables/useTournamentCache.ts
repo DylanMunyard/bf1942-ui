@@ -105,26 +105,44 @@ export function useTournamentCache() {
         const data = await publicTournamentService.getTournamentDetail(tournamentId)
         tournament.value = data
 
-        // Load images asynchronously (in parallel)
-        const [heroUrl, logoUrl] = await Promise.all([
-          data.hasHeroImage ? loadHeroImage(tournamentId) : Promise.resolve(null),
-          data.hasCommunityLogo ? loadLogoImage(tournamentId) : Promise.resolve(null),
-        ])
+        // Set loading to false immediately - page can render with tournament data
+        loading.value = false
 
-        heroImageUrl.value = heroUrl
-        logoImageUrl.value = logoUrl
+        // Load images asynchronously without blocking the page render
+        // Images will appear when they're ready
+        const loadImagesAsync = async () => {
+          const [heroUrl, logoUrl] = await Promise.all([
+            data.hasHeroImage ? loadHeroImage(tournamentId) : Promise.resolve(null),
+            data.hasCommunityLogo ? loadLogoImage(tournamentId) : Promise.resolve(null),
+          ])
 
-        // Cache the results
+          heroImageUrl.value = heroUrl
+          logoImageUrl.value = logoUrl
+
+          // Cache the results including images
+          setCachedTournament(tournamentId, {
+            data,
+            heroImageUrl: heroUrl,
+            logoImageUrl: logoUrl,
+            loadedAt: Date.now(),
+          })
+        }
+
+        // Fire and forget - don't await
+        loadImagesAsync().catch(err => {
+          console.debug('Failed to load tournament images:', err)
+        })
+
+        // Cache tournament data immediately (images will be updated when loaded)
         setCachedTournament(tournamentId, {
           data,
-          heroImageUrl: heroUrl,
-          logoImageUrl: logoUrl,
+          heroImageUrl: null,
+          logoImageUrl: null,
           loadedAt: Date.now(),
         })
       } catch (err) {
         console.error('Error loading tournament:', err)
         error.value = err instanceof Error ? err.message : 'Failed to load tournament'
-      } finally {
         loading.value = false
       }
 

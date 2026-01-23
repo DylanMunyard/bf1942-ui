@@ -1,19 +1,23 @@
 <template>
   <div class="relative overflow-hidden" :style="{ background: '#1a1a1a' }">
     <!-- Background Hero Image -->
-    <div v-if="heroImageUrl" class="absolute inset-0 z-0">
-      <img
-        :src="heroImageUrl"
-        :alt="tournament.name"
-        class="w-full h-full object-cover opacity-30"
-      >
-      <div
-        :style="{
-          background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7))',
-        }"
-        class="absolute inset-0"
-      />
-    </div>
+    <Transition name="fade">
+      <div v-if="heroImageUrl" class="absolute inset-0 z-0">
+        <img
+          :src="heroImageUrl"
+          :alt="tournament.name"
+          class="w-full h-full object-cover opacity-30"
+          loading="lazy"
+          decoding="async"
+        >
+        <div
+          :style="{
+            background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7))',
+          }"
+          class="absolute inset-0"
+        />
+      </div>
+    </Transition>
 
     <!-- Decorative Elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -33,9 +37,11 @@
         </h1>
 
         <!-- Community Logo Display (below tournament name) -->
-        <div v-if="logoImageUrl" class="mb-2 flex justify-center">
-          <img :src="logoImageUrl" alt="Community logo" class="max-h-32 object-contain">
-        </div>
+        <Transition name="fade">
+          <div v-if="logoImageUrl" class="mb-2 flex justify-center">
+            <img :src="logoImageUrl" alt="Community logo" class="max-h-32 object-contain" loading="lazy" decoding="async">
+          </div>
+        </Transition>
 
         <!-- Organizer Name Display -->
         <div v-if="tournament.organizer" class="mb-2 text-center">
@@ -339,5 +345,14 @@ const getButtonStyles = (page: string): Record<string, string> => {
     padding: 0.6rem 1rem;
     font-size: 0.875rem;
   }
+}
+
+/* Fade transition for async-loaded images */
+.fade-enter-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
 }
 </style>

@@ -177,7 +177,7 @@
         <!-- Latest Matches Empty State -->
         <div v-else class="backdrop-blur-sm border-2 rounded-xl overflow-hidden p-8 text-center" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
           <div v-if="logoImageUrl" class="mb-6 flex justify-center">
-            <img :src="logoImageUrl" alt="Community logo" class="max-h-32 object-contain opacity-70">
+            <img :src="logoImageUrl" alt="Community logo" class="max-h-32 object-contain opacity-70" loading="lazy" decoding="async">
           </div>
           <div v-else class="text-5xl mb-4 opacity-50">⚡</div>
           <h3 class="text-xl font-semibold mb-2" :style="{ color: getTextColor() }">No Completed Matches Yet</h3>
