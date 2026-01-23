@@ -120,6 +120,15 @@ export function usePublicTournamentPage() {
       tournament.value = cachedTournament.value
       heroImageUrl.value = cachedHeroUrl.value
       logoImageUrl.value = cachedLogoUrl.value
+
+      // Watch for async image loads - images load in background after page renders
+      watch(cachedHeroUrl, (newUrl) => {
+        if (newUrl) heroImageUrl.value = newUrl
+      }, { immediate: true })
+
+      watch(cachedLogoUrl, (newUrl) => {
+        if (newUrl) logoImageUrl.value = newUrl
+      }, { immediate: true })
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to load tournament'
     } finally {
