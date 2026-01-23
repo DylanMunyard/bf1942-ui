@@ -85,7 +85,7 @@
                   <button
                     class="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:scale-105"
                     :style="{ backgroundColor: getAccentColor(), color: getAccentTextColor }"
-                    @click="showManageTeamModal = true"
+                    @click="openManageTeamModal(registrationStatus!.teamMembership!.teamId)"
                   >
                     Manage Team
                   </button>
@@ -324,7 +324,7 @@
                     {{ team.name }}
                   </h3>
                   <button
-                    v-if="isUserTeam(team.id)"
+                    v-if="canManageTeam(team.id)"
                     class="text-sm font-medium opacity-75 hover:opacity-100 transition-opacity"
                     :style="{ color: getAccentColor() }"
                     @click="openManageTeamModal(team.id)"
@@ -420,8 +420,9 @@
 
     <!-- Modals -->
     <CreateTeamModal
+      v-if="tournament?.id"
       :is-visible="showCreateTeamModal"
-      :tournament-id="parseInt(tournamentId)"
+      :tournament-id="tournament.id"
       :registration-rules="tournament?.registrationRules"
       :accent-color="getAccentColor()"
       @close="showCreateTeamModal = false"
@@ -429,8 +430,9 @@
     />
 
     <JoinTeamModal
+      v-if="tournament?.id"
       :is-visible="showJoinTeamModal"
-      :tournament-id="parseInt(tournamentId)"
+      :tournament-id="tournament.id"
       :registration-rules="tournament?.registrationRules"
       :accent-color="getAccentColor()"
       @close="showJoinTeamModal = false"
@@ -440,24 +442,26 @@
     <!-- Team Management Modal -->
     <Teleport to="body">
       <div
-        v-if="showManageTeamModal && registrationStatus?.teamMembership"
+        v-if="showManageTeamModal && managingTeamId"
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
       >
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="showManageTeamModal = false" />
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="closeManageTeamModal" />
         <div class="relative w-full max-w-2xl">
           <button
             class="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
-            @click="showManageTeamModal = false"
+            @click="closeManageTeamModal"
           >
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
           <TeamManagementPanel
-            :tournament-id="parseInt(tournamentId)"
-            :team-id="registrationStatus.teamMembership.teamId"
-            :is-leader="registrationStatus.teamMembership.isLeader"
-            :membership-status="registrationStatus.teamMembership.membershipStatus"
+            v-if="tournament?.id"
+            :tournament-id="tournament.id"
+            :team-id="managingTeamId"
+            :is-leader="isManagingOwnTeamAsLeader"
+            :is-admin="registrationStatus?.isTournamentAdmin ?? false"
+            :membership-status="isManagingOwnTeam ? registrationStatus?.teamMembership?.membershipStatus : undefined"
             :accent-color="getAccentColor()"
             :text-color="getTextColor()"
             :text-muted-color="getTextMutedColor()"
@@ -530,6 +534,7 @@ const registrationStatusError = ref(false)
 const showCreateTeamModal = ref(false)
 const showJoinTeamModal = ref(false)
 const showManageTeamModal = ref(false)
+const managingTeamId = ref<number | null>(null) // For admins managing any team
 
 // Team details for leaders (to show pending members)
 const leaderTeamDetails = ref<{ players: { playerName: string; isLeader: boolean; membershipStatus?: MembershipStatus | null }[] } | null>(null)
@@ -600,23 +605,44 @@ const isUserTeam = (teamId: number) => {
   return registrationStatus.value?.teamMembership?.teamId === teamId
 }
 
-const openManageTeamModal = (_teamId: number) => {
+// Can the user manage this team? Either it's their team or they're a tournament admin
+const canManageTeam = (teamId: number) => {
+  return isUserTeam(teamId) || registrationStatus.value?.isTournamentAdmin
+}
+
+const openManageTeamModal = (teamId: number) => {
+  managingTeamId.value = teamId
   showManageTeamModal.value = true
 }
 
+const closeManageTeamModal = () => {
+  showManageTeamModal.value = false
+  managingTeamId.value = null
+}
+
+// Is the user managing their own team?
+const isManagingOwnTeam = computed(() => {
+  return managingTeamId.value === registrationStatus.value?.teamMembership?.teamId
+})
+
+// Is the user managing their own team AND they are the leader?
+const isManagingOwnTeamAsLeader = computed(() => {
+  return isManagingOwnTeam.value && (registrationStatus.value?.teamMembership?.isLeader ?? false)
+})
+
 const loadRegistrationStatus = async () => {
-  if (!isAuthenticated.value || !tournamentId.value) return
+  if (!isAuthenticated.value || !tournament.value?.id) return
 
   registrationStatusError.value = false
   leaderTeamDetails.value = null
-  
+
   try {
-    registrationStatus.value = await teamRegistrationService.getRegistrationStatus(parseInt(tournamentId.value))
-    
+    registrationStatus.value = await teamRegistrationService.getRegistrationStatus(tournament.value.id)
+
     // If user is a team leader, also fetch team details to get pending members
     if (registrationStatus.value?.teamMembership?.isLeader) {
       try {
-        const details = await teamRegistrationService.getTeamDetails(parseInt(tournamentId.value))
+        const details = await teamRegistrationService.getTeamDetails(tournament.value.id)
         leaderTeamDetails.value = details
       } catch {
         // Silently fail - leader just won't see pending members in the list
@@ -680,7 +706,7 @@ const getRecruitmentDotColor = (status: TeamRecruitmentStatus) => {
 const handleTeamCreated = async () => {
   showCreateTeamModal.value = false
   // Clear tournament cache to ensure fresh data is loaded
-  clearCache(parseInt(tournamentId.value))
+  clearCache(tournamentId.value)
   await loadRegistrationStatus()
   await loadTournament()
 }
@@ -688,7 +714,7 @@ const handleTeamCreated = async () => {
 const handleTeamJoined = async (_teamId: number, teamName: string, isPending: boolean) => {
   showJoinTeamModal.value = false
   // Clear tournament cache to ensure fresh data is loaded
-  clearCache(parseInt(tournamentId.value))
+  clearCache(tournamentId.value)
   await loadRegistrationStatus()
   await loadTournament()
 
@@ -705,23 +731,23 @@ const handleTeamJoined = async (_teamId: number, teamName: string, isPending: bo
 
 const handleTeamUpdated = async () => {
   // Clear tournament cache to ensure fresh data is loaded
-  clearCache(parseInt(tournamentId.value))
+  clearCache(tournamentId.value)
   await loadRegistrationStatus() // Reload team details for leaders to refresh pending members
   await loadTournament()
 }
 
 const handleLeftTeam = async () => {
-  showManageTeamModal.value = false
+  closeManageTeamModal()
   // Clear tournament cache to ensure fresh data is loaded
-  clearCache(parseInt(tournamentId.value))
+  clearCache(tournamentId.value)
   await loadRegistrationStatus()
   await loadTournament()
 }
 
 const handleDeletedTeam = async () => {
-  showManageTeamModal.value = false
+  closeManageTeamModal()
   // Clear tournament cache to ensure fresh data is loaded
-  clearCache(parseInt(tournamentId.value))
+  clearCache(tournamentId.value)
   await loadRegistrationStatus()
   await loadTournament()
 }
@@ -797,6 +823,16 @@ watch(
   () => tournamentId.value,
   () => {
     if (isAuthenticated.value) {
+      loadRegistrationStatus()
+    }
+  }
+)
+
+// Load registration status when tournament data becomes available
+watch(
+  () => tournament.value?.id,
+  (newId) => {
+    if (newId && isAuthenticated.value) {
       loadRegistrationStatus()
     }
   }

@@ -110,7 +110,7 @@ export function usePublicTournamentPage() {
       loading.value = true
       error.value = null
 
-      const { tournament: cachedTournament, heroImageUrl: cachedHeroUrl, logoImageUrl: cachedLogoUrl, error: cacheError } = await useTournament(parseInt(tournamentId.value))
+      const { tournament: cachedTournament, heroImageUrl: cachedHeroUrl, logoImageUrl: cachedLogoUrl, error: cacheError } = await useTournament(tournamentId.value)
 
       if (cacheError.value) {
         error.value = cacheError.value

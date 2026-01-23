@@ -83,6 +83,7 @@ export interface RegistrationStatusResponse {
   isRegistrationOpen: boolean;
   linkedPlayerNames: string[];
   teamMembership?: TeamMembershipInfo;
+  isTournamentAdmin?: boolean;
 }
 
 export interface TeamMembershipInfo {
@@ -187,20 +188,19 @@ class TeamRegistrationService {
     }
   }
 
-  async getTeamDetails(tournamentId: number): Promise<TeamDetailsResponse> {
-    const response = await apiClient.get(
-      `${this.baseUrl}/${tournamentId}/my-team`,
-      { requiresAuth: true }
-    );
+  async getTeamDetails(tournamentId: number, teamId?: number): Promise<TeamDetailsResponse> {
+    const url = teamId 
+      ? `${this.baseUrl}/${tournamentId}/my-team?teamId=${teamId}`
+      : `${this.baseUrl}/${tournamentId}/my-team`;
+    const response = await apiClient.get(url, { requiresAuth: true });
     return this.handleResponse<TeamDetailsResponse>(response);
   }
 
-  async updateTeam(tournamentId: number, request: UpdateTeamRequest): Promise<void> {
-    const response = await apiClient.put(
-      `${this.baseUrl}/${tournamentId}/my-team`,
-      request,
-      { requiresAuth: true }
-    );
+  async updateTeam(tournamentId: number, request: UpdateTeamRequest, teamId?: number): Promise<void> {
+    const url = teamId
+      ? `${this.baseUrl}/${tournamentId}/my-team?teamId=${teamId}`
+      : `${this.baseUrl}/${tournamentId}/my-team`;
+    const response = await apiClient.put(url, request, { requiresAuth: true });
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
@@ -215,12 +215,11 @@ class TeamRegistrationService {
     }
   }
 
-  async addPlayer(tournamentId: number, request: AddPlayerRequest): Promise<void> {
-    const response = await apiClient.post(
-      `${this.baseUrl}/${tournamentId}/my-team/players`,
-      request,
-      { requiresAuth: true }
-    );
+  async addPlayer(tournamentId: number, request: AddPlayerRequest, teamId?: number): Promise<void> {
+    const url = teamId
+      ? `${this.baseUrl}/${tournamentId}/my-team/players?teamId=${teamId}`
+      : `${this.baseUrl}/${tournamentId}/my-team/players`;
+    const response = await apiClient.post(url, request, { requiresAuth: true });
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
@@ -235,11 +234,11 @@ class TeamRegistrationService {
     }
   }
 
-  async removePlayer(tournamentId: number, playerName: string): Promise<void> {
-    const response = await apiClient.delete(
-      `${this.baseUrl}/${tournamentId}/my-team/players/${encodeURIComponent(playerName)}`,
-      { requiresAuth: true }
-    );
+  async removePlayer(tournamentId: number, playerName: string, teamId?: number): Promise<void> {
+    const url = teamId
+      ? `${this.baseUrl}/${tournamentId}/my-team/players/${encodeURIComponent(playerName)}?teamId=${teamId}`
+      : `${this.baseUrl}/${tournamentId}/my-team/players/${encodeURIComponent(playerName)}`;
+    const response = await apiClient.delete(url, { requiresAuth: true });
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
@@ -254,12 +253,11 @@ class TeamRegistrationService {
     }
   }
 
-  async approveMember(tournamentId: number, playerName: string): Promise<void> {
-    const response = await apiClient.post(
-      `${this.baseUrl}/${tournamentId}/my-team/players/${encodeURIComponent(playerName)}/approve`,
-      {},
-      { requiresAuth: true }
-    );
+  async approveMember(tournamentId: number, playerName: string, teamId?: number): Promise<void> {
+    const url = teamId
+      ? `${this.baseUrl}/${tournamentId}/my-team/players/${encodeURIComponent(playerName)}/approve?teamId=${teamId}`
+      : `${this.baseUrl}/${tournamentId}/my-team/players/${encodeURIComponent(playerName)}/approve`;
+    const response = await apiClient.post(url, {}, { requiresAuth: true });
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
@@ -293,11 +291,11 @@ class TeamRegistrationService {
     }
   }
 
-  async deleteTeam(tournamentId: number): Promise<void> {
-    const response = await apiClient.delete(
-      `${this.baseUrl}/${tournamentId}/my-team`,
-      { requiresAuth: true }
-    );
+  async deleteTeam(tournamentId: number, teamId?: number): Promise<void> {
+    const url = teamId
+      ? `${this.baseUrl}/${tournamentId}/my-team?teamId=${teamId}`
+      : `${this.baseUrl}/${tournamentId}/my-team`;
+    const response = await apiClient.delete(url, { requiresAuth: true });
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
@@ -312,12 +310,11 @@ class TeamRegistrationService {
     }
   }
 
-  async updateRecruitmentStatus(tournamentId: number, recruitmentStatus: TeamRecruitmentStatus): Promise<void> {
-    const response = await apiClient.put(
-      `${this.baseUrl}/${tournamentId}/my-team/recruitment-status`,
-      { recruitmentStatus },
-      { requiresAuth: true }
-    );
+  async updateRecruitmentStatus(tournamentId: number, recruitmentStatus: TeamRecruitmentStatus, teamId?: number): Promise<void> {
+    const url = teamId
+      ? `${this.baseUrl}/${tournamentId}/my-team/recruitment-status?teamId=${teamId}`
+      : `${this.baseUrl}/${tournamentId}/my-team/recruitment-status`;
+    const response = await apiClient.put(url, { recruitmentStatus }, { requiresAuth: true });
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {

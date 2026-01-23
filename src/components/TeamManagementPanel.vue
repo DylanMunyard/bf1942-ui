@@ -32,19 +32,20 @@
           <span v-if="teamDetails?.tag" class="text-sm font-normal opacity-75 ml-2">{{ teamDetails.tag }}</span>
         </h3>
         <p class="text-sm mt-1" :style="{ color: textMutedColor }">
-          <span v-if="isLeader">Team Leader</span>
+          <span v-if="isAdmin && !isLeader" class="text-cyan-400">Tournament Admin</span>
+          <span v-else-if="isLeader">Team Leader</span>
           <span v-else-if="props.membershipStatus === MembershipStatus.Pending" class="text-amber-400">Pending Approval</span>
           <span v-else>Team Member</span>
           &middot; {{ approvedPlayers.length }} player{{ approvedPlayers.length !== 1 ? 's' : '' }}
-          <span v-if="isLeader && pendingPlayers.length > 0" class="ml-2 text-amber-400">
+          <span v-if="canPerformLeaderActions && pendingPlayers.length > 0" class="ml-2 text-amber-400">
             &middot; {{ pendingPlayers.length }} pending
           </span>
         </p>
       </div>
     </div>
 
-    <!-- Recruitment Status Selector (Leader Only) -->
-    <div v-if="isLeader" class="px-6 py-4 border-b-2" :style="{ borderColor: accentColor + '44' }">
+    <!-- Recruitment Status Selector (Leader or Admin) -->
+    <div v-if="canPerformLeaderActions" class="px-6 py-4 border-b-2" :style="{ borderColor: accentColor + '44' }">
       <div class="mb-2 flex items-center gap-2">
         <h4 class="text-sm font-semibold" :style="{ color: textColor }">Recruitment Status</h4>
         <span 
@@ -78,8 +79,8 @@
       <div v-if="recruitmentStatusError" class="text-red-400 text-sm mt-2">{{ recruitmentStatusError }}</div>
     </div>
 
-    <!-- Add Player Form (Leader Only) -->
-    <div v-if="isLeader" class="px-6 py-4 border-b-2" :style="{ borderColor: accentColor + '44' }">
+    <!-- Add Player Form (Leader or Admin) -->
+    <div v-if="canPerformLeaderActions" class="px-6 py-4 border-b-2" :style="{ borderColor: accentColor + '44' }">
       <MultiPlayerSelector
         :current-players="teamDetails?.players?.map(p => p.playerName) || []"
         :loading="isAddingPlayer"
@@ -97,8 +98,8 @@
       <div v-if="addPlayerError" class="text-red-400 text-sm mt-2">{{ addPlayerError }}</div>
     </div>
 
-    <!-- Pending Approvals Section (Leader Only) -->
-    <div v-if="isLeader && pendingPlayers.length > 0" class="px-6 py-4 border-b-2" :style="{ borderColor: accentColor + '44' }">
+    <!-- Pending Approvals Section (Leader or Admin) -->
+    <div v-if="canPerformLeaderActions && pendingPlayers.length > 0" class="px-6 py-4 border-b-2" :style="{ borderColor: accentColor + '44' }">
       <h4 class="text-sm font-semibold mb-3 flex items-center gap-2" :style="{ color: textColor }">
         <span class="w-2 h-2 rounded-full bg-amber-400"></span>
         Pending Approvals ({{ pendingPlayers.length }})
@@ -203,7 +204,7 @@
             </div>
           </div>
           <button
-            v-if="isLeader && !player.isLeader"
+            v-if="canPerformLeaderActions && !player.isLeader"
             class="p-2 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors"
             title="Remove player"
             :disabled="isRemovingPlayer === player.playerName"
@@ -225,8 +226,8 @@
       </div>
     </div>
 
-    <!-- Leave Team (Non-Leaders) -->
-    <div v-if="!isLeader" class="px-6 py-4 border-t-2" :style="{ borderColor: accentColor + '44' }">
+    <!-- Leave Team (Non-Leaders who are actually on this team) -->
+    <div v-if="!isLeader && !isAdmin && props.membershipStatus !== undefined" class="px-6 py-4 border-t-2" :style="{ borderColor: accentColor + '44' }">
       <!-- Warning Message (shown when confirming) -->
       <div v-if="leaveState === 'confirming'" class="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg animate-fade-in">
         <div class="flex items-start gap-3">
@@ -272,8 +273,8 @@
       <div v-if="leaveError && leaveState !== 'error'" class="text-red-400 text-sm mt-2 text-center">{{ leaveError }}</div>
     </div>
 
-    <!-- Delete Team (Leaders Only) -->
-    <div v-if="isLeader" class="px-6 py-4 border-t-2" :style="{ borderColor: accentColor + '44' }">
+    <!-- Delete Team (Leaders or Admins) -->
+    <div v-if="canPerformLeaderActions" class="px-6 py-4 border-t-2" :style="{ borderColor: accentColor + '44' }">
       <!-- Warning Message (shown when confirming) -->
       <div v-if="deleteState === 'confirming'" class="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg animate-fade-in">
         <div class="flex items-start gap-3">
@@ -329,6 +330,7 @@ interface Props {
   tournamentId: number;
   teamId: number;
   isLeader: boolean;
+  isAdmin?: boolean; // Tournament admin (can manage any team)
   membershipStatus?: MembershipStatus | null;
   accentColor?: string;
   textColor?: string;
@@ -338,12 +340,19 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  isAdmin: false,
   accentColor: '#06b6d4',
   textColor: '#FFFFFF',
   textMutedColor: '#9ca3af',
   backgroundColor: '#1a1a1a',
   backgroundMuteColor: '#2d2d2d',
 });
+
+// Can perform leader actions (is leader OR is tournament admin)
+const canPerformLeaderActions = computed(() => props.isLeader || props.isAdmin);
+
+// Get teamId to pass to service calls (needed for admin managing other teams)
+const getTeamIdForService = () => props.isAdmin && !props.isLeader ? props.teamId : undefined;
 
 const emit = defineEmits<{
   teamUpdated: [];
@@ -410,7 +419,7 @@ const loadTeamDetails = async () => {
   isLoading.value = true;
   loadError.value = '';
   try {
-    teamDetails.value = await teamRegistrationService.getTeamDetails(props.tournamentId);
+    teamDetails.value = await teamRegistrationService.getTeamDetails(props.tournamentId, getTeamIdForService());
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : 'Failed to load team details';
   } finally {
@@ -484,7 +493,7 @@ const handleUpdateRecruitmentStatus = async (status: TeamRecruitmentStatus) => {
   recruitmentStatusError.value = '';
   
   try {
-    await teamRegistrationService.updateRecruitmentStatus(props.tournamentId, status);
+    await teamRegistrationService.updateRecruitmentStatus(props.tournamentId, status, getTeamIdForService());
     await loadTeamDetails();
     emit('teamUpdated');
   } catch (error) {
@@ -502,7 +511,7 @@ const handleAddMultiplePlayers = async (players: string[]) => {
   try {
     // Add players one by one (could be optimized to batch API calls if available)
     const addPromises = players.map(playerName =>
-      teamRegistrationService.addPlayer(props.tournamentId, { playerName: playerName.trim() })
+      teamRegistrationService.addPlayer(props.tournamentId, { playerName: playerName.trim() }, getTeamIdForService())
     );
 
     await Promise.all(addPromises);
@@ -532,7 +541,7 @@ const handleClearAllPlayers = async () => {
   try {
     // Remove all players
     const removePromises = teamDetails.value.players.map(player =>
-      teamRegistrationService.removePlayer(props.tournamentId, player.playerName)
+      teamRegistrationService.removePlayer(props.tournamentId, player.playerName, getTeamIdForService())
     );
 
     await Promise.all(removePromises);
@@ -550,7 +559,7 @@ const handleRemovePlayer = async (playerName: string) => {
   isRemovingPlayer.value = playerName;
 
   try {
-    await teamRegistrationService.removePlayer(props.tournamentId, playerName);
+    await teamRegistrationService.removePlayer(props.tournamentId, playerName, getTeamIdForService());
     await loadTeamDetails();
     emit('teamUpdated');
   } catch (error) {
@@ -567,7 +576,7 @@ const handleApproveMember = async (playerName: string) => {
   isApprovingMember.value = playerName;
 
   try {
-    await teamRegistrationService.approveMember(props.tournamentId, playerName);
+    await teamRegistrationService.approveMember(props.tournamentId, playerName, getTeamIdForService());
     await loadTeamDetails();
     emit('teamUpdated');
   } catch (error) {
@@ -667,7 +676,7 @@ const handleDeleteTeam = async () => {
     deleteError.value = '';
 
     try {
-      await teamRegistrationService.deleteTeam(props.tournamentId);
+      await teamRegistrationService.deleteTeam(props.tournamentId, getTeamIdForService());
       emit('deletedTeam');
     } catch (error) {
       deleteError.value = error instanceof Error ? error.message : 'Failed to delete team';
@@ -679,7 +688,7 @@ const handleDeleteTeam = async () => {
     deleteError.value = '';
 
     try {
-      await teamRegistrationService.deleteTeam(props.tournamentId);
+      await teamRegistrationService.deleteTeam(props.tournamentId, getTeamIdForService());
       emit('deletedTeam');
     } catch (error) {
       deleteError.value = error instanceof Error ? error.message : 'Failed to delete team';

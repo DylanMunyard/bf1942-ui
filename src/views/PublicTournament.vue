@@ -255,7 +255,7 @@ const expandedMaps = ref<Set<string>>(new Set());
 const leaderboard = ref<PublicTournamentLeaderboard | null>(null);
 const selectedWeekForLeaderboard = ref<string | null>(null);
 
-const tournamentId = parseInt(route.params.id as string);
+const tournamentId = route.params.id as string;
 
 // Helper function to get themed accent color
 const getThemedAccentColor = (): string => {

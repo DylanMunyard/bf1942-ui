@@ -183,8 +183,8 @@ export interface PublicTournamentDetail {
 class PublicTournamentService {
   private baseUrl = '/stats/tournaments';
 
-  async getTournamentDetail(id: number): Promise<PublicTournamentDetail> {
-    const response = await fetch(`${this.baseUrl}/${id}`);
+  async getTournamentDetail(idOrName: number | string): Promise<PublicTournamentDetail> {
+    const response = await fetch(`${this.baseUrl}/${encodeURIComponent(idOrName)}`);
 
     if (!response.ok) {
       // Try to get error message from response
@@ -204,12 +204,12 @@ class PublicTournamentService {
     return data;
   }
 
-  // Get tournament hero image URL
+  // Get tournament hero image URL (requires numeric ID)
   getTournamentImageUrl(id: number): string {
     return `${this.baseUrl}/${id}/image`;
   }
 
-  // Get tournament community logo URL
+  // Get tournament community logo URL (requires numeric ID)
   getTournamentLogoUrl(id: number): string {
     return `${this.baseUrl}/${id}/logo`;
   }
