@@ -7,6 +7,12 @@ export enum TeamRecruitmentStatus {
   LookingForBTeam = 2
 }
 
+// Membership status enum (matches backend)
+export enum MembershipStatus {
+  Pending = 0,
+  Approved = 1
+}
+
 // Helper to get display text for recruitment status
 export const getRecruitmentStatusText = (status: TeamRecruitmentStatus): string => {
   switch (status) {
@@ -86,6 +92,7 @@ export interface TeamMembershipInfo {
   isLeader: boolean;
   playerName: string;
   joinedAt: string;
+  membershipStatus?: MembershipStatus | null;
 }
 
 export interface TeamDetailsResponse {
@@ -103,6 +110,7 @@ export interface TeamPlayerInfo {
   rulesAcknowledged: boolean;
   joinedAt: string;
   userId?: number;
+  membershipStatus?: MembershipStatus | null;
 }
 
 export interface AvailableTeam {
@@ -230,6 +238,26 @@ class TeamRegistrationService {
   async removePlayer(tournamentId: number, playerName: string): Promise<void> {
     const response = await apiClient.delete(
       `${this.baseUrl}/${tournamentId}/my-team/players/${encodeURIComponent(playerName)}`,
+      { requiresAuth: true }
+    );
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch {
+        // Ignore JSON parsing errors
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
+  async approveMember(tournamentId: number, playerName: string): Promise<void> {
+    const response = await apiClient.post(
+      `${this.baseUrl}/${tournamentId}/my-team/players/${encodeURIComponent(playerName)}/approve`,
+      {},
       { requiresAuth: true }
     );
     if (!response.ok) {

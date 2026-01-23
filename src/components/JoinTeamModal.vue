@@ -284,7 +284,7 @@ const accentTextColor = computed(() => {
 
 const emit = defineEmits<{
   close: [];
-  success: [teamId: number, teamName: string];
+  success: [teamId: number, teamName: string, isPending: boolean];
 }>();
 
 // Loading state
@@ -473,7 +473,9 @@ const handleSubmit = async () => {
     await teamRegistrationService.joinTeam(props.tournamentId, selectedTeamId.value, request);
 
     const joinedTeam = availableTeams.value.find(t => t.id === selectedTeamId.value);
-    emit('success', selectedTeamId.value, joinedTeam?.name || 'Team');
+    // Team has a leader means join request is pending approval
+    const isPending = !!joinedTeam?.leaderPlayerName;
+    emit('success', selectedTeamId.value, joinedTeam?.name || 'Team', isPending);
     resetForm();
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Failed to join team';

@@ -63,6 +63,12 @@
                     <p class="text-sm" :style="{ color: getTextMutedColor() }">
                       Playing for <span class="font-semibold" :style="{ color: getAccentColor() }">{{ registrationStatus.teamMembership.teamName }}</span>
                       <span v-if="registrationStatus.teamMembership.isLeader" class="opacity-75"> · Leader</span>
+                      <span
+                        v-else-if="registrationStatus.teamMembership.membershipStatus === MembershipStatus.Pending"
+                        class="ml-2 px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                      >
+                        Pending Approval
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -341,13 +347,16 @@
               <!-- Team Content -->
               <div class="px-6 py-4">
                 <!-- Players List -->
-                <div v-if="team.players && team.players.length > 0" class="space-y-2">
+                <div v-if="team.players && sortedPlayers(team.players, isLeaderOfTeam(team.id)).length > 0" class="space-y-2">
                   <p class="text-xs font-bold uppercase" :style="{ color: getTextMutedColor() }">
-                    {{ team.players.length }} Player<span v-if="team.players.length !== 1">s</span>
+                    {{ sortedPlayers(team.players).length }} Player<span v-if="sortedPlayers(team.players).length !== 1">s</span>
+                    <span v-if="isLeaderOfTeam(team.id) && sortedPlayers(team.players, true).length > sortedPlayers(team.players).length" class="text-amber-400 font-normal normal-case">
+                      (+{{ sortedPlayers(team.players, true).length - sortedPlayers(team.players).length }} pending)
+                    </span>
                   </p>
                   <ul class="space-y-1">
                     <li
-                      v-for="(player, idx) in sortedPlayers(team.players)"
+                      v-for="(player, idx) in sortedPlayers(team.players, isLeaderOfTeam(team.id))"
                       :key="idx"
                       class="text-sm py-1 px-2 rounded flex items-center gap-2"
                       :style="{ backgroundColor: getBackgroundMuteColor() }"
@@ -355,7 +364,7 @@
                       <router-link
                         :to="`/players/${encodeURIComponent(player.playerName)}`"
                         class="hover:underline transition-colors flex-1"
-                        :style="{ color: getTextColor() }"
+                        :style="{ color: player.membershipStatus === MembershipStatus.Pending ? getTextMutedColor() : getTextColor() }"
                       >
                         {{ player.playerName }}
                       </router-link>
@@ -369,6 +378,12 @@
                         }"
                       >
                         👑 Leader
+                      </span>
+                      <span
+                        v-else-if="player.membershipStatus === MembershipStatus.Pending"
+                        class="text-xs px-1.5 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                      >
+                        Pending
                       </span>
                     </li>
                   </ul>
@@ -467,7 +482,7 @@ import JoinTeamModal from '@/components/JoinTeamModal.vue'
 import TeamManagementPanel from '@/components/TeamManagementPanel.vue'
 import { usePublicTournamentPage } from '@/composables/usePublicTournamentPage'
 import { useAuth } from '@/composables/useAuth'
-import { teamRegistrationService, TeamRecruitmentStatus, getRecruitmentStatusText, getRecruitmentStatusMessage, type RegistrationStatusResponse } from '@/services/teamRegistrationService'
+import { teamRegistrationService, TeamRecruitmentStatus, MembershipStatus, getRecruitmentStatusText, getRecruitmentStatusMessage, type RegistrationStatusResponse } from '@/services/teamRegistrationService'
 import { notificationService } from '@/services/notificationService'
 
 const {
@@ -619,12 +634,22 @@ const handleTeamCreated = async () => {
   await loadTournament()
 }
 
-const handleTeamJoined = async () => {
+const handleTeamJoined = async (_teamId: number, teamName: string, isPending: boolean) => {
   showJoinTeamModal.value = false
   // Clear tournament cache to ensure fresh data is loaded
   clearCache(parseInt(tournamentId.value))
   await loadRegistrationStatus()
   await loadTournament()
+
+  // Show appropriate notification based on pending status
+  if (isPending) {
+    notificationService.addNotification({
+      type: 'info',
+      title: 'Request Submitted',
+      message: `Waiting for ${teamName} leader to approve your membership.`,
+      duration: 5000
+    })
+  }
 }
 
 const handleTeamUpdated = async () => {
@@ -663,15 +688,38 @@ const handleDiscordLogin = async () => {
   }
 }
 
-// Sort players with leaders first
-const sortedPlayers = (players: { playerName: string; isLeader?: boolean }[]) => {
-  return [...players].sort((a, b) => {
-    // Leaders come first
-    if (a.isLeader && !b.isLeader) return -1
-    if (!a.isLeader && b.isLeader) return 1
-    // Then sort alphabetically by player name
-    return a.playerName.localeCompare(b.playerName)
-  })
+// Get current user's player name if they're on a team
+const currentUserPlayerName = computed(() => registrationStatus.value?.teamMembership?.playerName)
+
+// Sort players with leaders first, filtering out pending members (unless viewer is leader or it's themselves)
+const sortedPlayers = (players: { playerName: string; isLeader?: boolean; membershipStatus?: MembershipStatus | null }[], includePending = false) => {
+  return [...players]
+    // Filter out pending members unless includePending is true or it's the current user
+    // Treat missing/null membershipStatus as Approved for backward compatibility
+    .filter(p =>
+      includePending ||
+      p.membershipStatus === MembershipStatus.Approved ||
+      p.membershipStatus == null ||
+      p.playerName === currentUserPlayerName.value
+    )
+    .sort((a, b) => {
+      // Leaders come first
+      if (a.isLeader && !b.isLeader) return -1
+      if (!a.isLeader && b.isLeader) return 1
+      // Approved members before pending
+      const aApproved = a.membershipStatus === MembershipStatus.Approved || a.membershipStatus == null
+      const bApproved = b.membershipStatus === MembershipStatus.Approved || b.membershipStatus == null
+      if (aApproved && !bApproved) return -1
+      if (!aApproved && bApproved) return 1
+      // Then sort alphabetically by player name
+      return a.playerName.localeCompare(b.playerName)
+    })
+}
+
+// Check if current user is the leader of a specific team
+const isLeaderOfTeam = (teamId: number) => {
+  return registrationStatus.value?.teamMembership?.teamId === teamId &&
+         registrationStatus.value?.teamMembership?.isLeader
 }
 
 const formatDate = (dateStr: string): string => {

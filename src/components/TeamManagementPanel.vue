@@ -16,7 +16,10 @@
         <p class="text-sm mt-1" :style="{ color: textMutedColor }">
           <span v-if="isLeader">Team Leader</span>
           <span v-else>Team Member</span>
-          &middot; {{ teamDetails?.players?.length || 0 }} player{{ teamDetails?.players?.length !== 1 ? 's' : '' }}
+          &middot; {{ approvedPlayers.length }} player{{ approvedPlayers.length !== 1 ? 's' : '' }}
+          <span v-if="isLeader && pendingPlayers.length > 0" class="ml-2 text-amber-400">
+            &middot; {{ pendingPlayers.length }} pending
+          </span>
         </p>
       </div>
     </div>
@@ -75,6 +78,74 @@
       <div v-if="addPlayerError" class="text-red-400 text-sm mt-2">{{ addPlayerError }}</div>
     </div>
 
+    <!-- Pending Approvals Section (Leader Only) -->
+    <div v-if="isLeader && pendingPlayers.length > 0" class="px-6 py-4 border-b-2" :style="{ borderColor: accentColor + '44' }">
+      <h4 class="text-sm font-semibold mb-3 flex items-center gap-2" :style="{ color: textColor }">
+        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+        Pending Approvals ({{ pendingPlayers.length }})
+      </h4>
+      <div class="space-y-2">
+        <div
+          v-for="player in pendingPlayers"
+          :key="player.playerName"
+          class="flex items-center justify-between p-3 rounded-lg border-2 border-amber-500/30"
+          :style="{ backgroundColor: backgroundMuteColor }"
+        >
+          <div class="flex items-center gap-3">
+            <div>
+              <router-link
+                :to="`/players/${encodeURIComponent(player.playerName)}`"
+                class="font-medium hover:underline"
+                :style="{ color: textColor }"
+              >
+                {{ player.playerName }}
+              </router-link>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  Pending
+                </span>
+                <span class="text-xs" :style="{ color: textMutedColor }">
+                  Requested {{ formatDate(player.joinedAt) }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Approve Button -->
+            <button
+              class="p-2 rounded-lg hover:bg-green-500/20 text-green-400 transition-colors"
+              title="Approve member"
+              :disabled="isApprovingMember === player.playerName"
+              @click="handleApproveMember(player.playerName)"
+            >
+              <svg v-if="isApprovingMember === player.playerName" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+            <!-- Reject Button -->
+            <button
+              class="p-2 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors"
+              title="Reject request"
+              :disabled="isRemovingPlayer === player.playerName"
+              @click="handleRemovePlayer(player.playerName)"
+            >
+              <svg v-if="isRemovingPlayer === player.playerName" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Players List -->
     <div class="px-6 py-4">
       <div v-if="isLoading" class="flex items-center justify-center py-8">
@@ -86,9 +157,9 @@
 
       <div v-else-if="loadError" class="text-red-400 text-sm py-4">{{ loadError }}</div>
 
-      <div v-else-if="teamDetails?.players?.length" class="space-y-2">
+      <div v-else-if="approvedPlayers.length" class="space-y-2">
         <div
-          v-for="player in teamDetails.players"
+          v-for="player in approvedPlayers"
           :key="player.playerName"
           class="flex items-center justify-between p-3 rounded-lg"
           :style="{ backgroundColor: backgroundMuteColor }"
@@ -231,9 +302,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import MultiPlayerSelector from '@/components/MultiPlayerSelector.vue';
-import { teamRegistrationService, TeamRecruitmentStatus, getRecruitmentStatusText, type TeamDetailsResponse } from '@/services/teamRegistrationService';
+import { teamRegistrationService, TeamRecruitmentStatus, MembershipStatus, getRecruitmentStatusText, type TeamDetailsResponse, type TeamPlayerInfo } from '@/services/teamRegistrationService';
 
 interface Props {
   tournamentId: number;
@@ -277,6 +348,24 @@ const deleteError = ref('');
 
 const isUpdatingStatus = ref(false);
 const recruitmentStatusError = ref('');
+
+const isApprovingMember = ref<string | null>(null);
+
+// Computed properties for pending and approved players
+const pendingPlayers = computed<TeamPlayerInfo[]>(() => {
+  if (!teamDetails.value?.players) return [];
+  return teamDetails.value.players.filter(
+    p => p.membershipStatus === MembershipStatus.Pending
+  );
+});
+
+const approvedPlayers = computed<TeamPlayerInfo[]>(() => {
+  if (!teamDetails.value?.players) return [];
+  return teamDetails.value.players.filter(
+    // Treat missing/null membershipStatus as Approved for backward compatibility
+    p => p.membershipStatus === MembershipStatus.Approved || p.membershipStatus == null
+  );
+});
 
 // Recruitment status options
 const recruitmentStatusOptions = [
@@ -450,6 +539,23 @@ const handleRemovePlayer = async (playerName: string) => {
     setTimeout(() => { loadError.value = ''; }, 3000);
   } finally {
     isRemovingPlayer.value = null;
+  }
+};
+
+const handleApproveMember = async (playerName: string) => {
+  if (isApprovingMember.value) return;
+  isApprovingMember.value = playerName;
+
+  try {
+    await teamRegistrationService.approveMember(props.tournamentId, playerName);
+    await loadTeamDetails();
+    emit('teamUpdated');
+  } catch (error) {
+    // Show error briefly
+    loadError.value = error instanceof Error ? error.message : 'Failed to approve member';
+    setTimeout(() => { loadError.value = ''; }, 3000);
+  } finally {
+    isApprovingMember.value = null;
   }
 };
 

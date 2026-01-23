@@ -344,6 +344,18 @@ const formatPlayerStats = (player: PlayerSearchResult): string => {
 </script>
 
 <style scoped>
+/* Prevent text selection on interactive elements */
+.space-y-4 {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Allow text selection only in input fields */
+input {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 /* Smooth scrolling */
 .overflow-y-auto {
   scrollbar-width: thin;
