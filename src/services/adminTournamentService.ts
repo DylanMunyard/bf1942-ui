@@ -814,6 +814,65 @@ class AdminTournamentService {
       }
     );
   }
+
+  // ===== Tournament Posts Management =====
+
+  async getPosts(tournamentId: number): Promise<TournamentPost[]> {
+    return this.request<TournamentPost[]>(`/${tournamentId}/posts`);
+  }
+
+  async createPost(
+    tournamentId: number,
+    request: CreateTournamentPostRequest
+  ): Promise<TournamentPost> {
+    return this.request<TournamentPost>(`/${tournamentId}/posts`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async updatePost(
+    tournamentId: number,
+    postId: number,
+    request: UpdateTournamentPostRequest
+  ): Promise<TournamentPost> {
+    return this.request<TournamentPost>(`/${tournamentId}/posts/${postId}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async deletePost(tournamentId: number, postId: number): Promise<void> {
+    await this.request(`/${tournamentId}/posts/${postId}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+// Tournament Posts interfaces
+export interface TournamentPost {
+  id: number;
+  tournamentId: number;
+  title: string;
+  content: string;
+  publishAt: string | null;
+  status: 'draft' | 'published';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTournamentPostRequest {
+  title: string;
+  content: string;
+  publishAt?: string | null;
+  status?: 'draft' | 'published';
+}
+
+export interface UpdateTournamentPostRequest {
+  title?: string;
+  content?: string;
+  publishAt?: string | null;
+  status?: 'draft' | 'published';
 }
 
 export const adminTournamentService = new AdminTournamentService();

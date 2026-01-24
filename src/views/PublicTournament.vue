@@ -151,52 +151,22 @@
           </div>
         </div>
 
-        <!-- Latest Matches Section -->
-        <div v-if="computedLatestMatches && computedLatestMatches.length > 0">
-          <!-- Latest Matches Header -->
+        <!-- News Feed Section -->
+        <div>
           <div class="mb-6">
             <h3 class="text-xl font-semibold" :style="{ color: getTextColor() }">
-              ⚡ Latest Matches
+              📰 News & Updates
             </h3>
           </div>
 
-          <!-- Matches Table Component -->
-          <TournamentMatchesTable
-            :matches="computedLatestMatches"
-            :group-by-week="false"
+          <TournamentNewsFeed
+            :tournament-id="tournamentId"
             :accent-color="getAccentColor()"
             :text-color="getTextColor()"
             :text-muted-color="getTextMutedColor()"
-            :background-color="getBackgroundColor()"
             :background-soft-color="getBackgroundSoftColor()"
-            :background-mute-color="getBackgroundMuteColor()"
-            @match-selected="openMatchupModal"
           />
         </div>
-
-        <!-- Latest Matches Empty State -->
-        <div v-else class="backdrop-blur-sm border-2 rounded-xl overflow-hidden p-8 text-center" :style="{ borderColor: getAccentColor(), backgroundColor: getBackgroundSoftColor() }">
-          <div v-if="logoImageUrl" class="mb-6 flex justify-center">
-            <img :src="logoImageUrl" alt="Community logo" class="max-h-32 object-contain opacity-70" loading="lazy" decoding="async">
-          </div>
-          <div v-else class="text-5xl mb-4 opacity-50">⚡</div>
-          <h3 class="text-xl font-semibold mb-2" :style="{ color: getTextColor() }">No Completed Matches Yet</h3>
-          <p :style="{ color: getTextMutedColor() }">Check back soon as matches are completed. Visit the <router-link :to="`/t/${tournamentId}/matches`" class="underline hover:opacity-80 transition-opacity" :style="{ color: getAccentColor() }">Matches page</router-link> to see the full schedule.</p>
-        </div>
-
-        <!-- Tournament Rankings Table Component -->
-        <TournamentRankingsTable
-          :leaderboard="leaderboard"
-          title="Tournament Rankings"
-          :logo-image-url="logoImageUrl"
-          :game-mode="tournament?.gameMode"
-          :accent-color="getAccentColor()"
-          :text-color="getTextColor()"
-          :text-muted-color="getTextMutedColor()"
-          :background-soft-color="getBackgroundSoftColor()"
-          :background-mute-color="getBackgroundMuteColor()"
-        />
-
       </div>
     </div>
 
@@ -224,13 +194,12 @@ import { usePlayerComparison } from '@/composables/usePlayerComparison';
 import TournamentHero from '@/components/TournamentHero.vue';
 import TournamentPageNav from '@/components/TournamentPageNav.vue';
 import TournamentMatchesTable from '@/components/TournamentMatchesTable.vue';
-import TournamentRankingsTable from '@/components/TournamentRankingsTable.vue';
+import TournamentNewsFeed from '@/components/TournamentNewsFeed.vue';
 import MatchDetailsModal from '@/components/MatchDetailsModal.vue';
 import {
   publicTournamentService,
   type PublicTournamentDetail,
   type PublicTournamentMatch,
-  type PublicTournamentLeaderboard
 } from '@/services/publicTournamentService';
 import { notificationService } from '@/services/notificationService';
 import { isValidHex, normalizeHex, getContrastingTextColor, hexToRgb, rgbToHex, calculateLuminance } from '@/utils/colorUtils';
@@ -252,8 +221,6 @@ const error = ref<string | null>(null);
 const selectedMatch = ref<PublicTournamentMatch | null>(null);
 const selectedPlayers = ref<string[]>([]);
 const expandedMaps = ref<Set<string>>(new Set());
-const leaderboard = ref<PublicTournamentLeaderboard | null>(null);
-const selectedWeekForLeaderboard = ref<string | null>(null);
 
 const tournamentId = route.params.id as string;
 
@@ -599,17 +566,6 @@ const allMatchesByWeek = computed(() => {
 });
 
 
-const loadLeaderboard = async (week?: string) => {
-  try {
-    const data = await publicTournamentService.getLeaderboard(tournamentId, week);
-    leaderboard.value = data;
-    selectedWeekForLeaderboard.value = week || null;
-  } catch (err) {
-    console.error('Error loading leaderboard:', err);
-    leaderboard.value = null;
-  }
-};
-
 const loadTournament = async () => {
   error.value = null;
 
@@ -675,9 +631,6 @@ const loadTournament = async () => {
 
     // Always set loading to false - data is ready either from cache or API
     loading.value = false;
-
-    // Load leaderboard (async, doesn't block rendering)
-    loadLeaderboard().catch(err => console.debug('Failed to load leaderboard:', err));
   } catch (err) {
     console.error('Error loading tournament:', err);
     error.value = err instanceof Error ? err.message : 'Failed to load tournament';

@@ -406,6 +406,101 @@
           </div>
         </div>
 
+        <!-- Posts Section -->
+        <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
+          <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
+            <div>
+              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-400">
+                News Posts
+              </h2>
+              <p class="text-slate-400 text-sm mt-1">
+                Create news posts for the tournament feed
+              </p>
+            </div>
+            <button
+              class="px-4 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+              @click="showAddPostModal = true"
+            >
+              <span class="text-lg">+</span>
+              <span>Add Post</span>
+            </button>
+          </div>
+
+          <div class="p-4 sm:p-6">
+            <!-- Posts Table -->
+            <table v-if="posts.length > 0" class="w-full border-collapse">
+              <thead>
+                <tr class="bg-slate-700/30 border-b border-slate-700/50">
+                  <th class="p-3 text-left text-sm font-bold uppercase tracking-wide text-rose-400">Title</th>
+                  <th class="p-3 text-left text-sm font-bold uppercase tracking-wide text-rose-400">Status</th>
+                  <th class="p-3 text-left text-sm font-bold uppercase tracking-wide text-rose-400">Publish Date</th>
+                  <th class="p-3 text-left text-sm font-bold uppercase tracking-wide text-rose-400">Created</th>
+                  <th class="p-3 text-right text-sm font-bold uppercase tracking-wide text-rose-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="post in posts" :key="post.id" class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30">
+                  <td class="p-3">
+                    <span class="text-sm font-medium text-rose-400">{{ post.title }}</span>
+                  </td>
+                  <td class="p-3">
+                    <span
+                      class="px-2 py-1 text-xs font-medium rounded-full"
+                      :class="post.status === 'published' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'"
+                    >
+                      {{ post.status === 'published' ? 'Published' : 'Draft' }}
+                    </span>
+                  </td>
+                  <td class="p-3">
+                    <span v-if="post.publishAt" class="text-sm text-slate-400">{{ formatDate(post.publishAt) }}</span>
+                    <span v-else class="text-sm text-slate-500 italic">—</span>
+                  </td>
+                  <td class="p-3">
+                    <span class="text-sm text-slate-400">{{ formatDate(post.createdAt) }}</span>
+                  </td>
+                  <td class="p-3 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        class="p-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 hover:border-rose-500/50 rounded-lg transition-all"
+                        @click="editPost(post)"
+                        title="Edit post"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
+                        @click="confirmDeletePost(post.id, post.title)"
+                        title="Delete post"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-12">
+              <div class="text-6xl mb-4">📰</div>
+              <h3 class="text-xl font-bold text-slate-300 mb-2">No Posts Yet</h3>
+              <p class="text-slate-400 mb-6">
+                Create news posts to share updates with tournament participants
+              </p>
+              <button
+                class="px-6 py-3 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all"
+                @click="showAddPostModal = true"
+              >
+                Create First Post
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Matches Section -->
         <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
           <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
@@ -681,6 +776,15 @@
       :file="editingFile"
       @close="showAddFileModal = false; editingFile = undefined"
       @added="onFileAdded"
+    />
+
+    <!-- Add/Edit Post Modal -->
+    <AddPostModal
+      v-if="showAddPostModal && tournament"
+      :tournament-id="tournament.id"
+      :post="editingPost"
+      @close="showAddPostModal = false; editingPost = undefined"
+      @added="onPostAdded"
     />
 
     <!-- Delete Team Confirmation Modal -->
@@ -995,6 +1099,54 @@
       </div>
     </div>
 
+    <!-- Delete Post Confirmation Modal -->
+    <div
+      v-if="deletePostConfirmation"
+      class="modal-mobile-safe fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      @click.self="cancelDeletePost"
+    >
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+        <div class="flex items-start gap-4 mb-6">
+          <div class="w-12 h-12 bg-rose-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-slate-100 mb-2">
+              Delete Post?
+            </h3>
+            <p class="text-slate-300 mb-2">
+              Delete post <span class="font-bold text-rose-400">{{ deletePostConfirmation.title }}</span>?
+            </p>
+            <p class="text-slate-400 text-sm">
+              This action cannot be undone.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3">
+          <button
+            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors"
+            @click="cancelDeletePost"
+          >
+            Cancel
+          </button>
+          <button
+            class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+            :disabled="isProcessingPost"
+            @click="executeDeletePost"
+          >
+            <svg v-if="!isProcessingPost" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span>{{ isProcessingPost ? 'Deleting...' : 'Delete Post' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -1009,7 +1161,8 @@ import {
   type TournamentMatch,
   type TournamentMatchMap,
   type TournamentWeekDate,
-  type TournamentFile
+  type TournamentFile,
+  type TournamentPost
 } from '@/services/adminTournamentService';
 import AddTournamentModal from '@/components/dashboard/AddTournamentModal.vue';
 import EditTournamentThemeModal from '@/components/dashboard/EditTournamentThemeModal.vue';
@@ -1019,6 +1172,7 @@ import EditMapResultsModal from '@/components/dashboard/EditMapResultsModal.vue'
 import MatchFilesAndCommentsModal from '@/components/dashboard/MatchFilesAndCommentsModal.vue';
 import AddWeekModal from '@/components/dashboard/AddWeekModal.vue';
 import AddFileModal from '@/components/dashboard/AddFileModal.vue';
+import AddPostModal from '@/components/dashboard/AddPostModal.vue';
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
@@ -1065,6 +1219,13 @@ const showAddFileModal = ref(false);
 const editingFile = ref<TournamentFile | undefined>(undefined);
 const deleteFileConfirmation = ref<{ id: number; name: string } | null>(null);
 const isProcessingFile = ref(false);
+
+// Post management
+const showAddPostModal = ref(false);
+const editingPost = ref<TournamentPost | undefined>(undefined);
+const deletePostConfirmation = ref<{ id: number; title: string } | null>(null);
+const isProcessingPost = ref(false);
+const posts = ref<TournamentPost[]>([]);
 
 const tournamentId = parseInt(route.params.id as string);
 
@@ -1160,6 +1321,9 @@ const loadTournament = async () => {
 
     // Set loading to false BEFORE loading images - images load asynchronously in background
     loading.value = false;
+
+    // Load posts for this tournament
+    loadPosts().catch(err => console.debug('Failed to load posts:', err));
 
     // Load or clear hero image
     if (data.hasHeroImage) {
@@ -1421,6 +1585,53 @@ const onFileAdded = () => {
   showAddFileModal.value = false;
   editingFile.value = undefined;
   loadTournament();
+};
+
+// Post management
+const loadPosts = async () => {
+  try {
+    posts.value = await adminTournamentService.getPosts(tournamentId);
+  } catch (err) {
+    console.error('Error loading posts:', err);
+    // Don't set error state - posts are optional
+    posts.value = [];
+  }
+};
+
+const editPost = (post: TournamentPost) => {
+  editingPost.value = { ...post };
+  showAddPostModal.value = true;
+};
+
+const confirmDeletePost = (postId: number, postTitle: string) => {
+  deletePostConfirmation.value = { id: postId, title: postTitle };
+};
+
+const cancelDeletePost = () => {
+  deletePostConfirmation.value = null;
+  isProcessingPost.value = false;
+};
+
+const executeDeletePost = async () => {
+  if (!deletePostConfirmation.value) return;
+
+  isProcessingPost.value = true;
+  try {
+    await adminTournamentService.deletePost(tournamentId, deletePostConfirmation.value.id);
+    deletePostConfirmation.value = null;
+    await loadPosts();
+  } catch (err) {
+    console.error('Error deleting post:', err);
+    error.value = err instanceof Error ? err.message : 'Failed to delete post';
+  } finally {
+    isProcessingPost.value = false;
+  }
+};
+
+const onPostAdded = () => {
+  showAddPostModal.value = false;
+  editingPost.value = undefined;
+  loadPosts();
 };
 
 // Matches management
