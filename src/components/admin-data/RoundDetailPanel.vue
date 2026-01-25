@@ -2,6 +2,7 @@
   <div class="round-panel">
     <div v-if="detail.isDeleted" class="round-panel-deleted-banner">
       This round has been marked as deleted. It is excluded from stats and aggregates. Achievements were removed; round and sessions remain for recovery.
+      <span v-if="props.undeleteError" class="round-panel-deleted-err">{{ props.undeleteError }}</span>
     </div>
     <div class="round-panel-head">
       <div class="round-panel-meta">
@@ -20,6 +21,15 @@
         @click="$emit('delete')"
       >
         delete round
+      </button>
+      <button
+        v-else
+        type="button"
+        class="round-panel-undelete"
+        :disabled="loading"
+        @click="$emit('undelete')"
+      >
+        undelete round
       </button>
     </div>
 
@@ -85,10 +95,12 @@ import type { RoundDetailResponse, RoundPlayerEntry } from '@/services/adminData
 const props = defineProps<{
   detail: RoundDetailResponse;
   loading?: boolean;
+  undeleteError?: string | null;
 }>();
 
 defineEmits<{
   delete: [];
+  undelete: [];
   viewAchievements: [];
 }>();
 
@@ -142,6 +154,12 @@ function formatDate(iso: string): string {
   background: rgba(245, 158, 11, 0.1);
   border-bottom: 1px solid rgba(245, 158, 11, 0.3);
 }
+.round-panel-deleted-err {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--rp-danger);
+  font-size: 0.7rem;
+}
 .round-panel-head {
   display: flex;
   justify-content: space-between;
@@ -192,6 +210,27 @@ function formatDate(iso: string): string {
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
 }
 .round-panel-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.round-panel-undelete {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: rgba(0, 229, 160, 0.15);
+  color: var(--rp-accent);
+  border: 1px solid rgba(0, 229, 160, 0.4);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+.round-panel-undelete:hover:not(:disabled) {
+  background: rgba(0, 229, 160, 0.25);
+  box-shadow: 0 0 12px var(--rp-accent-dim);
+}
+.round-panel-undelete:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

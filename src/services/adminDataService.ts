@@ -6,6 +6,8 @@ export interface QuerySuspiciousSessionsRequest {
   minKd?: number;
   dateFrom?: string;
   dateTo?: string;
+  /** When true, include sessions from rounds that have been marked as deleted (so they can be undeleted). */
+  includeDeletedRounds?: boolean;
 }
 
 export interface SuspiciousSessionResponse {
@@ -20,6 +22,8 @@ export interface SuspiciousSessionResponse {
   sessionId?: string;
   /** Round start time (ISO string from backend). */
   roundStartTime?: string;
+  /** True when the round has been marked as deleted. */
+  roundIsDeleted?: boolean;
 }
 
 export interface PagedSuspiciousSessionsResponse {
@@ -73,6 +77,13 @@ export interface DeleteRoundResponse {
   observationsDeleted?: number;
   sessionsDeleted?: number;
   roundsDeleted?: number;
+}
+
+export interface UndeleteRoundResponse {
+  roundId: string;
+  sessionsRestored: number;
+  roundRestored: number;
+  affectedPlayers: number;
 }
 
 export interface AuditLogEntry {
@@ -171,6 +182,7 @@ class AdminDataService {
     if (req.minKd != null) body.minKdRatio = req.minKd;
     if (req.dateFrom != null) body.startDate = req.dateFrom;
     if (req.dateTo != null) body.endDate = req.dateTo;
+    if (req.includeDeletedRounds === true) body.includeDeletedRounds = true;
     return this.request<PagedSuspiciousSessionsResponse>('/sessions/query', {
       method: 'POST',
       body: JSON.stringify(body),
@@ -203,6 +215,12 @@ class AdminDataService {
     });
   }
 
+  async undeleteRound(roundId: string): Promise<UndeleteRoundResponse> {
+    return this.request<UndeleteRoundResponse>(`/rounds/${encodeURIComponent(roundId)}/undelete`, {
+      method: 'POST',
+    });
+  }
+
   async getAuditLog(_page = 1, pageSize = 50): Promise<{
     items: AuditLogEntry[];
     totalCount: number;
@@ -232,4 +250,5 @@ export async function searchServersForAdmin(
   return (data.items ?? data) || [];
 }
 
-export const adminDataService = new AdminDataService();
+const adminDataService = new AdminDataService();
+export { adminDataService };

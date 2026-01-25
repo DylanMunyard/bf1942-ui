@@ -46,9 +46,18 @@
         </div>
       </div>
 
+      <!-- Post-undelete hint: run Daily Aggregate to refresh stats -->
+      <div v-if="showPostUndeleteAggregateHint" class="portal-hint-banner">
+        <span class="portal-hint-banner-text">Round restored. Aggregate stats may be stale — run Daily Aggregate Refresh in Cron to recalc. Achievements need to be rebuilt separately.</span>
+        <div class="portal-hint-banner-actions">
+          <button type="button" class="portal-btn portal-btn--primary portal-btn--sm" @click="activeTab = 'cron'; showPostUndeleteAggregateHint = false">Go to Cron</button>
+          <button type="button" class="portal-btn portal-btn--ghost portal-btn--sm" @click="showPostUndeleteAggregateHint = false">Dismiss</button>
+        </div>
+      </div>
+
       <!-- Query tab -->
       <div v-show="activeTab === 'query'" class="portal-panel">
-        <AdminQueryTab @post-delete="showPostDeleteAggregateHint = true" />
+        <AdminQueryTab @post-delete="showPostDeleteAggregateHint = true" @post-undelete="showPostUndeleteAggregateHint = true" />
       </div>
 
       <!-- Audit tab -->
@@ -72,6 +81,7 @@ import AdminCronTab from '@/components/admin-data/AdminCronTab.vue';
 
 const activeTab = ref<'query' | 'audit' | 'cron'>('query');
 const showPostDeleteAggregateHint = ref(false);
+const showPostUndeleteAggregateHint = ref(false);
 const auditTabRef = ref<InstanceType<typeof AdminAuditTab> | null>(null);
 </script>
 
@@ -494,6 +504,13 @@ const auditTabRef = ref<InstanceType<typeof AdminAuditTab> | null>(null);
   color: var(--portal-warn);
   font-weight: 700;
 }
+.portal-round-header-deleted {
+  margin-left: 0.5rem;
+  color: var(--portal-warn);
+  font-size: 0.6rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
 .portal-sessions-table td {
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--portal-border);
@@ -769,6 +786,7 @@ const auditTabRef = ref<InstanceType<typeof AdminAuditTab> | null>(null);
 .admin-data-portal .portal-sessions-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--portal-border); color: var(--portal-text-bright); }
 .admin-data-portal .portal-sortable { cursor: pointer; user-select: none; }
 .admin-data-portal .portal-round-header { padding: 0.5rem 0.75rem; background: rgba(17, 17, 24, 0.95); color: var(--portal-accent); font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; font-family: ui-monospace, monospace; border-top: 1px solid var(--portal-border); border-bottom: 1px solid var(--portal-border); }
+.admin-data-portal .portal-round-header-deleted { margin-left: 0.5rem; color: var(--portal-warn); font-size: 0.6rem; font-weight: 600; opacity: 0.9; }
 .admin-data-portal .portal-mono { font-family: ui-monospace, monospace; }
 .admin-data-portal .portal-cell-btn { padding: 0.25rem 0.5rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; background: var(--portal-accent-dim); color: var(--portal-accent); border: 1px solid rgba(0, 229, 160, 0.3); border-radius: 2px; cursor: pointer; }
 .admin-data-portal .portal-kd--high { color: var(--portal-warn); font-weight: 600; }

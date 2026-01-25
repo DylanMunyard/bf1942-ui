@@ -49,6 +49,16 @@
           <label class="portal-label">[ TO ]</label>
           <input v-model="filters.dateTo" type="date" class="portal-input portal-input--mono" />
         </div>
+        <div class="portal-field portal-field--wide" style="display: flex; align-items: center; gap: 0.5rem;">
+          <input
+            id="include-deleted"
+            v-model="includeDeletedRounds"
+            type="checkbox"
+            class="portal-input"
+            style="width: auto;"
+          />
+          <label for="include-deleted" class="portal-label" style="margin: 0; letter-spacing: 0.05em;">Include deleted rounds (to restore)</label>
+        </div>
       </div>
       <div class="portal-actions">
         <button
@@ -86,6 +96,16 @@
               <table class="portal-sessions-table">
                 <thead>
                   <tr>
+                    <th class="portal-th-select">
+                      <input
+                        type="checkbox"
+                        :checked="allSelectableSelected"
+                        :indeterminate="someSelectableSelected && !allSelectableSelected"
+                        :disabled="selectableRoundGroups.length === 0"
+                        aria-label="Select all rounds"
+                        @change="toggleSelectAll"
+                      />
+                    </th>
                     <th class="portal-sortable" @click="onSortClick('playerName')">player <span v-if="sortField === 'playerName'" class="portal-sort-icon">{{ sortOrder === -1 ? '↓' : '↑' }}</span></th>
                     <th class="portal-sortable" @click="onSortClick('serverName')">server <span v-if="sortField === 'serverName'" class="portal-sort-icon">{{ sortOrder === -1 ? '↓' : '↑' }}</span></th>
                     <th class="portal-sortable" @click="onSortClick('totalScore')">score <span v-if="sortField === 'totalScore'" class="portal-sort-icon">{{ sortOrder === -1 ? '↓' : '↑' }}</span></th>
@@ -97,12 +117,23 @@
                 <tbody>
                   <template v-for="{ roundId, sessions: roundSessions } in roundGroups" :key="roundId">
                     <tr>
+                      <td class="portal-round-header portal-td-select">
+                        <input
+                          v-if="!roundSessions[0]?.roundIsDeleted"
+                          type="checkbox"
+                          :checked="selectedRoundIds.has(roundId)"
+                          :aria-label="`Select round ${roundId}`"
+                          @change="toggleRound(roundId)"
+                        />
+                      </td>
                       <td colspan="6" class="portal-round-header">
                         {{ (roundSessions[0]?.roundStartTime ? formatDate(roundSessions[0].roundStartTime) + ' · ' : '') + roundId }}
+                        <span v-if="roundSessions[0]?.roundIsDeleted" class="portal-round-header-deleted">[deleted]</span>
                         <span v-if="roundSessions.length > 1" class="portal-round-header-count">{{ roundSessions.length }} exceeding</span>
                       </td>
                     </tr>
                     <tr v-for="s in roundSessions" :key="`${s.roundId}-${s.playerName}`">
+                      <td class="portal-td-select" />
                       <td>{{ s.playerName }}</td>
                       <td>{{ s.serverName }}</td>
                       <td class="portal-mono">{{ s.totalScore }}</td>
@@ -117,6 +148,18 @@
                   </template>
                 </tbody>
               </table>
+            </div>
+            <div v-if="selectedRoundIds.size > 0" class="portal-bulk-actions">
+              <span class="portal-bulk-info">{{ selectedRoundIds.size }} round{{ selectedRoundIds.size === 1 ? '' : 's' }} selected</span>
+              <button
+                type="button"
+                class="portal-btn portal-btn--sm"
+                :class="bulkDeleteLoading ? 'portal-btn--ghost' : 'portal-btn--danger'"
+                :disabled="bulkDeleteLoading"
+                @click="openBulkDeleteModal"
+              >
+                {{ bulkDeleteLoading ? `deleting… (${bulkDeleteProgress.done}/${bulkDeleteProgress.total})` : `delete selected (${selectedRoundIds.size})` }}
+              </button>
             </div>
             <div class="portal-pagination">
               <div class="portal-pagination-info">
@@ -152,7 +195,15 @@
       </section>
 
       <div v-if="roundDetail || roundDetailLoading" class="portal-round-wrap">
-        <RoundDetailPanel v-if="roundDetail" :detail="roundDetail" :loading="roundDetailLoading" @delete="openDeleteModal" @view-achievements="onViewAchievements" />
+        <RoundDetailPanel
+          v-if="roundDetail"
+          :detail="roundDetail"
+          :loading="roundDetailLoading"
+          :undelete-error="undeleteError"
+          @delete="openDeleteModal"
+          @undelete="onUndelete"
+          @view-achievements="onViewAchievements"
+        />
         <div v-else class="portal-round-loading portal-card">
           <div class="portal-empty portal-empty--loading">
             <span class="portal-empty-dash">—</span>
@@ -183,6 +234,41 @@
       @confirm="onDeleteConfirm"
       @cancel="showDeleteModal = false"
     />
+
+    <!-- Bulk delete confirmation -->
+    <div v-if="showBulkDeleteModal" class="delete-modal-backdrop" @click.self="closeBulkDeleteModal">
+      <div class="delete-modal" @click.stop>
+        <div class="delete-modal-head">
+          <span class="delete-modal-label">[ BULK DELETE ]</span>
+          <h2 class="delete-modal-title">Delete {{ selectedRoundIds.size }} round{{ selectedRoundIds.size === 1 ? '' : 's' }}</h2>
+          <p class="delete-modal-desc">
+            Each round will be soft-deleted (achievements removed; round and sessions kept for recovery). Run Daily Aggregate Refresh in Cron after.
+          </p>
+        </div>
+        <div class="delete-modal-body">
+          <p v-if="bulkDeleteError" class="delete-modal-err">{{ bulkDeleteError }}</p>
+        </div>
+        <div class="delete-modal-foot">
+          <button
+            type="button"
+            class="delete-modal-btn delete-modal-btn--ghost"
+            :disabled="bulkDeleteLoading"
+            @click="closeBulkDeleteModal"
+          >
+            {{ bulkDeleteDone ? 'close' : 'cancel' }}
+          </button>
+          <button
+            v-if="!bulkDeleteDone"
+            type="button"
+            class="delete-modal-btn delete-modal-btn--danger"
+            :disabled="bulkDeleteLoading"
+            @click="onBulkDeleteConfirm"
+          >
+            {{ bulkDeleteLoading ? `deleting… (${bulkDeleteProgress.done}/${bulkDeleteProgress.total})` : `delete ${selectedRoundIds.size} round${selectedRoundIds.size === 1 ? '' : 's'}` }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -201,7 +287,7 @@ import {
 } from '@/services/adminDataService';
 import { formatDateTimeShort } from '@/utils/date';
 
-const emit = defineEmits<{ (e: 'post-delete'): void }>();
+const emit = defineEmits<{ (e: 'post-delete'): void; (e: 'post-undelete'): void }>();
 
 const ADMIN_DATA_LAST_SEARCH_KEY = 'bf1942_admin_data_last_search';
 
@@ -245,6 +331,30 @@ const showDeleteModal = ref(false);
 const deleteLoading = ref(false);
 const deleteError = ref<string | null>(null);
 
+const includeDeletedRounds = ref(false);
+const undeleteError = ref<string | null>(null);
+
+const selectedRoundIdsArray = ref<string[]>([]);
+const selectedRoundIds = computed(() => new Set(selectedRoundIdsArray.value));
+
+const selectableRoundGroups = computed(() =>
+  roundGroups.value.filter((g) => !g.sessions[0]?.roundIsDeleted)
+);
+const allSelectableSelected = computed(
+  () =>
+    selectableRoundGroups.value.length > 0 &&
+    selectableRoundGroups.value.every((g) => selectedRoundIds.value.has(g.roundId))
+);
+const someSelectableSelected = computed(() =>
+  selectableRoundGroups.value.some((g) => selectedRoundIds.value.has(g.roundId))
+);
+
+const showBulkDeleteModal = ref(false);
+const bulkDeleteLoading = ref(false);
+const bulkDeleteDone = ref(false);
+const bulkDeleteError = ref<string | null>(null);
+const bulkDeleteProgress = ref({ done: 0, total: 0 });
+
 function formatDate(iso: string): string {
   return formatDateTimeShort(iso);
 }
@@ -258,6 +368,7 @@ onMounted(() => {
       serverSearchQuery?: string;
       serverGuid?: string;
       serverName?: string;
+      includeDeletedRounds?: boolean;
     };
     if (s.filters) {
       filters.value = {
@@ -272,6 +383,7 @@ onMounted(() => {
     if (s.serverGuid && s.serverName) {
       selectedServer.value = { serverGuid: s.serverGuid, serverName: s.serverName };
     }
+    if (typeof s.includeDeletedRounds === 'boolean') includeDeletedRounds.value = s.includeDeletedRounds;
   } catch { /* ignore */ }
 });
 
@@ -314,6 +426,7 @@ async function runQuery() {
       serverSearchQuery: serverSearchQuery.value,
       serverGuid: selectedServer.value?.serverGuid,
       serverName: selectedServer.value?.serverName,
+      includeDeletedRounds: includeDeletedRounds.value,
     };
     localStorage.setItem(ADMIN_DATA_LAST_SEARCH_KEY, JSON.stringify(saved));
   } catch { /* ignore */ }
@@ -327,6 +440,66 @@ function clearQuery() {
   totalSessions.value = 0;
   hasQueried.value = false;
   roundDetail.value = null;
+  selectedRoundIdsArray.value = [];
+}
+
+function toggleRound(roundId: string) {
+  const set = new Set(selectedRoundIdsArray.value);
+  if (set.has(roundId)) set.delete(roundId);
+  else set.add(roundId);
+  selectedRoundIdsArray.value = [...set];
+}
+
+function toggleSelectAll() {
+  if (allSelectableSelected.value) {
+    selectedRoundIdsArray.value = [];
+  } else {
+    selectedRoundIdsArray.value = selectableRoundGroups.value.map((g) => g.roundId);
+  }
+}
+
+function openBulkDeleteModal() {
+  bulkDeleteError.value = null;
+  bulkDeleteDone.value = false;
+  bulkDeleteProgress.value = { done: 0, total: selectedRoundIds.value.size };
+  showBulkDeleteModal.value = true;
+}
+
+function closeBulkDeleteModal() {
+  showBulkDeleteModal.value = false;
+  bulkDeleteDone.value = false;
+  bulkDeleteError.value = null;
+}
+
+async function onBulkDeleteConfirm() {
+  const ids = [...selectedRoundIds.value];
+  bulkDeleteLoading.value = true;
+  bulkDeleteError.value = null;
+  const failures: { id: string; msg: string }[] = [];
+  for (let i = 0; i < ids.length; i++) {
+    try {
+      await adminDataService.deleteRound(ids[i]);
+    } catch (e) {
+      failures.push({ id: ids[i], msg: e instanceof Error ? e.message : String(e) });
+    }
+    bulkDeleteProgress.value = { done: i + 1, total: ids.length };
+  }
+  bulkDeleteLoading.value = false;
+  bulkDeleteDone.value = true;
+  if (failures.length > 0) {
+    bulkDeleteError.value = `Failed ${failures.length}: ${failures.map((f) => `${f.id}: ${f.msg}`).join('; ')}`;
+    const failedIds = new Set(failures.map((f) => f.id));
+    selectedRoundIdsArray.value = selectedRoundIdsArray.value.filter((id) => failedIds.has(id));
+    if (hasQueried.value) loadSessions();
+  } else {
+    selectedRoundIdsArray.value = [];
+    showBulkDeleteModal.value = false;
+    emit('post-delete');
+    if (hasQueried.value) loadSessions();
+  }
+  if (roundDetail.value && ids.includes(roundDetail.value.roundId)) {
+    roundDetail.value = null;
+  }
 }
 
 async function loadSessions() {
@@ -341,6 +514,7 @@ async function loadSessions() {
         minKd: filters.value.minKd,
         dateFrom,
         dateTo,
+        includeDeletedRounds: includeDeletedRounds.value,
       },
       currentPage.value,
       pageSize.value,
@@ -396,6 +570,7 @@ function onPageSizeChange() {
 
 async function viewRound(roundId: string) {
   closeAchievementsPanel();
+  undeleteError.value = null;
   roundDetail.value = null;
   roundDetailLoading.value = true;
   try {
@@ -444,4 +619,158 @@ async function onDeleteConfirm() {
     deleteLoading.value = false;
   }
 }
+
+async function onUndelete() {
+  if (!roundDetail.value) return;
+  undeleteError.value = null;
+  roundDetailLoading.value = true;
+  try {
+    await adminDataService.undeleteRound(roundDetail.value.roundId);
+    emit('post-undelete');
+    const id = roundDetail.value.roundId;
+    roundDetail.value = await adminDataService.getRoundDetail(id);
+    if (hasQueried.value) loadSessions();
+  } catch (e) {
+    undeleteError.value = e instanceof Error ? e.message : 'Undelete failed';
+  } finally {
+    roundDetailLoading.value = false;
+  }
+}
 </script>
+
+<style scoped>
+.portal-th-select {
+  width: 2.5rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.portal-td-select {
+  width: 2.5rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.portal-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-top: 1px solid var(--portal-border, #1a1a24);
+  background: var(--portal-surface-elevated, #111118);
+  font-size: 0.8rem;
+}
+.portal-bulk-info {
+  color: var(--portal-text, #9ca3af);
+}
+.portal-btn--danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+.portal-btn--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
+}
+
+/* Bulk delete modal (mirrors DeleteConfirmationModal) */
+.delete-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+}
+.delete-modal {
+  --dm-bg: #0a0a0f;
+  --dm-border: #1a1a24;
+  --dm-danger: #ef4444;
+  --dm-danger-glow: rgba(239, 68, 68, 0.2);
+  --dm-text: #9ca3af;
+  --dm-text-bright: #e5e7eb;
+  width: 100%;
+  max-width: 24rem;
+  background: var(--dm-bg);
+  border: 1px solid var(--dm-border);
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--dm-border), 0 24px 48px rgba(0, 0, 0, 0.5);
+}
+.delete-modal-head {
+  padding: 1.25rem 1.25rem 0;
+  border-bottom: 1px solid var(--dm-border);
+  padding-bottom: 1rem;
+}
+.delete-modal-label {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--dm-danger);
+  margin-bottom: 0.35rem;
+  font-family: ui-monospace, monospace;
+}
+.delete-modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--dm-text-bright);
+  margin: 0 0 0.35rem;
+}
+.delete-modal-desc {
+  font-size: 0.8rem;
+  color: var(--dm-text);
+  margin: 0;
+  line-height: 1.4;
+}
+.delete-modal-body {
+  padding: 1rem 1.25rem;
+}
+.delete-modal-err {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--dm-danger);
+}
+.delete-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--dm-border);
+  background: rgba(17, 17, 24, 0.4);
+}
+.delete-modal-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
+  border: 1px solid transparent;
+}
+.delete-modal-btn--ghost {
+  background: transparent;
+  color: var(--dm-text);
+  border-color: var(--dm-border);
+}
+.delete-modal-btn--ghost:hover:not(:disabled) {
+  color: var(--dm-text-bright);
+  background: rgba(0, 229, 160, 0.08);
+  border-color: rgba(0, 229, 160, 0.25);
+}
+.delete-modal-btn--danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--dm-danger);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+.delete-modal-btn--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 16px var(--dm-danger-glow);
+}
+.delete-modal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>
