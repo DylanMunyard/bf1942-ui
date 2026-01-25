@@ -494,6 +494,7 @@ function onPageSizeChange() {
 }
 
 async function viewRound(roundId: string) {
+  closeAchievementsPanel();
   roundDetail.value = null;
   roundDetailLoading.value = true;
   try {
