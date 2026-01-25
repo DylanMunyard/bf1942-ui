@@ -51,6 +51,8 @@ export interface RoundDetailResponse {
   achievementCountToDelete: number;
   observationCountToDelete?: number;
   sessionCountToDelete?: number;
+  /** True when this round has been marked as deleted (soft-delete). Excluded from aggregates. */
+  isDeleted?: boolean;
 }
 
 export interface RoundAchievement {
@@ -176,13 +178,14 @@ class AdminDataService {
   }
 
   async getRoundDetail(roundId: string): Promise<RoundDetailResponse> {
-    const raw = await this.request<RoundDetailResponse & { achievementCount?: number }>(
+    const raw = await this.request<RoundDetailResponse & { achievementCount?: number; isDeleted?: boolean }>(
       `/rounds/${encodeURIComponent(roundId)}`,
       { method: 'GET' }
     );
     return {
       ...raw,
       achievementCountToDelete: raw.achievementCount ?? raw.achievementCountToDelete ?? 0,
+      isDeleted: raw.isDeleted ?? false,
     };
   }
 
@@ -200,14 +203,18 @@ class AdminDataService {
     });
   }
 
-  async getAuditLog(page = 1, pageSize = 50): Promise<{
+  async getAuditLog(_page = 1, pageSize = 50): Promise<{
     items: AuditLogEntry[];
     totalCount: number;
   }> {
-    return this.request<{ items: AuditLogEntry[]; totalCount: number }>(
-      `/audit-log?page=${page}&pageSize=${pageSize}`,
+    const res = await this.request<AuditLogEntry[] | { items: AuditLogEntry[]; totalCount: number }>(
+      `/audit-log?limit=${pageSize}`,
       { method: 'GET' }
     );
+    if (Array.isArray(res)) {
+      return { items: res, totalCount: res.length };
+    }
+    return { items: res.items ?? [], totalCount: res.totalCount ?? res.items?.length ?? 0 };
   }
 }
 

@@ -94,4 +94,15 @@ export const formatDate = (dateString: string): string => {
     hour: '2-digit',
     minute: '2-digit'
   });
+};
+
+/** DD/MM/YYYY, HH:mm for admin/audit views */
+export const formatDateTimeShort = (iso: string): string => {
+  try {
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return iso;
+  }
 }; 

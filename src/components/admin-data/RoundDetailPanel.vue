@@ -1,5 +1,8 @@
 <template>
   <div class="round-panel">
+    <div v-if="detail.isDeleted" class="round-panel-deleted-banner">
+      This round has been marked as deleted. It is excluded from stats and aggregates. Achievements were removed; round and sessions remain for recovery.
+    </div>
     <div class="round-panel-head">
       <div class="round-panel-meta">
         <h3 class="round-panel-title">[ ROUND ] {{ detail.roundId }}</h3>
@@ -10,6 +13,7 @@
         </div>
       </div>
       <button
+        v-if="!detail.isDeleted"
         type="button"
         class="round-panel-delete"
         :disabled="loading"
@@ -130,6 +134,13 @@ function formatDate(iso: string): string {
   border: 1px solid var(--rp-border);
   border-radius: 2px;
   overflow: hidden;
+}
+.round-panel-deleted-banner {
+  padding: 0.6rem 1rem;
+  font-size: 0.75rem;
+  color: var(--rp-warn);
+  background: rgba(245, 158, 11, 0.1);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
 }
 .round-panel-head {
   display: flex;
