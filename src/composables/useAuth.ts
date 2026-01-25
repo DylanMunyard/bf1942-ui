@@ -13,6 +13,7 @@ export function useAuth() {
   const isAuthenticated = computed(() => authState.value.isAuthenticated);
   const token = computed(() => authState.value.token);
   const user = computed(() => authState.value.user);
+  const isAdmin = computed(() => user.value?.email === 'dmunyard@gmail.com');
 
   const handleAuthSuccess = (event: CustomEvent) => {
     authState.value = event.detail;
@@ -104,6 +105,7 @@ export function useAuth() {
     isAuthenticated,
     token,
     user,
+    isAdmin,
     loginWithDiscord,
     logout,
     loadStoredAuth,

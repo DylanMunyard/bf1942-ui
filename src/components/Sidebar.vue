@@ -168,6 +168,25 @@
             <div class="absolute left-full top-1/2 -translate-y-1/2 border-l-8 border-l-slate-800 border-y-8 border-y-transparent" />
           </div>
         </router-link>
+
+        <!-- Admin Data Management (admin only) -->
+        <router-link
+          v-if="isAdmin"
+          to="/admin/data"
+          class="group relative flex flex-col items-center justify-center w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-amber-500/50 transition-all duration-300 hover:scale-105"
+          active-class="!border-amber-500 !bg-gradient-to-br !from-amber-500/20 !to-orange-500/20"
+        >
+          <div class="w-8 h-8 flex items-center justify-center opacity-80 group-hover:opacity-100">
+            <i class="pi pi-database text-2xl text-amber-400/90" />
+          </div>
+          <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+            <div class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 p-4 shadow-2xl min-w-52">
+              <div class="text-sm font-bold text-amber-400">Admin Data</div>
+              <p class="text-slate-300 text-xs mt-1">Manage suspicious sessions</p>
+            </div>
+            <div class="absolute left-full top-1/2 -translate-y-1/2 border-l-8 border-l-slate-800 border-y-8 border-y-transparent" />
+          </div>
+        </router-link>
       </nav>
     </div>
   </div>
@@ -237,6 +256,16 @@
             :style="{ backgroundImage: `url(${explorerIcon})` }"
           />
         </router-link>
+
+        <!-- Admin Data (admin only) -->
+        <router-link
+          v-if="isAdmin"
+          to="/admin/data"
+          class="group flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-amber-500/50 transition-all duration-300 hover:scale-105"
+          active-class="!border-amber-500 !from-amber-500/20 !to-orange-500/20"
+        >
+          <i class="pi pi-database text-lg text-amber-400/90" />
+        </router-link>
       </nav>
     </div>
   </div>
@@ -253,7 +282,7 @@ import playersIcon from '@/assets/players.webp';
 import explorerIcon from '@/assets/menu-item-data-explorer.webp';
 
 const route = useRoute();
-const { isAuthenticated } = useAuth();
+const { isAuthenticated, isAdmin } = useAuth();
 </script>
 
  

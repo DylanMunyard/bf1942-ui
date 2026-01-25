@@ -24,6 +24,7 @@ const PublicTournamentMatches = () => import('../views/PublicTournamentMatches.v
 const PublicTournamentStats = () => import('../views/PublicTournamentStats.vue')
 const PublicTournamentFiles = () => import('../views/PublicTournamentFiles.vue')
 const DataExplorer = () => import('../views/DataExplorer.vue')
+const AdminDataManagement = () => import('../views/AdminDataManagement.vue')
 
 const routes: RouteRecordRaw[] = [
     {
@@ -389,6 +390,23 @@ const routes: RouteRecordRaw[] = [
         const { isAuthenticated } = useAuth()
         if (!isAuthenticated.value) {
           next('/servers/bf1942')
+        } else {
+          next()
+        }
+      }
+    },
+    {
+      path: '/admin/data',
+      name: 'admin-data',
+      component: AdminDataManagement,
+      meta: {
+        title: 'Admin Data Management - BF Stats',
+        description: 'Investigate and delete suspicious player sessions.'
+      },
+      beforeEnter: (_to, _from, next) => {
+        const { isAuthenticated, isAdmin } = useAuth()
+        if (!isAuthenticated.value || !isAdmin.value) {
+          next('/dashboard')
         } else {
           next()
         }
