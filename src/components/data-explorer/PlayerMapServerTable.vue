@@ -42,6 +42,7 @@
 
 <script setup lang="ts">
 import type { PlayerServerStats } from '../../services/dataExplorerService';
+import { getRankClass } from '@/utils/statsUtils';
 
 defineProps<{
   serverStats: PlayerServerStats[];
@@ -50,16 +51,6 @@ defineProps<{
 const emit = defineEmits<{
   'navigate-to-server': [serverGuid: string];
 }>();
-
-const getRankClass = (rank: number): string => {
-  const base = 'inline-flex items-center justify-center w-5 h-5 rounded text-xs font-medium';
-  switch (rank) {
-    case 1: return `${base} bg-yellow-500/20 text-yellow-400`;
-    case 2: return `${base} bg-slate-400/20 text-slate-300`;
-    case 3: return `${base} bg-orange-500/20 text-orange-400`;
-    default: return `${base} text-slate-500`;
-  }
-};
 
 const handleServerClick = (serverGuid: string) => {
   emit('navigate-to-server', serverGuid);

@@ -17,7 +17,7 @@
           class="border-b border-slate-700/30"
         >
           <td class="py-1.5">
-            <span :class="getRankClass(index)">{{ index + 1 }}</span>
+            <span :class="getRankClass(index + 1)">{{ index + 1 }}</span>
           </td>
           <td class="py-1.5">
             <router-link
@@ -41,6 +41,7 @@
 </template>
 
 <script setup lang="ts">
+import { getRankClass } from '@/utils/statsUtils';
 import type { TopPlayer } from '../../services/dataExplorerService';
 
 defineProps<{
@@ -52,13 +53,4 @@ const getPlayerDetailsRoute = (playerName: string) => ({
   params: { playerName }
 });
 
-const getRankClass = (index: number): string => {
-  const base = 'inline-flex items-center justify-center w-5 h-5 rounded text-xs font-medium';
-  switch (index) {
-    case 0: return `${base} bg-yellow-500/20 text-yellow-400`;
-    case 1: return `${base} bg-slate-400/20 text-slate-300`;
-    case 2: return `${base} bg-orange-500/20 text-orange-400`;
-    default: return `${base} text-slate-500`;
-  }
-};
 </script>

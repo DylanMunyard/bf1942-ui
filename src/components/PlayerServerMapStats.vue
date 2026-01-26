@@ -265,7 +265,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { calculateKDR } from '@/utils/statsUtils';
+import { calculateKDR, getRankClass } from '@/utils/statsUtils';
+import { formatPlayTime } from '@/utils/timeUtils';
+import { PLAYER_STATS_TIME_RANGE_OPTIONS } from '@/utils/constants';
 import { fetchPlayerMapRankings, type PlayerMapRankingsResponse, type GameType } from '../services/dataExplorerService';
 
 interface MapStat {
@@ -292,11 +294,7 @@ const sortField = ref<'mapName' | 'totalScore' | 'kdRatio' | 'totalKills' | 'tot
 const sortDirection = ref<'asc' | 'desc'>('desc');
 
 const selectedTimeRange = ref<number>(60);
-const timeRangeOptions = [
-  { value: 60, label: '60 days' },
-  { value: 180, label: '180 days' },
-  { value: 365, label: '365 days' }
-];
+const timeRangeOptions = PLAYER_STATS_TIME_RANGE_OPTIONS;
 
 // Flatten mapGroups into a single array of map stats for this server
 // Since we're filtering by serverGuid in the API, each mapGroup should only have one serverStat
@@ -365,28 +363,6 @@ const changeSort = (field: typeof sortField.value) => {
   }
 };
 
-const formatPlayTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = Math.floor(minutes % 60);
-
-  if (hours === 0) {
-    return `${remainingMinutes}m`;
-  } else if (hours === 1) {
-    return `${hours}h ${remainingMinutes}m`;
-  } else {
-    return `${hours}h ${remainingMinutes}m`;
-  }
-};
-
-const getRankClass = (rank: number): string => {
-  const base = 'inline-flex items-center justify-center w-5 h-5 rounded text-xs font-medium';
-  switch (rank) {
-    case 1: return `${base} bg-yellow-500/20 text-yellow-400`;
-    case 2: return `${base} bg-slate-400/20 text-slate-300`;
-    case 3: return `${base} bg-orange-500/20 text-orange-400`;
-    default: return `${base} text-slate-500`;
-  }
-};
 
 const loadData = async (days?: number) => {
   if (!props.playerName || !props.serverGuid) return;

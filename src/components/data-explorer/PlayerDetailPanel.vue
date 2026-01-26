@@ -178,7 +178,8 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue';
-import { fetchPlayerMapRankings, type PlayerMapRankingsResponse, type GameType, type PlayerMapGroup } from '../../services/dataExplorerService';
+import { PLAYER_STATS_TIME_RANGE_OPTIONS } from '@/utils/constants';
+import { fetchPlayerMapRankings, type PlayerMapRankingsResponse, type GameType } from '../../services/dataExplorerService';
 import PlayerMapServerTable from './PlayerMapServerTable.vue';
 
 const props = defineProps<{
@@ -205,83 +206,14 @@ const isLoading = ref(false);
 const error = ref<string | null>(null);
 const expandedMaps = ref<Set<string>>(new Set());
 
-// Computed property to filter playerData by serverGuid if provided
+// Computed property - when serverGuid is provided, API filters server-side, so no client-side filtering needed
 const filteredPlayerData = computed(() => {
-  if (!playerData.value || !props.serverGuid) {
-    return playerData.value;
-  }
-
-  // Filter mapGroups to only include maps where the player has stats on the specified server
-  const filteredMapGroups = playerData.value.mapGroups
-    .map(mapGroup => {
-      // Filter serverStats to only include the specified server
-      const filteredServerStats = mapGroup.serverStats.filter(
-        stat => stat.serverGuid === props.serverGuid
-      );
-
-      // Only include this map if there are stats for the specified server
-      if (filteredServerStats.length === 0) {
-        return null;
-      }
-
-      // Recalculate aggregatedScore and bestRank based on filtered server stats
-      const aggregatedScore = filteredServerStats.reduce((sum, stat) => sum + stat.totalScore, 0);
-      const bestRank = filteredServerStats.length > 0
-        ? Math.min(...filteredServerStats.map(stat => stat.rank))
-        : null;
-      const bestRankServer = bestRank
-        ? filteredServerStats.find(stat => stat.rank === bestRank)?.serverGuid || null
-        : null;
-
-      return {
-        ...mapGroup,
-        serverStats: filteredServerStats,
-        aggregatedScore,
-        bestRank,
-        bestRankServer
-      };
-    })
-    .filter((mapGroup): mapGroup is PlayerMapGroup => mapGroup !== null);
-
-  // Filter numberOneRankings to only include rankings on the specified server
-  const filteredNumberOneRankings = playerData.value.numberOneRankings.filter(
-    ranking => ranking.serverGuid === props.serverGuid
-  );
-
-  // Recalculate overallStats based on filtered data
-  const allFilteredServerStats = filteredMapGroups.flatMap(mg => mg.serverStats);
-  const uniqueServers = new Set(allFilteredServerStats.map(s => s.serverGuid)).size;
-  const uniqueMaps = filteredMapGroups.length;
-  const totalScore = allFilteredServerStats.reduce((sum, stat) => sum + stat.totalScore, 0);
-  const totalKills = allFilteredServerStats.reduce((sum, stat) => sum + stat.totalKills, 0);
-  const totalDeaths = allFilteredServerStats.reduce((sum, stat) => sum + stat.totalDeaths, 0);
-  const kdRatio = totalDeaths > 0 ? totalKills / totalDeaths : totalKills;
-  const totalRounds = allFilteredServerStats.reduce((sum, stat) => sum + stat.totalRounds, 0);
-
-  return {
-    ...playerData.value,
-    mapGroups: filteredMapGroups,
-    numberOneRankings: filteredNumberOneRankings,
-    overallStats: {
-      ...playerData.value.overallStats,
-      totalScore,
-      totalKills,
-      totalDeaths,
-      kdRatio,
-      totalRounds,
-      uniqueServers,
-      uniqueMaps
-    }
-  };
+  return playerData.value;
 });
 
 // Time range selection
 const selectedTimeRange = ref<number>(60); // Default to 60 days
-const timeRangeOptions = [
-  { value: 60, label: '60 days' },
-  { value: 180, label: '180 days' },
-  { value: 365, label: '365 days' }
-];
+const timeRangeOptions = PLAYER_STATS_TIME_RANGE_OPTIONS;
 
 const gameLabel = computed(() => {
   switch (playerData.value?.game?.toLowerCase()) {
@@ -301,7 +233,13 @@ const loadData = async (days?: number) => {
 
   try {
     console.log(`Loading player data for ${props.playerName} with ${timeRange} days`);
-    playerData.value = await fetchPlayerMapRankings(props.playerName, props.game || 'bf1942', timeRange);
+    // Pass serverGuid to filter on server side if provided
+    playerData.value = await fetchPlayerMapRankings(
+      props.playerName,
+      props.game || 'bf1942',
+      timeRange,
+      props.serverGuid
+    );
 
     // Clear expanded maps and set up new ones if we have data
     expandedMaps.value.clear();
@@ -358,7 +296,7 @@ onMounted(loadData);
 watch(() => props.playerName, () => loadData());
 watch(() => props.game, () => loadData());
 watch(() => props.serverGuid, () => {
-  // When serverGuid changes, we don't need to reload data, just re-filter
-  // The computed property will handle the filtering
+  // When serverGuid changes, reload data to get server-filtered results
+  loadData();
 });
 </script>

@@ -63,3 +63,17 @@ export function getMapAccentColor(mapName: string): string {
 
   return colors[Math.abs(hash) % colors.length];
 }
+
+/**
+ * Get CSS classes for rank-based styling (for badges/indicators)
+ * Returns Tailwind classes for rank 1 (gold), 2 (silver), 3 (bronze), and others
+ */
+export function getRankClass(rank: number): string {
+  const base = 'inline-flex items-center justify-center w-5 h-5 rounded text-xs font-medium';
+  switch (rank) {
+    case 1: return `${base} bg-yellow-500/20 text-yellow-400`;
+    case 2: return `${base} bg-slate-400/20 text-slate-300`;
+    case 3: return `${base} bg-orange-500/20 text-orange-400`;
+    default: return `${base} text-slate-500`;
+  }
+}
