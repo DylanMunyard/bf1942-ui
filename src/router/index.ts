@@ -8,7 +8,6 @@ const Players = () => import('../views/Players.vue')
 const PlayerDetails = () => import('../views/PlayerDetails.vue')
 const PlayerAllAchievements = () => import('../views/PlayerAllAchievements.vue')
 const ServerDetails = () => import('../views/ServerDetails.vue')
-const ServerRankingsPage = () => import('../components/ServerRankingsPage.vue')
 const PlayerSessionsPage = () => import('../components/PlayerSessionsPage.vue')
 const ServerSessionsPage = () => import('../components/ServerSessionsPage.vue')
 const RoundReportPageV2 = () => import('../components/RoundReportPageV2.vue')
@@ -124,16 +123,6 @@ const routes: RouteRecordRaw[] = [
       meta: {
         title: (route: RouteLocationNormalized) => `${route.params.serverName} Server Stats - BF Stats`,
         description: (route: RouteLocationNormalized) => `Detailed statistics for ${route.params.serverName} server. View player rankings, server history, performance metrics, and join information.`
-      }
-    },
-    {
-      path: '/servers/:serverName/rankings',
-      name: 'server-rankings',
-      component: ServerRankingsPage,
-      props: true,
-      meta: {
-        title: (route: RouteLocationNormalized) => `${route.params.serverName} Player Rankings - BF Stats`,
-        description: (route: RouteLocationNormalized) => `Top players and leaderboard for ${route.params.serverName}. View kill/death ratios, scores, and player performance rankings.`
       }
     },
     {

@@ -40,6 +40,14 @@ export interface MapRotationItem {
   winStats: WinStats;
 }
 
+export interface MapRotationResponse {
+  maps: MapRotationItem[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
 export interface TopPlayer {
   playerName: string;
   totalScore: number;
@@ -136,6 +144,34 @@ export async function fetchServerDetail(serverGuid: string): Promise<ServerDetai
   } catch (err) {
     console.error('Error fetching server detail:', err);
     throw new Error('Failed to get server detail');
+  }
+}
+
+/**
+ * Fetches paginated map rotation for a specific server
+ * @param serverGuid - The server GUID
+ * @param page - Page number (1-based, default 1)
+ * @param pageSize - Number of results per page (default 10)
+ */
+export async function fetchServerMapRotation(
+  serverGuid: string,
+  page: number = 1,
+  pageSize: number = 10
+): Promise<MapRotationResponse> {
+  try {
+    const response = await axios.get<MapRotationResponse>(
+      `/stats/data-explorer/servers/${encodeURIComponent(serverGuid)}/map-rotation`,
+      {
+        params: { page, pageSize }
+      }
+    );
+    return response.data;
+  } catch (err: any) {
+    if (err.response?.status === 404) {
+      throw new Error('Server not found');
+    }
+    console.error('Error fetching server map rotation:', err);
+    throw new Error('Failed to get server map rotation');
   }
 }
 

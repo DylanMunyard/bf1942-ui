@@ -29,7 +29,27 @@
               serverDetail.isOnline ? 'bg-green-400 shadow-lg shadow-green-400/50' : 'bg-slate-500'
             ]"
           />
-          <h2 class="text-2xl font-bold text-slate-200">{{ serverDetail.name }}</h2>
+          <router-link
+            :to="`/servers/${encodeURIComponent(serverDetail.name)}`"
+            class="group/link text-2xl font-bold text-slate-200 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-cyan-400 hover:via-blue-400 hover:to-purple-400 transition-all duration-200"
+            :title="`View server details for ${serverDetail.name}`"
+          >
+            {{ serverDetail.name }}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="inline ml-2 opacity-0 group-hover/link:opacity-100 transition-opacity"
+            >
+              <path d="m9 18 6-6-6-6" />
+            </svg>
+          </router-link>
         </div>
         <div class="flex items-center gap-3 text-sm text-slate-400">
           <span class="px-2 py-0.5 bg-slate-700 rounded">{{ getGameLabel(serverDetail.game) }}</span>
@@ -48,8 +68,14 @@
         <h3 class="text-sm font-medium text-slate-300 mb-3">Map Rotation</h3>
         <div class="bg-slate-800/30 rounded-lg p-4">
           <MapRotationTable
-            :map-rotation="serverDetail.mapRotation.slice(0, 10)"
+            :map-rotation="mapRotation"
+            :current-page="mapRotationPage"
+            :total-pages="mapRotationTotalPages"
+            :total-count="mapRotationTotalCount"
+            :page-size="mapRotationPageSize"
+            :is-loading="isLoadingMapRotation"
             @navigate="emit('navigateToMap', $event)"
+            @page-change="handleMapRotationPageChange"
           />
         </div>
       </div>
@@ -101,8 +127,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
-import { fetchServerDetail, type ServerDetail } from '../../services/dataExplorerService';
+import { ref, watch, onMounted, computed } from 'vue';
+import { fetchServerDetail, fetchServerMapRotation, type ServerDetail, type MapRotationItem } from '../../services/dataExplorerService';
 import WinStatsBar from './WinStatsBar.vue';
 import MapRotationTable from './MapRotationTable.vue';
 import ActivityHeatmap from './ActivityHeatmap.vue';
@@ -125,6 +151,14 @@ const serverDetail = ref<ServerDetail | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 
+// Map rotation pagination state
+const mapRotation = ref<MapRotationItem[]>([]);
+const mapRotationPage = ref(1);
+const mapRotationPageSize = ref(10);
+const mapRotationTotalCount = ref(0);
+const mapRotationTotalPages = computed(() => Math.max(1, Math.ceil(mapRotationTotalCount.value / mapRotationPageSize.value)));
+const isLoadingMapRotation = ref(false);
+
 const getGameLabel = (game: string): string => {
   switch (game.toLowerCase()) {
     case 'bf1942': return 'Battlefield 1942';
@@ -146,6 +180,8 @@ const loadData = async () => {
     if (serverDetail.value?.name) {
       document.title = `${serverDetail.value.name} - Data Explorer | BF Stats`;
     }
+    // Load first page of map rotation
+    await loadMapRotation(1);
   } catch (err) {
     console.error('Error loading server detail:', err);
     error.value = 'Failed to load server details';
@@ -154,6 +190,33 @@ const loadData = async () => {
   }
 };
 
+const loadMapRotation = async (page: number) => {
+  if (!props.serverGuid) return;
+
+  isLoadingMapRotation.value = true;
+  try {
+    const response = await fetchServerMapRotation(props.serverGuid, page, mapRotationPageSize.value);
+    mapRotation.value = response.maps;
+    mapRotationPage.value = response.page;
+    mapRotationTotalCount.value = response.totalCount;
+  } catch (err) {
+    console.error('Error loading map rotation:', err);
+    mapRotation.value = [];
+    mapRotationTotalCount.value = 0;
+  } finally {
+    isLoadingMapRotation.value = false;
+  }
+};
+
+const handleMapRotationPageChange = (page: number) => {
+  if (page >= 1 && page <= mapRotationTotalPages.value) {
+    loadMapRotation(page);
+  }
+};
+
 onMounted(loadData);
-watch(() => props.serverGuid, loadData);
+watch(() => props.serverGuid, () => {
+  loadData();
+  mapRotationPage.value = 1;
+});
 </script>

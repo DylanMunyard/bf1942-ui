@@ -1251,7 +1251,7 @@ onUnmounted(() => {
                     <div class="mt-auto pt-6 space-y-3">
                       <!-- View Rankings Link -->
                       <router-link
-                        :to="`/servers/${encodeURIComponent(ranking.serverName)}/rankings`"
+                        :to="{ name: 'explore-server-detail', params: { serverGuid: ranking.serverGuid } }"
                         class="block w-full px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-all duration-300 transform hover:scale-105 active:scale-95 text-center"
                         :class="{
                           'bg-gradient-to-r from-yellow-600/30 to-yellow-700/30 border border-yellow-500/50 text-yellow-200 hover:from-yellow-600/40 hover:to-yellow-700/40 hover:border-yellow-400/60 shadow-lg shadow-yellow-500/15': ranking.rank === 1,
