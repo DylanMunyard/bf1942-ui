@@ -1,103 +1,81 @@
 <template>
   <div
-    class="relative bg-gradient-to-r from-slate-800/30 to-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4 transition-all duration-300 hover:from-slate-800/50 hover:to-slate-900/50 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-1"
-    :class="{ 'border-l-4 border-l-green-500': playerName.player?.isOnline }"
+    class="hacker-card"
+    :class="{ 'is-online': playerName.player?.isOnline }"
   >
-    <div class="flex justify-between items-center gap-3">
-      <div class="flex items-center gap-3 flex-1 min-w-0">
+    <!-- Online indicator bar -->
+    <div v-if="playerName.player?.isOnline" class="online-bar" />
+
+    <div class="card-content">
+      <div class="card-main">
         <!-- Avatar -->
-        <div class="relative flex-shrink-0">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-slate-900 font-bold text-lg">
-            {{ playerName.playerName[0].toUpperCase() }}
+        <div class="avatar-container">
+          <div class="avatar">
+            <span class="avatar-text">{{ playerName.playerName[0].toUpperCase() }}</span>
           </div>
-          <div
-            v-if="playerName.player?.isOnline"
-            class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900 flex items-center justify-center"
-          >
-            <div class="w-2 h-2 bg-white rounded-full animate-pulse" />
+          <div v-if="playerName.player?.isOnline" class="online-indicator">
+            <div class="online-pulse" />
           </div>
         </div>
-        
+
         <!-- Player Details -->
-        <div class="flex-1 min-w-0">
+        <div class="player-info">
           <router-link
             :to="`/players/${playerName.playerName}`"
-            class="block text-slate-200 font-semibold text-sm hover:text-cyan-400 transition-colors duration-200 truncate"
+            class="player-name"
           >
             {{ playerName.playerName }}
           </router-link>
-          
+
           <!-- Status -->
-          <div class="text-xs mt-1">
+          <div class="player-status">
             <div
               v-if="playerName.player?.isOnline && playerName.player.currentServer"
-              class="text-green-400 font-medium"
+              class="status-online"
             >
-              🎮 <router-link
+              <span class="status-icon">&gt;</span>
+              <router-link
                 :to="`/servers/${encodeURIComponent(playerName.player.currentServer)}`"
-                class="text-green-400 hover:text-cyan-400 transition-colors duration-200 font-medium"
+                class="server-link"
               >
                 {{ truncateServerName(playerName.player.currentServer) }}
               </router-link>
-              <span
-                v-if="playerName.player.currentMap"
-                class="text-slate-400 block sm:inline"
-              > • {{ playerName.player.currentMap }}</span>
+              <span v-if="playerName.player.currentMap" class="map-name">
+                :: {{ playerName.player.currentMap }}
+              </span>
             </div>
-            <div
-              v-else-if="playerName.player?.isOnline"
-              class="text-green-400 font-medium"
-            >
-              🟢 Online
+            <div v-else-if="playerName.player?.isOnline" class="status-online">
+              <span class="status-icon">&gt;</span>
+              <span class="status-text">CONNECTED</span>
             </div>
-            <div
-              v-else
-              class="text-slate-400"
-            >
-              {{ formatLastSeen(playerName.player.lastSeenIso) }}
+            <div v-else class="status-offline">
+              <span class="status-icon">#</span>
+              <span class="status-text">{{ formatLastSeen(playerName.player.lastSeenIso) }}</span>
             </div>
-            
+
             <!-- Session Stats -->
-            <div
-              v-if="playerName.player?.isOnline && hasSessionStats"
-              class="flex gap-2 mt-1 flex-wrap"
-            >
-              <span
-                v-if="playerName.player.currentSessionScore !== undefined"
-                class="px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-md text-xs font-medium"
-              >
-                {{ formatScore(playerName.player.currentSessionScore) }}
+            <div v-if="playerName.player?.isOnline && hasSessionStats" class="session-stats">
+              <span v-if="playerName.player.currentSessionScore !== undefined" class="stat-badge stat-score">
+                SCR:{{ formatScore(playerName.player.currentSessionScore) }}
               </span>
               <span
                 v-if="playerName.player.currentSessionKills !== undefined && playerName.player.currentSessionDeaths !== undefined"
-                class="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded-md text-xs font-medium"
+                class="stat-badge stat-kd"
               >
-                <span class="text-green-400">{{ playerName.player.currentSessionKills }}</span>/<span class="text-red-400">{{ playerName.player.currentSessionDeaths }}</span>
+                K:<span class="kills">{{ playerName.player.currentSessionKills }}</span>/D:<span class="deaths">{{ playerName.player.currentSessionDeaths }}</span>
               </span>
             </div>
           </div>
         </div>
       </div>
-      
+
       <!-- Remove Button -->
       <button
-        class="group flex items-center justify-center w-8 h-8 rounded-full bg-slate-700/50 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all duration-200 hover:scale-110 flex-shrink-0"
+        class="btn-remove"
         title="Remove player"
         @click="$emit('remove', playerName.id)"
       >
-        <svg
-          class="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
+        <span class="btn-icon">[x]</span>
       </button>
     </div>
   </div>
@@ -162,3 +140,255 @@ const hasSessionStats = computed(() => {
 });
 </script>
 
+<style scoped>
+.hacker-card {
+  --card-accent: #00fff2;
+  position: relative;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.hacker-card:hover {
+  border-color: var(--card-accent);
+  box-shadow: 0 0 20px rgba(0, 255, 242, 0.15);
+}
+
+.hacker-card.is-online {
+  --card-accent: #39ff14;
+}
+
+.online-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--card-accent);
+  box-shadow: 0 0 10px var(--card-accent);
+}
+
+.card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+}
+
+.card-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Avatar */
+.avatar-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(0, 255, 242, 0.2) 0%, rgba(0, 255, 242, 0.05) 100%);
+  border: 1px solid rgba(0, 255, 242, 0.4);
+  border-radius: 4px;
+}
+
+.avatar-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #00fff2;
+  text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: #0d1117;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.online-pulse {
+  width: 8px;
+  height: 8px;
+  background: #39ff14;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #39ff14;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.9); }
+}
+
+/* Player Info */
+.player-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-name {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #e6edf3;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-name:hover {
+  color: #00fff2;
+  text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+}
+
+.player-status {
+  margin-top: 0.375rem;
+  font-size: 0.7rem;
+}
+
+.status-online, .status-offline {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.status-icon {
+  color: #8b949e;
+  font-weight: bold;
+}
+
+.status-online .status-icon {
+  color: #39ff14;
+}
+
+.status-text {
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-online .status-text {
+  color: #39ff14;
+}
+
+.server-link {
+  color: #39ff14;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.server-link:hover {
+  color: #00fff2;
+  text-shadow: 0 0 8px rgba(0, 255, 242, 0.5);
+}
+
+.map-name {
+  color: #6e7681;
+}
+
+/* Session Stats */
+.session-stats {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  padding: 0.125rem 0.375rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-score {
+  background: rgba(0, 255, 242, 0.15);
+  color: #00fff2;
+  border: 1px solid rgba(0, 255, 242, 0.3);
+}
+
+.stat-kd {
+  background: rgba(139, 148, 158, 0.1);
+  color: #8b949e;
+  border: 1px solid rgba(139, 148, 158, 0.2);
+}
+
+.stat-kd .kills {
+  color: #39ff14;
+}
+
+.stat-kd .deaths {
+  color: #ff3131;
+}
+
+/* Remove Button */
+.btn-remove {
+  flex-shrink: 0;
+  padding: 0.375rem 0.5rem;
+  background: transparent;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  color: #8b949e;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-size: 0.75rem;
+}
+
+.btn-remove:hover {
+  border-color: #ff3131;
+  color: #ff3131;
+  background: rgba(255, 49, 49, 0.1);
+}
+
+.btn-icon {
+  font-weight: bold;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .card-content {
+    padding: 0.75rem;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .avatar-text {
+    font-size: 0.875rem;
+  }
+
+  .player-name {
+    font-size: 0.8rem;
+  }
+
+  .player-status {
+    font-size: 0.65rem;
+  }
+}
+</style>

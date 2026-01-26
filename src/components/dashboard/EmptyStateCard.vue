@@ -1,22 +1,34 @@
 <template>
-  <div class="empty-state-card">
-    <div class="empty-state-content">
-      <div class="icon-container">
-        <span class="icon">{{ icon }}</span>
+  <div class="empty-state">
+    <div class="empty-content">
+      <div class="ascii-art">
+        <span class="icon-text">{{ icon }}</span>
       </div>
-      <h3 class="empty-title">
-        {{ title }}
-      </h3>
-      <p class="empty-description">
+      <div class="terminal-output">
+        <div class="output-line">
+          <span class="prompt">&gt;</span>
+          <span class="command">query {{ title.toLowerCase().replace(/_/g, ' ') }}</span>
+        </div>
+        <div class="output-line result">
+          <span class="response"># {{ title }}</span>
+        </div>
+      </div>
+      <p class="description">
         {{ description }}
       </p>
       <button
         v-if="actionText"
-        class="action-button"
+        class="action-btn"
         @click="$emit('action')"
       >
         {{ actionText }}
       </button>
+    </div>
+    <div class="corner-brackets">
+      <span class="corner tl">[</span>
+      <span class="corner tr">]</span>
+      <span class="corner bl">[</span>
+      <span class="corner br">]</span>
     </div>
   </div>
 </template>
@@ -35,85 +47,148 @@ defineEmits<{
 </script>
 
 <style scoped>
-.empty-state-card {
+.empty-state {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
-  padding: 40px 20px;
+  min-height: 180px;
+  padding: 2rem 1.5rem;
   text-align: center;
-  border: 2px dashed var(--color-border);
-  border-radius: 12px;
-  background-color: rgba(var(--color-accent-rgb), 0.02);
+  border: 1px dashed #30363d;
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(13, 17, 23, 0.8) 0%, rgba(22, 27, 34, 0.4) 100%);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
   transition: all 0.3s ease;
 }
 
-.empty-state-card:hover {
-  border-color: rgba(var(--color-accent-rgb), 0.3);
-  background-color: rgba(var(--color-accent-rgb), 0.05);
+.empty-state:hover {
+  border-color: rgba(0, 255, 242, 0.3);
+  background: linear-gradient(135deg, rgba(0, 255, 242, 0.02) 0%, rgba(13, 17, 23, 0.8) 100%);
 }
 
-.empty-state-content {
+.empty-content {
+  position: relative;
+  z-index: 1;
   max-width: 280px;
 }
 
-.icon-container {
-  margin-bottom: 16px;
+/* ASCII Art Icon */
+.ascii-art {
+  margin-bottom: 1rem;
 }
 
-.icon {
-  font-size: 3rem;
-  opacity: 0.7;
+.icon-text {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #6e7681;
+  text-shadow: 0 0 20px rgba(0, 255, 242, 0.2);
 }
 
-.empty-title {
-  color: var(--color-text);
-  margin: 0 0 8px 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+/* Terminal Output Style */
+.terminal-output {
+  margin-bottom: 0.75rem;
+  text-align: left;
 }
 
-.empty-description {
-  color: var(--color-text-secondary);
-  margin: 0 0 20px 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
+.output-line {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  line-height: 1.6;
 }
 
-.action-button {
-  background: linear-gradient(135deg, var(--color-accent) 0%, rgba(var(--color-accent-rgb), 0.8) 100%);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+.prompt {
+  color: #39ff14;
+  flex-shrink: 0;
+}
+
+.command {
+  color: #8b949e;
+}
+
+.result .response {
+  color: #00fff2;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Description */
+.description {
+  color: #6e7681;
+  margin: 0 0 1.25rem 0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+/* Action Button */
+.action-btn {
+  padding: 0.625rem 1.25rem;
+  background: transparent;
+  border: 1px solid rgba(0, 255, 242, 0.4);
+  border-radius: 4px;
+  color: #00fff2;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.875rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   transition: all 0.2s ease;
 }
 
-.action-button:hover {
+.action-btn:hover {
+  background: rgba(0, 255, 242, 0.1);
+  border-color: #00fff2;
+  box-shadow: 0 0 20px rgba(0, 255, 242, 0.2);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.3);
 }
 
-/* Mobile responsiveness */
+/* Corner Brackets */
+.corner-brackets {
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+}
+
+.corner {
+  position: absolute;
+  font-size: 1rem;
+  color: #30363d;
+  transition: color 0.3s ease;
+}
+
+.empty-state:hover .corner {
+  color: rgba(0, 255, 242, 0.3);
+}
+
+.corner.tl { top: 0; left: 0; }
+.corner.tr { top: 0; right: 0; }
+.corner.bl { bottom: 0; left: 0; }
+.corner.br { bottom: 0; right: 0; }
+
+/* Mobile */
 @media (max-width: 480px) {
-  .empty-state-card {
+  .empty-state {
     min-height: 150px;
-    padding: 30px 15px;
+    padding: 1.5rem 1rem;
   }
-  
-  .icon {
-    font-size: 2.5rem;
+
+  .icon-text {
+    font-size: 1.5rem;
   }
-  
-  .empty-title {
-    font-size: 1.125rem;
+
+  .output-line {
+    font-size: 0.65rem;
   }
-  
-  .empty-description {
-    font-size: 0.8rem;
+
+  .description {
+    font-size: 0.7rem;
+  }
+
+  .action-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
   }
 }
 </style>

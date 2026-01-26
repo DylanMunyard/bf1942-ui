@@ -1,110 +1,89 @@
 <template>
-  <div class="group relative bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-lg border border-slate-700/50 overflow-hidden hover:border-cyan-500/50 transition-all duration-300">
+  <div class="hacker-card">
     <!-- Hero Image -->
-    <div
-      v-if="tournament.hasHeroImage"
-      class="relative h-32 bg-slate-800/60 overflow-hidden"
-    >
-      <div
-        v-if="imageLoading && !heroImageUrl"
-        class="w-full h-full flex items-center justify-center"
-      >
-        <div class="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+    <div v-if="tournament.hasHeroImage" class="hero-section">
+      <div v-if="imageLoading && !heroImageUrl" class="hero-loading">
+        <div class="loading-spinner" />
       </div>
       <img
         v-else-if="heroImageUrl"
         :src="heroImageUrl"
         :alt="tournament.name"
-        class="w-full h-full object-cover opacity-70 group-hover:opacity-90 group-hover:scale-105 transition-all duration-300"
+        class="hero-image"
       >
-      <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
+      <div class="hero-overlay" />
+      <div class="hero-scanlines" />
     </div>
 
     <!-- Content -->
-    <div class="p-4">
-      <!-- Tournament Name -->
-      <div class="mb-3">
-        <div class="flex items-center gap-2 mb-1">
+    <div class="card-content">
+      <!-- Tournament Header -->
+      <div class="tournament-header">
+        <div class="game-badge">
           <div
-            class="w-5 h-5 rounded bg-cover bg-center flex-shrink-0"
+            class="game-icon"
             :style="{ backgroundImage: getGameIcon() }"
           />
-          <h3 class="text-lg font-bold text-slate-200 group-hover:text-cyan-400 transition-colors line-clamp-1 flex-1">
-            {{ tournament.name }}
-          </h3>
         </div>
-        <div class="flex items-center gap-2 mt-1 text-xs text-slate-400">
-          <span class="flex items-center gap-1">
-            <span>👤</span>
-            <span>{{ tournament.organizer }}</span>
-          </span>
-          <span>•</span>
-          <span>{{ formatDate(tournament.createdAt) }}</span>
-          <template v-if="tournament.serverName">
-            <span>•</span>
-            <span class="flex items-center gap-1" :title="tournament.serverName">
-              <span>🖥️</span>
-              <span class="truncate max-w-[150px]">{{ tournament.serverName }}</span>
-            </span>
-          </template>
-        </div>
+        <h3 class="tournament-name">
+          {{ tournament.name }}
+        </h3>
       </div>
 
-      <!-- Round Progress -->
-      <div class="mb-3">
-        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-          <span>Matches</span>
-          <span class="font-mono">
-            {{ tournament.matchCount }} scheduled
+      <!-- Meta Info -->
+      <div class="tournament-meta">
+        <span class="meta-item">
+          <span class="meta-label">&gt; ORG:</span>
+          <span class="meta-value">{{ tournament.organizer }}</span>
+        </span>
+        <span class="meta-divider">//</span>
+        <span class="meta-item">
+          <span class="meta-label">DATE:</span>
+          <span class="meta-value">{{ formatDate(tournament.createdAt) }}</span>
+        </span>
+        <template v-if="tournament.serverName">
+          <span class="meta-divider">//</span>
+          <span class="meta-item server-meta" :title="tournament.serverName">
+            <span class="meta-label">SRV:</span>
+            <span class="meta-value truncate">{{ tournament.serverName }}</span>
           </span>
-        </div>
+        </template>
+      </div>
 
-        <div v-if="tournament.anticipatedRoundCount" class="text-xs text-slate-500">
-          Anticipated {{ tournament.anticipatedRoundCount }} round{{ tournament.anticipatedRoundCount > 1 ? 's' : '' }}
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-block">
+          <span class="stat-value">{{ tournament.matchCount }}</span>
+          <span class="stat-label">MATCHES</span>
+        </div>
+        <div v-if="tournament.anticipatedRoundCount" class="stat-block">
+          <span class="stat-value">{{ tournament.anticipatedRoundCount }}</span>
+          <span class="stat-label">ROUNDS</span>
         </div>
       </div>
 
       <!-- Status Badge -->
-      <div class="flex items-center gap-2 mb-3">
-        <span
-          v-if="isInProgress"
-          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-cyan-400 bg-cyan-500/20 border border-cyan-500/30 rounded-full"
-        >
-          <span>🎮</span>
-          <span>In Progress</span>
+      <div class="status-row">
+        <span v-if="isInProgress" class="status-badge status-active">
+          <span class="status-dot" />
+          <span>IN_PROGRESS</span>
         </span>
-        <span
-          v-else
-          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-slate-400 bg-slate-500/20 border border-slate-500/30 rounded-full"
-        >
-          <span>📅</span>
-          <span>Upcoming</span>
+        <span v-else class="status-badge status-pending">
+          <span class="status-icon">&gt;</span>
+          <span>SCHEDULED</span>
         </span>
       </div>
 
       <!-- Actions -->
-      <div class="flex items-center gap-2">
-        <button
-          class="flex-1 px-3 py-2 text-xs font-medium bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all"
-          @click="$emit('view-details')"
-        >
-          View Details
+      <div class="actions-row">
+        <button class="btn-action btn-primary" @click="$emit('view-details')">
+          [VIEW]
         </button>
-        <button
-          class="px-3 py-2 text-xs font-medium bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-700 hover:border-slate-600 rounded-lg transition-all"
-          @click="$emit('edit')"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
+        <button class="btn-action btn-secondary" @click="$emit('edit')">
+          [EDIT]
         </button>
-        <button
-          class="px-3 py-2 text-xs font-medium bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"
-          @click="$emit('remove')"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
+        <button class="btn-action btn-danger" @click="$emit('remove')">
+          [DEL]
         </button>
       </div>
     </div>
@@ -196,16 +175,16 @@ const formatDate = (dateString: string): string => {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    return 'Today';
+    return 'TODAY';
   } else if (diffDays === 1) {
-    return 'Yesterday';
+    return 'YESTERDAY';
   } else if (diffDays < 7) {
-    return `${diffDays} days ago`;
+    return `${diffDays}D_AGO`;
   } else if (diffDays < 30) {
     const weeks = Math.floor(diffDays / 7);
-    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+    return `${weeks}W_AGO`;
   } else {
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase();
   }
 };
 
@@ -222,3 +201,313 @@ watch(() => props.tournament.hasHeroImage, (newValue) => {
   }
 });
 </script>
+
+<style scoped>
+.hacker-card {
+  --card-accent: #ffd700;
+  position: relative;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.hacker-card:hover {
+  border-color: var(--card-accent);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+}
+
+/* Hero Section */
+.hero-section {
+  position: relative;
+  height: 100px;
+  background: linear-gradient(135deg, #1a1f26 0%, #0d1117 100%);
+  overflow: hidden;
+}
+
+.hero-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  border-top-color: #ffd700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.hacker-card:hover .hero-image {
+  opacity: 0.7;
+  transform: scale(1.05);
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, #0d1117 100%);
+}
+
+.hero-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+}
+
+/* Card Content */
+.card-content {
+  padding: 1rem;
+}
+
+/* Tournament Header */
+.tournament-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.game-badge {
+  flex-shrink: 0;
+}
+
+.game-icon {
+  width: 20px;
+  height: 20px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 2px;
+}
+
+.tournament-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #e6edf3;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.hacker-card:hover .tournament-name {
+  color: #ffd700;
+}
+
+/* Meta Info */
+.tournament-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.meta-label {
+  color: #6e7681;
+}
+
+.meta-value {
+  color: #8b949e;
+}
+
+.meta-divider {
+  color: #30363d;
+}
+
+.server-meta {
+  max-width: 150px;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Stats Row */
+.stats-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.stat-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.stat-label {
+  font-size: 0.6rem;
+  color: #6e7681;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Status Row */
+.status-row {
+  margin-bottom: 0.75rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-active {
+  background: rgba(0, 255, 242, 0.15);
+  border: 1px solid rgba(0, 255, 242, 0.3);
+  color: #00fff2;
+}
+
+.status-pending {
+  background: rgba(139, 148, 158, 0.1);
+  border: 1px solid rgba(139, 148, 158, 0.2);
+  color: #8b949e;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00fff2;
+  box-shadow: 0 0 8px #00fff2;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-icon {
+  font-weight: bold;
+}
+
+/* Actions Row */
+.actions-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-action {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary {
+  color: #ffd700;
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+.btn-primary:hover {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.btn-secondary {
+  color: #8b949e;
+}
+
+.btn-secondary:hover {
+  background: rgba(139, 148, 158, 0.1);
+  border-color: #8b949e;
+}
+
+.btn-danger {
+  color: #ff3131;
+  border-color: rgba(255, 49, 49, 0.3);
+}
+
+.btn-danger:hover {
+  background: rgba(255, 49, 49, 0.15);
+  border-color: #ff3131;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .hero-section {
+    height: 80px;
+  }
+
+  .card-content {
+    padding: 0.75rem;
+  }
+
+  .tournament-name {
+    font-size: 0.8rem;
+  }
+
+  .tournament-meta {
+    font-size: 0.6rem;
+  }
+
+  .actions-row {
+    gap: 0.375rem;
+  }
+
+  .btn-action {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.65rem;
+  }
+}
+</style>

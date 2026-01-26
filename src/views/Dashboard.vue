@@ -1,77 +1,109 @@
 <template>
-  <div class="relative min-h-screen px-3 sm:px-6">
-    <!-- Background Effects -->
-    <div class="modal-mobile-safe fixed inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+  <div class="dashboard-root">
+    <!-- Scanline overlay -->
+    <div class="scanlines" />
+
+    <!-- Matrix rain background effect -->
+    <div class="matrix-bg">
+      <div v-for="i in 20" :key="i" class="matrix-column" :style="{ left: `${i * 5}%`, animationDelay: `${Math.random() * 5}s` }" />
     </div>
 
-    <div class="relative z-10 pb-6 sm:pb-12">
-      <div class="max-w-7xl mx-auto">
-        <!-- Header Section -->
-        <div class="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden mb-8">
-          <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 opacity-50" />
-          <div class="relative z-10 p-6 sm:p-8 md:p-12">
-            <div class="welcome-section">
-              <h1 
+    <div class="dashboard-content">
+      <div class="dashboard-container">
+        <!-- Terminal Header -->
+        <header class="terminal-header">
+          <div class="terminal-bar">
+            <div class="terminal-dots">
+              <span class="dot dot-red" />
+              <span class="dot dot-yellow" />
+              <span class="dot dot-green" />
+            </div>
+            <div class="terminal-title">
+              <span class="terminal-path">~/battlefield/</span>
+              <span class="terminal-cmd">dashboard</span>
+              <span class="cursor">_</span>
+            </div>
+          </div>
+
+          <div class="header-content">
+            <div class="glitch-wrapper">
+              <h1
                 v-if="isAuthenticated"
-                class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4"
+                class="glitch-text"
+                data-text="WELCOME_BACK//"
               >
                 Welcome back!
               </h1>
-              <h1 
+              <h1
                 v-else
-                class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4"
+                class="glitch-text"
+                data-text="BF_COMMAND_CENTER//"
               >
                 Welcome to Battlefield Command Center
               </h1>
-              <p
-                v-if="isAuthenticated"
-                class="text-slate-300 text-lg sm:text-xl leading-relaxed"
-              >
+            </div>
+            <p class="header-subtitle">
+              <span class="prompt">&gt;</span>
+              <span v-if="isAuthenticated" class="typing-text">
                 Ready for battle? Here's your tactical overview.
-              </p>
-              <p
-                v-else
-                class="text-slate-300 text-lg sm:text-xl leading-relaxed"
-              >
+              </span>
+              <span v-else class="typing-text">
                 Sign in to access your personal battlefield dashboard with player profiles, favorite servers, and squad management.
-              </p>
+              </span>
+            </p>
+            <div class="status-bar">
+              <span class="status-item">
+                <span class="status-dot online" />
+                <span class="status-label">SYS_STATUS:</span>
+                <span class="status-value">ONLINE</span>
+              </span>
+              <span class="status-divider">|</span>
+              <span class="status-item">
+                <span class="status-label">AUTH:</span>
+                <span :class="['status-value', isAuthenticated ? 'text-neon-green' : 'text-neon-red']">
+                  {{ isAuthenticated ? 'VERIFIED' : 'GUEST' }}
+                </span>
+              </span>
             </div>
           </div>
-        </div>
+        </header>
 
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        <!-- Main Grid -->
+        <div class="dashboard-grid">
           <!-- Player Profiles Section -->
-          <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-            <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
-              <div class="flex flex-col gap-2">
-                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 flex items-center gap-3">
-                  👤 Your Battlefield Profiles
-                </h2>
-                <p class="text-slate-400 text-sm">
-                  Link your in-game player name(s) to track stats and achievements
-                </p>
+          <section class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title-row">
+                <div class="panel-icon">
+                  <span class="ascii-icon">[&gt;_]</span>
+                </div>
+                <div class="panel-info">
+                  <h2 class="panel-title text-neon-cyan">
+                    PLAYER_PROFILES
+                  </h2>
+                  <p class="panel-desc">
+                    // linked identities for stat tracking
+                  </p>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
+              <div class="panel-actions">
                 <button
                   v-if="isAuthenticated && userProfiles.length > 0"
-                  class="group flex items-center justify-center w-10 h-10 rounded-full border-2 border-cyan-400 bg-transparent text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 transition-all duration-300 transform hover:scale-105"
+                  class="btn-add btn-cyan"
                   title="Add Player Profile"
                   @click="showAddPlayerModal = true"
                 >
-                  <span class="text-xl font-bold">+</span>
+                  <span>+</span>
                 </button>
-                <span class="px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-bold rounded-full">
+                <span class="count-badge badge-cyan">
                   {{ userProfiles.length }}
                 </span>
               </div>
             </div>
-            <div class="p-4 sm:p-6">
+            <div class="panel-body">
               <div
                 v-if="userProfiles.length > 0"
-                class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3"
+                class="card-grid"
               >
                 <PlayerNameCard
                   v-for="profile in userProfiles"
@@ -83,44 +115,49 @@
               </div>
               <EmptyStateCard
                 v-else
-                :title="isAuthenticated ? 'No Player Profiles Yet' : 'Player Profiles'"
+                :title="isAuthenticated ? 'NO_DATA_FOUND' : 'PLAYER_PROFILES'"
                 :description="isAuthenticated ? 'Add your in-game player names to see your battlefield stats and achievements.' : 'Sign in to add your player profiles and track your battlefield performance across all servers.'"
-                :action-text="isAuthenticated ? 'Add Your First Player' : undefined"
-                icon="👤"
+                :action-text="isAuthenticated ? '+ ADD_PLAYER' : undefined"
+                icon="[>_]"
                 @action="showAddPlayerModal = true"
               />
             </div>
           </section>
 
           <!-- Favorite Servers Section -->
-          <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-            <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
-              <div class="flex flex-col gap-2">
-                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
-                  🖥️ Favorite Servers
-                </h2>
-                <p class="text-slate-400 text-sm">
-                  Save servers to quickly monitor status and join battles
-                </p>
+          <section class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title-row">
+                <div class="panel-icon">
+                  <span class="ascii-icon">{::}</span>
+                </div>
+                <div class="panel-info">
+                  <h2 class="panel-title text-neon-green">
+                    FAVORITE_SERVERS
+                  </h2>
+                  <p class="panel-desc">
+                    // quick access to preferred battlegrounds
+                  </p>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
+              <div class="panel-actions">
                 <button
                   v-if="isAuthenticated && favoriteServers.length > 0"
-                  class="group flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-400 bg-transparent text-emerald-400 hover:bg-emerald-400 hover:text-slate-900 transition-all duration-300 transform hover:scale-105"
+                  class="btn-add btn-green"
                   title="Add Favorite Server"
                   @click="showAddServerModal = true"
                 >
-                  <span class="text-xl font-bold">+</span>
+                  <span>+</span>
                 </button>
-                <span class="px-3 py-1 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-bold rounded-full">
+                <span class="count-badge badge-green">
                   {{ favoriteServers.length }}
                 </span>
               </div>
             </div>
-            <div class="p-4 sm:p-6">
+            <div class="panel-body">
               <div
                 v-if="favoriteServers.length > 0"
-                class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3"
+                class="card-grid"
               >
                 <FavoriteServerCard
                   v-for="server in favoriteServers"
@@ -132,44 +169,49 @@
               </div>
               <EmptyStateCard
                 v-else
-                :title="isAuthenticated ? 'No Favorite Servers' : 'Favorite Servers'"
+                :title="isAuthenticated ? 'NO_SERVERS_SAVED' : 'FAVORITE_SERVERS'"
                 :description="isAuthenticated ? 'Mark servers as favorites to quickly see their status and join battles.' : 'Sign in to save your favorite servers for quick access and monitoring.'"
-                :action-text="isAuthenticated ? 'Add Server' : undefined"
-                icon="🖥️"
+                :action-text="isAuthenticated ? '+ ADD_SERVER' : undefined"
+                icon="{::}"
                 @action="showAddServerModal = true"
               />
             </div>
           </section>
 
           <!-- Buddies Section -->
-          <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
-            <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
-              <div class="flex flex-col gap-2">
-                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
-                  👥 Your Squad
-                </h2>
-                <p class="text-slate-400 text-sm">
-                  Track friends and squad mates across the battlefield
-                </p>
+          <section class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title-row">
+                <div class="panel-icon">
+                  <span class="ascii-icon">[@]</span>
+                </div>
+                <div class="panel-info">
+                  <h2 class="panel-title text-neon-pink">
+                    SQUAD_ROSTER
+                  </h2>
+                  <p class="panel-desc">
+                    // track allies across the battlefield
+                  </p>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
+              <div class="panel-actions">
                 <button
                   v-if="isAuthenticated && buddies.length > 0"
-                  class="group flex items-center justify-center w-10 h-10 rounded-full border-2 border-purple-400 bg-transparent text-purple-400 hover:bg-purple-400 hover:text-slate-900 transition-all duration-300 transform hover:scale-105"
+                  class="btn-add btn-pink"
                   title="Add Squad Member"
                   @click="showAddBuddyModal = true"
                 >
-                  <span class="text-xl font-bold">+</span>
+                  <span>+</span>
                 </button>
-                <span class="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-bold rounded-full">
+                <span class="count-badge badge-pink">
                   {{ buddies.length }}
                 </span>
               </div>
             </div>
-            <div class="p-4 sm:p-6">
+            <div class="panel-body">
               <div
                 v-if="buddies.length > 0"
-                class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3"
+                class="card-grid"
               >
                 <BuddyCard
                   v-for="buddy in buddies"
@@ -180,44 +222,49 @@
               </div>
               <EmptyStateCard
                 v-else
-                :title="isAuthenticated ? 'No Squad Members Yet' : 'Your Squad'"
-                :description="isAuthenticated ? 'Add friends to your squad to track their online status and recent activities.' : 'Sign in to build your squad and track your friends\' online status across the battlefield.'"
-                :action-text="isAuthenticated ? 'Search Players' : undefined"
-                icon="👥"
+                :title="isAuthenticated ? 'SQUAD_EMPTY' : 'SQUAD_ROSTER'"
+                :description="isAuthenticated ? 'Add friends to your squad to track their online status and recent activities.' : 'Sign in to build your squad and track your friends online status across the battlefield.'"
+                :action-text="isAuthenticated ? '+ RECRUIT_MEMBER' : undefined"
+                icon="[@]"
                 @action="showAddBuddyModal = true"
               />
             </div>
           </section>
 
-          <!-- Tournaments Section -->
-          <section class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden lg:col-span-2">
-            <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
-              <div class="flex flex-col gap-2">
-                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400 flex items-center gap-3">
-                  🏆 Tournaments
-                </h2>
-                <p class="text-slate-400 text-sm">
-                  Create and manage competitive tournaments and track results
-                </p>
+          <!-- Tournaments Section - Full Width -->
+          <section class="terminal-panel panel-wide">
+            <div class="panel-header">
+              <div class="panel-title-row">
+                <div class="panel-icon">
+                  <span class="ascii-icon">[#]</span>
+                </div>
+                <div class="panel-info">
+                  <h2 class="panel-title text-neon-gold">
+                    TOURNAMENTS
+                  </h2>
+                  <p class="panel-desc">
+                    // competitive events and rankings
+                  </p>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
+              <div class="panel-actions">
                 <button
                   v-if="isAuthenticated && tournaments.length > 0"
-                  class="group flex items-center justify-center w-10 h-10 rounded-full border-2 border-amber-400 bg-transparent text-amber-400 hover:bg-amber-400 hover:text-slate-900 transition-all duration-300 transform hover:scale-105"
+                  class="btn-add btn-gold"
                   title="Create Tournament"
                   @click="showAddTournamentModal = true"
                 >
-                  <span class="text-xl font-bold">+</span>
+                  <span>+</span>
                 </button>
-                <span class="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold rounded-full">
+                <span class="count-badge badge-gold">
                   {{ tournaments.length }}
                 </span>
               </div>
             </div>
-            <div class="p-4 sm:p-6">
+            <div class="panel-body">
               <div
                 v-if="tournaments.length > 0"
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+                class="card-grid card-grid-tournaments"
               >
                 <TournamentCard
                   v-for="tournament in tournaments"
@@ -230,10 +277,10 @@
               </div>
               <EmptyStateCard
                 v-else
-                :title="isAuthenticated ? 'No Tournaments Yet' : 'Tournaments'"
+                :title="isAuthenticated ? 'NO_ACTIVE_TOURNAMENTS' : 'TOURNAMENTS'"
                 :description="isAuthenticated ? 'Create competitive tournaments and track results across multiple rounds.' : 'Sign in to create and manage your own tournaments.'"
-                :action-text="isAuthenticated ? 'Create Tournament' : undefined"
-                icon="🏆"
+                :action-text="isAuthenticated ? '+ CREATE_TOURNAMENT' : undefined"
+                icon="[#]"
                 @action="showAddTournamentModal = true"
               />
             </div>
@@ -241,7 +288,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Modals -->
     <AddPlayerModal
       v-if="showAddPlayerModal"
@@ -402,7 +449,7 @@ const joinServer = (server: FavoriteServer) => {
 const removeFavoriteServer = (serverId: number) => {
   const server = favoriteServers.value.find(s => s.id === serverId);
   if (!server) return;
-  
+
   serverConfirmMessage.value = `Remove ${server.serverName}`;
   pendingServerAction.value = async () => {
     try {
@@ -419,7 +466,7 @@ const removeFavoriteServer = (serverId: number) => {
 const removePlayerName = (playerId: number) => {
   const profile = userProfiles.value.find(p => p.id === playerId);
   if (!profile) return;
-  
+
   playerConfirmMessage.value = `Remove ${profile.playerName}`;
   pendingPlayerAction.value = async () => {
     try {
@@ -436,7 +483,7 @@ const removePlayerName = (playerId: number) => {
 const removeBuddy = (buddyId: number) => {
   const buddy = buddies.value.find(b => b.id === buddyId);
   if (!buddy) return;
-  
+
   buddyConfirmMessage.value = `Remove ${buddy.buddyPlayerName}`;
   pendingBuddyAction.value = async () => {
     try {
@@ -614,13 +661,543 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Custom animations for enhanced visual effects */
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* ===== L33T HACKER THEME ===== */
+
+/* Base colors */
+.dashboard-root {
+  --neon-cyan: #00fff2;
+  --neon-green: #39ff14;
+  --neon-pink: #ff00ff;
+  --neon-gold: #ffd700;
+  --neon-red: #ff3131;
+  --bg-dark: #0a0a0f;
+  --bg-panel: #0d1117;
+  --bg-card: #161b22;
+  --border-color: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg-dark);
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  overflow-x: hidden;
 }
 
-.animate-spin-slow {
-  animation: spin-slow 3s linear infinite;
+/* Scanline effect */
+.scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  animation: scanline-flicker 0.1s infinite;
+}
+
+@keyframes scanline-flicker {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.06; }
+}
+
+/* Matrix background */
+.matrix-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.03;
+}
+
+.matrix-column {
+  position: absolute;
+  top: -100%;
+  width: 20px;
+  height: 200%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--neon-green) 50%,
+    transparent 100%
+  );
+  animation: matrix-fall 15s linear infinite;
+}
+
+@keyframes matrix-fall {
+  0% { transform: translateY(-50%); }
+  100% { transform: translateY(50%); }
+}
+
+/* Main content */
+.dashboard-content {
+  position: relative;
+  z-index: 10;
+  padding: 1rem;
+  padding-bottom: 3rem;
+}
+
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Terminal Header */
+.terminal-header {
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-panel);
+  box-shadow:
+    0 0 20px rgba(0, 255, 242, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(180deg, #1a1f26 0%, #0d1117 100%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dot-red { background: #ff5f57; }
+.dot-yellow { background: #febc2e; }
+.dot-green { background: #28c840; }
+
+.terminal-title {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.terminal-path {
+  color: var(--neon-cyan);
+}
+
+.terminal-cmd {
+  color: var(--text-primary);
+  margin-left: 0.25rem;
+}
+
+.cursor {
+  color: var(--neon-green);
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.header-content {
+  padding: 1.5rem;
+}
+
+/* Glitch text effect */
+.glitch-wrapper {
+  position: relative;
+}
+
+.glitch-text {
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  font-weight: 700;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0 0 0.75rem 0;
+  text-shadow:
+    0 0 10px var(--neon-cyan),
+    0 0 20px var(--neon-cyan),
+    0 0 40px var(--neon-cyan);
+  animation: glitch 3s infinite;
+}
+
+@keyframes glitch {
+  0%, 90%, 100% {
+    text-shadow:
+      0 0 10px var(--neon-cyan),
+      0 0 20px var(--neon-cyan);
+  }
+  92% {
+    text-shadow:
+      -2px 0 var(--neon-pink),
+      2px 0 var(--neon-green);
+    transform: translate(2px, 0);
+  }
+  94% {
+    text-shadow:
+      2px 0 var(--neon-pink),
+      -2px 0 var(--neon-green);
+    transform: translate(-2px, 0);
+  }
+}
+
+.header-subtitle {
+  color: var(--text-secondary);
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.prompt {
+  color: var(--neon-green);
+  margin-right: 0.5rem;
+}
+
+.typing-text {
+  border-right: 2px solid var(--neon-green);
+  padding-right: 4px;
+  animation: typing-cursor 0.8s step-end infinite;
+}
+
+@keyframes typing-cursor {
+  0%, 100% { border-color: var(--neon-green); }
+  50% { border-color: transparent; }
+}
+
+.status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.status-dot.online {
+  background: var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-label {
+  color: var(--text-secondary);
+}
+
+.status-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.status-divider {
+  color: var(--border-color);
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .panel-wide {
+    grid-column: span 2;
+  }
+}
+
+/* Terminal Panel */
+.terminal-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.terminal-panel:hover {
+  border-color: rgba(0, 255, 242, 0.3);
+  box-shadow: 0 0 30px rgba(0, 255, 242, 0.1);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.panel-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ascii-icon {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--text-secondary);
+}
+
+.panel-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.panel-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.panel-desc {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin: 0;
+  font-style: italic;
+}
+
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Add buttons */
+.btn-add {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.btn-cyan {
+  border: 2px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
+.btn-cyan:hover {
+  background: var(--neon-cyan);
+  color: var(--bg-dark);
+  box-shadow: 0 0 20px var(--neon-cyan);
+}
+
+.btn-green {
+  border: 2px solid var(--neon-green);
+  color: var(--neon-green);
+}
+
+.btn-green:hover {
+  background: var(--neon-green);
+  color: var(--bg-dark);
+  box-shadow: 0 0 20px var(--neon-green);
+}
+
+.btn-pink {
+  border: 2px solid var(--neon-pink);
+  color: var(--neon-pink);
+}
+
+.btn-pink:hover {
+  background: var(--neon-pink);
+  color: var(--bg-dark);
+  box-shadow: 0 0 20px var(--neon-pink);
+}
+
+.btn-gold {
+  border: 2px solid var(--neon-gold);
+  color: var(--neon-gold);
+}
+
+.btn-gold:hover {
+  background: var(--neon-gold);
+  color: var(--bg-dark);
+  box-shadow: 0 0 20px var(--neon-gold);
+}
+
+/* Count badges */
+.count-badge {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.badge-cyan {
+  background: rgba(0, 255, 242, 0.15);
+  color: var(--neon-cyan);
+  border: 1px solid rgba(0, 255, 242, 0.3);
+}
+
+.badge-green {
+  background: rgba(57, 255, 20, 0.15);
+  color: var(--neon-green);
+  border: 1px solid rgba(57, 255, 20, 0.3);
+}
+
+.badge-pink {
+  background: rgba(255, 0, 255, 0.15);
+  color: var(--neon-pink);
+  border: 1px solid rgba(255, 0, 255, 0.3);
+}
+
+.badge-gold {
+  background: rgba(255, 215, 0, 0.15);
+  color: var(--neon-gold);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+/* Panel body */
+.panel-body {
+  padding: 1rem 1.25rem;
+}
+
+/* Card grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1536px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.card-grid-tournaments {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .card-grid-tournaments {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .card-grid-tournaments {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Neon text colors */
+.text-neon-cyan { color: var(--neon-cyan); }
+.text-neon-green { color: var(--neon-green); }
+.text-neon-pink { color: var(--neon-pink); }
+.text-neon-gold { color: var(--neon-gold); }
+.text-neon-red { color: var(--neon-red); }
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .dashboard-content {
+    padding: 0.75rem;
+  }
+
+  .header-content {
+    padding: 1rem;
+  }
+
+  .terminal-bar {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .terminal-title {
+    font-size: 0.7rem;
+  }
+
+  .glitch-text {
+    letter-spacing: 1px;
+  }
+
+  .status-bar {
+    font-size: 0.65rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .panel-header {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .panel-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .panel-body {
+    padding: 0.75rem 1rem;
+  }
+
+  .dashboard-grid {
+    gap: 1rem;
+  }
 }
 </style>

@@ -1,89 +1,71 @@
 <template>
   <div
-    class="group relative bg-gradient-to-r from-slate-800/30 to-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4 transition-all duration-300 hover:from-slate-800/50 hover:to-slate-900/50 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-1 cursor-pointer"
+    class="hacker-card"
+    :class="{ 'is-online': server.currentMap }"
     @click="$emit('join', server)"
   >
-    <div class="flex justify-between items-start gap-3">
-      <div class="flex-1 min-w-0">
-        <!-- Server Name -->
-        <router-link
-          :to="`/servers/${encodeURIComponent(server.serverName)}`"
-          class="block text-slate-200 font-semibold text-sm hover:text-emerald-400 transition-colors duration-200 truncate group-hover:text-emerald-300"
-          @click.stop
-        >
-          {{ server.serverName }}
-        </router-link>
-        
-        <!-- Server Status -->
-        <div class="mt-2 flex items-center justify-between gap-2">
-          <div class="flex-1 min-w-0">
-            <div
-              v-if="server.currentMap"
-              class="text-xs text-slate-400 truncate"
-            >
-              🗺️ {{ server.currentMap }}
-            </div>
-            <div
-              v-else
-              class="text-xs text-red-400 font-medium"
-            >
-              🔴 Server Offline
-            </div>
-          </div>
-          
-          <!-- Player Count Badge -->
-          <div
-            class="px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 flex-shrink-0"
-            :class="getStatusBadgeClass()"
+    <div class="card-content">
+      <div class="card-main">
+        <!-- Server Icon -->
+        <div class="server-icon">
+          <span class="icon-text">{::}</span>
+          <div v-if="server.currentMap" class="status-led online" />
+          <div v-else class="status-led offline" />
+        </div>
+
+        <!-- Server Details -->
+        <div class="server-info">
+          <router-link
+            :to="`/servers/${encodeURIComponent(server.serverName)}`"
+            class="server-name"
+            @click.stop
           >
-            <template v-if="server.currentMap">
-              <span class="text-xs">{{ server.activeSessions }}</span>
-              <span class="text-xs opacity-75">/{{ server.maxPlayers }}</span>
-            </template>
-            <span
-              v-else
-              class="text-xs tracking-wide"
-            >OFFLINE</span>
+            {{ server.serverName }}
+          </router-link>
+
+          <div class="server-status">
+            <div v-if="server.currentMap" class="status-row">
+              <span class="map-label">&gt; MAP:</span>
+              <span class="map-name">{{ server.currentMap }}</span>
+            </div>
+            <div v-else class="status-row offline">
+              <span class="status-label">// SERVER_OFFLINE</span>
+            </div>
           </div>
         </div>
       </div>
-      
-      <!-- Action Buttons -->
-      <div class="flex items-center gap-2 flex-shrink-0">
-        <a 
-          v-if="server.joinLink" 
-          :href="server.joinLink" 
-          class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-all duration-200 hover:scale-110" 
-          title="Join Server" 
-          @click.stop
-        >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+
+      <!-- Player Count & Actions -->
+      <div class="card-actions">
+        <!-- Player Count Badge -->
+        <div class="player-count" :class="getStatusClass()">
+          <template v-if="server.currentMap">
+            <span class="count-current">{{ server.activeSessions }}</span>
+            <span class="count-divider">/</span>
+            <span class="count-max">{{ server.maxPlayers }}</span>
+          </template>
+          <span v-else class="status-offline-text">OFF</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-group">
+          <a
+            v-if="server.joinLink"
+            :href="server.joinLink"
+            class="btn-action btn-join"
+            title="Join Server"
+            @click.stop
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 7l5 5m0 0l-5 5m5-5H6"
-            />
-          </svg>
-        </a>
-        <button
-          class="group flex items-center justify-center w-8 h-8 rounded-full bg-slate-700/50 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200 hover:scale-110"
-          title="Remove from favorites"
-          @click.stop="$emit('remove', server.id)"
-        >
-          <svg
-            class="w-4 h-4"
-            fill="currentColor"
-            viewBox="0 0 24 24"
+            <span>&gt;&gt;</span>
+          </a>
+          <button
+            class="btn-action btn-remove"
+            title="Remove from favorites"
+            @click.stop="$emit('remove', server.id)"
           >
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-          </svg>
-        </button>
+            <span>[x]</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -111,19 +93,316 @@ defineEmits<{
   remove: [serverId: number];
 }>();
 
-const getStatusBadgeClass = () => {
-  // If no current map, server is offline
-  if (!props.server.currentMap) return 'bg-red-500/20 text-red-400';
-  
+const getStatusClass = () => {
+  if (!props.server.currentMap) return 'status-offline';
+
   const maxPlayers = props.server.maxPlayers;
   const sessions = props.server.activeSessions;
-  
-  // Server is online, use emerald-based colors for online servers with players
-  if (sessions === 0) return 'bg-emerald-500/10 text-emerald-400';
-  if (sessions >= maxPlayers) return 'bg-emerald-500/40 text-emerald-100';
-  if (sessions >= maxPlayers * 0.75) return 'bg-emerald-500/30 text-emerald-200';
-  if (sessions >= maxPlayers * 0.5) return 'bg-emerald-500/20 text-emerald-300';
-  return 'bg-emerald-500/15 text-emerald-400';
+
+  if (sessions === 0) return 'status-empty';
+  if (sessions >= maxPlayers) return 'status-full';
+  if (sessions >= maxPlayers * 0.75) return 'status-high';
+  if (sessions >= maxPlayers * 0.5) return 'status-medium';
+  return 'status-low';
 };
 </script>
 
+<style scoped>
+.hacker-card {
+  --card-accent: #39ff14;
+  position: relative;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  cursor: pointer;
+}
+
+.hacker-card:hover {
+  border-color: var(--card-accent);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.15);
+}
+
+.hacker-card:not(.is-online) {
+  --card-accent: #ff3131;
+}
+
+.hacker-card:not(.is-online):hover {
+  box-shadow: 0 0 20px rgba(255, 49, 49, 0.1);
+}
+
+.card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+}
+
+.card-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Server Icon */
+.server-icon {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(57, 255, 20, 0.15) 0%, rgba(57, 255, 20, 0.05) 100%);
+  border: 1px solid rgba(57, 255, 20, 0.3);
+  border-radius: 4px;
+}
+
+.hacker-card:not(.is-online) .server-icon {
+  background: linear-gradient(135deg, rgba(255, 49, 49, 0.15) 0%, rgba(255, 49, 49, 0.05) 100%);
+  border-color: rgba(255, 49, 49, 0.3);
+}
+
+.icon-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #39ff14;
+}
+
+.hacker-card:not(.is-online) .icon-text {
+  color: #ff3131;
+}
+
+.status-led {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #0d1117;
+}
+
+.status-led.online {
+  background: #39ff14;
+  box-shadow: 0 0 8px #39ff14;
+  animation: blink 2s infinite;
+}
+
+.status-led.offline {
+  background: #ff3131;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Server Info */
+.server-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.server-name {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #e6edf3;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.server-name:hover {
+  color: #39ff14;
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+}
+
+.server-status {
+  margin-top: 0.375rem;
+  font-size: 0.7rem;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.map-label {
+  color: #39ff14;
+  font-weight: bold;
+}
+
+.map-name {
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-row.offline .status-label {
+  color: #ff3131;
+  font-style: italic;
+}
+
+/* Card Actions */
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Player Count */
+.player-count {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.player-count.status-offline {
+  background: rgba(255, 49, 49, 0.15);
+  border: 1px solid rgba(255, 49, 49, 0.3);
+  color: #ff3131;
+}
+
+.player-count.status-empty {
+  background: rgba(57, 255, 20, 0.1);
+  border: 1px solid rgba(57, 255, 20, 0.2);
+  color: #39ff14;
+}
+
+.player-count.status-low {
+  background: rgba(57, 255, 20, 0.15);
+  border: 1px solid rgba(57, 255, 20, 0.3);
+  color: #39ff14;
+}
+
+.player-count.status-medium {
+  background: rgba(57, 255, 20, 0.2);
+  border: 1px solid rgba(57, 255, 20, 0.4);
+  color: #39ff14;
+}
+
+.player-count.status-high {
+  background: rgba(0, 255, 242, 0.2);
+  border: 1px solid rgba(0, 255, 242, 0.4);
+  color: #00fff2;
+}
+
+.player-count.status-full {
+  background: rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  color: #ffd700;
+}
+
+.count-current {
+  color: inherit;
+}
+
+.count-divider {
+  opacity: 0.5;
+  margin: 0 1px;
+}
+
+.count-max {
+  opacity: 0.7;
+}
+
+.status-offline-text {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Button Group */
+.btn-group {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.btn-action {
+  padding: 0.375rem 0.5rem;
+  background: transparent;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-join {
+  color: #39ff14;
+  border-color: rgba(57, 255, 20, 0.3);
+}
+
+.btn-join:hover {
+  background: rgba(57, 255, 20, 0.15);
+  border-color: #39ff14;
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+}
+
+.btn-remove {
+  color: #8b949e;
+}
+
+.btn-remove:hover {
+  border-color: #ff3131;
+  color: #ff3131;
+  background: rgba(255, 49, 49, 0.1);
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .card-content {
+    padding: 0.75rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .card-main {
+    margin-bottom: 0.5rem;
+  }
+
+  .card-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .server-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .icon-text {
+    font-size: 0.7rem;
+  }
+
+  .server-name {
+    font-size: 0.8rem;
+  }
+
+  .server-status {
+    font-size: 0.65rem;
+  }
+}
+</style>

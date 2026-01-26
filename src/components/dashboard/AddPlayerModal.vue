@@ -60,24 +60,24 @@ const handleClose = () => emit('close');
 <template>
   <BaseModal
     :model-value="true"
+    title="add_player_profile"
     @update:model-value="handleClose"
     @close="handleClose"
   >
     <template #header>
-      <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 m-0">
+      <h3 class="modal-title">
         Add Player Profile
       </h3>
-      <p class="text-slate-400 text-sm font-normal m-0 mt-1">
-        Link your in-game player name(s) to track stats and achievements
+      <p class="modal-desc">
+        // Link your in-game player name(s) to track stats and achievements
       </p>
     </template>
 
     <form @submit.prevent="handleSubmit">
-      <div class="mb-5">
-        <label
-          for="playerName"
-          class="block text-white font-semibold mb-2"
-        >Player Name</label>
+      <div class="form-group">
+        <label for="playerName" class="form-label">
+          &gt; PLAYER_NAME
+        </label>
         <PlayerSearch
           v-model="playerName"
           placeholder="Search for your player name..."
@@ -85,74 +85,268 @@ const handleClose = () => emit('close');
           @select="onPlayerSelected"
           @enter="handleSubmit"
         />
-        <small class="block text-slate-400 text-sm mt-1.5">
-          Start typing to search for your exact in-game player name
+        <small class="form-hint">
+          # Start typing to search for your exact in-game player name
         </small>
       </div>
 
-      <div
-        v-if="error"
-        class="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg border border-red-500/20"
-      >
-        {{ error }}
+      <div v-if="error" class="error-box">
+        <span class="error-icon">[!]</span>
+        <span>{{ error }}</span>
       </div>
 
-      <div
-        v-if="selectedPlayer"
-        class="mb-5"
-      >
-        <div class="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-          <h4 class="text-green-400 m-0 mb-3 text-base font-semibold">
-            {{ selectedPlayer.playerName }}
-          </h4>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="text-center">
-              <span class="block text-white font-bold text-lg">{{ Math.floor(selectedPlayer.totalPlayTimeMinutes / 60) }}h</span>
-              <span class="block text-slate-400 text-xs mt-0.5 uppercase tracking-wider">Play Time</span>
-            </div>
-            <div class="text-center">
-              <span class="block text-white font-bold text-lg">{{ formatLastSeen(selectedPlayer.lastSeen) }}</span>
-              <span class="block text-slate-400 text-xs mt-0.5 uppercase tracking-wider">Last Seen</span>
-            </div>
-            <div class="text-center">
-              <span
-                class="block font-bold text-lg"
-                :class="selectedPlayer.isActive ? 'text-green-400' : 'text-gray-500'"
-              >
-                {{ selectedPlayer.isActive ? 'Online' : 'Offline' }}
-              </span>
-              <span class="block text-slate-400 text-xs mt-0.5 uppercase tracking-wider">Status</span>
-            </div>
+      <div v-if="selectedPlayer" class="player-preview">
+        <div class="preview-header">
+          <span class="preview-icon">&gt;</span>
+          <span class="preview-name">{{ selectedPlayer.playerName }}</span>
+          <span v-if="selectedPlayer.isActive" class="status-badge online">ONLINE</span>
+          <span v-else class="status-badge offline">OFFLINE</span>
+        </div>
+        <div class="preview-stats">
+          <div class="stat-item">
+            <span class="stat-value">{{ Math.floor(selectedPlayer.totalPlayTimeMinutes / 60) }}h</span>
+            <span class="stat-label">PLAY_TIME</span>
           </div>
-          <div
-            v-if="selectedPlayer.currentServer && selectedPlayer.isActive"
-            class="mt-3 p-3 bg-cyan-500/10 rounded-md text-cyan-400 text-sm italic"
-          >
-            Currently playing on {{ selectedPlayer.currentServer.serverName }}
+          <div class="stat-item">
+            <span class="stat-value">{{ formatLastSeen(selectedPlayer.lastSeen) }}</span>
+            <span class="stat-label">LAST_SEEN</span>
           </div>
+        </div>
+        <div
+          v-if="selectedPlayer.currentServer && selectedPlayer.isActive"
+          class="server-info"
+        >
+          &gt; Currently playing on {{ selectedPlayer.currentServer.serverName }}
         </div>
       </div>
 
-      <div class="flex flex-col sm:flex-row gap-3 justify-end mt-6 pt-5 border-t border-slate-700/50">
-        <button
-          type="button"
-          class="px-5 py-2.5 rounded-lg border border-slate-700/50 bg-transparent text-slate-400 cursor-pointer font-semibold text-sm transition-all duration-200 hover:bg-slate-800/50 hover:text-white"
-          @click="handleClose"
-        >
-          Cancel
+      <div class="form-actions">
+        <button type="button" class="btn-action btn-cancel" @click="handleClose">
+          [CANCEL]
         </button>
         <button
           type="submit"
           :disabled="!playerName.trim() || isSubmitting"
-          class="px-5 py-2.5 rounded-lg border-0 bg-gradient-to-r from-cyan-500 to-blue-500 text-white cursor-pointer font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-cyan-500/25 disabled:opacity-70 disabled:cursor-not-allowed hover:disabled:shadow-none"
+          class="btn-action btn-submit"
         >
-          <span
-            v-if="isSubmitting"
-            class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"
-          />
-          {{ isSubmitting ? 'Adding...' : 'Add Player' }}
+          <span v-if="isSubmitting" class="spinner" />
+          {{ isSubmitting ? 'ADDING...' : '[ADD_PLAYER]' }}
         </button>
       </div>
     </form>
   </BaseModal>
 </template>
+
+<style scoped>
+.modal-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #00fff2;
+  margin: 0;
+  text-shadow: 0 0 20px rgba(0, 255, 242, 0.3);
+}
+
+.modal-desc {
+  font-size: 0.75rem;
+  color: #6e7681;
+  margin: 0.375rem 0 0 0;
+  font-style: italic;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #00fff2;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.form-hint {
+  display: block;
+  font-size: 0.7rem;
+  color: #6e7681;
+  margin-top: 0.5rem;
+}
+
+.error-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 49, 49, 0.1);
+  border: 1px solid rgba(255, 49, 49, 0.3);
+  border-radius: 4px;
+  color: #ff3131;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.error-icon {
+  font-weight: 700;
+}
+
+/* Player Preview */
+.player-preview {
+  background: rgba(57, 255, 20, 0.05);
+  border: 1px solid rgba(57, 255, 20, 0.2);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.preview-icon {
+  color: #39ff14;
+  font-weight: 700;
+}
+
+.preview-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #39ff14;
+}
+
+.status-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-badge.online {
+  background: rgba(57, 255, 20, 0.2);
+  color: #39ff14;
+  border: 1px solid rgba(57, 255, 20, 0.4);
+}
+
+.status-badge.offline {
+  background: rgba(139, 148, 158, 0.1);
+  color: #8b949e;
+  border: 1px solid rgba(139, 148, 158, 0.2);
+}
+
+.preview-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e6edf3;
+}
+
+.stat-label {
+  font-size: 0.6rem;
+  color: #6e7681;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.server-info {
+  font-size: 0.75rem;
+  color: #00fff2;
+  font-style: italic;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(57, 255, 20, 0.2);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #30363d;
+}
+
+.btn-action {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-cancel {
+  color: #8b949e;
+}
+
+.btn-cancel:hover {
+  background: rgba(139, 148, 158, 0.1);
+  border-color: #8b949e;
+}
+
+.btn-submit {
+  color: #00fff2;
+  border-color: rgba(0, 255, 242, 0.4);
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: rgba(0, 255, 242, 0.15);
+  border-color: #00fff2;
+  box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+}
+
+.btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0, 255, 242, 0.2);
+  border-top-color: #00fff2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .preview-stats {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+</style>
