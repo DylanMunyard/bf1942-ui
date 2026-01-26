@@ -105,6 +105,12 @@ export interface AuditLogEntry {
   timestamp: string;
 }
 
+export interface UserWithRoleResponse {
+  userId: number;
+  email: string;
+  role: string;
+}
+
 export interface ServerSearchResult {
   serverGuid: string;
   serverName: string;
@@ -250,6 +256,17 @@ class AdminDataService {
       return { items: res, totalCount: res.length };
     }
     return { items: res.items ?? [], totalCount: res.totalCount ?? res.items?.length ?? 0 };
+  }
+
+  async listUsers(): Promise<UserWithRoleResponse[]> {
+    return this.request<UserWithRoleResponse[]>('/users', { method: 'GET' });
+  }
+
+  async setUserRole(userId: number, role: string): Promise<void> {
+    await this.request<void>(`/users/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    });
   }
 }
 

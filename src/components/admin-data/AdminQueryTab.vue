@@ -96,7 +96,7 @@
               <table class="portal-sessions-table">
                 <thead>
                   <tr>
-                    <th class="portal-th-select">
+                    <th v-if="canDelete" class="portal-th-select">
                       <input
                         type="checkbox"
                         :checked="allSelectableSelected"
@@ -117,7 +117,7 @@
                 <tbody>
                   <template v-for="{ roundId, sessions: roundSessions } in roundGroups" :key="roundId">
                     <tr>
-                      <td class="portal-round-header portal-td-select">
+                      <td v-if="canDelete" class="portal-round-header portal-td-select">
                         <input
                           v-if="!roundSessions[0]?.roundIsDeleted"
                           type="checkbox"
@@ -133,7 +133,7 @@
                       </td>
                     </tr>
                     <tr v-for="s in roundSessions" :key="`${s.roundId}-${s.playerName}`">
-                      <td class="portal-td-select" />
+                      <td v-if="canDelete" class="portal-td-select" />
                       <td>{{ s.playerName }}</td>
                       <td>{{ s.serverName }}</td>
                       <td class="portal-mono">{{ s.totalScore }}</td>
@@ -149,7 +149,7 @@
                 </tbody>
               </table>
             </div>
-            <div v-if="selectedRoundIds.size > 0" class="portal-bulk-actions">
+            <div v-if="canDelete && selectedRoundIds.size > 0" class="portal-bulk-actions">
               <span class="portal-bulk-info">{{ selectedRoundIds.size }} round{{ selectedRoundIds.size === 1 ? '' : 's' }} selected</span>
               <button
                 type="button"
@@ -200,6 +200,7 @@
           :detail="roundDetail"
           :loading="roundDetailLoading"
           :undelete-error="undeleteError"
+          :can-delete="canDelete"
           @delete="openDeleteModal"
           @undelete="onUndelete"
           @view-achievements="onViewAchievements"
@@ -288,8 +289,8 @@ import {
 import { formatDateTimeShort } from '@/utils/date';
 
 const props = withDefaults(
-  defineProps<{ gameFilter?: string }>(),
-  { gameFilter: 'bf1942' }
+  defineProps<{ gameFilter?: string; canDelete?: boolean }>(),
+  { gameFilter: 'bf1942', canDelete: false }
 );
 
 const emit = defineEmits<{ (e: 'post-delete'): void; (e: 'post-undelete'): void }>();

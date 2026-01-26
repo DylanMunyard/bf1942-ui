@@ -14,7 +14,7 @@
         </div>
       </div>
       <button
-        v-if="!detail.isDeleted"
+        v-if="canDelete && !detail.isDeleted"
         type="button"
         class="round-panel-delete"
         :disabled="loading"
@@ -23,7 +23,7 @@
         delete round
       </button>
       <button
-        v-else
+        v-else-if="canDelete && detail.isDeleted"
         type="button"
         class="round-panel-undelete"
         :disabled="loading"
@@ -92,11 +92,15 @@
 import { computed } from 'vue';
 import type { RoundDetailResponse, RoundPlayerEntry } from '@/services/adminDataService';
 
-const props = defineProps<{
-  detail: RoundDetailResponse;
-  loading?: boolean;
-  undeleteError?: string | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    detail: RoundDetailResponse;
+    loading?: boolean;
+    undeleteError?: string | null;
+    canDelete?: boolean;
+  }>(),
+  { canDelete: false }
+);
 
 defineEmits<{
   delete: [];

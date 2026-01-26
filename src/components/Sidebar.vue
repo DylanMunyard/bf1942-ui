@@ -169,9 +169,9 @@
           </div>
         </router-link>
 
-        <!-- Admin Data Management (admin only) -->
+        <!-- Admin Data Management (Support and Admin) -->
         <router-link
-          v-if="isAdmin"
+          v-if="isSupport"
           to="/admin/data"
           class="group relative flex flex-col items-center justify-center w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-amber-500/50 transition-all duration-300 hover:scale-105"
           active-class="!border-amber-500 !bg-gradient-to-br !from-amber-500/20 !to-orange-500/20"
@@ -257,9 +257,9 @@
           />
         </router-link>
 
-        <!-- Admin Data (admin only) -->
+        <!-- Admin Data (Support and Admin) -->
         <router-link
-          v-if="isAdmin"
+          v-if="isSupport"
           to="/admin/data"
           class="group flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur-sm border border-slate-600/50 hover:border-amber-500/50 transition-all duration-300 hover:scale-105"
           active-class="!border-amber-500 !from-amber-500/20 !to-orange-500/20"
@@ -282,7 +282,7 @@ import playersIcon from '@/assets/players.webp';
 import explorerIcon from '@/assets/menu-item-data-explorer.webp';
 
 const route = useRoute();
-const { isAuthenticated, isAdmin } = useAuth();
+const { isAuthenticated, isSupport } = useAuth();
 </script>
 
  

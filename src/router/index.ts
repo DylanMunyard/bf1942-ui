@@ -404,8 +404,8 @@ const routes: RouteRecordRaw[] = [
         description: 'Investigate and delete suspicious player sessions.'
       },
       beforeEnter: (_to, _from, next) => {
-        const { isAuthenticated, isAdmin } = useAuth()
-        if (!isAuthenticated.value || !isAdmin.value) {
+        const { isAuthenticated, isSupport } = useAuth()
+        if (!isAuthenticated.value || !isSupport.value) {
           next('/dashboard')
         } else {
           next()

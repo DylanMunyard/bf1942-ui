@@ -1,8 +1,9 @@
-
 export interface UserProfile {
   id: number;
   name: string;
   email: string;
+  /** Roles from JWT (e.g. User, Support, Admin). Derived from token when loading state. */
+  roles?: string[];
 }
 
 export interface AuthState {
@@ -15,7 +16,7 @@ class AuthService {
   private discordClientId = import.meta.env.VITE_DISCORD_CLIENT_ID || '';
   private discordRedirectUri = `${window.location.origin}/auth/discord/callback`;
 
-  private parseJwt(token: string): any {
+  private parseJwt(token: string): Record<string, unknown> {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(
@@ -24,7 +25,19 @@ class AuthService {
         .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    return JSON.parse(jsonPayload);
+    return JSON.parse(jsonPayload) as Record<string, unknown>;
+  }
+
+  /** Get role claim(s) from JWT. Handles both "role" and full claim type; value can be string or string[]. */
+  getRolesFromToken(token: string): string[] {
+    try {
+      const p = this.parseJwt(token);
+      const raw = p['role'] ?? p['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+      if (raw == null) return [];
+      return Array.isArray(raw) ? (raw as string[]) : [raw as string];
+    } catch {
+      return [];
+    }
   }
 
   // Discord OAuth Methods
@@ -74,6 +87,7 @@ class AuthService {
           id: loginData.user.id,
           name: loginData.user.name,
           email: loginData.user.email,
+          roles: this.getRolesFromToken(loginData.accessToken),
         };
 
         const authState: AuthState = {
@@ -84,7 +98,7 @@ class AuthService {
 
         // Store the backend JWT, user profile, and expiration in localStorage
         localStorage.setItem('authToken', loginData.accessToken);
-        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        localStorage.setItem('userProfile', JSON.stringify({ id: userProfile.id, name: userProfile.name, email: userProfile.email }));
         if (loginData.expiresAt) {
           localStorage.setItem('tokenExpiresAt', loginData.expiresAt);
         }
@@ -108,11 +122,13 @@ class AuthService {
 
     if (userProfileJson) {
       try {
-        user = JSON.parse(userProfileJson);
-      } catch (error) {
+        user = JSON.parse(userProfileJson) as UserProfile;
+      } catch {
         // Failed to parse stored user profile
       }
     }
+    const roles = token ? this.getRolesFromToken(token) : [];
+    if (user) user = { ...user, roles };
 
     return {
       isAuthenticated: !!token,
@@ -189,6 +205,7 @@ class AuthService {
         localStorage.setItem('tokenExpiresAt', expiresAt);
       }
 
+      window.dispatchEvent(new CustomEvent('auth-token-refreshed'));
       return true;
     } catch (error) {
       return false;

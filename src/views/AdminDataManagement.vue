@@ -42,10 +42,18 @@
           <span class="portal-tab-icon">⟩</span> Audit
         </button>
         <button
+          v-if="isAdmin"
           :class="['portal-tab', activeTab === 'cron' && 'portal-tab--active']"
           @click="activeTab = 'cron'"
         >
           <span class="portal-tab-icon">⟩</span> Cron
+        </button>
+        <button
+          v-if="isAdmin"
+          :class="['portal-tab', activeTab === 'access' && 'portal-tab--active']"
+          @click="activeTab = 'access'; accessTabRef?.load?.()"
+        >
+          <span class="portal-tab-icon">⟩</span> Access
         </button>
       </div>
 
@@ -71,6 +79,7 @@
       <div v-show="activeTab === 'query'" class="portal-panel">
         <AdminQueryTab
           :game-filter="activeGameFilter"
+          :can-delete="isAdmin"
           @post-delete="showPostDeleteAggregateHint = true"
           @post-undelete="showPostUndeleteAggregateHint = true"
         />
@@ -81,9 +90,14 @@
         <AdminAuditTab ref="auditTabRef" />
       </div>
 
-      <!-- Cron tab -->
-      <div v-show="activeTab === 'cron'" class="portal-panel">
+      <!-- Cron tab (admin only) -->
+      <div v-if="isAdmin" v-show="activeTab === 'cron'" class="portal-panel">
         <AdminCronTab />
+      </div>
+
+      <!-- Access tab (admin only) -->
+      <div v-show="activeTab === 'access'" class="portal-panel">
+        <AdminAccessTab ref="accessTabRef" />
       </div>
     </div>
   </div>
@@ -94,6 +108,10 @@ import { ref, onMounted } from 'vue';
 import AdminQueryTab from '@/components/admin-data/AdminQueryTab.vue';
 import AdminAuditTab from '@/components/admin-data/AdminAuditTab.vue';
 import AdminCronTab from '@/components/admin-data/AdminCronTab.vue';
+import AdminAccessTab from '@/components/admin-data/AdminAccessTab.vue';
+import { useAuth } from '@/composables/useAuth';
+
+const { isAdmin } = useAuth();
 
 const ADMIN_DATA_GAME_FILTER_KEY = 'bf1942_admin_data_game_filter';
 
@@ -103,11 +121,12 @@ const gameTypes = [
   { id: 'bfvietnam', label: 'BFV' },
 ];
 
-const activeTab = ref<'query' | 'audit' | 'cron'>('query');
+const activeTab = ref<'query' | 'audit' | 'cron' | 'access'>('query');
 const activeGameFilter = ref<string>('bf1942');
 const showPostDeleteAggregateHint = ref(false);
 const showPostUndeleteAggregateHint = ref(false);
 const auditTabRef = ref<InstanceType<typeof AdminAuditTab> | null>(null);
+const accessTabRef = ref<InstanceType<typeof AdminAccessTab> & { load?: () => void } | null>(null);
 
 function setGameFilter(id: string) {
   if (!gameTypes.some((g) => g.id === id)) return;
@@ -573,14 +592,18 @@ onMounted(() => {
 }
 .portal-round-header {
   padding: 0.5rem 0.75rem;
-  background: rgba(17, 17, 24, 0.95);
+  background: rgba(0, 229, 160, 0.1);
   color: var(--portal-accent);
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   font-family: ui-monospace, monospace;
   border-top: 1px solid var(--portal-border);
-  border-bottom: 1px solid var(--portal-border);
+  border-bottom: 1px solid rgba(0, 229, 160, 0.25);
+  box-shadow: inset 0 0 24px rgba(0, 229, 160, 0.04);
+}
+.portal-round-header:first-child {
+  border-left: 3px solid var(--portal-accent);
 }
 .portal-round-header-count {
   margin-left: 0.5rem;
@@ -599,11 +622,15 @@ onMounted(() => {
   border-bottom: 1px solid var(--portal-border);
   color: var(--portal-text-bright);
 }
-.portal-sessions-table tbody tr:hover td {
+.portal-sessions-table tbody td:not(.portal-round-header) {
+  background: rgba(17, 17, 24, 0.5);
+}
+.portal-sessions-table tbody tr:hover td:not(.portal-round-header) {
   background: var(--portal-accent-dim);
 }
 .portal-sessions-table tbody tr:hover td.portal-round-header {
-  background: rgba(17, 17, 24, 0.95);
+  background: rgba(0, 229, 160, 0.14);
+  box-shadow: inset 0 0 24px rgba(0, 229, 160, 0.06);
 }
 .portal-pagination {
   display: flex;
@@ -868,8 +895,12 @@ onMounted(() => {
 .admin-data-portal .portal-sessions-table th { text-align: left; padding: 0.5rem 0.75rem; background: var(--portal-surface-elevated); color: var(--portal-accent); font-weight: 600; letter-spacing: 0.06em; font-family: ui-monospace, monospace; border-bottom: 1px solid var(--portal-border); }
 .admin-data-portal .portal-sessions-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--portal-border); color: var(--portal-text-bright); }
 .admin-data-portal .portal-sortable { cursor: pointer; user-select: none; }
-.admin-data-portal .portal-round-header { padding: 0.5rem 0.75rem; background: rgba(17, 17, 24, 0.95); color: var(--portal-accent); font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; font-family: ui-monospace, monospace; border-top: 1px solid var(--portal-border); border-bottom: 1px solid var(--portal-border); }
+.admin-data-portal .portal-round-header { padding: 0.5rem 0.75rem; background: rgba(0, 229, 160, 0.1); color: var(--portal-accent); font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; font-family: ui-monospace, monospace; border-top: 1px solid var(--portal-border); border-bottom: 1px solid rgba(0, 229, 160, 0.25); box-shadow: inset 0 0 24px rgba(0, 229, 160, 0.04); }
+.admin-data-portal .portal-round-header:first-child { border-left: 3px solid var(--portal-accent); }
 .admin-data-portal .portal-round-header-deleted { margin-left: 0.5rem; color: var(--portal-warn); font-size: 0.6rem; font-weight: 600; opacity: 0.9; }
+.admin-data-portal .portal-sessions-table tbody td:not(.portal-round-header) { background: rgba(17, 17, 24, 0.5); }
+.admin-data-portal .portal-sessions-table tbody tr:hover td:not(.portal-round-header) { background: var(--portal-accent-dim); }
+.admin-data-portal .portal-sessions-table tbody tr:hover td.portal-round-header { background: rgba(0, 229, 160, 0.14); box-shadow: inset 0 0 24px rgba(0, 229, 160, 0.06); }
 .admin-data-portal .portal-mono { font-family: ui-monospace, monospace; }
 .admin-data-portal .portal-cell-btn { padding: 0.25rem 0.5rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; background: var(--portal-accent-dim); color: var(--portal-accent); border: 1px solid rgba(0, 229, 160, 0.3); border-radius: 2px; cursor: pointer; }
 .admin-data-portal .portal-kd--high { color: var(--portal-warn); font-weight: 600; }

@@ -1,6 +1,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { authService, type AuthState } from '@/services/authService';
+import { ROLE_ADMIN, ROLE_SUPPORT, ADMIN_EMAIL } from '@/constants/roles';
 
 const authState = ref<AuthState>({
   isAuthenticated: false,
@@ -13,7 +14,11 @@ export function useAuth() {
   const isAuthenticated = computed(() => authState.value.isAuthenticated);
   const token = computed(() => authState.value.token);
   const user = computed(() => authState.value.user);
-  const isAdmin = computed(() => user.value?.email === 'dmunyard@gmail.com');
+  const roles = computed(() => user.value?.roles ?? []);
+  const isAdmin = computed(
+    () => roles.value.includes(ROLE_ADMIN) || (user.value?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase())
+  );
+  const isSupport = computed(() => roles.value.includes(ROLE_SUPPORT) || isAdmin.value);
 
   const handleAuthSuccess = (event: CustomEvent) => {
     authState.value = event.detail;
@@ -85,16 +90,21 @@ export function useAuth() {
   // Initialize auth state immediately
   loadStoredAuth();
   
+  const handleTokenRefreshed = () => {
+    authState.value = authService.getStoredAuthState();
+  };
+
   // Initialize auth state on first use
   onMounted(() => {
-    // Listen for Discord auth events
     window.addEventListener('discord-auth-success', handleAuthSuccess as EventListener);
     window.addEventListener('discord-auth-error', handleAuthError as EventListener);
+    window.addEventListener('auth-token-refreshed', handleTokenRefreshed);
   });
 
   onUnmounted(() => {
     window.removeEventListener('discord-auth-success', handleAuthSuccess as EventListener);
     window.removeEventListener('discord-auth-error', handleAuthError as EventListener);
+    window.removeEventListener('auth-token-refreshed', handleTokenRefreshed);
   });
 
   const ensureValidToken = async (): Promise<boolean> => {
@@ -105,7 +115,9 @@ export function useAuth() {
     isAuthenticated,
     token,
     user,
+    roles,
     isAdmin,
+    isSupport,
     loginWithDiscord,
     logout,
     loadStoredAuth,
