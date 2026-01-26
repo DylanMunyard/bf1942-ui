@@ -9,7 +9,7 @@ import { ServerSummary } from '../types/server';
 import PlayersPanel from '../components/PlayersPanel.vue';
 import PlayerHistoryChart from '../components/PlayerHistoryChart.vue';
 import ServerLeaderboards from '../components/ServerLeaderboards.vue';
-import ServerRecentRounds from '../components/ServerRecentRounds.vue';
+import RecentSessionsList from '../components/data-explorer/RecentSessionsList.vue';
 import MapRotationTable from '../components/data-explorer/MapRotationTable.vue';
 import ServerMapDetailPanel from '../components/data-explorer/ServerMapDetailPanel.vue';
 import { formatDate } from '../utils/date';
@@ -492,7 +492,7 @@ const handleCloseMapDetailPanel = () => {
 };
 
 // Handle navigation from map detail panel
-const handleNavigateToServerFromMap = (serverGuid: string) => {
+const handleNavigateToServerFromMap = (_serverGuid: string) => {
   // Already on server details page, just close the panel
   handleCloseMapDetailPanel();
 };
@@ -831,23 +831,41 @@ const closeForecastOverlay = () => {
               </div>
             </div>
 
-            <!-- Recent Rounds Section -->
+            <!-- Recent Sessions Section -->
             <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
               <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
                 <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
-                  🎯 Recent Rounds
+                  🎯 Recent Sessions
                 </h3>
                 <router-link
                   :to="`/servers/${encodeURIComponent(serverName)}/sessions`"
-                  class="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium px-4 py-2 bg-slate-700/50 hover:bg-slate-600/70 rounded-lg border border-slate-600/50"
+                  class="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium group"
                 >
-                  View All Sessions
+                  <span>View All Sessions</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="transition-transform group-hover:translate-x-0.5"
+                  >
+                    <path d="m9 18 6-6-6-6"/>
+                  </svg>
                 </router-link>
               </div>
               <div class="p-6">
-                <ServerRecentRounds
-                  :server-details="serverDetails"
+                <RecentSessionsList
+                  v-if="serverDetails?.serverGuid"
+                  :server-guid="serverDetails.serverGuid"
                   :server-name="serverName"
+                  :limit="5"
+                  :initial-visible-count="2"
+                  empty-message="No recent sessions found for this server"
                 />
               </div>
             </div>

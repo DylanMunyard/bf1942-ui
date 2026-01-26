@@ -5,15 +5,87 @@
         <thead>
           <tr class="text-slate-400 text-left border-b border-slate-700/50 whitespace-nowrap">
             <th class="pb-2 pr-2 font-medium w-28">Map</th>
-            <th class="pb-2 px-2 font-medium text-right w-14">Play %</th>
+            <th 
+              class="pb-2 px-2 font-medium text-right w-14 cursor-pointer hover:text-slate-300 transition-colors select-none"
+              @click="handleSort('playTimePercentage')"
+            >
+              <div class="flex items-center justify-end gap-1">
+                <span>Play %</span>
+                <div class="flex flex-col items-center">
+                  <svg 
+                    v-if="sortColumn === 'playTimePercentage' && sortDirection === 'asc'"
+                    class="w-3 h-3 text-cyan-400" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                  </svg>
+                  <svg 
+                    v-else-if="sortColumn === 'playTimePercentage' && sortDirection === 'desc'"
+                    class="w-3 h-3 text-cyan-400" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                  <svg 
+                    v-else
+                    class="w-3 h-3 opacity-30" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                </div>
+              </div>
+            </th>
             <th class="pb-2 px-2 font-medium text-right w-14">Rounds</th>
-            <th class="pb-2 px-2 font-medium text-right w-12 hidden sm:table-cell">Avg</th>
+            <th 
+              class="pb-2 px-2 font-medium text-right w-12 hidden sm:table-cell cursor-pointer hover:text-slate-300 transition-colors select-none"
+              @click="handleSort('avgConcurrentPlayers')"
+            >
+              <div class="flex items-center justify-end gap-1">
+                <span>Avg</span>
+                <div class="flex flex-col items-center">
+                  <svg 
+                    v-if="sortColumn === 'avgConcurrentPlayers' && sortDirection === 'asc'"
+                    class="w-3 h-3 text-cyan-400" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                  </svg>
+                  <svg 
+                    v-else-if="sortColumn === 'avgConcurrentPlayers' && sortDirection === 'desc'"
+                    class="w-3 h-3 text-cyan-400" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                  <svg 
+                    v-else
+                    class="w-3 h-3 opacity-30" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                </div>
+              </div>
+            </th>
             <th class="pb-2 pl-3 font-medium w-24 hidden md:table-cell">Win Stats</th>
           </tr>
         </thead>
         <tbody>
           <tr
-            v-for="map in mapRotation"
+            v-for="map in sortedMapRotation"
             :key="map.mapName"
             class="border-b border-slate-700/30 hover:bg-slate-700/20 cursor-pointer transition-colors"
             @click="emit('navigate', map.mapName)"
@@ -96,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import type { MapRotationItem } from '../../services/dataExplorerService';
 
 const props = defineProps<{
@@ -112,6 +184,57 @@ const emit = defineEmits<{
   (e: 'navigate', mapName: string): void;
   (e: 'pageChange', page: number): void;
 }>();
+
+// Sorting state
+type SortColumn = 'playTimePercentage' | 'avgConcurrentPlayers' | null;
+type SortDirection = 'asc' | 'desc';
+
+const sortColumn = ref<SortColumn>(null);
+const sortDirection = ref<SortDirection>('desc');
+
+// Handle column header click for sorting
+const handleSort = (column: 'playTimePercentage' | 'avgConcurrentPlayers') => {
+  if (sortColumn.value === column) {
+    // Toggle direction if clicking the same column
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    // Set new column and default to descending
+    sortColumn.value = column;
+    sortDirection.value = 'desc';
+  }
+};
+
+// Sorted map rotation
+const sortedMapRotation = computed(() => {
+  if (!sortColumn.value) {
+    return props.mapRotation;
+  }
+
+  const sorted = [...props.mapRotation];
+  
+  sorted.sort((a, b) => {
+    let aValue: number;
+    let bValue: number;
+
+    if (sortColumn.value === 'playTimePercentage') {
+      aValue = a.playTimePercentage;
+      bValue = b.playTimePercentage;
+    } else if (sortColumn.value === 'avgConcurrentPlayers') {
+      aValue = a.avgConcurrentPlayers;
+      bValue = b.avgConcurrentPlayers;
+    } else {
+      return 0;
+    }
+
+    if (sortDirection.value === 'asc') {
+      return aValue - bValue;
+    } else {
+      return bValue - aValue;
+    }
+  });
+
+  return sorted;
+});
 
 const paginationRange = computed(() => {
   const range: number[] = [];
