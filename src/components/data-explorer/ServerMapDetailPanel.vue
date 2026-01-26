@@ -374,6 +374,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { fetchServerMapDetail, fetchServerMapSessions, type ServerMapDetail, type LeaderboardEntry, type ServerMapSession } from '../../services/dataExplorerService';
 import { formatRelativeTimeShort as formatRelativeTime } from '@/utils/timeUtils';
+import { calculateKDR, getKDRColor, getTeamColor, getMapAccentColor } from '@/utils/statsUtils';
 import WinStatsBar from './WinStatsBar.vue';
 import LeaderboardTable from './LeaderboardTable.vue';
 import ActivityHeatmap from './ActivityHeatmap.vue';
@@ -442,52 +443,6 @@ const formatPlayTime = (minutes: number): string => {
   const days = Math.floor(hours / 24);
   const remainingHours = hours % 24;
   return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
-};
-
-const calculateKDR = (kills: number, deaths: number): string => {
-  if (deaths === 0) return kills > 0 ? `${kills.toFixed(1)}` : '0.0';
-  return (kills / deaths).toFixed(2);
-};
-
-const getKDRColor = (kills: number, deaths: number): string => {
-  const kdr = deaths === 0 ? (kills > 0 ? kills : 0) : kills / deaths;
-  if (kdr >= 2.0) return 'text-emerald-400';
-  if (kdr >= 1.5) return 'text-cyan-400';
-  if (kdr >= 1.0) return 'text-blue-400';
-  if (kdr >= 0.5) return 'text-orange-400';
-  return 'text-red-400';
-};
-
-const getTeamColor = (teamLabel: string | null | undefined): string => {
-  if (!teamLabel) return 'text-slate-300';
-  const label = teamLabel.toLowerCase();
-  if (label.includes('axis') || label.includes('red') || label.includes('team 2')) return 'text-red-400';
-  if (label.includes('allies') || label.includes('blue') || label.includes('team 1')) return 'text-blue-400';
-  if (label.includes('north') || label.includes('nva')) return 'text-red-400';
-  if (label.includes('south') || label.includes('usa')) return 'text-blue-400';
-  return 'text-purple-400';
-};
-
-const getMapAccentColor = (mapName: string): string => {
-  let hash = 0;
-  for (let i = 0; i < mapName.length; i++) {
-    hash = mapName.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  const colors = [
-    'text-cyan-400',
-    'text-emerald-400',
-    'text-violet-400',
-    'text-orange-400',
-    'text-pink-400',
-    'text-amber-400',
-    'text-lime-400',
-    'text-sky-400',
-    'text-fuchsia-400',
-    'text-indigo-400',
-  ];
-
-  return colors[Math.abs(hash) % colors.length];
 };
 
 const loadData = async (isRefresh = false) => {

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { fetchSessions, PlayerContextInfo } from '../services/playerStatsService';
 import HeroBackButton from './HeroBackButton.vue';
 import { formatPlayTime, formatRelativeTimeShort as formatRelativeTime } from '@/utils/timeUtils';
+import { calculateKDR, getKDRColor, getTeamColor, getMapAccentColor } from '@/utils/statsUtils';
 
 // Router
 const router = useRouter();
@@ -60,52 +61,6 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const totalItems = ref(0);
 const totalPages = ref(0);
-
-const calculateKDR = (kills: number, deaths: number): string => {
-  if (deaths === 0) return kills > 0 ? `${kills.toFixed(1)}` : '0.0';
-  return (kills / deaths).toFixed(2);
-};
-
-const getKDRColor = (kills: number, deaths: number): string => {
-  const kdr = deaths === 0 ? (kills > 0 ? kills : 0) : kills / deaths;
-  if (kdr >= 2.0) return 'text-emerald-400';
-  if (kdr >= 1.5) return 'text-cyan-400';
-  if (kdr >= 1.0) return 'text-blue-400';
-  if (kdr >= 0.5) return 'text-orange-400';
-  return 'text-red-400';
-};
-
-const getTeamColor = (teamLabel: string | null | undefined): string => {
-  if (!teamLabel) return 'text-slate-300';
-  const label = teamLabel.toLowerCase();
-  if (label.includes('axis') || label.includes('red') || label.includes('team 2')) return 'text-red-400';
-  if (label.includes('allies') || label.includes('blue') || label.includes('team 1')) return 'text-blue-400';
-  if (label.includes('north') || label.includes('nva')) return 'text-red-400';
-  if (label.includes('south') || label.includes('usa')) return 'text-blue-400';
-  return 'text-purple-400';
-};
-
-const getMapAccentColor = (mapName: string): string => {
-  let hash = 0;
-  for (let i = 0; i < mapName.length; i++) {
-    hash = mapName.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  const colors = [
-    'text-cyan-400',
-    'text-emerald-400',
-    'text-violet-400',
-    'text-orange-400',
-    'text-pink-400',
-    'text-amber-400',
-    'text-lime-400',
-    'text-sky-400',
-    'text-fuchsia-400',
-    'text-indigo-400',
-  ];
-
-  return colors[Math.abs(hash) % colors.length];
-};
 
 const navigateToRoundReport = (roundId: string) => {
   router.push({

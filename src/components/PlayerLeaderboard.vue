@@ -393,6 +393,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import PlayerName from './PlayerName.vue';
+import { calculateKDR } from '@/utils/statsUtils';
 
 interface Player {
   name?: string;
@@ -432,12 +433,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const selectedTeamTab = ref(0);
 const isMobile = ref(false);
-
-// Calculate K/D ratio
-const calculateKDR = (kills: number, deaths: number): string => {
-  if (deaths === 0) return kills.toString();
-  return (kills / deaths).toFixed(2);
-};
 
 // Check if mobile
 const checkMobile = () => {

@@ -14,14 +14,6 @@ const { isConnected, connectionId } = useSignalR();
 // Initialize notifications
 useNotifications();
 
-// Debug logging for SignalR connection status
-watch(isConnected, () => {
-  // console.log('App.vue - SignalR connection status changed:', connected);
-});
-
-watch(connectionId, () => {
-  // console.log('App.vue - SignalR connection ID changed:', id);
-});
 
 // Function to toggle dark mode
 const toggleDarkMode = () => {

@@ -5,6 +5,7 @@ import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import AchievementModal from '../components/AchievementModal.vue';
 import { formatLastSeen, formatRelativeTime } from '@/utils/timeUtils';
+import { calculateKDR } from '@/utils/statsUtils';
 import { getAchievementImageFromObject } from '@/utils/achievementImageUtils';
 
 
@@ -398,11 +399,6 @@ onMounted(() => {
     }
   }
 });
-
-const calculateKDR = (kills: number, deaths: number): string => {
-  if (deaths === 0) return kills.toString();
-  return (kills / deaths).toFixed(2);
-};
 
 const player1KDR = computed(() => {
   if (!comparisonData.value?.bucketTotals) return '0.00';

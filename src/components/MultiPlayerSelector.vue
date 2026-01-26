@@ -173,6 +173,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { getContrastingTextColor } from '@/utils/colorUtils';
 
 interface Props {
   currentPlayers: string[];
@@ -207,23 +208,7 @@ const props = withDefaults(defineProps<Props>(), {
   backgroundMuteColor: '#2d2d2d',
 });
 
-// Computed property for accent text color (black on light accents, white on dark accents)
-const accentTextColor = computed(() => {
-  const accent = props.accentColor;
-  if (!accent) return '#FFFFFF';
-
-  // Simple luminance calculation
-  const hex = accent.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-
-  // Calculate luminance using the formula: (0.299*R + 0.587*G + 0.114*B)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-  // If accent color is light (high luminance), use dark text; if dark, use light text
-  return luminance > 0.5 ? '#000000' : '#FFFFFF';
-});
+const accentTextColor = computed(() => getContrastingTextColor(props.accentColor));
 
 const emit = defineEmits<{
   addPlayers: [players: string[]];

@@ -10,6 +10,7 @@ import PlayerRecentSessions from '../components/PlayerRecentSessions.vue';
 import HeroBackButton from '../components/HeroBackButton.vue';
 import PlayerAchievementHeroBadges from '../components/PlayerAchievementHeroBadges.vue';
 import { formatRelativeTime } from '@/utils/timeUtils';
+import { calculateKDR } from '@/utils/statsUtils';
 
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
@@ -327,12 +328,6 @@ const formatPlayTime = (minutes: number): string => {
   } else {
     return `${hours} hours ${remainingMinutes} minutes`;
   }
-};
-
-// Calculate K/D ratio
-const calculateKDR = (kills: number, deaths: number): string => {
-  if (deaths === 0) return kills.toString();
-  return (kills / deaths).toFixed(2);
 };
 
 // Function to navigate to round report using best score data

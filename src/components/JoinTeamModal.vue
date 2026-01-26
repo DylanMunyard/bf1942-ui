@@ -240,6 +240,7 @@ import { ref, computed, watch } from 'vue';
 import { marked } from 'marked';
 import PlayerSearch from '@/components/PlayerSearch.vue';
 import { teamRegistrationService, TeamRecruitmentStatus, getRecruitmentStatusText, getRecruitmentStatusMessage, type JoinTeamRequest, type AvailableTeam, type LinkedPlayerName } from '@/services/teamRegistrationService';
+import { getContrastingTextColor } from '@/utils/colorUtils';
 
 interface Props {
   isVisible: boolean;
@@ -264,23 +265,7 @@ const renderedRegistrationRules = computed(() => {
   }
 });
 
-// Computed property for accent text color (black on light accents, white on dark accents)
-const accentTextColor = computed(() => {
-  const accent = props.accentColor;
-  if (!accent) return '#FFFFFF';
-
-  // Simple luminance calculation
-  const hex = accent.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-
-  // Calculate luminance using the formula: (0.299*R + 0.587*G + 0.114*B)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-  // If accent color is light (high luminance), use dark text; if dark, use light text
-  return luminance > 0.5 ? '#000000' : '#FFFFFF';
-});
+const accentTextColor = computed(() => getContrastingTextColor(props.accentColor));
 
 const emit = defineEmits<{
   close: [];

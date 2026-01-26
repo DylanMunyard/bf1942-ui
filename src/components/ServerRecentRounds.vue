@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { ServerDetails, RecentRoundInfo } from '@/services/serverDetailsService';
 import { formatPlayTime, formatRelativeTimeShort as formatRelativeTime, getDurationMinutes } from '@/utils/timeUtils';
+import { getTeamColor, getMapAccentColor } from '@/utils/statsUtils';
 
 const props = defineProps<{
   serverDetails: ServerDetails;
@@ -35,40 +36,6 @@ const navigateToRoundReport = (round: RecentRoundInfo) => {
       roundId: round.roundId,
     },
   });
-};
-
-// Helper to get team color
-const getTeamColor = (teamLabel: string | null | undefined): string => {
-  if (!teamLabel) return 'text-slate-300';
-  const label = teamLabel.toLowerCase();
-  if (label.includes('axis') || label.includes('red')) return 'text-red-400';
-  if (label.includes('allies') || label.includes('blue')) return 'text-blue-400';
-  if (label.includes('north') || label.includes('nva')) return 'text-red-400';
-  if (label.includes('south') || label.includes('usa')) return 'text-blue-400';
-  return 'text-purple-400';
-};
-
-// Generate vibrant accent color for map name
-const getMapAccentColor = (mapName: string): string => {
-  let hash = 0;
-  for (let i = 0; i < mapName.length; i++) {
-    hash = mapName.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  const colors = [
-    'text-cyan-400',
-    'text-emerald-400',
-    'text-violet-400',
-    'text-orange-400',
-    'text-pink-400',
-    'text-amber-400',
-    'text-lime-400',
-    'text-sky-400',
-    'text-fuchsia-400',
-    'text-indigo-400',
-  ];
-
-  return colors[Math.abs(hash) % colors.length];
 };
 
 // Get left border color

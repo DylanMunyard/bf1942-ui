@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Session } from '@/types/playerStatsTypes';
 import { formatPlayTime, formatRelativeTimeShort as formatRelativeTime, getDurationMinutes } from '@/utils/timeUtils';
+import { calculateKDR, getKDRColor } from '@/utils/statsUtils';
 
 const props = defineProps<{
   sessions: Session[];
@@ -25,20 +26,6 @@ const hasMoreSessions = computed(() => {
 
 const toggleShowAll = () => {
   showAll.value = !showAll.value;
-};
-
-const calculateKDR = (kills: number, deaths: number): string => {
-  if (deaths === 0) return kills > 0 ? `${kills.toFixed(1)}` : '0.0';
-  return (kills / deaths).toFixed(2);
-};
-
-const getKDRColor = (kills: number, deaths: number): string => {
-  const kdr = deaths === 0 ? (kills > 0 ? kills : 0) : kills / deaths;
-  if (kdr >= 2.0) return 'text-emerald-400';
-  if (kdr >= 1.5) return 'text-cyan-400';
-  if (kdr >= 1.0) return 'text-blue-400';
-  if (kdr >= 0.5) return 'text-orange-400';
-  return 'text-red-400';
 };
 
 const navigateToRoundReport = (session: Session) => {
