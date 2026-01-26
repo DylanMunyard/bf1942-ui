@@ -1,140 +1,6 @@
-<template>
-  <div
-    v-if="isVisible"
-    class="milestone-modal-overlay"
-    @click="closeModal"
-  >
-    <div
-      class="milestone-modal"
-      @click.stop
-    >
-      <div class="milestone-modal-header">
-        <div class="milestone-modal-title">
-          <div class="milestone-modal-title-text">
-            <h3>{{ milestone?.toLocaleString() }} Kills</h3>
-            <div
-              v-if="isAchieved && achievementData"
-              class="milestone-achievement-subtitle"
-            >
-              {{ formatAchievementDate(achievementData?.achievedDate) }} • {{ achievementData?.daysToAchieve }} days to achieve
-            </div>
-            <div
-              v-else-if="isNext"
-              class="milestone-achievement-subtitle"
-            >
-              Next milestone • {{ Math.floor(progressPercentage) }}% complete
-            </div>
-            <div
-              v-else
-              class="milestone-achievement-subtitle"
-            >
-              Locked milestone
-            </div>
-          </div>
-        </div>
-        <button
-          class="milestone-modal-close"
-          @click="closeModal"
-        >
-          ×
-        </button>
-      </div>
-      
-      <div class="milestone-modal-content">
-        <!-- Badge prominently displayed at top -->
-        <div class="milestone-badge-display">
-          <img
-            :src="milestoneImage"
-            :alt="`${milestone?.toLocaleString()} Kills Badge`"
-            class="milestone-modal-badge"
-          >
-        </div>
-        
-        <div
-          v-if="isAchieved"
-          class="milestone-achieved"
-        >
-          <div class="achievement-status">
-            <span class="achievement-icon">🏆</span>
-            <span class="achievement-text">Achievement Unlocked!</span>
-          </div>
-          
-          <!-- Comparison data for PlayerComparison.vue -->
-          <div
-            v-if="comparisonData"
-            class="comparison-section"
-          >
-            <h4>Comparison</h4>
-            <div class="comparison-details">
-              <div
-                v-if="comparisonData.isFaster"
-                class="comparison-result faster"
-              >
-                <span class="comparison-icon">⚡</span>
-                <span>Achieved faster than opponent!</span>
-              </div>
-              <div
-                v-else-if="comparisonData.isSlower"
-                class="comparison-result slower"
-              >
-                <span class="comparison-icon">🐌</span>
-                <span>Achieved slower than opponent</span>
-              </div>
-              <div
-                v-else-if="comparisonData.hasBothAchieved"
-                class="comparison-result tie"
-              >
-                <span class="comparison-icon">🤝</span>
-                <span>Same achievement time</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div
-          v-else-if="isNext"
-          class="milestone-next"
-        >
-          <div class="progress-status">
-            <span class="progress-icon">🎯</span>
-            <span class="progress-text">Next Target</span>
-          </div>
-          
-          <div class="progress-details">
-            <div class="progress-bar-container">
-              <div class="progress-bar">
-                <div
-                  class="progress-fill"
-                  :style="{ width: progressPercentage + '%' }"
-                />
-              </div>
-              <span class="progress-percentage">{{ Math.floor(progressPercentage) }}%</span>
-            </div>
-            <div class="progress-info">
-              <span>{{ currentKills?.toLocaleString() }} / {{ milestone?.toLocaleString() }} kills</span>
-            </div>
-          </div>
-        </div>
-        
-        <div
-          v-else
-          class="milestone-locked"
-        >
-          <div class="locked-status">
-            <span class="locked-icon">🔒</span>
-            <span class="locked-text">Locked</span>
-          </div>
-          <p class="locked-description">
-            Achieve previous milestones to unlock this badge.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue';
+import BaseModal from './BaseModal.vue';
 
 interface Props {
   isVisible: boolean;
@@ -165,29 +31,32 @@ const emit = defineEmits<{
   close: []
 }>();
 
+const modalTitle = computed(() => props.milestone ? `${props.milestone.toLocaleString()} Kills` : '');
+
+const modalSubtitle = computed(() => {
+  if (props.isAchieved && props.achievementData) {
+    return `${formatAchievementDate(props.achievementData.achievedDate)} - ${props.achievementData.daysToAchieve} days to achieve`;
+  }
+  if (props.isNext) {
+    return `Next milestone - ${Math.floor(progressPercentage.value)}% complete`;
+  }
+  return 'Locked milestone';
+});
+
 const progressPercentage = computed(() => {
   if (!props.milestone || !props.currentKills) return 0;
-  
-  // Find the previous milestone to calculate progress from
   const MILESTONES = [5000, 10000, 20000, 40000, 50000, 75000, 100000];
   const currentIndex = MILESTONES.findIndex(m => m === props.milestone);
   const prevMilestone = currentIndex > 0 ? MILESTONES[currentIndex - 1] : 0;
-  
   const progress = (props.currentKills - prevMilestone) / (props.milestone - prevMilestone);
   return Math.max(0, Math.min(100, progress * 100));
 });
 
-const closeModal = () => {
-  emit('close');
-};
-
 const formatAchievementDate = (dateString?: string): string => {
   if (!dateString) return '';
-  
   const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-  
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Yesterday';
   if (diffDays < 7) return `${diffDays} days ago`;
@@ -195,271 +64,119 @@ const formatAchievementDate = (dateString?: string): string => {
   if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
   return `${Math.floor(diffDays / 365)} years ago`;
 };
+
+const handleClose = () => emit('close');
 </script>
 
-<style scoped>
-.milestone-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-  backdrop-filter: blur(4px);
-}
+<template>
+  <BaseModal
+    :model-value="isVisible"
+    size="sm"
+    content-class="overflow-hidden"
+    @update:model-value="handleClose"
+    @close="handleClose"
+  >
+    <template #header>
+      <div class="flex flex-col gap-1">
+        <h3 class="text-xl font-semibold text-white m-0">
+          {{ modalTitle }}
+        </h3>
+        <p class="text-sm text-white/80 m-0">
+          {{ modalSubtitle }}
+        </p>
+      </div>
+    </template>
 
-.milestone-modal {
-  @apply bg-slate-800/95 backdrop-blur-md border border-slate-700/50;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 400px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
-}
+    <div class="text-center">
+      <!-- Badge Display -->
+      <div class="flex justify-center mb-5">
+        <img
+          :src="milestoneImage"
+          :alt="`${milestone?.toLocaleString()} Kills Badge`"
+          class="w-20 h-20 rounded-full border-3 border-purple-500 shadow-lg shadow-purple-500/30"
+        >
+      </div>
 
-.milestone-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 20px 16px 20px;
-  border-bottom: 1px solid var(--color-border);
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 16px 16px 0 0;
-  color: white;
-}
+      <!-- Achieved State -->
+      <div
+        v-if="isAchieved"
+        class="space-y-4"
+      >
+        <div class="flex items-center justify-center gap-2">
+          <span class="text-2xl">🏆</span>
+          <span class="text-lg font-semibold text-green-400">Achievement Unlocked!</span>
+        </div>
 
-.milestone-modal-title {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
+        <div
+          v-if="comparisonData"
+          class="pt-4 border-t border-slate-700/50"
+        >
+          <h4 class="text-base text-white mb-3">
+            Comparison
+          </h4>
+          <div
+            v-if="comparisonData.isFaster"
+            class="flex items-center justify-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400"
+          >
+            <span class="text-xl">⚡</span>
+            <span>Achieved faster than opponent!</span>
+          </div>
+          <div
+            v-else-if="comparisonData.isSlower"
+            class="flex items-center justify-center gap-2 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400"
+          >
+            <span class="text-xl">🐌</span>
+            <span>Achieved slower than opponent</span>
+          </div>
+          <div
+            v-else-if="comparisonData.hasBothAchieved"
+            class="flex items-center justify-center gap-2 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400"
+          >
+            <span class="text-xl">🤝</span>
+            <span>Same achievement time</span>
+          </div>
+        </div>
+      </div>
 
-.milestone-modal-title-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+      <!-- Next Target State -->
+      <div
+        v-else-if="isNext"
+        class="space-y-4"
+      >
+        <div class="flex items-center justify-center gap-2">
+          <span class="text-2xl">🎯</span>
+          <span class="text-lg font-semibold text-purple-400">Next Target</span>
+        </div>
 
-.milestone-modal-title h3 {
-  margin: 0;
-  font-size: 1.4rem;
-  font-weight: 600;
-}
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden border border-slate-600">
+              <div
+                class="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
+                :style="{ width: progressPercentage + '%' }"
+              />
+            </div>
+            <span class="text-sm font-semibold text-purple-400 min-w-[40px]">{{ Math.floor(progressPercentage) }}%</span>
+          </div>
+          <p class="text-sm text-slate-400">
+            {{ currentKills?.toLocaleString() }} / {{ milestone?.toLocaleString() }} kills
+          </p>
+        </div>
+      </div>
 
-.milestone-achievement-subtitle {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 400;
-  line-height: 1.3;
-}
-
-.milestone-badge-display {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.milestone-modal-badge {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 3px solid var(--color-primary);
-  box-shadow: 0 4px 16px rgba(156, 39, 176, 0.3);
-}
-
-.milestone-modal-close {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  font-size: 24px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
-}
-
-.milestone-modal-close:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.milestone-modal-content {
-  padding: 20px;
-}
-
-.milestone-achieved,
-.milestone-next,
-.milestone-locked {
-  text-align: center;
-}
-
-.achievement-status,
-.progress-status,
-.locked-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.achievement-icon,
-.progress-icon,
-.locked-icon {
-  font-size: 1.5rem;
-}
-
-.achievement-text {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #4CAF50;
-}
-
-.progress-text {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.locked-text {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
-.achievement-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  text-align: left;
-}
-
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  @apply bg-slate-900/60;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-}
-
-.detail-label {
-  font-weight: 500;
-  color: var(--color-text-muted);
-}
-
-.detail-value {
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.comparison-section {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
-}
-
-.comparison-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 1rem;
-  color: var(--color-heading);
-  text-align: center;
-}
-
-.comparison-result {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-.comparison-result.faster {
-  background: rgba(76, 175, 80, 0.1);
-  color: #4CAF50;
-  border: 1px solid rgba(76, 175, 80, 0.3);
-}
-
-.comparison-result.slower {
-  background: rgba(255, 152, 0, 0.1);
-  color: #ff9800;
-  border: 1px solid rgba(255, 152, 0, 0.3);
-}
-
-.comparison-result.tie {
-  background: rgba(156, 39, 176, 0.1);
-  color: var(--color-primary);
-  border: 1px solid rgba(156, 39, 176, 0.3);
-}
-
-.comparison-icon {
-  font-size: 1.2rem;
-}
-
-.progress-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  text-align: center;
-}
-
-.progress-bar-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 8px;
-  @apply bg-slate-900/60;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
-  transition: width 0.3s ease;
-}
-
-.progress-percentage {
-  font-weight: 600;
-  color: var(--color-primary);
-  font-size: 0.9rem;
-  min-width: 40px;
-}
-
-.progress-info {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-}
-
-.locked-description {
-  margin: 8px 0 0 0;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  .milestone-modal-overlay {
-    background: rgba(0, 0, 0, 0.8);
-  }
-}
-</style> 
+      <!-- Locked State -->
+      <div
+        v-else
+        class="space-y-3"
+      >
+        <div class="flex items-center justify-center gap-2">
+          <span class="text-2xl">🔒</span>
+          <span class="text-lg font-semibold text-slate-400">Locked</span>
+        </div>
+        <p class="text-sm text-slate-500">
+          Achieve previous milestones to unlock this badge.
+        </p>
+      </div>
+    </div>
+  </BaseModal>
+</template>

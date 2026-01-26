@@ -373,6 +373,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { fetchServerMapDetail, fetchServerMapSessions, type ServerMapDetail, type LeaderboardEntry, type ServerMapSession } from '../../services/dataExplorerService';
+import { formatRelativeTimeShort as formatRelativeTime } from '@/utils/timeUtils';
 import WinStatsBar from './WinStatsBar.vue';
 import LeaderboardTable from './LeaderboardTable.vue';
 import ActivityHeatmap from './ActivityHeatmap.vue';
@@ -441,22 +442,6 @@ const formatPlayTime = (minutes: number): string => {
   const days = Math.floor(hours / 24);
   const remainingHours = hours % 24;
   return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
-};
-
-const formatRelativeTime = (dateString: string): string => {
-  if (!dateString) return '';
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffDays > 0) return diffDays === 1 ? '1d' : `${diffDays}d`;
-  if (diffHours > 0) return diffHours === 1 ? '1h' : `${diffHours}h`;
-  if (diffMinutes > 0) return diffMinutes === 1 ? '1m' : `${diffMinutes}m`;
-  return 'now';
 };
 
 const calculateKDR = (kills: number, deaths: number): string => {

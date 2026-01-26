@@ -13,6 +13,18 @@
         <p class="portal-subtitle">
           Trace anomalous sessions. Modded servers, inflated stats, manipulation patterns.
         </p>
+        <!-- Game type filter: same options as landing (BF1942, FH2, BFV) -->
+        <div class="portal-game-filters">
+          <button
+            v-for="g in gameTypes"
+            :key="g.id"
+            :class="['portal-game-chip', activeGameFilter === g.id && 'portal-game-chip--active']"
+            type="button"
+            @click="setGameFilter(g.id)"
+          >
+            <span class="portal-game-chip-label">{{ g.label }}</span>
+          </button>
+        </div>
       </header>
 
       <!-- Tabs -->
@@ -57,7 +69,11 @@
 
       <!-- Query tab -->
       <div v-show="activeTab === 'query'" class="portal-panel">
-        <AdminQueryTab @post-delete="showPostDeleteAggregateHint = true" @post-undelete="showPostUndeleteAggregateHint = true" />
+        <AdminQueryTab
+          :game-filter="activeGameFilter"
+          @post-delete="showPostDeleteAggregateHint = true"
+          @post-undelete="showPostUndeleteAggregateHint = true"
+        />
       </div>
 
       <!-- Audit tab -->
@@ -74,15 +90,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import AdminQueryTab from '@/components/admin-data/AdminQueryTab.vue';
 import AdminAuditTab from '@/components/admin-data/AdminAuditTab.vue';
 import AdminCronTab from '@/components/admin-data/AdminCronTab.vue';
 
+const ADMIN_DATA_GAME_FILTER_KEY = 'bf1942_admin_data_game_filter';
+
+const gameTypes = [
+  { id: 'bf1942', label: 'BF1942' },
+  { id: 'fh2', label: 'FH2' },
+  { id: 'bfvietnam', label: 'BFV' },
+];
+
 const activeTab = ref<'query' | 'audit' | 'cron'>('query');
+const activeGameFilter = ref<string>('bf1942');
 const showPostDeleteAggregateHint = ref(false);
 const showPostUndeleteAggregateHint = ref(false);
 const auditTabRef = ref<InstanceType<typeof AdminAuditTab> | null>(null);
+
+function setGameFilter(id: string) {
+  if (!gameTypes.some((g) => g.id === id)) return;
+  activeGameFilter.value = id;
+  try {
+    localStorage.setItem(ADMIN_DATA_GAME_FILTER_KEY, id);
+  } catch { /* ignore */ }
+}
+
+onMounted(() => {
+  try {
+    const saved = localStorage.getItem(ADMIN_DATA_GAME_FILTER_KEY);
+    if (saved && gameTypes.some((g) => g.id === saved)) activeGameFilter.value = saved;
+  } catch { /* ignore */ }
+});
 </script>
 
 <style scoped>
@@ -161,6 +201,49 @@ const auditTabRef = ref<InstanceType<typeof AdminAuditTab> | null>(null);
   font-size: 0.8rem;
   color: var(--portal-text);
   opacity: 0.9;
+}
+
+.portal-game-filters {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+}
+
+.portal-game-chip {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-family: ui-monospace, monospace;
+  background: transparent;
+  border: 1px solid var(--portal-border);
+  border-radius: 2px;
+  color: var(--portal-text);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.portal-game-chip:hover {
+  color: var(--portal-text-bright);
+  border-color: var(--portal-border-focus);
+}
+
+.portal-game-chip--active {
+  color: var(--portal-accent);
+  border-color: var(--portal-accent);
+  background: var(--portal-accent-dim);
+  box-shadow: 0 0 0 1px rgba(0, 229, 160, 0.15);
+}
+
+.portal-game-chip--active:hover {
+  color: var(--portal-accent);
+  border-color: var(--portal-accent);
+  background: rgba(0, 229, 160, 0.18);
+}
+
+.portal-game-chip-label {
+  opacity: 0.95;
 }
 
 .portal-tabs {

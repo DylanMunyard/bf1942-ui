@@ -8,6 +8,8 @@ export interface QuerySuspiciousSessionsRequest {
   dateTo?: string;
   /** When true, include sessions from rounds that have been marked as deleted (so they can be undeleted). */
   includeDeletedRounds?: boolean;
+  /** Game type filter: bf1942, fh2, bfvietnam. From server record. */
+  game?: string;
 }
 
 export interface SuspiciousSessionResponse {
@@ -183,6 +185,7 @@ class AdminDataService {
     if (req.dateFrom != null) body.startDate = req.dateFrom;
     if (req.dateTo != null) body.endDate = req.dateTo;
     if (req.includeDeletedRounds === true) body.includeDeletedRounds = true;
+    if (req.game != null && req.game !== '') body.game = req.game;
     return this.request<PagedSuspiciousSessionsResponse>('/sessions/query', {
       method: 'POST',
       body: JSON.stringify(body),
@@ -237,13 +240,14 @@ class AdminDataService {
 }
 
 // Server search for the query form (uses existing /stats/servers/search; no admin auth required for read)
+// game: bf1942 | fh2 | bfvietnam — filters by server's game type
 export async function searchServersForAdmin(
   query: string,
   pageSize = 20,
-  game = 'bf1942'
+  game: string = 'bf1942'
 ): Promise<ServerSearchResult[]> {
   const q = query?.trim() || '';
-  const url = `/stats/servers/search?query=${encodeURIComponent(q)}&game=${game}&pageSize=${pageSize}`;
+  const url = `/stats/servers/search?query=${encodeURIComponent(q)}&game=${encodeURIComponent(game)}&pageSize=${pageSize}`;
   const res = await fetch(url);
   if (!res.ok) return [];
   const data = await res.json();

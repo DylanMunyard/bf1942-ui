@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Session } from '@/types/playerStatsTypes';
+import { formatPlayTime, formatRelativeTimeShort as formatRelativeTime, getDurationMinutes } from '@/utils/timeUtils';
 
 const props = defineProps<{
   sessions: Session[];
@@ -24,45 +25,6 @@ const hasMoreSessions = computed(() => {
 
 const toggleShowAll = () => {
   showAll.value = !showAll.value;
-};
-
-const formatPlayTime = (minutes: number): string => {
-  if (minutes < 1) {
-    return '<1m';
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = Math.round(minutes % 60);
-
-  if (hours === 0) {
-    return `${remainingMinutes}m`;
-  } else {
-    return `${hours}h ${remainingMinutes}m`;
-  }
-};
-
-const formatRelativeTime = (dateString: string): string => {
-  if (!dateString) return '';
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffDays > 0) return diffDays === 1 ? '1d' : `${diffDays}d`;
-  if (diffHours > 0) return diffHours === 1 ? '1h' : `${diffHours}h`;
-  if (diffMinutes > 0) return diffMinutes === 1 ? '1m' : `${diffMinutes}m`;
-  return 'now';
-};
-
-const getDurationMinutes = (startTime: string, endTime: string): number => {
-  if (!endTime || !startTime) return 0;
-  const start = new Date(startTime.endsWith('Z') ? startTime : startTime + 'Z');
-  const end = new Date(endTime.endsWith('Z') ? endTime : endTime + 'Z');
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
-  const diffMs = end.getTime() - start.getTime();
-  return Math.max(0, Math.floor(diffMs / 60000));
 };
 
 const calculateKDR = (kills: number, deaths: number): string => {

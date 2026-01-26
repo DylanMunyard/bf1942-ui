@@ -3,6 +3,7 @@ import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { fetchSessions, PlayerContextInfo } from '../services/playerStatsService';
 import HeroBackButton from './HeroBackButton.vue';
+import { formatPlayTime, formatRelativeTimeShort as formatRelativeTime } from '@/utils/timeUtils';
 
 // Router
 const router = useRouter();
@@ -59,37 +60,6 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const totalItems = ref(0);
 const totalPages = ref(0);
-
-// Helper functions
-const formatPlayTime = (minutes: number): string => {
-  if (minutes < 1) {
-    return '<1m';
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = Math.round(minutes % 60);
-
-  if (hours === 0) {
-    return `${remainingMinutes}m`;
-  } else {
-    return `${hours}h ${remainingMinutes}m`;
-  }
-};
-
-const formatRelativeTime = (dateString: string): string => {
-  if (!dateString) return '';
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffDays > 0) return diffDays === 1 ? '1d' : `${diffDays}d`;
-  if (diffHours > 0) return diffHours === 1 ? '1h' : `${diffHours}h`;
-  if (diffMinutes > 0) return diffMinutes === 1 ? '1m' : `${diffMinutes}m`;
-  return 'now';
-};
 
 const calculateKDR = (kills: number, deaths: number): string => {
   if (deaths === 0) return kills > 0 ? `${kills.toFixed(1)}` : '0.0';

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import type { PlayerTimeStatistics, PlayerAchievementSummary } from '@/types/playerStatsTypes';
 import { getBadgeDescription, isBadgeServiceInitialized } from '@/services/badgeService';
 import { getAchievementImageFromObject } from '@/utils/achievementImageUtils';
+import { formatRelativeTime } from '@/utils/timeUtils';
 import AchievementModal from './AchievementModal.vue';
 import StreakModal from './StreakModal.vue';
 
@@ -107,33 +108,6 @@ const fetchPlayerStats = async () => {
     playerStatsData.value = await response.json();
   } catch (err: unknown) {
     console.error('Error fetching player stats:', err);
-  }
-};
-
-const formatRelativeTime = (dateString: string): string => {
-  if (!dateString) return '';
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-  const diffMonths = Math.floor(diffDays / 30);
-  const diffYears = Math.floor(diffMonths / 12);
-
-  if (diffYears > 0) {
-    return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
-  } else if (diffMonths > 0) {
-    return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
-  } else if (diffDays > 0) {
-    return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
-  } else if (diffHours > 0) {
-    return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
-  } else if (diffMinutes > 0) {
-    return diffMinutes === 1 ? '1 minute ago' : `${diffMinutes} minutes ago`;
-  } else {
-    return 'Just now';
   }
 };
 

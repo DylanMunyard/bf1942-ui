@@ -3,13 +3,13 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { PlayerTimeStatistics, fetchPlayerStats } from '../services/playerStatsService';
 import { TrendDataPoint, PlayerAchievementGroup } from '../types/playerStatsTypes';
-// Removed unused imports - BestScores, BestScoreEntry
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import PlayerAchievementSummary from '../components/PlayerAchievementSummary.vue';
 import PlayerRecentSessions from '../components/PlayerRecentSessions.vue';
 import HeroBackButton from '../components/HeroBackButton.vue';
 import PlayerAchievementHeroBadges from '../components/PlayerAchievementHeroBadges.vue';
+import { formatRelativeTime } from '@/utils/timeUtils';
 
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
@@ -326,36 +326,6 @@ const formatPlayTime = (minutes: number): string => {
     return `${hours} hour ${remainingMinutes} minutes`;
   } else {
     return `${hours} hours ${remainingMinutes} minutes`;
-  }
-};
-
-
-// Format date to a human-readable relative time (e.g., "2 days ago")
-const formatRelativeTime = (dateString: string): string => {
-  if (!dateString) return '';
-  // Ensure the date is treated as UTC by appending 'Z' if it doesn't have timezone info
-  const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-  const diffMonths = Math.floor(diffDays / 30);
-  const diffYears = Math.floor(diffMonths / 12);
-
-  if (diffYears > 0) {
-    return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
-  } else if (diffMonths > 0) {
-    return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
-  } else if (diffDays > 0) {
-    return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
-  } else if (diffHours > 0) {
-    return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
-  } else if (diffMinutes > 0) {
-    return diffMinutes === 1 ? '1 minute ago' : `${diffMinutes} minutes ago`;
-  } else {
-    return 'Just now';
   }
 };
 
