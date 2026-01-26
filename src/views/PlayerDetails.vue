@@ -9,6 +9,7 @@ import PlayerAchievementSummary from '../components/PlayerAchievementSummary.vue
 import PlayerRecentSessions from '../components/PlayerRecentSessions.vue';
 import HeroBackButton from '../components/HeroBackButton.vue';
 import PlayerAchievementHeroBadges from '../components/PlayerAchievementHeroBadges.vue';
+import PlayerServerInsights from '../components/PlayerServerInsights.vue';
 import { formatRelativeTime } from '@/utils/timeUtils';
 import { calculateKDR } from '@/utils/statsUtils';
 
@@ -37,6 +38,7 @@ const showLastOnline = ref(false);
 const achievementGroups = ref<PlayerAchievementGroup[]>([]);
 const achievementGroupsLoading = ref(false);
 const achievementGroupsError = ref<string | null>(null);
+const playerServerInsightsRef = ref<InstanceType<typeof PlayerServerInsights> | null>(null);
 
 // Engagement stats for dynamic content
 const playerEngagementStats = ref<PlayerEngagementStats['stats']>([]);
@@ -65,6 +67,14 @@ const timeRangeOptions = [
 // New state for map stats sorting
 const mapStatsSortField = ref('totalScore');
 const mapStatsSortDirection = ref('desc');
+
+// Server filtering and navigation state
+const serverSearchQuery = ref('');
+const serverFilter = ref<'all' | 'top-performers' | 'most-played' | 'by-game'>('all');
+const selectedGameFilter = ref<string | null>(null);
+const serversViewMode = ref<'detailed' | 'compact'>('detailed');
+const serversPerPage = ref(10);
+const currentServerPage = ref(1);
 
 // Best Scores state
 const selectedBestScoresTab = ref<'allTime' | 'last30Days' | 'thisWeek'>('thisWeek');
@@ -263,6 +273,11 @@ watch(selectedTimeRange, async () => {
   }
 });
 
+// Reset pagination when filters change
+watch([serverSearchQuery, serverFilter, selectedGameFilter], () => {
+  currentServerPage.value = 1;
+});
+
 const fetchData = async () => {
   isLoading.value = true;
   error.value = null;
@@ -449,11 +464,184 @@ const getGameIcon = (gameId: string): string => {
 
 // --- Server Cards Computed ---
 const hasServers = computed(() => !!playerStats.value?.servers && playerStats.value.servers.length > 0);
-const sortedServers = computed(() => {
+
+// Filtered and sorted servers
+const filteredAndSortedServers = computed(() => {
   if (!playerStats.value?.servers) return [];
-  // Sort by totalMinutes descending
-  return [...playerStats.value.servers].sort((a, b) => b.totalMinutes - a.totalMinutes);
+  
+  let servers = [...playerStats.value.servers];
+  
+  // Apply search filter
+  if (serverSearchQuery.value.trim()) {
+    const query = serverSearchQuery.value.toLowerCase().trim();
+    servers = servers.filter(server => 
+      server.serverName.toLowerCase().includes(query) ||
+      server.gameId.toLowerCase().includes(query)
+    );
+  }
+  
+  // Apply quick filters
+  if (serverFilter.value === 'top-performers') {
+    servers = servers.filter(server => {
+      const indicator = getServerPerformanceIndicator(server);
+      return indicator?.type === 'excellent' || indicator?.type === 'good';
+    });
+  } else if (serverFilter.value === 'most-played') {
+    // Already sorted by playtime, just take top ones
+    servers = servers.slice(0, Math.min(5, servers.length));
+  } else if (serverFilter.value === 'by-game' && selectedGameFilter.value) {
+    servers = servers.filter(server => server.gameId.toLowerCase() === selectedGameFilter.value?.toLowerCase());
+  }
+  
+  // Sort based on filter
+  if (serverFilter.value === 'top-performers') {
+    servers.sort((a, b) => {
+      const aKd = typeof a.kdRatio === 'number' ? a.kdRatio : parseFloat(String(a.kdRatio)) || 0;
+      const bKd = typeof b.kdRatio === 'number' ? b.kdRatio : parseFloat(String(b.kdRatio)) || 0;
+      return bKd - aKd;
+    });
+  } else {
+    // Default: sort by totalMinutes descending
+    servers.sort((a, b) => b.totalMinutes - a.totalMinutes);
+  }
+  
+  return servers;
 });
+
+// Get servers with insights (to filter them out from the server cards list)
+const serversWithInsights = computed(() => {
+  if (!playerServerInsightsRef.value) return [];
+  try {
+    // Access the exposed serversWithInsights from the child component
+    const exposed = playerServerInsightsRef.value as any;
+    return exposed.serversWithInsights || [];
+  } catch {
+    return [];
+  }
+});
+
+// Servers without insights (to show in the server cards list)
+const serversWithoutInsights = computed(() => {
+  if (!playerStats.value?.servers) return [];
+  
+  const insightServerGuids = new Set(
+    serversWithInsights.value.map((s: any) => s.server.serverGuid)
+  );
+  
+  return filteredAndSortedServers.value.filter(
+    server => !insightServerGuids.has(server.serverGuid)
+  );
+});
+
+// Paginated servers (only those without insights)
+const paginatedServers = computed(() => {
+  const start = (currentServerPage.value - 1) * serversPerPage.value;
+  const end = start + serversPerPage.value;
+  return serversWithoutInsights.value.slice(start, end);
+});
+
+const totalServerPages = computed(() => {
+  return Math.ceil(serversWithoutInsights.value.length / serversPerPage.value);
+});
+
+// Available games for filtering
+const availableGames = computed(() => {
+  if (!playerStats.value?.servers) return [];
+  const games = new Set(playerStats.value.servers.map(s => s.gameId));
+  return Array.from(games);
+});
+
+// Server count by game
+const serverCountByGame = computed(() => {
+  if (!playerStats.value?.servers) return {};
+  const counts: Record<string, number> = {};
+  playerStats.value.servers.forEach(server => {
+    counts[server.gameId] = (counts[server.gameId] || 0) + 1;
+  });
+  return counts;
+});
+
+// Compute overall averages for comparison
+const overallAverages = computed<{ kdRatio: number; killsPerMinute: number; totalMinutes: number }>(() => {
+  if (!playerStats.value?.servers || playerStats.value.servers.length === 0) {
+    return { kdRatio: 0, killsPerMinute: 0, totalMinutes: 0 };
+  }
+  const servers = playerStats.value.servers;
+  const totalKills = servers.reduce((sum, s) => sum + s.totalKills, 0);
+  const totalDeaths = servers.reduce((sum, s) => sum + s.totalDeaths, 0);
+  const totalMinutes = servers.reduce((sum, s) => sum + s.totalMinutes, 0);
+  
+  const kdRatio = calculateKDR(totalKills, totalDeaths);
+  const kdRatioNum = typeof kdRatio === 'number' ? kdRatio : parseFloat(String(kdRatio)) || 0;
+  
+  return {
+    kdRatio: kdRatioNum,
+    killsPerMinute: totalKills / Math.max(totalMinutes, 1) * 60,
+    totalMinutes: totalMinutes / servers.length
+  };
+});
+
+// Helper function to get performance indicator for a server
+const getServerPerformanceIndicator = (server: { kdRatio: number | string; killsPerMinute: number | string }) => {
+  const avg = overallAverages.value;
+  const serverKd = typeof server.kdRatio === 'number' ? server.kdRatio : parseFloat(String(server.kdRatio)) || 0;
+  const serverKpm = typeof server.killsPerMinute === 'number' ? server.killsPerMinute : parseFloat(String(server.killsPerMinute)) || 0;
+  const avgKd = typeof avg.kdRatio === 'number' ? avg.kdRatio : 0;
+  const avgKpm = typeof avg.killsPerMinute === 'number' ? avg.killsPerMinute : 0;
+  const kdMultiplier = avgKd > 0 ? serverKd / avgKd : 1;
+  const kpmMultiplier = avgKpm > 0 ? serverKpm / avgKpm : 1;
+  
+  if (kdMultiplier >= 1.3 || kpmMultiplier >= 1.3) {
+    return { 
+      type: 'excellent', 
+      label: 'Top Performer', 
+      color: 'from-green-500/20 to-emerald-500/20',
+      borderColor: 'border-green-500/50'
+    };
+  } else if (kdMultiplier >= 1.1 || kpmMultiplier >= 1.1) {
+    return { 
+      type: 'good', 
+      label: 'Strong', 
+      color: 'from-blue-500/20 to-cyan-500/20',
+      borderColor: 'border-blue-500/50'
+    };
+  } else if (kdMultiplier < 0.9) {
+    return { 
+      type: 'below', 
+      label: 'Developing', 
+      color: 'from-amber-500/20 to-orange-500/20',
+      borderColor: 'border-amber-500/50'
+    };
+  }
+  return null;
+};
+
+// Helper to get playtime percentage
+const getPlaytimePercentage = (serverMinutes: number) => {
+  if (!playerStats.value?.servers) return 0;
+  const total = playerStats.value.servers.reduce((sum, s) => sum + s.totalMinutes, 0);
+  return total > 0 ? (serverMinutes / total) * 100 : 0;
+};
+
+// Helper to get K/D comparison class
+const getKdComparisonClass = (serverKd: number | string, avgKd: number | string) => {
+  const serverKdNum = Number(serverKd);
+  const avgKdNum = Number(avgKd);
+  if (serverKdNum > avgKdNum * 1.1) {
+    return 'bg-green-500/20 text-green-400';
+  } else if (serverKdNum < avgKdNum * 0.9) {
+    return 'bg-amber-500/20 text-amber-400';
+  }
+  return 'bg-slate-700/50 text-slate-400';
+};
+
+// Helper to get K/D comparison text
+const getKdComparisonText = (serverKd: number | string, avgKd: number | string) => {
+  const serverKdNum = Number(serverKd);
+  const avgKdNum = Number(avgKd);
+  const diff = avgKdNum > 0 ? ((serverKdNum / avgKdNum - 1) * 100) : 0;
+  return `${serverKdNum > avgKdNum ? '+' : ''}${diff.toFixed(0)}%`;
+};
 // ... existing code ...
 
 
@@ -904,167 +1092,358 @@ onUnmounted(() => {
           
             <div class="relative z-10 p-8 space-y-6">
               <!-- Section Header -->
-              <div class="space-y-2">
-                <h3 class="text-3xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                  🎮 Favorite Battlegrounds
-                </h3>
-                <p class="text-slate-400">
-                  Your most active server destinations
-                </p>
+              <div class="space-y-4">
+                <div class="flex items-start justify-between gap-4">
+                  <div class="space-y-2">
+                    <h3 class="text-3xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                      Favorite Battlegrounds
+                    </h3>
+                    <p class="text-slate-400">
+                      Your most active server destinations
+                      <span v-if="playerStats?.servers" class="text-slate-500">
+                        ({{ playerStats.servers.length }} server{{ playerStats.servers.length !== 1 ? 's' : '' }})
+                      </span>
+                    </p>
+                  </div>
+                  
+                  <!-- View Mode Toggle -->
+                  <div v-if="hasServers && playerStats.servers.length > 5" class="flex items-center gap-2">
+                    <button
+                      @click="serversViewMode = 'compact'"
+                      class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                      :class="serversViewMode === 'compact' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'"
+                      title="Compact view"
+                    >
+                      Compact
+                    </button>
+                    <button
+                      @click="serversViewMode = 'detailed'"
+                      class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                      :class="serversViewMode === 'detailed' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'"
+                      title="Detailed view"
+                    >
+                      Detailed
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Search and Filters -->
+                <div v-if="hasServers && playerStats.servers.length > 5" class="space-y-3">
+                  <!-- Search Bar -->
+                  <div class="relative">
+                    <input
+                      v-model="serverSearchQuery"
+                      type="text"
+                      placeholder="Search servers by name or game..."
+                      class="w-full px-4 py-2.5 pl-10 bg-slate-800/60 border border-slate-700/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                    >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <button
+                      v-if="serverSearchQuery"
+                      @click="serverSearchQuery = ''"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M18 6L6 18" />
+                        <path d="M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Quick Filter Buttons -->
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <button
+                      @click="serverFilter = 'all'; selectedGameFilter = null; currentServerPage = 1"
+                      class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                      :class="serverFilter === 'all' 
+                        ? 'bg-cyan-600 text-white' 
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'"
+                    >
+                      All ({{ filteredAndSortedServers.length }})
+                      <span v-if="serversWithInsights.length > 0" class="ml-1 text-xs opacity-75">
+                        ({{ serversWithoutInsights.length }} shown)
+                      </span>
+                    </button>
+                    <button
+                      @click="serverFilter = 'top-performers'; selectedGameFilter = null; currentServerPage = 1"
+                      class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                      :class="serverFilter === 'top-performers' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'"
+                    >
+                      Top Performers
+                    </button>
+                    <button
+                      @click="serverFilter = 'most-played'; selectedGameFilter = null; currentServerPage = 1"
+                      class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                      :class="serverFilter === 'most-played' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'"
+                    >
+                      Most Played
+                    </button>
+                    
+                    <!-- Game Filters -->
+                    <div
+                      v-for="game in availableGames"
+                      :key="game"
+                      class="flex items-center"
+                    >
+                      <button
+                        @click="serverFilter = 'by-game'; selectedGameFilter = selectedGameFilter === game ? null : game; currentServerPage = 1"
+                        class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                        :class="serverFilter === 'by-game' && selectedGameFilter === game
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'"
+                      >
+                        {{ game.toUpperCase() }} ({{ serverCountByGame[game] }})
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              <!-- Performance Insights Component -->
+              <PlayerServerInsights
+                v-if="playerStats?.servers && playerStats.servers.length > 0"
+                ref="playerServerInsightsRef"
+                :player-name="playerName"
+                :servers="playerStats.servers"
+                :overall-averages="overallAverages"
+                :open-map-modal="openMapModal"
+              />
             
-              <!-- Server Cards Grid -->
+              <!-- Modernized Server Cards - Horizontal Layout -->
               <div
                 v-if="hasServers"
-                class="w-full"
+                class="w-full space-y-3"
               >
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
-                  <div
-                    v-for="server in sortedServers"
-                    :key="server.serverGuid"
-                    class="group relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]"
+                <!-- No Results -->
+                <div
+                  v-if="serversWithoutInsights.length === 0 && filteredAndSortedServers.length === 0"
+                  class="text-center py-12 text-slate-400"
+                >
+                  <p>No servers match your filters.</p>
+                  <button
+                    @click="serverSearchQuery = ''; serverFilter = 'all'; selectedGameFilter = null"
+                    class="mt-2 text-cyan-400 hover:text-cyan-300 text-sm"
                   >
-                    <!-- Card Background Effects -->
-                    <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    Clear filters
+                  </button>
+                </div>
+
+                <!-- Server Cards -->
+                <div
+                  v-for="server in paginatedServers"
+                  :key="server.serverGuid"
+                  class="group relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl border transition-all duration-300 hover:scale-[1.01]"
+                  :class="getServerPerformanceIndicator(server)?.borderColor || 'border-slate-700/50 hover:border-blue-500/50'"
+                >
+                  <!-- Background Effects -->
+                  <div 
+                    class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    :class="getServerPerformanceIndicator(server)?.color || 'bg-gradient-to-br from-blue-500/5 to-purple-500/5'"
+                  />
                   
-                    <div class="relative z-10 p-3 sm:p-6 space-y-3 sm:space-y-4">
-                      <!-- Server Header -->
-                      <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0">
-                          <div class="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg p-2 group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
-                            <img
-                              :src="getGameIcon(server.gameId)"
-                              alt="Server"
-                              class="w-full h-full rounded object-cover"
-                            >
+                  <div class="relative z-10 p-4">
+                    <!-- Main Server Info - Horizontal Layout -->
+                    <div :class="serversViewMode === 'compact' ? 'flex items-center gap-3' : 'flex items-center gap-4'">
+                      <!-- Game Icon -->
+                      <div class="flex-shrink-0">
+                        <div :class="serversViewMode === 'compact' 
+                          ? 'w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg p-2 group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300'
+                          : 'w-14 h-14 bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg p-2.5 group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300'">
+                          <img
+                            :src="getGameIcon(server.gameId)"
+                            alt="Server"
+                            class="w-full h-full rounded object-cover"
+                          >
+                        </div>
+                      </div>
+
+                      <!-- Server Name & Game Badge -->
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1.5">
+                          <router-link
+                            :to="`/servers/${encodeURIComponent(server.serverName)}`"
+                            :class="serversViewMode === 'compact' 
+                              ? 'font-bold text-white hover:text-cyan-400 transition-colors duration-200 truncate text-base'
+                              : 'font-bold text-white hover:text-cyan-400 transition-colors duration-200 truncate text-lg'"
+                            :title="`View server details for ${server.serverName}`"
+                          >
+                            {{ server.serverName }}
+                          </router-link>
+                          <span class="flex-shrink-0 px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full">
+                            {{ server.gameId.toUpperCase() }}
+                          </span>
+                          <!-- Performance Badge -->
+                          <div
+                            v-if="getServerPerformanceIndicator(server)"
+                            class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold backdrop-blur-sm border"
+                            :class="getServerPerformanceIndicator(server)?.color + ' ' + getServerPerformanceIndicator(server)?.borderColor"
+                          >
+                            <div class="w-1.5 h-1.5 rounded-full"
+                                 :class="{
+                                   'bg-green-400': getServerPerformanceIndicator(server)?.type === 'excellent',
+                                   'bg-blue-400': getServerPerformanceIndicator(server)?.type === 'good',
+                                   'bg-amber-400': getServerPerformanceIndicator(server)?.type === 'below'
+                                 }">
+                            </div>
+                            <span class="text-white">{{ getServerPerformanceIndicator(server)?.label }}</span>
                           </div>
                         </div>
-                      
-                        <div class="flex-1 min-w-0 space-y-2">
-                          <div class="flex items-start justify-between gap-2">
-                            <router-link
-                              :to="`/servers/${encodeURIComponent(server.serverName)}`"
-                              class="group/link font-bold text-white hover:text-cyan-400 transition-colors duration-200 line-clamp-2 leading-tight"
-                              :title="`View server details for ${server.serverName}`"
+                        
+                        <!-- Compact Stats Row -->
+                        <div class="flex items-center gap-4 text-xs flex-wrap">
+                          <div class="flex items-center gap-1">
+                            <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                            <span class="text-green-400 font-semibold">{{ Number(server.kdRatio).toFixed(2) }}</span>
+                            <span class="text-slate-500">K/D</span>
+                            <span
+                              v-if="Number(overallAverages.kdRatio) > 0"
+                              class="text-xs px-1 py-0.5 rounded ml-1"
+                              :class="getKdComparisonClass(server.kdRatio, overallAverages.kdRatio)"
                             >
-                              {{ server.serverName }}
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                class="inline ml-1 opacity-0 group-hover/link:opacity-100 transition-opacity"
-                              >
-                                <path d="m9 18 6-6-6-6" />
-                              </svg>
-                            </router-link>
-                            <span class="flex-shrink-0 px-2 py-1 text-xs font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full">
-                              {{ server.gameId.toUpperCase() }}
+                              {{ getKdComparisonText(server.kdRatio, overallAverages.kdRatio) }}
                             </span>
                           </div>
-                        
-                          <!-- Quick Stats Bar -->
-                          <div class="flex items-center gap-4 text-sm">
-                            <div class="flex items-center gap-1">
-                              <div class="w-2 h-2 bg-green-400 rounded-full" />
-                              <span class="text-green-400 font-medium">{{ server.kdRatio.toFixed(2) }} K/D</span>
-                            </div>
-                            <div class="flex items-center gap-1">
-                              <div class="w-2 h-2 bg-blue-400 rounded-full" />
-                              <span class="text-blue-400 font-medium">{{ server.totalRounds }} rounds</span>
-                            </div>
-                            <div class="flex items-center gap-1">
-                              <div class="w-2 h-2 bg-purple-400 rounded-full" />
-                              <span class="text-purple-400 font-medium">{{ server.killsPerMinute.toFixed(2) }} KPM</span>
-                            </div>
+                          <div class="flex items-center gap-1">
+                            <div class="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+                            <span class="text-blue-400 font-semibold">{{ server.totalRounds }}</span>
+                            <span class="text-slate-500">rounds</span>
+                          </div>
+                          <div class="flex items-center gap-1">
+                            <div class="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                            <span class="text-purple-400 font-semibold">{{ server.killsPerMinute.toFixed(2) }}</span>
+                            <span class="text-slate-500">KPM</span>
+                          </div>
+                          <div class="flex items-center gap-1">
+                            <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full"></div>
+                            <span class="text-cyan-400 font-semibold">{{ formatPlayTime(server.totalMinutes) }}</span>
+                          </div>
+                          <div class="flex items-center gap-1">
+                            <div class="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                            <span class="text-yellow-400 font-semibold">{{ server.highestScore?.toLocaleString() || '0' }}</span>
+                            <span class="text-slate-500">best</span>
+                          </div>
+                          <div class="flex items-center gap-1">
+                            <div class="w-1.5 h-1.5 bg-red-400 rounded-full"></div>
+                            <span class="text-green-400 font-semibold">{{ server.totalKills.toLocaleString() }}</span>
+                            <span class="text-slate-500">/</span>
+                            <span class="text-red-400 font-semibold">{{ server.totalDeaths.toLocaleString() }}</span>
                           </div>
                         </div>
                       </div>
-                    
-                      <!-- Detailed Stats Grid -->
-                      <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
-                        <!-- Best Score -->
-                        <div class="space-y-1">
-                          <p class="text-xs text-slate-400 font-medium">
-                            Best Score
-                          </p>
-                          <router-link
-                            v-if="server.highestScoreRoundId"
-                            class="group/score inline-flex items-center gap-1 text-lg font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent hover:from-yellow-300 hover:to-orange-300 transition-all duration-200"
-                            :to="{
-                              name: 'round-report',
-                              params: {
-                                roundId: server.highestScoreRoundId
-                              },
-                              query: {
-                                players: playerName
-                              }
-                            }"
-                            :title="`View round report for best score${server.bestScoreDate ? ` (${formatRelativeTime(server.bestScoreDate)})` : ''}`"
-                          >
-                            {{ server.highestScore?.toLocaleString() }}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              class="opacity-0 group-hover/score:opacity-100 transition-opacity text-orange-400"
-                            >
-                              <path d="m9 18 6-6-6-6" />
-                            </svg>
-                          </router-link>
-                          <span
-                            v-else
-                            class="text-lg font-bold text-white"
-                          >
-                            {{ server.highestScore?.toLocaleString() }}
-                          </span>
-                        </div>
-                      
-                        <!-- KPM -->
-                        <div class="space-y-1">
-                          <p class="text-xs text-slate-400 font-medium">
-                            Kills/Min
-                          </p>
-                          <p class="text-lg font-bold text-cyan-400">
-                            {{ server.killsPerMinute.toFixed(2) }}
-                          </p>
-                        </div>
-                      
-                        <!-- Combat Stats -->
-                        <div class="space-y-1">
-                          <p class="text-xs text-slate-400 font-medium">
-                            Combat
-                          </p>
-                          <div class="flex items-center gap-2 text-sm font-bold">
-                            <span class="text-green-400">{{ server.totalKills }}</span>
-                            <span class="text-slate-500">/</span>
-                            <span class="text-red-400">{{ server.totalDeaths }}</span>
-                          </div>
-                        </div>
-                      
-                        <!-- Play Time -->
-                        <div class="space-y-1">
-                          <p class="text-xs text-slate-400 font-medium">
-                            Time Played
-                          </p>
-                          <p class="text-lg font-bold text-purple-400">
-                            {{ formatPlayTime(Math.round(server.totalMinutes)) }}
-                          </p>
-                        </div>
+
+                      <!-- Quick Actions -->
+                      <div class="flex-shrink-0 flex items-center gap-2">
+                        <button
+                          @click="openMapModal(server.serverGuid)"
+                          class="px-3 py-1.5 text-xs font-medium bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 hover:border-slate-500/50 rounded-lg transition-colors text-slate-300 hover:text-white"
+                          title="View map statistics"
+                        >
+                          Maps
+                        </button>
                       </div>
                     </div>
+
+                    <!-- Playtime Progress Bar (hidden in compact mode) -->
+                    <div v-if="serversViewMode === 'detailed'" class="mt-3">
+                      <div class="flex items-center justify-between text-xs mb-1">
+                        <span class="text-slate-400">Playtime Share</span>
+                        <span class="text-slate-300 font-medium">{{ getPlaytimePercentage(server.totalMinutes).toFixed(0) }}%</span>
+                      </div>
+                      <div class="w-full h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                        <div
+                          class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
+                          :style="{ width: `${getPlaytimePercentage(server.totalMinutes)}%` }"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pagination -->
+                <div
+                  v-if="totalServerPages > 1"
+                  class="flex items-center justify-between pt-4 border-t border-slate-700/50"
+                >
+                  <div class="text-sm text-slate-400">
+                    Showing {{ (currentServerPage - 1) * serversPerPage + 1 }}-{{ Math.min(currentServerPage * serversPerPage, serversWithoutInsights.length) }} of {{ serversWithoutInsights.length }}
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button
+                      @click="currentServerPage = Math.max(1, currentServerPage - 1)"
+                      :disabled="currentServerPage === 1"
+                      class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      :class="currentServerPage === 1 
+                        ? 'bg-slate-700/30 text-slate-500' 
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'"
+                    >
+                      Previous
+                    </button>
+                    <div class="flex items-center gap-1">
+                      <button
+                        v-for="page in Math.min(5, totalServerPages)"
+                        :key="page"
+                        @click="currentServerPage = page"
+                        class="w-8 h-8 text-xs font-medium rounded transition-colors"
+                        :class="currentServerPage === page
+                          ? 'bg-cyan-600 text-white'
+                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'"
+                      >
+                        {{ page }}
+                      </button>
+                      <span v-if="totalServerPages > 5" class="px-2 text-slate-400">...</span>
+                      <button
+                        v-if="totalServerPages > 5"
+                        @click="currentServerPage = totalServerPages"
+                        class="w-8 h-8 text-xs font-medium rounded transition-colors"
+                        :class="currentServerPage === totalServerPages
+                          ? 'bg-cyan-600 text-white'
+                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'"
+                      >
+                        {{ totalServerPages }}
+                      </button>
+                    </div>
+                    <button
+                      @click="currentServerPage = Math.min(totalServerPages, currentServerPage + 1)"
+                      :disabled="currentServerPage === totalServerPages"
+                      class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      :class="currentServerPage === totalServerPages 
+                        ? 'bg-slate-700/30 text-slate-500' 
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'"
+                    >
+                      Next
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1078,7 +1457,7 @@ onUnmounted(() => {
               <!-- Server Rankings Header -->
               <div class="space-y-2">
                 <h4 class="text-3xl font-bold bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text text-transparent flex items-center gap-3">
-                  🏅 Server Rankings
+                  Server Rankings
                 </h4>
                 <p class="text-slate-400">
                   Your competitive standings across servers
@@ -1396,7 +1775,7 @@ onUnmounted(() => {
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b border-slate-700/50 bg-gradient-to-r from-slate-800/80 to-slate-900/80 gap-4">
         <div class="space-y-1">
           <h3 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-3">
-            🗺️ Map Performance
+            Map Performance
           </h3>
           <p class="text-slate-400 text-sm">
             {{ selectedServerName || 'Selected Server' }}
@@ -1482,8 +1861,7 @@ onUnmounted(() => {
                     @click="changeMapStatsSort('mapName')"
                   >
                     <div class="flex items-center gap-1 sm:gap-2">
-                      <span class="text-amber-400 text-xs sm:text-sm">🗺️</span>
-                      <span class="font-mono font-bold">MAP</span>
+                      <span class="font-mono font-bold text-amber-400">MAP</span>
                       <span
                         class="text-xs sm:text-sm transition-transform duration-200"
                         :class="{
@@ -1572,8 +1950,7 @@ onUnmounted(() => {
                     @click="changeMapStatsSort('sessionsPlayed')"
                   >
                     <div class="flex items-center gap-1 sm:gap-2">
-                      <span class="text-blue-400 text-xs sm:text-sm">🎮</span>
-                      <span class="font-mono font-bold">SESSIONS</span>
+                      <span class="font-mono font-bold text-blue-400">SESSIONS</span>
                       <span
                         class="text-xs sm:text-sm transition-transform duration-200"
                         :class="{
