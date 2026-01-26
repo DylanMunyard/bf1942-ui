@@ -287,6 +287,11 @@ import {
 } from '@/services/adminDataService';
 import { formatDateTimeShort } from '@/utils/date';
 
+const props = withDefaults(
+  defineProps<{ gameFilter?: string }>(),
+  { gameFilter: 'bf1942' }
+);
+
 const emit = defineEmits<{ (e: 'post-delete'): void; (e: 'post-undelete'): void }>();
 
 const ADMIN_DATA_LAST_SEARCH_KEY = 'bf1942_admin_data_last_search';
@@ -397,7 +402,7 @@ function onServerSearchInput() {
       return;
     }
     serverSearchLoading.value = true;
-    searchServersForAdmin(q, 20)
+    searchServersForAdmin(q, 20, props.gameFilter || 'bf1942')
       .then((r) => { serverSuggestions.value = r; })
       .finally(() => { serverSearchLoading.value = false; });
   }, 300);
@@ -515,6 +520,7 @@ async function loadSessions() {
         dateFrom,
         dateTo,
         includeDeletedRounds: includeDeletedRounds.value,
+        game: props.gameFilter || 'bf1942',
       },
       currentPage.value,
       pageSize.value,
