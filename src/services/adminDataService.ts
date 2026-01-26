@@ -81,6 +81,13 @@ export interface DeleteRoundResponse {
   roundsDeleted?: number;
 }
 
+export interface BulkDeleteRoundsResponse {
+  roundsDeleted: number;
+  deletedAchievements: number;
+  deletedSessions: number;
+  affectedPlayers: number;
+}
+
 export interface UndeleteRoundResponse {
   roundId: string;
   sessionsRestored: number;
@@ -215,6 +222,13 @@ class AdminDataService {
   async deleteRound(roundId: string): Promise<DeleteRoundResponse> {
     return this.request<DeleteRoundResponse>(`/rounds/${encodeURIComponent(roundId)}`, {
       method: 'DELETE',
+    });
+  }
+
+  async deleteRounds(roundIds: string[]): Promise<BulkDeleteRoundsResponse> {
+    return this.request<BulkDeleteRoundsResponse>('/rounds/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({ roundIds }),
     });
   }
 

@@ -158,7 +158,7 @@
                 :disabled="bulkDeleteLoading"
                 @click="openBulkDeleteModal"
               >
-                {{ bulkDeleteLoading ? `deleting… (${bulkDeleteProgress.done}/${bulkDeleteProgress.total})` : `delete selected (${selectedRoundIds.size})` }}
+                {{ bulkDeleteLoading ? 'deleting…' : `delete selected (${selectedRoundIds.size})` }}
               </button>
             </div>
             <div class="portal-pagination">
@@ -264,7 +264,7 @@
             :disabled="bulkDeleteLoading"
             @click="onBulkDeleteConfirm"
           >
-            {{ bulkDeleteLoading ? `deleting… (${bulkDeleteProgress.done}/${bulkDeleteProgress.total})` : `delete ${selectedRoundIds.size} round${selectedRoundIds.size === 1 ? '' : 's'}` }}
+            {{ bulkDeleteLoading ? 'deleting…' : `delete ${selectedRoundIds.size} round${selectedRoundIds.size === 1 ? '' : 's'}` }}
           </button>
         </div>
       </div>
@@ -358,8 +358,6 @@ const showBulkDeleteModal = ref(false);
 const bulkDeleteLoading = ref(false);
 const bulkDeleteDone = ref(false);
 const bulkDeleteError = ref<string | null>(null);
-const bulkDeleteProgress = ref({ done: 0, total: 0 });
-
 function formatDate(iso: string): string {
   return formatDateTimeShort(iso);
 }
@@ -466,7 +464,6 @@ function toggleSelectAll() {
 function openBulkDeleteModal() {
   bulkDeleteError.value = null;
   bulkDeleteDone.value = false;
-  bulkDeleteProgress.value = { done: 0, total: selectedRoundIds.value.size };
   showBulkDeleteModal.value = true;
 }
 
@@ -480,30 +477,21 @@ async function onBulkDeleteConfirm() {
   const ids = [...selectedRoundIds.value];
   bulkDeleteLoading.value = true;
   bulkDeleteError.value = null;
-  const failures: { id: string; msg: string }[] = [];
-  for (let i = 0; i < ids.length; i++) {
-    try {
-      await adminDataService.deleteRound(ids[i]);
-    } catch (e) {
-      failures.push({ id: ids[i], msg: e instanceof Error ? e.message : String(e) });
-    }
-    bulkDeleteProgress.value = { done: i + 1, total: ids.length };
-  }
-  bulkDeleteLoading.value = false;
-  bulkDeleteDone.value = true;
-  if (failures.length > 0) {
-    bulkDeleteError.value = `Failed ${failures.length}: ${failures.map((f) => `${f.id}: ${f.msg}`).join('; ')}`;
-    const failedIds = new Set(failures.map((f) => f.id));
-    selectedRoundIdsArray.value = selectedRoundIdsArray.value.filter((id) => failedIds.has(id));
-    if (hasQueried.value) loadSessions();
-  } else {
+  try {
+    await adminDataService.deleteRounds(ids);
+    bulkDeleteDone.value = true;
     selectedRoundIdsArray.value = [];
     showBulkDeleteModal.value = false;
     emit('post-delete');
     if (hasQueried.value) loadSessions();
-  }
-  if (roundDetail.value && ids.includes(roundDetail.value.roundId)) {
-    roundDetail.value = null;
+    if (roundDetail.value && ids.includes(roundDetail.value.roundId)) {
+      roundDetail.value = null;
+    }
+  } catch (e) {
+    bulkDeleteDone.value = true;
+    bulkDeleteError.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    bulkDeleteLoading.value = false;
   }
 }
 
