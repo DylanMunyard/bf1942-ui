@@ -38,18 +38,18 @@
     </div>
 
     <!-- Content -->
-    <div v-else-if="playerData" class="space-y-6">
+    <div v-else-if="filteredPlayerData" class="space-y-6">
       <!-- Header -->
       <div>
         <div class="flex items-center gap-3 mb-4">
           <span class="text-3xl">👤</span>
-          <h2 class="text-2xl font-bold text-slate-200">{{ playerData.playerName }}</h2>
+          <h2 class="text-2xl font-bold text-slate-200">{{ filteredPlayerData.playerName }}</h2>
         </div>
 
         <!-- Time Range Selector -->
         <div class="flex items-center justify-between">
           <div class="text-sm text-slate-400">
-            {{ gameLabel }} &bull; Last {{ playerData.dateRange.days }} days
+            {{ gameLabel }} &bull; Last {{ filteredPlayerData.dateRange.days }} days
           </div>
           <div class="flex gap-2">
             <button
@@ -75,32 +75,32 @@
         <h3 class="text-sm font-medium text-slate-300 mb-3">Overall Statistics</h3>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div class="text-center">
-            <div class="text-2xl font-bold text-cyan-400">{{ formatNumber(playerData.overallStats.totalScore) }}</div>
+            <div class="text-2xl font-bold text-cyan-400">{{ formatNumber(filteredPlayerData.overallStats.totalScore) }}</div>
             <div class="text-xs text-slate-400 mt-1">Total Score</div>
           </div>
           <div class="text-center">
-            <div class="text-2xl font-bold text-slate-200">{{ playerData.overallStats.kdRatio.toFixed(2) }}</div>
+            <div class="text-2xl font-bold text-slate-200">{{ filteredPlayerData.overallStats.kdRatio.toFixed(2) }}</div>
             <div class="text-xs text-slate-400 mt-1">K/D Ratio</div>
           </div>
           <div class="text-center">
-            <div class="text-2xl font-bold text-slate-200">{{ playerData.overallStats.uniqueServers }}</div>
+            <div class="text-2xl font-bold text-slate-200">{{ filteredPlayerData.overallStats.uniqueServers }}</div>
             <div class="text-xs text-slate-400 mt-1">Servers</div>
           </div>
           <div class="text-center">
-            <div class="text-2xl font-bold text-slate-200">{{ playerData.overallStats.uniqueMaps }}</div>
+            <div class="text-2xl font-bold text-slate-200">{{ filteredPlayerData.overallStats.uniqueMaps }}</div>
             <div class="text-xs text-slate-400 mt-1">Maps</div>
           </div>
         </div>
       </div>
 
       <!-- #1 Rankings Section -->
-      <div v-if="playerData.numberOneRankings.length > 0" class="bg-slate-800/30 rounded-lg p-4">
+      <div v-if="filteredPlayerData.numberOneRankings.length > 0" class="bg-slate-800/30 rounded-lg p-4">
         <h3 class="text-sm font-medium text-slate-300 mb-3">
           <span class="text-yellow-400">#1</span> Rankings
         </h3>
         <div class="flex flex-wrap gap-2">
           <div
-            v-for="ranking in playerData.numberOneRankings"
+            v-for="ranking in filteredPlayerData.numberOneRankings"
             :key="`${ranking.mapName}-${ranking.serverGuid}`"
             class="px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm"
             :title="`${ranking.mapName} on ${ranking.serverName} - ${formatNumber(ranking.totalScore)} score`"
@@ -117,11 +117,11 @@
       </div>
 
       <!-- Map Rankings -->
-      <div v-if="playerData.mapGroups.length > 0">
+      <div v-if="filteredPlayerData.mapGroups.length > 0">
         <h3 class="text-sm font-medium text-slate-300 mb-3">Rankings by Map</h3>
         <div class="space-y-3">
           <details
-            v-for="mapGroup in playerData.mapGroups"
+            v-for="mapGroup in filteredPlayerData.mapGroups"
             :key="mapGroup.mapName"
             class="bg-slate-800/30 rounded-lg overflow-hidden group"
             :open="expandedMaps.has(mapGroup.mapName)"
@@ -178,12 +178,13 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue';
-import { fetchPlayerMapRankings, type PlayerMapRankingsResponse, type GameType } from '../../services/dataExplorerService';
+import { fetchPlayerMapRankings, type PlayerMapRankingsResponse, type GameType, type PlayerMapGroup } from '../../services/dataExplorerService';
 import PlayerMapServerTable from './PlayerMapServerTable.vue';
 
 const props = defineProps<{
   playerName: string;
   game?: GameType;
+  serverGuid?: string; // Optional: filter to a specific server
 }>();
 
 const emit = defineEmits<{
@@ -203,6 +204,76 @@ const playerData = ref<PlayerMapRankingsResponse | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 const expandedMaps = ref<Set<string>>(new Set());
+
+// Computed property to filter playerData by serverGuid if provided
+const filteredPlayerData = computed(() => {
+  if (!playerData.value || !props.serverGuid) {
+    return playerData.value;
+  }
+
+  // Filter mapGroups to only include maps where the player has stats on the specified server
+  const filteredMapGroups = playerData.value.mapGroups
+    .map(mapGroup => {
+      // Filter serverStats to only include the specified server
+      const filteredServerStats = mapGroup.serverStats.filter(
+        stat => stat.serverGuid === props.serverGuid
+      );
+
+      // Only include this map if there are stats for the specified server
+      if (filteredServerStats.length === 0) {
+        return null;
+      }
+
+      // Recalculate aggregatedScore and bestRank based on filtered server stats
+      const aggregatedScore = filteredServerStats.reduce((sum, stat) => sum + stat.totalScore, 0);
+      const bestRank = filteredServerStats.length > 0
+        ? Math.min(...filteredServerStats.map(stat => stat.rank))
+        : null;
+      const bestRankServer = bestRank
+        ? filteredServerStats.find(stat => stat.rank === bestRank)?.serverGuid || null
+        : null;
+
+      return {
+        ...mapGroup,
+        serverStats: filteredServerStats,
+        aggregatedScore,
+        bestRank,
+        bestRankServer
+      };
+    })
+    .filter((mapGroup): mapGroup is PlayerMapGroup => mapGroup !== null);
+
+  // Filter numberOneRankings to only include rankings on the specified server
+  const filteredNumberOneRankings = playerData.value.numberOneRankings.filter(
+    ranking => ranking.serverGuid === props.serverGuid
+  );
+
+  // Recalculate overallStats based on filtered data
+  const allFilteredServerStats = filteredMapGroups.flatMap(mg => mg.serverStats);
+  const uniqueServers = new Set(allFilteredServerStats.map(s => s.serverGuid)).size;
+  const uniqueMaps = filteredMapGroups.length;
+  const totalScore = allFilteredServerStats.reduce((sum, stat) => sum + stat.totalScore, 0);
+  const totalKills = allFilteredServerStats.reduce((sum, stat) => sum + stat.totalKills, 0);
+  const totalDeaths = allFilteredServerStats.reduce((sum, stat) => sum + stat.totalDeaths, 0);
+  const kdRatio = totalDeaths > 0 ? totalKills / totalDeaths : totalKills;
+  const totalRounds = allFilteredServerStats.reduce((sum, stat) => sum + stat.totalRounds, 0);
+
+  return {
+    ...playerData.value,
+    mapGroups: filteredMapGroups,
+    numberOneRankings: filteredNumberOneRankings,
+    overallStats: {
+      ...playerData.value.overallStats,
+      totalScore,
+      totalKills,
+      totalDeaths,
+      kdRatio,
+      totalRounds,
+      uniqueServers,
+      uniqueMaps
+    }
+  };
+});
 
 // Time range selection
 const selectedTimeRange = ref<number>(60); // Default to 60 days
@@ -286,4 +357,8 @@ const truncateServerName = (name: string): string => {
 onMounted(loadData);
 watch(() => props.playerName, () => loadData());
 watch(() => props.game, () => loadData());
+watch(() => props.serverGuid, () => {
+  // When serverGuid changes, we don't need to reload data, just re-filter
+  // The computed property will handle the filtering
+});
 </script>

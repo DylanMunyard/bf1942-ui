@@ -200,15 +200,6 @@ import fh2Icon from '@/assets/fh2.webp';
 import bfvIcon from '@/assets/bfv.webp';
 import defaultIcon from '@/assets/servers.webp';
 
-interface ServerMapStats {
-  mapName: string;
-  totalScore: number;
-  totalKills: number;
-  totalDeaths: number;
-  sessionsPlayed: number;
-  totalPlayTimeMinutes: number;
-}
-
 interface ServerInsight {
   type: string;
   title: string;
@@ -359,30 +350,6 @@ const calculateInsights = async () => {
   const serverInsightsMap = new Map<string, ServerInsight[]>();
 
   try {
-    // Fetch map stats for all servers
-    const serverMapStatsPromises = props.servers.map(async (server) => {
-      try {
-        const response = await fetch(
-          `/stats/players/${encodeURIComponent(props.playerName)}/server/${server.serverGuid}/mapstats?range=ThisYear`
-        );
-        if (!response.ok) return null;
-        const mapStats: ServerMapStats[] = await response.json();
-        return { server, mapStats };
-      } catch (err) {
-        console.error(`Error fetching map stats for ${server.serverName}:`, err);
-        return null;
-      }
-    });
-
-    const serverMapData = (await Promise.all(serverMapStatsPromises)).filter(Boolean) as Array<{
-      server: typeof props.servers[0];
-      mapStats: ServerMapStats[];
-    }>;
-
-    if (serverMapData.length === 0) {
-      loading.value = false;
-      return;
-    }
 
     // Calculate overall averages for comparison
     const overallKdRatioRaw = calculateKDR(
@@ -446,66 +413,7 @@ const calculateInsights = async () => {
       serverInsightsMap.set(mostPlayedServer.serverGuid, insights);
     }
 
-    // 3. Best performing map per server
-    for (const { server, mapStats } of serverMapData) {
-      if (mapStats.length === 0) continue;
-
-      const significantMaps = mapStats.filter(m => m.totalKills >= 10);
-      if (significantMaps.length === 0) continue;
-
-      const bestMap = significantMaps.reduce((best, current) => {
-        const currentKdStr = calculateKDR(current.totalKills, current.totalDeaths);
-        const bestKdStr = calculateKDR(best.totalKills, best.totalDeaths);
-        const currentKd = parseFloat(currentKdStr) || 0;
-        const bestKd = parseFloat(bestKdStr) || 0;
-        return currentKd > bestKd ? current : best;
-      });
-
-      const mapKdStr = calculateKDR(bestMap.totalKills, bestMap.totalDeaths);
-      const mapKd = parseFloat(mapKdStr) || 0;
-      const serverKdNum = typeof server.kdRatio === 'number' ? server.kdRatio : parseFloat(String(server.kdRatio)) || 0;
-
-      if (mapKd > serverKdNum * 1.2 && bestMap.totalKills >= 20) {
-        const multiplier = mapKd / Math.max(serverKdNum, 0.1);
-        const insights = serverInsightsMap.get(server.serverGuid) || [];
-        insights.push({
-          type: 'Map Mastery',
-          title: `${bestMap.mapName}`,
-          description: `You excel on this map with a ${mapKd.toFixed(2)} K/D, significantly outperforming your average on this server.`,
-          multiplier: multiplier,
-          multiplierLabel: 'better than server avg',
-          stats: {
-            kdRatio: mapKd,
-            kills: bestMap.totalKills,
-            playTime: bestMap.totalPlayTimeMinutes
-          }
-        });
-        serverInsightsMap.set(server.serverGuid, insights);
-      }
-    }
-
-    // 4. Map diversity
-    for (const { server, mapStats } of serverMapData) {
-      if (mapStats.length >= 5) {
-        const uniqueMaps = mapStats.length;
-        const insights = serverInsightsMap.get(server.serverGuid) || [];
-        const serverKd = typeof server.kdRatio === 'number' ? server.kdRatio : parseFloat(String(server.kdRatio)) || 0;
-        insights.push({
-          type: 'Map Explorer',
-          title: `${uniqueMaps} Unique Maps`,
-          description: `You've experienced ${uniqueMaps} different maps on this server, showing great battlefield diversity.`,
-          stats: {
-            kdRatio: serverKd,
-            kills: server.totalKills,
-            playTime: server.totalMinutes
-          }
-        });
-        serverInsightsMap.set(server.serverGuid, insights);
-        break;
-      }
-    }
-
-    // 5. High activity server
+    // 3. High activity server
     const mostRoundsServer = [...props.servers].sort((a, b) => b.totalRounds - a.totalRounds)[0];
     if (mostRoundsServer && mostRoundsServer.totalRounds >= 50) {
       const mostRoundsKd = typeof mostRoundsServer.kdRatio === 'number' ? mostRoundsServer.kdRatio : parseFloat(String(mostRoundsServer.kdRatio)) || 0;
@@ -523,7 +431,7 @@ const calculateInsights = async () => {
       serverInsightsMap.set(mostRoundsServer.serverGuid, insights);
     }
 
-    // 6. Best kill rate server
+    // 4. Best kill rate server
     // Use the server's existing killsPerMinute property instead of recalculating
     const bestKpmServer = [...props.servers]
       .map(s => ({

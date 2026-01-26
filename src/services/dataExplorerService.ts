@@ -424,16 +424,23 @@ export async function searchPlayers(
  * @param playerName - The player name
  * @param game - Game filter: bf1942 (default), fh2, or bfvietnam
  * @param days - Number of days to look back (default 60)
+ * @param serverGuid - Optional server GUID to filter results to a specific server
  */
 export async function fetchPlayerMapRankings(
   playerName: string,
   game: GameType = 'bf1942',
-  days: number = 60
+  days: number = 60,
+  serverGuid?: string
 ): Promise<PlayerMapRankingsResponse> {
   try {
+    const params: Record<string, string | number> = { game, days };
+    if (serverGuid) {
+      params.serverGuid = serverGuid;
+    }
+    
     const response = await axios.get<PlayerMapRankingsResponse>(
       `/stats/data-explorer/players/${encodeURIComponent(playerName)}/maps`,
-      { params: { game, days } }
+      { params }
     );
     return response.data;
   } catch (err: any) {
