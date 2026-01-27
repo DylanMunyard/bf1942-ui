@@ -1,0 +1,621 @@
+.player-leaderboard {
+  width: 100%;
+}
+
+/* Desktop Layout */
+.desktop-layout {
+  display: block;
+}
+
+.teams-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.team-column {
+  @apply bg-slate-900/60 border border-slate-700/50;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.team-header {
+  padding: 15px;
+  background: var(--color-background-mute);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.team-name {
+  font-weight: bold;
+  color: var(--color-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-icon {
+  font-size: 1.1rem;
+}
+
+.team-stats {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.team-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.stat-value {
+  font-weight: bold;
+  color: var(--color-primary);
+}
+
+.team-players {
+  padding: 0;
+}
+
+.players-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 60px 60px;
+  gap: 10px;
+  padding: 12px 15px;
+  background: var(--color-background-mute);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.players-list {
+  overflow-y: auto;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 60px 60px;
+  gap: 10px;
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.player-row:hover {
+  @apply bg-slate-700/30;
+}
+
+.player-row.top-player {
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+}
+
+.player-row.pinned-player {
+  background: linear-gradient(90deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%);
+}
+
+.player-rank {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.rank-medal {
+  font-size: 1rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.rank-number {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  background: var(--color-background-mute);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-name {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-link {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.player-link:hover {
+  text-decoration: underline;
+}
+
+.pin-player-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: var(--color-text-muted);
+  transition: color 0.2s ease;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+}
+
+.pin-player-btn:hover {
+  color: var(--color-primary);
+}
+
+.pinned-badge {
+  background: var(--color-primary);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+.player-score {
+  text-align: center;
+  font-weight: 500;
+}
+
+.player-kd {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+
+.kills {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.separator {
+  color: var(--color-text-muted);
+}
+
+.deaths {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.player-ping {
+  text-align: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.ping-good {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.ping-ok {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+.ping-bad {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+/* Mobile Layout */
+.mobile-layout {
+  display: none;
+}
+
+/* Mobile Team Tabs */
+.mobile-team-tabs {
+  width: 100%;
+}
+
+.tab-buttons {
+  display: flex;
+  background: var(--color-background-mute);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 12px;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+  white-space: nowrap;
+}
+
+.tab-button.active {
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tab-button:hover:not(.active) {
+  @apply bg-slate-700/50;
+  color: var(--color-text);
+}
+
+.team-score-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.tab-button.active .team-score-badge {
+  opacity: 1;
+}
+
+.tab-content {
+  min-height: 400px;
+}
+
+.mobile-tab-panel {
+  width: 100%;
+  margin: 0;
+}
+
+/* Single Column Layout */
+.single-column-layout {
+  width: 100%;
+}
+
+.single-column-layout .players-header {
+  display: grid;
+  grid-template-columns: 30px 60px 1fr 70px 60px 60px;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+}
+
+.single-column-layout .player-row {
+  display: grid;
+  grid-template-columns: 30px 60px 1fr 70px 60px 60px;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.player-team {
+  display: flex;
+  align-items: center;
+}
+
+.team-badge {
+  background: var(--color-background-mute);
+  color: var(--color-text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Mobile leaderboard layout - ultra compact rows */
+.mobile-team-tabs .players-header {
+  display: grid;
+  grid-template-columns: 20px 1fr 50px;
+  gap: 4px;
+  padding: 4px 6px;
+  font-size: 0.65rem;
+  min-height: 24px;
+}
+
+.mobile-team-tabs .header-kd,
+.mobile-team-tabs .header-ping {
+  display: none;
+}
+
+.mobile-team-tabs .player-row {
+  display: grid;
+  grid-template-columns: 20px 1fr 50px;
+  gap: 4px;
+  padding: 4px 6px;
+  font-size: 0.8rem;
+  min-height: 28px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mobile-team-tabs .player-row .player-kd,
+.mobile-team-tabs .player-row .player-ping {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+}
+
+.mobile-team-tabs .player-row .player-kd {
+  border-top: none;
+  justify-content: space-between;
+  gap: 6px;
+  background: var(--color-background-mute);
+  padding: 2px 4px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+.kd-section,
+.ping-section {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.kd-label,
+.ping-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+
+.kd-values {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+/* Single Column Layout - ultra compact */
+.single-column-layout .players-header {
+  display: grid;
+  grid-template-columns: 20px 40px 1fr 50px 40px 40px;
+  gap: 4px;
+  padding: 4px 6px;
+  font-size: 0.65rem;
+  min-height: 24px;
+}
+
+.single-column-layout .player-row {
+  display: grid;
+  grid-template-columns: 20px 40px 1fr 50px 40px 40px;
+  gap: 4px;
+  padding: 4px 6px;
+  font-size: 0.8rem;
+  min-height: 28px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.player-team {
+  display: flex;
+  align-items: center;
+}
+
+.team-badge {
+  background: var(--color-background-mute);
+  color: var(--color-text-muted);
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-size: 0.6rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .desktop-layout {
+    display: none;
+  }
+  
+  .mobile-layout {
+    display: block;
+  }
+  
+  .mobile-team-tabs {
+    display: block;
+  }
+  
+  .single-column-layout {
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-button {
+    font-size: 0.7rem;
+    padding: 4px 3px;
+    min-width: 60px;
+  }
+
+  .team-score-badge {
+    font-size: 0.6rem;
+  }
+
+  .tab-content {
+    min-height: 300px;
+  }
+
+  .mobile-team-tabs .players-header {
+    grid-template-columns: 18px 1fr 45px;
+    gap: 3px;
+    padding: 3px 4px;
+    font-size: 0.6rem;
+    min-height: 20px;
+  }
+
+  .mobile-team-tabs .player-row {
+    grid-template-columns: 18px 1fr 45px;
+    gap: 3px;
+    padding: 3px 4px;
+    font-size: 0.75rem;
+    min-height: 24px;
+  }
+
+  .mobile-team-tabs .player-row .player-kd {
+    font-size: 0.65rem;
+    gap: 3px;
+  }
+
+  .kd-label,
+  .ping-label {
+    font-size: 0.55rem;
+  }
+
+  .single-column-layout .players-header {
+    grid-template-columns: 18px 35px 1fr 45px 35px 35px;
+    gap: 3px;
+    padding: 3px 4px;
+    font-size: 0.6rem;
+    min-height: 20px;
+  }
+
+  .single-column-layout .player-row {
+    grid-template-columns: 18px 35px 1fr 45px 35px 35px;
+    gap: 3px;
+    padding: 3px 4px;
+    font-size: 0.75rem;
+    min-height: 24px;
+  }
+
+  .team-badge {
+    font-size: 0.55rem;
+    padding: 1px 2px;
+  }
+}
+
+@media (max-width: 360px) {
+  .tab-button {
+    font-size: 0.65rem;
+    padding: 3px 2px;
+    min-width: 50px;
+  }
+
+  .team-score-badge {
+    font-size: 0.55rem;
+  }
+
+  .tab-content {
+    min-height: 250px;
+  }
+
+  .mobile-team-tabs .players-header {
+    grid-template-columns: 16px 1fr 40px;
+    gap: 2px;
+    padding: 2px 3px;
+    font-size: 0.55rem;
+    min-height: 18px;
+  }
+
+  .mobile-team-tabs .player-row {
+    grid-template-columns: 16px 1fr 40px;
+    gap: 2px;
+    padding: 2px 3px;
+    font-size: 0.7rem;
+    min-height: 20px;
+  }
+
+  .mobile-team-tabs .player-row .player-kd {
+    font-size: 0.6rem;
+    gap: 2px;
+  }
+
+  .kd-label,
+  .ping-label {
+    font-size: 0.5rem;
+  }
+
+  .single-column-layout .players-header {
+    grid-template-columns: 16px 30px 1fr 40px 30px 30px;
+    gap: 2px;
+    padding: 2px 3px;
+    font-size: 0.55rem;
+    min-height: 18px;
+  }
+
+  .single-column-layout .player-row {
+    grid-template-columns: 16px 30px 1fr 40px 30px 30px;
+    gap: 2px;
+    padding: 2px 3px;
+    font-size: 0.7rem;
+    min-height: 20px;
+  }
+
+  .team-badge {
+    font-size: 0.5rem;
+    padding: 1px 2px;
+  }
+
+  /* Ultra compact rank indicators */
+  .rank-medal {
+    font-size: 0.8rem;
+  }
+
+  .rank-number {
+    width: 16px;
+    height: 16px;
+    font-size: 0.65rem;
+  }
+
+  /* Reduce player name font size */
+  .player-name {
+    font-size: 0.7rem;
+  }
+
+  /* Compact pin buttons */
+  .pin-player-btn {
+    font-size: 0.9rem;
+    padding: 0 2px;
+  }
+
+  .pinned-badge {
+    font-size: 0.55rem;
+    padding: 1px 3px;
+    margin-left: 4px;
+  }
+}
+
+.kdr-icon {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+@media (max-width: 768px) {
+  .kdr-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kdr-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 1px;
+  }
+}
+</style> 

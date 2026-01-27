@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-slate-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
       <!-- Header -->
       <DataExplorerHeader
         v-model:mode="currentMode"
@@ -10,7 +10,7 @@
       <!-- Content Area -->
       <div class="flex flex-col lg:flex-row gap-6 mt-6">
         <!-- Master List (Left Panel) -->
-        <div class="w-full lg:w-2/5 xl:w-1/3">
+        <div class="w-full lg:w-2/5 xl:w-1/3 2xl:w-1/4">
           <MasterList
             :mode="currentMode"
             :search-query="debouncedSearchQuery"
@@ -22,16 +22,95 @@
 
         <!-- Detail Panel (Right Panel) -->
         <div class="flex-1">
-          <DetailPanel :is-open="!!selectedItem || isServerMapView">
-            <!-- Container for layered panels -->
-            <div class="relative">
-              <!-- Server Detail (base layer, stays mounted when viewing server-map) -->
-              <div v-if="currentMode === 'servers' && selectedServerGuid && !isServerMapView">
-                <ServerDetailPanel
-                  :server-guid="selectedServerGuid"
-                  @navigate-to-map="handleNavigateToMap"
-                />
+          <!-- Side-by-side layout for server-map view on large screens -->
+          <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+          >
+            <div
+              v-if="isServerMapView && serverMapGuid && serverMapMapName"
+              class="flex flex-col xl:flex-row gap-6"
+            >
+              <!-- Server Detail (left side on xl+, hidden on smaller screens) -->
+              <Transition
+                enter-active-class="transition-all duration-300 ease-out"
+                enter-from-class="opacity-0 -translate-x-8"
+                enter-to-class="opacity-100 translate-x-0"
+                leave-active-class="transition-all duration-200 ease-in"
+                leave-from-class="opacity-100 translate-x-0"
+                leave-to-class="opacity-0 -translate-x-4"
+              >
+                <div
+                  v-if="isServerMapView && serverMapGuid && serverMapMapName"
+                  class="hidden xl:block xl:w-1/2 xl:max-h-[calc(100vh-8rem)]"
+                >
+                  <DetailPanel :is-open="true">
+                    <div class="max-h-[calc(100vh-8rem)] overflow-y-auto">
+                      <ServerDetailPanel
+                        :server-guid="serverMapGuid"
+                        @navigate-to-map="handleNavigateToMap"
+                      />
+                    </div>
+                  </DetailPanel>
+                </div>
+              </Transition>
+              <!-- Map Detail (right side on xl+, full width on smaller screens) -->
+              <div class="xl:w-1/2 xl:max-h-[calc(100vh-8rem)]">
+                <DetailPanel :is-open="true">
+                  <Transition
+                    enter-active-class="transition-all duration-300 ease-out"
+                    enter-from-class="opacity-0 translate-x-4"
+                    enter-to-class="opacity-100 translate-x-0"
+                    leave-active-class="transition-all duration-200 ease-in"
+                    leave-from-class="opacity-100 translate-x-0"
+                    leave-to-class="opacity-0 translate-x-4"
+                  >
+                    <div class="max-h-[calc(100vh-8rem)] overflow-y-auto">
+                      <ServerMapDetailPanel
+                        :server-guid="serverMapGuid"
+                        :map-name="serverMapMapName"
+                        @navigate-to-server="handleNavigateBackToServer"
+                        @navigate-to-map="handleNavigateBackToMap"
+                        @close="handleCloseServerMapView"
+                      />
+                    </div>
+                  </Transition>
+                </DetailPanel>
               </div>
+            </div>
+          </Transition>
+          <!-- Single panel layout for other views -->
+          <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 translate-x-4"
+            enter-to-class="opacity-100 translate-x-0"
+            leave-active-class="transition-all duration-300 ease-in"
+            leave-from-class="opacity-100 translate-x-0"
+            leave-to-class="opacity-0 -translate-x-8"
+          >
+            <DetailPanel v-if="!isServerMapView || !serverMapGuid || !serverMapMapName" :is-open="!!selectedItem || isServerMapView">
+              <!-- Container for layered panels -->
+              <div class="relative">
+                <!-- Server Detail (base layer, stays mounted when viewing server-map) -->
+                <Transition
+                  enter-active-class="transition-all duration-300 ease-out"
+                  enter-from-class="opacity-0 translate-x-4"
+                  enter-to-class="opacity-100 translate-x-0"
+                  leave-active-class="transition-all duration-300 ease-in"
+                  leave-from-class="opacity-100 translate-x-0"
+                  leave-to-class="opacity-100 -translate-x-8"
+                >
+                  <div v-if="currentMode === 'servers' && selectedServerGuid && !isServerMapView">
+                    <ServerDetailPanel
+                      :server-guid="selectedServerGuid"
+                      @navigate-to-map="handleNavigateToMap"
+                    />
+                  </div>
+                </Transition>
               <!-- Map Detail -->
               <template v-if="currentMode === 'maps' && selectedMapName && !isServerMapView">
                 <MapDetailPanel
@@ -59,31 +138,9 @@
                   </p>
                 </div>
               </template>
-
-              <!-- Server-Map Detail View (replaces content instead of overlaying) -->
-              <Transition
-                enter-active-class="transition-all duration-200 ease-out"
-                enter-from-class="opacity-0 translate-x-4"
-                enter-to-class="opacity-100 translate-x-0"
-                leave-active-class="transition-all duration-150 ease-in"
-                leave-from-class="opacity-100 translate-x-0"
-                leave-to-class="opacity-0 translate-x-4"
-              >
-                <div
-                  v-if="isServerMapView && serverMapGuid && serverMapMapName"
-                  class="overflow-y-auto"
-                >
-                  <ServerMapDetailPanel
-                    :server-guid="serverMapGuid"
-                    :map-name="serverMapMapName"
-                    @navigate-to-server="handleNavigateBackToServer"
-                    @navigate-to-map="handleNavigateBackToMap"
-                    @close="handleCloseServerMapView"
-                  />
-                </div>
-              </Transition>
             </div>
           </DetailPanel>
+          </Transition>
         </div>
       </div>
     </div>
