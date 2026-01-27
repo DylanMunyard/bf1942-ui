@@ -1,76 +1,5 @@
-<template>
-  <div
-    class="relative flex items-center"
-    @click.stop
-  >
-    <input 
-      ref="inputRef"
-      v-model="searchInput" 
-      type="text" 
-      :placeholder="placeholder"
-      autocomplete="off"
-      class="w-full px-5 py-4 pr-12 text-base bg-slate-800/60 backdrop-blur-lg border border-slate-600/50 rounded-xl text-white placeholder-slate-400 font-normal transition-all duration-300 shadow-md focus:outline-none focus:border-cyan-500 focus:shadow-cyan-500/15 focus:shadow-lg focus:-translate-y-0.5 focus:bg-slate-800/80"
-      @keyup.enter="$emit('enter', searchInput)"
-      @input="onInput"
-      @focus="onFocus"
-      @blur="onBlur"
-    >
-    <div
-      v-if="isLoading"
-      class="absolute right-4 text-base text-cyan-500 animate-spin pointer-events-none"
-    >
-      🔄
-    </div>
-    <div
-      v-if="showDropdown && (searchResults.length > 0 || (!isLoading && searchInput.length >= 2))"
-      class="absolute top-full mt-1 left-0 right-0 bg-slate-800/95 backdrop-blur-xl border border-slate-600/50 rounded-xl max-h-80 overflow-y-auto z-[1050] shadow-2xl"
-    >
-      <div 
-        v-for="player in searchResults" 
-        :key="player.playerName"
-        class="p-4 px-5 cursor-pointer border-b border-slate-600/20 last:border-b-0 transition-all duration-200 hover:bg-slate-700/60 hover:shadow-[inset_3px_0_0_#06b6d4] first:rounded-t-xl last:rounded-b-xl relative before:absolute before:inset-0 before:bg-cyan-500/5 before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-200"
-        :class="{
-          'rounded-xl': searchResults.length === 1
-        }"
-        @mousedown.prevent="selectPlayer(player)"
-      >
-        <div class="flex flex-col gap-1.5">
-          <div class="font-semibold text-lg text-white mb-0.5">
-            {{ player.playerName }}
-          </div>
-          <div class="flex gap-3 items-center flex-wrap">
-            <span class="text-slate-400 text-sm font-medium">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
-            <span class="text-slate-400 text-sm font-medium">{{ formatLastSeen(player.lastSeen) }}</span>
-            <span
-              v-if="player.isActive"
-              class="text-green-500 text-xs font-semibold px-2 py-1 bg-green-500/15 border border-green-500/20 rounded-xl inline-flex items-center gap-1"
-            >🟢 Online</span>
-            <span
-              v-else
-              class="text-gray-400 text-xs font-semibold px-2 py-1 bg-gray-500/15 border border-gray-500/20 rounded-xl inline-flex items-center gap-1"
-            >⚫ Offline</span>
-          </div>
-          <div
-            v-if="player.currentServer && player.isActive"
-            class="text-sm text-cyan-400 italic px-2 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded mt-1"
-          >
-            {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
-          </div>
-        </div>
-      </div>
-      <div
-        v-if="searchResults.length === 0 && !isLoading && searchInput.length >= 2"
-        class="p-5 text-slate-400 text-center italic text-sm"
-      >
-        No players found
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from 'vue';
-import { formatLastSeen } from '@/utils/timeUtils';
+import { ref, watch } from 'vue';
 
 interface PlayerSearchResult {
   playerName: string;
@@ -96,110 +25,26 @@ interface PlayerSearchResponse {
 }
 
 interface Props {
-  modelValue?: string;
+  modelValue: string;
   placeholder?: string;
-  autoFocus?: boolean;
+  fullWidth?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: '',
-  placeholder: 'Search player name...',
-  autoFocus: false
+  placeholder: 'Search players...',
+  fullWidth: false,
 });
 
 const emit = defineEmits<{
   'update:modelValue': [value: string];
   'select': [player: PlayerSearchResult];
-  'enter': [value: string];
+  'enter': [];
 }>();
 
-const inputRef = ref<HTMLInputElement>();
-const searchInput = ref(props.modelValue || '');
 const searchResults = ref<PlayerSearchResult[]>([]);
 const isLoading = ref(false);
 const showDropdown = ref(false);
-let searchTimeout: number | null = null;
-let blurTimeout: number | null = null;
-
-// Watch for external model value changes
-watch(() => props.modelValue, (newValue) => {
-  searchInput.value = newValue || '';
-});
-
-// Watch for input changes and emit to parent
-watch(searchInput, (newValue) => {
-  emit('update:modelValue', newValue);
-});
-
-// Auto-focus on mount if requested
-onMounted(() => {
-  if (props.autoFocus) {
-    nextTick(() => {
-      inputRef.value?.focus();
-    });
-  }
-});
-
-const searchPlayers = async (query: string) => {
-  if (!query || query.length < 2) {
-    searchResults.value = [];
-    showDropdown.value = false;
-    return;
-  }
-
-  isLoading.value = true;
-  
-  try {
-    const response = await fetch(`/stats/Players/search?query=${encodeURIComponent(query)}&pageSize=10`);
-    if (!response.ok) {
-      throw new Error('Failed to search players');
-    }
-
-    const data: PlayerSearchResponse = await response.json();
-    searchResults.value = data.items;
-    showDropdown.value = data.items.length > 0;
-  } catch (error) {
-    console.error('Error searching players:', error);
-    searchResults.value = [];
-    showDropdown.value = false;
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-const onInput = () => {
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
-  }
-
-  searchTimeout = setTimeout(() => {
-    searchPlayers(searchInput.value);
-  }, 300) as unknown as number;
-};
-
-const onFocus = () => {
-  if (blurTimeout) {
-    clearTimeout(blurTimeout);
-  }
-  if (searchInput.value.length >= 2) {
-    searchPlayers(searchInput.value);
-  }
-};
-
-const onBlur = () => {
-  // Delay hiding dropdown to allow for click events
-  blurTimeout = setTimeout(() => {
-    showDropdown.value = false;
-  }, 200) as unknown as number;
-};
-
-const selectPlayer = (player: PlayerSearchResult) => {
-  searchInput.value = player.playerName;
-  searchResults.value = [];
-  showDropdown.value = false;
-  emit('select', player);
-  emit('update:modelValue', player.playerName);
-};
+const searchDebounceTimeout = ref<number | null>(null);
 
 const formatPlayTime = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
@@ -210,14 +55,153 @@ const formatPlayTime = (minutes: number): string => {
   return `${days}d ${hours % 24}h`;
 };
 
-// Note: formatLastSeen is now imported from @/utils/timeUtils
+const searchPlayers = async (query: string) => {
+  if (!query || query.length < 2) {
+    searchResults.value = [];
+    showDropdown.value = false;
+    return;
+  }
+
+  isLoading.value = true;
+
+  try {
+    const response = await fetch(`/stats/Players/search?query=${encodeURIComponent(query)}&pageSize=10`);
+    if (!response.ok) {
+      throw new Error('Failed to search players');
+    }
+
+    const data: PlayerSearchResponse = await response.json();
+    searchResults.value = data.items;
+    showDropdown.value = data.items.length > 0 || query.length >= 2;
+  } catch (error) {
+    console.error('Error searching players:', error);
+    searchResults.value = [];
+    showDropdown.value = false;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const onInput = (query: string) => {
+  emit('update:modelValue', query);
+  
+  if (searchDebounceTimeout.value) {
+    clearTimeout(searchDebounceTimeout.value);
+  }
+
+  searchDebounceTimeout.value = setTimeout(() => {
+    searchPlayers(query);
+  }, 300) as unknown as number;
+};
+
+const onFocus = () => {
+  if (props.modelValue.length >= 2) {
+    searchPlayers(props.modelValue);
+  }
+};
+
+const onBlur = () => {
+  setTimeout(() => {
+    showDropdown.value = false;
+  }, 200);
+};
+
+const selectPlayer = (player: PlayerSearchResult) => {
+  emit('update:modelValue', player.playerName);
+  emit('select', player);
+  showDropdown.value = false;
+  searchResults.value = [];
+};
+
+watch(() => props.modelValue, (newValue) => {
+  if (newValue.length >= 2) {
+    onInput(newValue);
+  } else {
+    searchResults.value = [];
+    showDropdown.value = false;
+  }
+});
 </script>
 
-<style scoped>
-/* Mobile responsiveness */
-@media (max-width: 480px) {
-  .max-h-80 {
-    max-height: 200px;
-  }
-}
-</style>
+<template>
+  <div
+    class="relative group"
+    :class="fullWidth ? 'w-full' : 'w-80'"
+  >
+    <!-- Search Icon with Glow -->
+    <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+      <div class="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
+        <span class="text-slate-900 text-xs font-bold">🔍</span>
+      </div>
+    </div>
+    
+    <!-- Enhanced Search Input -->
+    <input
+      :model-value="modelValue"
+      type="text"
+      :placeholder="placeholder"
+      class="w-full pl-14 pr-14 py-3 bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-lg border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-300 font-medium shadow-lg hover:shadow-cyan-500/20 focus:shadow-cyan-500/30"
+      @input="(e) => onInput((e.target as HTMLInputElement).value)"
+      @keyup.enter="$emit('enter')"
+      @focus="onFocus"
+      @blur="onBlur"
+    >
+    
+    <!-- Loading Spinner -->
+    <div
+      v-if="isLoading"
+      class="absolute right-4 top-1/2 transform -translate-y-1/2"
+    >
+      <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+    </div>
+    
+    <!-- Search Glow Effect -->
+    <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+    
+    <!-- Enhanced Player Dropdown -->
+    <div
+      v-if="showDropdown"
+      class="absolute top-full mt-3 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto shadow-2xl z-50"
+    >
+      <div
+        v-for="player in searchResults"
+        :key="player.playerName"
+        class="group p-4 border-b border-slate-700/30 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-800/50 cursor-pointer transition-all duration-300 last:border-b-0 hover:shadow-lg"
+        @mousedown.prevent="selectPlayer(player)"
+      >
+        <div class="space-y-2">
+          <div class="font-bold text-slate-200 text-sm group-hover:text-cyan-400 transition-colors">
+            {{ player.playerName }}
+          </div>
+          <div class="flex items-center gap-3 flex-wrap text-xs">
+            <span class="text-slate-400 font-medium">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
+            <span
+              v-if="player.isActive"
+              class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full"
+            >
+              🟢 ONLINE
+            </span>
+            <span
+              v-else
+              class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 bg-slate-500/20 border border-slate-500/30 rounded-full"
+            >
+              ⚫ OFFLINE
+            </span>
+          </div>
+          <div
+            v-if="player.currentServer && player.isActive"
+            class="text-xs text-cyan-400 font-medium"
+          >
+            🎮 {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
+          </div>
+        </div>
+      </div>
+      <div
+        v-if="searchResults.length === 0 && !isLoading && modelValue.length >= 2"
+        class="p-4 text-center text-slate-400 text-sm font-medium"
+      >
+        🔍 No players found
+      </div>
+    </div>
+  </div>
+</template>

@@ -10,516 +10,74 @@
         <div class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-3">
           <!-- Mobile: Player Search Full Width -->
           <div class="block lg:hidden w-full mb-4">
-            <div class="relative group">
-              <!-- Search Icon with Glow -->
-              <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-                <div class="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
-                  <span class="text-slate-900 text-xs font-bold">🔍</span>
-                </div>
-              </div>
-              
-              <!-- Enhanced Search Input -->
-              <input
-                v-model="playerSearchQuery"
-                type="text"
-                placeholder="Search players..."
-                class="w-full pl-14 pr-14 py-3 bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-lg border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-300 font-medium shadow-lg hover:shadow-cyan-500/20 focus:shadow-cyan-500/30"
-                @input="onPlayerSearchInput"
-                @keyup.enter="navigateToPlayer"
-                @focus="onSearchFocus"
-                @blur="onSearchBlur"
-              >
-              
-              <!-- Loading Spinner -->
-              <div
-                v-if="isSearchLoading"
-                class="absolute right-4 top-1/2 transform -translate-y-1/2"
-              >
-                <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
-              </div>
-              
-              <!-- Search Glow Effect -->
-              <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-              
-              <!-- Enhanced Player Dropdown -->
-              <div
-                v-if="showPlayerDropdown"
-                class="absolute top-full mt-3 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto shadow-2xl z-50"
-              >
-                <div
-                  v-for="player in playerSuggestions"
-                  :key="player.playerName"
-                  class="group p-4 border-b border-slate-700/30 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-800/50 cursor-pointer transition-all duration-300 last:border-b-0 hover:shadow-lg"
-                  @mousedown.prevent="selectPlayer(player)"
-                >
-                  <div class="space-y-2">
-                    <div class="font-bold text-slate-200 text-sm group-hover:text-cyan-400 transition-colors">
-                      {{ player.playerName }}
-                    </div>
-                    <div class="flex items-center gap-3 flex-wrap text-xs">
-                      <span class="text-slate-400 font-medium">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
-                      <span
-                        v-if="player.isActive"
-                        class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full"
-                      >
-                        🟢 ONLINE
-                      </span>
-                      <span
-                        v-else
-                        class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 bg-slate-500/20 border border-slate-500/30 rounded-full"
-                      >
-                        ⚫ OFFLINE
-                      </span>
-                    </div>
-                    <div
-                      v-if="player.currentServer && player.isActive"
-                      class="text-xs text-cyan-400 font-medium"
-                    >
-                      🎮 {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
-                    </div>
-                  </div>
-                </div>
-                <div
-                  v-if="playerSuggestions.length === 0 && !isSearchLoading && playerSearchQuery.length >= 2"
-                  class="p-4 text-center text-slate-400 text-sm font-medium"
-                >
-                  🔍 No players found
-                </div>
-              </div>
-            </div>
+            <PlayerSearch
+              v-model="playerSearchQuery"
+              :full-width="true"
+              @select="selectPlayer"
+              @enter="navigateToPlayer"
+            />
           </div>
 
           <!-- Desktop: Original Layout -->
           <div class="hidden lg:flex lg:items-center lg:justify-between gap-4">
             <!-- Game Filter Buttons -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <button
-                v-for="game in gameTypes.filter(g => g.id !== 'all')"
-                :key="game.id"
-                :class="[
-                  'group relative flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200',
-                  activeFilter === game.id
-                    ? 'bg-slate-700 border-slate-600 text-white shadow-md'
-                    : 'bg-slate-800/60 border-slate-700/50 hover:border-slate-600 text-slate-300 hover:bg-slate-800'
-                ]"
-                @click="setActiveFilter(game.id)"
-              >
-                <div
-                  class="w-6 h-6 rounded bg-cover bg-center"
-                  :style="{ backgroundImage: getGameIcon(game.iconClass) }"
-                />
-                <div class="text-sm font-medium hidden sm:block">
-                  {{ game.name }}
-                </div>
-              </button>
-            </div>
+            <GameFilterButtons
+              :game-types="gameTypes"
+              :active-filter="activeFilter"
+              :get-game-icon="getGameIcon"
+              @update:active-filter="setActiveFilter"
+            />
             
             <!-- Installation Links & Player Search -->
             <div class="flex items-center gap-4 justify-end">
               <!-- Installation Links Dropdown -->
-              <div class="relative">
-                <button
-                  class="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-medium transition-[background-color,box-shadow,transform] duration-300 shadow-lg hover:shadow-green-500/30 transform hover:scale-105 will-change-transform"
-                  @click="showInstallDropdown = !showInstallDropdown"
-                >
-                  <span class="text-lg">🎮</span>
-                  <span class="hidden sm:inline">Get Online</span>
-                  <span class="sm:hidden">Install</span>
-                  <svg
-                    class="w-4 h-4 transition-transform duration-200"
-                    :class="{ 'rotate-180': showInstallDropdown }"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-
-                <!-- Installation Links Dropdown Menu -->
-                <div
-                  v-if="showInstallDropdown"
-                  class="absolute top-full mt-2 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 shadow-2xl z-50 min-w-[280px] sm:min-w-[320px]"
-                >
-                  <div class="p-2">
-                    <div class="px-4 py-2 text-sm font-medium text-slate-400 border-b border-slate-700/30 mb-2">
-                      🎯 Installation Guides
-                    </div>
-                    <a
-                      href="https://team-simple.org/download/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="flex items-center gap-3 p-3 hover:bg-slate-700/50 rounded-lg transition-all duration-200 group"
-                    >
-                      <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center border border-blue-500/30">
-                        <span class="text-blue-400 text-sm">📦</span>
-                      </div>
-                      <div class="flex-1">
-                        <div class="text-sm font-medium text-slate-200 group-hover:text-blue-400">SiMPLE | BF1942 installers</div>
-                        <div class="text-xs text-slate-500">Official installers and patches</div>
-                      </div>
-                      <span class="text-slate-500 group-hover:text-blue-400 transition-colors">↗</span>
-                    </a>
-                    <a
-                      href="https://bf1942.online/guide/installation"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="flex items-center gap-3 p-3 hover:bg-slate-700/50 rounded-lg transition-all duration-200 group"
-                    >
-                      <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center border border-green-500/30">
-                        <span class="text-green-400 text-sm">📋</span>
-                      </div>
-                      <div class="flex-1">
-                        <div class="text-sm font-medium text-slate-200 group-hover:text-green-400">BF1942 Online | Step-by-step</div>
-                        <div class="text-xs text-slate-500">Complete installation guide</div>
-                      </div>
-                      <span class="text-slate-500 group-hover:text-green-400 transition-colors">↗</span>
-                    </a>
-                    <a
-                      href="https://steamcommunity.com/sharedfiles/filedetails/?id=2721068159"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="flex items-center gap-3 p-3 hover:bg-slate-700/50 rounded-lg transition-all duration-200 group"
-                    >
-                      <div class="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center border border-purple-500/30">
-                        <span class="text-purple-400 text-sm">📚</span>
-                      </div>
-                      <div class="flex-1">
-                        <div class="text-sm font-medium text-slate-200 group-hover:text-purple-400">Steam Community | Wiki</div>
-                        <div class="text-xs text-slate-500">Community installation wiki</div>
-                      </div>
-                      <span class="text-slate-500 group-hover:text-purple-400 transition-colors">↗</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
+              <InstallationLinksDropdown ref="installDropdownRef" />
 
               <!-- Player Search -->
-              <div class="relative group">
-                <!-- Search Icon with Glow -->
-                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-                  <div class="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
-                    <span class="text-slate-900 text-xs font-bold">🔍</span>
-                  </div>
-                </div>
-                
-                <!-- Enhanced Search Input -->
-                <input
-                  v-model="playerSearchQuery"
-                  type="text"
-                  placeholder="Search players..."
-                  class="w-80 pl-14 pr-14 py-3 bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-lg border border-slate-700/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-300 font-medium shadow-lg hover:shadow-cyan-500/20 focus:shadow-cyan-500/30"
-                  @input="onPlayerSearchInput"
-                  @keyup.enter="navigateToPlayer"
-                  @focus="onSearchFocus"
-                  @blur="onSearchBlur"
-                >
-                
-                <!-- Loading Spinner -->
-                <div
-                  v-if="isSearchLoading"
-                  class="absolute right-4 top-1/2 transform -translate-y-1/2"
-                >
-                  <div class="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
-                </div>
-                
-                <!-- Search Glow Effect -->
-                <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                
-                <!-- Enhanced Player Dropdown -->
-                <div
-                  v-if="showPlayerDropdown"
-                  class="absolute top-full mt-3 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto shadow-2xl z-50"
-                >
-                  <div
-                    v-for="player in playerSuggestions"
-                    :key="player.playerName"
-                    class="group p-4 border-b border-slate-700/30 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-800/50 cursor-pointer transition-all duration-300 last:border-b-0 hover:shadow-lg"
-                    @mousedown.prevent="selectPlayer(player)"
-                  >
-                    <div class="space-y-2">
-                      <div class="font-bold text-slate-200 text-sm group-hover:text-cyan-400 transition-colors">
-                        {{ player.playerName }}
-                      </div>
-                      <div class="flex items-center gap-3 flex-wrap text-xs">
-                        <span class="text-slate-400 font-medium">{{ formatPlayTime(player.totalPlayTimeMinutes) }}</span>
-                        <span
-                          v-if="player.isActive"
-                          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-400 bg-green-500/20 border border-green-500/30 rounded-full"
-                        >
-                          🟢 ONLINE
-                        </span>
-                        <span
-                          v-else
-                          class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-500 bg-slate-500/20 border border-slate-500/30 rounded-full"
-                        >
-                          ⚫ OFFLINE
-                        </span>
-                      </div>
-                      <div
-                        v-if="player.currentServer && player.isActive"
-                        class="text-xs text-cyan-400 font-medium"
-                      >
-                        🎮 {{ player.currentServer.serverName }} - {{ player.currentServer.mapName }}
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    v-if="playerSuggestions.length === 0 && !isSearchLoading && playerSearchQuery.length >= 2"
-                    class="p-4 text-center text-slate-400 text-sm font-medium"
-                  >
-                    🔍 No players found
-                  </div>
-                </div>
-              </div>
+              <PlayerSearch
+                v-model="playerSearchQuery"
+                @select="selectPlayer"
+                @enter="navigateToPlayer"
+              />
             </div>
           </div>
         </div>
 
         <!-- Mobile: Game Filter Buttons (Above Table) -->
         <div class="block lg:hidden p-3 border-b border-slate-700/30">
-          <div class="flex items-center gap-2 flex-wrap">
-            <button
-              v-for="game in gameTypes.filter(g => g.id !== 'all')"
-              :key="game.id"
-              :class="[
-                'group relative flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200',
-                activeFilter === game.id
-                  ? 'bg-slate-700 border-slate-600 text-white shadow-md'
-                  : 'bg-slate-800/60 border-slate-700/50 hover:border-slate-600 text-slate-300 hover:bg-slate-800'
-              ]"
-              @click="setActiveFilter(game.id)"
-            >
-              <div
-                class="w-6 h-6 rounded bg-cover bg-center"
-                :style="{ backgroundImage: getGameIcon(game.iconClass) }"
-              />
-              <div class="text-sm font-medium">
-                {{ game.name }}
-              </div>
-            </button>
-          </div>
+          <GameFilterButtons
+            :game-types="gameTypes"
+            :active-filter="activeFilter"
+            :get-game-icon="getGameIcon"
+            @update:active-filter="setActiveFilter"
+          />
         </div>
 
         <!-- Player History Section -->
-        <div class="border-b border-slate-700/30">
-          <!-- Toggle Button -->
-          <div class="p-3">
-            <button
-              class="w-full flex items-center justify-between p-3 bg-slate-800/30 hover:bg-slate-700/50 rounded-lg border border-slate-700/50 transition-all duration-300 group"
-              @click="togglePlayerHistory"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center">
-                  <span class="text-slate-900 text-sm font-bold">📈</span>
-                </div>
-                <div class="text-left">
-                  <div class="text-sm font-medium text-slate-200">
-                    Player Activity History
-                  </div>
-                  <div class="text-xs text-slate-400">
-                    {{ getActiveGameName() }} population trends
-                  </div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-slate-400 hidden sm:block">{{ showPlayerHistory ? 'Hide' : 'Show' }}</span>
-                <div
-                  class="transform transition-transform duration-300"
-                  :class="{ 'rotate-180': showPlayerHistory }"
-                >
-                  <svg
-                    class="w-5 h-5 text-slate-400 group-hover:text-cyan-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </button>
-          </div>
-
-          <!-- Collapsible History Content -->
-          <div 
-            v-if="showPlayerHistory" 
-            class="px-3 pb-3 space-y-3 animate-in slide-in-from-top duration-300"
-          >
-            <!-- Enhanced Period Selector -->
-            <div class="flex justify-center gap-1 bg-slate-800/30 rounded-lg p-1">
-              <!-- Short periods -->
-              <button
-                v-for="period in ['1d', '3d', '7d']"
-                :key="period"
-                :class="[
-                  'px-3 py-1 text-xs font-medium rounded-md transition-all duration-200',
-                  historyPeriod === period
-                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                ]"
-                @click="changePeriod(period as '1d' | '3d' | '7d')"
-              >
-                {{ period === '1d' ? '24h' : period === '3d' ? '3 days' : '7 days' }}
-              </button>
-              
-              <!-- Longer periods dropdown -->
-              <div class="relative">
-                <button
-                  :class="[
-                    'px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1',
-                    historyPeriod === 'longer'
-                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                  ]"
-                  @click="toggleLongerDropdown"
-                >
-                  {{ getLongerPeriodLabel() }}
-                  <svg
-                    class="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-                
-                <!-- Dropdown menu -->
-                <div
-                  v-if="showLongerDropdown"
-                  class="absolute top-full mt-1 right-0 bg-slate-800/95 backdrop-blur-lg rounded-lg border border-slate-700/50 shadow-xl z-50 min-w-[120px]"
-                >
-                  <button
-                    v-for="period in [{ id: '1month', label: '1 Month' }, { id: '3months', label: '3 Months' }, { id: 'thisyear', label: 'This Year' }, { id: 'alltime', label: 'All Time' }]"
-                    :key="period.id"
-                    :class="[
-                      'w-full text-left px-3 py-2 text-xs hover:bg-slate-700/50 transition-colors first:rounded-t-lg last:rounded-b-lg',
-                      longerPeriod === period.id ? 'text-cyan-400 bg-cyan-500/10' : 'text-slate-300'
-                    ]"
-                    @click="selectLongerPeriod(period.id as '1month' | '3months' | 'thisyear' | 'alltime')"
-                  >
-                    {{ period.label }}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Chart Container -->
-            <div class="bg-slate-800/20 rounded-lg p-4">
-              <PlayerHistoryChart
-                :chart-data="playerHistoryData"
-                :insights="playerHistoryInsights"
-                :period="getCurrentPeriod()"
-                :rolling-window="historyRollingWindow"
-                :loading="historyLoading"
-                :error="historyError"
-                @rolling-window-change="changeRollingWindow"
-              />
-            </div>
-          </div>
-        </div>
+        <PlayerHistorySection
+          :active-game-name="getActiveGameName()"
+          :player-history-data="playerHistoryData"
+          :player-history-insights="playerHistoryInsights"
+          :history-period="historyPeriod"
+          :longer-period="longerPeriod"
+          :history-rolling-window="historyRollingWindow"
+          :history-loading="historyLoading"
+          :history-error="historyError"
+          ref="playerHistorySectionRef"
+          @toggle="togglePlayerHistory"
+          @period-change="changePeriod"
+          @longer-period-change="selectLongerPeriod"
+          @rolling-window-change="changeRollingWindow"
+        />
 
         <!-- Game Trends Section -->
-        <div class="border-b border-slate-700/30">
-          <div class="p-3">
-            <!-- Game Trends -->
-            <div 
-              v-if="gameTrends && !trendsLoading" 
-              class="bg-slate-800/30 rounded-lg p-4 space-y-4"
-            >
-              <!-- Forecast Chart - Vertical Bar Display -->
-              <div class="space-y-3">
-                <div class="flex items-center gap-2">
-                  <div class="w-5 h-5 bg-gradient-to-r from-purple-400 to-pink-500 rounded flex items-center justify-center">
-                    <span class="text-slate-900 text-xs font-bold">📊</span>
-                  </div>
-                  <span class="text-xs font-bold text-purple-400 uppercase tracking-wide">Forecast</span>
-                </div>
-                
-                <!-- Vertical bars like Google Maps busy indicator -->
-                <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
-                  <div 
-                    v-for="(forecast, index) in processedForecast" 
-                    :key="index"
-                    class="flex flex-col items-center gap-1 flex-1 max-w-[60px] group cursor-pointer"
-                  >
-                    <!-- Vertical bar -->
-                    <div
-                      class="w-6 rounded-t transition-[background-color,transform,box-shadow] duration-300 hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/30 will-change-transform"
-                      :class="forecast.isCurrentHour ? 'bg-gradient-to-t from-cyan-300 to-cyan-500 hover:from-cyan-200 hover:to-cyan-400' : 'bg-gradient-to-t from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400'"
-                      :style="{
-                        height: Math.max(8, (forecast.predictedPlayers / gameTrends.maxPredictedPlayers) * 80) + 'px'
-                      }"
-                      :title="`${formatHourDisplayFixed(forecast.hourOfDay, forecast.isCurrentHour, index)}: ${Math.round(forecast.predictedPlayers)} players${forecast.isCurrentHour && forecast.actualPlayers ? ` (${forecast.actualPlayers} actual)` : ''}`"
-                    />
-                    <!-- Time label -->
-                    <div
-                      class="text-xs font-mono text-center transition-colors duration-300 group-hover:text-slate-200"
-                      :class="forecast.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'"
-                    >
-                      {{ formatHourDisplayFixed(forecast.hourOfDay, forecast.isCurrentHour, index) }}
-                    </div>
-                    <!-- Player count -->
-                    <div class="text-xs text-center transition-colors duration-300 group-hover:text-slate-200">
-                      <div
-                        v-if="forecast.isCurrentHour"
-                        class="text-cyan-400 font-bold group-hover:text-cyan-300"
-                      >
-                        {{ forecast.actualPlayers || Math.round(forecast.predictedPlayers) }}
-                      </div>
-                      <div
-                        v-else
-                        class="text-slate-300 font-semibold"
-                      >
-                        {{ Math.round(forecast.predictedPlayers) }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Trends Loading State -->
-            <div 
-              v-else-if="trendsLoading" 
-              class="bg-slate-800/30 rounded-lg p-4"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
-                <span class="text-sm text-slate-400">Loading activity trends...</span>
-              </div>
-            </div>
-
-            <!-- Trends Error State -->
-            <div 
-              v-else-if="trendsError" 
-              class="bg-red-500/10 border border-red-500/20 rounded-lg p-4"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
-                  <span class="text-red-400 text-xs">⚠️</span>
-                </div>
-                <span class="text-sm text-red-400">{{ trendsError }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <GameTrendsSection
+          :game-trends="gameTrends"
+          :trends-loading="trendsLoading"
+          :trends-error="trendsError"
+          :processed-forecast="processedForecast"
+          :format-hour-display-fixed="formatHourDisplayFixed"
+        />
 
         <!-- Loading State -->
         <div
@@ -1146,6 +704,11 @@ import PlayerHistoryChart from '../components/PlayerHistoryChart.vue'
 import { fetchPlayerOnlineHistory } from '../services/playerStatsService'
 import { formatTimeRemaining } from '../utils/timeUtils'
 import ForecastModal from '../components/ForecastModal.vue'
+import PlayerSearch from '../components/PlayerSearch.vue'
+import GameFilterButtons from '../components/GameFilterButtons.vue'
+import InstallationLinksDropdown from '../components/InstallationLinksDropdown.vue'
+import PlayerHistorySection from '../components/PlayerHistorySection.vue'
+import GameTrendsSection from '../components/GameTrendsSection.vue'
 
 import bf1942Icon from '@/assets/bf1942.webp'
 import fh2Icon from '@/assets/fh2.webp'
@@ -1190,6 +753,8 @@ interface GameTrendsResponse {
   generatedAt: string
 }
 
+// PlayerSearchResult interface is defined in PlayerSearch component
+// We need it for the selectPlayer function
 interface PlayerSearchResult {
   playerName: string
   totalPlayTimeMinutes: number
@@ -1203,14 +768,6 @@ interface PlayerSearchResult {
     mapName: string
     gameId: string
   }
-}
-
-interface PlayerSearchResponse {
-  items: PlayerSearchResult[]
-  page: number
-  pageSize: number
-  totalItems: number
-  totalPages: number
 }
 
 const router = useRouter()
@@ -1246,9 +803,6 @@ const getFilterFromMode = (mode?: string) => {
 
 // State
 const playerSearchQuery = ref('')
-const playerSuggestions = ref<PlayerSearchResult[]>([])
-const isSearchLoading = ref(false)
-const showPlayerDropdown = ref(false)
 const serverFilterQuery = ref('')
 const activeFilter = ref(getFilterFromMode(props.initialMode))
 const sortField = ref('numPlayers')
@@ -1257,15 +811,16 @@ const servers = ref<ServerSummary[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const refreshTimer = ref<number | null>(null)
-let searchTimeout: number | null = null
-let blurTimeout: number | null = null
+
+// Component refs
+const installDropdownRef = ref<InstanceType<typeof InstallationLinksDropdown> | null>(null)
+const playerHistorySectionRef = ref<InstanceType<typeof PlayerHistorySection> | null>(null)
 
 // Players panel state
 const showPlayersPanel = ref(false)
 const selectedServer = ref<ServerSummary | null>(null)
 
 // Player history state
-const showPlayerHistory = ref(false)
 const playerHistoryData = ref<PlayerHistoryDataPoint[]>([])
 const playerHistoryInsights = ref<PlayerHistoryInsights | null>(null)
 const historyPeriod = ref<'1d' | '3d' | '7d' | 'longer'>('1d')
@@ -1273,10 +828,7 @@ const longerPeriod = ref<'1month' | '3months' | 'thisyear' | 'alltime'>('1month'
 const historyRollingWindow = ref('7d')
 const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
-const showLongerDropdown = ref(false)
 
-// Installation links dropdown state
-const showInstallDropdown = ref(false)
 
 // Game trends state
 const gameTrends = ref<GameTrendsInsights | null>(null)
@@ -1565,71 +1117,9 @@ const getGameIconClass = (gameType: string) => {
 }
 
 // Player search methods
-const searchPlayers = async (query: string) => {
-  if (!query || query.length < 2) {
-    playerSuggestions.value = []
-    showPlayerDropdown.value = false
-    return
-  }
-
-  isSearchLoading.value = true
-  
-  try {
-    const response = await fetch(`/stats/Players/search?query=${encodeURIComponent(query)}&pageSize=10`)
-    if (!response.ok) {
-      throw new Error('Failed to search players')
-    }
-
-    const data: PlayerSearchResponse = await response.json()
-    playerSuggestions.value = data.items
-    showPlayerDropdown.value = data.items.length > 0 || query.length >= 2
-  } catch (error) {
-    playerSuggestions.value = []
-    showPlayerDropdown.value = false
-  } finally {
-    isSearchLoading.value = false
-  }
-}
-
-const onPlayerSearchInput = () => {
-  if (searchTimeout) {
-    clearTimeout(searchTimeout)
-  }
-
-  searchTimeout = setTimeout(() => {
-    searchPlayers(playerSearchQuery.value)
-  }, 300) as unknown as number
-}
-
-const onSearchFocus = () => {
-  if (blurTimeout) {
-    clearTimeout(blurTimeout)
-  }
-  if (playerSearchQuery.value.length >= 2) {
-    searchPlayers(playerSearchQuery.value)
-  }
-}
-
-const onSearchBlur = () => {
-  blurTimeout = setTimeout(() => {
-    showPlayerDropdown.value = false
-  }, 200) as unknown as number
-}
-
 const selectPlayer = (player: PlayerSearchResult) => {
   playerSearchQuery.value = player.playerName
-  playerSuggestions.value = []
-  showPlayerDropdown.value = false
   navigateToPlayerProfile(player.playerName)
-}
-
-const formatPlayTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) {
-    return `${hours}h`
-  }
-  const days = Math.floor(hours / 24)
-  return `${days}d ${hours % 24}h`
 }
 
 const navigateToPlayer = () => {
@@ -1985,15 +1475,17 @@ const fetchPlayerHistory = async () => {
 }
 
 const togglePlayerHistory = () => {
-  showPlayerHistory.value = !showPlayerHistory.value
-  if (showPlayerHistory.value && playerHistoryData.value.length === 0) {
-    fetchPlayerHistory()
+  if (playerHistorySectionRef.value) {
+    const isShowing = playerHistorySectionRef.value.show
+    playerHistorySectionRef.value.setShow(!isShowing)
+    if (!isShowing && playerHistoryData.value.length === 0) {
+      fetchPlayerHistory()
+    }
   }
 }
 
 const changePeriod = (period: '1d' | '3d' | '7d') => {
   historyPeriod.value = period
-  showLongerDropdown.value = false
   fetchPlayerHistory()
 }
 
@@ -2016,26 +1508,10 @@ const getRollingWindowDays = (rollingWindow: string): number => {
   }
 }
 
-const toggleLongerDropdown = () => {
-  showLongerDropdown.value = !showLongerDropdown.value
-}
-
 const selectLongerPeriod = (period: '1month' | '3months' | 'thisyear' | 'alltime') => {
   longerPeriod.value = period
   historyPeriod.value = 'longer'
-  showLongerDropdown.value = false
   fetchPlayerHistory()
-}
-
-const getLongerPeriodLabel = () => {
-  if (historyPeriod.value !== 'longer') return 'More'
-  const labels = {
-    '1month': '1 Month',
-    '3months': '3 Months', 
-    'thisyear': 'This Year',
-    'alltime': 'All Time'
-  }
-  return labels[longerPeriod.value]
 }
 
 const getCurrentPeriod = () => {
@@ -2125,7 +1601,7 @@ watch(activeFilter, (newFilter) => {
   serverRankings.value = []
   fetchServersForGame(newFilter as 'bf1942' | 'fh2' | 'bfvietnam', true)
   // Also refresh player history if it's visible
-  if (showPlayerHistory.value) {
+  if (playerHistorySectionRef.value?.show) {
     fetchPlayerHistory()
   }
   // Refresh game trends
@@ -2152,8 +1628,9 @@ onMounted(() => {
   document.addEventListener('click', (e) => {
     const target = e.target as Element
     if (!target.closest('.relative')) {
-      showLongerDropdown.value = false
-      showInstallDropdown.value = false
+      if (installDropdownRef.value) {
+        installDropdownRef.value.close()
+      }
     }
   })
 })

@@ -1,135 +1,9 @@
 <template>
-  <!-- Markdown Help Modal (separate from tournament modal) -->
-  <div v-if="showMarkdownHelp" class="modal-mobile-safe fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" @click.self="showMarkdownHelp = false">
-    <div class="bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-2xl border border-slate-700/50 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-      <!-- Header -->
-      <div class="sticky top-0 z-10 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-6 flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
-          Markdown Guide
-        </h2>
-        <button
-          type="button"
-          class="text-slate-400 hover:text-slate-200 transition-colors"
-          @click="showMarkdownHelp = false"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Content -->
-      <div class="p-6 space-y-6">
-        <!-- Headings -->
-        <div>
-          <h3 class="text-lg font-semibold text-slate-200 mb-3">Headings</h3>
-          <div class="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-            <div class="text-sm">
-              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400"># Main Heading</code>
-              <p class="text-slate-400 mt-1">Creates the largest heading</p>
-            </div>
-            <div class="text-sm">
-              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">## Subheading</code>
-              <p class="text-slate-400 mt-1">Creates a smaller heading</p>
-            </div>
-            <div class="text-sm">
-              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">### Even Smaller</code>
-              <p class="text-slate-400 mt-1">And so on...</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Text Formatting -->
-        <div>
-          <h3 class="text-lg font-semibold text-slate-200 mb-3">Text Formatting</h3>
-          <div class="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-            <div class="text-sm">
-              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">**bold text**</code>
-              <p class="text-slate-400 mt-1">Makes text <strong>bold</strong></p>
-            </div>
-            <div class="text-sm">
-              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">*italic text*</code>
-              <p class="text-slate-400 mt-1">Makes text <em>italic</em></p>
-            </div>
-            <div class="text-sm">
-              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">`code`</code>
-              <p class="text-slate-400 mt-1">Highlights inline code</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Lists -->
-        <div>
-          <h3 class="text-lg font-semibold text-slate-200 mb-3">Lists</h3>
-          <div class="space-y-3 bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-            <div>
-              <p class="text-sm font-medium text-slate-300 mb-2">Bullet List:</p>
-              <code class="block bg-slate-900 px-3 py-2 rounded text-amber-400 text-xs whitespace-pre-wrap">- Item one
-- Item two
-- Item three</code>
-            </div>
-            <div>
-              <p class="text-sm font-medium text-slate-300 mb-2">Numbered List:</p>
-              <code class="block bg-slate-900 px-3 py-2 rounded text-amber-400 text-xs whitespace-pre-wrap">1. First item
-2. Second item
-3. Third item</code>
-            </div>
-          </div>
-        </div>
-
-        <!-- Links -->
-        <div>
-          <h3 class="text-lg font-semibold text-slate-200 mb-3">Links</h3>
-          <div class="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-            <div class="text-sm">
-              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">[link text](https://example.com)</code>
-              <p class="text-slate-400 mt-1">Creates a clickable link</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Blockquotes -->
-        <div>
-          <h3 class="text-lg font-semibold text-slate-200 mb-3">Blockquotes</h3>
-          <div class="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-            <div class="text-sm">
-              <code class="bg-slate-900 px-2 py-1 rounded text-amber-400">> Important note</code>
-              <p class="text-slate-400 mt-1">Creates a highlighted blockquote</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Example -->
-        <div>
-          <h3 class="text-lg font-semibold text-slate-200 mb-3">Example</h3>
-          <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-            <p class="text-slate-300 text-sm mb-3">This markdown:</p>
-            <code class="block bg-slate-900 px-3 py-2 rounded text-amber-400 text-xs whitespace-pre-wrap mb-3"># Tournament Rules
-
-## General Rules
-- All players must be registered
-- Respect all referees
-- No cheating allowed
-
-## Map Selection
-Winners choose first map for next round.</code>
-            <p class="text-slate-300 text-sm">Will display nicely formatted rules with sections and lists.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Close Button -->
-      <div class="sticky bottom-0 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-t border-slate-700/50 p-6">
-        <button
-          type="button"
-          class="w-full px-4 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all"
-          @click="showMarkdownHelp = false"
-        >
-          Got it!
-        </button>
-      </div>
-    </div>
-  </div>
+  <!-- Markdown Help Modal -->
+  <MarkdownHelpModal
+    :is-visible="showMarkdownHelp"
+    @close="showMarkdownHelp = false"
+  />
 
   <!-- Add Tournament Modal -->
   <div
@@ -266,395 +140,70 @@ Winners choose first map for next round.</code>
         </div>
 
         <!-- Game Selection -->
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            Game <span class="text-red-400">*</span>
-          </label>
-          <div class="flex items-center gap-2">
-            <button
-              v-for="game in [{id: 'bf1942', name: 'BF1942', icon: bf1942Icon}, {id: 'fh2', name: 'FH2', icon: fh2Icon}, {id: 'bfvietnam', name: 'BF Vietnam', icon: bfvIcon}]"
-              :key="game.id"
-              type="button"
-              :class="[
-                'flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 flex-1',
-                formData.game === game.id
-                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400 ring-2 ring-cyan-500/30'
-                  : 'bg-slate-800/60 border-slate-700/50 hover:border-slate-600 text-slate-300 hover:bg-slate-800'
-              ]"
-              @click="formData.game = game.id as 'bf1942' | 'fh2' | 'bfvietnam'"
-            >
-              <div
-                class="w-6 h-6 rounded bg-cover bg-center"
-                :style="{ backgroundImage: `url('${game.icon}')` }"
-              />
-              <span class="text-sm font-medium">{{ game.name }}</span>
-            </button>
-          </div>
-        </div>
+        <GameSelector
+          v-model="formData.game"
+        />
 
         <!-- Server Selection (Optional) -->
-        <div class="relative z-40">
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            Tournament Server <span class="text-slate-500">(Optional)</span>
-          </label>
-
-          <!-- Selected Server Display -->
-          <div v-if="selectedServer" class="mb-3">
-            <div class="flex items-center justify-between gap-3 p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
-              <div class="flex items-center gap-2 flex-1 min-w-0">
-                <span class="text-cyan-400 text-sm">🖥️</span>
-                <div class="flex-1 min-w-0">
-                  <div class="font-medium text-slate-200 text-sm truncate">
-                    {{ selectedServer.serverName }}
-                  </div>
-                  <div class="text-xs text-slate-400 mt-0.5">
-                    {{ selectedServer.serverIp }}:{{ selectedServer.serverPort }}
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                class="text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
-                @click="clearServerSelection"
-                title="Change server"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Server Search Input (only show when no server selected) -->
-          <div v-else class="relative">
-            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
-              <span class="text-slate-500 text-sm">🖥️</span>
-            </div>
-            <input
-              v-model="serverSearchQuery"
-              type="text"
-              placeholder="Search for server..."
-              class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
-              @input="onServerSearchInput"
-              @focus="onServerSearchFocus"
-              @blur="onServerSearchBlur"
-            >
-
-            <!-- Server Suggestions Dropdown -->
-            <div
-              v-if="showServerDropdown"
-              class="absolute top-full mt-2 left-0 right-0 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-lg border border-slate-700/50 max-h-60 overflow-y-auto shadow-2xl z-50"
-            >
-              <div
-                v-for="server in serverSuggestions"
-                :key="server.serverGuid"
-                class="p-3 border-b border-slate-700/30 hover:bg-slate-700/50 cursor-pointer transition-all last:border-b-0"
-                @mousedown.prevent="selectServer(server)"
-              >
-                <div class="font-medium text-slate-200 text-sm">
-                  {{ server.serverName }}
-                </div>
-                <div class="text-xs text-slate-400 mt-1">
-                  {{ server.serverIp }}:{{ server.serverPort }}
-                </div>
-              </div>
-              <div
-                v-if="serverSuggestions.length === 0 && !isServerSearchLoading && serverSearchQuery.length >= 2"
-                class="p-3 text-center text-slate-400 text-sm"
-              >
-                No servers found
-              </div>
-            </div>
-          </div>
-          <p class="mt-1 text-xs text-slate-500">
-            Optionally specify which server this tournament will be played on
-          </p>
-        </div>
+        <ServerSelector
+          v-model="formData.serverGuid"
+          :game="formData.game"
+          :selected-server="selectedServer"
+          @select="selectServer"
+          @clear="clearServerSelection"
+        />
 
         <!-- Row 2: Social Media Links -->
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-3">
-            Social Media Links <span class="text-slate-500">(Optional)</span>
-          </label>
-          <div class="space-y-3">
-            <!-- Discord Link -->
-            <div class="flex items-center gap-3">
-              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center overflow-hidden">
-                <img :src="discordLogo" alt="Discord" class="w-6 h-6 object-contain">
-              </div>
-              <input
-                v-model="formData.discordUrl"
-                type="url"
-                placeholder="https://discord.gg/..."
-                class="flex-1 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
-              >
-            </div>
-
-            <!-- YouTube Link -->
-            <div class="flex items-center gap-3">
-              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center overflow-hidden">
-                <img :src="youtubeLogo" alt="YouTube" class="w-6 h-6 object-contain">
-              </div>
-              <input
-                v-model="formData.youTubeUrl"
-                type="url"
-                placeholder="https://youtube.com/@..."
-                class="flex-1 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all"
-              >
-            </div>
-
-            <!-- Twitch Link -->
-            <div class="flex items-center gap-3">
-              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center overflow-hidden">
-                <img :src="twitchLogo" alt="Twitch" class="w-6 h-6 object-contain">
-              </div>
-              <input
-                v-model="formData.twitchUrl"
-                type="url"
-                placeholder="https://twitch.tv/..."
-                class="flex-1 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-              >
-            </div>
-
-            <!-- Forum Link -->
-            <div class="flex items-center gap-3">
-              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
-                <span class="text-orange-400 text-lg">📋</span>
-              </div>
-              <input
-                v-model="formData.forumUrl"
-                type="url"
-                placeholder="https://..."
-                class="flex-1 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
-              >
-            </div>
-          </div>
-        </div>
+        <SocialMediaLinks
+          :discord-url="formData.discordUrl"
+          :you-tube-url="formData.youTubeUrl"
+          :twitch-url="formData.twitchUrl"
+          :forum-url="formData.forumUrl"
+          @update:discord-url="formData.discordUrl = $event"
+          @update:you-tube-url="formData.youTubeUrl = $event"
+          @update:twitch-url="formData.twitchUrl = $event"
+          @update:forum-url="formData.forumUrl = $event"
+        />
 
         <!-- Row 3: Hero Image + Community Logo -->
         <div class="grid grid-cols-2 gap-4">
-          <!-- Hero Image Upload -->
-          <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            Hero Image <span class="text-slate-500">(Optional)</span>
-          </label>
-
-          <!-- Image Preview -->
-          <div
-            v-if="imagePreview"
-            class="relative mb-3 rounded-lg overflow-hidden border border-slate-700/50"
-          >
-            <img
-              :src="imagePreview"
-              alt="Tournament hero image"
-              class="w-full h-48 object-cover"
-            >
-            <button
-              type="button"
-              class="absolute top-2 right-2 p-2 bg-red-500/80 hover:bg-red-600 text-white rounded-lg transition-colors"
-              @click="removeImage"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <!-- Upload Button -->
-          <div
-            class="relative border-2 border-dashed border-slate-700/50 rounded-lg p-6 text-center hover:border-cyan-500/50 transition-colors cursor-pointer"
-            @click="triggerFileInput"
-            @dragover.prevent="isDragging = true"
-            @dragleave.prevent="isDragging = false"
-            @drop.prevent="handleDrop"
-            :class="{ 'border-cyan-500/50 bg-cyan-500/5': isDragging }"
-          >
-            <input
-              ref="fileInput"
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-              class="hidden"
-              @change="handleFileSelect"
-            >
-            <div class="text-slate-400">
-              <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <p class="text-sm font-medium">
-                {{ imagePreview ? 'Change Image' : 'Upload Hero Image' }}
-              </p>
-              <p class="text-xs text-slate-500 mt-1">
-                Click or drag & drop (Max 4MB, JPEG/PNG/GIF/WEBP)
-              </p>
-            </div>
-          </div>
-
-          <!-- Error Message -->
-          <p v-if="imageError" class="mt-2 text-xs text-red-400">
-            {{ imageError }}
-          </p>
-          </div>
-
-          <!-- Community Logo Upload -->
-          <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            Community Logo <span class="text-slate-500">(Optional)</span>
-          </label>
-
-          <!-- Logo Preview -->
-          <div
-            v-if="logoPreview"
-            class="relative mb-3 rounded-lg overflow-hidden border border-slate-700/50 bg-slate-800/30 p-4 flex items-center justify-center h-32"
-          >
-            <img
-              :src="logoPreview"
-              alt="Community logo"
-              class="max-h-28 max-w-full object-contain"
-            >
-            <button
-              type="button"
-              class="absolute top-2 right-2 p-2 bg-red-500/80 hover:bg-red-600 text-white rounded-lg transition-colors"
-              @click="removeLogo"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <!-- Upload Button -->
-          <div
-            class="relative border-2 border-dashed border-slate-700/50 rounded-lg p-6 text-center hover:border-cyan-500/50 transition-colors cursor-pointer"
-            @click="triggerLogoFileInput"
-            @dragover.prevent="isDraggingLogo = true"
-            @dragleave.prevent="isDraggingLogo = false"
-            @drop.prevent="handleLogoDrop"
-            :class="{ 'border-cyan-500/50 bg-cyan-500/5': isDraggingLogo }"
-          >
-            <input
-              ref="logoFileInput"
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-              class="hidden"
-              @change="handleLogoFileSelect"
-            >
-            <div class="text-slate-400">
-              <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <p class="text-sm font-medium">
-                {{ logoPreview ? 'Change Logo' : 'Upload Community Logo' }}
-              </p>
-              <p class="text-xs text-slate-500 mt-1">
-                Click or drag & drop (Max 4MB, JPEG/PNG/GIF/WEBP)
-              </p>
-            </div>
-          </div>
-
-            <!-- Error Message -->
-            <p v-if="logoError" class="mt-2 text-xs text-red-400">
-              {{ logoError }}
-            </p>
-          </div>
+          <ImageUpload
+            v-model:model-value="imageFile"
+            v-model:preview="imagePreview"
+            label="Hero Image"
+            aspect-ratio="hero"
+            @remove="removeHeroImage = true"
+          />
+          <ImageUpload
+            v-model:model-value="logoFile"
+            v-model:preview="logoPreview"
+            label="Community Logo"
+            aspect-ratio="logo"
+            @remove="removeCommunityLogo = true"
+          />
         </div>
 
         <!-- Tournament Rules (Markdown) -->
-        <div>
-          <div class="flex items-center justify-between gap-4 mb-2">
-            <label class="block text-sm font-medium text-slate-300">
-              Tournament Rules <span class="text-slate-500">(Optional)</span>
-            </label>
-            <button
-              type="button"
-              @click="showMarkdownHelp = true"
-              class="text-xs px-3 py-1 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-slate-200 rounded transition-colors"
-              title="Show markdown syntax help"
-            >
-              ? Help
-            </button>
-          </div>
-
-          <textarea
-            v-model="formData.rules"
-            placeholder="# Tournament Rules&#10;&#10;Write your tournament rules in markdown..."
-            class="w-full h-64 px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all resize-none"
-          />
-
-          <!-- Preview Toggle and Display -->
-          <div class="mt-3 flex items-center gap-2">
-            <button
-              type="button"
-              @click="showRulesPreview = !showRulesPreview"
-              class="text-xs px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-slate-200 rounded transition-colors flex items-center gap-2"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              {{ showRulesPreview ? 'Hide' : 'Show' }} Preview
-            </button>
-          </div>
-
-          <!-- Markdown Preview (Below Editor) -->
-          <div v-if="showRulesPreview && (formData.rules && formData.rules.trim())" class="mt-4 bg-slate-800/40 border border-slate-700/50 rounded-lg p-4 overflow-y-auto max-h-64">
-            <div class="prose prose-invert prose-sm max-w-none">
-              <div
-                v-html="renderedMarkdown"
-                class="text-slate-300 markdown-content"
-              />
-            </div>
-          </div>
-        </div>
+        <MarkdownEditor
+          v-model="formData.rules"
+          label="Tournament Rules"
+          placeholder="# Tournament Rules&#10;&#10;Write your tournament rules in markdown..."
+          height="h-64"
+          @show-help="showMarkdownHelp = true"
+        />
 
         <!-- Registration Rules (Markdown) -->
         <div>
-          <div class="flex items-center justify-between gap-4 mb-2">
-            <label class="block text-sm font-medium text-slate-300">
-              Registration Rules <span class="text-slate-500">(Optional)</span>
-            </label>
-            <button
-              type="button"
-              @click="showMarkdownHelp = true"
-              class="text-xs px-3 py-1 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-slate-200 rounded transition-colors"
-              title="Show markdown syntax help"
-            >
-              ? Help
-            </button>
-          </div>
           <p class="text-xs text-slate-500 mb-2">
             Shown to users when they register for the tournament
           </p>
-
-          <textarea
+          <MarkdownEditor
             v-model="formData.registrationRules"
+            label="Registration Rules"
             placeholder="# Registration Info&#10;&#10;Write registration instructions in markdown..."
-            class="w-full h-48 px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all resize-none"
+            height="h-48"
+            @show-help="showMarkdownHelp = true"
           />
-
-          <!-- Preview Toggle and Display -->
-          <div class="mt-3 flex items-center gap-2">
-            <button
-              type="button"
-              @click="showRegistrationRulesPreview = !showRegistrationRulesPreview"
-              class="text-xs px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-slate-200 rounded transition-colors flex items-center gap-2"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              {{ showRegistrationRulesPreview ? 'Hide' : 'Show' }} Preview
-            </button>
-          </div>
-
-          <!-- Markdown Preview (Below Editor) -->
-          <div v-if="showRegistrationRulesPreview && (formData.registrationRules && formData.registrationRules.trim())" class="mt-4 bg-slate-800/40 border border-slate-700/50 rounded-lg p-4 overflow-y-auto max-h-64">
-            <div class="prose prose-invert prose-sm max-w-none">
-              <div
-                v-html="renderedRegistrationRulesMarkdown"
-                class="text-slate-300 markdown-content"
-              />
-            </div>
-          </div>
         </div>
 
         <!-- Status & Game Mode -->
@@ -1304,16 +853,15 @@ Winners choose first map for next round.</code>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
-import { marked } from 'marked';
+import { ref, onMounted, watch } from 'vue';
 import { adminTournamentService, type CreateTournamentRequest, type TournamentDetail, ValidationError } from '@/services/adminTournamentService';
 import { isValidHex } from '@/utils/colorUtils';
-import bf1942Icon from '@/assets/bf1942.webp';
-import fh2Icon from '@/assets/fh2.webp';
-import bfvIcon from '@/assets/bfv.webp';
-import discordLogo from '@/assets/discord.webp';
-import youtubeLogo from '@/assets/youtube-logo.webp';
-import twitchLogo from '@/assets/twitch.webp';
+import MarkdownHelpModal from './MarkdownHelpModal.vue';
+import MarkdownEditor from './MarkdownEditor.vue';
+import GameSelector from './GameSelector.vue';
+import ServerSelector from './ServerSelector.vue';
+import SocialMediaLinks from './SocialMediaLinks.vue';
+import ImageUpload from './ImageUpload.vue';
 
 interface PlayerSearchResult {
   playerName: string;
@@ -1447,8 +995,6 @@ const isDraggingLogo = ref(false);
 const removeCommunityLogo = ref(false);
 
 // Rules editor state
-const showRulesPreview = ref(false);
-const showRegistrationRulesPreview = ref(false);
 const showMarkdownHelp = ref(false);
 
 // Theme color input state
@@ -1457,28 +1003,6 @@ const textColorInput = ref('#FFFFFF');
 const accentColorInput = ref('#FFD700');
 const showThemePreview = ref(false);
 
-// Markdown preview
-const renderedMarkdown = computed(() => {
-  if (!formData.value.rules || !formData.value.rules.trim()) {
-    return '';
-  }
-  try {
-    return marked(formData.value.rules, { breaks: true });
-  } catch {
-    return '<p class="text-red-400">Invalid markdown</p>';
-  }
-});
-
-const renderedRegistrationRulesMarkdown = computed(() => {
-  if (!formData.value.registrationRules || !formData.value.registrationRules.trim()) {
-    return '';
-  }
-  try {
-    return marked(formData.value.registrationRules, { breaks: true });
-  } catch {
-    return '<p class="text-red-400">Invalid markdown</p>';
-  }
-});
 
 // Load hero image from API
 const loadHeroImage = async (tournamentId: number) => {
