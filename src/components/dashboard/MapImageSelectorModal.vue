@@ -418,27 +418,4 @@ const initializeModal = async () => {
 initializeModal();
 </script>
 
-<style scoped>
-.overflow-y-auto {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(100, 116, 139, 0.5) rgba(71, 85, 105, 0.3);
-}
-
-.overflow-y-auto::-webkit-scrollbar {
-  width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-  background: rgba(71, 85, 105, 0.3);
-  border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.5);
-  border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.7);
-}
-</style>
+<style scoped src="./MapImageSelectorModal.vue.css"></style>

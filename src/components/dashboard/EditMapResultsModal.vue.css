@@ -1,0 +1,32 @@
+/* Modal enters from center with fade effect */
+:deep(.fixed) {
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Expand transition for manual entry form */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.2s ease;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 200px;
+}

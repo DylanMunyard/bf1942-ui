@@ -1,0 +1,77 @@
+/* Custom animations for enhanced gaming feel */
+@keyframes animate-spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: animate-spin-slow 3s linear infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.5);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.7);
+}
+
+/* Enhanced table row hover effects */
+tbody tr:hover {
+  /* Removed transform and box-shadow to prevent wobbling */
+}
+
+/* Clean typography for the entire table */
+table {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Compact row spacing with better typography */
+tbody tr {
+  height: 32px;
+}
+
+/* Gaming-style glow effects */
+.glow-cyan {
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+
+.glow-green {
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+}
+
+.glow-orange {
+  box-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
+}
+
+/* Responsive table behavior */
+@media (max-width: 1024px) {
+  table {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 768px) {
+  table {
+    min-width: 700px;
+  }
+  
+  /* Make table cells more compact on mobile */
+  th, td {
+    padding: 0.5rem 0.25rem;
+  }
+}

@@ -1,0 +1,28 @@
+/* Smooth row hover transitions */
+tbody tr {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Table responsive scrolling */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.5) rgba(71, 85, 105, 0.3);
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: rgba(71, 85, 105, 0.3);
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}

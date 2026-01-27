@@ -752,32 +752,4 @@ watch(
 );
 </script>
 
-<style scoped>
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-pulse {
-  animation: pulse 0.5s ease-out;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-}
-</style>
+<style scoped src="./TeamManagementPanel.vue.css"></style>
