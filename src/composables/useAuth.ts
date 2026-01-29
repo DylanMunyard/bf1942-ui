@@ -2,6 +2,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { authService, type AuthState } from '@/services/authService';
 import { ROLE_ADMIN, ROLE_SUPPORT, ADMIN_EMAIL } from '@/constants/roles';
+import { appInsightsService } from '@/services/appInsightsService';
 
 const authState = ref<AuthState>({
   isAuthenticated: false,
@@ -22,6 +23,19 @@ export function useAuth() {
 
   const handleAuthSuccess = (event: CustomEvent) => {
     authState.value = event.detail;
+    // Set Application Insights user context
+    if (event.detail.user) {
+      appInsightsService.setAuthenticatedUser(
+        event.detail.user.id.toString(),
+        event.detail.user.email
+      );
+      // Track login event
+      appInsightsService.trackEvent('UserLogin', {
+        userId: event.detail.user.id.toString(),
+        userEmail: event.detail.user.email,
+        userName: event.detail.user.name
+      });
+    }
     // Setup auto-refresh when authentication succeeds
     authService.setupAutoRefresh();
     // Redirect to dashboard after successful sign-in
@@ -42,6 +56,18 @@ export function useAuth() {
 
   const logout = (): void => {
     const currentRoute = router.currentRoute.value.path;
+    const userId = authState.value.user?.id?.toString();
+    
+    // Track logout event before clearing user context
+    if (userId) {
+      appInsightsService.trackEvent('UserLogout', {
+        userId: userId
+      });
+    }
+    
+    // Clear Application Insights user context
+    appInsightsService.clearAuthenticatedUser();
+    
     authService.logout();
     authState.value = {
       isAuthenticated: false,
@@ -63,6 +89,7 @@ export function useAuth() {
         const isValid = await authService.ensureValidToken();
         if (!isValid) {
           // Token refresh failed, clear auth state
+          appInsightsService.clearAuthenticatedUser();
           authState.value = {
             isAuthenticated: false,
             token: null,
@@ -72,10 +99,18 @@ export function useAuth() {
         }
         // Reload auth state after potential refresh
         authState.value = authService.getStoredAuthState();
+        // Set Application Insights user context if user is authenticated
+        if (authState.value.user) {
+          appInsightsService.setAuthenticatedUser(
+            authState.value.user.id.toString(),
+            authState.value.user.email
+          );
+        }
         // Setup auto-refresh for future expirations
         authService.setupAutoRefresh();
       } catch (error) {
         // Clear auth state on error
+        appInsightsService.clearAuthenticatedUser();
         authState.value = {
           isAuthenticated: false,
           token: null,

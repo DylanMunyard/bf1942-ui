@@ -1,97 +1,72 @@
 <template>
-  <div class="bg-slate-800/30 rounded-lg p-4">
-    <h4 class="text-sm font-medium text-slate-300 mb-3">
+  <div class="leaderboard-card">
+    <h4 class="card-title">
       {{ title }}
-      <span v-if="totalCount > 0" class="text-slate-500 font-normal text-xs">
-        ({{ totalCount.toLocaleString() }})
-      </span>
+      <span v-if="totalCount > 0" class="card-count">({{ totalCount.toLocaleString() }})</span>
     </h4>
 
     <!-- Initial Loading State (no data yet) -->
-    <div v-if="isLoading && rankings.length === 0" class="flex items-center justify-center py-8">
-      <div class="w-5 h-5 border-2 border-slate-600 border-t-cyan-400 rounded-full animate-spin"></div>
+    <div v-if="isLoading && rankings.length === 0" class="card-loading">
+      <div class="spinner"></div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error && rankings.length === 0" class="text-center py-4">
-      <div class="text-red-400 text-sm">{{ error }}</div>
-      <button @click="emit('retry')" class="text-cyan-400 hover:text-cyan-300 text-sm mt-1">
-        Try again
-      </button>
+    <div v-else-if="error && rankings.length === 0" class="card-error">
+      <div class="error-text">{{ error }}</div>
+      <button @click="emit('retry')" class="error-retry">Try again</button>
     </div>
 
     <!-- Rankings Table (shown even while refreshing) -->
-    <div v-else-if="rankings.length > 0" :class="{ 'opacity-50 pointer-events-none': isRefreshing }">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+    <div v-else-if="rankings.length > 0" :class="{ 'card-loading-overlay': isRefreshing }">
+      <div class="card-table-wrap">
+        <table class="card-table">
           <thead>
-            <tr class="text-slate-400 text-left border-b border-slate-700/50">
-              <th class="pb-2 font-medium w-8">#</th>
-              <th class="pb-2 font-medium">Player</th>
-              <th class="pb-2 font-medium text-right">{{ primaryColumnHeader }}</th>
-              <th class="pb-2 font-medium text-right hidden sm:table-cell">Rounds</th>
+            <tr>
+              <th class="col-rank">#</th>
+              <th class="col-player">Player</th>
+              <th class="col-value">{{ primaryColumnHeader }}</th>
+              <th class="col-rounds">Rounds</th>
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="entry in rankings"
-              :key="entry.playerName"
-              class="border-b border-slate-700/30 last:border-b-0"
-            >
-              <td class="py-2">
+            <tr v-for="entry in rankings" :key="entry.playerName">
+              <td class="col-rank">
                 <span :class="getRankClass(entry.rank)">{{ entry.rank }}</span>
               </td>
-              <td class="py-2 truncate max-w-[100px] sm:max-w-[120px]">
-                <button
-                  @click="navigateToPlayer(entry.playerName)"
-                  class="text-cyan-400 hover:text-cyan-300 transition-colors text-left"
-                >
+              <td class="col-player">
+                <button @click="navigateToPlayer(entry.playerName)" class="player-link">
                   {{ entry.playerName }}
                 </button>
               </td>
-              <td class="py-2 text-right text-cyan-400 font-medium">
-                {{ formatPrimaryValue(entry) }}
-              </td>
-              <td class="py-2 text-right text-slate-400 hidden sm:table-cell">
-                {{ entry.totalRounds }}
-              </td>
+              <td class="col-value">{{ formatPrimaryValue(entry) }}</td>
+              <td class="col-rounds">{{ entry.totalRounds }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <!-- Pagination -->
-      <div
-        v-if="totalPages > 1"
-        class="flex flex-wrap items-center justify-center gap-1 pt-3 mt-3 border-t border-slate-700/30"
-      >
-        <!-- Previous Page -->
+      <div v-if="totalPages > 1" class="pagination">
         <button
-          class="px-2 py-1 text-xs font-medium bg-slate-700/50 border border-slate-600/50 text-slate-400 rounded transition-all hover:bg-slate-600 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="pagination-btn"
           :disabled="currentPage === 1 || isRefreshing"
           @click="emit('pageChange', currentPage - 1)"
         >
           Prev
         </button>
 
-        <!-- Page Numbers -->
         <button
           v-for="pageNum in paginationRange"
           :key="pageNum"
-          class="px-2 py-1 text-xs font-medium rounded transition-all min-w-[24px]"
-          :class="{
-            'bg-cyan-600/80 border border-cyan-500/50 text-white': pageNum === currentPage,
-            'bg-slate-700/50 border border-slate-600/50 text-slate-400 hover:bg-slate-600 hover:text-slate-200': pageNum !== currentPage
-          }"
+          :class="['pagination-btn', pageNum === currentPage && 'pagination-btn--active']"
           :disabled="isRefreshing"
           @click="emit('pageChange', pageNum)"
         >
           {{ pageNum }}
         </button>
 
-        <!-- Next Page -->
         <button
-          class="px-2 py-1 text-xs font-medium bg-slate-700/50 border border-slate-600/50 text-slate-400 rounded transition-all hover:bg-slate-600 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="pagination-btn"
           :disabled="currentPage === totalPages || isRefreshing"
           @click="emit('pageChange', currentPage + 1)"
         >
@@ -101,9 +76,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else class="text-center py-4 text-slate-500 text-sm">
-      No player data available
-    </div>
+    <div v-else class="card-empty">No player data available</div>
   </div>
 </template>
 
@@ -183,3 +156,204 @@ const paginationRange = computed(() => {
   return range;
 });
 </script>
+
+<style scoped>
+.leaderboard-card {
+  background: var(--portal-surface);
+  border: 1px solid var(--portal-border);
+  border-radius: 2px;
+  padding: 1rem;
+}
+
+.card-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--portal-text-bright);
+  margin: 0 0 0.75rem;
+}
+
+.card-count {
+  color: var(--portal-text);
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+.card-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--portal-border);
+  border-top-color: var(--portal-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.card-error {
+  text-align: center;
+  padding: 1rem;
+}
+
+.error-text {
+  color: var(--portal-danger);
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.error-retry {
+  font-size: 0.8rem;
+  color: var(--portal-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.error-retry:hover {
+  color: #00f5a8;
+}
+
+.card-loading-overlay {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.card-table-wrap {
+  overflow-x: auto;
+}
+
+.card-table {
+  width: 100%;
+  font-size: 0.8rem;
+  border-collapse: collapse;
+}
+
+.card-table th {
+  text-align: left;
+  padding: 0.5rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--portal-accent);
+  font-family: ui-monospace, monospace;
+  border-bottom: 1px solid var(--portal-border);
+}
+
+.card-table th.col-value,
+.card-table th.col-rounds {
+  text-align: right;
+}
+
+.card-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--portal-border);
+  color: var(--portal-text-bright);
+}
+
+.card-table td.col-value {
+  text-align: right;
+  color: var(--portal-accent);
+  font-weight: 500;
+  font-family: ui-monospace, monospace;
+}
+
+.card-table td.col-rounds {
+  text-align: right;
+  color: var(--portal-text);
+}
+
+.card-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.col-rank { width: 2rem; }
+.col-player {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .col-player { max-width: 120px; }
+}
+
+.col-rounds { display: none; }
+
+@media (min-width: 640px) {
+  .col-rounds { display: table-cell; }
+}
+
+.player-link {
+  color: var(--portal-accent);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.player-link:hover {
+  color: #00f5a8;
+}
+
+.card-empty {
+  text-align: center;
+  padding: 1rem;
+  color: var(--portal-text);
+  font-size: 0.8rem;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--portal-border);
+}
+
+.pagination-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--portal-surface-elevated);
+  border: 1px solid var(--portal-border);
+  border-radius: 2px;
+  color: var(--portal-text);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--portal-accent-dim);
+  color: var(--portal-accent);
+  border-color: rgba(0, 229, 160, 0.3);
+}
+
+.pagination-btn--active {
+  background: var(--portal-accent);
+  color: var(--portal-bg);
+  border-color: var(--portal-accent);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>

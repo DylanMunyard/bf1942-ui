@@ -1,116 +1,55 @@
 <template>
-  <div class="space-y-4">
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm table-fixed">
+  <div class="rotation-table-wrap">
+    <div class="rotation-table-scroll">
+      <table class="rotation-table">
         <thead>
-          <tr class="text-slate-400 text-left border-b border-slate-700/50 whitespace-nowrap">
-            <th class="pb-2 pr-2 font-medium w-28">Map</th>
-            <th 
-              class="pb-2 px-2 font-medium text-right w-14 cursor-pointer hover:text-slate-300 transition-colors select-none"
+          <tr>
+            <th class="col-map">Map</th>
+            <th
+              class="col-play sortable"
               @click="handleSort('playTimePercentage')"
             >
-              <div class="flex items-center justify-end gap-1">
+              <div class="th-content">
                 <span>Play %</span>
-                <div class="flex flex-col items-center">
-                  <svg 
-                    v-if="sortColumn === 'playTimePercentage' && sortDirection === 'asc'"
-                    class="w-3 h-3 text-cyan-400" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                  </svg>
-                  <svg 
-                    v-else-if="sortColumn === 'playTimePercentage' && sortDirection === 'desc'"
-                    class="w-3 h-3 text-cyan-400" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                  <svg 
-                    v-else
-                    class="w-3 h-3 opacity-30" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                  </svg>
-                </div>
+                <svg v-if="sortColumn === 'playTimePercentage'" class="sort-icon" :class="{ 'sort-asc': sortDirection === 'asc' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
             </th>
-            <th class="pb-2 px-2 font-medium text-right w-14">Rounds</th>
-            <th 
-              class="pb-2 px-2 font-medium text-right w-12 hidden sm:table-cell cursor-pointer hover:text-slate-300 transition-colors select-none"
+            <th class="col-rounds">Rounds</th>
+            <th
+              class="col-avg sortable"
               @click="handleSort('avgConcurrentPlayers')"
             >
-              <div class="flex items-center justify-end gap-1">
+              <div class="th-content">
                 <span>Avg</span>
-                <div class="flex flex-col items-center">
-                  <svg 
-                    v-if="sortColumn === 'avgConcurrentPlayers' && sortDirection === 'asc'"
-                    class="w-3 h-3 text-cyan-400" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                  </svg>
-                  <svg 
-                    v-else-if="sortColumn === 'avgConcurrentPlayers' && sortDirection === 'desc'"
-                    class="w-3 h-3 text-cyan-400" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                  <svg 
-                    v-else
-                    class="w-3 h-3 opacity-30" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                  </svg>
-                </div>
+                <svg v-if="sortColumn === 'avgConcurrentPlayers'" class="sort-icon" :class="{ 'sort-asc': sortDirection === 'asc' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
             </th>
-            <th class="pb-2 pl-3 font-medium w-24 hidden md:table-cell">Win Stats</th>
+            <th class="col-win">Win Stats</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="map in sortedMapRotation"
             :key="map.mapName"
-            class="border-b border-slate-700/30 hover:bg-slate-700/20 cursor-pointer transition-colors"
             @click="emit('navigate', map.mapName)"
           >
-            <td class="py-2 pr-2">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="text-slate-200 truncate">{{ map.mapName }}</span>
-                <span class="text-cyan-400 text-xs flex-shrink-0">→</span>
+            <td class="col-map">
+              <div class="map-name">
+                <span>{{ map.mapName }}</span>
+                <span class="arrow">-></span>
               </div>
             </td>
-            <td class="py-2 px-2 text-right text-slate-300 tabular-nums">{{ map.playTimePercentage }}%</td>
-            <td class="py-2 px-2 text-right text-slate-400 tabular-nums">{{ map.totalRounds }}</td>
-            <td class="py-2 px-2 text-right text-slate-400 tabular-nums hidden sm:table-cell">{{ map.avgConcurrentPlayers }}</td>
-            <td class="py-2 pl-3 hidden md:table-cell">
-              <div class="h-2 rounded-full overflow-hidden bg-slate-700/50 flex">
-                <div
-                  class="bg-red-500"
-                  :style="{ width: `${map.winStats.team1WinPercentage}%` }"
-                  :title="`${map.winStats.team1Label}: ${map.winStats.team1WinPercentage}%`"
-                />
-                <div
-                  class="bg-blue-500"
-                  :style="{ width: `${map.winStats.team2WinPercentage}%` }"
-                  :title="`${map.winStats.team2Label}: ${map.winStats.team2WinPercentage}%`"
-                />
+            <td class="col-play">{{ map.playTimePercentage }}%</td>
+            <td class="col-rounds">{{ map.totalRounds }}</td>
+            <td class="col-avg">{{ map.avgConcurrentPlayers }}</td>
+            <td class="col-win">
+              <div class="win-bar">
+                <div class="win-bar-team1" :style="{ width: `${map.winStats.team1WinPercentage}%` }" :title="`${map.winStats.team1Label}: ${map.winStats.team1WinPercentage}%`" />
+                <div class="win-bar-team2" :style="{ width: `${map.winStats.team2WinPercentage}%` }" :title="`${map.winStats.team2Label}: ${map.winStats.team2WinPercentage}%`" />
               </div>
             </td>
           </tr>
@@ -119,44 +58,32 @@
     </div>
 
     <!-- Pagination Controls -->
-    <div
-      v-if="totalPages > 1"
-      class="flex items-center justify-between gap-4 pt-2 border-t border-slate-700/30"
-    >
-      <!-- Pagination Info -->
-      <div class="text-slate-400 text-sm">
+    <div v-if="totalPages > 1" class="pagination">
+      <div class="pagination-info">
         Showing {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, totalCount) }} of {{ totalCount }}
       </div>
 
-      <!-- Pagination Buttons -->
-      <div class="flex items-center gap-1">
-        <!-- Previous Page -->
+      <div class="pagination-controls">
         <button
-          class="px-2 py-1 text-xs font-medium bg-slate-700/50 border border-slate-600/50 text-slate-400 rounded transition-all hover:bg-slate-600 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="pagination-btn"
           :disabled="currentPage === 1 || isLoading"
           @click="emit('pageChange', currentPage - 1)"
         >
           Prev
         </button>
 
-        <!-- Page Numbers -->
         <button
           v-for="pageNum in paginationRange"
           :key="pageNum"
-          class="px-2 py-1 text-xs font-medium rounded transition-all min-w-[24px]"
-          :class="{
-            'bg-cyan-600/80 border border-cyan-500/50 text-white': pageNum === currentPage,
-            'bg-slate-700/50 border border-slate-600/50 text-slate-400 hover:bg-slate-600 hover:text-slate-200': pageNum !== currentPage
-          }"
+          :class="['pagination-btn', pageNum === currentPage && 'pagination-btn--active']"
           :disabled="isLoading"
           @click="emit('pageChange', pageNum)"
         >
           {{ pageNum }}
         </button>
 
-        <!-- Next Page -->
         <button
-          class="px-2 py-1 text-xs font-medium bg-slate-700/50 border border-slate-600/50 text-slate-400 rounded transition-all hover:bg-slate-600 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="pagination-btn"
           :disabled="currentPage === totalPages || isLoading"
           @click="emit('pageChange', currentPage + 1)"
         >
@@ -192,26 +119,22 @@ type SortDirection = 'asc' | 'desc';
 const sortColumn = ref<SortColumn>(null);
 const sortDirection = ref<SortDirection>('desc');
 
-// Handle column header click for sorting
 const handleSort = (column: 'playTimePercentage' | 'avgConcurrentPlayers') => {
   if (sortColumn.value === column) {
-    // Toggle direction if clicking the same column
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
   } else {
-    // Set new column and default to descending
     sortColumn.value = column;
     sortDirection.value = 'desc';
   }
 };
 
-// Sorted map rotation
 const sortedMapRotation = computed(() => {
   if (!sortColumn.value) {
     return props.mapRotation;
   }
 
   const sorted = [...props.mapRotation];
-  
+
   sorted.sort((a, b) => {
     let aValue: number;
     let bValue: number;
@@ -254,3 +177,201 @@ const paginationRange = computed(() => {
   return range;
 });
 </script>
+
+<style scoped>
+.rotation-table-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rotation-table-scroll {
+  overflow-x: auto;
+}
+
+.rotation-table {
+  width: 100%;
+  font-size: 0.8rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.rotation-table th {
+  text-align: left;
+  padding: 0.5rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--portal-accent);
+  font-family: ui-monospace, monospace;
+  border-bottom: 1px solid var(--portal-border);
+  white-space: nowrap;
+}
+
+.rotation-table th.col-play,
+.rotation-table th.col-rounds,
+.rotation-table th.col-avg {
+  text-align: right;
+}
+
+.rotation-table .sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.rotation-table .sortable:hover {
+  color: #00f5a8;
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.sort-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  transition: transform 0.2s;
+}
+
+.sort-icon.sort-asc {
+  transform: rotate(180deg);
+}
+
+.rotation-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--portal-border);
+  color: var(--portal-text-bright);
+}
+
+.rotation-table td.col-play {
+  text-align: right;
+  font-family: ui-monospace, monospace;
+}
+
+.rotation-table td.col-rounds,
+.rotation-table td.col-avg {
+  text-align: right;
+  color: var(--portal-text);
+  font-family: ui-monospace, monospace;
+}
+
+.rotation-table tbody tr {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rotation-table tbody tr:hover td {
+  background: var(--portal-accent-dim);
+}
+
+.col-map { width: 7rem; }
+.col-play { width: 3.5rem; }
+.col-rounds { width: 3.5rem; }
+.col-avg { width: 2.5rem; display: none; }
+.col-win { width: 6rem; display: none; }
+
+@media (min-width: 640px) {
+  .col-avg { display: table-cell; }
+}
+
+@media (min-width: 768px) {
+  .col-win { display: table-cell; }
+}
+
+.map-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.map-name span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrow {
+  color: var(--portal-accent);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.rotation-table tbody tr:hover .arrow {
+  opacity: 1;
+}
+
+.win-bar {
+  height: 0.375rem;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--portal-surface);
+  display: flex;
+}
+
+.win-bar-team1 {
+  background: #ef4444;
+}
+
+.win-bar-team2 {
+  background: #3b82f6;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--portal-border);
+}
+
+.pagination-info {
+  font-size: 0.75rem;
+  color: var(--portal-text);
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.pagination-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--portal-surface);
+  border: 1px solid var(--portal-border);
+  border-radius: 2px;
+  color: var(--portal-text);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--portal-accent-dim);
+  color: var(--portal-accent);
+  border-color: rgba(0, 229, 160, 0.3);
+}
+
+.pagination-btn--active {
+  background: var(--portal-accent);
+  color: var(--portal-bg);
+  border-color: var(--portal-accent);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>

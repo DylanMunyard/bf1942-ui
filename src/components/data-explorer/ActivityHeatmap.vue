@@ -1,21 +1,21 @@
 <template>
-  <div class="w-full">
+  <div class="heatmap">
     <!-- Day labels -->
-    <div class="flex">
-      <div class="w-10"></div>
-      <div class="flex-1 grid grid-cols-24 gap-px text-xs text-slate-500 text-center mb-1">
-        <span v-for="h in 24" :key="h" class="hidden sm:block">{{ (h - 1).toString().padStart(2, '0') }}</span>
+    <div class="heatmap-header">
+      <div class="heatmap-day-label"></div>
+      <div class="heatmap-hours">
+        <span v-for="h in 24" :key="h" class="heatmap-hour-label">{{ (h - 1).toString().padStart(2, '0') }}</span>
       </div>
     </div>
 
     <!-- Heatmap grid -->
-    <div v-for="day in days" :key="day.index" class="flex items-center gap-1 mb-px">
-      <div class="w-10 text-xs text-slate-500">{{ day.label }}</div>
-      <div class="flex-1 grid grid-cols-24 gap-px">
+    <div v-for="day in days" :key="day.index" class="heatmap-row">
+      <div class="heatmap-day-label">{{ day.label }}</div>
+      <div class="heatmap-cells">
         <div
           v-for="hour in 24"
           :key="hour"
-          class="aspect-square rounded-sm transition-all duration-200 hover:ring-2 hover:ring-cyan-400/50"
+          class="heatmap-cell"
           :style="{ backgroundColor: getCellColor(day.index, hour - 1) }"
           :title="getCellTooltip(day.index, hour - 1)"
         />
@@ -23,10 +23,10 @@
     </div>
 
     <!-- Legend -->
-    <div class="flex items-center justify-center gap-2 mt-3 text-xs text-slate-400">
+    <div class="heatmap-legend">
       <span>Quiet</span>
-      <div class="flex gap-px">
-        <div v-for="(color, i) in legendColors" :key="i" class="w-4 h-3 rounded-sm" :style="{ backgroundColor: color }" />
+      <div class="heatmap-legend-colors">
+        <div v-for="(color, i) in legendColors" :key="i" class="heatmap-legend-color" :style="{ backgroundColor: color }" />
       </div>
       <span>Busy</span>
     </div>
@@ -88,14 +88,14 @@ const maxPlayers = computed(() => {
   return Math.max(...props.patterns.map(p => p.avgPlayers), 1);
 });
 
-// Color scale for heatmap
+// Color scale for heatmap - using portal theme colors
 const legendColors = [
-  'rgb(30, 41, 59)', // slate-800
-  'rgb(51, 65, 85)', // slate-700
-  'rgb(6, 95, 70)', // emerald-800
-  'rgb(4, 120, 87)', // emerald-700
-  'rgb(5, 150, 105)', // emerald-600
-  'rgb(16, 185, 129)', // emerald-500
+  '#111118', // portal-surface-elevated
+  '#1a1a24', // portal-border
+  '#0d3d2d', // dark teal
+  '#0a5c45', // medium teal
+  '#07785c', // bright teal
+  '#00e5a0', // portal-accent
 ];
 
 const getCellColor = (dayOfWeek: number, hourOfDay: number): string => {
@@ -116,7 +116,86 @@ const getCellTooltip = (dayOfWeek: number, hourOfDay: number): string => {
 </script>
 
 <style scoped>
-.grid-cols-24 {
+.heatmap {
+  width: 100%;
+}
+
+.heatmap-header {
+  display: flex;
+  margin-bottom: 0.25rem;
+}
+
+.heatmap-day-label {
+  width: 2.5rem;
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  color: var(--portal-text);
+  font-family: ui-monospace, monospace;
+}
+
+.heatmap-hours {
+  flex: 1;
+  display: grid;
   grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.heatmap-hour-label {
+  text-align: center;
+  font-size: 0.5rem;
+  color: var(--portal-text);
+  font-family: ui-monospace, monospace;
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .heatmap-hour-label {
+    display: block;
+  }
+}
+
+.heatmap-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 1px;
+}
+
+.heatmap-cells {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  transition: box-shadow 0.2s;
+}
+
+.heatmap-cell:hover {
+  box-shadow: 0 0 0 2px var(--portal-accent-dim);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.65rem;
+  color: var(--portal-text);
+}
+
+.heatmap-legend-colors {
+  display: flex;
+  gap: 1px;
+}
+
+.heatmap-legend-color {
+  width: 1rem;
+  height: 0.75rem;
+  border-radius: 2px;
 }
 </style>

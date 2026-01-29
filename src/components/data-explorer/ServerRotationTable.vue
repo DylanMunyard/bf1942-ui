@@ -1,52 +1,35 @@
 <template>
-  <div class="overflow-x-auto">
-    <table class="w-full text-sm table-fixed">
+  <div class="server-table-wrap">
+    <table class="server-table">
       <thead>
-        <tr class="text-slate-400 text-left border-b border-slate-700/50 whitespace-nowrap">
-          <th class="pb-2 pr-2 font-medium">Server</th>
-          <th class="pb-2 px-2 font-medium text-center w-14">Status</th>
-          <th class="pb-2 px-2 font-medium text-right w-16">Rounds</th>
-          <th class="pb-2 pl-3 font-medium w-24 hidden sm:table-cell">Win Stats</th>
+        <tr>
+          <th class="col-server">Server</th>
+          <th class="col-status">Status</th>
+          <th class="col-rounds">Rounds</th>
+          <th class="col-win">Win Stats</th>
         </tr>
       </thead>
       <tbody>
         <tr
           v-for="server in servers"
           :key="server.serverGuid"
-          class="border-b border-slate-700/30 hover:bg-slate-700/20 cursor-pointer transition-colors"
           @click="emit('navigate', server.serverGuid)"
         >
-          <td class="py-2 pr-2">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="text-slate-200 truncate">{{ server.serverName }}</span>
-              <span class="text-xs px-1.5 py-0.5 bg-slate-700 rounded text-slate-400 flex-shrink-0">
-                {{ getGameLabel(server.game) }}
-              </span>
-              <span class="text-cyan-400 text-xs flex-shrink-0">→</span>
+          <td class="col-server">
+            <div class="server-name">
+              <span>{{ server.serverName }}</span>
+              <span class="game-tag">{{ getGameLabel(server.game) }}</span>
+              <span class="arrow">-></span>
             </div>
           </td>
-          <td class="py-2 px-2 text-center">
-            <div
-              :class="[
-                'inline-flex w-2.5 h-2.5 rounded-full',
-                server.isOnline ? 'bg-green-400 shadow-lg shadow-green-400/50' : 'bg-slate-500'
-              ]"
-              :title="server.isOnline ? 'Online' : 'Offline'"
-            />
+          <td class="col-status">
+            <div :class="['status-dot', server.isOnline ? 'status-dot--online' : 'status-dot--offline']" :title="server.isOnline ? 'Online' : 'Offline'" />
           </td>
-          <td class="py-2 px-2 text-right text-slate-400 tabular-nums">{{ server.totalRoundsOnMap }}</td>
-          <td class="py-2 pl-3 hidden sm:table-cell">
-            <div class="h-2 rounded-full overflow-hidden bg-slate-700/50 flex">
-              <div
-                class="bg-red-500"
-                :style="{ width: `${server.winStats.team1WinPercentage}%` }"
-                :title="`${server.winStats.team1Label}: ${server.winStats.team1WinPercentage}%`"
-              />
-              <div
-                class="bg-blue-500"
-                :style="{ width: `${server.winStats.team2WinPercentage}%` }"
-                :title="`${server.winStats.team2Label}: ${server.winStats.team2WinPercentage}%`"
-              />
+          <td class="col-rounds">{{ server.totalRoundsOnMap }}</td>
+          <td class="col-win">
+            <div class="win-bar">
+              <div class="win-bar-team1" :style="{ width: `${server.winStats.team1WinPercentage}%` }" :title="`${server.winStats.team1Label}: ${server.winStats.team1WinPercentage}%`" />
+              <div class="win-bar-team2" :style="{ width: `${server.winStats.team2WinPercentage}%` }" :title="`${server.winStats.team2Label}: ${server.winStats.team2WinPercentage}%`" />
             </div>
           </td>
         </tr>
@@ -75,3 +58,142 @@ const getGameLabel = (game: string): string => {
   }
 };
 </script>
+
+<style scoped>
+.server-table-wrap {
+  overflow-x: auto;
+}
+
+.server-table {
+  width: 100%;
+  font-size: 0.8rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.server-table th {
+  text-align: left;
+  padding: 0.5rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--portal-accent);
+  font-family: ui-monospace, monospace;
+  border-bottom: 1px solid var(--portal-border);
+  white-space: nowrap;
+}
+
+.server-table th.col-status {
+  text-align: center;
+}
+
+.server-table th.col-rounds {
+  text-align: right;
+}
+
+.server-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--portal-border);
+  color: var(--portal-text-bright);
+}
+
+.server-table td.col-status {
+  text-align: center;
+}
+
+.server-table td.col-rounds {
+  text-align: right;
+  color: var(--portal-text);
+  font-family: ui-monospace, monospace;
+}
+
+.server-table tbody tr {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.server-table tbody tr:hover td {
+  background: var(--portal-accent-dim);
+}
+
+.col-server { width: auto; }
+.col-status { width: 3.5rem; }
+.col-rounds { width: 4rem; }
+.col-win { width: 6rem; display: none; }
+
+@media (min-width: 640px) {
+  .col-win { display: table-cell; }
+}
+
+.server-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.server-name > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-tag {
+  flex-shrink: 0;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-family: ui-monospace, monospace;
+  background: var(--portal-surface);
+  border: 1px solid var(--portal-border);
+  border-radius: 2px;
+  color: var(--portal-text);
+}
+
+.arrow {
+  color: var(--portal-accent);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.server-table tbody tr:hover .arrow {
+  opacity: 1;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.status-dot--online {
+  background: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+}
+
+.status-dot--offline {
+  background: var(--portal-text);
+  opacity: 0.4;
+}
+
+.win-bar {
+  height: 0.375rem;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--portal-surface);
+  display: flex;
+}
+
+.win-bar-team1 {
+  background: #ef4444;
+}
+
+.win-bar-team2 {
+  background: #3b82f6;
+}
+</style>

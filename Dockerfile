@@ -1,6 +1,9 @@
 # Use Node.js as the base image
 FROM node:20-alpine AS build-stage
 
+# Accept build argument for Application Insights connection string
+ARG VITE_APPLICATIONINSIGHTS_CONNECTION_STRING
+
 # Set the working directory
 WORKDIR /app
 
@@ -13,8 +16,9 @@ RUN npm install
 # Copy the rest of the application code
 COPY .. .
 
-# Build the application
-RUN npm run build
+# Build the application with the build arg as an environment variable
+# Vite will replace import.meta.env.VITE_APPLICATIONINSIGHTS_CONNECTION_STRING at build time
+RUN VITE_APPLICATIONINSIGHTS_CONNECTION_STRING="${VITE_APPLICATIONINSIGHTS_CONNECTION_STRING}" npm run build
 
 # Production stage
 FROM nginx:stable-alpine AS production-stage

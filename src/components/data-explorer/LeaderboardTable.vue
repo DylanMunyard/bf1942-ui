@@ -1,42 +1,41 @@
 <template>
-  <div class="overflow-x-auto">
-    <table class="w-full text-sm">
+  <div class="leaderboard-table-wrap">
+    <table class="leaderboard-table">
       <thead>
-        <tr class="text-slate-400 text-left border-b border-slate-700/50">
-          <th class="pb-2 font-medium w-8">#</th>
-          <th class="pb-2 font-medium">Player</th>
-          <th class="pb-2 font-medium text-right">{{ primaryColumnHeader }}</th>
-          <th class="pb-2 font-medium text-right hidden sm:table-cell">Rounds</th>
+        <tr>
+          <th class="col-rank">#</th>
+          <th class="col-player">Player</th>
+          <th class="col-value">{{ primaryColumnHeader }}</th>
+          <th class="col-rounds">Rounds</th>
         </tr>
       </thead>
       <tbody>
         <tr
           v-for="(entry, index) in entries"
           :key="entry.playerName"
-          class="border-b border-slate-700/30 last:border-b-0"
         >
-          <td class="py-2">
+          <td class="col-rank">
             <span :class="getRankClass(index + 1)">{{ index + 1 }}</span>
           </td>
-          <td class="py-2 truncate max-w-[120px] sm:max-w-none">
+          <td class="col-player">
             <router-link
               :to="getPlayerDetailsRoute(entry.playerName)"
-              class="text-cyan-400 hover:text-cyan-300 transition-colors"
+              class="player-link"
             >
               {{ entry.playerName }}
             </router-link>
           </td>
-          <td class="py-2 text-right text-cyan-400 font-medium">
+          <td class="col-value">
             {{ formatPrimaryValue(entry) }}
           </td>
-          <td class="py-2 text-right text-slate-400 hidden sm:table-cell">
+          <td class="col-rounds">
             {{ entry.totalRounds }}
           </td>
         </tr>
       </tbody>
     </table>
 
-    <div v-if="entries.length === 0" class="text-center text-slate-500 py-4">
+    <div v-if="entries.length === 0" class="leaderboard-empty">
       No player data available
     </div>
   </div>
@@ -79,3 +78,102 @@ const formatPrimaryValue = (entry: LeaderboardEntry): string => {
 };
 
 </script>
+
+<style scoped>
+.leaderboard-table-wrap {
+  overflow-x: auto;
+}
+
+.leaderboard-table {
+  width: 100%;
+  font-size: 0.8rem;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--portal-accent);
+  font-family: ui-monospace, monospace;
+  border-bottom: 1px solid var(--portal-border);
+}
+
+.leaderboard-table th.col-value,
+.leaderboard-table th.col-rounds {
+  text-align: right;
+}
+
+.leaderboard-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--portal-border);
+  color: var(--portal-text-bright);
+}
+
+.leaderboard-table td.col-value {
+  text-align: right;
+  color: var(--portal-accent);
+  font-weight: 500;
+  font-family: ui-monospace, monospace;
+}
+
+.leaderboard-table td.col-rounds {
+  text-align: right;
+  color: var(--portal-text);
+}
+
+.leaderboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.leaderboard-table tbody tr:hover td {
+  background: var(--portal-accent-dim);
+}
+
+.col-rank {
+  width: 2rem;
+}
+
+.col-player {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .col-player {
+    max-width: none;
+  }
+}
+
+.col-rounds {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .col-rounds {
+    display: table-cell;
+  }
+}
+
+.player-link {
+  color: var(--portal-accent);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.player-link:hover {
+  color: #00f5a8;
+}
+
+.leaderboard-empty {
+  text-align: center;
+  padding: 1rem;
+  color: var(--portal-text);
+  font-size: 0.8rem;
+}
+</style>

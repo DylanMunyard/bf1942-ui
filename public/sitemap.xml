@@ -42,8 +42,7 @@
        from the tournament API and added to this sitemap via a backend service.
        Legacy /tournaments/:id URLs redirect to /t/:id for backwards compatibility -->
 
-  <!-- Round Report Pages -->
-  <!-- Note: Round report pages (/rounds/:id/report) are excluded from indexing via robots meta tag
-       and should not be added to the sitemap -->
+  <!-- Round Report Pages: EXCLUDED - Do not add /rounds/:roundId/report URLs.
+       Low value for search; disallowed in robots.txt and noindex in page meta. -->
 
 </urlset>

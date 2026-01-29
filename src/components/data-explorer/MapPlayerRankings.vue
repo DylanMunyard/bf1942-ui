@@ -1,56 +1,37 @@
 <template>
-  <div class="space-y-4">
+  <div class="rankings">
     <!-- Header with Search -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <h3 class="text-sm font-medium text-slate-300">
-          Top Players on This Map
-        </h3>
-        <!-- Inline refresh spinner -->
-        <div v-if="isRefreshing" class="flex items-center gap-1.5 text-slate-400">
-          <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+    <div class="rankings-header">
+      <div class="rankings-header-left">
+        <h3 class="rankings-title">Top Players on This Map</h3>
+        <div v-if="isRefreshing" class="rankings-spinner">
+          <div class="spinner"></div>
         </div>
       </div>
 
       <!-- Search Input -->
-      <div class="relative">
+      <div class="rankings-search">
+        <span class="search-icon">$</span>
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Search players..."
-          class="w-full sm:w-48 px-3 py-1.5 pl-8 text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20"
+          class="search-input"
           @input="handleSearchInput"
         />
-        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
       </div>
     </div>
 
     <!-- Tab Navigation -->
-    <div class="flex border-b border-slate-700/50">
+    <div class="rankings-tabs">
       <button
         v-for="tab in tabs"
         :key="tab.id"
         @click="selectTab(tab.id)"
         :disabled="isRefreshing"
-        :class="[
-          'px-4 py-2 text-sm font-medium transition-colors relative',
-          activeTab === tab.id
-            ? 'text-cyan-400'
-            : 'text-slate-400 hover:text-slate-200',
-          isRefreshing ? 'cursor-not-allowed opacity-60' : ''
-        ]"
+        :class="['rankings-tab', activeTab === tab.id && 'rankings-tab--active']"
       >
         {{ tab.label }}
-        <!-- Active indicator -->
-        <span
-          v-if="activeTab === tab.id"
-          class="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-400"
-        />
       </button>
     </div>
 
@@ -92,7 +73,7 @@ const tabs = [
 // Active tab state
 const activeTab = ref<MapRankingSortBy>('score');
 
-const activeTabConfig = computed(() => 
+const activeTabConfig = computed(() =>
   tabs.find(t => t.id === activeTab.value) || tabs[0]
 );
 
@@ -106,8 +87,8 @@ const pageSize = 10;
 
 // Rankings state (single leaderboard)
 const rankings = ref<MapPlayerRanking[]>([]);
-const isInitialLoading = ref(false);  // Only true when no data yet
-const isRefreshing = ref(false);       // True when refreshing with existing data
+const isInitialLoading = ref(false);
+const isRefreshing = ref(false);
 const error = ref<string | null>(null);
 const currentPage = ref(1);
 const totalPages = ref(0);
@@ -116,7 +97,6 @@ const totalCount = ref(0);
 const loadRankings = async () => {
   if (!props.mapName) return;
 
-  // Use initial loading only when we have no data yet
   if (rankings.value.length === 0) {
     isInitialLoading.value = true;
   } else {
@@ -178,13 +158,140 @@ watch(() => props.mapName, () => {
   currentPage.value = 1;
   searchQuery.value = '';
   debouncedSearch.value = '';
-  rankings.value = [];  // Clear data for new map (shows initial loading)
+  rankings.value = [];
   loadRankings();
 });
 
 watch(() => props.game, () => {
   currentPage.value = 1;
-  rankings.value = [];  // Clear data for new game
+  rankings.value = [];
   loadRankings();
 });
 </script>
+
+<style scoped>
+.rankings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rankings-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .rankings-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.rankings-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rankings-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--portal-text-bright);
+  margin: 0;
+}
+
+.rankings-spinner {
+  display: flex;
+  align-items: center;
+}
+
+.spinner {
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid var(--portal-border);
+  border-top-color: var(--portal-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.rankings-search {
+  position: relative;
+  width: 100%;
+  max-width: 12rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--portal-accent);
+  opacity: 0.7;
+  font-size: 0.75rem;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.35rem 0.5rem 0.35rem 1.5rem;
+  font-size: 0.8rem;
+  background: var(--portal-surface);
+  border: 1px solid var(--portal-border);
+  border-radius: 2px;
+  color: var(--portal-text-bright);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input::placeholder {
+  color: var(--portal-text);
+  opacity: 0.5;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--portal-accent);
+  box-shadow: 0 0 0 3px var(--portal-accent-dim);
+}
+
+.rankings-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--portal-border);
+}
+
+.rankings-tab {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--portal-text);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.rankings-tab:hover:not(:disabled) {
+  color: var(--portal-text-bright);
+}
+
+.rankings-tab--active {
+  color: var(--portal-accent);
+  border-bottom-color: var(--portal-accent);
+}
+
+.rankings-tab:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+</style>

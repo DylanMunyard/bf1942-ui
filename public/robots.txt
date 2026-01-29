@@ -13,6 +13,9 @@ Sitemap: https://bfstats.io/sitemap.xml
 Disallow: /api/
 Disallow: /*.json$
 
+# Round report pages - low value, avoid crawling
+Disallow: /rounds/*/report
+
 # Allow important pages
 Allow: /servers/
 Allow: /players/

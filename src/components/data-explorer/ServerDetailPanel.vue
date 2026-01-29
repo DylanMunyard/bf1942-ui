@@ -1,72 +1,58 @@
 <template>
-  <div class="p-6">
+  <div class="detail-content">
     <!-- Loading State -->
-    <div v-if="isLoading" class="space-y-4">
-      <div class="animate-pulse">
-        <div class="h-8 bg-slate-700/50 rounded w-1/3 mb-2"></div>
-        <div class="h-4 bg-slate-700/30 rounded w-1/4"></div>
-      </div>
-      <div class="h-32 bg-slate-700/30 rounded-lg animate-pulse"></div>
-      <div class="h-48 bg-slate-700/30 rounded-lg animate-pulse"></div>
+    <div v-if="isLoading" class="detail-loading">
+      <div class="detail-skeleton detail-skeleton--title"></div>
+      <div class="detail-skeleton detail-skeleton--subtitle"></div>
+      <div class="detail-skeleton detail-skeleton--block"></div>
+      <div class="detail-skeleton detail-skeleton--block-lg"></div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="text-center py-8">
-      <div class="text-red-400 mb-2">{{ error }}</div>
-      <button @click="loadData" class="text-cyan-400 hover:text-cyan-300 text-sm">
+    <div v-else-if="error" class="detail-error">
+      <div class="detail-error-text">{{ error }}</div>
+      <button @click="loadData" class="detail-retry">
         Try again
       </button>
     </div>
 
     <!-- Content -->
-    <div v-else-if="serverDetail" class="space-y-6">
+    <div v-else-if="serverDetail" class="detail-body">
       <!-- Header -->
-      <div>
-        <div class="flex items-center gap-3 mb-2">
+      <div class="detail-header">
+        <div class="detail-header-row">
           <div
-            :class="[
-              'w-3 h-3 rounded-full',
-              serverDetail.isOnline ? 'bg-green-400 shadow-lg shadow-green-400/50' : 'bg-slate-500'
-            ]"
+            :class="['detail-status', serverDetail.isOnline ? 'detail-status--online' : 'detail-status--offline']"
           />
           <router-link
             :to="`/servers/${encodeURIComponent(serverDetail.name)}`"
-            class="group/link text-2xl font-bold text-slate-200 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-cyan-400 hover:via-blue-400 hover:to-purple-400 transition-all duration-200"
+            class="detail-title-link"
             :title="`View server details for ${serverDetail.name}`"
           >
             {{ serverDetail.name }}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="inline ml-2 opacity-0 group-hover/link:opacity-100 transition-opacity"
-            >
-              <path d="m9 18 6-6-6-6" />
+            <svg class="detail-title-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" />
             </svg>
           </router-link>
         </div>
-        <div class="flex items-center gap-3 text-sm text-slate-400">
-          <span class="px-2 py-0.5 bg-slate-700 rounded">{{ getGameLabel(serverDetail.game) }}</span>
+        <div class="detail-meta">
+          <span class="detail-tag">{{ getGameLabel(serverDetail.game) }}</span>
           <span v-if="serverDetail.country">{{ serverDetail.country }}</span>
         </div>
       </div>
 
       <!-- Overall Win Stats -->
-      <div class="bg-slate-800/30 rounded-lg p-4">
-        <h3 class="text-sm font-medium text-slate-300 mb-3">Overall Win Statistics</h3>
-        <WinStatsBar :win-stats="serverDetail.overallWinStats" />
+      <div class="detail-section">
+        <h3 class="detail-section-title">OVERALL WIN STATISTICS</h3>
+        <div class="detail-card">
+          <WinStatsBar :win-stats="serverDetail.overallWinStats" />
+        </div>
       </div>
 
       <!-- Map Rotation -->
-      <div>
-        <h3 class="text-sm font-medium text-slate-300 mb-3">Map Rotation</h3>
-        <div class="bg-slate-800/30 rounded-lg p-4">
+      <div class="detail-section">
+        <h3 class="detail-section-title">MAP ROTATION</h3>
+        <div class="detail-card">
           <MapRotationTable
             :map-rotation="mapRotation"
             :current-page="mapRotationPage"
@@ -81,43 +67,41 @@
       </div>
 
       <!-- Activity Heatmap -->
-      <div v-if="serverDetail.activityPatterns.length > 0">
-        <h3 class="text-sm font-medium text-slate-300 mb-3">Activity Patterns (Local Time)</h3>
-        <div class="bg-slate-800/30 rounded-lg p-4">
+      <div v-if="serverDetail.activityPatterns.length > 0" class="detail-section">
+        <h3 class="detail-section-title">ACTIVITY PATTERNS (LOCAL TIME)</h3>
+        <div class="detail-card">
           <ActivityHeatmap :patterns="serverDetail.activityPatterns" />
         </div>
       </div>
 
       <!-- Per-Map Stats with Leaderboards -->
-      <div v-if="serverDetail.perMapStats.length > 0">
-        <h3 class="text-sm font-medium text-slate-300 mb-3">Top Players by Map</h3>
-        <div class="space-y-3">
+      <div v-if="serverDetail.perMapStats.length > 0" class="detail-section">
+        <h3 class="detail-section-title">TOP PLAYERS BY MAP</h3>
+        <div class="detail-accordions">
           <details
             v-for="mapStats in serverDetail.perMapStats.slice(0, 5)"
             :key="mapStats.mapName"
-            class="bg-slate-800/30 rounded-lg overflow-hidden group"
+            class="detail-accordion"
           >
-            <summary class="px-4 py-3 cursor-pointer hover:bg-slate-700/30 transition-colors flex items-center justify-between">
-              <span class="text-slate-200 font-medium">{{ mapStats.mapName }}</span>
-              <div class="flex items-center gap-3">
-                <span v-if="mapStats.topPlayers.length > 0" class="text-sm text-slate-400 group-open:hidden">
-                  <span class="text-yellow-400">#1</span>
+            <summary class="detail-accordion-header">
+              <span class="detail-accordion-title">{{ mapStats.mapName }}</span>
+              <div class="detail-accordion-meta">
+                <span v-if="mapStats.topPlayers.length > 0" class="detail-accordion-preview">
+                  <span class="detail-rank-1">#1</span>
                   <router-link
                     :to="getPlayerDetailsRoute(mapStats.topPlayers[0].playerName)"
-                    class="text-cyan-400 hover:text-cyan-300 transition-colors"
+                    class="detail-link"
                   >
                     {{ mapStats.topPlayers[0].playerName }}
                   </router-link>
                 </span>
-                <svg class="w-5 h-5 text-slate-400 transform transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="detail-accordion-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
             </summary>
-            <div class="px-4 pb-4 border-t border-slate-700/30">
-              <div class="mt-3">
-                <LeaderboardPreview :players="mapStats.topPlayers" />
-              </div>
+            <div class="detail-accordion-content">
+              <LeaderboardPreview :players="mapStats.topPlayers" />
             </div>
           </details>
         </div>
@@ -220,3 +204,255 @@ watch(() => props.serverGuid, () => {
   mapRotationPage.value = 1;
 });
 </script>
+
+<style scoped>
+.detail-content {
+  padding: 1.5rem;
+}
+
+.detail-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--portal-surface-elevated) 0%,
+    var(--portal-border) 50%,
+    var(--portal-surface-elevated) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 2px;
+}
+
+.detail-skeleton--title {
+  height: 2rem;
+  width: 33%;
+}
+
+.detail-skeleton--subtitle {
+  height: 1rem;
+  width: 25%;
+}
+
+.detail-skeleton--block {
+  height: 8rem;
+}
+
+.detail-skeleton--block-lg {
+  height: 12rem;
+}
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.detail-error {
+  text-align: center;
+  padding: 2rem;
+}
+
+.detail-error-text {
+  color: var(--portal-danger);
+  margin-bottom: 0.5rem;
+}
+
+.detail-retry {
+  font-size: 0.8rem;
+  color: var(--portal-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.detail-retry:hover {
+  color: #00f5a8;
+}
+
+.detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.detail-header {
+  margin-bottom: 0.5rem;
+}
+
+.detail-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.detail-status {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.detail-status--online {
+  background: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+}
+
+.detail-status--offline {
+  background: var(--portal-text);
+  opacity: 0.4;
+}
+
+.detail-title-link {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--portal-text-bright);
+  text-decoration: none;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-title-link:hover {
+  color: var(--portal-accent);
+}
+
+.detail-title-arrow {
+  width: 1rem;
+  height: 1rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.detail-title-link:hover .detail-title-arrow {
+  opacity: 1;
+}
+
+.detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--portal-text);
+}
+
+.detail-tag {
+  padding: 0.125rem 0.5rem;
+  background: var(--portal-surface-elevated);
+  border: 1px solid var(--portal-border);
+  border-radius: 2px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail-section-title {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--portal-accent);
+  margin: 0;
+  font-family: ui-monospace, monospace;
+}
+
+.detail-card {
+  background: var(--portal-surface-elevated);
+  border: 1px solid var(--portal-border);
+  border-radius: 2px;
+  padding: 1rem;
+}
+
+.detail-accordions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-accordion {
+  background: var(--portal-surface-elevated);
+  border: 1px solid var(--portal-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.detail-accordion-header {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.2s;
+  list-style: none;
+}
+
+.detail-accordion-header::-webkit-details-marker {
+  display: none;
+}
+
+.detail-accordion-header:hover {
+  background: var(--portal-accent-dim);
+}
+
+.detail-accordion-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--portal-text-bright);
+}
+
+.detail-accordion-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.detail-accordion-preview {
+  font-size: 0.8rem;
+  color: var(--portal-text);
+}
+
+.detail-accordion[open] .detail-accordion-preview {
+  display: none;
+}
+
+.detail-rank-1 {
+  color: #fbbf24;
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.detail-link {
+  color: var(--portal-accent);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.detail-link:hover {
+  color: #00f5a8;
+}
+
+.detail-accordion-arrow {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--portal-text);
+  transition: transform 0.2s;
+}
+
+.detail-accordion[open] .detail-accordion-arrow {
+  transform: rotate(180deg);
+}
+
+.detail-accordion-content {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--portal-border);
+}
+</style>

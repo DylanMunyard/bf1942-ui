@@ -35,3 +35,19 @@ npx playwright test  # Run E2E tests
 - `src/` - Vue 3 + TypeScript application
 - `e2e/` - Playwright E2E tests
 - `features/` - Feature documentation and design decisions
+
+## Jenkins Configuration
+
+### Application Insights Secret
+
+The Jenkins pipeline requires an Application Insights connection string to be configured as a Jenkins secret.
+
+**To add the secret:**
+
+1. Go to Jenkins → Manage Jenkins → Credentials
+2. Add a new "Secret text" credential with:
+   - **ID**: `bfstats-appi-connection-string`
+   - **Secret**: Your Application Insights connection string (format: `InstrumentationKey=xxx;IngestionEndpoint=https://xxx.in.applicationinsights.azure.com/;LiveEndpoint=https://xxx.livedata.monitor.azure.com/`)
+3. Save the credential
+
+The connection string is passed as a Docker build argument during the build process and baked into the frontend bundle at build time.

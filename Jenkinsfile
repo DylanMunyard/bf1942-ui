@@ -15,7 +15,10 @@ pipeline {
               }
               steps {
                 container('dind') {
-                  withCredentials([usernamePassword(credentialsId: 'jenkins-bf1942-stats-dockerhub-pat', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                  withCredentials([
+                    usernamePassword(credentialsId: 'jenkins-bf1942-stats-dockerhub-pat', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD'),
+                    string(credentialsId: 'bfstats-appi-connection-string', variable: 'APPINSIGHTS_CONNECTION_STRING')
+                  ]) {
                     sh '''
                       # Login to Docker Hub
                       echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
@@ -25,9 +28,11 @@ pipeline {
                       docker buildx use multiarch-builder-ui
 
                       # Build and push ARM64 image for UI with DinD optimizations
+                      # Pass Application Insights connection string as build arg
                       DOCKER_BUILDKIT=1 docker buildx build -f Dockerfile . \
                         --platform linux/arm64 \
                         --build-arg BUILDKIT_PROGRESS=plain \
+                        --build-arg VITE_APPLICATIONINSIGHTS_CONNECTION_STRING="${APPINSIGHTS_CONNECTION_STRING}" \
                         --load \
                         -t dylanmunyard/bfstats-ui:latest
 

@@ -1,6 +1,14 @@
 <template>
-  <div class="min-h-screen bg-slate-900">
-    <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
+  <div class="data-explorer">
+    <!-- Scanline overlay -->
+    <div class="scanlines" aria-hidden="true" />
+
+    <!-- Matrix rain background effect -->
+    <div class="matrix-bg" aria-hidden="true">
+      <div v-for="i in 20" :key="i" class="matrix-column" :style="{ left: `${i * 5}%`, animationDelay: `${Math.random() * 5}s` }" />
+    </div>
+
+    <div class="explorer-inner">
       <!-- Header -->
       <DataExplorerHeader
         v-model:mode="currentMode"
@@ -8,9 +16,9 @@
       />
 
       <!-- Content Area -->
-      <div class="flex flex-col lg:flex-row gap-6 mt-6">
+      <div class="explorer-layout">
         <!-- Master List (Left Panel) -->
-        <div class="w-full lg:w-2/5 xl:w-1/3 2xl:w-1/4">
+        <div class="explorer-sidebar">
           <MasterList
             :mode="currentMode"
             :search-query="debouncedSearchQuery"
@@ -21,7 +29,7 @@
         </div>
 
         <!-- Detail Panel (Right Panel) -->
-        <div class="flex-1">
+        <div class="explorer-main">
           <!-- Side-by-side layout for server-map view on large screens -->
           <Transition
             enter-active-class="transition-all duration-300 ease-out"
@@ -129,11 +137,11 @@
               </template>
               <!-- Empty State -->
               <template v-if="!selectedItem && !isServerMapView">
-                <div class="flex flex-col items-center justify-center h-64 text-slate-400">
-                  <div class="text-4xl mb-4">
-                    {{ modeEmoji }}
+                <div class="explorer-empty">
+                  <div class="explorer-empty-icon">
+                    {{ modeIcon }}
                   </div>
-                  <p class="text-lg">
+                  <p class="explorer-empty-title">
                     {{ emptyStateText }}
                   </p>
                 </div>
@@ -219,13 +227,13 @@ const selectedPlayerName = computed(() =>
   currentMode.value === 'players' ? selectedItem.value : null
 );
 
-// Mode emoji and text
-const modeEmoji = computed(() => {
+// Mode icon and text
+const modeIcon = computed(() => {
   switch (currentMode.value) {
-    case 'servers': return '🖥️';
-    case 'maps': return '🗺️';
-    case 'players': return '👤';
-    default: return '🖥️';
+    case 'servers': return '[ ]';
+    case 'maps': return '{ }';
+    case 'players': return '< >';
+    default: return '[ ]';
   }
 });
 
@@ -435,3 +443,5 @@ watch(currentMode, (newMode, oldMode) => {
   }
 });
 </script>
+
+<style scoped src="./DataExplorer.vue.css"></style>

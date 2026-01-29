@@ -1,27 +1,23 @@
 <template>
-  <div class="bg-slate-800/50 rounded-xl border border-slate-700/50 overflow-hidden">
-    <!-- List Header -->
-    <div class="px-4 py-3 border-b border-slate-700/50 bg-slate-800/30">
-      <div class="flex items-center justify-between">
-        <span class="text-slate-300 font-medium">
+  <div class="master-list">
+    <!-- Terminal-style Header -->
+    <div class="master-list-header">
+      <div class="master-list-header-row">
+        <span class="master-list-title">
+          <span class="title-icon">{{ modeIcon }}</span>
           {{ modeLabel }}
-          <span v-if="mode !== 'players' || players.length > 0" class="text-slate-500 text-sm ml-2">
-            ({{ filteredItems.length }})
+          <span v-if="mode !== 'players' || players.length > 0" class="master-list-count">
+            [{{ filteredItems.length }}]
           </span>
         </span>
 
         <!-- Game Toggle -->
-        <div class="flex items-center gap-1 bg-slate-900/50 rounded-lg p-0.5">
+        <div class="master-list-game-toggle">
           <button
             v-for="game in games"
             :key="game.id"
             @click="handleGameChange(game.id)"
-            :class="[
-              'px-2 py-1 rounded text-xs font-medium transition-all duration-200',
-              selectedGame === game.id
-                ? 'bg-slate-700 text-white'
-                : 'text-slate-400 hover:text-slate-200'
-            ]"
+            :class="['master-list-game-btn', selectedGame === game.id && 'master-list-game-btn--active']"
             :title="game.name"
           >
             {{ game.label }}
@@ -31,42 +27,39 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="p-4">
-      <div v-for="i in 8" :key="i" class="animate-pulse mb-3">
-        <div class="h-14 bg-slate-700/50 rounded-lg"></div>
+    <div v-if="isLoading" class="master-list-body">
+      <div v-for="i in 8" :key="i" class="master-list-skeleton">
+        <div class="master-list-skeleton-bar"></div>
       </div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="p-6 text-center">
-      <div class="text-red-400 mb-2">Failed to load data</div>
-      <button
-        @click="loadData"
-        class="text-cyan-400 hover:text-cyan-300 text-sm"
-      >
-        Try again
+    <div v-else-if="error" class="master-list-empty">
+      <div class="master-list-error">// ERROR: Failed to load data</div>
+      <button @click="loadData" class="master-list-retry">
+        $ retry --force
       </button>
     </div>
 
     <!-- Players Empty State (search-only mode) -->
-    <div v-else-if="mode === 'players' && players.length === 0" class="p-6 text-center text-slate-400">
-      <div class="text-3xl mb-2">👤</div>
-      <p v-if="!searchQuery || searchQuery.length < 3">
-        Enter at least 3 characters to search for players
+    <div v-else-if="mode === 'players' && players.length === 0" class="master-list-empty">
+      <div class="master-list-empty-icon">&lt;@&gt;</div>
+      <p v-if="!searchQuery || searchQuery.length < 3" class="master-list-empty-text">
+        // Enter at least 3 characters to search
       </p>
-      <p v-else>
-        No players found matching "{{ searchQuery }}"
+      <p v-else class="master-list-empty-text">
+        // No players found matching "{{ searchQuery }}"
       </p>
     </div>
 
     <!-- Empty State (servers/maps) -->
-    <div v-else-if="filteredItems.length === 0 && mode !== 'players'" class="p-6 text-center text-slate-400">
-      <div class="text-3xl mb-2">{{ mode === 'servers' ? '🖥️' : '🗺️' }}</div>
-      <p>No {{ mode }} found</p>
+    <div v-else-if="filteredItems.length === 0 && mode !== 'players'" class="master-list-empty">
+      <div class="master-list-empty-icon">{{ mode === 'servers' ? '{::}' : '[#]' }}</div>
+      <p class="master-list-empty-text">// No {{ mode }} found</p>
     </div>
 
     <!-- List -->
-    <div v-else class="max-h-[calc(100vh-280px)] overflow-y-auto">
+    <div v-else class="master-list-scroll">
       <template v-if="mode === 'servers'">
         <ServerListItem
           v-for="server in filteredServers"
@@ -76,14 +69,14 @@
           @click="emit('select', server.guid)"
         />
         <!-- Load More Button for Servers -->
-        <div v-if="hasMoreServers && !props.searchQuery" class="p-3">
+        <div v-if="hasMoreServers && !props.searchQuery" class="master-list-load-more">
           <button
             @click="loadMoreServers"
             :disabled="isLoadingMore"
-            class="w-full py-2 px-4 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            class="master-list-load-more-btn"
           >
-            <span v-if="isLoadingMore">Loading...</span>
-            <span v-else>Load More ({{ servers.length }} of {{ totalServerCount }})</span>
+            <span v-if="isLoadingMore">$ loading...</span>
+            <span v-else>$ load-more --count {{ totalServerCount - servers.length }}</span>
           </button>
         </div>
       </template>
@@ -157,12 +150,22 @@ const hasMoreServers = ref(false);
 const totalServerCount = ref(0);
 const SERVER_PAGE_SIZE = 50;
 
+// Mode icon
+const modeIcon = computed(() => {
+  switch (props.mode) {
+    case 'servers': return '{::}';
+    case 'maps': return '[#]';
+    case 'players': return '<@>';
+    default: return '[ ]';
+  }
+});
+
 // Mode label
 const modeLabel = computed(() => {
   switch (props.mode) {
-    case 'servers': return 'Servers';
-    case 'maps': return 'Maps';
-    case 'players': return 'Players';
+    case 'servers': return 'SERVERS';
+    case 'maps': return 'MAPS';
+    case 'players': return 'PLAYERS';
     default: return '';
   }
 });
@@ -310,3 +313,193 @@ watch(() => props.searchQuery, () => {
   }
 });
 </script>
+
+<style scoped>
+.master-list {
+  background: var(--bg-panel, #0d1117);
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.master-list:hover {
+  border-color: rgba(0, 255, 242, 0.2);
+  box-shadow: 0 0 20px rgba(0, 255, 242, 0.05);
+}
+
+.master-list-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color, #30363d);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+
+.master-list-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.master-list-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--neon-cyan, #00fff2);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.title-icon {
+  opacity: 0.7;
+}
+
+.master-list-count {
+  color: var(--text-secondary, #8b949e);
+  font-weight: 400;
+}
+
+.master-list-game-toggle {
+  display: flex;
+  gap: 0.125rem;
+  background: var(--bg-panel, #0d1117);
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 4px;
+  padding: 0.125rem;
+}
+
+.master-list-game-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-family: 'JetBrains Mono', monospace;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-secondary, #8b949e);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.master-list-game-btn:hover {
+  color: var(--text-primary, #e6edf3);
+}
+
+.master-list-game-btn--active {
+  background: rgba(0, 255, 242, 0.15);
+  color: var(--neon-cyan, #00fff2);
+  box-shadow: 0 0 10px rgba(0, 255, 242, 0.2);
+}
+
+.master-list-body {
+  padding: 1rem;
+}
+
+.master-list-skeleton {
+  margin-bottom: 0.75rem;
+}
+
+.master-list-skeleton-bar {
+  height: 3.5rem;
+  background: linear-gradient(
+    90deg,
+    var(--bg-card, #161b22) 0%,
+    var(--border-color, #30363d) 50%,
+    var(--bg-card, #161b22) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.master-list-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.master-list-empty-icon {
+  font-size: 1.5rem;
+  color: var(--neon-cyan, #00fff2);
+  opacity: 0.5;
+  margin-bottom: 0.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  text-shadow: 0 0 10px rgba(0, 255, 242, 0.3);
+}
+
+.master-list-empty-text {
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-secondary, #8b949e);
+  margin: 0;
+}
+
+.master-list-error {
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--neon-red, #ff3131);
+  margin-bottom: 0.75rem;
+}
+
+.master-list-retry {
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--neon-cyan, #00fff2);
+  background: none;
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.master-list-retry:hover {
+  background: rgba(0, 255, 242, 0.1);
+  border-color: var(--neon-cyan, #00fff2);
+  box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+}
+
+.master-list-scroll {
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
+}
+
+.master-list-load-more {
+  padding: 0.75rem;
+}
+
+.master-list-load-more-btn {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-card, #161b22);
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 4px;
+  color: var(--text-secondary, #8b949e);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.master-list-load-more-btn:hover:not(:disabled) {
+  background: rgba(0, 255, 242, 0.1);
+  color: var(--neon-cyan, #00fff2);
+  border-color: rgba(0, 255, 242, 0.3);
+  box-shadow: 0 0 10px rgba(0, 255, 242, 0.2);
+}
+
+.master-list-load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>
