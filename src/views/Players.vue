@@ -2,9 +2,9 @@
   <div class="min-h-screen bg-neutral-950">
     <!-- Hero Section -->
     <div class="w-full bg-neutral-900 border-b border-neutral-700">
-      <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-8">
+      <div class="w-full max-w-screen-2xl mx-auto px-0 sm:px-8 lg:px-12 py-8">
         <!-- Search Form -->
-        <form class="flex justify-center" @submit.prevent="executeSearch">
+        <form class="flex justify-center px-4 sm:px-0" @submit.prevent="executeSearch">
           <div class="relative w-full max-w-xl">
             <!-- Search Icon -->
             <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-8">
+    <div class="w-full max-w-screen-2xl mx-auto px-0 sm:px-8 lg:px-12 py-8">
       <PlayersPage
         ref="playersPageRef"
         :search-query="activeSearchQuery"

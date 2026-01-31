@@ -491,9 +491,11 @@ const getTierDotClass = (tier: string): string => {
   <div class="min-h-screen bg-neutral-950">
     <!-- Hero Section -->
     <div class="w-full bg-neutral-900 border-b border-neutral-700">
-      <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12">
-        <HeroBackButton :fallback-route="`/players/${encodeURIComponent(playerName)}`" />
-        <div class="py-6 sm:py-8">
+      <div class="w-full max-w-screen-2xl mx-auto px-0 sm:px-8 lg:px-12">
+        <div class="px-4 sm:px-0">
+          <HeroBackButton :fallback-route="`/players/${encodeURIComponent(playerName)}`" />
+        </div>
+        <div class="py-6 sm:py-8 px-4 sm:px-0">
           <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
             <!-- Achievement Trophy Avatar -->
             <div class="flex-shrink-0">
@@ -578,7 +580,7 @@ const getTierDotClass = (tier: string): string => {
     <!-- Main Content Area -->
     <div class="min-h-screen bg-neutral-950">
       <div class="relative py-6 sm:py-8">
-        <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12">
+        <div class="w-full max-w-screen-2xl mx-auto px-2 sm:px-8 lg:px-12">
           <div
             v-if="(!isLoading && achievements.length > 0) || (isLoading && achievements.length > 0)"
             class="bg-neutral-950 rounded-lg border border-neutral-700 p-6"

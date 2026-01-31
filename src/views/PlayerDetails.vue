@@ -621,12 +621,12 @@ onUnmounted(() => {
 <template>
   <!-- Full-width Hero Section -->
   <div class="w-full bg-neutral-900 border-b border-neutral-800">
-    <div class="w-full px-4 sm:px-8 lg:px-12 py-6">
-      <div class="flex items-center justify-between mb-6">
+    <div class="w-full px-0 sm:px-8 lg:px-12 py-6">
+      <div class="flex items-center justify-between mb-6 px-4 sm:px-0">
         <HeroBackButton fallback-route="/players" />
       </div>
       
-      <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8">
+      <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8 px-4 sm:px-0">
         <!-- Player Avatar Section (hidden on mobile) -->
         <div class="hidden lg:block flex-shrink-0">
           <div class="relative group cursor-pointer" @click="showLastOnline = !showLastOnline">
@@ -806,7 +806,7 @@ onUnmounted(() => {
     >
       <div class="flex-1 min-w-0">
         <div class="relative">
-          <div class="w-full px-4 sm:px-8 lg:px-12 py-6">
+          <div class="w-full px-0 sm:px-8 lg:px-12 py-6">
         <!-- Loading State -->
         <div
           v-if="isLoading"
@@ -880,11 +880,11 @@ onUnmounted(() => {
         <!-- Main Content -->
         <div
           v-else-if="playerStats"
-          class="w-full px-3 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
+          class="w-full px-2 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
         >
           <!-- Data Explorer Call-to-Action Section -->
           <div class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden">
-            <div class="p-6">
+            <div class="p-3 sm:p-6">
               <div class="flex flex-col lg:flex-row items-center gap-6">
                 <!-- Data Explorer Image -->
                 <div class="flex-shrink-0">
@@ -943,7 +943,7 @@ onUnmounted(() => {
                 View All Sessions
               </router-link>
             </div>
-            <div class="p-6">
+            <div class="p-3 sm:p-6">
               <PlayerRecentSessions
                 :sessions="playerStats.recentSessions"
               />
@@ -955,7 +955,7 @@ onUnmounted(() => {
             v-if="playerStats?.bestScores && (playerStats.bestScores.allTime?.length > 0 || playerStats.bestScores.last30Days?.length > 0 || playerStats.bestScores.thisWeek?.length > 0)"
             class="relative bg-neutral-900/80 rounded-xl border border-neutral-700/50 mt-8"
           >
-            <div class="relative z-10 p-4 sm:p-6 lg:p-8 space-y-4">
+            <div class="relative z-10 p-2 sm:p-6 lg:p-8 space-y-4">
               <!-- Sleek, minimal header -->
               <div class="flex items-center justify-between">
                 <h3 class="text-xl font-bold text-neutral-200">Best Scores This Week</h3>
@@ -1032,7 +1032,7 @@ onUnmounted(() => {
             <!-- Hero strip: rankings at a glance -->
             <div
               v-if="rankingsSummary"
-              class="player-servers-hero flex flex-wrap items-center gap-4 sm:gap-6 px-6 py-4 border-b border-neutral-700/50 bg-neutral-800/40"
+              class="player-servers-hero flex flex-wrap items-center gap-4 sm:gap-6 px-3 sm:px-6 py-4 border-b border-neutral-700/50 bg-neutral-800/40"
             >
               <div class="flex items-center gap-2">
                 <span class="rankings-hero-accent font-mono">◆</span>
@@ -1058,7 +1058,7 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div class="p-6 space-y-6">
+            <div class="p-3 sm:p-6 space-y-6">
               <!-- Favourite Battlefields: compact strip (only when player has servers) -->
               <div v-if="hasServers">
                 <h3 class="text-lg font-bold text-neutral-200 mb-1 flex items-center gap-2">
@@ -1176,7 +1176,7 @@ onUnmounted(() => {
           <div class="relative overflow-hidden bg-neutral-900/80 rounded-2xl border border-neutral-700/50 mt-8">
             <!-- Background Effects (subtle dark theme accent) -->
             <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
-            <div class="relative z-10 p-8 space-y-6">
+            <div class="relative z-10 p-3 sm:p-8 space-y-6">
               <!-- Section Header -->
               <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div class="space-y-2">
@@ -1244,7 +1244,7 @@ onUnmounted(() => {
           :class="{ 'h-[calc(100vh-4rem)]': true, 'md:h-full': true, 'mt-16': true, 'md:mt-0': true }"
         >
           <!-- Header -->
-          <div class="sticky top-0 z-20 bg-neutral-950/95 border-b border-neutral-800 p-4 flex justify-between items-center">
+          <div class="sticky top-0 z-20 bg-neutral-950/95 border-b border-neutral-800 p-2 sm:p-4 flex justify-between items-center">
             <div class="flex flex-col min-w-0 flex-1 mr-4">
               <h2 class="text-xl font-bold text-neutral-200 truncate">
                 Map Performance

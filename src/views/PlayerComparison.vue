@@ -394,8 +394,8 @@ const closeMilestoneAchievementsModal = () => {
   <div class="min-h-screen bg-neutral-950">
     <!-- Header Section -->
     <div class="bg-neutral-900 border-b border-neutral-700">
-      <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-6">
-        <div class="text-center mb-8">
+      <div class="w-full max-w-screen-2xl mx-auto px-0 sm:px-8 lg:px-12 py-6">
+        <div class="text-center mb-8 px-4 sm:px-0">
           <h1 class="text-3xl md:text-4xl font-bold text-cyan-400 mb-2">
             Player Comparison
           </h1>
@@ -406,7 +406,7 @@ const closeMilestoneAchievementsModal = () => {
         
         <!-- Search Form -->
         <div 
-          class="flex flex-col lg:flex-row items-center justify-center gap-6 max-w-4xl mx-auto"
+          class="flex flex-col lg:flex-row items-center justify-center gap-6 max-w-4xl mx-auto px-4 sm:px-0"
           @click="hideDropdowns"
         >
           <!-- Player 1 Input with Search -->
@@ -559,7 +559,7 @@ const closeMilestoneAchievementsModal = () => {
     <!-- Comparison Results -->
     <div
       v-if="comparisonData"
-      class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-6 space-y-8"
+      class="w-full max-w-screen-2xl mx-auto px-2 sm:px-8 lg:px-12 py-6 space-y-8"
     >
       <!-- Common Servers Selector -->
       <CommonServersSelector

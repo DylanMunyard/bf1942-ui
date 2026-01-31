@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen bg-neutral-950 px-3 sm:px-6"
+    class="min-h-screen bg-neutral-950 px-0 sm:px-6"
     @click="closeAllModals"
   >
     <div
@@ -10,7 +10,7 @@
       <!-- Main Server Table -->
       <div class="flex-1 min-w-0 w-full">
         <!-- Header -->
-        <div class="sticky top-0 z-20 bg-neutral-950/95 backdrop-blur-sm border-b border-neutral-700/50 p-3">
+        <div class="sticky top-0 z-20 bg-neutral-950/95 backdrop-blur-sm border-b border-neutral-700/50 p-1 sm:p-3">
           <!-- Mobile: Player Search Full Width -->
           <div class="block lg:hidden w-full mb-4">
             <PlayerSearch
@@ -47,7 +47,7 @@
         </div>
 
         <!-- Mobile: Game Filter Buttons (Above Table) -->
-        <div class="block lg:hidden p-3 border-b border-neutral-700/30">
+        <div class="block lg:hidden p-2 sm:p-3 border-b border-neutral-700/30">
           <GameFilterButtons
             :game-types="gameTypes"
             :active-filter="activeFilter"
