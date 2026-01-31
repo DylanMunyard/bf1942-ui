@@ -391,16 +391,16 @@ const closeMilestoneAchievementsModal = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-900">
+  <div class="min-h-screen bg-neutral-950">
     <!-- Header Section -->
-    <div class="bg-gradient-to-r from-slate-800/60 to-slate-900/60 backdrop-blur-lg border-b border-slate-700/50">
-      <div class="max-w-7xl mx-auto p-6">
+    <div class="bg-neutral-900 border-b border-neutral-700">
+      <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-6">
         <div class="text-center mb-8">
-          <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4">
+          <h1 class="text-3xl md:text-4xl font-bold text-cyan-400 mb-2">
             Player Comparison
           </h1>
-          <p class="text-slate-400 text-lg">
-            Compare two players' statistics and performance side-by-side
+          <p class="text-neutral-400 text-sm">
+            Compare statistics side-by-side
           </p>
         </div>
         
@@ -436,7 +436,7 @@ const closeMilestoneAchievementsModal = () => {
           <!-- Compare Button -->
           <button
             :disabled="isLoading || !player1Input.trim() || !player2Input.trim()"
-            class="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-700 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-purple-500/25 disabled:shadow-none disabled:cursor-not-allowed flex-shrink-0"
+            class="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-neutral-700 disabled:to-neutral-700 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-purple-500/25 disabled:shadow-none disabled:cursor-not-allowed flex-shrink-0"
             @click="handleCompare"
           >
             <span
@@ -464,7 +464,7 @@ const closeMilestoneAchievementsModal = () => {
     >
       <div class="text-center space-y-6">
         <div class="relative flex items-center justify-center">
-          <div class="w-20 h-20 border-4 border-slate-700 rounded-full animate-spin" />
+          <div class="w-20 h-20 border-4 border-neutral-700 rounded-full animate-spin" />
           <div class="absolute w-20 h-20 border-4 border-purple-500 rounded-full border-t-transparent animate-spin" />
           <div class="absolute w-8 h-8 bg-gradient-to-r from-purple-400 to-blue-500 rounded-full animate-pulse" />
         </div>
@@ -547,10 +547,10 @@ const closeMilestoneAchievementsModal = () => {
             <path d="m17 8 5 5" />
           </svg>
         </div>
-        <div class="text-xl font-medium text-slate-300">
+        <div class="text-xl font-medium text-neutral-300">
           Enter two player names above and click "Compare" to see their stats side-by-side.
         </div>
-        <div class="text-sm text-slate-400">
+        <div class="text-sm text-neutral-400">
           Compare performance metrics, activity patterns, and head-to-head encounters between any two players.
         </div>
       </div>
@@ -559,7 +559,7 @@ const closeMilestoneAchievementsModal = () => {
     <!-- Comparison Results -->
     <div
       v-if="comparisonData"
-      class="max-w-7xl mx-auto p-6 space-y-8"
+      class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-6 space-y-8"
     >
       <!-- Common Servers Selector -->
       <CommonServersSelector

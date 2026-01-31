@@ -38,7 +38,7 @@
       />
 
       <!-- Content -->
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12 space-y-8">
+      <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 mt-8 sm:mt-12 space-y-8">
         <!-- Registration Section (for authenticated users) -->
         <div v-if="isAuthenticated && registrationStatus">
           <!-- Already on a team - show registered status with manage option -->

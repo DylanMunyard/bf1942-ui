@@ -2,14 +2,14 @@
   <!-- Desktop: Hover Overlay -->
   <div 
     v-if="showOverlay && !isMobile"
-    class="absolute left-1/2 transform -translate-x-1/2 w-80 bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-2xl transition-all duration-300 z-50 pointer-events-none"
+    class="absolute left-1/2 transform -translate-x-1/2 w-80 bg-neutral-800 border border-neutral-600 rounded-lg p-4 shadow-2xl transition-all duration-300 z-50 pointer-events-none"
     :class="[overlayClass, openUpward ? 'bottom-full mb-2' : 'top-full mt-2']"
   >
     <div class="space-y-3">
       <!-- Forecast Bars -->
       <div class="space-y-2">
         <!-- Bars container -->
-        <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-32">
+        <div class="flex items-end justify-center gap-1 bg-neutral-800/30 rounded-lg p-4 h-32">
           <div 
             v-for="(entry, index) in hourlyTimeline" 
             :key="index"
@@ -37,7 +37,7 @@
             <!-- Time label -->
             <div
               class="text-xs font-mono text-center transition-colors duration-300"
-              :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'"
+              :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-neutral-400'"
             >
               {{ formatTimelineTimeLabel(entry) }}
             </div>
@@ -51,7 +51,7 @@
               </div>
               <div
                 v-else
-                class="text-slate-300 font-semibold"
+                class="text-neutral-300 font-semibold"
               >
                 {{ Math.round(entry.typicalPlayers) }}
               </div>
@@ -65,7 +65,7 @@
         v-if="currentStatus"
         class="flex items-center justify-center gap-3"
       >
-        <div class="text-xs text-slate-400 text-center">
+        <div class="text-xs text-neutral-400 text-center">
           {{ currentStatus }}
         </div>
       </div>
@@ -79,7 +79,7 @@
     @click.stop.prevent="$emit('close')"
   >
     <div 
-      class="bg-slate-800 border border-slate-600 rounded-lg p-6 w-full max-w-sm shadow-2xl"
+      class="bg-neutral-800 border border-neutral-600 rounded-lg p-6 w-full max-w-sm shadow-2xl"
       @click.stop
     >
       <div class="space-y-4">
@@ -89,7 +89,7 @@
             Activity Forecast
           </h3>
           <button 
-            class="text-slate-400 hover:text-white transition-colors"
+            class="text-neutral-400 hover:text-white transition-colors"
             @click.stop.prevent="$emit('close')"
           >
             <svg
@@ -111,7 +111,7 @@
         <!-- Current Status -->
         <div
           v-if="currentStatus"
-          class="text-sm text-slate-400"
+          class="text-sm text-neutral-400"
         >
           {{ currentStatus }}
         </div>
@@ -119,7 +119,7 @@
         <!-- Forecast Bars -->
         <div class="space-y-2">
           <!-- Bars container -->
-          <div class="flex items-end justify-center gap-1 bg-slate-800/30 rounded-lg p-4 h-28">
+          <div class="flex items-end justify-center gap-1 bg-neutral-800/30 rounded-lg p-4 h-28">
             <div 
               v-for="(entry, index) in hourlyTimeline" 
               :key="index"
@@ -146,7 +146,7 @@
               <!-- Time label -->
               <div
                 class="text-xs font-mono text-center"
-                :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-slate-400'"
+                :class="entry.isCurrentHour ? 'text-cyan-400 font-bold' : 'text-neutral-400'"
               >
                 {{ formatTimelineTimeLabel(entry) }}
               </div>
@@ -160,7 +160,7 @@
                 </div>
                 <div
                   v-else
-                  class="text-slate-300 font-semibold"
+                  class="text-neutral-300 font-semibold"
                 >
                   {{ Math.round(entry.typicalPlayers) }}
                 </div>

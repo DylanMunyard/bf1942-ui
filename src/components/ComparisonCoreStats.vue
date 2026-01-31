@@ -27,8 +27,8 @@ const calculateDelta = (value1: number, value2: number, decimals: number = 0): s
 <template>
   <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
     <div class="p-6 border-b border-slate-700/50">
-      <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-400 flex items-center gap-3">
-        📊 Core Statistics
+      <h3 class="text-2xl font-bold text-cyan-400 flex items-center gap-3">
+        Core Statistics
       </h3>
     </div>
     <div class="p-6">

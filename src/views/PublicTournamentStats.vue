@@ -19,7 +19,7 @@
         :logo-image-url="logoImageUrl"
       />
 
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12">
+      <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 mt-8 sm:mt-12">
         <div class="text-center py-20">
           <div class="text-6xl mb-6 opacity-50">📊</div>
           <h3 class="text-2xl font-bold mb-3" :style="{ color: getTextColor() }">Stats Coming Soon</h3>

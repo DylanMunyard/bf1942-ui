@@ -825,12 +825,11 @@ const updatePageTitle = () => {
 </script>
 
 <template>
-  <div class="min-h-screen">
-    <!-- Animated background elements -->
-    <div class="absolute inset-0 overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10" />
-      <div class="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse" />
-      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
+  <div class="min-h-screen bg-slate-900">
+    <!-- Subtle animated background elements -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/3 rounded-full blur-3xl animate-pulse" />
+      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/3 rounded-full blur-3xl animate-pulse delay-1000" />
     </div>
 
     <div class="relative z-10 p-6">
@@ -869,8 +868,8 @@ const updatePageTitle = () => {
           
           <!-- Main Content -->
           <div class="flex-1 min-w-0 text-center">
-            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-6">
-              🗺️ {{ roundReport.round.mapName }}
+            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-cyan-400 mb-6">
+              {{ roundReport.round.mapName }}
             </h1>
             
             <!-- Unified Round Info Section -->
@@ -914,7 +913,7 @@ const updatePageTitle = () => {
                     <div class="text-xl font-bold text-slate-300 mb-1">
                       VS
                     </div>
-                    <div class="w-8 h-px bg-gradient-to-r from-blue-400 via-purple-400 to-red-400" />
+                    <div class="w-8 h-px bg-slate-600" />
                   </div>
                   
                   <div class="text-center">

@@ -1,26 +1,26 @@
 <template>
-  <div class="space-y-4 border-t border-slate-700/50 pt-6 mt-6">
+  <div class="space-y-4 border-t border-neutral-700/50 pt-6 mt-6">
     <!-- Insights Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <div class="w-1 h-6 bg-gradient-to-b from-cyan-400 to-purple-400 rounded-full"></div>
-        <h4 class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
+        <div class="w-1 h-6 bg-cyan-400 rounded-full opacity-80"></div>
+        <h4 class="text-sm font-bold uppercase tracking-wide text-cyan-400 font-mono">
           Performance Insights
         </h4>
       </div>
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="flex items-center justify-center py-8">
-      <div class="flex items-center gap-3 text-slate-400">
-        <div class="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-        <span class="text-sm">Analyzing your battlefield performance...</span>
+    <div v-if="loading" class="flex items-center justify-center py-6">
+      <div class="flex items-center gap-3 text-neutral-400">
+        <div class="w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+        <span class="text-xs font-mono">Analyzing performance...</span>
       </div>
     </div>
 
     <!-- No Insights State -->
-    <div v-else-if="serversWithInsights.length === 0" class="text-center py-8 text-slate-400 text-sm">
-      <p>Not enough data to generate insights yet. Keep playing to unlock performance insights!</p>
+    <div v-else-if="serversWithInsights.length === 0" class="text-center py-6 text-neutral-500 text-xs">
+      <p>Keep playing to unlock performance insights.</p>
     </div>
 
     <!-- Servers with Insights -->
@@ -28,21 +28,14 @@
       <div
         v-for="serverData in serversWithInsights"
         :key="serverData.server.serverGuid"
-        class="group relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl border transition-all duration-300 hover:scale-[1.01]"
-        :class="getServerPerformanceIndicator(serverData.server)?.borderColor || 'border-slate-700/50 hover:border-blue-500/50'"
+        class="group relative overflow-hidden bg-neutral-800/60 backdrop-blur-sm rounded-lg border border-neutral-700/50 hover:border-cyan-500/30 transition-all duration-200"
       >
-        <!-- Background Effects -->
-        <div 
-          class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          :class="getServerPerformanceIndicator(serverData.server)?.color || 'bg-gradient-to-br from-blue-500/5 to-purple-500/5'"
-        />
-        
         <div class="relative z-10 p-4">
           <!-- Condensed Server Bar Header -->
           <div class="flex items-center gap-4 mb-4">
             <!-- Game Icon -->
             <div class="flex-shrink-0">
-              <div class="w-14 h-14 bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg p-2.5 group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
+              <div class="w-12 h-12 bg-neutral-700 rounded-lg p-2 group-hover:bg-neutral-600 transition-all">
                 <img
                   :src="getGameIcon(serverData.server.gameId)"
                   alt="Server"
@@ -56,37 +49,36 @@
               <div class="flex items-center gap-2 mb-1.5">
                 <router-link
                   :to="`/servers/${encodeURIComponent(serverData.server.serverName)}`"
-                  class="font-bold text-white hover:text-cyan-400 transition-colors duration-200 truncate text-lg"
+                  class="font-bold text-slate-200 hover:text-cyan-400 transition-colors truncate text-base"
                   :title="`View server details for ${serverData.server.serverName}`"
                 >
                   {{ serverData.server.serverName }}
                 </router-link>
-                <span class="flex-shrink-0 px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full">
+                <span class="flex-shrink-0 px-2 py-0.5 text-xs font-bold bg-neutral-600 text-slate-200 rounded font-mono">
                   {{ serverData.server.gameId.toUpperCase() }}
                 </span>
                 <!-- Performance Badge -->
                 <div
                   v-if="getServerPerformanceIndicator(serverData.server)"
-                  class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold backdrop-blur-sm border"
+                  class="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold border"
                   :class="getServerPerformanceIndicator(serverData.server)?.color + ' ' + getServerPerformanceIndicator(serverData.server)?.borderColor"
                 >
                   <div class="w-1.5 h-1.5 rounded-full"
                        :class="{
-                         'bg-green-400': getServerPerformanceIndicator(serverData.server)?.type === 'excellent',
-                         'bg-blue-400': getServerPerformanceIndicator(serverData.server)?.type === 'good',
+                         'bg-emerald-400': getServerPerformanceIndicator(serverData.server)?.type === 'excellent',
+                         'bg-cyan-400': getServerPerformanceIndicator(serverData.server)?.type === 'good',
                          'bg-amber-400': getServerPerformanceIndicator(serverData.server)?.type === 'below'
                        }">
                   </div>
-                  <span class="text-white">{{ getServerPerformanceIndicator(serverData.server)?.label }}</span>
+                  <span class="text-slate-200">{{ getServerPerformanceIndicator(serverData.server)?.label }}</span>
                 </div>
               </div>
               
               <!-- Compact Stats Row -->
               <div class="flex items-center gap-4 text-xs flex-wrap">
                 <div class="flex items-center gap-1">
-                  <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                  <span class="text-green-400 font-semibold">{{ Number(serverData.server.kdRatio).toFixed(2) }}</span>
-                  <span class="text-slate-500">K/D</span>
+                  <span class="text-emerald-400 font-mono font-semibold">{{ Number(serverData.server.kdRatio).toFixed(2) }}</span>
+                  <span class="text-neutral-500">K/D</span>
                   <span
                     v-if="overallAverages && Number(overallAverages.kdRatio) > 0"
                     class="text-xs px-1 py-0.5 rounded ml-1"
@@ -96,28 +88,23 @@
                   </span>
                 </div>
                 <div class="flex items-center gap-1">
-                  <div class="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                  <span class="text-blue-400 font-semibold">{{ serverData.server.totalRounds }}</span>
-                  <span class="text-slate-500">rounds</span>
+                  <span class="text-cyan-400 font-mono font-semibold">{{ serverData.server.totalRounds }}</span>
+                  <span class="text-neutral-500">rounds</span>
                 </div>
                 <div class="flex items-center gap-1">
-                  <div class="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                  <span class="text-purple-400 font-semibold">{{ serverData.server.killsPerMinute.toFixed(2) }}</span>
-                  <span class="text-slate-500">KPM</span>
+                  <span class="text-cyan-400 font-mono font-semibold">{{ serverData.server.killsPerMinute.toFixed(2) }}</span>
+                  <span class="text-neutral-500">KPM</span>
                 </div>
                 <div class="flex items-center gap-1">
-                  <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full"></div>
-                  <span class="text-cyan-400 font-semibold">{{ formatPlayTime(serverData.server.totalMinutes) }}</span>
+                  <span class="text-neutral-300 font-mono text-xs">{{ formatPlayTime(serverData.server.totalMinutes) }}</span>
                 </div>
                 <div class="flex items-center gap-1">
-                  <div class="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                  <span class="text-yellow-400 font-semibold">{{ serverData.server.highestScore?.toLocaleString() || '0' }}</span>
-                  <span class="text-slate-500">best</span>
+                  <span class="text-amber-400 font-mono font-semibold">{{ serverData.server.highestScore?.toLocaleString() || '0' }}</span>
+                  <span class="text-neutral-500">best</span>
                 </div>
                 <div class="flex items-center gap-1">
-                  <div class="w-1.5 h-1.5 bg-red-400 rounded-full"></div>
-                  <span class="text-green-400 font-semibold">{{ serverData.server.totalKills.toLocaleString() }}</span>
-                  <span class="text-slate-500">/</span>
+                  <span class="text-emerald-400 font-semibold">{{ serverData.server.totalKills.toLocaleString() }}</span>
+                  <span class="text-neutral-500">/</span>
                   <span class="text-red-400 font-semibold">{{ serverData.server.totalDeaths.toLocaleString() }}</span>
                 </div>
               </div>
@@ -127,7 +114,7 @@
             <div class="flex-shrink-0 flex items-center gap-2">
               <button
                 @click="openMapModal(serverData.server.serverGuid)"
-                class="px-3 py-1.5 text-xs font-medium bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 hover:border-slate-500/50 rounded-lg transition-colors text-slate-300 hover:text-white"
+                class="px-2.5 py-1.5 text-xs font-medium bg-neutral-700/50 hover:bg-neutral-600 border border-neutral-600 rounded text-slate-300 hover:text-white transition-colors"
                 title="View map statistics"
               >
                 Maps
@@ -136,33 +123,33 @@
           </div>
 
           <!-- Insights List -->
-          <div class="space-y-2 border-t border-slate-700/50 pt-4">
+          <div class="space-y-2 border-t border-neutral-700/50 pt-4">
             <div
               v-for="(insight, index) in serverData.insights"
               :key="index"
-              class="flex items-start gap-3 p-2.5 rounded-lg bg-slate-800/40 border border-slate-700/30"
+              class="flex items-start gap-3 p-2.5 rounded-lg bg-neutral-800/60 border border-neutral-700/40"
             >
               <div class="flex-shrink-0 w-1 h-full min-h-[32px] rounded-full"
                    :class="getInsightBarColor(insight.type)">
               </div>
               <div class="flex-1 min-w-0">
-                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">
+                <div class="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-0.5 font-mono">
                   {{ insight.type }}
                 </div>
-                <div class="text-sm font-medium text-white mb-1">
+                <div class="text-sm font-medium text-slate-200 mb-1">
                   {{ insight.title }}
                 </div>
-                <p class="text-xs text-slate-300 leading-relaxed mb-2">
+                <p class="text-xs text-neutral-400 leading-relaxed mb-2">
                   {{ insight.description }}
                 </p>
                 <div class="flex items-center gap-2 flex-wrap">
                   <div
                     v-if="insight.multiplier"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold font-mono"
                     :class="{
-                      'bg-green-500/20 text-green-400 border border-green-500/30': insight.multiplier >= 1.5,
-                      'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30': insight.multiplier >= 1.2 && insight.multiplier < 1.5,
-                      'bg-blue-500/20 text-blue-400 border border-blue-500/30': insight.multiplier < 1.2
+                      'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30': insight.multiplier >= 1.5,
+                      'bg-amber-500/20 text-amber-400 border border-amber-500/30': insight.multiplier >= 1.2 && insight.multiplier < 1.5,
+                      'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30': insight.multiplier < 1.2
                     }"
                   >
                     <svg
@@ -180,7 +167,7 @@
                       <polyline points="17 6 23 6 23 12" />
                     </svg>
                     <span class="font-mono">{{ insight.multiplier.toFixed(1) }}x</span>
-                    <span class="text-slate-300 font-normal">{{ insight.multiplierLabel }}</span>
+                    <span class="text-neutral-400 font-normal">{{ insight.multiplierLabel }}</span>
                   </div>
                 </div>
               </div>
@@ -286,8 +273,8 @@ const getServerPerformanceIndicator = (server: { kdRatio: number | string; kills
     return { 
       type: 'good', 
       label: 'Strong', 
-      color: 'from-blue-500/20 to-cyan-500/20',
-      borderColor: 'border-blue-500/50'
+      color: 'from-cyan-500/20 to-emerald-500/20',
+      borderColor: 'border-cyan-500/50'
     };
   } else if (kdMultiplier < 0.9) {
     return { 

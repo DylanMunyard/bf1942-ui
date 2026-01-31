@@ -33,7 +33,7 @@ const goBack = () => {
 
 <template>
   <button
-    class="absolute z-50 group w-10 h-10 bg-slate-800/80 hover:bg-slate-700/90 backdrop-blur-sm border border-slate-600/50 hover:border-cyan-400/50 rounded-full transition-all duration-300 cursor-pointer flex items-center justify-center hover:scale-110"
+    class="absolute z-50 group w-10 h-10 bg-neutral-800/80 hover:bg-neutral-700/90 backdrop-blur-sm border border-neutral-600/50 hover:border-cyan-400/50 rounded-full transition-all duration-300 cursor-pointer flex items-center justify-center hover:scale-110"
     :class="{
       'top-4 left-4 sm:top-6 sm:left-6': positioning === 'compact',
       'top-4 left-4 sm:top-8 sm:left-8 md:top-12 md:left-12': positioning === 'standard',
@@ -53,7 +53,7 @@ const goBack = () => {
       stroke-width="2.5"
       stroke-linecap="round"
       stroke-linejoin="round"
-      class="text-slate-300 group-hover:text-cyan-400 group-hover:-translate-x-0.5 transition-all duration-300"
+      class="text-neutral-300 group-hover:text-cyan-400 group-hover:-translate-x-0.5 transition-all duration-300"
     >
       <line
         x1="19"

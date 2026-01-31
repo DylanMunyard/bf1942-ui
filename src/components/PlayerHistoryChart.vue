@@ -22,11 +22,11 @@
       class="space-y-4"
     >
       <!-- Main Chart Container with Rolling Average Overlay -->
-      <div class="relative h-64 bg-slate-800/30 rounded-lg border border-slate-700/50 p-4">
+      <div class="relative h-64 bg-neutral-800/30 rounded-lg border border-neutral-700/50 p-4">
         <!-- Loading Overlay -->
         <div
           v-if="loading"
-          class="absolute inset-0 bg-slate-800/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10"
+          class="absolute inset-0 bg-neutral-800/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10"
         >
           <div class="flex flex-col items-center gap-3">
             <div class="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
@@ -48,7 +48,7 @@
         v-if="props.insights?.rollingAverage && props.insights.rollingAverage.length > 0"
         class="flex items-center gap-2"
       >
-        <div class="text-xs text-slate-400 font-medium">
+        <div class="text-xs text-neutral-400 font-medium">
           Rolling Average:
         </div>
         <div class="flex gap-1">
@@ -58,7 +58,7 @@
             class="px-2 py-1 text-xs font-medium transition-all duration-200 rounded border"
             :class="{
               'text-white bg-gradient-to-r from-purple-500 to-pink-500 border-purple-400/50 shadow-sm': props.rollingWindow === option.value,
-              'text-slate-400 bg-slate-700/30 border-slate-600/50 hover:text-purple-400 hover:bg-slate-600/50 hover:border-purple-500/50': props.rollingWindow !== option.value
+              'text-neutral-400 bg-neutral-700/30 border-neutral-600/50 hover:text-purple-400 hover:bg-neutral-600/50 hover:border-purple-500/50': props.rollingWindow !== option.value
             }"
             :disabled="props.loading"
             @click="handleRollingWindowChange(option.value)"
@@ -72,7 +72,7 @@
     <!-- No Data State -->
     <div
       v-else-if="!loading && chartData.length === 0"
-      class="text-slate-400 text-sm text-center py-8"
+      class="text-neutral-400 text-sm text-center py-8"
     >
       No historical data available
     </div>

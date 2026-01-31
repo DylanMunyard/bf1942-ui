@@ -68,9 +68,9 @@
   z-index: 10;
   padding: 1rem 1.5rem;
   margin-top: auto;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(134, 114, 184, 0.2);
+  border-top: 1px solid rgba(64, 64, 64, 0.5);
 }
 
 .footer-content {
@@ -127,7 +127,7 @@
 .divider {
   width: 1px;
   height: 1rem;
-  background: rgba(134, 114, 184, 0.3);
+  background: rgba(64, 64, 64, 0.6);
 }
 
 .stats-link,
@@ -146,7 +146,7 @@
 .stats-link:hover,
 .github-link:hover {
   color: var(--color-text);
-  background: rgba(134, 114, 184, 0.1);
+  background: rgba(64, 64, 64, 0.5);
   transform: translateY(-1px);
 }
 

@@ -1,127 +1,44 @@
-/* color palette from <https://github.com/vuejs/theme> */
+/* ===== HACKER THEME - Global Base Styles ===== */
+
+/* Neon color palette */
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
+  /* Neon accents */
+  --neon-cyan: #00fff2;
+  --neon-green: #39ff14;
+  --neon-pink: #ff00ff;
+  --neon-gold: #ffd700;
+  --neon-red: #ff3131;
 
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
+  /* Backgrounds */
+  --bg-dark: #0a0a0f;
+  --bg-panel: #0d1117;
+  --bg-card: #161b22;
 
-  --vt-c-indigo: #2c3e50;
+  /* Borders & text */
+  --border-color: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
 
-  /* Dark mode colors - dark purple with deep blue vibe */
-  --vt-c-dark-purple: #1a1025;
-  --vt-c-dark-purple-soft: #231535;
-  --vt-c-dark-purple-mute: #2c1a40;
-  --vt-c-dark-blue: #0f1a2e;
-  --vt-c-dark-blue-soft: #162a45;
-  --vt-c-dark-accent: #6b46c1;
-  --vt-c-dark-accent-soft: #805ad5;
+  /* Semantic mappings for backwards compatibility */
+  --color-background: var(--bg-dark);
+  --color-background-soft: var(--bg-panel);
+  --color-background-mute: var(--bg-card);
+  --color-border: var(--border-color);
+  --color-border-hover: #484f58;
+  --color-heading: var(--text-primary);
+  --color-text: var(--text-secondary);
+  --color-text-2: var(--text-secondary);
+  --color-text-muted: rgba(139, 148, 158, 0.7);
+  --color-primary: var(--neon-cyan);
+  --color-primary-hover: #00ffff;
+  --color-accent: var(--neon-green);
+  --color-accent-hover: #4dff33;
+  --color-card-bg: var(--bg-panel);
+  --color-card-bg-hover: var(--bg-card);
+  --color-text-secondary: var(--text-secondary);
 
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(134, 114, 184, 0.65);
-  --vt-c-divider-dark-2: rgba(134, 114, 184, 0.48);
-
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
-}
-
-/* semantic color variables for this project */
-:root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
-  --color-background-rgb: 255, 255, 255;
-
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
-
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
-  --color-text-2: var(--vt-c-text-light-2);
-  --color-text-muted: var(--vt-c-text-light-2);
-
-  --color-primary: #2196F3;
-  --color-primary-hover: #0b7dda;
-  --color-primary-rgb: 33, 150, 243;
-  --color-accent: #4CAF50;
-  --color-accent-hover: #45a049;
-  --color-accent-rgb: 76, 175, 80;
-
-  /* Dashboard-specific variables */
-  --color-card-bg: var(--vt-c-white);
-  --color-card-bg-hover: var(--vt-c-white-soft);
-  --color-text-secondary: var(--vt-c-text-light-2);
-  --color-border-rgb: 60, 60, 60;
-
-  --section-gap: 160px;
-
-  /* Mobile navigation height for responsive layout adjustments */
+  /* Mobile navigation height */
   --mobile-nav-height: 64px;
-}
-
-/* Dark mode theme */
-.dark-mode {
-  --color-background: var(--vt-c-dark-purple);
-  --color-background-soft: var(--vt-c-dark-purple-soft);
-  --color-background-mute: var(--vt-c-dark-purple-mute);
-  --color-background-rgb: 26, 16, 37;
-
-  --color-border: var(--vt-c-divider-dark-2);
-  --color-border-hover: var(--vt-c-divider-dark-1);
-
-  --color-heading: var(--vt-c-text-dark-1);
-  --color-text: var(--vt-c-text-dark-2);
-  --color-text-2: var(--vt-c-text-dark-2);
-  --color-text-muted: rgba(235, 235, 235, 0.45);
-
-  --color-primary: #06b6d4;
-  --color-primary-hover: #0891b2;
-  --color-primary-rgb: 6, 182, 212;
-  --color-accent: #10b981;
-  --color-accent-hover: #059669;
-  --color-accent-rgb: 16, 185, 129;
-
-  /* Dashboard-specific dark mode variables */
-  --color-card-bg: var(--vt-c-dark-purple-soft);
-  --color-card-bg-hover: var(--vt-c-dark-purple-mute);
-  --color-text-secondary: rgba(235, 235, 235, 0.64);
-  --color-border-rgb: 134, 114, 184;
-}
-
-/* System preference based dark mode */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light-mode) {
-    --color-background: var(--vt-c-dark-purple);
-    --color-background-soft: var(--vt-c-dark-purple-soft);
-    --color-background-mute: var(--vt-c-dark-purple-mute);
-    --color-background-rgb: 26, 16, 37;
-
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
-    --color-text-2: var(--vt-c-text-dark-2);
-    --color-text-muted: rgba(235, 235, 235, 0.45);
-
-    --color-primary: #06b6d4;
-    --color-primary-hover: #0891b2;
-    --color-primary-rgb: 6, 182, 212;
-    --color-accent: #10b981;
-    --color-accent-hover: #059669;
-    --color-accent-rgb: 16, 185, 129;
-
-    /* Dashboard-specific dark mode variables */
-    --color-card-bg: var(--vt-c-dark-purple-soft);
-    --color-card-bg-hover: var(--vt-c-dark-purple-mute);
-    --color-text-secondary: rgba(235, 235, 235, 0.64);
-    --color-border-rgb: 134, 114, 184;
-  }
 }
 
 *,
@@ -131,47 +48,137 @@
   font-weight: normal;
 }
 
-/* Reset margins only for specific elements, not all elements */
+/* Reset margins only for specific elements */
 body, h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd {
   margin: 0;
+}
+
+html {
+  background: var(--bg-dark);
+  color-scheme: dark;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  color: var(--color-text);
-  background: #0f172a;
-  transition:
-    color 0.5s,
-    background-color 0.5s;
+  color: var(--text-primary);
+  background: var(--bg-dark);
   line-height: 1.6;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
-    sans-serif;
-  font-size: 15px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  font-size: 13px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Additional dark mode styles */
-.dark-mode {
-  color-scheme: dark;
+/* Custom scrollbar - global */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-/* Transition for smooth theme switching */
-html {
-  background: #0f172a;
-  transition: background-color 0.3s ease, color 0.3s ease;
+::-webkit-scrollbar-track {
+  background: var(--bg-panel);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-panel);
+}
+
+/* Links */
+a {
+  color: var(--neon-cyan);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+}
+
+/* Focus states */
+:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: rgba(0, 255, 242, 0.3);
+  color: var(--text-primary);
+}
+
+/* Inputs */
+input, textarea, select {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+}
+
+/* Buttons */
+button {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--neon-cyan);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+
+td {
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background: rgba(0, 255, 242, 0.08);
 }

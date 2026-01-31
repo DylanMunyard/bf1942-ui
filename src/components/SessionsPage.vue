@@ -137,12 +137,12 @@ onUnmounted(() => {
   <div class="min-h-screen bg-slate-900">
     <!-- Hero Section -->
     <div class="w-full bg-slate-800 border-b border-slate-700">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-6">
         <div class="flex items-center justify-between gap-4">
           <div class="flex-grow">
             <div class="flex items-center gap-3 mb-2">
               <HeroBackButton :on-click="() => router.back()" />
-              <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400">
+              <h1 class="text-3xl md:text-4xl font-bold text-cyan-400">
                 {{ playerInfo ? `${playerInfo.name}'s Sessions` : 'Game Sessions' }}
               </h1>
             </div>
@@ -155,7 +155,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-8">
       <!-- Loading State -->
       <div
         v-if="loading"

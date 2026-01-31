@@ -244,6 +244,35 @@ class AdminDataService {
     });
   }
 
+  // App Data (KVP) methods
+  async getAppData(key: string): Promise<{ id: string; value: string; updatedAt: string } | null> {
+    try {
+      return await this.request<{ id: string; value: string; updatedAt: string }>(
+        `/app-data/${encodeURIComponent(key)}`,
+        { method: 'GET' }
+      );
+    } catch (e) {
+      // Return null for 404 (not found)
+      if (e instanceof Error && e.message.includes('404')) {
+        return null;
+      }
+      throw e;
+    }
+  }
+
+  async setAppData(key: string, value: string): Promise<void> {
+    await this.request<void>(`/app-data/${encodeURIComponent(key)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ value }),
+    });
+  }
+
+  async deleteAppData(key: string): Promise<void> {
+    await this.request<void>(`/app-data/${encodeURIComponent(key)}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getAuditLog(_page = 1, pageSize = 50): Promise<{
     items: AuditLogEntry[];
     totalCount: number;

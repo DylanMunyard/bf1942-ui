@@ -1,0 +1,688 @@
+/* ===== HACKER THEME - Global CSS Variables & Base Styles ===== */
+
+:root {
+  /* Neon accents */
+  --neon-cyan: #00fff2;
+  --neon-green: #39ff14;
+  --neon-pink: #ff00ff;
+  --neon-gold: #ffd700;
+  --neon-red: #ff3131;
+
+  /* Backgrounds */
+  --bg-dark: #0a0a0f;
+  --bg-panel: #0d1117;
+  --bg-card: #161b22;
+
+  /* Borders & text */
+  --border-color: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+
+  /* Semantic mappings */
+  --hacker-surface: var(--bg-panel);
+  --hacker-surface-elevated: var(--bg-card);
+  --hacker-border: var(--border-color);
+  --hacker-border-focus: #484f58;
+  --hacker-accent: var(--neon-cyan);
+  --hacker-accent-dim: rgba(0, 255, 242, 0.12);
+  --hacker-accent-glow: rgba(0, 255, 242, 0.25);
+  --hacker-warn: var(--neon-gold);
+  --hacker-danger: var(--neon-red);
+  --hacker-success: var(--neon-green);
+  --hacker-text: var(--text-secondary);
+  --hacker-text-bright: var(--text-primary);
+}
+
+/* ===== Typography ===== */
+.hacker-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+}
+
+/* ===== Custom Scrollbar ===== */
+.hacker-scrollbar::-webkit-scrollbar,
+.hacker-theme ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.hacker-scrollbar::-webkit-scrollbar-track,
+.hacker-theme ::-webkit-scrollbar-track {
+  background: var(--bg-panel);
+}
+
+.hacker-scrollbar::-webkit-scrollbar-thumb,
+.hacker-theme ::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.hacker-scrollbar::-webkit-scrollbar-thumb:hover,
+.hacker-theme ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* ===== Cards & Panels ===== */
+.hacker-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.hacker-card:hover {
+  border-color: rgba(0, 255, 242, 0.3);
+  box-shadow: 0 0 30px rgba(0, 255, 242, 0.1);
+}
+
+.hacker-card-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+
+.hacker-card-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--neon-cyan);
+  margin: 0;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+}
+
+.hacker-card-body {
+  padding: 1rem;
+}
+
+/* ===== Buttons ===== */
+.hacker-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-family: 'JetBrains Mono', monospace;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  text-transform: uppercase;
+}
+
+.hacker-btn--primary {
+  background: var(--neon-cyan);
+  color: var(--bg-dark);
+  border-color: var(--neon-cyan);
+}
+
+.hacker-btn--primary:hover:not(:disabled) {
+  background: #00ffff;
+  border-color: #00ffff;
+  box-shadow: 0 0 20px rgba(0, 255, 242, 0.5);
+}
+
+.hacker-btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+.hacker-btn--ghost:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--neon-cyan);
+  background: rgba(0, 255, 242, 0.1);
+  box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+}
+
+.hacker-btn--danger {
+  background: transparent;
+  color: var(--neon-red);
+  border-color: var(--neon-red);
+}
+
+.hacker-btn--danger:hover:not(:disabled) {
+  background: rgba(255, 49, 49, 0.15);
+  box-shadow: 0 0 15px rgba(255, 49, 49, 0.3);
+}
+
+.hacker-btn--sm {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+}
+
+.hacker-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Inputs ===== */
+.hacker-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.hacker-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.hacker-input:focus {
+  outline: none;
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+}
+
+.hacker-textarea {
+  resize: none;
+}
+
+.hacker-select {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hacker-select:focus {
+  outline: none;
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+}
+
+/* ===== Tables ===== */
+.hacker-table {
+  width: 100%;
+  font-size: 0.8rem;
+  border-collapse: collapse;
+}
+
+.hacker-table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-card);
+  color: var(--neon-cyan);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-family: 'JetBrains Mono', monospace;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.hacker-table th.text-right {
+  text-align: right;
+}
+
+.hacker-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.hacker-table td.text-right {
+  text-align: right;
+}
+
+.hacker-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.hacker-table tbody tr:hover td {
+  background: rgba(0, 255, 242, 0.08);
+}
+
+/* ===== Tags / Badges ===== */
+.hacker-tag {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+
+.hacker-tag--accent {
+  background: rgba(0, 255, 242, 0.15);
+  border-color: rgba(0, 255, 242, 0.3);
+  color: var(--neon-cyan);
+}
+
+.hacker-tag--warn {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: rgba(255, 215, 0, 0.3);
+  color: var(--neon-gold);
+}
+
+.hacker-tag--success {
+  background: rgba(57, 255, 20, 0.15);
+  border-color: rgba(57, 255, 20, 0.3);
+  color: var(--neon-green);
+}
+
+.hacker-tag--danger {
+  background: rgba(255, 49, 49, 0.15);
+  border-color: rgba(255, 49, 49, 0.3);
+  color: var(--neon-red);
+}
+
+/* ===== Status Indicators ===== */
+.hacker-status {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hacker-status--online {
+  background: var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green);
+  animation: hacker-pulse-glow 2s infinite;
+}
+
+@keyframes hacker-pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--neon-green); }
+  50% { opacity: 0.7; box-shadow: 0 0 5px var(--neon-green); }
+}
+
+.hacker-status--offline {
+  background: var(--text-secondary);
+  opacity: 0.5;
+}
+
+/* ===== Loading Spinner ===== */
+.hacker-spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--neon-cyan);
+  border-radius: 50%;
+  animation: hacker-spin 0.8s linear infinite;
+}
+
+@keyframes hacker-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== Loading Skeleton ===== */
+.hacker-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 0%,
+    var(--border-color) 50%,
+    var(--bg-card) 100%
+  );
+  background-size: 200% 100%;
+  animation: hacker-skeleton 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes hacker-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===== Text Utilities ===== */
+.text-neon-cyan { color: var(--neon-cyan); }
+.text-neon-green { color: var(--neon-green); }
+.text-neon-pink { color: var(--neon-pink); }
+.text-neon-gold { color: var(--neon-gold); }
+.text-neon-red { color: var(--neon-red); }
+.text-hacker-primary { color: var(--text-primary); }
+.text-hacker-secondary { color: var(--text-secondary); }
+
+/* ===== Glow Effects ===== */
+.glow-cyan {
+  text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+}
+
+.glow-green {
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+}
+
+.glow-gold {
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.glow-pink {
+  text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+/* ===== Section Headers ===== */
+.hacker-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--neon-cyan);
+  margin: 0 0 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(0, 255, 242, 0.3);
+}
+
+/* ===== Links ===== */
+.hacker-link {
+  color: var(--neon-cyan);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.hacker-link:hover {
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+}
+
+/* ===== Stats Grid ===== */
+.hacker-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .hacker-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.hacker-stat {
+  text-align: center;
+  padding: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.hacker-stat:hover {
+  border-color: rgba(0, 255, 242, 0.3);
+  box-shadow: 0 0 20px rgba(0, 255, 242, 0.1);
+}
+
+.hacker-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.hacker-stat-value--accent {
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+}
+
+.hacker-stat-value--green {
+  color: var(--neon-green);
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+}
+
+.hacker-stat-value--gold {
+  color: var(--neon-gold);
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.hacker-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ===== Rank Colors ===== */
+.hacker-rank-1 {
+  color: var(--neon-gold);
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.hacker-rank-2 {
+  color: #c0c0c0;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(192, 192, 192, 0.3);
+}
+
+.hacker-rank-3 {
+  color: #cd7f32;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+}
+
+/* ===== Tabs ===== */
+.hacker-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.hacker-tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-family: 'JetBrains Mono', monospace;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.hacker-tab:hover {
+  color: var(--text-primary);
+}
+
+.hacker-tab--active {
+  color: var(--neon-cyan);
+  border-bottom-color: var(--neon-cyan);
+  text-shadow: 0 0 10px rgba(0, 255, 242, 0.3);
+}
+
+/* ===== Toggle Group ===== */
+.hacker-toggle-group {
+  display: flex;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.125rem;
+}
+
+.hacker-toggle-btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hacker-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.hacker-toggle-btn--active {
+  background: var(--neon-cyan);
+  color: var(--bg-dark);
+  box-shadow: 0 0 10px rgba(0, 255, 242, 0.4);
+}
+
+/* ===== Empty State ===== */
+.hacker-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.hacker-empty-icon {
+  font-size: 2.5rem;
+  color: var(--neon-cyan);
+  opacity: 0.5;
+  margin-bottom: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  text-shadow: 0 0 20px rgba(0, 255, 242, 0.3);
+}
+
+.hacker-empty-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+
+.hacker-empty-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.35rem;
+  max-width: 20rem;
+}
+
+/* ===== Pagination ===== */
+.hacker-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.hacker-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.hacker-pagination-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.hacker-pagination-btn:hover:not(:disabled) {
+  background: rgba(0, 255, 242, 0.1);
+  color: var(--neon-cyan);
+  border-color: rgba(0, 255, 242, 0.3);
+}
+
+.hacker-pagination-btn--active {
+  background: var(--neon-cyan);
+  color: var(--bg-dark);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 255, 242, 0.4);
+}
+
+.hacker-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Notice Banner Styles ===== */
+.hacker-notice-banner {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  border-bottom: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.hacker-notice-banner--info {
+  background: rgba(0, 255, 242, 0.1);
+  border-color: rgba(0, 255, 242, 0.3);
+  color: var(--neon-cyan);
+}
+
+.hacker-notice-banner--warning {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.3);
+  color: var(--neon-gold);
+}
+
+.hacker-notice-banner--error {
+  background: rgba(255, 49, 49, 0.1);
+  border-color: rgba(255, 49, 49, 0.3);
+  color: var(--neon-red);
+}
+
+.hacker-notice-banner--success {
+  background: rgba(57, 255, 20, 0.1);
+  border-color: rgba(57, 255, 20, 0.3);
+  color: var(--neon-green);
+}
+
+.hacker-notice-banner .markdown-content {
+  flex: 1;
+  text-align: center;
+}
+
+.hacker-notice-banner .markdown-content a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.hacker-notice-banner .markdown-content a:hover {
+  text-shadow: 0 0 10px currentColor;
+}
+
+.hacker-notice-dismiss {
+  background: transparent;
+  border: 1px solid currentColor;
+  color: inherit;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.hacker-notice-dismiss:hover {
+  opacity: 1;
+  box-shadow: 0 0 10px currentColor;
+}

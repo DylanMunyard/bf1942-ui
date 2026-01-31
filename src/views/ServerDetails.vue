@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ServerDetails, ServerInsights, LeaderboardsData, fetchServerDetails, fetchServerInsights, fetchServerLeaderboards, fetchLiveServerData, ServerBusyIndicator, ServerHourlyTimelineEntry, fetchServerBusyIndicators } from '../services/serverDetailsService';
 import { fetchServerEngagementStats, type ServerEngagementStats, fetchServerMapRotation, type MapRotationItem } from '../services/dataExplorerService';
@@ -57,8 +57,8 @@ const mapRotationTotalCount = ref(0);
 const mapRotationTotalPages = computed(() => Math.max(1, Math.ceil(mapRotationTotalCount.value / mapRotationPageSize.value)));
 const isMapsLoading = ref(false);
 const mapsError = ref<string | null>(null);
-const showMapAnalytics = ref(false);
 const hasLoadedMaps = ref(false);
+const showMapRotation = ref(true);
 
 // Server-map detail panel state
 const selectedMapName = ref<string | null>(null);
@@ -70,6 +70,12 @@ const serverHourlyTimeline = ref<ServerHourlyTimelineEntry[]>([]);
 const isBusyIndicatorLoading = ref(false);
 const busyIndicatorError = ref<string | null>(null);
 const showForecastOverlay = ref(false);
+
+// Wide viewport: show slide-out panels side-by-side (lg: 1024px+)
+const isWideScreen = ref(false);
+const updateWideScreen = () => {
+  isWideScreen.value = typeof window !== 'undefined' && window.innerWidth >= 1024;
+};
 
 // Engagement stats for dynamic content
 const serverEngagementStats = ref<ServerEngagementStats['stats']>([]);
@@ -253,8 +259,25 @@ watch(
   }
 );
 
+watch(
+  () => serverDetails.value?.serverGuid,
+  (guid) => {
+    if (guid && !hasLoadedMaps.value) {
+      hasLoadedMaps.value = true;
+      fetchMapRotationAsync();
+    }
+  },
+  { immediate: true }
+);
+
 onMounted(() => {
   fetchData();
+  updateWideScreen();
+  window.addEventListener('resize', updateWideScreen);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWideScreen);
 });
 
 
@@ -317,6 +340,7 @@ const joinServer = () => {
 // Players modal functions
 const openPlayersModal = () => {
   if (!liveServerInfo.value) return;
+  showMapDetailPanel.value = false;
   showPlayersModal.value = true;
 };
 
@@ -466,21 +490,19 @@ const togglePlayerHistory = () => {
   }
 };
 
-// Toggle map analytics visibility and fetch data on first expand
-const toggleMapAnalytics = () => {
-  showMapAnalytics.value = !showMapAnalytics.value;
-
-  // Fetch data on first expand
-  if (showMapAnalytics.value && !hasLoadedMaps.value) {
+// Toggle map rotation section (expand to show maps inline)
+const toggleMapRotation = () => {
+  showMapRotation.value = !showMapRotation.value;
+  if (showMapRotation.value && !hasLoadedMaps.value) {
     hasLoadedMaps.value = true;
     fetchMapRotationAsync();
   }
 };
 
-// Handle map navigation from MapRotationTable - open server-map detail panel
+// Handle map navigation from MapRotationTable - open same server-map detail panel as DataExplorer
 const handleMapNavigate = (mapName: string) => {
   if (!serverDetails.value?.serverGuid) return;
-  
+  showPlayersModal.value = false;
   selectedMapName.value = mapName;
   showMapDetailPanel.value = true;
 };
@@ -548,8 +570,8 @@ const closeForecastOverlay = () => {
 
 <template>
   <!-- Full-width Hero Section -->
-  <div class="w-full bg-slate-800 border-b border-slate-700">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="w-full bg-neutral-900 border-b border-neutral-800">
+    <div class="w-full px-4 sm:px-8 lg:px-12 py-6">
       <div class="flex items-center justify-between">
         <HeroBackButton :on-click="() => $router.push(getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string)))" />
       </div>
@@ -557,7 +579,7 @@ const closeForecastOverlay = () => {
       <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8 mt-6">
         <!-- Server Info -->
         <div class="flex-grow min-w-0">
-          <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-3">
+          <h1 class="text-3xl md:text-4xl font-bold text-neutral-200 mb-3">
             {{ serverName }}
           </h1>
           
@@ -568,19 +590,19 @@ const closeForecastOverlay = () => {
           >
             <div
               v-if="serverDetails.region"
-              class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600"
+              class="inline-flex items-center px-3 py-1 bg-neutral-800 rounded-lg text-sm text-neutral-300 border border-neutral-700"
             >
               📍 {{ serverDetails.region }}
             </div>
             <div
               v-if="serverDetails.country || serverDetails.countryCode"
-              class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600"
+              class="inline-flex items-center px-3 py-1 bg-neutral-800 rounded-lg text-sm text-neutral-300 border border-neutral-700"
             >
               🌍 {{ getCountryName(serverDetails.countryCode, serverDetails.country) }}
             </div>
             <div
               v-if="serverDetails.timezone && getTimezoneDisplay(serverDetails.timezone)"
-              class="inline-flex items-center px-3 py-1 bg-slate-700 rounded-lg text-sm text-slate-300 border border-slate-600"
+              class="inline-flex items-center px-3 py-1 bg-neutral-800 rounded-lg text-sm text-neutral-300 border border-neutral-700"
             >
               🕒 {{ getTimezoneDisplay(serverDetails.timezone) }}
             </div>
@@ -616,7 +638,7 @@ const closeForecastOverlay = () => {
           <!-- Period Info -->
           <div
             v-if="serverDetails"
-            class="text-slate-400 text-sm"
+            class="text-neutral-400 text-sm"
           >
             📊 Data from {{ formatDate(serverDetails.startPeriod) }} to {{ formatDate(serverDetails.endPeriod) }}
           </div>
@@ -624,7 +646,7 @@ const closeForecastOverlay = () => {
           <!-- Server Activity Forecast Widget (Ultra Condensed) -->
           <div
             v-if="serverBusyIndicator && serverHourlyTimeline.length > 0"
-            class="mt-3 bg-slate-800/50 rounded-lg p-2 border border-slate-700/50 group/forecast relative inline-block cursor-pointer"
+            class="mt-3 bg-neutral-800/50 rounded-lg p-2 border border-neutral-700/50 group/forecast relative inline-block cursor-pointer"
             @click.stop="toggleForecastOverlay"
           >
             <!-- Mini Forecast Bars Only -->
@@ -637,7 +659,7 @@ const closeForecastOverlay = () => {
                 <!-- Mini vertical bar -->
                 <div 
                   class="w-1.5 rounded-t transition-all duration-300"
-                  :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
+                  :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-neutral-600'"
                   :style="{ 
                     height: getMiniTimelineBarHeight(entry) + 'px' 
                   }"
@@ -661,11 +683,11 @@ const closeForecastOverlay = () => {
           <!-- Busy Indicator Loading State -->
           <div
             v-else-if="isBusyIndicatorLoading"
-            class="mt-4 bg-slate-800/50 rounded-lg p-4 border border-slate-700/50"
+            class="mt-4 bg-neutral-800/50 rounded-lg p-4 border border-neutral-700/50"
           >
             <div class="flex items-center gap-3">
               <div class="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
-              <span class="text-sm text-slate-400">Loading activity forecast...</span>
+              <span class="text-sm text-neutral-400">Loading activity forecast...</span>
             </div>
           </div>
 
@@ -689,7 +711,8 @@ const closeForecastOverlay = () => {
           <button
             v-if="liveServerInfo && liveServerInfo.players.length > 0"
             class="group bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all duration-200 px-4 py-3 min-w-[140px]"
-            @click="openPlayersModal"
+            type="button"
+            @click.stop="openPlayersModal"
           >
             <div class="flex flex-col items-center">
               <div class="font-bold text-xl">
@@ -709,7 +732,12 @@ const closeForecastOverlay = () => {
           
           <div
             v-else-if="liveServerInfo && liveServerInfo.players.length === 0"
-            class="bg-slate-700 text-slate-400 rounded-xl border border-slate-600 px-4 py-3 min-w-[140px]"
+            class="bg-neutral-800 text-neutral-400 rounded-xl border border-neutral-700 px-4 py-3 min-w-[140px] cursor-pointer hover:bg-neutral-700/80 transition-colors"
+            role="button"
+            tabindex="0"
+            @click.stop="openPlayersModal"
+            @keydown.enter.prevent="openPlayersModal"
+            @keydown.space.prevent="openPlayersModal"
           >
             <div class="flex flex-col items-center">
               <div class="font-bold text-xl">
@@ -729,16 +757,16 @@ const closeForecastOverlay = () => {
 
           <div
             v-else-if="isLiveServerLoading"
-            class="bg-slate-700 text-slate-400 rounded-xl border border-slate-600 flex items-center justify-center gap-3 px-4 py-3 min-w-[140px]"
+            class="bg-neutral-800 text-neutral-400 rounded-xl border border-neutral-700 flex items-center justify-center gap-3 px-4 py-3 min-w-[140px]"
           >
-            <div class="w-4 h-4 border-2 border-slate-500 border-t-slate-300 rounded-full animate-spin" />
+            <div class="w-4 h-4 border-2 border-neutral-600 border-t-neutral-300 rounded-full animate-spin" />
             <span class="text-sm">Loading...</span>
           </div>
 
           <!-- Join Server Button -->
           <button
             v-if="liveServerInfo?.joinLink"
-            class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+            class="bg-cyan-500 hover:bg-cyan-400 text-neutral-900 px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-lg hover:shadow-cyan-500/40"
             @click="joinServer"
           >
             <span class="text-base">🎮</span>
@@ -749,21 +777,26 @@ const closeForecastOverlay = () => {
     </div>
   </div>
 
-  <!-- Main Content Area -->
-  <div
-    class="min-h-screen bg-slate-900"
-    @click="closeForecastOverlay"
-  >
-    <div class="relative">
-      <div class="relative py-6 sm:py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- Main Content Area: flex row on lg when a panel is open for side-by-side layout -->
+  <div class="min-h-screen bg-neutral-950">
+    <div
+      class="relative flex flex-col min-h-0"
+      :class="{ 'lg:flex-row': showPlayersModal || showMapDetailPanel }"
+    >
+      <div
+        class="flex-1 min-w-0"
+        @click="closeForecastOverlay"
+      >
+        <div class="relative">
+          <div class="relative py-6 sm:py-8">
+            <div class="w-full px-4 sm:px-8 lg:px-12">
           <!-- Loading State -->
           <div
             v-if="isLoading"
-            class="flex flex-col items-center justify-center py-20 text-slate-400"
+            class="flex flex-col items-center justify-center py-20 text-neutral-400"
           >
-            <div class="w-12 h-12 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin mb-4" />
-            <p class="text-lg text-slate-300">
+            <div class="w-12 h-12 border-4 border-neutral-700 border-t-cyan-400 rounded-full animate-spin mb-4" />
+            <p class="text-lg text-neutral-300">
               Loading server profile...
             </p>
           </div>
@@ -771,7 +804,7 @@ const closeForecastOverlay = () => {
           <!-- Error State -->
           <div
             v-else-if="error"
-            class="bg-slate-800/70 backdrop-blur-sm border border-red-800/50 rounded-xl p-8 text-center"
+            class="bg-neutral-900/80 border border-red-800/50 rounded-xl p-8 text-center"
           >
             <div class="text-6xl mb-4">
               ⚠️
@@ -787,13 +820,13 @@ const closeForecastOverlay = () => {
             class="space-y-6"
           >
             <!-- Data Explorer Call-to-Action Section -->
-            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+            <div class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden">
               <div class="p-6">
                 <div class="flex flex-col lg:flex-row items-center gap-6">
                   <!-- Data Explorer Image -->
                   <div class="flex-shrink-0">
                     <div class="relative group">
-                      <div class="absolute -inset-2 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-xl blur-lg opacity-25 group-hover:opacity-40 transition-opacity duration-300"></div>
+                      <div class="absolute -inset-2 bg-cyan-500 rounded-xl blur-lg opacity-20 group-hover:opacity-35 transition-opacity duration-300"></div>
                       <img
                         :src="dataExplorerImage"
                         alt="Data Explorer"
@@ -804,10 +837,10 @@ const closeForecastOverlay = () => {
 
                   <!-- Content -->
                   <div class="flex-1 text-center lg:text-left">
-                    <h3 class="text-xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+                    <h3 class="text-xl font-semibold text-neutral-200 mb-2">
                       Explore Advanced Analytics
                     </h3>
-                    <p class="text-slate-300 text-sm mb-4 transition-all duration-500 ease-in-out">
+                    <p class="text-neutral-300 text-sm mb-4 transition-all duration-500 ease-in-out">
                       <span v-if="currentEngagementStat && currentEngagementStat.message">
                         {{ currentEngagementStat.message }}
                       </span>
@@ -819,7 +852,7 @@ const closeForecastOverlay = () => {
                     <!-- CTA Button -->
                     <router-link
                       :to="{ name: 'explore-server-detail', params: { serverGuid: serverDetails?.serverGuid } }"
-                      class="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white rounded-md transition-all duration-200 font-medium text-sm shadow-sm hover:shadow-md"
+                      class="inline-flex items-center gap-2 px-4 py-2 bg-neutral-800/80 hover:bg-neutral-700 border border-neutral-600 hover:border-neutral-500 text-neutral-300 hover:text-white rounded-md transition-all duration-200 font-medium text-sm shadow-sm hover:shadow-md"
                     >
                       <span>View in Data Explorer</span>
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-0.5">
@@ -832,14 +865,14 @@ const closeForecastOverlay = () => {
             </div>
 
             <!-- Recent Sessions Section -->
-            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
-              <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
-                <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-3">
+<div class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-neutral-700/50 flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-neutral-200 flex items-center gap-3">
                   🎯 Recent Sessions
                 </h3>
                 <router-link
                   :to="`/servers/${encodeURIComponent(serverName)}/sessions`"
-                  class="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium group"
+                  class="inline-flex items-center gap-1.5 text-neutral-300 hover:text-neutral-200 transition-colors text-sm font-medium group"
                 >
                   <span>View All Sessions</span>
                   <svg
@@ -870,34 +903,109 @@ const closeForecastOverlay = () => {
               </div>
             </div>
 
+            <!-- Map Rotation Section (Collapsible: expand to show maps, click map to open ServerMapDetailPanel) -->
+            <div class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden">
+              <button
+                class="w-full flex items-center justify-between p-4 hover:bg-neutral-800/50 transition-all duration-300 group"
+                @click="toggleMapRotation"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center">
+                    <span class="text-neutral-200 text-sm font-bold">🗺️</span>
+                  </div>
+                  <div class="text-left">
+                    <div class="text-base font-semibold text-neutral-200">
+                      Map Rotation
+                    </div>
+                    <div class="text-xs text-neutral-400">
+                      Server map rotation and statistics — click a map for details
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-neutral-400 hidden sm:block">{{ showMapRotation ? 'Hide' : 'Show' }}</span>
+                  <div
+                    class="transform transition-transform duration-300"
+                    :class="{ 'rotate-180': showMapRotation }"
+                  >
+                    <svg
+                      class="w-5 h-5 text-neutral-400 group-hover:text-neutral-200"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                </div>
+              </button>
+
+              <div v-if="showMapRotation" class="border-t border-neutral-700/50">
+                <div v-if="mapRotation.length > 0" class="bg-neutral-800/30 overflow-hidden relative">
+                  <div
+                    v-if="isMapsLoading"
+                    class="absolute inset-0 bg-neutral-900/80 rounded-xl flex items-center justify-center z-10"
+                  >
+                    <div class="flex flex-col items-center gap-3">
+                      <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-400 rounded-full animate-spin" />
+                      <div class="text-orange-400 text-sm font-medium">Loading map rotation...</div>
+                    </div>
+                  </div>
+                  <div class="p-6">
+                    <MapRotationTable
+                      :map-rotation="mapRotation"
+                      :current-page="mapRotationPage"
+                      :total-pages="mapRotationTotalPages"
+                      :total-count="mapRotationTotalCount"
+                      :page-size="mapRotationPageSize"
+                      :is-loading="isMapsLoading"
+                      @navigate="handleMapNavigate"
+                      @page-change="handleMapRotationPageChange"
+                    />
+                  </div>
+                </div>
+                <div v-else-if="isMapsLoading" class="p-6 flex justify-center py-8">
+                  <div class="flex flex-col items-center gap-3">
+                    <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-400 rounded-full animate-spin" />
+                    <div class="text-orange-400 text-sm font-medium">Loading map rotation...</div>
+                  </div>
+                </div>
+                <div v-else-if="mapsError" class="p-6">
+                  <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
+                    <span class="text-sm text-red-400">{{ mapsError }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Player Activity History Section (Collapsible) -->
-            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+            <div class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden">
               <!-- Toggle Button -->
               <button
-                class="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-all duration-300 group"
+                class="w-full flex items-center justify-between p-4 hover:bg-neutral-800/50 transition-all duration-300 group"
                 @click="togglePlayerHistory"
               >
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center">
-                    <span class="text-slate-900 text-sm font-bold">📈</span>
+                  <div class="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center">
+                    <span class="text-neutral-200 text-sm font-bold">📈</span>
                   </div>
                   <div class="text-left">
-                    <div class="text-base font-semibold text-slate-200">
+                    <div class="text-base font-semibold text-neutral-200">
                       Player Activity History
                     </div>
-                    <div class="text-xs text-slate-400">
+                    <div class="text-xs text-neutral-400">
                       Server population trends
                     </div>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="text-xs text-slate-400 hidden sm:block">{{ showPlayerHistory ? 'Hide' : 'Show' }}</span>
+                  <span class="text-xs text-neutral-400 hidden sm:block">{{ showPlayerHistory ? 'Hide' : 'Show' }}</span>
                   <div
                     class="transform transition-transform duration-300"
                     :class="{ 'rotate-180': showPlayerHistory }"
                   >
                     <svg
-                      class="w-5 h-5 text-slate-400 group-hover:text-cyan-400"
+                      class="w-5 h-5 text-neutral-400 group-hover:text-neutral-200"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -916,15 +1024,15 @@ const closeForecastOverlay = () => {
               <!-- Collapsible Content -->
               <div
                 v-if="showPlayerHistory"
-                class="border-t border-slate-700/50"
+                class="border-t border-neutral-700/50"
               >
                 <div
                   v-if="serverInsights?.playersOnlineHistory"
                   class="animate-in slide-in-from-top duration-300"
                 >
                   <!-- Period Selector -->
-                  <div class="px-6 py-4 bg-slate-800/30 flex justify-center">
-                    <div class="flex items-center gap-2 bg-slate-800/30 rounded-lg p-1">
+                  <div class="px-6 py-4 bg-neutral-800/30 flex justify-center">
+                    <div class="flex items-center gap-2 bg-neutral-800/30 rounded-lg p-1">
                       <!-- Short periods -->
                       <button
                         v-for="period in ['1d', '3d', '7d']"
@@ -933,7 +1041,7 @@ const closeForecastOverlay = () => {
                           'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
                           historyPeriod === period
                             ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                            : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/50'
                         ]"
                         @click="handleHistoryPeriodChange(period as '1d' | '3d' | '7d')"
                       >
@@ -947,7 +1055,7 @@ const closeForecastOverlay = () => {
                             'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1',
                             historyPeriod === 'longer'
                               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                              : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/50'
                           ]"
                           @click="toggleLongerDropdown"
                         >
@@ -970,14 +1078,14 @@ const closeForecastOverlay = () => {
                         <!-- Dropdown menu -->
                         <div
                           v-if="showLongerDropdown"
-                          class="absolute top-full mt-1 right-0 bg-slate-800/95 backdrop-blur-lg rounded-lg border border-slate-700/50 shadow-xl z-50 min-w-[120px]"
+                          class="absolute top-full mt-1 right-0 bg-neutral-900/95 rounded-lg border border-neutral-700/50 shadow-xl z-50 min-w-[120px]"
                         >
                           <button
                             v-for="period in [{ id: '1month', label: '1 Month' }, { id: '3months', label: '3 Months' }, { id: 'thisyear', label: 'This Year' }, { id: 'alltime', label: 'All Time' }]"
                             :key="period.id"
                             :class="[
-                              'w-full text-left px-3 py-2 text-xs hover:bg-slate-700/50 transition-colors first:rounded-t-lg last:rounded-b-lg',
-                              longerPeriod === period.id ? 'text-cyan-400 bg-cyan-500/10' : 'text-slate-300'
+                              'w-full text-left px-3 py-2 text-xs hover:bg-neutral-700/50 transition-colors first:rounded-t-lg last:rounded-b-lg',
+                              longerPeriod === period.id ? 'text-cyan-400 bg-cyan-500/10' : 'text-neutral-300'
                             ]"
                             @click="selectLongerPeriod(period.id as '1month' | '3months' | 'thisyear' | 'alltime')"
                           >
@@ -1012,125 +1120,10 @@ const closeForecastOverlay = () => {
               </div>
             </div>
 
-            <!-- Map Rotation Section (Collapsible) -->
-            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
-              <!-- Toggle Button -->
-              <button
-                class="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-all duration-300 group"
-                @click="toggleMapAnalytics"
-              >
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-gradient-to-r from-orange-400 to-red-500 flex items-center justify-center">
-                    <span class="text-slate-900 text-sm font-bold">🗺️</span>
-                  </div>
-                  <div class="text-left">
-                    <div class="text-base font-semibold text-slate-200">
-                      Map Rotation
-                    </div>
-                    <div class="text-xs text-slate-400">
-                      Server map rotation and statistics
-                    </div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="text-xs text-slate-400 hidden sm:block">{{ showMapAnalytics ? 'Hide' : 'Show' }}</span>
-                  <div
-                    class="transform transition-transform duration-300"
-                    :class="{ 'rotate-180': showMapAnalytics }"
-                  >
-                    <svg
-                      class="w-5 h-5 text-slate-400 group-hover:text-orange-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </button>
-
-              <!-- Collapsible Content -->
-              <div
-                v-if="showMapAnalytics"
-                class="border-t border-slate-700/50"
-              >
-                <!-- Map Rotation Table Content -->
-                <div
-                  v-if="mapRotation.length > 0"
-                  class="animate-in slide-in-from-top duration-300"
-                >
-                  <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg overflow-hidden relative">
-                    <!-- Loading Overlay for Map Rotation -->
-                    <div
-                      v-if="isMapsLoading"
-                      class="absolute inset-0 bg-slate-800/50 backdrop-blur-sm rounded-xl flex items-center justify-center z-10"
-                    >
-                      <div class="flex flex-col items-center gap-3">
-                        <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-400 rounded-full animate-spin" />
-                        <div class="text-orange-400 text-sm font-medium">
-                          Loading map rotation...
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Map Rotation Table -->
-                    <div class="p-6">
-                      <MapRotationTable
-                        :map-rotation="mapRotation"
-                        :current-page="mapRotationPage"
-                        :total-pages="mapRotationTotalPages"
-                        :total-count="mapRotationTotalCount"
-                        :page-size="mapRotationPageSize"
-                        :is-loading="isMapsLoading"
-                        @navigate="handleMapNavigate"
-                        @page-change="handleMapRotationPageChange"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Loading State (initial load) -->
-                <div
-                  v-else-if="isMapsLoading"
-                  class="p-6"
-                >
-                  <div class="flex items-center justify-center py-8">
-                    <div class="flex flex-col items-center gap-3">
-                      <div class="w-8 h-8 border-2 border-orange-500/30 border-t-orange-400 rounded-full animate-spin" />
-                      <div class="text-orange-400 text-sm font-medium">
-                        Loading map rotation...
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Error State -->
-                <div
-                  v-else-if="mapsError"
-                  class="p-6"
-                >
-                  <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                    <div class="flex items-center gap-3">
-                      <div class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
-                        <span class="text-red-400 text-xs">⚠️</span>
-                      </div>
-                      <span class="text-sm text-red-400">{{ mapsError }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- Server Rankings & Leaderboards Section -->
-            <div class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
-              <div class="px-6 py-4 border-b border-slate-700/50">
-                <h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-3">
+            <div class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden">
+              <div class="px-6 py-4 border-b border-neutral-700/50">
+                <h3 class="text-xl font-semibold text-neutral-200 flex items-center gap-3">
                   🏆 Player Statistics & Rankings
                 </h3>
               </div>
@@ -1139,12 +1132,12 @@ const closeForecastOverlay = () => {
               <div class="px-6 pt-6 pb-4">
                 <div class="relative group">
                   <!-- Background Glow Effect -->
-                  <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-300" />
+                  <div class="absolute -inset-0.5 bg-cyan-500 rounded-lg blur opacity-20 group-hover:opacity-35 transition duration-300" />
 
                   <!-- Main Button -->
                   <router-link
                     :to="{ name: 'explore-server-detail', params: { serverGuid: serverDetails?.serverGuid } }"
-                    class="relative group/btn block w-full bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-lg p-4 shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5"
+                    class="relative group/btn block w-full bg-neutral-800 border border-neutral-700 rounded-lg p-4 shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5 hover:border-neutral-600"
                   >
                     <div class="flex items-center justify-center gap-3 text-white">
                       <span class="text-2xl">🏆</span>
@@ -1176,50 +1169,60 @@ const closeForecastOverlay = () => {
           <!-- No Data State -->
           <div
             v-else
-            class="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center"
+            class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl p-12 text-center"
           >
             <div class="text-6xl mb-4 opacity-50">
               📊
             </div>
-            <p class="text-slate-400 text-lg">
+            <p class="text-neutral-400 text-lg">
               No server data available
             </p>
           </div>
         </div>
       </div>
     </div>
-  </div>
-    
-  <!-- Players Panel -->
-  <PlayersPanel 
-    :show="showPlayersModal" 
-    :server="liveServerInfo" 
-    @close="closePlayersModal" 
-  />
+    </div>
 
-  <!-- Server Map Detail Panel (Side Panel on Desktop, Modal on Mobile) -->
-  <div
-    v-if="showMapDetailPanel && selectedMapName && serverDetails?.serverGuid"
-    class="modal-mobile-safe fixed inset-0 bg-black/20 backdrop-blur-sm z-[100] flex items-center"
-    @click="handleCloseMapDetailPanel"
-  >
-    <div 
-      class="bg-slate-900 w-full max-w-6xl shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-slate-700/50 ml-0 mr-0 md:mr-20" 
-      :class="{ 'h-[calc(100vh-4rem)]': true, 'md:h-full': true, 'mt-16': true, 'md:mt-0': true }"
-      @click.stop
-    >
+      <!-- Players Panel: overlay on mobile, side-by-side on lg when space allows (must be inside flex container) -->
+      <div
+        v-if="showPlayersModal"
+        class="fixed inset-0 z-[100] lg:relative lg:inset-auto lg:z-auto lg:w-[640px] xl:w-[720px] 2xl:w-[800px] lg:flex-shrink-0 lg:border-l lg:border-neutral-800 lg:min-h-0"
+      >
+      <PlayersPanel
+        :show="showPlayersModal"
+        :server="liveServerInfo"
+        :inline="isWideScreen"
+        @close="closePlayersModal"
+      />
+      </div>
+
+      <!-- Server Map Detail Panel: overlay on mobile, side-by-side on lg when space allows (same as DataExplorer server→map view) -->
+    <template v-if="showMapDetailPanel && selectedMapName && serverDetails?.serverGuid">
+      <div
+        class="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100] lg:hidden"
+        aria-hidden="true"
+        @click="handleCloseMapDetailPanel"
+      />
+      <div
+        class="fixed inset-y-0 left-0 right-0 z-[100] flex items-stretch lg:relative lg:inset-auto lg:z-auto lg:w-[720px] xl:w-[840px] 2xl:w-[960px] lg:flex-shrink-0 lg:min-h-0 lg:border-l lg:border-neutral-800"
+        @click.stop
+      >
+        <div
+          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 ml-0 mr-0 md:mr-20 lg:mr-0 lg:border-r-0"
+          :class="{ 'h-[calc(100vh-4rem)]': true, 'md:h-full': true, 'mt-16': true, 'md:mt-0': true }"
+        >
       <!-- Header -->
-      <div class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-4 flex justify-between items-center">
+      <div class="sticky top-0 z-20 bg-neutral-950/95 border-b border-neutral-800 p-4 flex justify-between items-center">
         <div class="flex flex-col min-w-0 flex-1 mr-4">
-          <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 truncate">
+          <h2 class="text-xl font-bold text-neutral-200 truncate">
             {{ selectedMapName }}
           </h2>
-          <p class="text-sm text-slate-400 mt-1 truncate">
+          <p class="text-sm text-neutral-400 mt-1 truncate">
             on {{ serverName }}
           </p>
         </div>
         <button 
-          class="group p-2 text-slate-400 hover:text-white hover:bg-red-500/20 border border-slate-600/50 hover:border-red-500/50 rounded-lg transition-all duration-300 flex items-center justify-center w-10 h-10 flex-shrink-0"
+          class="group p-2 text-neutral-400 hover:text-white hover:bg-red-500/20 border border-neutral-600 hover:border-red-500/50 rounded-lg transition-all duration-300 flex items-center justify-center w-10 h-10 flex-shrink-0"
           title="Close panel"
           @click="handleCloseMapDetailPanel"
         >
@@ -1242,7 +1245,7 @@ const closeForecastOverlay = () => {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 overflow-y-auto">
+      <div class="flex-1 min-h-0 overflow-y-auto">
         <ServerMapDetailPanel
           :server-guid="serverDetails.serverGuid"
           :map-name="selectedMapName"
@@ -1251,12 +1254,15 @@ const closeForecastOverlay = () => {
           @close="handleCloseMapDetailPanel"
         />
       </div>
-    </div>
+        </div>
+      </div>
+    </template>
+      </div>
   </div>
 </template>
 
 <style scoped>
-/* Custom animations for enhanced visual effects */
+/* Map-details style: darker, sleeker slate theme (no neon overrides) */
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -1264,5 +1270,23 @@ const closeForecastOverlay = () => {
 
 .animate-spin-slow {
   animation: spin-slow 3s linear infinite;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #171717;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #525252;
 }
 </style>

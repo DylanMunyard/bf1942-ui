@@ -55,6 +55,13 @@
         >
           <span class="portal-tab-icon">⟩</span> Access
         </button>
+        <button
+          v-if="isAdmin"
+          :class="['portal-tab', activeTab === 'notice' && 'portal-tab--active']"
+          @click="activeTab = 'notice'; noticeTabRef?.load?.()"
+        >
+          <span class="portal-tab-icon">⟩</span> Notice
+        </button>
       </div>
 
       <!-- Post-delete hint: run Daily Aggregate to refresh stats -->
@@ -99,6 +106,11 @@
       <div v-show="activeTab === 'access'" class="portal-panel">
         <AdminAccessTab ref="accessTabRef" />
       </div>
+
+      <!-- Notice tab (admin only) -->
+      <div v-if="isAdmin" v-show="activeTab === 'notice'" class="portal-panel">
+        <AdminNoticeTab ref="noticeTabRef" />
+      </div>
     </div>
   </div>
 </template>
@@ -109,6 +121,7 @@ import AdminQueryTab from '@/components/admin-data/AdminQueryTab.vue';
 import AdminAuditTab from '@/components/admin-data/AdminAuditTab.vue';
 import AdminCronTab from '@/components/admin-data/AdminCronTab.vue';
 import AdminAccessTab from '@/components/admin-data/AdminAccessTab.vue';
+import AdminNoticeTab from '@/components/admin-data/AdminNoticeTab.vue';
 import { useAuth } from '@/composables/useAuth';
 
 const { isAdmin } = useAuth();
@@ -121,12 +134,13 @@ const gameTypes = [
   { id: 'bfvietnam', label: 'BFV' },
 ];
 
-const activeTab = ref<'query' | 'audit' | 'cron' | 'access'>('query');
+const activeTab = ref<'query' | 'audit' | 'cron' | 'access' | 'notice'>('query');
 const activeGameFilter = ref<string>('bf1942');
 const showPostDeleteAggregateHint = ref(false);
 const showPostUndeleteAggregateHint = ref(false);
 const auditTabRef = ref<InstanceType<typeof AdminAuditTab> | null>(null);
 const accessTabRef = ref<InstanceType<typeof AdminAccessTab> & { load?: () => void } | null>(null);
+const noticeTabRef = ref<InstanceType<typeof AdminNoticeTab> & { load?: () => void } | null>(null);
 
 function setGameFilter(id: string) {
   if (!gameTypes.some((g) => g.id === id)) return;

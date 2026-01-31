@@ -2,11 +2,11 @@
   <div class="relative min-h-screen px-3 sm:px-6 pb-12">
     <!-- Background Effects -->
     <div class="modal-mobile-safe fixed inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-0 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
-      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/3 rounded-full blur-3xl animate-pulse" />
+      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/3 rounded-full blur-3xl animate-pulse delay-1000" />
     </div>
 
-    <div class="relative z-10 max-w-7xl mx-auto">
+    <div class="relative z-10 w-full max-w-screen-2xl mx-auto">
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center min-h-screen">
         <div class="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
@@ -229,7 +229,7 @@
         <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden">
           <div class="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700/50 bg-slate-800/20">
             <div>
-              <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
+              <h2 class="text-2xl font-bold text-cyan-400">
                 Tournament Weeks
               </h2>
               <p class="text-slate-400 text-sm mt-1">

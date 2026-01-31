@@ -1,5 +1,6 @@
 import { fetchInitialData } from './playerStatsApi';
 import type { BadgeDefinition, InitialData } from '@/types/playerStatsTypes';
+import { useSiteNotice } from '@/composables/useSiteNotice';
 
 // Store for badge definitions
 let badgeDefinitions: BadgeDefinition[] = [];
@@ -14,6 +15,10 @@ export async function initializeBadgeDefinitions(): Promise<void> {
     const initialData: InitialData = await fetchInitialData();
     badgeDefinitions = initialData.badgeDefinitions;
     isInitialized = true;
+
+    // Set site notice if present in initial data
+    const { setNotice } = useSiteNotice();
+    setNotice(initialData.siteNotice);
   } catch (error) {
     console.error('Failed to initialize badge definitions:', error);
     // Don't throw here to avoid breaking the app if badge descriptions fail to load

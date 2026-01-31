@@ -1,13 +1,16 @@
 <template>
   <div
-    class="min-h-screen bg-slate-900 px-3 sm:px-6"
+    class="min-h-screen bg-neutral-950 px-3 sm:px-6"
     @click="closeAllModals"
   >
-    <div class="min-h-screen pt-4">
+    <div
+      class="min-h-screen pt-4 flex flex-col min-h-0"
+      :class="{ 'lg:flex-row': showPlayersPanel && isWideScreen }"
+    >
       <!-- Main Server Table -->
-      <div class="w-full">
+      <div class="flex-1 min-w-0 w-full">
         <!-- Header -->
-        <div class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-3">
+        <div class="sticky top-0 z-20 bg-neutral-950/95 backdrop-blur-sm border-b border-neutral-700/50 p-3">
           <!-- Mobile: Player Search Full Width -->
           <div class="block lg:hidden w-full mb-4">
             <PlayerSearch
@@ -44,7 +47,7 @@
         </div>
 
         <!-- Mobile: Game Filter Buttons (Above Table) -->
-        <div class="block lg:hidden p-3 border-b border-slate-700/30">
+        <div class="block lg:hidden p-3 border-b border-neutral-700/30">
           <GameFilterButtons
             :game-types="gameTypes"
             :active-filter="activeFilter"
@@ -70,15 +73,6 @@
           @rolling-window-change="changeRollingWindow"
         />
 
-        <!-- Game Trends Section -->
-        <GameTrendsSection
-          :game-trends="gameTrends"
-          :trends-loading="trendsLoading"
-          :trends-error="trendsError"
-          :processed-forecast="processedForecast"
-          :format-hour-display-fixed="formatHourDisplayFixed"
-        />
-
         <!-- Loading State -->
         <div
           v-if="loading"
@@ -86,9 +80,9 @@
         >
           <div class="text-center space-y-6">
             <div class="relative flex items-center justify-center">
-              <div class="w-20 h-20 border-4 border-slate-700 rounded-full animate-spin" />
+              <div class="w-20 h-20 border-4 border-neutral-700 rounded-full animate-spin" />
               <div class="absolute w-20 h-20 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin" />
-              <div class="absolute w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full animate-pulse" />
+              <div class="absolute w-8 h-8 bg-cyan-500 rounded-full animate-pulse" style="box-shadow: 0 0 15px rgba(0, 255, 242, 0.5);" />
             </div>
             <div class="text-lg font-semibold text-white">
               Loading servers...
@@ -145,12 +139,12 @@
           v-else
           class="overflow-x-auto"
         >
-          <table class="w-full border-collapse border border-slate-700/30">
+          <table class="w-full border-collapse border border-neutral-700/30">
             <!-- Table Header -->
             <thead class="sticky top-0 z-10">
-              <tr class="bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm">
+              <tr class="bg-gradient-to-r from-neutral-900/95 to-neutral-950/95 backdrop-blur-sm">
                 <!-- Rank Column Header -->
-                <th class="p-1.5 text-center font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-yellow-500/50"
+                <th class="p-1.5 text-center font-bold text-xs uppercase tracking-wide text-neutral-300 cursor-pointer hover:bg-neutral-700/50 transition-all duration-300 border-b border-neutral-700/30 hover:border-yellow-500/50"
                     @click="sortBy('rank')"
                 >
                   <div class="flex items-center gap-1.5">
@@ -167,15 +161,15 @@
                     >▲</span>
                   </div>
                 </th>
-                <th class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                <th class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-neutral-300 border-b border-neutral-700/30">
                   <!-- Desktop Layout: Horizontal -->
                   <div class="hidden lg:flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
                       <div
-                        class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50"
+                        class="flex items-center gap-1.5 cursor-pointer hover:bg-neutral-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50"
                         @click="sortBy('name')"
                       >
-                        <span class="text-slate-400 text-xs">🏷️</span>
+                        <span class="text-neutral-400 text-xs">🏷️</span>
                         <span class="font-mono font-bold">NAME</span>
                         <span
                           class="text-xs transition-transform duration-200"
@@ -191,17 +185,17 @@
                       <!-- Server Filter Input (Desktop) -->
                       <div class="relative">
                         <div class="absolute left-2 top-1/2 transform -translate-y-1/2 z-10">
-                          <span class="text-slate-500 text-xs">🔍</span>
+                          <span class="text-neutral-500 text-xs">🔍</span>
                         </div>
                         <input
                           v-model="serverFilterQuery"
                           type="text"
                           placeholder="Filter..."
-                          class="w-48 pl-7 pr-7 py-1 bg-slate-700/60 border border-slate-600/50 rounded text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-xs"
+                          class="w-48 pl-7 pr-7 py-1 bg-neutral-700/60 border border-neutral-600/50 rounded text-neutral-200 placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-xs"
                         >
                         <button
                           v-if="serverFilterQuery"
-                          class="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                          class="absolute right-2 top-1/2 transform -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors"
                           @click="serverFilterQuery = ''"
                         >
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,29 +205,13 @@
                       </div>
                     </div>
 
-                    <div
-                      class="flex items-center gap-1 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-yellow-500/50"
-                      @click="sortBy('timezone')"
-                    >
-                      <span class="text-yellow-400 text-xs">🌍</span>
-                      <span class="font-mono font-bold text-xs">TIME</span>
-                      <span
-                        class="text-xs transition-transform duration-200"
-                        :class="{
-                          'text-yellow-400 opacity-100': sortField === 'timezone',
-                          'opacity-50': sortField !== 'timezone',
-                          'rotate-0': sortField === 'timezone' && sortDirection === 'asc',
-                          'rotate-180': sortField === 'timezone' && sortDirection === 'desc'
-                        }"
-                      >▲</span>
-                    </div>
                   </div>
 
                   <!-- Mobile Layout: Vertical -->
                   <div class="flex lg:hidden flex-col gap-2">
                     <div class="flex items-center justify-between">
                       <div
-                        class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-yellow-500/50"
+                        class="flex items-center gap-1.5 cursor-pointer hover:bg-neutral-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-yellow-500/50"
                         @click="sortBy('rank')"
                       >
                         <span class="text-yellow-400 text-xs">🏆</span>
@@ -249,10 +227,10 @@
                         >▲</span>
                       </div>
                       <div
-                        class="flex items-center gap-1.5 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50"
+                        class="flex items-center gap-1.5 cursor-pointer hover:bg-neutral-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-cyan-500/50"
                         @click="sortBy('name')"
                       >
-                        <span class="text-slate-400 text-xs">🏷️</span>
+                        <span class="text-neutral-400 text-xs">🏷️</span>
                         <span class="font-mono font-bold">NAME</span>
                         <span
                           class="text-xs transition-transform duration-200"
@@ -264,38 +242,22 @@
                           }"
                         >▲</span>
                       </div>
-                      <div
-                        class="flex items-center gap-1 cursor-pointer hover:bg-slate-700/50 rounded px-2 py-1 transition-all duration-300 hover:border-yellow-500/50"
-                        @click="sortBy('timezone')"
-                      >
-                        <span class="text-yellow-400 text-xs">🌍</span>
-                        <span class="font-mono font-bold text-xs">TIME</span>
-                        <span
-                          class="text-xs transition-transform duration-200"
-                          :class="{
-                            'text-yellow-400 opacity-100': sortField === 'timezone',
-                            'opacity-50': sortField !== 'timezone',
-                            'rotate-0': sortField === 'timezone' && sortDirection === 'asc',
-                            'rotate-180': sortField === 'timezone' && sortDirection === 'desc'
-                          }"
-                        >▲</span>
-                      </div>
                     </div>
 
                     <!-- Server Filter Input (Mobile) -->
                     <div class="relative">
                       <div class="absolute left-2 top-1/2 transform -translate-y-1/2 z-10">
-                        <span class="text-slate-500 text-xs">🔍</span>
+                        <span class="text-neutral-500 text-xs">🔍</span>
                       </div>
                       <input
                         v-model="serverFilterQuery"
                         type="text"
                         placeholder="Filter servers..."
-                        class="w-full pl-7 pr-7 py-1.5 bg-slate-700/60 border border-slate-600/50 rounded text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-xs"
+                        class="w-full pl-7 pr-7 py-1.5 bg-neutral-700/60 border border-neutral-600/50 rounded text-neutral-200 placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-xs"
                       >
                       <button
                         v-if="serverFilterQuery"
-                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors"
                         @click="serverFilterQuery = ''"
                       >
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,7 +274,7 @@
                   </div>
                 </th>
                 <th
-                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-green-500/50"
+                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-neutral-300 cursor-pointer hover:bg-neutral-700/50 transition-all duration-300 border-b border-neutral-700/30 hover:border-green-500/50"
                   @click="sortBy('numPlayers')"
                 >
                   <div class="flex items-center gap-1.5">
@@ -330,7 +292,7 @@
                   </div>
                 </th>
                 <th
-                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-orange-500/50"
+                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-neutral-300 cursor-pointer hover:bg-neutral-700/50 transition-all duration-300 border-b border-neutral-700/30 hover:border-orange-500/50"
                   @click="sortBy('mapName')"
                 >
                   <div class="flex items-center gap-1.5">
@@ -348,7 +310,7 @@
                   </div>
                 </th>
                 <th
-                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-yellow-500/50"
+                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-neutral-300 cursor-pointer hover:bg-neutral-700/50 transition-all duration-300 border-b border-neutral-700/30 hover:border-yellow-500/50"
                   @click="sortBy('roundTimeRemain')"
                 >
                   <div class="flex items-center gap-1.5">
@@ -366,7 +328,7 @@
                   </div>
                 </th>
                 <th
-                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all duration-300 border-b border-slate-700/30 hover:border-purple-500/50"
+                  class="group p-1.5 text-left font-bold text-xs uppercase tracking-wide text-neutral-300 cursor-pointer hover:bg-neutral-700/50 transition-all duration-300 border-b border-neutral-700/30 hover:border-purple-500/50"
                   @click="sortBy('gameType')"
                 >
                   <div class="flex items-center gap-1.5">
@@ -383,13 +345,13 @@
                     >▲</span>
                   </div>
                 </th>
-                <th class="p-1.5 text-left font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                <th class="p-1.5 text-left font-bold text-xs uppercase tracking-wide text-neutral-300 border-b border-neutral-700/30">
                   <div class="flex items-center gap-1.5">
                     <span class="text-blue-400 text-xs">🔗</span>
                     <span class="font-mono font-bold">IP</span>
                   </div>
                 </th>
-                <th class="p-1.5 text-center font-bold text-xs uppercase tracking-wide text-slate-300 border-b border-slate-700/30">
+                <th class="p-1.5 text-center font-bold text-xs uppercase tracking-wide text-neutral-300 border-b border-neutral-700/30">
                   <div class="flex items-center justify-center gap-1.5">
                     <span class="text-red-400 text-xs">⚔️</span>
                     <span class="font-mono font-bold">JOIN</span>
@@ -403,7 +365,7 @@
               <tr
                 v-for="(server, serverIndex) in sortedServers"
                 :key="server.guid"
-                class="group transition-all duration-300 hover:bg-slate-800/20 border-b border-slate-700/30"
+                class="group transition-all duration-300 hover:bg-neutral-900/20 border-b border-neutral-700/30"
                 :class="getServerStatusClass(server)"
               >
                 <!-- Rank -->
@@ -420,24 +382,24 @@
                         <!-- Rank Tooltip -->
                         <div
                           v-if="rankTooltipServer === server.guid"
-                          class="absolute z-50 left-full top-1/2 transform -translate-y-1/2 ml-2 px-3 py-2 bg-slate-800/95 backdrop-blur-lg rounded-lg border border-slate-600/50 shadow-xl text-xs text-left whitespace-nowrap"
+                          class="absolute z-50 left-full top-1/2 transform -translate-y-1/2 ml-2 px-3 py-2 bg-neutral-900/95 backdrop-blur-lg rounded-lg border border-neutral-600/50 shadow-xl text-xs text-left whitespace-nowrap"
                         >
                           <div class="text-yellow-400 font-semibold mb-1">
                             Ranked #{{ getServerRank(server.guid) }} by total playtime
                           </div>
-                          <div class="text-slate-300">
+                          <div class="text-neutral-300">
                             {{ formatTotalPlayTime(getServerTotalPlayTime(server.guid)) }}
                           </div>
-                          <div class="text-slate-400 text-[10px] mt-1">
+                          <div class="text-neutral-400 text-[10px] mt-1">
                             Last 60 days
                           </div>
                           <!-- Tooltip arrow -->
-                          <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800/95"></div>
+                          <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-neutral-800/95"></div>
                         </div>
                       </div>
                       <div
                         v-else
-                        class="text-slate-500 text-xs font-mono"
+                        class="text-neutral-500 text-xs font-mono"
                       >
                         -
                       </div>
@@ -458,19 +420,19 @@
                         class="text-lg"
                       >{{ getCountryFlag(server.country) }}</span>
                       <div class="flex-1 min-w-0 flex items-center gap-2">
-                        <div class="font-bold text-slate-200 truncate max-w-xs text-sm">
+                        <div class="font-bold text-neutral-200 truncate max-w-xs text-sm">
                           {{ server.name }}
                         </div>
                         <div
                           v-if="getTimezoneDisplay(server.timezone)"
-                          class="text-xs text-slate-400 font-mono"
+                          class="text-xs text-neutral-400 font-mono"
                         >
                           {{ getTimezoneDisplay(server.timezone) }}
                         </div>
                         <!-- Mini hourly timeline bars (current hour centered) -->
                         <div
                           v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
-                          class="flex items-end gap-0.5 ml-1 py-2 px-1 -my-2 group/timeline relative cursor-pointer hover:bg-slate-700/20 active:bg-slate-700/30 rounded transition-colors"
+                          class="flex items-end gap-0.5 ml-1 py-2 px-1 -my-2 group/timeline relative cursor-pointer hover:bg-neutral-700/20 active:bg-neutral-700/30 rounded transition-colors"
                           aria-label="Server activity timeline - hover or click to view forecast"
                           @click.stop.prevent="toggleServerModal(server.guid)"
                         >
@@ -479,7 +441,7 @@
                             v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
                             :key="idx"
                             class="w-1.5 rounded-t transition-opacity duration-300 cursor-pointer"
-                            :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
+                            :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-neutral-600'"
                             :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
                             :title="formatTimelineTooltip(entry)"
                           />
@@ -506,7 +468,7 @@
                           v-if="server.country"
                           class="text-lg"
                         >{{ getCountryFlag(server.country) }}</span>
-                        <div class="font-bold text-slate-200 truncate text-sm flex-1">
+                        <div class="font-bold text-neutral-200 truncate text-sm flex-1">
                           {{ server.name }}
                         </div>
                       </div>
@@ -515,14 +477,14 @@
                       <div class="flex items-center gap-2">
                         <div
                           v-if="getTimezoneDisplay(server.timezone)"
-                          class="text-xs text-slate-400 font-mono"
+                          class="text-xs text-neutral-400 font-mono"
                         >
                           {{ getTimezoneDisplay(server.timezone) }}
                         </div>
                         <!-- Mini hourly timeline bars for mobile -->
                         <div
                           v-if="serverTrendsByGuid[server.guid]?.hourlyTimeline"
-                          class="flex items-end gap-0.5 ml-1 py-2 px-1 -my-2 flex-1 group/timeline relative cursor-pointer active:bg-slate-700/30 rounded transition-colors"
+                          class="flex items-end gap-0.5 ml-1 py-2 px-1 -my-2 flex-1 group/timeline relative cursor-pointer active:bg-neutral-700/30 rounded transition-colors"
                           aria-label="Server activity timeline - tap to view forecast"
                           @click.stop.prevent="toggleServerModal(server.guid)"
                         >
@@ -531,7 +493,7 @@
                             v-for="(entry, idx) in serverTrendsByGuid[server.guid].hourlyTimeline"
                             :key="idx"
                             class="w-1 rounded-t transition-opacity duration-300 cursor-pointer"
-                            :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-slate-600'"
+                            :class="entry.isCurrentHour ? 'bg-cyan-400' : 'bg-neutral-600'"
                             :style="{ height: getTimelineBarHeight(server.guid, entry) + 'px' }"
                             :title="formatTimelineTooltip(entry)"
                           />
@@ -564,10 +526,10 @@
                       :class="getPlayerCountClass(server)"
                     >
                       <span class="text-sm font-mono">{{ server.numPlayers }}</span>
-                      <span class="text-slate-500 text-xs font-mono">/{{ server.maxPlayers }}</span>
+                      <span class="text-neutral-500 text-xs font-mono">/{{ server.maxPlayers }}</span>
                     </div>
                     <div class="flex-1 max-w-[80px]">
-                      <div class="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                      <div class="w-full h-1.5 bg-neutral-700 rounded-full overflow-hidden">
                         <div 
                           class="h-full transition-all duration-500 rounded-full" 
                           :style="{ 
@@ -601,7 +563,7 @@
                 <td class="p-1.5">
                   <div class="flex items-center gap-1.5">
                     <div 
-                      class="w-5 h-5 rounded bg-cover bg-center border border-slate-600/50"
+                      class="w-5 h-5 rounded bg-cover bg-center border border-neutral-600/50"
                       :style="{ backgroundImage: getGameIcon(getGameIconClass(server.gameType)) }"
                     />
                     <span
@@ -610,9 +572,9 @@
                     >
                       {{ getGameDisplayName(server.gameType) }}
                     </span>
-                    <!-- Busy indicator badge -->
+                    <!-- Busy indicator badge (only when we have enough prediction data) -->
                     <span
-                      v-if="serverTrendsByGuid[server.guid]?.busyIndicator"
+                      v-if="hasValidBusyIndicator(server.guid)"
                       class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase font-mono border ml-1"
                       :class="getBusyBadgeClass(serverTrendsByGuid[server.guid]!.busyIndicator.busyLevel)"
                       :title="`Typical: ${Math.round(serverTrendsByGuid[server.guid]!.busyIndicator.typicalPlayers)}, Current: ${serverTrendsByGuid[server.guid]!.busyIndicator.currentPlayers}`"
@@ -626,7 +588,7 @@
                 <!-- Connection -->
                 <td class="p-1.5">
                   <div class="text-center">
-                    <div class="font-mono text-xs text-slate-400 font-medium">
+                    <div class="font-mono text-xs text-neutral-400 font-medium">
                       {{ server.ip }}:{{ server.port }}
                     </div>
                   </div>
@@ -667,8 +629,8 @@
                     <button
                       class="px-2.5 py-1 text-xs font-bold uppercase transition-all duration-300 rounded-lg border font-mono"
                       :class="{
-                        'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-blue-600 shadow-lg hover:shadow-blue-500/30 transform hover:scale-105 will-change-transform': server.numPlayers < server.maxPlayers,
-                        'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60 border-slate-600': server.numPlayers >= server.maxPlayers
+                        'bg-cyan-500 hover:bg-cyan-400 text-neutral-900 border-cyan-500 shadow-lg hover:shadow-cyan-500/40 transform hover:scale-105 will-change-transform': server.numPlayers < server.maxPlayers,
+                        'bg-neutral-700 text-neutral-400 cursor-not-allowed opacity-60 border-neutral-600': server.numPlayers >= server.maxPlayers
                       }"
                       :disabled="server.numPlayers >= server.maxPlayers"
                       @click="joinServer(server)"
@@ -682,14 +644,20 @@
           </table>
         </div>
       </div>
-    </div>
 
-    <!-- Players Panel -->
-    <PlayersPanel
-      :show="showPlayersPanel"
-      :server="selectedServer"
-      @close="closePlayersPanel"
-    />
+      <!-- Players Panel: overlay on mobile, right panel on lg when space permits -->
+      <div
+        v-if="showPlayersPanel"
+        class="fixed inset-0 z-[100] lg:relative lg:inset-auto lg:z-auto lg:w-[480px] xl:w-[520px] lg:flex-shrink-0 lg:border-l lg:border-neutral-700/50 lg:min-h-0 lg:min-w-[480px] xl:min-w-[520px]"
+      >
+        <PlayersPanel
+          :show="showPlayersPanel"
+          :server="selectedServer"
+          :inline="isWideScreen"
+          @close="closePlayersPanel"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -708,50 +676,11 @@ import PlayerSearch from '../components/PlayerSearch.vue'
 import GameFilterButtons from '../components/GameFilterButtons.vue'
 import InstallationLinksDropdown from '../components/InstallationLinksDropdown.vue'
 import PlayerHistorySection from '../components/PlayerHistorySection.vue'
-import GameTrendsSection from '../components/GameTrendsSection.vue'
 
 import bf1942Icon from '@/assets/bf1942.webp'
 import fh2Icon from '@/assets/fh2.webp'
 import bfvIcon from '@/assets/bfv.webp'
 import discordIcon from '@/assets/discord.webp'
-
-interface GameTrendsInsights {
-  currentHourPredictedPlayers: number
-  currentActualPlayers: number
-  activityComparisonStatus: 'busier_than_usual' | 'quieter_than_usual' | 'as_usual'
-  currentStatus: 'very_busy' | 'busy' | 'moderate' | 'quiet' | 'very_quiet'
-  trendDirection: 'increasing_significantly' | 'increasing' | 'stable' | 'decreasing' | 'decreasing_significantly'
-  nextHourPredictedPlayers: number
-  maxPredictedPlayers: number
-  forecast: {
-    hourOfDay: number
-    dayOfWeek: number
-    predictedPlayers: number
-    dataPoints: number
-    isCurrentHour?: boolean
-    actualPlayers?: number
-    delta?: number
-  }[]
-  next24HourPeaks: {
-    hourOfDay: number
-    dayOfWeek: number
-    predictedPlayers: number
-  }[]
-  generatedAt: string
-  recommendationMessage: string
-}
-
-interface GameTrendsResponse {
-  currentActivity: {
-    game: string
-    serverGuid: string
-    currentPlayers: number
-    latestActivity: string
-    currentMapName: string
-  }[]
-  insights: GameTrendsInsights
-  generatedAt: string
-}
 
 // PlayerSearchResult interface is defined in PlayerSearch component
 // We need it for the selectPlayer function
@@ -830,11 +759,6 @@ const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
 
 
-// Game trends state
-const gameTrends = ref<GameTrendsInsights | null>(null)
-const trendsLoading = ref(false)
-const trendsError = ref<string | null>(null)
-
 // Per-server trends state (busy indicator + hourly timeline)
 const serverTrendsByGuid = ref<Record<string, ServerBusyIndicatorResult>>({})
 
@@ -848,6 +772,12 @@ const rankingsError = ref<string | null>(null)
 
 // Rank tooltip state
 const rankTooltipServer = ref<string | null>(null)
+
+// Wide viewport: show players panel on the right (lg: 1024px+)
+const isWideScreen = ref(false)
+const updateWideScreen = () => {
+  isWideScreen.value = typeof window !== 'undefined' && window.innerWidth >= 1024
+}
 
 // Helper to determine if modal should open upward (for rows near bottom)
 const shouldOpenUpward = (index: number) => {
@@ -906,46 +836,6 @@ const filteredServers = computed(() => {
       server.timezone?.toLowerCase().includes(query) ||
       `${server.ip}:${server.port}`.toLowerCase().includes(query)
     )
-  })
-})
-
-const processedForecast = computed(() => {
-  if (!gameTrends.value?.forecast) return []
-  
-  const forecast = [...gameTrends.value.forecast]
-  
-  // Find the current hour entry
-  const currentHourEntry = forecast.find(f => f.isCurrentHour)
-  if (!currentHourEntry) return forecast
-  
-  const currentDay = currentHourEntry.dayOfWeek;
-  
-  // Sort the forecast array chronologically
-  return forecast.sort((a, b) => {
-    // If both entries are from the same day, sort by hour
-    if (a.dayOfWeek === b.dayOfWeek) {
-      return a.hourOfDay - b.hourOfDay
-    }
-    
-    // If one entry is from the current day and the other is from the next day
-    if (a.dayOfWeek === currentDay && b.dayOfWeek === (currentDay % 7) + 1) {
-      return -1 // Current day comes first
-    }
-    if (b.dayOfWeek === currentDay && a.dayOfWeek === (currentDay % 7) + 1) {
-      return 1 // Current day comes first
-    }
-    
-    // If one entry is from the previous day and the other is from the current day
-    const prevDay = currentDay === 1 ? 7 : currentDay - 1
-    if (a.dayOfWeek === prevDay && b.dayOfWeek === currentDay) {
-      return -1 // Previous day comes first
-    }
-    if (b.dayOfWeek === prevDay && a.dayOfWeek === currentDay) {
-      return 1 // Previous day comes first
-    }
-    
-    // Default: sort by day of week
-    return a.dayOfWeek - b.dayOfWeek
   })
 })
 
@@ -1219,7 +1109,7 @@ const getServerStatusClass = (server: ServerSummary) => {
   const percentage = getPlayerPercentage(server)
   if (percentage >= 100) return 'bg-red-500/5'
   if (percentage >= 80) return 'bg-orange-500/5'
-  if (percentage === 0) return 'bg-slate-500/5'
+  if (percentage === 0) return 'bg-neutral-500/5'
   return 'bg-green-500/5'
 }
 
@@ -1228,7 +1118,7 @@ const getGameTypeClass = (gameType: string) => {
   if (type.includes('bf1942')) return 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
   if (type.includes('fh2')) return 'bg-green-500/20 text-green-400 border border-green-500/30'
   if (type.includes('vietnam')) return 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-  return 'bg-slate-500/20 text-slate-400 border border-slate-500/30'
+  return 'bg-neutral-500/20 text-neutral-400 border border-neutral-500/30'
 }
 
 const getCountryFlag = (countryCode: string): string => {
@@ -1306,30 +1196,6 @@ const fetchServerRankingsData = async () => {
   }
 }
 
-const fetchGameTrends = async (isInitialLoad = false) => {
-  // Only show loading state on initial load to prevent flashing
-  if (isInitialLoad) {
-    trendsLoading.value = true
-  }
-  trendsError.value = null
-  
-  try {
-    const response = await fetch(`/stats/v2/game-trends/landing-summary?game=${activeFilter.value}`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch game trends')
-    }
-
-    const data: GameTrendsResponse = await response.json()
-    gameTrends.value = data.insights
-  } catch (err) {
-    trendsError.value = 'Failed to load game trends'
-  } finally {
-    if (isInitialLoad) {
-      trendsLoading.value = false
-    }
-  }
-}
-
 // Helper: fetch per-server busy indicators without blocking main render
 const fetchAndAttachServerTrends = async () => {
   try {
@@ -1362,6 +1228,12 @@ const fetchAndAttachServerTrends = async () => {
   }
 }
 
+// Only show busy badge when we have valid prediction data (not "Not enough data")
+const hasValidBusyIndicator = (serverGuid: string): boolean => {
+  const data = serverTrendsByGuid.value[serverGuid]?.busyIndicator
+  return !!(data && data.busyText !== 'Not enough data')
+}
+
 // UI helpers for busy badge
 const getBusyEmoji = (level: BusyLevel): string => {
   switch (level) {
@@ -1381,7 +1253,7 @@ const getBusyBadgeClass = (level: BusyLevel): string => {
     case 'moderate': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
     case 'quiet': return 'bg-green-500/20 text-green-300 border-green-500/30'
     case 'very_quiet': return 'bg-blue-500/20 text-blue-300 border-blue-500/30'
-    default: return 'bg-slate-600/30 text-slate-300 border-slate-600/40'
+    default: return 'bg-neutral-600/30 text-neutral-300 border-neutral-600/40'
   }
 }
 
@@ -1476,9 +1348,10 @@ const fetchPlayerHistory = async () => {
 
 const togglePlayerHistory = () => {
   if (playerHistorySectionRef.value) {
-    const isShowing = playerHistorySectionRef.value.show
-    playerHistorySectionRef.value.setShow(!isShowing)
-    if (!isShowing && playerHistoryData.value.length === 0) {
+    // The child component already toggles its own state, so just check if we need to fetch data
+    // Use a nextTick-like delay to read the state after the child has updated
+    const isNowShowing = playerHistorySectionRef.value.show
+    if (isNowShowing && playerHistoryData.value.length === 0) {
       fetchPlayerHistory()
     }
   }
@@ -1532,28 +1405,6 @@ const getActiveGameName = () => {
   return gameType?.name || 'Game'
 }
 
-const formatHourDisplayFixed = (hourUTC: number, isCurrentHour?: boolean, forecastIndex?: number) => {
-  // If we have the isCurrentHour flag from the API, use it directly
-  if (isCurrentHour !== undefined) {
-    if (isCurrentHour) return 'Now'
-  }
-  
-  // Convert UTC hour to local time
-  const now = new Date()
-  const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hourUTC, 0, 0))
-  const localHour = utcDate.getHours()
-  
-  // Format the hour as 12-hour time with am/pm
-  const formatHour = (hour: number) => {
-    if (hour === 0) return '12am'
-    if (hour < 12) return `${hour}am`
-    if (hour === 12) return '12pm'
-    return `${hour - 12}pm`
-  }
-  
-  return formatHour(localHour)
-}
-
 // Update SEO meta tags when server data changes
 const updateSeoMetaTags = () => {
   // Helper function to update or create meta tags
@@ -1604,26 +1455,18 @@ watch(activeFilter, (newFilter) => {
   if (playerHistorySectionRef.value?.show) {
     fetchPlayerHistory()
   }
-  // Refresh game trends
-  fetchGameTrends(true)
 })
 
 // Lifecycle
 onMounted(() => {
+  updateWideScreen()
+  window.addEventListener('resize', updateWideScreen)
   fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', true)
-  fetchGameTrends(true)
-  
+
   refreshTimer.value = window.setInterval(() => {
     fetchServersForGame(activeFilter.value as 'bf1942' | 'fh2' | 'bfvietnam', false)
-    
-    // Only fetch trends if we're at a new hour
-    const now = new Date()
-    const lastFetchTime = gameTrends.value ? new Date(gameTrends.value.generatedAt) : null
-    if (!lastFetchTime || now.getUTCHours() !== lastFetchTime.getUTCHours()) {
-      fetchGameTrends()
-    }
   }, 300000)
-  
+
   // Close dropdown on outside click
   document.addEventListener('click', (e) => {
     const target = e.target as Element
@@ -1636,6 +1479,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', updateWideScreen)
   if (refreshTimer.value) {
     clearInterval(refreshTimer.value)
   }

@@ -140,14 +140,14 @@ watch(() => [props.serverGuid, props.mapName], () => {
 <template>
   <div>
     <!-- Loading Sessions State -->
-    <div v-if="isLoadingSessions" class="bg-slate-800/30 rounded-lg p-6">
+    <div v-if="isLoadingSessions" class="bg-neutral-800/30 rounded-lg p-6">
       <div class="flex items-center justify-center py-8">
-        <div class="w-8 h-8 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin" />
+        <div class="w-8 h-8 border-4 border-neutral-600 border-t-cyan-400 rounded-full animate-spin" />
       </div>
     </div>
 
     <!-- Sessions Error State -->
-    <div v-else-if="sessionsError" class="bg-slate-800/30 rounded-lg p-6">
+    <div v-else-if="sessionsError" class="bg-neutral-800/30 rounded-lg p-6">
       <div class="text-center py-4">
         <div class="text-red-400 mb-2">{{ sessionsError }}</div>
         <button @click="loadSessions" class="text-cyan-400 hover:text-cyan-300 text-sm">
@@ -157,24 +157,24 @@ watch(() => [props.serverGuid, props.mapName], () => {
     </div>
 
     <!-- Sessions List -->
-    <div v-else-if="sessions.length > 0" class="bg-slate-800/30 rounded-lg overflow-hidden">
+    <div v-else-if="sessions.length > 0" class="bg-neutral-800/30 rounded-lg overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-slate-700/50">
-              <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <tr class="border-b border-neutral-700/50">
+              <th class="text-left py-3 px-4 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                 Map & Server
               </th>
-              <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell">
+              <th class="text-left py-3 px-4 text-xs font-semibold text-neutral-400 uppercase tracking-wider hidden md:table-cell">
                 Team Matchup
               </th>
-              <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <th class="text-left py-3 px-4 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                 Top Players
               </th>
-              <th class="text-center py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden lg:table-cell">
+              <th class="text-center py-3 px-4 text-xs font-semibold text-neutral-400 uppercase tracking-wider hidden lg:table-cell">
                 Participants
               </th>
-              <th class="text-center py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden lg:table-cell">
+              <th class="text-center py-3 px-4 text-xs font-semibold text-neutral-400 uppercase tracking-wider hidden lg:table-cell">
                 Duration
               </th>
             </tr>
@@ -183,7 +183,7 @@ watch(() => [props.serverGuid, props.mapName], () => {
             <tr
               v-for="(session, index) in visibleSessions"
               :key="session.roundId"
-              class="group border-l-4 border-b border-slate-700/30 hover:bg-slate-800/40 transition-all duration-150 cursor-pointer border-l-cyan-400"
+              class="group border-l-4 border-b border-neutral-700/30 hover:bg-neutral-800/40 transition-all duration-150 cursor-pointer border-l-cyan-400"
               :class="session.isActive && index === 0 ? 'bg-emerald-500/5' : ''"
               @click="navigateToRoundReport(session)"
             >
@@ -204,7 +204,7 @@ watch(() => [props.serverGuid, props.mapName], () => {
                       Live
                     </span>
                   </div>
-                  <span class="text-xs text-slate-500 font-medium">
+                  <span class="text-xs text-neutral-500 font-medium">
                     {{ session.serverName }} • {{ formatRelativeTime(session.startTime) }} ago
                   </span>
                 </div>
@@ -223,7 +223,7 @@ watch(() => [props.serverGuid, props.mapName], () => {
                     >
                       {{ session.team1Label }}
                     </span>
-                    <span class="font-mono text-sm font-bold text-slate-200">{{ session.team1Points }}</span>
+                    <span class="font-mono text-sm font-bold text-neutral-200">{{ session.team1Points }}</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <span
@@ -232,12 +232,12 @@ watch(() => [props.serverGuid, props.mapName], () => {
                     >
                       {{ session.team2Label }}
                     </span>
-                    <span class="font-mono text-sm font-bold text-slate-200">{{ session.team2Points }}</span>
+                    <span class="font-mono text-sm font-bold text-neutral-200">{{ session.team2Points }}</span>
                   </div>
                 </div>
                 <span
                   v-else
-                  class="text-sm text-slate-500"
+                  class="text-sm text-neutral-500"
                 >
                   —
                 </span>
@@ -256,7 +256,7 @@ watch(() => [props.serverGuid, props.mapName], () => {
                   >
                     <div class="flex items-center gap-2">
                       <span
-                        class="font-bold tabular-nums text-slate-400"
+                        class="font-bold tabular-nums text-neutral-400"
                       >
                         {{ playerIdx + 1 }}.
                       </span>
@@ -268,20 +268,20 @@ watch(() => [props.serverGuid, props.mapName], () => {
                       >
                         {{ player.playerName }}
                       </router-link>
-                      <span class="text-slate-600">/</span>
+                      <span class="text-neutral-600">/</span>
                       <span
                         class="font-mono font-semibold"
                         :class="getKDRColor(player.kills, player.deaths)"
                       >
                         {{ calculateKDR(player.kills, player.deaths) }}
                       </span>
-                      <span class="text-slate-600">{{ player.score }}</span>
+                      <span class="text-neutral-600">{{ player.score }}</span>
                     </div>
                   </div>
                 </div>
                 <span
                   v-else
-                  class="text-sm text-slate-500"
+                  class="text-sm text-neutral-500"
                 >
                   —
                 </span>
@@ -289,14 +289,14 @@ watch(() => [props.serverGuid, props.mapName], () => {
 
               <!-- Participants Column (hidden on mobile/tablet) -->
               <td class="py-4 px-4 text-center hidden lg:table-cell">
-                <span class="text-sm text-slate-400">
+                <span class="text-sm text-neutral-400">
                   {{ session.participantCount }}
                 </span>
               </td>
 
               <!-- Duration Column (hidden on mobile/tablet) -->
               <td class="py-4 px-4 text-center hidden lg:table-cell">
-                <span class="text-sm text-slate-400 font-mono">
+                <span class="text-sm text-neutral-400 font-mono">
                   {{ formatPlayTime(session.durationMinutes) }}
                 </span>
               </td>
@@ -312,13 +312,13 @@ watch(() => [props.serverGuid, props.mapName], () => {
       >
         <button
           v-if="!isExpanded"
-          class="group px-6 py-2.5 bg-slate-800/60 hover:bg-slate-800/80 border border-slate-700/50 hover:border-slate-600 rounded-lg transition-all duration-200 flex items-center gap-2"
+          class="group px-6 py-2.5 bg-neutral-800/60 hover:bg-neutral-800/80 border border-neutral-700/50 hover:border-neutral-600 rounded-lg transition-all duration-200 flex items-center gap-2"
           @click="toggleExpand"
         >
-          <span class="text-sm font-medium text-slate-300 group-hover:text-slate-200">
+          <span class="text-sm font-medium text-neutral-300 group-hover:text-neutral-200">
             Show {{ sessions.length - (initialVisibleCount || 0) }} More
           </span>
-          <span class="text-slate-400 transition-transform duration-200">
+          <span class="text-neutral-400 transition-transform duration-200">
             ▼
           </span>
         </button>
@@ -327,7 +327,7 @@ watch(() => [props.serverGuid, props.mapName], () => {
           class="flex items-center gap-4"
         >
           <button
-            class="text-sm font-medium text-slate-400 hover:text-slate-300 transition-colors"
+            class="text-sm font-medium text-neutral-400 hover:text-neutral-300 transition-colors"
             @click="toggleExpand"
           >
             Show Less
@@ -358,8 +358,8 @@ watch(() => [props.serverGuid, props.mapName], () => {
     </div>
 
     <!-- Empty Sessions State -->
-    <div v-else class="bg-slate-800/30 rounded-lg p-6">
-      <div class="text-center py-4 text-slate-500">
+    <div v-else class="bg-neutral-800/30 rounded-lg p-6">
+      <div class="text-center py-4 text-neutral-500">
         {{ emptyMessage || 'No recent sessions found' }}
       </div>
     </div>

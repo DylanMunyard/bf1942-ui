@@ -137,8 +137,8 @@ watch(() => props.modelValue, (newValue) => {
       </div>
       
       <!-- Search Input -->
-      <input 
-        :model-value="modelValue" 
+      <input
+        :value="modelValue"
         type="text" 
         :placeholder="placeholder" 
         autocomplete="off"

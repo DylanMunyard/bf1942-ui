@@ -8,7 +8,7 @@
       <div class="border-b border-slate-700/50 p-6">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
+            <h2 class="text-2xl font-bold text-cyan-400">
               {{ editMode ? 'Edit Week' : 'Create Week' }}
             </h2>
             <p class="text-slate-400 text-sm mt-1">

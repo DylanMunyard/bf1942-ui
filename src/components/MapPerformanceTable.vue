@@ -119,8 +119,8 @@ const sortedMapPerformance = computed(() => {
   >
     <div class="p-6 border-b border-slate-700/50">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center gap-3">
-          🗺️ Map Performance
+        <h3 class="text-2xl font-bold text-cyan-400 flex items-center gap-3">
+          Map Performance
         </h3>
         <div class="flex items-center gap-3">
           <button 

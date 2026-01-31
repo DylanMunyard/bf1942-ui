@@ -338,11 +338,21 @@ export interface BestScores {
   allTime: BestScoreEntry[];
 }
 
+export interface SiteNotice {
+  id: string;           // UUID for dismiss tracking
+  content: string;      // Markdown content
+  type: 'info' | 'warning' | 'success' | 'error';
+  dismissible: boolean;
+  expiresAt?: string;   // ISO date (optional)
+  createdAt: string;    // ISO date
+}
+
 export interface InitialData {
   badgeDefinitions: BadgeDefinition[];
   categories: string[];
   tiers: string[];
   generatedAt: string;
+  siteNotice?: SiteNotice | null;
 }
 
 export interface PlayerHistoryDataPoint {

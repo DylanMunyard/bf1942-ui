@@ -1,39 +1,92 @@
 @import './base.css';
+@import './hacker-theme.css';
 @import 'tailwindcss';
 
 #app {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0 auto;
   font-weight: normal;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+/* ===== TAILWIND COLOR OVERRIDES FOR HACKER THEME ===== */
+
+/* Slate backgrounds → Hacker backgrounds */
+.bg-slate-900 { background-color: var(--bg-dark) !important; }
+.bg-slate-800 { background-color: var(--bg-panel) !important; }
+.bg-slate-700 { background-color: var(--bg-card) !important; }
+.bg-slate-800\/50, .bg-slate-800\/60, .bg-slate-800\/40, .bg-slate-800\/95 { background-color: var(--bg-panel) !important; }
+.bg-slate-900\/95 { background-color: var(--bg-dark) !important; }
+
+/* Slate borders → Hacker borders */
+.border-slate-700, .border-slate-600, .border-slate-700\/50, .border-slate-700\/30, .border-slate-600\/50 { border-color: var(--border-color) !important; }
+
+/* Slate text → Hacker text */
+.text-slate-200, .text-white { color: var(--text-primary) !important; }
+.text-slate-300 { color: var(--text-secondary) !important; }
+.text-slate-400 { color: var(--text-secondary) !important; opacity: 0.85; }
+.text-slate-500 { color: var(--text-secondary) !important; opacity: 0.65; }
+
+/* Cyan accent colors */
+.text-cyan-400, .text-cyan-300, .text-cyan-500 { color: var(--neon-cyan) !important; }
+.bg-cyan-500, .bg-cyan-600 { background-color: var(--neon-cyan) !important; color: var(--bg-dark) !important; }
+.bg-cyan-500\/20 { background-color: rgba(0, 255, 242, 0.15) !important; }
+.border-cyan-500, .border-cyan-500\/30, .border-cyan-400 { border-color: var(--neon-cyan) !important; }
+
+/* Green accent colors */
+.text-green-400, .text-emerald-400 { color: var(--neon-green) !important; }
+.bg-green-500\/20, .bg-emerald-500\/20 { background-color: rgba(57, 255, 20, 0.15) !important; }
+.border-green-500\/30 { border-color: rgba(57, 255, 20, 0.3) !important; }
+
+/* Pink/Purple accent colors → Neon pink */
+.text-purple-400, .text-violet-400, .text-pink-400 { color: var(--neon-pink) !important; }
+.bg-purple-500\/20, .bg-violet-500\/20 { background-color: rgba(255, 0, 255, 0.15) !important; }
+
+/* Gold/Yellow/Amber accent colors */
+.text-yellow-400, .text-amber-400, .text-orange-400 { color: var(--neon-gold) !important; }
+.bg-yellow-500\/20, .bg-amber-500\/20 { background-color: rgba(255, 215, 0, 0.15) !important; }
+.bg-yellow-400 { background-color: var(--neon-gold) !important; color: var(--bg-dark) !important; }
+
+/* Red accent colors */
+.text-red-400 { color: var(--neon-red) !important; }
+.bg-red-500\/20, .bg-red-500\/10 { background-color: rgba(255, 49, 49, 0.15) !important; }
+.border-red-500\/20, .border-red-500\/50 { border-color: rgba(255, 49, 49, 0.3) !important; }
+
+/* Blue accent colors → Cyan (hacker theme doesn't use blue) */
+.text-blue-400 { color: var(--neon-cyan) !important; }
+.bg-blue-500\/20 { background-color: rgba(0, 255, 242, 0.15) !important; }
+
+/* Indigo colors (for Discord) */
+.bg-indigo-500\/20 { background-color: rgba(99, 102, 241, 0.2) !important; }
+.bg-indigo-500\/30 { background-color: rgba(99, 102, 241, 0.3) !important; }
+.border-indigo-500\/30 { border-color: rgba(99, 102, 241, 0.3) !important; }
+
+/* Gradient title overrides */
+.bg-gradient-to-r.from-cyan-400.to-purple-400,
+.bg-gradient-to-r.from-cyan-400.via-blue-400.to-purple-400,
+.bg-gradient-to-r.from-cyan-400.to-purple-500,
+.bg-gradient-to-r.from-cyan-400.to-pink-500 {
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink)) !important;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-}
+/* Hover effects */
+.hover\:bg-slate-700:hover { background-color: var(--bg-card) !important; }
+.hover\:bg-slate-600:hover { background-color: var(--bg-card) !important; }
+.hover\:border-cyan-500:hover { border-color: var(--neon-cyan) !important; }
+.hover\:text-cyan-400:hover { color: var(--neon-cyan) !important; }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-  }
+/* Loading spinner */
+.border-t-cyan-400, .border-t-cyan-500 { border-top-color: var(--neon-cyan) !important; }
 
-  #app {
-    display: block;
-    width: 100%;
-  }
-}
+/* Status row backgrounds */
+.bg-red-500\/5 { background-color: rgba(255, 49, 49, 0.05) !important; }
+.bg-orange-500\/5 { background-color: rgba(255, 165, 0, 0.05) !important; }
+.bg-green-500\/5 { background-color: rgba(57, 255, 20, 0.05) !important; }
+.bg-slate-500\/5 { background-color: rgba(48, 54, 61, 0.1) !important; }
 
-/* Global mobile modal utility - accounts for top navbar on mobile */
+/* ===== END TAILWIND OVERRIDES ===== */
+
+/* Global mobile modal utility */
 @media (max-width: 768px) {
   .modal-mobile-safe {
     top: var(--mobile-nav-height, 0) !important;
@@ -44,46 +97,52 @@ a,
   }
 }
 
-/* Animated rainbow gradient border for Data Explorer menu item */
+/* Animated gradient border for Data Explorer menu item */
 @keyframes gradient-rotate {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .animate-gradient-rotate {
   animation: gradient-rotate 3s ease infinite;
 }
 
-/* Glow effect for Data Explorer */
+/* Glow effects for Data Explorer */
 .data-explorer-glow {
-  box-shadow: 
-    0 0 15px rgba(168, 85, 247, 0.4),
-    0 0 30px rgba(168, 85, 247, 0.2),
-    0 0 45px rgba(236, 72, 153, 0.1);
+  box-shadow:
+    0 0 15px rgba(0, 255, 242, 0.4),
+    0 0 30px rgba(0, 255, 242, 0.2),
+    0 0 45px rgba(255, 0, 255, 0.1);
 }
 
 .data-explorer-glow:hover {
-  box-shadow: 
-    0 0 20px rgba(168, 85, 247, 0.6),
-    0 0 40px rgba(168, 85, 247, 0.4),
-    0 0 60px rgba(236, 72, 153, 0.2);
+  box-shadow:
+    0 0 20px rgba(0, 255, 242, 0.6),
+    0 0 40px rgba(0, 255, 242, 0.4),
+    0 0 60px rgba(255, 0, 255, 0.2);
 }
 
 .data-explorer-glow-mobile {
-  box-shadow: 
-    0 0 10px rgba(168, 85, 247, 0.4),
-    0 0 20px rgba(168, 85, 247, 0.2);
+  box-shadow:
+    0 0 10px rgba(0, 255, 242, 0.4),
+    0 0 20px rgba(0, 255, 242, 0.2);
 }
 
 .data-explorer-glow-mobile:hover {
-  box-shadow: 
-    0 0 15px rgba(168, 85, 247, 0.6),
-    0 0 30px rgba(168, 85, 247, 0.3);
+  box-shadow:
+    0 0 15px rgba(0, 255, 242, 0.6),
+    0 0 30px rgba(0, 255, 242, 0.3);
+}
+
+/* Responsive table */
+@media (min-width: 1024px) {
+  body {
+    display: flex;
+  }
+
+  #app {
+    display: block;
+    width: 100%;
+  }
 }
