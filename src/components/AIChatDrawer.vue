@@ -52,9 +52,6 @@
                 <li>Finding when games happen</li>
                 <li>Understanding your performance</li>
               </ul>
-              <div class="tip-box">
-                <strong>Tip:</strong> Type <code>@</code> to search for players or <code>#</code> to search for servers
-              </div>
               <p v-if="context.playerName || context.serverGuid" class="context-hint">
                 <span v-if="context.playerName">Current player: <strong>{{ context.playerName }}</strong></span>
                 <span v-if="context.serverGuid">Current server: <strong>{{ context.serverName || context.serverGuid }}</strong></span>
@@ -117,26 +114,31 @@
           <!-- Input -->
           <div class="input-container">
             <div class="input-wrapper">
-              <span class="input-prompt">></span>
-              <input
-                ref="inputRef"
-                v-model="inputMessage"
-                type="text"
-                placeholder="Ask a question... (@ for players, # for servers)"
-                :disabled="isLoading"
-                @keydown="handleKeydown"
-                @input="handleInput"
-              />
-              <button
-                class="send-button"
-                :disabled="isLoading || !canSend"
-                @click="sendMessage"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13" />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              </button>
+              <div class="tip-box tip-inside-input">
+                <strong>Tip:</strong> Type <code>@</code> to search for players or <code>#</code> to search for servers
+              </div>
+              <div class="input-row">
+                <span class="input-prompt">></span>
+                <input
+                  ref="inputRef"
+                  v-model="inputMessage"
+                  type="text"
+                  placeholder="Ask a question... (@ for players, # for servers)"
+                  :disabled="isLoading"
+                  @keydown="handleKeydown"
+                  @input="handleInput"
+                />
+                <button
+                  class="send-button"
+                  :disabled="isLoading || !canSend"
+                  @click="sendMessage"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <p v-if="error" class="error-message">{{ error }}</p>
           </div>
@@ -603,6 +605,15 @@ async function sendMessage() {
   font-size: 0.8rem;
 }
 
+.tip-inside-input {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+}
+
 .tip-box code {
   background: rgba(0, 0, 0, 0.3);
   padding: 0.1rem 0.3rem;
@@ -943,12 +954,11 @@ async function sendMessage() {
 
 .input-wrapper {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
   background: #161b22;
   border: 1px solid #30363d;
   border-radius: 6px;
-  padding: 0.625rem 0.75rem;
+  overflow: hidden;
   transition: border-color 0.2s ease;
 }
 
@@ -957,10 +967,18 @@ async function sendMessage() {
   box-shadow: 0 0 0 2px rgba(0, 255, 242, 0.1);
 }
 
+.input-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+}
+
 .input-prompt {
   color: #00fff2;
   font-weight: 700;
   flex-shrink: 0;
+  padding-top: 0.35rem;
 }
 
 .input-wrapper input {
