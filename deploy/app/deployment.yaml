@@ -1,4 +1,19 @@
 ---
+# Secret for runtime config (e.g. Application Insights connection string).
+# Create or replace with your real values, e.g.:
+#   kubectl create secret generic bfstats-ui-secrets \
+#     --from-literal=APPLICATIONINSIGHTS_CONNECTION_STRING='InstrumentationKey=xxx;IngestionEndpoint=...' \
+#     --namespace bfstats-ui --dry-run=client -o yaml | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bfstats-ui-secrets
+  namespace: bfstats-ui
+type: Opaque
+stringData:
+  # Replace with your Azure Application Insights connection string, or apply secret via kubectl
+  APPLICATIONINSIGHTS_CONNECTION_STRING: ""
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,6 +37,9 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          envFrom:
+            - secretRef:
+                name: bfstats-ui-secrets
 ---
 apiVersion: v1
 kind: Service

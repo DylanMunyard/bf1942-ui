@@ -14,7 +14,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy the rest of the application code
-COPY .. .
+COPY . .
 
 # Build the application with the build arg as an environment variable
 # Vite will replace import.meta.env.VITE_APPLICATIONINSIGHTS_CONNECTION_STRING at build time
@@ -29,8 +29,12 @@ COPY --from=build-stage /app/dist /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Runtime config: entrypoint writes config.json from env (e.g. Kubernetes Secret)
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Expose port 80
 EXPOSE 80
 
-# Start nginx
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]

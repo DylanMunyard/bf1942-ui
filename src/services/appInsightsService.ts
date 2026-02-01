@@ -39,10 +39,28 @@ class AppInsightsService {
       this.setupErrorHandlers()
 
       this.initialized = true
-      console.log('Application Insights initialized successfully')
     } catch (error) {
       console.error('Failed to initialize Application Insights:', error)
     }
+  }
+
+  /**
+   * Flush queued telemetry immediately. Call after init to send the first batch without waiting.
+   */
+  flush(): void {
+    if (!this.appInsights) return
+    try {
+      this.appInsights.flush(true)
+    } catch (error) {
+      console.error('Application Insights flush failed:', error)
+    }
+  }
+
+  /**
+   * Flush after a delay (e.g. in dev so first page view appears in the portal quickly).
+   */
+  flushAfterDelay(ms: number): void {
+    setTimeout(() => this.flush(), ms)
   }
 
   /**

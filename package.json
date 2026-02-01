@@ -21,6 +21,7 @@
     "@google-cloud/local-auth": "^3.0.1",
     "@microsoft/applicationinsights-web": "^3.3.11",
     "@microsoft/signalr": "^9.0.6",
+    "@primeuix/themes": "^2.0.3",
     "@unhead/vue": "^2.0.17",
     "axios": "^1.6.7",
     "chart.js": "^4.4.9",
