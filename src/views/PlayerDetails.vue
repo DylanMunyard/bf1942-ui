@@ -52,6 +52,7 @@ const currentEngagementStat = computed(() => {
 
 // State for server map stats view
 const selectedServerGuid = ref<string | null>(null);
+const scrollPositionBeforeMapStats = ref(0);
 
 // Wide viewport: show slide-out panel side-by-side (lg: 1024px+)
 const isWideScreen = ref(false);
@@ -216,14 +217,18 @@ const microChartOptions = computed(() => {
 
 // Function to show map stats for a server
 const showServerMapStats = (serverGuid: string) => {
+  scrollPositionBeforeMapStats.value = window.scrollY;
   selectedServerGuid.value = serverGuid;
-  // Scroll to top so the side panel is visible (user may have been scrolled down when clicking "View Maps")
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // On wide screens the panel is side-by-side; scroll to top so the panel is visible. On mobile the panel is a fixed overlay, so don't scroll.
+  if (isWideScreen.value) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 };
 
 // Function to close server map stats view
 const closeServerMapStats = () => {
   selectedServerGuid.value = null;
+  window.scrollTo({ top: scrollPositionBeforeMapStats.value, behavior: 'auto' });
 };
 
 // Reset pagination when filters change
@@ -621,12 +626,12 @@ onUnmounted(() => {
 <template>
   <!-- Full-width Hero Section -->
   <div class="w-full bg-neutral-900 border-b border-neutral-800">
-    <div class="w-full px-4 sm:px-8 lg:px-12 py-6">
-      <div class="flex items-center justify-between mb-6">
+    <div class="w-full px-0 sm:px-8 lg:px-12 py-6">
+      <div class="flex items-center justify-between mb-6 px-4 sm:px-0">
         <HeroBackButton fallback-route="/players" />
       </div>
       
-      <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8">
+      <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8 px-4 sm:px-0">
         <!-- Player Avatar Section (hidden on mobile) -->
         <div class="hidden lg:block flex-shrink-0">
           <div class="relative group cursor-pointer" @click="showLastOnline = !showLastOnline">
@@ -806,7 +811,7 @@ onUnmounted(() => {
     >
       <div class="flex-1 min-w-0">
         <div class="relative">
-          <div class="w-full px-4 sm:px-8 lg:px-12 py-6">
+          <div class="w-full px-0 sm:px-8 lg:px-12 py-6">
         <!-- Loading State -->
         <div
           v-if="isLoading"
@@ -880,11 +885,11 @@ onUnmounted(() => {
         <!-- Main Content -->
         <div
           v-else-if="playerStats"
-          class="w-full px-3 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
+          class="w-full px-2 sm:px-6 pb-6 sm:pb-12 space-y-4 sm:space-y-8"
         >
           <!-- Data Explorer Call-to-Action Section -->
           <div class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden">
-            <div class="p-6">
+            <div class="p-3 sm:p-6">
               <div class="flex flex-col lg:flex-row items-center gap-6">
                 <!-- Data Explorer Image -->
                 <div class="flex-shrink-0">
@@ -943,7 +948,7 @@ onUnmounted(() => {
                 View All Sessions
               </router-link>
             </div>
-            <div class="p-6">
+            <div class="p-3 sm:p-6">
               <PlayerRecentSessions
                 :sessions="playerStats.recentSessions"
               />
@@ -955,7 +960,7 @@ onUnmounted(() => {
             v-if="playerStats?.bestScores && (playerStats.bestScores.allTime?.length > 0 || playerStats.bestScores.last30Days?.length > 0 || playerStats.bestScores.thisWeek?.length > 0)"
             class="relative bg-neutral-900/80 rounded-xl border border-neutral-700/50 mt-8"
           >
-            <div class="relative z-10 p-4 sm:p-6 lg:p-8 space-y-4">
+            <div class="relative z-10 p-2 sm:p-6 lg:p-8 space-y-4">
               <!-- Sleek, minimal header -->
               <div class="flex items-center justify-between">
                 <h3 class="text-xl font-bold text-neutral-200">Best Scores This Week</h3>
@@ -985,42 +990,82 @@ onUnmounted(() => {
                 <div
                   v-for="(score, index) in currentBestScores.slice(0, 10)"
                   :key="`${score.roundId}-${index}`"
-                  class="flex items-center gap-4 p-3 bg-neutral-800/40 hover:bg-neutral-800/60 rounded-lg border border-neutral-700/30 hover:border-neutral-700/60 transition-colors duration-200 cursor-pointer group"
+                  class="p-3 bg-neutral-800/40 hover:bg-neutral-800/60 rounded-lg border border-neutral-700/30 hover:border-neutral-700/60 transition-colors duration-200 cursor-pointer group"
                   @click="navigateToRoundReport(score.roundId)"
                 >
-                  <!-- Rank badge -->
-                  <div class="flex-shrink-0 w-6 h-6 bg-neutral-700 rounded-full flex items-center justify-center font-bold text-sm text-neutral-200">
-                    {{ index + 1 }}
+                  <!-- Mobile layout (stacked) -->
+                  <div class="sm:hidden space-y-2">
+                    <div class="flex items-center gap-3">
+                      <!-- Rank badge -->
+                      <div class="flex-shrink-0 w-6 h-6 bg-neutral-700 rounded-full flex items-center justify-center font-bold text-sm text-neutral-200">
+                        {{ index + 1 }}
+                      </div>
+                      <!-- Map & Server -->
+                      <div class="flex-1 min-w-0">
+                        <div class="text-sm text-neutral-200 font-medium truncate">{{ score.mapName }}</div>
+                        <div class="text-xs text-neutral-500 truncate">{{ score.serverName }}</div>
+                      </div>
+                      <!-- Time -->
+                      <div class="flex-shrink-0 text-xs text-neutral-500">
+                        {{ formatRelativeTime(score.timestamp) }}
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-4 pl-9">
+                      <!-- Score -->
+                      <div>
+                        <span class="text-sm font-bold text-neutral-100">{{ score.score.toLocaleString() }}</span>
+                        <span class="text-xs text-neutral-500 ml-1">pts</span>
+                      </div>
+                      <!-- K/D -->
+                      <div>
+                        <span class="text-sm font-bold text-neutral-200">{{ calculateKDR(score.kills, score.deaths) }}</span>
+                        <span class="text-xs text-neutral-500 ml-1">K/D</span>
+                      </div>
+                      <!-- Kills/Deaths -->
+                      <div class="text-sm">
+                        <span class="text-green-400 font-semibold">{{ score.kills }}</span>
+                        <span class="text-neutral-500 mx-1">/</span>
+                        <span class="text-red-400 font-semibold">{{ score.deaths }}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <!-- Score -->
-                  <div class="flex-shrink-0 w-24">
-                    <div class="text-sm font-bold text-neutral-100">{{ score.score.toLocaleString() }}</div>
-                    <div class="text-xs text-neutral-500">SCORE</div>
-                  </div>
+                  <!-- Desktop layout (horizontal) -->
+                  <div class="hidden sm:flex items-center gap-4">
+                    <!-- Rank badge -->
+                    <div class="flex-shrink-0 w-6 h-6 bg-neutral-700 rounded-full flex items-center justify-center font-bold text-sm text-neutral-200">
+                      {{ index + 1 }}
+                    </div>
 
-                  <!-- K/D -->
-                  <div class="flex-shrink-0">
-                    <div class="text-sm font-bold text-neutral-200">{{ calculateKDR(score.kills, score.deaths) }}</div>
-                    <div class="text-xs text-neutral-500">K/D</div>
-                  </div>
+                    <!-- Score -->
+                    <div class="flex-shrink-0 w-24">
+                      <div class="text-sm font-bold text-neutral-100">{{ score.score.toLocaleString() }}</div>
+                      <div class="text-xs text-neutral-500">SCORE</div>
+                    </div>
 
-                  <!-- Kills/Deaths -->
-                  <div class="flex-shrink-0 text-sm">
-                    <span class="text-green-400 font-semibold">{{ score.kills }}</span>
-                    <span class="text-neutral-500 mx-1">/</span>
-                    <span class="text-red-400 font-semibold">{{ score.deaths }}</span>
-                  </div>
+                    <!-- K/D -->
+                    <div class="flex-shrink-0">
+                      <div class="text-sm font-bold text-neutral-200">{{ calculateKDR(score.kills, score.deaths) }}</div>
+                      <div class="text-xs text-neutral-500">K/D</div>
+                    </div>
 
-                  <!-- Map -->
-                  <div class="flex-1 min-w-0">
-                    <div class="text-sm text-neutral-300 truncate">{{ score.mapName }}</div>
-                    <div class="text-xs text-neutral-500 truncate">{{ score.serverName }}</div>
-                  </div>
+                    <!-- Kills/Deaths -->
+                    <div class="flex-shrink-0 text-sm">
+                      <span class="text-green-400 font-semibold">{{ score.kills }}</span>
+                      <span class="text-neutral-500 mx-1">/</span>
+                      <span class="text-red-400 font-semibold">{{ score.deaths }}</span>
+                    </div>
 
-                  <!-- Time -->
-                  <div class="flex-shrink-0 text-right text-xs text-neutral-500">
-                    {{ formatRelativeTime(score.timestamp) }}
+                    <!-- Map -->
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm text-neutral-300 truncate">{{ score.mapName }}</div>
+                      <div class="text-xs text-neutral-500 truncate">{{ score.serverName }}</div>
+                    </div>
+
+                    <!-- Time -->
+                    <div class="flex-shrink-0 text-right text-xs text-neutral-500">
+                      {{ formatRelativeTime(score.timestamp) }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1028,11 +1073,14 @@ onUnmounted(() => {
           </div>
 
           <!-- Favourite Battlefields & Server Rankings – High-level summary (hacker theme) -->
-          <div class="player-servers-section bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden mt-8">
+          <div
+            v-if="hasServers || (playerStats?.insights?.serverRankings && playerStats.insights.serverRankings.length > 0)"
+            class="player-servers-section bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden mt-8"
+          >
             <!-- Hero strip: rankings at a glance -->
             <div
               v-if="rankingsSummary"
-              class="player-servers-hero flex flex-wrap items-center gap-4 sm:gap-6 px-6 py-4 border-b border-neutral-700/50 bg-neutral-800/40"
+              class="player-servers-hero flex flex-wrap items-center gap-4 sm:gap-6 px-3 sm:px-6 py-4 border-b border-neutral-700/50 bg-neutral-800/40"
             >
               <div class="flex items-center gap-2">
                 <span class="rankings-hero-accent font-mono">◆</span>
@@ -1058,7 +1106,7 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div class="p-6 space-y-6">
+            <div class="p-3 sm:p-6 space-y-6">
               <!-- Favourite Battlefields: compact strip (only when player has servers) -->
               <div v-if="hasServers">
                 <h3 class="text-lg font-bold text-neutral-200 mb-1 flex items-center gap-2">
@@ -1131,40 +1179,42 @@ onUnmounted(() => {
                   <div
                     v-for="ranking in playerStats.insights.serverRankings"
                     :key="ranking.serverGuid"
-                    class="player-ranking-strip flex flex-wrap items-center gap-2 sm:gap-4 p-3 rounded-lg border border-neutral-700/50 bg-neutral-800/40 hover:border-neutral-600 transition-all"
+                    class="player-ranking-strip flex flex-col gap-2 p-3 rounded-lg border border-neutral-700/50 bg-neutral-800/40 hover:border-neutral-600 transition-all"
                   >
                     <router-link
                       :to="`/servers/${encodeURIComponent(ranking.serverName)}`"
-                      class="flex-1 min-w-0 font-medium text-neutral-200 hover:text-cyan-400 truncate"
+                      class="w-full font-medium text-neutral-200 hover:text-cyan-400 break-words"
                     >
                       {{ ranking.serverName }}
                     </router-link>
-                    <span class="text-neutral-500 text-sm">{{ ranking.rankDisplay ?? ranking.rank }} of {{ ranking.totalRankedPlayers }}</span>
-                    <span
-                      v-if="ranking.averagePing > 0"
-                      class="text-xs font-mono font-medium"
-                      :class="{
-                        'ping-good': ranking.averagePing < 50,
-                        'ping-warning': ranking.averagePing >= 50 && ranking.averagePing < 100,
-                        'ping-bad': ranking.averagePing >= 100
-                      }"
-                    >
-                      {{ ranking.averagePing }}ms
-                    </span>
-                    <div class="flex flex-shrink-0 gap-2">
-                      <router-link
-                        :to="{ name: 'explore-server-detail', params: { serverGuid: ranking.serverGuid } }"
-                        class="rankings-list-btn px-2.5 py-1.5 text-xs font-medium rounded border transition-colors"
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-4">
+                      <span class="text-neutral-500 text-sm">{{ ranking.rankDisplay ?? ranking.rank }} of {{ ranking.totalRankedPlayers }}</span>
+                      <span
+                        v-if="ranking.averagePing > 0"
+                        class="text-xs font-mono font-medium"
+                        :class="{
+                          'ping-good': ranking.averagePing < 50,
+                          'ping-warning': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                          'ping-bad': ranking.averagePing >= 100
+                        }"
                       >
-                        Rankings
-                      </router-link>
-                      <button
-                        type="button"
-                        class="px-2.5 py-1.5 text-xs font-medium rounded border border-neutral-600 text-neutral-300 hover:bg-neutral-700 transition-colors"
-                        @click="showServerMapStats(ranking.serverGuid)"
-                      >
-                        Maps
-                      </button>
+                        {{ ranking.averagePing }}ms
+                      </span>
+                      <div class="flex flex-shrink-0 gap-2 ml-auto">
+                        <router-link
+                          :to="{ name: 'explore-server-detail', params: { serverGuid: ranking.serverGuid } }"
+                          class="rankings-list-btn px-2.5 py-1.5 text-xs font-medium rounded border transition-colors"
+                        >
+                          Rankings
+                        </router-link>
+                        <button
+                          type="button"
+                          class="px-2.5 py-1.5 text-xs font-medium rounded border border-neutral-600 text-neutral-300 hover:bg-neutral-700 transition-colors"
+                          @click="showServerMapStats(ranking.serverGuid)"
+                        >
+                          Maps
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1176,7 +1226,7 @@ onUnmounted(() => {
           <div class="relative overflow-hidden bg-neutral-900/80 rounded-2xl border border-neutral-700/50 mt-8">
             <!-- Background Effects (subtle dark theme accent) -->
             <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
-            <div class="relative z-10 p-8 space-y-6">
+            <div class="relative z-10 p-3 sm:p-8 space-y-6">
               <!-- Section Header -->
               <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div class="space-y-2">
@@ -1236,15 +1286,15 @@ onUnmounted(() => {
         @click="closeServerMapStats"
       ></div>
       <div
-        class="fixed inset-y-0 left-0 right-0 z-[100] flex items-stretch lg:relative lg:inset-auto lg:z-auto lg:w-2/5 lg:flex-shrink-0 lg:min-h-0 lg:border-l lg:border-neutral-800"
+        class="fixed inset-y-0 left-0 right-0 md:right-20 z-[100] flex items-stretch lg:relative lg:inset-auto lg:z-auto lg:w-2/5 lg:mr-20 lg:flex-shrink-0 lg:min-h-0 lg:border-l lg:border-neutral-800"
         @click.stop
       >
         <div
-          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 ml-0 mr-0 md:mr-20 lg:mr-0 lg:border-r-0"
+          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 lg:border-r-0"
           :class="{ 'h-[calc(100vh-4rem)]': true, 'md:h-full': true, 'mt-16': true, 'md:mt-0': true }"
         >
           <!-- Header -->
-          <div class="sticky top-0 z-20 bg-neutral-950/95 border-b border-neutral-800 p-4 flex justify-between items-center">
+          <div class="sticky top-0 z-20 bg-neutral-950/95 border-b border-neutral-800 p-2 sm:p-4 flex justify-between items-center">
             <div class="flex flex-col min-w-0 flex-1 mr-4">
               <h2 class="text-xl font-bold text-neutral-200 truncate">
                 Map Performance

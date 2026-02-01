@@ -1186,7 +1186,7 @@ const closeForecastOverlay = () => {
       <!-- Players Panel: overlay on mobile, side-by-side on lg when space allows (must be inside flex container) -->
       <div
         v-if="showPlayersModal"
-        class="fixed inset-0 z-[100] lg:relative lg:inset-auto lg:z-auto lg:w-[640px] xl:w-[720px] 2xl:w-[800px] lg:flex-shrink-0 lg:border-l lg:border-neutral-800 lg:min-h-0"
+        class="fixed inset-0 md:right-20 z-[100] lg:relative lg:inset-auto lg:z-auto lg:w-[640px] xl:w-[720px] 2xl:w-[800px] lg:mr-20 lg:flex-shrink-0 lg:border-l lg:border-neutral-800 lg:min-h-0"
       >
       <PlayersPanel
         :show="showPlayersModal"
@@ -1204,11 +1204,11 @@ const closeForecastOverlay = () => {
         @click="handleCloseMapDetailPanel"
       />
       <div
-        class="fixed inset-y-0 left-0 right-0 z-[100] flex items-stretch lg:relative lg:inset-auto lg:z-auto lg:w-[720px] xl:w-[840px] 2xl:w-[960px] lg:flex-shrink-0 lg:min-h-0 lg:border-l lg:border-neutral-800"
+        class="fixed inset-y-0 left-0 right-0 md:right-20 z-[100] flex items-stretch lg:relative lg:inset-auto lg:z-auto lg:w-[720px] xl:w-[840px] 2xl:w-[960px] lg:mr-20 lg:flex-shrink-0 lg:min-h-0 lg:border-l lg:border-neutral-800"
         @click.stop
       >
         <div
-          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 ml-0 mr-0 md:mr-20 lg:mr-0 lg:border-r-0"
+          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 lg:border-r-0"
           :class="{ 'h-[calc(100vh-4rem)]': true, 'md:h-full': true, 'mt-16': true, 'md:mt-0': true }"
         >
       <!-- Header -->

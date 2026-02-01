@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen bg-neutral-950 px-3 sm:px-6"
+    class="min-h-screen bg-neutral-950 px-0 sm:px-6"
     @click="closeAllModals"
   >
     <div
@@ -10,7 +10,7 @@
       <!-- Main Server Table -->
       <div class="flex-1 min-w-0 w-full">
         <!-- Header -->
-        <div class="sticky top-0 z-20 bg-neutral-950/95 backdrop-blur-sm border-b border-neutral-700/50 p-3">
+        <div class="sticky top-0 z-20 bg-neutral-950/95 backdrop-blur-sm border-b border-neutral-700/50 p-1 sm:p-3">
           <!-- Mobile: Player Search Full Width -->
           <div class="block lg:hidden w-full mb-4">
             <PlayerSearch
@@ -47,7 +47,7 @@
         </div>
 
         <!-- Mobile: Game Filter Buttons (Above Table) -->
-        <div class="block lg:hidden p-3 border-b border-neutral-700/30">
+        <div class="block lg:hidden p-2 sm:p-3 border-b border-neutral-700/30">
           <GameFilterButtons
             :game-types="gameTypes"
             :active-filter="activeFilter"
@@ -143,8 +143,8 @@
             <!-- Table Header -->
             <thead class="sticky top-0 z-10">
               <tr class="bg-gradient-to-r from-neutral-900/95 to-neutral-950/95 backdrop-blur-sm">
-                <!-- Rank Column Header -->
-                <th class="p-1.5 text-center font-bold text-xs uppercase tracking-wide text-neutral-300 cursor-pointer hover:bg-neutral-700/50 transition-all duration-300 border-b border-neutral-700/30 hover:border-yellow-500/50"
+                <!-- Rank Column Header (hidden on mobile - rank controls are in NAME column on mobile) -->
+                <th class="hidden lg:table-cell p-1.5 text-center font-bold text-xs uppercase tracking-wide text-neutral-300 cursor-pointer hover:bg-neutral-700/50 transition-all duration-300 border-b border-neutral-700/30 hover:border-yellow-500/50"
                     @click="sortBy('rank')"
                 >
                   <div class="flex items-center gap-1.5">
@@ -368,8 +368,8 @@
                 class="group transition-all duration-300 hover:bg-neutral-900/20 border-b border-neutral-700/30"
                 :class="getServerStatusClass(server)"
               >
-                <!-- Rank -->
-                <td class="p-1.5">
+                <!-- Rank (hidden on mobile - rank is shown in NAME column on mobile) -->
+                <td class="hidden lg:table-cell p-1.5">
                   <div class="flex items-center justify-center">
                     <div class="text-center">
                       <div
@@ -464,6 +464,13 @@
                     <!-- Mobile Layout -->
                     <div class="block lg:hidden">
                       <div class="flex items-center gap-2 mb-1">
+                        <!-- Rank badge on mobile -->
+                        <div
+                          v-if="getServerRank(server.guid)"
+                          class="text-yellow-400 font-bold text-xs font-mono"
+                        >
+                          #{{ getServerRank(server.guid) }}
+                        </div>
                         <span
                           v-if="server.country"
                           class="text-lg"

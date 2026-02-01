@@ -23,6 +23,13 @@ spec:
           subPath: daemon.json
     - name: kubectl
       image: dylanmunyard/jenkins-agent-kubectl:latest
+      command: ["sleep", "infinity"]
+      resources:
+        requests:
+          memory: 512Mi
+    - name: deploy-aks
+      image: dylanmunyard/jenkins-agent-kubectl-az:latest
+      command: ["sleep", "infinity"]
       resources:
         requests:
           memory: 512Mi

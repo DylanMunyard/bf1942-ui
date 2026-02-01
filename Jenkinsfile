@@ -1,5 +1,9 @@
 pipeline {
   agent none
+  parameters {
+    string(name: 'AKS_RESOURCE_GROUP', defaultValue: 'bfstats-io', description: 'Azure resource group containing the AKS cluster')
+    string(name: 'AKS_CLUSTER_NAME', defaultValue: 'bfstats-aks', description: 'AKS cluster name')
+  }
   stages {
     stage('Build and Deploy') {
       parallel {
@@ -46,16 +50,27 @@ pipeline {
             stage('Deploy UI') {
               agent {
                 kubernetes {
-                  cloud 'AKS'
+                  cloud 'Local k8s'
                   yamlFile 'deploy/pod.yaml'
+                  nodeSelector 'kubernetes.io/hostname=bethany'
                 }
               }
               steps {
-                container('kubectl') {
-                  withKubeConfig([namespace: "bfstats-ui"]) {
-                    withCredentials([string(credentialsId: 'OPENAI_API_KEY', variable: 'OPENAI_API_KEY')]) {
-                      sh 'kubectl rollout restart deployment/bfstats-ui'
-                    }
+                container('deploy-aks') {
+                  withCredentials([
+                    string(credentialsId: 'bf42-stats-aks-sp-client-id', variable: 'AZURE_CLIENT_ID'),
+                    string(credentialsId: 'bf42-stats-aks-sp-client-secret', variable: 'AZURE_CLIENT_SECRET'),
+                    string(credentialsId: 'bf42-stats-aks-sp-tenant-id', variable: 'AZURE_TENANT_ID')
+                  ]) {
+                    sh '''
+                      set -euo pipefail
+                      export KUBECONFIG=$(mktemp)
+                      trap 'rm -f "$KUBECONFIG"' EXIT
+                      az login --service-principal -u "$AZURE_CLIENT_ID" -p "$AZURE_CLIENT_SECRET" --tenant "$AZURE_TENANT_ID"
+                      az aks get-credentials --resource-group "''' + params.AKS_RESOURCE_GROUP + '''" --name "''' + params.AKS_CLUSTER_NAME + '''" --file "$KUBECONFIG"
+                      kubelogin convert-kubeconfig -l azurecli
+                      kubectl -n bfstats-ui rollout restart deployment/bfstats-ui
+                    '''
                   }
                 }
               }
