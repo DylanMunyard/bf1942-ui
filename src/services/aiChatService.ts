@@ -118,10 +118,10 @@ export async function searchPlayersForMention(query: string): Promise<MentionRes
     }
 
     const data = await response.json();
-    return (data.players || []).slice(0, 8).map((p: { playerName: string; totalScore: number; kdRatio: number }) => ({
+    return (data.players || []).slice(0, 8).map((p: { playerName: string; totalScore: number; kdRatio?: number }) => ({
       id: p.playerName,
       name: p.playerName,
-      detail: `Score: ${p.totalScore.toLocaleString()} | K/D: ${p.kdRatio.toFixed(2)}`
+      detail: `Score: ${(p.totalScore ?? 0).toLocaleString()} | K/D: ${p.kdRatio != null ? p.kdRatio.toFixed(2) : 'N/A'}`
     }));
   } catch (err) {
     console.error('Player search error:', err);

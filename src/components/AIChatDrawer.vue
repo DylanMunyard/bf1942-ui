@@ -375,7 +375,10 @@ function formatMessage(content: string, role?: 'user' | 'assistant'): string {
   if (!content.trim()) return '';
 
   if (role === 'assistant') {
-    const html = marked(content.trim(), { breaks: true }) as string;
+    let html = marked(content.trim(), { breaks: true }) as string;
+    // Wrap tables so they can scroll horizontally on mobile without affecting text wrap
+    html = html.replace(/<table/g, '<div class="table-scroll-wrap"><table');
+    html = html.replace(/<\/table>/g, '</table></div>');
     return applyMentionBadges(html);
   }
 
@@ -777,10 +780,22 @@ async function sendMessage() {
   text-decoration: none;
 }
 
+/* Wrapper for tables: horizontal scroll on narrow viewports, text elsewhere stays wrapped */
+.message-text.markdown-rules :deep(.table-scroll-wrap) {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.5rem 0;
+  max-width: 100%;
+}
+
+.message-text.markdown-rules :deep(.table-scroll-wrap table) {
+  min-width: max-content;
+  width: 100%;
+}
+
 .message-text.markdown-rules :deep(table) {
   border-collapse: collapse;
-  width: 100%;
-  margin: 1.5rem 0;
+  margin: 0;
   border: 2px solid var(--rule-primary);
   border-radius: 0.5rem;
   overflow: hidden;

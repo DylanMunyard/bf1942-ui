@@ -6,16 +6,18 @@
       <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/3 rounded-full blur-3xl animate-pulse delay-1000" />
     </div>
 
-    <!-- Site Notice Banner -->
+    <!-- Site Notice Banner (full width across top) -->
     <SiteNoticeBanner />
 
-    <div class="layout-wrapper relative z-10">
-      <main class="content-area">
-        <router-view />
-      </main>
-      <Footer />
+    <div class="layout-row">
+      <div class="layout-wrapper relative z-10">
+        <main class="content-area">
+          <router-view />
+        </main>
+        <Footer />
+      </div>
+      <Sidebar />
     </div>
-    <Sidebar />
     <OnlinePlayersSidebar v-if="isAuthenticated && isDesktop" />
     <ToastNotifications />
   </div>
@@ -52,7 +54,14 @@ onUnmounted(() => {
 <style scoped>
 .dashboard-layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
+}
+
+.layout-row {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .layout-wrapper {
@@ -60,7 +69,7 @@ onUnmounted(() => {
   flex-direction: column;
   margin-right: 60px; /* Same as sidebar width */
   flex-grow: 1;
-  width: calc(100% - 60px);
+  min-width: 0;
   min-height: 100vh;
 }
 
@@ -71,10 +80,6 @@ onUnmounted(() => {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .dashboard-layout {
-    flex-direction: column;
-  }
-
   .layout-wrapper {
     margin-right: 0;
     margin-top: var(--mobile-nav-height);
