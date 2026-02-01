@@ -163,6 +163,13 @@ const fetchEngagementStatsAsync = async () => {
 const fetchData = async () => {
   if (!serverName.value) return;
 
+  // Set AI context immediately with server name from route so chat shows correct context before fetch
+  setContext({
+    pageType: 'server',
+    serverName: serverName.value,
+    game: 'bf1942'
+  });
+
   isLoading.value = true;
   error.value = null;
 
@@ -170,10 +177,11 @@ const fetchData = async () => {
     // Fetch server details first (blocks UI)
     serverDetails.value = await fetchServerDetails(serverName.value);
 
-    // Update AI context with server details
+    // Update AI context with serverGuid once we have it (API uses serverGuid)
     setContext({
       pageType: 'server',
       serverGuid: serverDetails.value?.serverGuid,
+      serverName: serverName.value,
       game: serverDetails.value?.gameId || 'bf1942'
     });
 

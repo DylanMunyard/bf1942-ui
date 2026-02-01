@@ -73,13 +73,16 @@ export function usePlayerContext(playerName: string, game?: string) {
 
 /**
  * Helper to set server page context.
+ * @param serverGuid - API identifier for the server
+ * @param serverName - Optional display name (shown in chat; avoids exposing GUID to users)
  */
-export function useServerContext(serverGuid: string, game?: string) {
+export function useServerContext(serverGuid: string, serverName?: string, game?: string) {
   const { setContext } = useAIContext();
 
   setContext({
     pageType: 'server',
     serverGuid,
+    serverName,
     game: game || 'bf1942',
   });
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, provide } from 'vue';
+import { useRoute } from 'vue-router';
 import DashboardLayout from './layouts/DashboardLayout.vue';
 import AIChatButton from './components/AIChatButton.vue';
 import AIChatDrawer from './components/AIChatDrawer.vue';
@@ -7,6 +8,8 @@ import { initializeBadgeDefinitions } from './services/badgeService';
 import { useSignalR } from '@/composables/useSignalR';
 import { useNotifications } from '@/composables/useNotifications';
 import { createAIContext } from '@/composables/useAIContext';
+
+const route = useRoute();
 
 // Dark mode state
 const isDarkMode = ref(false);
@@ -88,7 +91,7 @@ provide('toggleDarkMode', toggleDarkMode);
 <template>
   <DashboardLayout />
   <AIChatButton :is-open="isAIChatOpen" @click="toggleAIChat" />
-  <AIChatDrawer v-model="isAIChatOpen" :context="aiContext" />
+  <AIChatDrawer v-model="isAIChatOpen" :context="aiContext" :key="route.fullPath" />
 </template>
 
 <style>

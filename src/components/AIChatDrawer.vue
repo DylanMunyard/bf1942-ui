@@ -27,7 +27,18 @@
 
           <!-- Header -->
           <div class="drawer-header">
-            <h3 class="drawer-title">AI Assistant</h3>
+            <div class="drawer-header-row">
+              <h3 class="drawer-title">AI Assistant</h3>
+              <button
+                v-if="messages.length > 0"
+                type="button"
+                class="btn-clear"
+                aria-label="Clear conversation"
+                @click="clearConversation"
+              >
+                Clear conversation
+              </button>
+            </div>
             <p class="drawer-subtitle">// Type @ for players, # for servers</p>
           </div>
 
@@ -46,7 +57,7 @@
               </div>
               <p v-if="context.playerName || context.serverGuid" class="context-hint">
                 <span v-if="context.playerName">Current player: <strong>{{ context.playerName }}</strong></span>
-                <span v-if="context.serverGuid">Current server: <strong>{{ context.serverGuid }}</strong></span>
+                <span v-if="context.serverGuid">Current server: <strong>{{ context.serverName || context.serverGuid }}</strong></span>
               </p>
             </div>
 
@@ -58,14 +69,21 @@
             >
               <div class="message-content">
                 <span class="message-role">{{ msg.role === 'user' ? '>' : '$' }}</span>
-                <span class="message-text" v-html="formatMessage(msg.content)" />
+                <span
+                  class="message-text"
+                  :class="{ 'markdown-rules': msg.role === 'assistant' }"
+                  v-html="formatMessage(msg.content, msg.role)"
+                />
               </div>
             </div>
 
             <div v-if="isLoading" class="message assistant loading">
               <div class="message-content">
                 <span class="message-role">$</span>
-                <span class="message-text">{{ streamingContent || 'Thinking...' }}</span>
+                <span
+                  class="message-text markdown-rules"
+                  v-html="formatMessage(streamingContent || 'Thinking...', 'assistant')"
+                />
                 <span class="cursor" />
               </div>
             </div>
@@ -130,6 +148,7 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue';
+import { marked } from 'marked';
 import { streamChat, type ChatMessage, type PageContext } from '@/services/aiChatService';
 import { searchPlayersForMention, searchServersForMention, type MentionResult } from '@/services/aiChatService';
 
@@ -175,6 +194,14 @@ let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const canSend = computed(() => {
   return inputMessage.value.trim().length > 0;
 });
+
+function clearConversation() {
+  messages.value = [];
+  streamingContent.value = '';
+  error.value = '';
+  mentionRegistry.clear();
+  inputMessage.value = '';
+}
 
 // Focus input when drawer opens
 watch(() => props.modelValue, (isOpen) => {
@@ -317,22 +344,35 @@ function selectAutocompleteItem(item: MentionResult) {
   });
 }
 
-function formatMessage(content: string): string {
-  // Escape HTML
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function applyMentionBadges(html: string): string {
+  return html
+    .replace(/@([^\s@#]+)/g, (_, name) => `<span class="mention-badge mention-player"><span class="mention-icon">👤</span><span class="mention-text">${escapeHtml(name)}</span></span>`)
+    .replace(/#(?!\d)([^\s@#]+)/g, (_, name) => `<span class="mention-badge mention-server"><span class="mention-icon">🖥</span><span class="mention-text">${escapeHtml(name)}</span></span>`);
+}
+
+function formatMessage(content: string, role?: 'user' | 'assistant'): string {
+  if (!content.trim()) return '';
+
+  if (role === 'assistant') {
+    const html = marked(content.trim(), { breaks: true }) as string;
+    return applyMentionBadges(html);
+  }
+
+  // User message: escape HTML, then apply mentions and newlines
   let formatted = content
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
-
-  // Highlight @mentions (players) with badge style
-  formatted = formatted.replace(/@([^\s@#]+)/g, '<span class="mention-badge mention-player"><span class="mention-icon">👤</span><span class="mention-text">$1</span></span>');
-
-  // Highlight #mentions (servers) with badge style
-  formatted = formatted.replace(/#([^\s@#]+)/g, '<span class="mention-badge mention-server"><span class="mention-icon">🖥</span><span class="mention-text">$1</span></span>');
-
-  // Convert newlines
+  formatted = applyMentionBadges(formatted);
   formatted = formatted.replace(/\n/g, '<br>');
-
   return formatted;
 }
 
@@ -366,7 +406,7 @@ async function sendMessage() {
   }
 
   // Find #server mentions
-  const serverMentions = message.match(/#([^\s@#]+)/g);
+  const serverMentions = message.match(/#(?!\d)([^\s@#]+)/g);
   if (serverMentions) {
     for (const mention of serverMentions) {
       const name = mention.slice(1); // Remove #
@@ -417,7 +457,7 @@ async function sendMessage() {
 
 .ai-drawer {
   width: 100%;
-  max-width: 600px;
+  max-width: 960px;
   height: 100%;
   background: #0d1117;
   border-left: 1px solid #30363d;
@@ -485,11 +525,37 @@ async function sendMessage() {
   flex-shrink: 0;
 }
 
+.drawer-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .drawer-title {
   font-size: 1rem;
   font-weight: 700;
   color: #e6edf3;
   margin: 0;
+}
+
+.btn-clear {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid #30363d;
+  color: #8b949e;
+  font-family: inherit;
+  font-size: 0.7rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.btn-clear:hover {
+  color: #e6edf3;
+  border-color: #484f58;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .drawer-subtitle {
@@ -581,6 +647,153 @@ async function sendMessage() {
 .message-text {
   color: #e6edf3;
   word-break: break-word;
+}
+
+/* Chat theme vars for markdown-rules (same pattern as PublicTournamentRules.vue) */
+.message.assistant .message-content {
+  --color-text: #e6edf3;
+  --color-text-muted: #8b949e;
+  --rule-primary: #00fff2;
+  --rule-secondary: #00fff2;
+}
+
+/* Markdown rules styling (same as PublicTournamentRules.vue) */
+.message-text.markdown-rules :deep(h1),
+.message-text.markdown-rules :deep(h2),
+.message-text.markdown-rules :deep(h3),
+.message-text.markdown-rules :deep(h4),
+.message-text.markdown-rules :deep(h5),
+.message-text.markdown-rules :deep(h6) {
+  color: var(--color-text);
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* First block in response: no top margin so it aligns with the $ prompt */
+.message-text.markdown-rules :deep(h1:first-child),
+.message-text.markdown-rules :deep(h2:first-child),
+.message-text.markdown-rules :deep(h3:first-child),
+.message-text.markdown-rules :deep(h4:first-child),
+.message-text.markdown-rules :deep(h5:first-child),
+.message-text.markdown-rules :deep(h6:first-child),
+.message-text.markdown-rules :deep(p:first-child) {
+  margin-top: 0;
+}
+
+.message-text.markdown-rules :deep(p) {
+  margin-bottom: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.message-text.markdown-rules :deep(strong) {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.message-text.markdown-rules :deep(em) {
+  color: var(--rule-secondary);
+  font-style: italic;
+}
+
+.message-text.markdown-rules :deep(ul) {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  padding-left: 0;
+}
+
+.message-text.markdown-rules :deep(ol) {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  padding-left: 0;
+}
+
+.message-text.markdown-rules :deep(li) {
+  margin-bottom: 0.5rem;
+  color: var(--color-text-muted);
+  margin-left: 1rem;
+}
+
+.message-text.markdown-rules :deep(code) {
+  background: linear-gradient(135deg, var(--rule-primary)15, var(--rule-secondary)10);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  color: var(--color-text);
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  border: 1px solid var(--rule-primary);
+}
+
+.message-text.markdown-rules :deep(blockquote) {
+  border-left: 4px solid var(--rule-primary);
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-bottom: 1rem;
+  color: var(--color-text-muted);
+  background: linear-gradient(to right, var(--rule-primary)08, transparent);
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+}
+
+.message-text.markdown-rules :deep(a) {
+  color: var(--color-text);
+  text-decoration: underline;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.message-text.markdown-rules :deep(a:hover) {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.message-text.markdown-rules :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+  border: 2px solid var(--rule-primary);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.message-text.markdown-rules :deep(thead) {
+  background: linear-gradient(to right, var(--rule-primary)30, var(--rule-secondary)20);
+  backdrop-filter: blur(0.5rem);
+}
+
+.message-text.markdown-rules :deep(th) {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--color-text);
+  border-bottom: 2px solid var(--rule-primary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.message-text.markdown-rules :deep(td) {
+  padding: 0.75rem 1rem;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--rule-primary)20;
+}
+
+.message-text.markdown-rules :deep(tbody tr) {
+  background-color: transparent;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.message-text.markdown-rules :deep(tbody tr:nth-child(even)) {
+  background-color: var(--rule-primary)08;
+}
+
+.message-text.markdown-rules :deep(tbody tr:hover) {
+  background-color: var(--rule-primary)15;
+  box-shadow: inset 0 0 16px var(--rule-primary)15;
 }
 
 .message.user .message-text {
@@ -826,7 +1039,7 @@ async function sendMessage() {
 }
 
 /* Mobile */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .ai-drawer {
     max-width: 100%;
   }

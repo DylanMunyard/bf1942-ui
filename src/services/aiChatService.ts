@@ -6,6 +6,8 @@ export interface PageContext {
   pageType?: 'player' | 'server' | 'round' | 'home';
   playerName?: string;
   serverGuid?: string;
+  /** Display name for the server (e.g. for AI chat hint); API still uses serverGuid. */
+  serverName?: string;
   game?: string;
 }
 
