@@ -589,8 +589,11 @@ const closeForecastOverlay = () => {
 </script>
 
 <template>
+  <div class="portal-page">
+    <div class="portal-grid" aria-hidden="true" />
+    <div class="portal-inner">
   <!-- Full-width Hero Section -->
-  <div class="w-full bg-neutral-900 border-b border-neutral-800">
+  <div class="w-full rounded-lg border border-[var(--portal-border)] bg-[var(--portal-surface)] mb-6">
     <div class="w-full px-4 sm:px-8 lg:px-12 py-6">
       <div class="flex items-center justify-between">
         <HeroBackButton :on-click="() => $router.push(getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string)))" />
@@ -1279,8 +1282,11 @@ const closeForecastOverlay = () => {
     </template>
       </div>
   </div>
+    </div>
+  </div>
 </template>
 
+<style src="./portal-layout.css"></style>
 <style scoped>
 /* Map-details style: darker, sleeker slate theme (no neon overrides) */
 @keyframes spin-slow {

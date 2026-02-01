@@ -1,8 +1,10 @@
 <template>
-  <div class="min-h-screen bg-neutral-950">
-    <!-- Hero Section -->
-    <div class="w-full bg-neutral-900 border-b border-neutral-700">
-      <div class="w-full max-w-screen-2xl mx-auto px-0 sm:px-8 lg:px-12 py-8">
+  <div class="portal-page">
+    <div class="portal-grid" aria-hidden="true" />
+    <div class="portal-inner">
+      <!-- Hero Section -->
+      <div class="w-full rounded-lg border border-[var(--portal-border)] bg-[var(--portal-surface)] mb-6">
+        <div class="w-full max-w-screen-2xl mx-auto px-0 sm:px-8 lg:px-12 py-8">
         <!-- Search Form -->
         <form class="flex justify-center px-4 sm:px-0" @submit.prevent="executeSearch">
           <div class="relative w-full max-w-xl">
@@ -30,7 +32,7 @@
               v-model="searchQuery"
               type="text"
               placeholder="Search players..."
-              class="w-full pl-12 pr-24 py-3.5 bg-neutral-950 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-cyan-500 transition-colors"
+              class="w-full pl-12 pr-24 py-3.5 bg-[var(--portal-surface-elevated)] border border-[var(--portal-border)] rounded-lg text-[var(--portal-text-bright)] placeholder-[var(--portal-text)] focus:outline-none focus:border-[var(--portal-accent)] transition-colors"
               @keydown.enter.prevent="executeSearch"
             >
 
@@ -38,23 +40,24 @@
             <button
               type="submit"
               :disabled="!searchQuery.trim() || isSearching"
-              class="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 disabled:bg-neutral-700 disabled:text-neutral-500 text-neutral-900 font-semibold text-sm rounded-md transition-colors disabled:cursor-not-allowed"
+              class="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-[var(--portal-accent)] hover:opacity-90 disabled:bg-[var(--portal-border)] disabled:text-[var(--portal-text)] text-[var(--portal-bg)] font-semibold text-sm rounded-md transition-colors disabled:cursor-not-allowed"
             >
               <span v-if="isSearching">...</span>
               <span v-else>Search</span>
             </button>
           </div>
         </form>
+        </div>
       </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="w-full max-w-screen-2xl mx-auto px-0 sm:px-8 lg:px-12 py-8">
-      <PlayersPage
+      <!-- Main Content -->
+      <div class="w-full max-w-screen-2xl mx-auto px-0 sm:px-8 lg:px-12 py-8">
+        <PlayersPage
         ref="playersPageRef"
         :search-query="activeSearchQuery"
         :manual-search="true"
-      />
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -97,3 +100,5 @@ const executeSearch = async () => {
   isSearching.value = false
 }
 </script>
+
+<style src="./portal-layout.css"></style>

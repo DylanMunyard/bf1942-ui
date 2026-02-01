@@ -151,7 +151,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue';
 import { marked } from 'marked';
-import { streamChat, type ChatMessage, type PageContext } from '@/services/aiChatService';
+import { streamChat, stripQualityMarker, type ChatMessage, type PageContext } from '@/services/aiChatService';
 import { searchPlayersForMention, searchServersForMention, type MentionResult } from '@/services/aiChatService';
 
 interface MentionData {
@@ -454,7 +454,9 @@ async function sendMessage() {
       streamingContent.value = fullResponse;
     }
 
-    messages.value.push({ role: 'assistant', content: fullResponse });
+    // Strip quality assessment marker before storing (it's logged server-side)
+    const cleanedResponse = stripQualityMarker(fullResponse);
+    messages.value.push({ role: 'assistant', content: cleanedResponse });
   } catch (err) {
     console.error('Chat error:', err);
     error.value = err instanceof Error ? err.message : 'Failed to get response';

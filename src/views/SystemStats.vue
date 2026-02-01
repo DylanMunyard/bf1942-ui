@@ -1,12 +1,8 @@
 <template>
-  <div class="relative min-h-screen px-3 sm:px-6">
-    <!-- Background Effects -->
-    <div class="modal-mobile-safe fixed inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/3 rounded-full blur-3xl animate-pulse" />
-      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/3 rounded-full blur-3xl animate-pulse delay-1000" />
-    </div>
-
-    <div class="relative z-10 pb-6 sm:pb-12">
+  <div class="portal-page">
+    <div class="portal-grid" aria-hidden="true" />
+    <div class="portal-inner">
+    <div class="relative pb-6 sm:pb-12">
       <div class="w-full max-w-screen-2xl mx-auto">
         <!-- Header Section -->
         <div class="w-full bg-neutral-900 border-b border-neutral-700 rounded-xl mb-8">
@@ -181,6 +177,7 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -291,6 +288,7 @@ onUnmounted(() => {
 });
 </script>
 
+<style src="./portal-layout.css"></style>
 <style scoped>
 @keyframes pulse {
   0%, 100% {

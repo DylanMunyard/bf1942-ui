@@ -1,10 +1,9 @@
 <template>
-  <div
-    class="min-h-screen bg-neutral-950 px-0 sm:px-6"
-    @click="closeAllModals"
-  >
+  <div class="portal-page" @click="closeAllModals">
+    <div class="portal-grid" aria-hidden="true" />
+    <div class="portal-inner px-0 sm:px-6">
     <div
-      class="min-h-screen pt-4 flex flex-col min-h-0"
+      class="pt-4 flex flex-col min-h-0 min-h-screen"
       :class="{ 'lg:flex-row': showPlayersPanel && isWideScreen }"
     >
       <!-- Main Server Table -->
@@ -664,6 +663,7 @@
           @close="closePlayersPanel"
         />
       </div>
+    </div>
     </div>
   </div>
 </template>
@@ -1493,4 +1493,5 @@ onUnmounted(() => {
 })
 </script>
 
+<style src="./portal-layout.css"></style>
 <style scoped src="./LandingPageV2.vue.css"></style>

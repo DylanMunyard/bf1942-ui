@@ -391,9 +391,11 @@ const closeMilestoneAchievementsModal = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-950">
+  <div class="portal-page">
+    <div class="portal-grid" aria-hidden="true" />
+    <div class="portal-inner">
     <!-- Header Section -->
-    <div class="bg-neutral-900 border-b border-neutral-700">
+    <div class="rounded-lg border border-[var(--portal-border)] bg-[var(--portal-surface)] mb-6">
       <div class="w-full max-w-screen-2xl mx-auto px-0 sm:px-8 lg:px-12 py-6">
         <div class="text-center mb-8 px-4 sm:px-0">
           <h1 class="text-3xl md:text-4xl font-bold text-cyan-400 mb-2">
@@ -652,7 +654,9 @@ const closeMilestoneAchievementsModal = () => {
       :player-name="selectedMilestonePlayer === 1 ? comparisonData?.player1 : selectedMilestonePlayer === 2 ? comparisonData?.player2 : undefined"
       @close="closeMilestoneAchievementsModal"
     />
+    </div>
   </div>
 </template>
 
+<style src="./portal-layout.css"></style>
 <style scoped src="./PlayerComparison.vue.css"></style> 

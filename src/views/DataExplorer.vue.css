@@ -14,23 +14,23 @@
   --text-primary: #e6edf3;
   --text-secondary: #8b949e;
 
-  /* Legacy portal variables mapped to new theme */
-  --portal-bg: var(--bg-dark);
-  --portal-surface: var(--bg-panel);
-  --portal-surface-elevated: var(--bg-card);
-  --portal-border: var(--border-color);
-  --portal-border-focus: #484f58;
-  --portal-accent: var(--neon-cyan);
-  --portal-accent-dim: rgba(0, 255, 242, 0.12);
-  --portal-accent-glow: rgba(0, 255, 242, 0.25);
-  --portal-warn: var(--neon-gold);
-  --portal-danger: var(--neon-red);
-  --portal-text: var(--text-secondary);
-  --portal-text-bright: var(--text-primary);
+  /* Use portal layout variables when inside .portal-page */
+  --portal-bg: var(--portal-bg, var(--bg-dark));
+  --portal-surface: var(--portal-surface, var(--bg-panel));
+  --portal-surface-elevated: var(--portal-surface-elevated, var(--bg-card));
+  --portal-border: var(--portal-border, var(--border-color));
+  --portal-border-focus: var(--portal-border-focus, #484f58);
+  --portal-accent: var(--portal-accent, var(--neon-cyan));
+  --portal-accent-dim: var(--portal-accent-dim, rgba(0, 255, 242, 0.12));
+  --portal-accent-glow: var(--portal-accent-glow, rgba(0, 255, 242, 0.25));
+  --portal-warn: var(--portal-warn, var(--neon-gold));
+  --portal-danger: var(--portal-danger, var(--neon-red));
+  --portal-text: var(--portal-text, var(--text-secondary));
+  --portal-text-bright: var(--portal-text-bright, var(--text-primary));
 
   position: relative;
-  min-height: 100vh;
-  background: var(--bg-dark);
+  min-height: 0;
+  background: transparent;
   font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
   overflow-x: hidden;
   color: var(--text-secondary);

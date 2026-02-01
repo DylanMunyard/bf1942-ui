@@ -1,0 +1,44 @@
+/* Shared portal layout: grid pattern, font colours, transparent surfaces.
+ * Use class "portal-page" on the root, add a child <div class="portal-grid" aria-hidden="true" />,
+ * and wrap content in <div class="portal-inner">. */
+
+.portal-page {
+  --portal-bg: #06060a;
+  --portal-surface: rgba(12, 12, 18, 0.85);
+  --portal-surface-elevated: #111118;
+  --portal-border: #1a1a24;
+  --portal-border-focus: #2a2a38;
+  --portal-accent: #00e5a0;
+  --portal-accent-dim: rgba(0, 229, 160, 0.12);
+  --portal-accent-glow: rgba(0, 229, 160, 0.25);
+  --portal-warn: #f59e0b;
+  --portal-danger: #ef4444;
+  --portal-danger-glow: rgba(239, 68, 68, 0.2);
+  --portal-text: #9ca3af;
+  --portal-text-bright: #e5e7eb;
+  min-height: 100vh;
+  background: var(--portal-bg);
+  color: var(--portal-text);
+  position: relative;
+  font-family: system-ui, sans-serif;
+}
+
+.portal-page .portal-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 229, 160, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 160, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.portal-page .portal-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem 1.5rem 3rem;
+}

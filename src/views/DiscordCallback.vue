@@ -1,5 +1,7 @@
 <template>
-  <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950">
+  <div class="portal-page flex items-center justify-center min-h-screen">
+    <div class="portal-grid" aria-hidden="true" />
+    <div class="portal-inner flex items-center justify-center">
     <div class="text-center">
       <div v-if="error" class="bg-red-500/10 border border-red-500/50 rounded-xl p-6 max-w-md">
         <h2 class="text-xl font-bold text-red-400 mb-2">Authentication Failed</h2>
@@ -21,6 +23,7 @@
         <h2 class="text-xl font-bold text-neutral-200">Signing in with Discord...</h2>
         <p class="text-neutral-400 mt-2">Please wait while we complete your authentication</p>
       </div>
+    </div>
     </div>
   </div>
 </template>
@@ -69,3 +72,5 @@ const redirectToHome = () => {
   router.push('/');
 };
 </script>
+
+<style src="./portal-layout.css"></style>

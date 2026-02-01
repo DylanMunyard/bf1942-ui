@@ -488,9 +488,11 @@ const getTierDotClass = (tier: string): string => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-950">
+  <div class="portal-page">
+    <div class="portal-grid" aria-hidden="true" />
+    <div class="portal-inner">
     <!-- Hero Section -->
-    <div class="w-full bg-neutral-900 border-b border-neutral-700">
+    <div class="w-full rounded-lg border border-[var(--portal-border)] bg-[var(--portal-surface)] mb-6">
       <div class="w-full max-w-screen-2xl mx-auto px-0 sm:px-8 lg:px-12">
         <div class="px-4 sm:px-0">
           <HeroBackButton :fallback-route="`/players/${encodeURIComponent(playerName)}`" />
@@ -1218,9 +1220,11 @@ const getTierDotClass = (tier: string): string => {
       </div>
     </div>
   </div>
+    </div>
+  </div>
 </template>
 
-
+<style src="./portal-layout.css"></style>
 <style scoped>
 /* Utility class for text truncation */
 .line-clamp-2 {

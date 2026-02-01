@@ -639,8 +639,11 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <div class="portal-page">
+    <div class="portal-grid" aria-hidden="true" />
+    <div class="portal-inner">
   <!-- Full-width Hero Section -->
-  <div class="w-full bg-neutral-900 border-b border-neutral-800">
+  <div class="w-full rounded-lg border border-[var(--portal-border)] bg-[var(--portal-surface)] mb-6">
     <div class="w-full px-0 sm:px-8 lg:px-12 py-6">
       <div class="flex items-center justify-between mb-6 px-4 sm:px-0">
         <HeroBackButton fallback-route="/players" />
@@ -1354,6 +1357,9 @@ onUnmounted(() => {
     </template>
     </div>
   </div>
+    </div>
+  </div>
 </template>
 
+<style src="./portal-layout.css"></style>
 <style scoped src="./PlayerDetails.vue.css"></style>

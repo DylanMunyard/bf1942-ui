@@ -1,5 +1,7 @@
 <template>
-  <div class="min-h-screen pb-12 text-bf-text" :style="{ ...themeVars, backgroundColor: getBackgroundColor() }">
+  <div class="portal-page min-h-screen pb-12 text-bf-text" :style="{ ...themeVars, backgroundColor: 'var(--portal-bg)' }">
+    <div class="portal-grid" aria-hidden="true" />
+    <div class="portal-inner">
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
       <div class="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
     </div>
@@ -65,6 +67,8 @@
       </div>
     </div>
   </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -103,3 +107,5 @@ watch(tournament, (newTournament) => {
   }
 })
 </script>
+
+<style src="./portal-layout.css"></style>

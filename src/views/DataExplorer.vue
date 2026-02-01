@@ -1,16 +1,11 @@
 <template>
-  <div class="data-explorer">
-    <!-- Scanline overlay -->
-    <div class="scanlines" aria-hidden="true" />
-
-    <!-- Matrix rain background effect -->
-    <div class="matrix-bg" aria-hidden="true">
-      <div v-for="i in 20" :key="i" class="matrix-column" :style="{ left: `${i * 5}%`, animationDelay: `${Math.random() * 5}s` }" />
-    </div>
-
-    <div class="explorer-inner">
-      <!-- Header -->
-      <DataExplorerHeader
+  <div class="portal-page">
+    <div class="portal-grid" aria-hidden="true" />
+    <div class="portal-inner">
+      <div class="data-explorer">
+        <div class="explorer-inner">
+          <!-- Header -->
+          <DataExplorerHeader
         v-model:mode="currentMode"
         v-model:search="searchQuery"
       />
@@ -151,6 +146,7 @@
           </Transition>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
@@ -444,4 +440,5 @@ watch(currentMode, (newMode, oldMode) => {
 });
 </script>
 
+<style src="./portal-layout.css"></style>
 <style scoped src="./DataExplorer.vue.css"></style>
