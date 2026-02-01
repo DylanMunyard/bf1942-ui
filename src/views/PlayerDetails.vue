@@ -13,6 +13,7 @@ import PlayerServerInsights from '../components/PlayerServerInsights.vue';
 import PlayerServerMapStats from '../components/PlayerServerMapStats.vue';
 import { formatRelativeTime } from '@/utils/timeUtils';
 import { calculateKDR } from '@/utils/statsUtils';
+import { useAIContext } from '@/composables/useAIContext';
 
 import bf1942Icon from '@/assets/bf1942.webp';
 import fh2Icon from '@/assets/fh2.webp';
@@ -27,6 +28,9 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 // Router
 const router = useRouter();
 const route = useRoute();
+
+// AI Context
+const { setContext, clearContext } = useAIContext();
 
 const playerName = ref(route.params.playerName as string);
 const playerStats = ref<PlayerTimeStatistics | null>(null);
@@ -368,6 +372,17 @@ onMounted(() => {
   document.addEventListener('click', closeTooltipOnClickOutside);
   updateWideScreen();
   window.addEventListener('resize', updateWideScreen);
+
+  // Set AI context for player page
+  setContext({
+    pageType: 'player',
+    playerName: playerName.value,
+    game: 'bf1942'
+  });
+});
+
+onUnmounted(() => {
+  clearContext();
 });
 
 const gameIcons: { [key: string]: string } = {

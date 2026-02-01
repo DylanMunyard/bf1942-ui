@@ -17,12 +17,16 @@ import HeroBackButton from '../components/HeroBackButton.vue';
 import ForecastModal from '../components/ForecastModal.vue';
 import discordIcon from '@/assets/discord.webp';
 import dataExplorerImage from '@/assets/menu-item-data-explorer.webp';
+import { useAIContext } from '@/composables/useAIContext';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
 const route = useRoute();
 const router = useRouter();
+
+// AI Context
+const { setContext, clearContext } = useAIContext();
 
 // State
 const serverName = ref(route.params.serverName as string);
@@ -166,6 +170,13 @@ const fetchData = async () => {
     // Fetch server details first (blocks UI)
     serverDetails.value = await fetchServerDetails(serverName.value);
 
+    // Update AI context with server details
+    setContext({
+      pageType: 'server',
+      serverGuid: serverDetails.value?.serverGuid,
+      game: serverDetails.value?.gameId || 'bf1942'
+    });
+
     // Fetch live server data and busy indicator data asynchronously after server details are loaded
     fetchLiveServerDataAsync();
     fetchBusyIndicatorData();
@@ -278,6 +289,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateWideScreen);
+  clearContext();
 });
 
 
