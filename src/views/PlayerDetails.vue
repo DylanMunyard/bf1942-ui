@@ -52,6 +52,7 @@ const currentEngagementStat = computed(() => {
 
 // State for server map stats view
 const selectedServerGuid = ref<string | null>(null);
+const scrollPositionBeforeMapStats = ref(0);
 
 // Wide viewport: show slide-out panel side-by-side (lg: 1024px+)
 const isWideScreen = ref(false);
@@ -216,14 +217,18 @@ const microChartOptions = computed(() => {
 
 // Function to show map stats for a server
 const showServerMapStats = (serverGuid: string) => {
+  scrollPositionBeforeMapStats.value = window.scrollY;
   selectedServerGuid.value = serverGuid;
-  // Scroll to top so the side panel is visible (user may have been scrolled down when clicking "View Maps")
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // On wide screens the panel is side-by-side; scroll to top so the panel is visible. On mobile the panel is a fixed overlay, so don't scroll.
+  if (isWideScreen.value) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 };
 
 // Function to close server map stats view
 const closeServerMapStats = () => {
   selectedServerGuid.value = null;
+  window.scrollTo({ top: scrollPositionBeforeMapStats.value, behavior: 'auto' });
 };
 
 // Reset pagination when filters change
@@ -1131,40 +1136,42 @@ onUnmounted(() => {
                   <div
                     v-for="ranking in playerStats.insights.serverRankings"
                     :key="ranking.serverGuid"
-                    class="player-ranking-strip flex flex-wrap items-center gap-2 sm:gap-4 p-3 rounded-lg border border-neutral-700/50 bg-neutral-800/40 hover:border-neutral-600 transition-all"
+                    class="player-ranking-strip flex flex-col gap-2 p-3 rounded-lg border border-neutral-700/50 bg-neutral-800/40 hover:border-neutral-600 transition-all"
                   >
                     <router-link
                       :to="`/servers/${encodeURIComponent(ranking.serverName)}`"
-                      class="flex-1 min-w-0 font-medium text-neutral-200 hover:text-cyan-400 truncate"
+                      class="w-full font-medium text-neutral-200 hover:text-cyan-400 break-words"
                     >
                       {{ ranking.serverName }}
                     </router-link>
-                    <span class="text-neutral-500 text-sm">{{ ranking.rankDisplay ?? ranking.rank }} of {{ ranking.totalRankedPlayers }}</span>
-                    <span
-                      v-if="ranking.averagePing > 0"
-                      class="text-xs font-mono font-medium"
-                      :class="{
-                        'ping-good': ranking.averagePing < 50,
-                        'ping-warning': ranking.averagePing >= 50 && ranking.averagePing < 100,
-                        'ping-bad': ranking.averagePing >= 100
-                      }"
-                    >
-                      {{ ranking.averagePing }}ms
-                    </span>
-                    <div class="flex flex-shrink-0 gap-2">
-                      <router-link
-                        :to="{ name: 'explore-server-detail', params: { serverGuid: ranking.serverGuid } }"
-                        class="rankings-list-btn px-2.5 py-1.5 text-xs font-medium rounded border transition-colors"
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-4">
+                      <span class="text-neutral-500 text-sm">{{ ranking.rankDisplay ?? ranking.rank }} of {{ ranking.totalRankedPlayers }}</span>
+                      <span
+                        v-if="ranking.averagePing > 0"
+                        class="text-xs font-mono font-medium"
+                        :class="{
+                          'ping-good': ranking.averagePing < 50,
+                          'ping-warning': ranking.averagePing >= 50 && ranking.averagePing < 100,
+                          'ping-bad': ranking.averagePing >= 100
+                        }"
                       >
-                        Rankings
-                      </router-link>
-                      <button
-                        type="button"
-                        class="px-2.5 py-1.5 text-xs font-medium rounded border border-neutral-600 text-neutral-300 hover:bg-neutral-700 transition-colors"
-                        @click="showServerMapStats(ranking.serverGuid)"
-                      >
-                        Maps
-                      </button>
+                        {{ ranking.averagePing }}ms
+                      </span>
+                      <div class="flex flex-shrink-0 gap-2 ml-auto">
+                        <router-link
+                          :to="{ name: 'explore-server-detail', params: { serverGuid: ranking.serverGuid } }"
+                          class="rankings-list-btn px-2.5 py-1.5 text-xs font-medium rounded border transition-colors"
+                        >
+                          Rankings
+                        </router-link>
+                        <button
+                          type="button"
+                          class="px-2.5 py-1.5 text-xs font-medium rounded border border-neutral-600 text-neutral-300 hover:bg-neutral-700 transition-colors"
+                          @click="showServerMapStats(ranking.serverGuid)"
+                        >
+                          Maps
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -2,6 +2,15 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { fetchRoundReport, RoundReport } from '../services/serverDetailsService';
+import {
+  generateBattleReport,
+  filterBattleEvents,
+  type BattleEvent,
+  type BattleHighlight,
+  type RoundSummary,
+} from '../utils/battleEventGenerator';
+import BattleSummary from './round-report/BattleSummary.vue';
+import BattleHighlightComponent from './round-report/BattleHighlight.vue';
 
 // Router
 const router = useRouter();
@@ -20,22 +29,16 @@ const selectedSnapshotIndex = ref(0);
 const isPlaying = ref(false);
 const playbackInterval = ref<NodeJS.Timeout | null>(null);
 const playbackSpeed = ref(800); // milliseconds between events
-const battleEvents = ref<Array<{
-  timestamp: string;
-  type: 'kill' | 'death' | 'objective' | 'spawn';
-  player: string;
-  target?: string;
-  message: string;
-  color: string;
-}>>([]);
+const battleEvents = ref<BattleEvent[]>([]);
+const battleHighlights = ref<BattleHighlight[]>([]);
+const roundSummary = ref<RoundSummary | null>(null);
 const visibleEventIndex = ref(0);
 const autoScrollEnabled = ref(true);
 const showLiveLadder = ref(false);
 const trackedPlayer = ref('');
 const newEventIds = ref(new Set<number>());
-const batchUpdateEvents = ref<Array<{timestamp: string, events: typeof battleEvents.value}>>([]);
+const batchUpdateEvents = ref<Array<{timestamp: string, events: BattleEvent[]}>>([]);
 const consoleElement = ref<HTMLElement | null>(null);
-const timeNavigationTrigger = ref<HTMLElement | null>(null);
 const timeCheckpoints = ref<Array<{
   index: number;
   timestamp: string;
@@ -43,126 +46,45 @@ const timeCheckpoints = ref<Array<{
   minutes: number;
 }>>([]);
 
-// Generate battle narrative from leaderboard snapshots
-const generateBattleEvents = () => {
+// Display filter options
+const showJoinEvents = ref(false);
+const showDeathEvents = ref(true);
+const highlightsOnly = ref(false);
+
+// Generate battle narrative from leaderboard snapshots using the new utility
+const processBattleReport = () => {
   if (!roundReport.value) return;
-  
-  const events: typeof battleEvents.value = [];
-  const snapshots = roundReport.value.leaderboardSnapshots;
-  
-  // Add round start event
-  events.push({
-    timestamp: roundReport.value.round.startTime,
-    type: 'spawn',
-    player: 'SYSTEM',
-    message: `🚁 Battle begins on ${roundReport.value.round.mapName}`,
-    color: 'text-cyan-400'
-  });
-  
-  // Compare snapshots to generate events
-  for (let i = 1; i < snapshots.length; i++) {
-    const prevSnapshot = snapshots[i - 1];
-    const currentSnapshot = snapshots[i];
-    const timestamp = currentSnapshot.timestamp;
-    
-    // Track score and kill changes
-    currentSnapshot.entries.forEach(currentPlayer => {
-      const prevPlayer = prevSnapshot.entries.find(p => p.playerName === currentPlayer.playerName);
-      
-      if (prevPlayer) {
-        const killsDiff = currentPlayer.kills - prevPlayer.kills;
-        const deathsDiff = currentPlayer.deaths - prevPlayer.deaths;
-        const scoreDiff = currentPlayer.score - prevPlayer.score;
-        
-        // Generate kill events
-        if (killsDiff > 0) {
-          for (let k = 0; k < killsDiff; k++) {
-            events.push({
-              timestamp,
-              type: 'kill',
-              player: currentPlayer.playerName,
-              message: `💀 ${currentPlayer.playerName} eliminated an enemy (+${Math.floor(scoreDiff / (killsDiff + deathsDiff) || 10)} pts)`,
-              color: 'text-emerald-400'
-            });
-          }
-        }
-        
-        // Generate death events
-        if (deathsDiff > 0) {
-          for (let d = 0; d < deathsDiff; d++) {
-            events.push({
-              timestamp,
-              type: 'death',
-              player: currentPlayer.playerName,
-              message: `⚰️ ${currentPlayer.playerName} was eliminated`,
-              color: 'text-red-400'
-            });
-          }
-        }
-        
-        // Generate major score events (objectives, assists, etc.)
-        if (scoreDiff > 50 && killsDiff === 0) {
-          events.push({
-            timestamp,
-            type: 'objective',
-            player: currentPlayer.playerName,
-            message: `🎯 ${currentPlayer.playerName} completed an objective (+${scoreDiff} pts)`,
-            color: 'text-purple-400'
-          });
-        }
-      } else {
-        // New player joined
-        events.push({
-          timestamp,
-          type: 'spawn',
-          player: currentPlayer.playerName,
-          message: `🪂 ${currentPlayer.playerName} joined the battle`,
-          color: 'text-blue-400'
-        });
-      }
-    });
-    
-    // Add periodic battle updates
-    if (i % 3 === 0) {
-      const topPlayer = currentSnapshot.entries[0];
-      events.push({
-        timestamp,
-        type: 'objective',
-        player: 'SYSTEM',
-        message: `📊 ${topPlayer.playerName} leads with ${topPlayer.score} points (${topPlayer.kills}/${topPlayer.deaths})`,
-        color: 'text-yellow-400'
-      });
-    }
-  }
-  
-  // Add round end event
-  const finalSnapshot = snapshots[snapshots.length - 1];
-  const winner = finalSnapshot.entries[0];
-  events.push({
-    timestamp: finalSnapshot.timestamp,
-    type: 'objective',
-    player: 'SYSTEM',
-    message: `🏆 Battle concluded! ${winner.playerName} achieved victory with ${winner.score} points!`,
-    color: 'text-yellow-400'
-  });
-  
-  battleEvents.value = events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-  
+
+  const report = generateBattleReport(roundReport.value);
+
+  battleEvents.value = report.events;
+  battleHighlights.value = report.highlights;
+  roundSummary.value = report.summary;
+
   // Group events by timestamp for batch updates
-  const eventGroups = events.reduce((acc, event) => {
+  const eventGroups = report.events.reduce((acc, event) => {
     if (!acc[event.timestamp]) acc[event.timestamp] = [];
     acc[event.timestamp].push(event);
     return acc;
-  }, {} as Record<string, typeof events>);
-  
+  }, {} as Record<string, BattleEvent[]>);
+
   batchUpdateEvents.value = Object.entries(eventGroups).map(([timestamp, events]) => ({
     timestamp,
     events
   })).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-  
+
   // Generate time-based checkpoints
   generateTimeCheckpoints();
 };
+
+// Filtered events based on display preferences
+const filteredBattleEvents = computed(() => {
+  return filterBattleEvents(battleEvents.value, {
+    showJoinEvents: showJoinEvents.value,
+    showDeathEvents: showDeathEvents.value,
+    highlightsOnly: highlightsOnly.value,
+  });
+});
 
 // Generate time-based checkpoints (every minute)
 const generateTimeCheckpoints = () => {
@@ -247,7 +169,7 @@ const fetchData = async () => {
       return;
     }
 
-    generateBattleEvents();
+    processBattleReport();
     selectedSnapshotIndex.value = data.leaderboardSnapshots.length - 1;
     visibleEventIndex.value = batchUpdateEvents.value.length - 1;
 
@@ -436,23 +358,20 @@ const getCurrentTimeOffset = () => {
   return timeCheckpoints.value[selectedTimeIndex.value]?.offset || timeCheckpoints.value[0].offset;
 };
 
-// Visible events for display
+// Visible events for display (using filtered events)
 const visibleEvents = computed(() => {
+  const filtered = filteredBattleEvents.value;
   if (visibleEventIndex.value >= batchUpdateEvents.value.length) {
-    return battleEvents.value;
+    return filtered;
   }
-  
+
   const currentBatch = batchUpdateEvents.value[visibleEventIndex.value];
   if (!currentBatch) return [];
-  
-  // Find the index of the last event in the current batch
-  const lastEventInBatch = currentBatch.events[currentBatch.events.length - 1];
-  const lastEventIndex = battleEvents.value.findIndex(e => 
-    e.timestamp === lastEventInBatch.timestamp && 
-    e.message === lastEventInBatch.message
-  );
-  
-  return battleEvents.value.slice(0, lastEventIndex + 1);
+
+  // Find the index of the last event in the current batch based on timestamp
+  const cutoffTime = new Date(currentBatch.timestamp).getTime();
+
+  return filtered.filter(e => new Date(e.timestamp).getTime() <= cutoffTime);
 });
 
 // Reversed visible events (newest first)
@@ -461,23 +380,29 @@ const visibleEventsReversed = computed(() => {
 });
 
 // Group events by time periods (every minute) for mobile display
-const groupedEvents = computed(() => {
+interface EventGroup {
+  timeDisplay: string;
+  offsetMinutes: number;
+  events: Array<BattleEvent & { originalIndex: number }>;
+}
+
+const groupedEvents = computed((): EventGroup[] => {
   if (!visibleEvents.value.length || !roundReport.value) return [];
-  
-  const groups = [];
+
+  const groups: EventGroup[] = [];
   const startTime = new Date(roundReport.value.round.startTime).getTime();
-  let currentGroup = null;
-  
+  let currentGroup: EventGroup | null = null;
+
   // Reverse the events so newest are first
   const reversedEvents = [...visibleEvents.value].reverse();
-  
+
   reversedEvents.forEach((event, index) => {
     const eventTime = new Date(event.timestamp).getTime();
     const offsetMs = eventTime - startTime;
     const offsetMinutes = Math.floor(offsetMs / (1000 * 60));
-    
+
     // Create time display
-    let timeDisplay;
+    let timeDisplay: string;
     if (offsetMinutes === 0) {
       timeDisplay = 'Start';
     } else if (offsetMinutes < 60) {
@@ -487,7 +412,7 @@ const groupedEvents = computed(() => {
       const mins = offsetMinutes % 60;
       timeDisplay = `+${hours}h${mins > 0 ? mins + 'm' : ''}`;
     }
-    
+
     // Check if we need to create a new group
     if (!currentGroup || currentGroup.timeDisplay !== timeDisplay) {
       currentGroup = {
@@ -497,13 +422,13 @@ const groupedEvents = computed(() => {
       };
       groups.push(currentGroup);
     }
-    
+
     currentGroup.events.push({
       ...event,
       originalIndex: visibleEvents.value.length - index - 1
     });
   });
-  
+
   return groups;
 });
 
@@ -962,10 +887,35 @@ const updatePageTitle = () => {
         </p>
       </div>
 
+      <!-- Battle Summary Stats -->
+      <div v-if="roundReport && roundSummary" class="max-w-6xl mx-auto mb-6">
+        <BattleSummary :summary="roundSummary" />
+      </div>
+
+      <!-- Battle Highlights -->
+      <div v-if="roundReport && battleHighlights.length > 0" class="max-w-6xl mx-auto mb-6">
+        <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-xl border border-slate-700/50 overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-700/50 bg-slate-900/40">
+            <h3 class="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400 uppercase tracking-wider flex items-center gap-2">
+              <span class="text-base">🎬</span>
+              Battle Highlights
+            </h3>
+          </div>
+          <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <BattleHighlightComponent
+              v-for="(highlight, index) in battleHighlights.slice(0, 6)"
+              :key="index"
+              :highlight="highlight"
+              :format-time-offset="formatTimeOffset"
+            />
+          </div>
+        </div>
+      </div>
+
       <!-- Main Content -->
       <div
-        v-else-if="roundReport"
-        class="grid grid-cols-1 xl:grid-cols-3 gap-8 h-[calc(100vh-200px)]"
+        v-if="roundReport && !loading && !error"
+        class="grid grid-cols-1 xl:grid-cols-3 gap-8 xl:h-[calc(100vh-200px)]"
       >
         <!-- Battle Console (2/3 width) -->
         <div class="xl:col-span-2 flex flex-col gap-6 h-full relative">
@@ -1062,8 +1012,36 @@ const updatePageTitle = () => {
                 </div>
                 
                 <div class="flex items-center gap-3">
+                  <!-- Event Filter Toggles -->
+                  <div class="hidden md:flex items-center gap-2 border-l border-slate-600/50 pl-3">
+                    <label class="flex items-center gap-1 cursor-pointer group">
+                      <input
+                        v-model="showJoinEvents"
+                        type="checkbox"
+                        class="w-3 h-3 rounded border-slate-500 bg-slate-700 text-cyan-500 focus:ring-cyan-500/30"
+                      >
+                      <span class="text-xs text-slate-400 group-hover:text-slate-300">Joins</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer group">
+                      <input
+                        v-model="showDeathEvents"
+                        type="checkbox"
+                        class="w-3 h-3 rounded border-slate-500 bg-slate-700 text-cyan-500 focus:ring-cyan-500/30"
+                      >
+                      <span class="text-xs text-slate-400 group-hover:text-slate-300">Deaths</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer group">
+                      <input
+                        v-model="highlightsOnly"
+                        type="checkbox"
+                        class="w-3 h-3 rounded border-slate-500 bg-slate-700 text-orange-500 focus:ring-orange-500/30"
+                      >
+                      <span class="text-xs text-orange-400 group-hover:text-orange-300">Highlights Only</span>
+                    </label>
+                  </div>
+
                   <!-- Player Tracking Input -->
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 border-l border-slate-600/50 pl-3">
                     <span class="text-xs text-slate-400">Track:</span>
                     <input
                       v-model="trackedPlayer"
@@ -1098,7 +1076,10 @@ const updatePageTitle = () => {
                 <div
                   v-for="(event, index) in visibleEventsReversed"
                   :key="visibleEvents.length - index - 1"
-                  :class="getEventStyling(event, index)"
+                  :class="[
+                    getEventStyling(event, index),
+                    event.isHighlight ? 'border-l-2 border-orange-400/50 bg-orange-500/5' : ''
+                  ]"
                 >
                   <div class="flex items-start gap-3">
                     <div
@@ -1107,11 +1088,14 @@ const updatePageTitle = () => {
                     >
                       {{ formatTimeOffset(event.timestamp) }}
                     </div>
-                    <div
-                      :class="[event.color, 'flex-1 transition-colors duration-300']" 
-                      :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''"
-                    >
-                      {{ event.message }}
+                    <div class="flex items-center gap-2 flex-1">
+                      <span class="flex-shrink-0">{{ event.icon }}</span>
+                      <span
+                        :class="[event.color, 'transition-colors duration-300']"
+                        :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''"
+                      >
+                        {{ event.message }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1137,13 +1121,19 @@ const updatePageTitle = () => {
                     <div
                       v-for="event in group.events"
                       :key="event.originalIndex"
-                      :class="getEventStyling(event, event.originalIndex)"
+                      :class="[
+                        getEventStyling(event, event.originalIndex),
+                        event.isHighlight ? 'border-l-2 border-orange-400/50 bg-orange-500/5' : ''
+                      ]"
                     >
-                      <div
-                        :class="[event.color, 'transition-colors duration-300']" 
-                        :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''"
-                      >
-                        {{ event.message }}
+                      <div class="flex items-center gap-2">
+                        <span class="flex-shrink-0">{{ event.icon }}</span>
+                        <span
+                          :class="[event.color, 'transition-colors duration-300']"
+                          :style="trackedPlayer.trim() && !isTrackedPlayerEvent(event) ? 'opacity: 0.6' : ''"
+                        >
+                          {{ event.message }}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1180,7 +1170,7 @@ const updatePageTitle = () => {
             <!-- Data Table -->
             <div class="flex-1 overflow-hidden">
               <div
-                v-for="(team, teamIndex) in teamGroups"
+                v-for="team in teamGroups"
                 :key="team.teamName"
                 class="border-b border-slate-700/30 last:border-b-0"
               >
