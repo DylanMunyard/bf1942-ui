@@ -1033,7 +1033,10 @@ onUnmounted(() => {
           </div>
 
           <!-- Favourite Battlefields & Server Rankings – High-level summary (hacker theme) -->
-          <div class="player-servers-section bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden mt-8">
+          <div
+            v-if="hasServers || (playerStats?.insights?.serverRankings && playerStats.insights.serverRankings.length > 0)"
+            class="player-servers-section bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden mt-8"
+          >
             <!-- Hero strip: rankings at a glance -->
             <div
               v-if="rankingsSummary"
@@ -1243,11 +1246,11 @@ onUnmounted(() => {
         @click="closeServerMapStats"
       ></div>
       <div
-        class="fixed inset-y-0 left-0 right-0 z-[100] flex items-stretch lg:relative lg:inset-auto lg:z-auto lg:w-2/5 lg:flex-shrink-0 lg:min-h-0 lg:border-l lg:border-neutral-800"
+        class="fixed inset-y-0 left-0 right-0 md:right-20 z-[100] flex items-stretch lg:relative lg:inset-auto lg:z-auto lg:w-2/5 lg:mr-20 lg:flex-shrink-0 lg:min-h-0 lg:border-l lg:border-neutral-800"
         @click.stop
       >
         <div
-          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 ml-0 mr-0 md:mr-20 lg:mr-0 lg:border-r-0"
+          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 ml-0 mr-0 md:mr-20 lg:border-r-0"
           :class="{ 'h-[calc(100vh-4rem)]': true, 'md:h-full': true, 'mt-16': true, 'md:mt-0': true }"
         >
           <!-- Header -->

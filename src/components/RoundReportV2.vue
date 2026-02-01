@@ -918,7 +918,7 @@ const updatePageTitle = () => {
         class="grid grid-cols-1 xl:grid-cols-3 gap-8 xl:h-[calc(100vh-200px)]"
       >
         <!-- Battle Console (2/3 width) -->
-        <div class="xl:col-span-2 flex flex-col gap-6 h-full relative">
+        <div class="xl:col-span-2 flex flex-col gap-6 xl:h-full relative">
           <!-- Time Navigator - Left Side -->
           <div 
             v-if="timeCheckpoints.length > 0"
@@ -1056,10 +1056,9 @@ const updatePageTitle = () => {
             </div>
             
             
-            <div 
+            <div
               ref="consoleElement"
-              class="battle-console p-4 pl-20 bg-black/20 font-mono text-sm space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
-              style="height: calc(100vh - 280px); max-height: calc(100vh - 280px);"
+              class="battle-console p-4 pl-20 bg-black/20 font-mono text-sm space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar h-96 md:h-[50vh] xl:h-[calc(100vh-280px)]"
             >
               <div
                 v-if="visibleEvents.length === 0"
@@ -1144,8 +1143,8 @@ const updatePageTitle = () => {
         </div>
 
         <!-- Leaderboard (1/3 width) -->
-        <div class="flex flex-col gap-6 h-full">
-          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden flex-1 flex flex-col">
+        <div class="flex flex-col gap-6 xl:h-full">
+          <div class="bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-lg rounded-2xl border border-slate-700/50 overflow-hidden xl:flex-1 flex flex-col">
             <div class="p-4 border-b border-slate-700/50 flex-shrink-0">
               <div class="flex items-center justify-between mb-3">
                 <h3 class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center gap-2">
