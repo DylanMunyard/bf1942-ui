@@ -1208,7 +1208,7 @@ const closeForecastOverlay = () => {
         @click.stop
       >
         <div
-          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 ml-0 mr-0 md:mr-20 lg:border-r-0"
+          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 lg:border-r-0"
           :class="{ 'h-[calc(100vh-4rem)]': true, 'md:h-full': true, 'mt-16': true, 'md:mt-0': true }"
         >
       <!-- Header -->

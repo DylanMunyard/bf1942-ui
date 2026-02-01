@@ -990,42 +990,82 @@ onUnmounted(() => {
                 <div
                   v-for="(score, index) in currentBestScores.slice(0, 10)"
                   :key="`${score.roundId}-${index}`"
-                  class="flex items-center gap-4 p-3 bg-neutral-800/40 hover:bg-neutral-800/60 rounded-lg border border-neutral-700/30 hover:border-neutral-700/60 transition-colors duration-200 cursor-pointer group"
+                  class="p-3 bg-neutral-800/40 hover:bg-neutral-800/60 rounded-lg border border-neutral-700/30 hover:border-neutral-700/60 transition-colors duration-200 cursor-pointer group"
                   @click="navigateToRoundReport(score.roundId)"
                 >
-                  <!-- Rank badge -->
-                  <div class="flex-shrink-0 w-6 h-6 bg-neutral-700 rounded-full flex items-center justify-center font-bold text-sm text-neutral-200">
-                    {{ index + 1 }}
+                  <!-- Mobile layout (stacked) -->
+                  <div class="sm:hidden space-y-2">
+                    <div class="flex items-center gap-3">
+                      <!-- Rank badge -->
+                      <div class="flex-shrink-0 w-6 h-6 bg-neutral-700 rounded-full flex items-center justify-center font-bold text-sm text-neutral-200">
+                        {{ index + 1 }}
+                      </div>
+                      <!-- Map & Server -->
+                      <div class="flex-1 min-w-0">
+                        <div class="text-sm text-neutral-200 font-medium truncate">{{ score.mapName }}</div>
+                        <div class="text-xs text-neutral-500 truncate">{{ score.serverName }}</div>
+                      </div>
+                      <!-- Time -->
+                      <div class="flex-shrink-0 text-xs text-neutral-500">
+                        {{ formatRelativeTime(score.timestamp) }}
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-4 pl-9">
+                      <!-- Score -->
+                      <div>
+                        <span class="text-sm font-bold text-neutral-100">{{ score.score.toLocaleString() }}</span>
+                        <span class="text-xs text-neutral-500 ml-1">pts</span>
+                      </div>
+                      <!-- K/D -->
+                      <div>
+                        <span class="text-sm font-bold text-neutral-200">{{ calculateKDR(score.kills, score.deaths) }}</span>
+                        <span class="text-xs text-neutral-500 ml-1">K/D</span>
+                      </div>
+                      <!-- Kills/Deaths -->
+                      <div class="text-sm">
+                        <span class="text-green-400 font-semibold">{{ score.kills }}</span>
+                        <span class="text-neutral-500 mx-1">/</span>
+                        <span class="text-red-400 font-semibold">{{ score.deaths }}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <!-- Score -->
-                  <div class="flex-shrink-0 w-24">
-                    <div class="text-sm font-bold text-neutral-100">{{ score.score.toLocaleString() }}</div>
-                    <div class="text-xs text-neutral-500">SCORE</div>
-                  </div>
+                  <!-- Desktop layout (horizontal) -->
+                  <div class="hidden sm:flex items-center gap-4">
+                    <!-- Rank badge -->
+                    <div class="flex-shrink-0 w-6 h-6 bg-neutral-700 rounded-full flex items-center justify-center font-bold text-sm text-neutral-200">
+                      {{ index + 1 }}
+                    </div>
 
-                  <!-- K/D -->
-                  <div class="flex-shrink-0">
-                    <div class="text-sm font-bold text-neutral-200">{{ calculateKDR(score.kills, score.deaths) }}</div>
-                    <div class="text-xs text-neutral-500">K/D</div>
-                  </div>
+                    <!-- Score -->
+                    <div class="flex-shrink-0 w-24">
+                      <div class="text-sm font-bold text-neutral-100">{{ score.score.toLocaleString() }}</div>
+                      <div class="text-xs text-neutral-500">SCORE</div>
+                    </div>
 
-                  <!-- Kills/Deaths -->
-                  <div class="flex-shrink-0 text-sm">
-                    <span class="text-green-400 font-semibold">{{ score.kills }}</span>
-                    <span class="text-neutral-500 mx-1">/</span>
-                    <span class="text-red-400 font-semibold">{{ score.deaths }}</span>
-                  </div>
+                    <!-- K/D -->
+                    <div class="flex-shrink-0">
+                      <div class="text-sm font-bold text-neutral-200">{{ calculateKDR(score.kills, score.deaths) }}</div>
+                      <div class="text-xs text-neutral-500">K/D</div>
+                    </div>
 
-                  <!-- Map -->
-                  <div class="flex-1 min-w-0">
-                    <div class="text-sm text-neutral-300 truncate">{{ score.mapName }}</div>
-                    <div class="text-xs text-neutral-500 truncate">{{ score.serverName }}</div>
-                  </div>
+                    <!-- Kills/Deaths -->
+                    <div class="flex-shrink-0 text-sm">
+                      <span class="text-green-400 font-semibold">{{ score.kills }}</span>
+                      <span class="text-neutral-500 mx-1">/</span>
+                      <span class="text-red-400 font-semibold">{{ score.deaths }}</span>
+                    </div>
 
-                  <!-- Time -->
-                  <div class="flex-shrink-0 text-right text-xs text-neutral-500">
-                    {{ formatRelativeTime(score.timestamp) }}
+                    <!-- Map -->
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm text-neutral-300 truncate">{{ score.mapName }}</div>
+                      <div class="text-xs text-neutral-500 truncate">{{ score.serverName }}</div>
+                    </div>
+
+                    <!-- Time -->
+                    <div class="flex-shrink-0 text-right text-xs text-neutral-500">
+                      {{ formatRelativeTime(score.timestamp) }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1250,7 +1290,7 @@ onUnmounted(() => {
         @click.stop
       >
         <div
-          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 ml-0 mr-0 md:mr-20 lg:border-r-0"
+          class="bg-neutral-950 w-full max-w-6xl lg:max-w-none shadow-2xl animate-slide-in-left overflow-hidden flex flex-col border-r border-neutral-800 lg:border-r-0"
           :class="{ 'h-[calc(100vh-4rem)]': true, 'md:h-full': true, 'mt-16': true, 'md:mt-0': true }"
         >
           <!-- Header -->
