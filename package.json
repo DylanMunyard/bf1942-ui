@@ -23,7 +23,7 @@
     "@microsoft/signalr": "^9.0.6",
     "@primeuix/themes": "^2.0.3",
     "@unhead/vue": "^2.0.17",
-    "axios": "^1.6.7",
+    "axios": "^1.12.0",
     "chart.js": "^4.4.9",
     "chartjs-plugin-annotation": "^3.1.0",
     "google-auth-library": "^10.2.1",
