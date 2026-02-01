@@ -197,17 +197,22 @@ const canSend = computed(() => {
   return inputMessage.value.trim().length > 0;
 });
 
+// Pin page context for the whole conversation so we don't lose server/player context
+const conversationContext = ref<PageContext>({});
+
 function clearConversation() {
   messages.value = [];
   streamingContent.value = '';
   error.value = '';
   mentionRegistry.clear();
   inputMessage.value = '';
+  conversationContext.value = { ...props.context };
 }
 
-// Focus input when drawer opens
+// Focus input and pin current page context when drawer opens (so first message uses up-to-date context)
 watch(() => props.modelValue, (isOpen) => {
   if (isOpen) {
+    conversationContext.value = { ...props.context };
     nextTick(() => {
       inputRef.value?.focus();
     });
@@ -354,8 +359,14 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
+/** Delimited player/server names from AI: «player:name» and «server:name» (allows spaces, pipes, etc.) */
+const DELIM_PLAYER = /«player:([^»]*)»/g;
+const DELIM_SERVER = /«server:([^»]*)»/g;
+
 function applyMentionBadges(html: string): string {
   return html
+    .replace(DELIM_PLAYER, (_, name) => `<span class="mention-badge mention-player"><span class="mention-icon">👤</span><span class="mention-text">${escapeHtml(name.trim())}</span></span>`)
+    .replace(DELIM_SERVER, (_, name) => `<span class="mention-badge mention-server"><span class="mention-icon">🖥</span><span class="mention-text">${escapeHtml(name.trim())}</span></span>`)
     .replace(/@([^\s@#]+)/g, (_, name) => `<span class="mention-badge mention-player"><span class="mention-icon">👤</span><span class="mention-text">${escapeHtml(name)}</span></span>`)
     .replace(/#(?!\d)([^\s@#]+)/g, (_, name) => `<span class="mention-badge mention-server"><span class="mention-icon">🖥</span><span class="mention-text">${escapeHtml(name)}</span></span>`);
 }
@@ -386,11 +397,16 @@ async function sendMessage() {
   error.value = '';
   inputMessage.value = '';
 
+  // Pin context when starting a new conversation so we keep server/player context for the whole chat
+  if (messages.value.length === 0) {
+    conversationContext.value = { ...props.context };
+  }
+
   // Add user message
   messages.value.push({ role: 'user', content: message });
 
-  // Extract mentions from message and build enhanced context
-  const enhancedContext = { ...props.context };
+  // Extract mentions from message and build enhanced context (use pinned conversation context)
+  const enhancedContext = { ...conversationContext.value };
 
   // Find @player mentions
   const playerMentions = message.match(/@([^\s@#]+)/g);
