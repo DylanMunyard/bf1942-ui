@@ -1219,7 +1219,6 @@ const getTierDotClass = (tier: string): string => {
         <span>{{ label.displayName }}</span>
       </div>
     </div>
-  </div>
     </div>
   </div>
 </template>
