@@ -594,7 +594,7 @@ const closeForecastOverlay = () => {
     <div class="portal-inner">
   <!-- Full-width Hero Section -->
   <div class="w-full rounded-lg border border-[var(--portal-border)] bg-[var(--portal-surface)] mb-6">
-    <div class="w-full px-4 sm:px-8 lg:px-12 py-6">
+    <div class="w-full px-2 sm:px-6 lg:px-12 py-6">
       <div class="flex items-center justify-between">
         <HeroBackButton :on-click="() => $router.push(getServersRoute(serverDetails?.gameId || (liveServerInfo?.gameType as string)))" />
       </div>
@@ -812,7 +812,7 @@ const closeForecastOverlay = () => {
       >
         <div class="relative">
           <div class="relative py-6 sm:py-8">
-            <div class="w-full px-4 sm:px-8 lg:px-12">
+            <div class="w-full px-2 sm:px-6 lg:px-12">
           <!-- Loading State -->
           <div
             v-if="isLoading"
@@ -840,11 +840,11 @@ const closeForecastOverlay = () => {
           <!-- Server Content -->
           <div
             v-else-if="serverDetails"
-            class="space-y-6"
+            class="space-y-4 sm:space-y-6"
           >
             <!-- Data Explorer Call-to-Action Section -->
             <div class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden">
-              <div class="p-6">
+              <div class="p-3 sm:p-6">
                 <div class="flex flex-col lg:flex-row items-center gap-6">
                   <!-- Data Explorer Image -->
                   <div class="flex-shrink-0">
@@ -889,7 +889,7 @@ const closeForecastOverlay = () => {
 
             <!-- Recent Sessions Section -->
 <div class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden">
-            <div class="px-6 py-4 border-b border-neutral-700/50 flex items-center justify-between">
+            <div class="px-3 sm:px-6 py-4 border-b border-neutral-700/50 flex items-center justify-between">
                 <h3 class="text-xl font-semibold text-neutral-200 flex items-center gap-3">
                   🎯 Recent Sessions
                 </h3>
@@ -914,7 +914,7 @@ const closeForecastOverlay = () => {
                   </svg>
                 </router-link>
               </div>
-              <div class="p-6">
+              <div class="p-3 sm:p-6">
                 <RecentSessionsList
                   v-if="serverDetails?.serverGuid"
                   :server-guid="serverDetails.serverGuid"
@@ -974,7 +974,7 @@ const closeForecastOverlay = () => {
                       <div class="text-orange-400 text-sm font-medium">Loading map rotation...</div>
                     </div>
                   </div>
-                  <div class="p-6">
+                  <div class="p-3 sm:p-6">
                     <MapRotationTable
                       :map-rotation="mapRotation"
                       :current-page="mapRotationPage"
@@ -993,7 +993,7 @@ const closeForecastOverlay = () => {
                     <div class="text-orange-400 text-sm font-medium">Loading map rotation...</div>
                   </div>
                 </div>
-                <div v-else-if="mapsError" class="p-6">
+                <div v-else-if="mapsError" class="p-3 sm:p-6">
                   <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
                     <span class="text-sm text-red-400">{{ mapsError }}</span>
                   </div>
@@ -1120,7 +1120,7 @@ const closeForecastOverlay = () => {
                   </div>
 
                   <!-- Chart -->
-                  <div class="p-6">
+                  <div class="p-3 sm:p-6">
                     <PlayerHistoryChart
                       :chart-data="serverInsights.playersOnlineHistory.dataPoints"
                       :insights="serverInsights.playersOnlineHistory.insights"
@@ -1134,7 +1134,7 @@ const closeForecastOverlay = () => {
                 </div>
                 <div
                   v-else-if="isInsightsLoading"
-                  class="p-6"
+                  class="p-3 sm:p-6"
                 >
                   <div class="flex items-center justify-center py-8">
                     <div class="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
@@ -1145,7 +1145,7 @@ const closeForecastOverlay = () => {
 
             <!-- Server Rankings & Leaderboards Section -->
             <div class="bg-neutral-900/80 border border-neutral-700/50 rounded-xl overflow-hidden">
-              <div class="px-6 py-4 border-b border-neutral-700/50">
+              <div class="px-3 sm:px-6 py-4 border-b border-neutral-700/50">
                 <h3 class="text-xl font-semibold text-neutral-200 flex items-center gap-3">
                   🏆 Player Statistics & Rankings
                 </h3>
@@ -1172,7 +1172,7 @@ const closeForecastOverlay = () => {
               </div>
 
               <!-- Leaderboards Content -->
-              <div class="px-6 pb-6">
+              <div class="px-3 sm:px-6 pb-6">
                 <ServerLeaderboards
                   :leaderboards-data="leaderboardsData"
                   :is-loading="isLeaderboardsLoading"
