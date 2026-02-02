@@ -56,6 +56,7 @@ export function useSiteNotice() {
 
   const isVisible = computed(() => {
     if (!notice.value) return false;
+    if (!notice.value.content) return false; // Don't show banner with empty content
     if (isDismissed.value) return false;
     if (isExpired(notice.value)) return false;
     return true;
