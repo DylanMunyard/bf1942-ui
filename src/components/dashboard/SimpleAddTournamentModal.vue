@@ -1,39 +1,38 @@
 <template>
   <div
-    class="modal-mobile-safe fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+    class="modal-mobile-safe fixed inset-0 z-50 flex items-center justify-center p-4 portal-modal-overlay"
     @click.self="$emit('close')"
   >
-    <div class="bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-2xl border border-slate-700/50 max-w-md w-full shadow-2xl relative">
+    <div class="portal-modal">
       <!-- Header -->
-      <div class="p-6 border-b border-slate-700/50">
-        <div class="flex items-center justify-between">
-          <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
-            Create Tournament
-          </h2>
-          <button
-            class="text-slate-400 hover:text-slate-200 transition-colors"
-            @click="$emit('close')"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="portal-modal-title">
+          Create Tournament
+        </h2>
+        <button
+          class="portal-modal-close"
+          @click="$emit('close')"
+          title="Close"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- Form -->
-      <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
+      <form @submit.prevent="handleSubmit">
         <!-- Tournament Name -->
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            Tournament Name <span class="text-red-400">*</span>
+        <div class="mb-6">
+          <label class="portal-form-label portal-form-label--required">
+            Tournament Name
           </label>
           <input
             v-model="tournamentName"
             type="text"
             required
             placeholder="e.g., Summer Championship 2025"
-            class="w-full px-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+            class="portal-form-input"
             :disabled="loading"
           >
         </div>
@@ -41,18 +40,16 @@
         <!-- Error Message -->
         <div
           v-if="error"
-          class="p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
+          class="portal-form-error mb-6"
         >
-          <div class="text-sm text-red-400">
-            {{ error }}
-          </div>
+          {{ error }}
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center gap-3 pt-4">
+        <div class="flex items-center justify-end gap-3">
           <button
             type="button"
-            class="flex-1 px-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-lg font-medium transition-colors"
+            class="portal-btn portal-btn--ghost"
             @click="$emit('close')"
             :disabled="loading"
           >
@@ -60,8 +57,8 @@
           </button>
           <button
             type="submit"
+            class="portal-btn portal-btn--primary"
             :disabled="loading || !tournamentName.trim()"
-            class="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ loading ? 'Creating...' : 'Create' }}
           </button>
@@ -134,3 +131,5 @@ const handleSubmit = async () => {
   z-index: 9999;
 }
 </style>
+
+<style src="@/styles/portal-admin.css"></style>
