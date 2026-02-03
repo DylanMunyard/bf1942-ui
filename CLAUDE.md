@@ -10,7 +10,11 @@ All changes must be mobile-friendly. UI components must render cleanly on both m
 ### End-to-End Tests
 Maintain and update Playwright E2E tests with all changes. Tests are located in `/e2e` and must pass after any UI modifications.
 
-## Design Documentation
+## Design System
+
+See [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) for quick reference on components, colors, themes, and responsive patterns. Use this when implementing frontend changes with vague UX requirements.
+
+## Feature Documentation
 
 When building documentation for a feature decision:
 - Create a folder: `/features/<feature-name>` (use a concise, descriptive name)
