@@ -14,6 +14,7 @@ export interface TournamentListItem {
   discordUrl?: string;
   youTubeUrl?: string;
   forumUrl?: string;
+  promoVideoUrl?: string;
   theme?: TournamentTheme;
 }
 
@@ -117,6 +118,7 @@ export interface TournamentDetail {
   twitchUrl?: string;
   forumUrl?: string;
   rules?: string;
+  promoVideoUrl?: string;
   theme: TournamentTheme;
   hasHeroImage?: boolean;
   hasCommunityLogo?: boolean;
@@ -141,6 +143,7 @@ export interface CreateTournamentRequest {
   forumUrl?: string;
   rules?: string;
   registrationRules?: string;
+  promoVideoUrl?: string;
   weekDates?: TournamentWeekDate[];
   files?: CreateTournamentFileRequest[];
   theme: TournamentTheme;
@@ -165,6 +168,7 @@ export interface UpdateTournamentRequest {
   forumUrl?: string;
   rules?: string;
   registrationRules?: string;
+  promoVideoUrl?: string;
   weekDates?: TournamentWeekDate[];
   files?: CreateTournamentFileRequest[];
   theme?: TournamentTheme;

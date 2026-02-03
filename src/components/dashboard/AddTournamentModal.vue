@@ -165,6 +165,29 @@
           @update:forum-url="formData.forumUrl = $event"
         />
 
+        <!-- Promo Video URL -->
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">
+            Promo Video URL <span class="text-slate-500">(Optional)</span>
+          </label>
+          <div class="relative">
+            <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+              </svg>
+            </div>
+            <input
+              v-model="formData.promoVideoUrl"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=..."
+              class="w-full pl-14 pr-4 py-3 bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+            >
+          </div>
+          <p class="mt-1 text-xs text-slate-500">
+            YouTube video URL to embed on tournament page. Supports youtube.com/watch, youtu.be, shorts, and embed formats.
+          </p>
+        </div>
+
         <!-- Row 3: Hero Image + Community Logo -->
         <div class="grid grid-cols-2 gap-4">
           <ImageUpload
@@ -902,6 +925,7 @@ const formData = ref({
   youTubeUrl: '',
   twitchUrl: '',
   forumUrl: '',
+  promoVideoUrl: '',
   rules: '',
   registrationRules: '',
   status: 'draft' as 'draft' | 'registration' | 'open' | 'closed',
@@ -1064,6 +1088,7 @@ onMounted(() => {
       youTubeUrl: props.tournament.youTubeUrl || '',
       twitchUrl: props.tournament.twitchUrl || '',
       forumUrl: props.tournament.forumUrl || '',
+      promoVideoUrl: props.tournament.promoVideoUrl || '',
       rules: props.tournament.rules || '',
       registrationRules: props.tournament.registrationRules || '',
       status: props.tournament.status || undefined,
@@ -1593,6 +1618,10 @@ const handleSubmit = async () => {
 
     if (formData.value.forumUrl?.trim()) {
       request.forumUrl = formData.value.forumUrl.trim();
+    }
+
+    if (formData.value.promoVideoUrl?.trim()) {
+      request.promoVideoUrl = formData.value.promoVideoUrl.trim();
     }
 
     if (formData.value.rules?.trim()) {

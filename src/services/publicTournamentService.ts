@@ -177,6 +177,7 @@ export interface PublicTournamentDetail {
   forumUrl?: string;
   rules?: string;
   registrationRules?: string;
+  promoVideoUrl?: string;
   theme: TournamentTheme;
 }
 

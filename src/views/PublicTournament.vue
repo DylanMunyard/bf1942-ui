@@ -153,6 +153,16 @@
           </div>
         </div>
 
+        <!-- Promo Video (shown above news feed during registration) -->
+        <TournamentPromoVideo
+          v-if="tournament.promoVideoUrl && tournament.status === 'registration'"
+          :video-url="tournament.promoVideoUrl"
+          :accent-color="getAccentColor()"
+          :text-color="getTextColor()"
+          :text-muted-color="getTextMutedColor()"
+          :background-soft-color="getBackgroundSoftColor()"
+        />
+
         <!-- News Feed Section -->
         <div>
           <div class="mb-6">
@@ -169,6 +179,16 @@
             :background-soft-color="getBackgroundSoftColor()"
           />
         </div>
+
+        <!-- Promo Video (shown below news feed when open or closed) -->
+        <TournamentPromoVideo
+          v-if="tournament.promoVideoUrl && (tournament.status === 'open' || tournament.status === 'closed')"
+          :video-url="tournament.promoVideoUrl"
+          :accent-color="getAccentColor()"
+          :text-color="getTextColor()"
+          :text-muted-color="getTextMutedColor()"
+          :background-soft-color="getBackgroundSoftColor()"
+        />
       </div>
     </div>
 
@@ -198,6 +218,7 @@ import TournamentHero from '@/components/TournamentHero.vue';
 import TournamentPageNav from '@/components/TournamentPageNav.vue';
 import TournamentMatchesTable from '@/components/TournamentMatchesTable.vue';
 import TournamentNewsFeed from '@/components/TournamentNewsFeed.vue';
+import TournamentPromoVideo from '@/components/TournamentPromoVideo.vue';
 import MatchDetailsModal from '@/components/MatchDetailsModal.vue';
 import {
   publicTournamentService,
