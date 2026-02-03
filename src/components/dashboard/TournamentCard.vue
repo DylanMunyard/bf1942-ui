@@ -77,10 +77,7 @@
       <!-- Actions -->
       <div class="actions-row">
         <button class="btn-action btn-primary" @click="$emit('view-details')">
-          [VIEW]
-        </button>
-        <button class="btn-action btn-secondary" @click="$emit('edit')">
-          [EDIT]
+          [MANAGE]
         </button>
         <button class="btn-action btn-danger" @click="$emit('remove')">
           [DEL]
@@ -106,7 +103,6 @@ const props = defineProps<Props>();
 
 defineEmits<{
   'view-details': [];
-  edit: [];
   remove: [];
 }>();
 

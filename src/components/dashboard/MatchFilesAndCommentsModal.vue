@@ -1,350 +1,7 @@
-<template>
-  <div
-    class="modal-mobile-safe fixed inset-0 z-50 flex items-center justify-center p-4 portal-modal-overlay"
-    @click.self="$emit('close')"
-  >
-    <div class="portal-modal portal-modal--large">
-      <!-- Header -->
-      <div class="portal-modal-header">
-        <div>
-          <h2 class="portal-modal-title--large" style="color: var(--portal-accent);">
-            Match Files & Comments
-          </h2>
-          <p v-if="match" class="portal-modal-hint mt-1">
-            {{ match.team1Name }} vs {{ match.team2Name }} • {{ formatMatchDate(match.scheduledDate) }}
-          </p>
-        </div>
-        <button
-          class="portal-modal-close"
-          @click="$emit('close')"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Content -->
-      <div class="portal-modal-content space-y-6">
-        <!-- Loading State -->
-        <div v-if="isLoading" class="flex items-center justify-center py-12">
-          <div class="flex flex-col items-center gap-3">
-            <div class="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin" style="border-color: var(--portal-accent-dim); border-top-color: var(--portal-accent);" />
-            <p class="portal-modal-hint">Loading files and comments...</p>
-          </div>
-        </div>
-
-        <template v-else>
-          <!-- Error Message -->
-          <div v-if="error" class="portal-card" style="background: var(--portal-danger-glow); border-color: rgba(239, 68, 68, 0.3);">
-            <p style="color: var(--portal-danger); font-size: 0.875rem;">{{ error }}</p>
-          </div>
-
-          <!-- Files Panel -->
-          <div class="space-y-3 portal-card">
-            <!-- Add Link Input -->
-            <div class="space-y-2">
-              <div>
-                <h3 class="portal-modal-section-title">📎 Links</h3>
-                <p class="portal-modal-hint mt-1">Paste URL (auto-fills name), press Enter to add</p>
-              </div>
-
-              <!-- Compact Link Input -->
-              <div class="space-y-2">
-                <div class="flex gap-2">
-                  <input
-                    v-model="newFile.url"
-                    type="url"
-                    placeholder="https://..."
-                    class="flex-1 portal-input"
-                    :disabled="isProcessing"
-                    @input="autoFillFileDetails"
-                    @keydown.enter.prevent="addNewFile"
-                  >
-                  <button
-                    @click="addNewFile"
-                    :disabled="isProcessing || !newFile.url.trim()"
-                    class="portal-btn portal-btn--ghost"
-                    title="Add link (or press Enter)"
-                  >
-                    +
-                  </button>
-                </div>
-                <div class="flex gap-2">
-                  <input
-                    v-model="newFile.name"
-                    type="text"
-                    placeholder="File name (auto-filled)"
-                    class="flex-1 portal-input"
-                    :disabled="isProcessing"
-                    @keydown.enter.prevent="addNewFile"
-                  >
-                  <input
-                    v-model="newFile.tags"
-                    type="text"
-                    placeholder="gameplay"
-                    class="w-24 portal-input"
-                    :disabled="isProcessing"
-                    @keydown.enter.prevent="addNewFile"
-                  >
-                </div>
-              </div>
-            </div>
-
-            <!-- Files List -->
-            <div v-if="existingFiles.length > 0" class="space-y-2 border-t" style="border-color: var(--portal-border); padding-top: 0.75rem;">
-              <div
-                v-for="file in existingFiles"
-                :key="file.id"
-                :class="[
-                  'portal-card transition-all p-3',
-                  editingFileId === file.id ? '' : (file.isNew ? 'animate-pulse-once' : 'group')
-                ]"
-                :style="editingFileId === file.id ? 'background: var(--portal-surface-elevated); border-color: var(--portal-accent);' : (file.isNew ? 'background: var(--portal-accent-dim); border-color: var(--portal-accent);' : '')"
-              >
-                <!-- View Mode -->
-                <div v-if="editingFileId !== file.id" class="flex items-start gap-3">
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <a
-                        :href="file.url"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-xs font-medium break-all"
-                        style="color: var(--portal-accent);"
-                        onmouseover="this.style.color='var(--portal-accent)'"
-                        onmouseout="this.style.color='var(--portal-accent)'"
-                      >
-                        {{ file.name }} ↗️
-                      </a>
-                      <span v-if="file.isNew" class="text-xs px-2 py-0.5 rounded" style="background: var(--portal-accent-dim); color: var(--portal-accent);">Unsaved</span>
-                    </div>
-                    <p class="portal-modal-hint truncate mt-0.5">{{ file.url }}</p>
-                    <p v-if="file.tags" class="text-xs mt-1" style="color: var(--portal-text);">{{ file.tags }}</p>
-                  </div>
-                  <div class="flex-shrink-0 flex gap-2">
-                    <button
-                      @click="startEditFile(file)"
-                      :disabled="isProcessing"
-                      class="px-2 py-1 text-xs transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
-                      style="color: var(--portal-text);"
-                      onmouseover="this.style.color='var(--portal-accent)'"
-                      onmouseout="this.style.color='var(--portal-text)'"
-                      title="Edit file"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      @click="deleteExistingFile(file.id)"
-                      :disabled="isProcessing"
-                      :class="[
-                        'px-2 py-1 text-xs transition-colors disabled:opacity-50',
-                        file.isNew ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                      ]"
-                      style="color: var(--portal-danger);"
-                      onmouseover="this.style.color='var(--portal-danger)'"
-                      onmouseout="this.style.color='var(--portal-danger)'"
-                      title="Delete file"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Edit Mode -->
-                <div v-else class="space-y-2">
-                  <input
-                    v-model="editingFile.name"
-                    type="text"
-                    placeholder="File name"
-                    class="w-full portal-input"
-                    :disabled="isProcessing"
-                  />
-                  <input
-                    v-model="editingFile.url"
-                    type="url"
-                    placeholder="https://..."
-                    class="w-full portal-input"
-                    :disabled="isProcessing"
-                  />
-                  <input
-                    v-model="editingFile.tags"
-                    type="text"
-                    placeholder="gameplay"
-                    class="w-full portal-input"
-                    :disabled="isProcessing"
-                  />
-                  <div class="flex justify-end gap-2">
-                    <button
-                      @click="cancelEditFile"
-                      :disabled="isProcessing"
-                      class="portal-btn portal-btn--ghost"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      @click="saveEditFile(file.id as number)"
-                      :disabled="isProcessing"
-                      class="portal-btn portal-btn--primary"
-                    >
-                      {{ isProcessing ? 'Saving...' : 'Save' }}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- No Files Message -->
-            <div v-else class="text-center py-4 portal-modal-hint border-t" style="border-color: var(--portal-border); padding-top: 0.75rem;">
-              No files yet
-            </div>
-          </div>
-
-          <!-- Comments Panel -->
-          <div class="space-y-3 portal-card">
-            <!-- Add Comment Input -->
-            <div class="space-y-2">
-              <div>
-                <h3 class="portal-modal-section-title">💬 Comments</h3>
-                <p class="portal-modal-hint mt-1">Paste comment, press Enter to add</p>
-              </div>
-
-              <!-- Comments Input with Auto-Add -->
-              <div class="relative space-y-2">
-                <textarea
-                  v-model="newComment"
-                  @keydown.enter.exact.prevent="addNewComment"
-                  placeholder="Your comment..."
-                  class="w-full portal-input resize-none"
-                  :disabled="isProcessing"
-                  rows="2"
-                />
-                <div class="flex justify-end">
-                  <button
-                    @click="addNewComment"
-                    :disabled="isProcessing || !newComment.trim()"
-                    class="portal-btn portal-btn--ghost"
-                    title="Add comment (or press Enter)"
-                  >
-                    + Add
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Comments List -->
-            <div v-if="existingComments.length > 0" class="space-y-2 border-t" style="border-color: var(--portal-border); padding-top: 0.75rem;">
-              <div
-                v-for="comment in existingComments"
-                :key="comment.id"
-                :class="[
-                  'portal-card transition-all p-3',
-                  editingCommentId === comment.id ? '' : (comment.isNew ? 'animate-pulse-once' : 'group')
-                ]"
-                :style="editingCommentId === comment.id ? 'background: var(--portal-surface-elevated); border-color: var(--portal-accent);' : (comment.isNew ? 'background: var(--portal-accent-dim); border-color: var(--portal-accent);' : '')"
-              >
-                <!-- View Mode -->
-                <div v-if="editingCommentId !== comment.id" class="flex items-start gap-3">
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <p class="text-xs break-words whitespace-pre-wrap flex-1" style="color: var(--portal-text-bright);">{{ comment.content }}</p>
-                      <span v-if="comment.isNew" class="flex-shrink-0 text-xs px-2 py-0.5 rounded" style="background: var(--portal-accent-dim); color: var(--portal-accent);">Unsaved</span>
-                    </div>
-                    <p class="portal-modal-hint mt-1">{{ formatCommentDate(comment.createdAt) }}</p>
-                  </div>
-                  <div class="flex-shrink-0 flex gap-2">
-                    <button
-                      @click="startEditComment(comment)"
-                      :disabled="isProcessing"
-                      class="px-2 py-1 text-xs transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
-                      style="color: var(--portal-text);"
-                      onmouseover="this.style.color='var(--portal-accent)'"
-                      onmouseout="this.style.color='var(--portal-text)'"
-                      title="Edit comment"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      @click="deleteExistingComment(comment.id)"
-                      :disabled="isProcessing"
-                      :class="[
-                        'px-2 py-1 text-xs transition-colors disabled:opacity-50',
-                        comment.isNew ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                      ]"
-                      style="color: var(--portal-danger);"
-                      onmouseover="this.style.color='var(--portal-danger)'"
-                      onmouseout="this.style.color='var(--portal-danger)'"
-                      title="Delete comment"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Edit Mode -->
-                <div v-else class="space-y-2">
-                  <textarea
-                    v-model="editingComment"
-                    placeholder="Comment..."
-                    class="w-full portal-input resize-none"
-                    :disabled="isProcessing"
-                    rows="3"
-                  />
-                  <div class="flex justify-end gap-2">
-                    <button
-                      @click="cancelEditComment"
-                      :disabled="isProcessing"
-                      class="portal-btn portal-btn--ghost"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      @click="saveEditComment(comment.id as number)"
-                      :disabled="isProcessing"
-                      class="portal-btn portal-btn--primary"
-                    >
-                      {{ isProcessing ? 'Saving...' : 'Save' }}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- No Comments Message -->
-            <div v-else class="text-center py-4 portal-modal-hint border-t" style="border-color: var(--portal-border); padding-top: 0.75rem;">
-              No comments yet
-            </div>
-          </div>
-        </template>
-      </div>
-
-      <!-- Footer -->
-      <div class="portal-modal-footer flex items-center justify-end gap-3">
-        <button
-          class="portal-btn portal-btn--ghost"
-          @click="$emit('close')"
-          :disabled="isProcessing"
-        >
-          Cancel
-        </button>
-        <button
-          class="portal-btn portal-btn--primary flex items-center gap-2"
-          @click="handleSave"
-          :disabled="isProcessing || (newFiles.length === 0 && newComments.length === 0)"
-          :title="newFiles.length === 0 && newComments.length === 0 ? 'No unsaved items to save' : ''"
-        >
-          <div v-if="isProcessing" class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          <span v-if="isProcessing">Saving...</span>
-          <span v-else>Save {{ newFiles.length + newComments.length }} Item{{ newFiles.length + newComments.length !== 1 ? 's' : '' }}</span>
-        </button>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { adminTournamentService, type TournamentMatch, type MatchFile, type MatchComment, type CreateMatchFileRequest, type CreateMatchCommentRequest } from '@/services/adminTournamentService';
+import BaseModal from '@/components/BaseModal.vue';
 
 interface Props {
   match: TournamentMatch | null;
@@ -388,14 +45,14 @@ const newFiles = ref<FileEntry[]>([]);
 const newComments = ref<CommentEntry[]>([]);
 const newFile = ref({ name: '', url: '', tags: 'gameplay' });
 const newComment = ref('');
-const recentlyAddedCommentId = ref<string | null>(null);
-const recentlyAddedFileId = ref<string | null>(null);
 
 // Edit state
 const editingFileId = ref<number | null>(null);
 const editingFile = ref({ name: '', url: '', tags: '' });
 const editingCommentId = ref<number | null>(null);
 const editingComment = ref('');
+
+const hasUnsavedItems = computed(() => newFiles.value.length > 0 || newComments.value.length > 0);
 
 const formatMatchDate = (dateString: string): string => {
   const date = new Date(dateString);
@@ -466,7 +123,6 @@ const addNewFile = () => {
 
   try {
     const url = new URL(newFile.value.url.trim());
-    const fileId = `temp-file-${Date.now()}`;
 
     existingFiles.value.unshift({
       id: -1,
@@ -476,11 +132,6 @@ const addNewFile = () => {
       uploadedAt: new Date().toISOString(),
       isNew: true,
     } as DisplayFile);
-
-    recentlyAddedFileId.value = fileId;
-    setTimeout(() => {
-      recentlyAddedFileId.value = null;
-    }, 1500);
 
     // Add to pending files for saving
     newFiles.value.push({
@@ -497,11 +148,17 @@ const addNewFile = () => {
 };
 
 const removeNewFile = (fileId: string | number) => {
-  existingFiles.value = existingFiles.value.filter(f => f.id !== fileId);
-  newFiles.value = newFiles.value.filter((_, idx) => {
-    const file = existingFiles.value[idx];
-    return !file || file.id !== fileId;
-  });
+  const index = existingFiles.value.findIndex(f => f.id === fileId);
+  if (index !== -1) {
+    existingFiles.value.splice(index, 1);
+    // Remove from newFiles if it was a new file
+    if (typeof fileId === 'string' || fileId < 0) {
+      const newIndex = existingFiles.value.length - newFiles.value.length + index;
+      if (newIndex >= 0 && newIndex < newFiles.value.length) {
+        newFiles.value.splice(newIndex, 1);
+      }
+    }
+  }
 };
 
 const deleteExistingFile = async (fileId: number | string) => {
@@ -529,8 +186,6 @@ const deleteExistingFile = async (fileId: number | string) => {
 const addNewComment = () => {
   if (!newComment.value.trim()) return;
 
-  const commentId = `temp-comment-${Date.now()}`;
-
   existingComments.value.unshift({
     id: -1,
     content: newComment.value.trim(),
@@ -540,11 +195,6 @@ const addNewComment = () => {
     updatedAt: new Date().toISOString(),
     isNew: true,
   } as DisplayComment);
-
-  recentlyAddedCommentId.value = commentId;
-  setTimeout(() => {
-    recentlyAddedCommentId.value = null;
-  }, 1500);
 
   // Add to pending comments for saving
   newComments.value.push({
@@ -556,11 +206,17 @@ const addNewComment = () => {
 };
 
 const removeNewComment = (commentId: string | number) => {
-  existingComments.value = existingComments.value.filter(c => c.id !== commentId);
-  newComments.value = newComments.value.filter((_, idx) => {
-    const comment = existingComments.value[idx];
-    return !comment || comment.id !== commentId;
-  });
+  const index = existingComments.value.findIndex(c => c.id === commentId);
+  if (index !== -1) {
+    existingComments.value.splice(index, 1);
+    // Remove from newComments if it was a new comment
+    if (typeof commentId === 'string' || commentId < 0) {
+      const newIndex = existingComments.value.length - newComments.value.length + index;
+      if (newIndex >= 0 && newIndex < newComments.value.length) {
+        newComments.value.splice(newIndex, 1);
+      }
+    }
+  }
 };
 
 const deleteExistingComment = async (commentId: number | string) => {
@@ -678,7 +334,7 @@ const saveEditComment = async (commentId: number) => {
 };
 
 const handleSave = async () => {
-  if (!props.match) return;
+  if (!props.match || !hasUnsavedItems.value) return;
 
   isProcessing.value = true;
   error.value = null;
@@ -728,9 +384,348 @@ const handleSave = async () => {
   }
 };
 
+const handleClose = () => {
+  emit('close');
+};
+
 onMounted(() => {
   loadFilesAndComments();
 });
 </script>
 
-<style scoped src="./MatchFilesAndCommentsModal.vue.css"></style>
+<template>
+  <BaseModal
+    :model-value="true"
+    size="lg"
+    @update:model-value="handleClose"
+    @close="handleClose"
+  >
+    <template #header>
+      <h3 class="modal-title">
+        Match Files & Comments
+      </h3>
+      <p v-if="match" class="modal-subtitle">
+        {{ match.team1Name }} vs {{ match.team2Name }} • {{ formatMatchDate(match.scheduledDate) }}
+      </p>
+    </template>
+
+    <div class="space-y-6">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex items-center justify-center py-12">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin" style="border-color: #6e7681; border-top-color: #00fff2;" />
+          <p class="text-sm" style="color: #6e7681;">Loading files and comments...</p>
+        </div>
+      </div>
+
+      <template v-else>
+        <!-- Error Message -->
+        <div v-if="error" class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+          <p class="text-red-400 text-sm">{{ error }}</p>
+        </div>
+
+        <!-- Files Section -->
+        <div class="space-y-4">
+          <div>
+            <h4 class="text-sm font-semibold mb-1" style="color: #e6edf3;">📎 Files & Links</h4>
+            <p class="text-xs" style="color: #6e7681;">Add files, recordings, or links for this match</p>
+          </div>
+
+          <!-- Add File Form -->
+          <div class="space-y-3 bg-slate-800/30 border border-slate-700/30 rounded-lg p-4">
+            <div>
+              <label class="block text-xs font-medium mb-1.5" style="color: #8b949e;">
+                URL <span class="text-red-400">*</span>
+              </label>
+              <input
+                v-model="newFile.url"
+                type="url"
+                placeholder="https://..."
+                class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                :disabled="isProcessing"
+                @input="autoFillFileDetails"
+                @keydown.enter.prevent="addNewFile"
+              >
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium mb-1.5" style="color: #8b949e;">
+                  File Name
+                </label>
+                <input
+                  v-model="newFile.name"
+                  type="text"
+                  placeholder="File name (auto-filled)"
+                  class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                  :disabled="isProcessing"
+                  @keydown.enter.prevent="addNewFile"
+                >
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1.5" style="color: #8b949e;">
+                  Category
+                </label>
+                <input
+                  v-model="newFile.tags"
+                  type="text"
+                  placeholder="gameplay"
+                  class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                  :disabled="isProcessing"
+                  @keydown.enter.prevent="addNewFile"
+                >
+              </div>
+            </div>
+
+            <button
+              @click="addNewFile"
+              :disabled="isProcessing || !newFile.url.trim()"
+              class="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm rounded font-medium transition-colors"
+            >
+              + Add File
+            </button>
+          </div>
+
+          <!-- Files List -->
+          <div v-if="existingFiles.length > 0" class="space-y-2">
+            <div
+              v-for="file in existingFiles"
+              :key="file.id"
+              class="bg-slate-800/30 border border-slate-700/30 rounded-lg p-3 transition-all"
+              :class="editingFileId === file.id ? 'border-cyan-500' : (file.isNew ? 'border-cyan-500/50' : '')"
+            >
+              <!-- View Mode -->
+              <div v-if="editingFileId !== file.id" class="flex items-start gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <a
+                      :href="file.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-sm font-medium break-all hover:underline"
+                      style="color: #00fff2;"
+                    >
+                      {{ file.name }} ↗️
+                    </a>
+                    <span v-if="file.isNew" class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">Unsaved</span>
+                  </div>
+                  <p class="text-xs truncate" style="color: #6e7681;">{{ file.url }}</p>
+                  <p v-if="file.tags" class="text-xs mt-1" style="color: #8b949e;">Category: {{ file.tags }}</p>
+                </div>
+                <div class="flex-shrink-0 flex gap-2">
+                  <button
+                    @click="startEditFile(file)"
+                    :disabled="isProcessing"
+                    class="px-2 py-1 text-xs transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100 hover:text-cyan-400"
+                    style="color: #8b949e;"
+                    title="Edit file"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    @click="deleteExistingFile(file.id)"
+                    :disabled="isProcessing"
+                    class="px-2 py-1 text-xs transition-colors disabled:opacity-50 hover:text-red-400"
+                    :class="file.isNew ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+                    style="color: #8b949e;"
+                    title="Delete file"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <!-- Edit Mode -->
+              <div v-else class="space-y-3">
+                <div>
+                  <label class="block text-xs font-medium mb-1.5" style="color: #8b949e;">
+                    File Name
+                  </label>
+                  <input
+                    v-model="editingFile.name"
+                    type="text"
+                    placeholder="File name"
+                    class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                    :disabled="isProcessing"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium mb-1.5" style="color: #8b949e;">
+                    URL
+                  </label>
+                  <input
+                    v-model="editingFile.url"
+                    type="url"
+                    placeholder="https://..."
+                    class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                    :disabled="isProcessing"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium mb-1.5" style="color: #8b949e;">
+                    Category
+                  </label>
+                  <input
+                    v-model="editingFile.tags"
+                    type="text"
+                    placeholder="gameplay"
+                    class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                    :disabled="isProcessing"
+                  />
+                </div>
+                <div class="flex justify-end gap-2">
+                  <button
+                    @click="cancelEditFile"
+                    :disabled="isProcessing"
+                    class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    @click="saveEditFile(file.id as number)"
+                    :disabled="isProcessing"
+                    class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded text-sm font-medium transition-colors"
+                  >
+                    {{ isProcessing ? 'Saving...' : 'Save' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="space-y-4">
+          <div>
+            <h4 class="text-sm font-semibold mb-1" style="color: #e6edf3;">💬 Comments</h4>
+            <p class="text-xs" style="color: #6e7681;">Add notes or comments about this match</p>
+          </div>
+
+          <!-- Add Comment Form -->
+          <div class="space-y-3 bg-slate-800/30 border border-slate-700/30 rounded-lg p-4">
+            <div>
+              <label class="block text-xs font-medium mb-1.5" style="color: #8b949e;">
+                Comment
+              </label>
+              <textarea
+                v-model="newComment"
+                placeholder="Enter your comment..."
+                class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all resize-none"
+                :disabled="isProcessing"
+                rows="3"
+                @keydown.enter.exact.prevent="addNewComment"
+              />
+            </div>
+
+            <button
+              @click="addNewComment"
+              :disabled="isProcessing || !newComment.trim()"
+              class="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm rounded font-medium transition-colors"
+            >
+              + Add Comment
+            </button>
+          </div>
+
+          <!-- Comments List -->
+          <div v-if="existingComments.length > 0" class="space-y-2">
+            <div
+              v-for="comment in existingComments"
+              :key="comment.id"
+              class="bg-slate-800/30 border border-slate-700/30 rounded-lg p-3 transition-all"
+              :class="editingCommentId === comment.id ? 'border-cyan-500' : (comment.isNew ? 'border-cyan-500/50' : '')"
+            >
+              <!-- View Mode -->
+              <div v-if="editingCommentId !== comment.id" class="flex items-start gap-3">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm break-words whitespace-pre-wrap mb-1" style="color: #e6edf3;">{{ comment.content }}</p>
+                  <p class="text-xs" style="color: #6e7681;">{{ formatCommentDate(comment.createdAt) }}</p>
+                  <span v-if="comment.isNew" class="inline-block mt-2 text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">Unsaved</span>
+                </div>
+                <div class="flex-shrink-0 flex gap-2">
+                  <button
+                    @click="startEditComment(comment)"
+                    :disabled="isProcessing"
+                    class="px-2 py-1 text-xs transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100 hover:text-cyan-400"
+                    style="color: #8b949e;"
+                    title="Edit comment"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    @click="deleteExistingComment(comment.id)"
+                    :disabled="isProcessing"
+                    class="px-2 py-1 text-xs transition-colors disabled:opacity-50 hover:text-red-400"
+                    :class="comment.isNew ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+                    style="color: #8b949e;"
+                    title="Delete comment"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <!-- Edit Mode -->
+              <div v-else class="space-y-3">
+                <div>
+                  <label class="block text-xs font-medium mb-1.5" style="color: #8b949e;">
+                    Comment
+                  </label>
+                  <textarea
+                    v-model="editingComment"
+                    placeholder="Comment..."
+                    class="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all resize-none"
+                    :disabled="isProcessing"
+                    rows="3"
+                  />
+                </div>
+                <div class="flex justify-end gap-2">
+                  <button
+                    @click="cancelEditComment"
+                    :disabled="isProcessing"
+                    class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    @click="saveEditComment(comment.id as number)"
+                    :disabled="isProcessing"
+                    class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded text-sm font-medium transition-colors"
+                  >
+                    {{ isProcessing ? 'Saving...' : 'Save' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <template #footer>
+      <div class="flex items-center justify-end gap-3">
+        <button
+          class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm transition-colors"
+          @click="handleClose"
+          :disabled="isProcessing"
+        >
+          {{ hasUnsavedItems ? 'Cancel' : 'Close' }}
+        </button>
+        <button
+          v-if="hasUnsavedItems"
+          class="px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          @click="handleSave"
+          :disabled="isProcessing"
+        >
+          <div v-if="isProcessing" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <span>{{ isProcessing ? 'Saving...' : `Save ${newFiles.length + newComments.length} Item${newFiles.length + newComments.length !== 1 ? 's' : ''}` }}</span>
+        </button>
+      </div>
+    </template>
+  </BaseModal>
+</template>
+
+<style scoped>
+.group:hover .opacity-0 {
+  opacity: 1;
+}
+</style>

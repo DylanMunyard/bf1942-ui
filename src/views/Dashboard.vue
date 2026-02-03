@@ -271,7 +271,6 @@
                   :key="tournament.id"
                   :tournament="tournament"
                   @view-details="() => router.push(`/admin/tournaments/${tournament.id}`)"
-                  @edit="() => editTournament(tournament.id)"
                   @remove="() => removeTournament(tournament.id)"
                 />
               </div>
@@ -305,12 +304,11 @@
       @close="showAddBuddyModal = false"
       @added="onBuddyAdded"
     />
-    <AddTournamentModal
+    <SimpleAddTournamentModal
       v-if="showAddTournamentModal"
-      :tournament="editingTournament"
       :default-organizer="userProfiles.length > 0 ? userProfiles[0].playerName : undefined"
-      @close="showAddTournamentModal = false; editingTournament = null"
-      @added="onTournamentAdded"
+      @close="showAddTournamentModal = false"
+      @created="onTournamentCreated"
     />
 
     <!-- Confirmation Modals -->
@@ -360,7 +358,7 @@ import AddServerModal from '@/components/dashboard/AddServerModal.vue';
 import AddBuddyModal from '@/components/dashboard/AddBuddyModal.vue';
 import ConfirmationModal from '@/components/dashboard/ConfirmationModal.vue';
 import TournamentCard from '@/components/dashboard/TournamentCard.vue';
-import AddTournamentModal from '@/components/dashboard/AddTournamentModal.vue';
+import SimpleAddTournamentModal from '@/components/dashboard/SimpleAddTournamentModal.vue';
 
 interface Player {
   name: string;
@@ -420,7 +418,6 @@ const showAddPlayerModal = ref(false);
 const showAddServerModal = ref(false);
 const showAddBuddyModal = ref(false);
 const showAddTournamentModal = ref(false);
-const editingTournament = ref<TournamentListItem | null>(null);
 
 // Confirmation modal states for each section
 const showPlayerConfirm = ref(false);
@@ -529,37 +526,10 @@ const removeTournament = (tournamentId: number) => {
   showTournamentConfirm.value = true;
 };
 
-const editTournament = async (tournamentId: number) => {
-  const tournament = tournaments.value.find(t => t.id === tournamentId);
-  if (!tournament) return;
-
-  // Fetch full tournament details for editing
-  try {
-    const details = await adminTournamentService.getTournamentDetail(tournamentId);
-    // Store the details with the id and basic info from the list item
-    editingTournament.value = {
-      ...tournament,
-      ...details
-    } as any;
-    showAddTournamentModal.value = true;
-  } catch (err) {
-    console.error('Error loading tournament details:', err);
-    error.value = 'Failed to load tournament details';
-  }
-};
-
-const onTournamentAdded = (tournamentId?: number) => {
-  const wasEditing = editingTournament.value !== null;
+const onTournamentCreated = (tournamentId: number) => {
   showAddTournamentModal.value = false;
-  editingTournament.value = null;
-
-  // If a new tournament was created (not editing), navigate to it
-  if (tournamentId && !wasEditing) {
-    router.push(`/admin/tournaments/${tournamentId}`);
-  } else {
-    // Otherwise just reload the data
-    loadUserData();
-  }
+  // Navigate to the tournament management page
+  router.push(`/admin/tournaments/${tournamentId}`);
 };
 
 const loadUserData = async () => {
