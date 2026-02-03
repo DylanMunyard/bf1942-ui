@@ -344,8 +344,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import { statsService } from '@/services/statsService';
 import { adminTournamentService, type TournamentListItem } from '@/services/adminTournamentService';
@@ -403,6 +403,7 @@ interface Buddy {
 
 
 const router = useRouter();
+const route = useRoute();
 const { isAuthenticated } = useAuth();
 
 // State
@@ -528,8 +529,8 @@ const removeTournament = (tournamentId: number) => {
 
 const onTournamentCreated = (tournamentId: number) => {
   showAddTournamentModal.value = false;
-  // Navigate to the tournament management page
-  router.push(`/admin/tournaments/${tournamentId}`);
+  // Navigate to the tournament settings tab
+  router.push(`/admin/tournaments/${tournamentId}/settings`);
 };
 
 const loadUserData = async () => {
@@ -627,6 +628,13 @@ const cancelTournamentConfirm = () => {
 
 onMounted(() => {
   loadUserData();
+});
+
+// Reload data when navigating back to the dashboard
+watch(() => route.path, (newPath) => {
+  if (newPath === '/dashboard') {
+    loadUserData();
+  }
 });
 </script>
 

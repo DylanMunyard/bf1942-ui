@@ -1,7 +1,16 @@
 <template>
   <div class="tournament-matches-tab">
+    <!-- Results Form View -->
+    <TournamentResultsForm
+      v-if="showResultsView && editingMatchForResultsView"
+      :tournament="tournament"
+      :match="editingMatchForResultsView"
+      @close="closeResultsView"
+      @updated="onRefresh"
+    />
+
     <!-- Add/Edit Match View -->
-    <div v-if="showForm" class="portal-card">
+    <div v-else-if="showForm" class="portal-card">
       <div class="portal-card-header">
         <div>
           <h2 class="portal-card-title">[ {{ editingMatch ? 'EDIT MATCH' : 'SCHEDULE MATCH' }} ]</h2>
@@ -191,7 +200,7 @@
     </div>
 
     <!-- Matches List View -->
-    <div v-else class="portal-card">
+    <div v-else-if="!showResultsView" class="portal-card">
       <div class="portal-card-header">
         <div>
           <h2 class="portal-card-title">[ MATCHES ]</h2>
@@ -294,7 +303,7 @@
                     <div class="portal-table-actions">
                       <button
                         class="portal-cell-btn"
-                        @click="openEditMapResultsModal(match)"
+                        @click="openResultsView(match)"
                         title="Enter match results for all maps"
                       >
                         Results
@@ -352,16 +361,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Edit Map Results Modal -->
-    <EditMapResultsModal
-      v-if="showEditMapResultsModal && editingMatchForResults"
-      :is-open="showEditMapResultsModal"
-      :tournament="tournament"
-      :match="editingMatchForResults"
-      @close="showEditMapResultsModal = false; editingMatchForResults = null"
-      @updated="onRefresh"
-    />
 
     <!-- Match Files and Comments Modal -->
     <MatchFilesAndCommentsModal
@@ -543,14 +542,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
   adminTournamentService,
   type TournamentDetail,
   type TournamentMatch,
   type TournamentMatchMap
 } from '@/services/adminTournamentService';
-import EditMapResultsModal from '@/components/dashboard/EditMapResultsModal.vue';
+import TournamentResultsForm from './TournamentResultsForm.vue';
 import MatchFilesAndCommentsModal from '@/components/dashboard/MatchFilesAndCommentsModal.vue';
 
 interface ServerSearchResult {
@@ -572,6 +572,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'refresh'): void;
 }>();
+
+const route = useRoute();
+const router = useRouter();
 
 // Form state
 const showForm = ref(false);
@@ -596,9 +599,14 @@ const showServerDropdown = ref(false);
 let serverSearchTimeout: number | null = null;
 let blurTimeout: number | null = null;
 
+// Results form view state - derived from route params
+const editingMatchForResultsView = ref<TournamentMatch | null>(null);
+
+const showResultsView = computed(() => {
+  return !!route.query.matchId;
+});
+
 // Other modal states
-const showEditMapResultsModal = ref(false);
-const editingMatchForResults = ref<TournamentMatch | null>(null);
 const showMatchFilesAndCommentsModal = ref(false);
 const editingMatchForFilesAndComments = ref<TournamentMatch | null>(null);
 const deleteMatchConfirmation = ref<{ id: number } | null>(null);
@@ -666,6 +674,21 @@ const availableWeeks = computed(() => {
 const hasMultipleWeeks = computed(() => {
   return availableWeeks.value.length > 1;
 });
+
+// Watch for route changes to load the selected match
+watch(() => route.query.matchId, async (matchId) => {
+  if (matchId) {
+    try {
+      const freshMatch = await adminTournamentService.getMatchDetail(props.tournament.id, Number(matchId));
+      editingMatchForResultsView.value = freshMatch;
+    } catch (err) {
+      console.error('Error loading match details:', err);
+      editingMatchForResultsView.value = null;
+    }
+  } else {
+    editingMatchForResultsView.value = null;
+  }
+}, { immediate: true });
 
 // Form computed properties
 const availableWeeksForForm = computed(() => {
@@ -921,9 +944,23 @@ const submitForm = async () => {
   }
 };
 
-const openEditMapResultsModal = (match: TournamentMatch) => {
-  editingMatchForResults.value = match;
-  showEditMapResultsModal.value = true;
+const openResultsView = (match: TournamentMatch) => {
+  router.push({
+    query: {
+      ...route.query,
+      matchId: match.id.toString()
+    }
+  });
+};
+
+const closeResultsView = () => {
+  router.push({
+    query: {
+      ...route.query,
+      matchId: undefined,
+      resultId: undefined
+    }
+  });
 };
 
 const openMatchFilesAndCommentsModal = (match: TournamentMatch) => {
