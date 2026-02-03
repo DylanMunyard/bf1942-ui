@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <!-- Current Players Display -->
-    <div v-if="currentPlayers.length > 0">
+    <div v-if="currentPlayers.length > 0" class="current-players-section">
       <div class="flex items-center justify-between mb-2">
         <label class="block text-sm font-medium" :style="{ color: textMutedColor }">
           Current Players ({{ currentPlayers.length }})
@@ -19,7 +19,14 @@
       </div>
 
       <!-- Added Players List -->
-      <div class="max-h-32 overflow-y-auto rounded-lg p-2" :style="{ backgroundColor: backgroundMuteColor + '80', borderColor: accentColor + '30', borderWidth: '1px', borderStyle: 'solid' }">
+      <div 
+        ref="currentPlayersListRef"
+        class="max-h-32 overflow-y-auto rounded-lg p-2 current-players-list" 
+        :style="{ 
+          backgroundColor: backgroundMuteColor + '80',
+          '--current-players-bg': backgroundMuteColor + '80'
+        }"
+      >
         <div class="flex flex-wrap gap-2">
           <div
             v-for="(player, index) in currentPlayers"
@@ -151,13 +158,13 @@
       <!-- Add Selected Button -->
       <button
         v-if="selectedPlayerNames.length > 0"
-        class="w-full px-4 py-2 rounded-lg font-medium transition-all text-sm flex items-center justify-center gap-2"
+        class="add-players-btn w-full px-4 py-2 rounded-lg font-medium transition-all text-sm flex items-center justify-center gap-2"
         :style="{
           background: `linear-gradient(90deg, ${props.accentColor}, ${props.accentColor}dd)`,
           color: accentTextColor
         }"
-        @mouseenter="$el.style.background = `linear-gradient(90deg, ${props.accentColor}dd, ${props.accentColor}cc)`"
-        @mouseleave="$el.style.background = `linear-gradient(90deg, ${props.accentColor}, ${props.accentColor}dd)`"
+        @mouseenter="handleAddButtonHover(true)"
+        @mouseleave="handleAddButtonHover(false)"
         @click="addSelectedPlayers"
         :disabled="loading"
       >
@@ -174,6 +181,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { getContrastingTextColor } from '@/utils/colorUtils';
+
+const currentPlayersListRef = ref<HTMLElement | null>(null);
 
 interface Props {
   currentPlayers: string[];
@@ -284,6 +293,22 @@ const selectAllVisiblePlayers = () => {
   selectedPlayerNames.value = [...new Set([...selectedPlayerNames.value, ...newSelections])];
 };
 
+const handleAddButtonHover = (isHovering: boolean) => {
+  const button = document.querySelector('.add-players-btn') as HTMLElement;
+  if (button) {
+    if (isHovering) {
+      button.style.background = `linear-gradient(90deg, ${props.accentColor}dd, ${props.accentColor}cc)`;
+    } else {
+      button.style.background = `linear-gradient(90deg, ${props.accentColor}, ${props.accentColor}dd)`;
+    }
+  }
+  
+  // Ensure Current Players section background doesn't change
+  if (currentPlayersListRef.value) {
+    currentPlayersListRef.value.style.backgroundColor = props.backgroundMuteColor + '80';
+  }
+};
+
 const addSelectedPlayers = () => {
   const playersToAdd = selectedPlayerNames.value.filter(name => !props.currentPlayers.includes(name));
 
@@ -335,10 +360,44 @@ const formatPlayerStats = (player: PlayerSearchResult): string => {
   -webkit-user-select: none;
 }
 
+/* Remove all focus outlines from container elements */
+.space-y-4 *:focus {
+  outline: none;
+}
+
 /* Allow text selection only in input fields */
 input {
   user-select: text;
   -webkit-user-select: text;
+}
+
+/* Prevent hover effects from affecting Current Players section */
+.current-players-section {
+  pointer-events: auto;
+  isolation: isolate;
+}
+
+.current-players-section,
+.current-players-section * {
+  transition: none !important;
+}
+
+.current-players-list {
+  transition: background-color 0s !important;
+  background-color: var(--current-players-bg) !important;
+}
+
+/* Prevent any hover rules from affecting the Current Players list background */
+.space-y-4:hover .current-players-list,
+.space-y-4 button:hover ~ .current-players-section .current-players-list,
+.add-players-btn:hover ~ .current-players-section .current-players-list,
+.add-players-btn:hover + * .current-players-section .current-players-list {
+  background-color: var(--current-players-bg) !important;
+}
+
+/* Ensure the add button hover doesn't affect siblings */
+.add-players-btn {
+  isolation: isolate;
 }
 
 /* Smooth scrolling */

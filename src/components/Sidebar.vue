@@ -3,7 +3,6 @@
   <div class="fixed right-0 top-0 w-20 h-full bg-gradient-to-b from-neutral-900/95 to-neutral-950 backdrop-blur-xl border-l border-neutral-700/50 z-50 hidden md:flex flex-col shadow-2xl">
     <!-- Animated background gradient -->
     <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-purple-500/5 opacity-60" />
-    <div class="absolute top-1/4 -left-20 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
     <div class="absolute bottom-1/4 -left-20 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
     
     <div class="relative z-10 flex flex-col h-full">

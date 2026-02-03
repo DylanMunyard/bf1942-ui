@@ -369,18 +369,38 @@ const routes: RouteRecordRaw[] = [
     {
       path: '/admin/tournaments/:id',
       name: 'admin-tournament-details',
-      component: TournamentDetails,
-      props: true,
-      meta: {
-        title: (route: RouteLocationNormalized) => `Tournament ${route.params.id} - BF Stats Tournament Manager`,
-        description: 'Manage your Battlefield tournament rounds, track results, and view the overall winner.'
-      },
+      redirect: to => `/admin/tournaments/${to.params.id}/matches`,
       beforeEnter: (_to, _from, next) => {
         const { isAuthenticated } = useAuth()
         if (!isAuthenticated.value) {
           next('/servers/bf1942')
         } else {
           next()
+        }
+      }
+    },
+    {
+      path: '/admin/tournaments/:id/:tab',
+      name: 'admin-tournament-details-tab',
+      component: TournamentDetails,
+      props: true,
+      meta: {
+        title: (route: RouteLocationNormalized) => `Tournament ${route.params.id} - BF Stats Tournament Manager`,
+        description: 'Manage your Battlefield tournament rounds, track results, and view the overall winner.'
+      },
+      beforeEnter: (to, _from, next) => {
+        const { isAuthenticated } = useAuth()
+        if (!isAuthenticated.value) {
+          next('/servers/bf1942')
+        } else {
+          // Validate tab parameter
+          const validTabs = ['matches', 'teams', 'weeks', 'files', 'posts', 'settings']
+          const tab = to.params.tab as string
+          if (!validTabs.includes(tab)) {
+            next(`/admin/tournaments/${to.params.id}/matches`)
+          } else {
+            next()
+          }
         }
       }
     },

@@ -1,54 +1,52 @@
 <template>
   <div
-    class="modal-mobile-safe fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+    class="modal-mobile-safe fixed inset-0 z-50 flex items-center justify-center p-4 portal-modal-overlay"
     @click.self="$emit('close')"
   >
-    <div class="bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-lg rounded-2xl border border-slate-700/50 max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+    <div class="portal-modal portal-modal--large">
       <!-- Header -->
-      <div class="sticky top-0 z-10 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
-              Match Files & Comments
-            </h2>
-            <p v-if="match" class="text-slate-400 text-sm mt-1">
-              {{ match.team1Name }} vs {{ match.team2Name }} • {{ formatMatchDate(match.scheduledDate) }}
-            </p>
-          </div>
-          <button
-            class="text-slate-400 hover:text-slate-200 transition-colors"
-            @click="$emit('close')"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      <div class="portal-modal-header">
+        <div>
+          <h2 class="portal-modal-title--large" style="color: var(--portal-accent);">
+            Match Files & Comments
+          </h2>
+          <p v-if="match" class="portal-modal-hint mt-1">
+            {{ match.team1Name }} vs {{ match.team2Name }} • {{ formatMatchDate(match.scheduledDate) }}
+          </p>
         </div>
+        <button
+          class="portal-modal-close"
+          @click="$emit('close')"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- Content -->
-      <div class="flex-1 overflow-y-auto p-6 space-y-6">
+      <div class="portal-modal-content space-y-6">
         <!-- Loading State -->
         <div v-if="isLoading" class="flex items-center justify-center py-12">
           <div class="flex flex-col items-center gap-3">
-            <div class="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
-            <p class="text-slate-400 text-sm">Loading files and comments...</p>
+            <div class="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin" style="border-color: var(--portal-accent-dim); border-top-color: var(--portal-accent);" />
+            <p class="portal-modal-hint">Loading files and comments...</p>
           </div>
         </div>
 
         <template v-else>
           <!-- Error Message -->
-          <div v-if="error" class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-            <p class="text-red-400 text-sm">{{ error }}</p>
+          <div v-if="error" class="portal-card" style="background: var(--portal-danger-glow); border-color: rgba(239, 68, 68, 0.3);">
+            <p style="color: var(--portal-danger); font-size: 0.875rem;">{{ error }}</p>
           </div>
 
           <!-- Files Panel -->
-          <div class="space-y-3 bg-slate-800/30 border border-slate-700/30 rounded-lg p-4">
+          <div class="space-y-3 portal-card">
             <!-- Add Link Input -->
             <div class="space-y-2">
               <div>
-                <h3 class="text-sm font-medium text-slate-300">📎 Links</h3>
-                <p class="text-xs text-slate-500 mt-1">Paste URL (auto-fills name), press Enter to add</p>
+                <h3 class="portal-modal-section-title">📎 Links</h3>
+                <p class="portal-modal-hint mt-1">Paste URL (auto-fills name), press Enter to add</p>
               </div>
 
               <!-- Compact Link Input -->
@@ -58,7 +56,7 @@
                     v-model="newFile.url"
                     type="url"
                     placeholder="https://..."
-                    class="flex-1 px-3 py-2 bg-slate-900/40 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded-lg"
+                    class="flex-1 portal-input"
                     :disabled="isProcessing"
                     @input="autoFillFileDetails"
                     @keydown.enter.prevent="addNewFile"
@@ -66,7 +64,7 @@
                   <button
                     @click="addNewFile"
                     :disabled="isProcessing || !newFile.url.trim()"
-                    class="px-3 py-2 bg-slate-900/40 hover:bg-slate-800/60 text-cyan-400 hover:text-cyan-300 text-xs rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    class="portal-btn portal-btn--ghost"
                     title="Add link (or press Enter)"
                   >
                     +
@@ -77,7 +75,7 @@
                     v-model="newFile.name"
                     type="text"
                     placeholder="File name (auto-filled)"
-                    class="flex-1 px-3 py-2 bg-slate-900/40 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded-lg"
+                    class="flex-1 portal-input"
                     :disabled="isProcessing"
                     @keydown.enter.prevent="addNewFile"
                   >
@@ -85,7 +83,7 @@
                     v-model="newFile.tags"
                     type="text"
                     placeholder="gameplay"
-                    class="w-24 px-2 py-2 bg-slate-900/60 text-slate-200 placeholder-slate-500 text-xs focus:outline-none border border-slate-700/50 rounded-lg"
+                    class="w-24 portal-input"
                     :disabled="isProcessing"
                     @keydown.enter.prevent="addNewFile"
                   >
@@ -94,14 +92,15 @@
             </div>
 
             <!-- Files List -->
-            <div v-if="existingFiles.length > 0" class="space-y-2 border-t border-slate-700/30 pt-3">
+            <div v-if="existingFiles.length > 0" class="space-y-2 border-t" style="border-color: var(--portal-border); padding-top: 0.75rem;">
               <div
                 v-for="file in existingFiles"
                 :key="file.id"
                 :class="[
-                  'rounded border transition-all p-3',
-                  editingFileId === file.id ? 'bg-slate-900/60 border-cyan-500/50' : (file.isNew ? 'bg-cyan-900/20 border-cyan-500/50 animate-pulse-once' : 'bg-slate-800/50 border-slate-700/30 group hover:bg-slate-800/70')
+                  'portal-card transition-all p-3',
+                  editingFileId === file.id ? '' : (file.isNew ? 'animate-pulse-once' : 'group')
                 ]"
+                :style="editingFileId === file.id ? 'background: var(--portal-surface-elevated); border-color: var(--portal-accent);' : (file.isNew ? 'background: var(--portal-accent-dim); border-color: var(--portal-accent);' : '')"
               >
                 <!-- View Mode -->
                 <div v-if="editingFileId !== file.id" class="flex items-start gap-3">
@@ -111,20 +110,26 @@
                         :href="file.url"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="text-xs text-cyan-400 hover:text-cyan-300 font-medium break-all"
+                        class="text-xs font-medium break-all"
+                        style="color: var(--portal-accent);"
+                        onmouseover="this.style.color='var(--portal-accent)'"
+                        onmouseout="this.style.color='var(--portal-accent)'"
                       >
                         {{ file.name }} ↗️
                       </a>
-                      <span v-if="file.isNew" class="text-xs px-2 py-0.5 bg-cyan-500/30 text-cyan-300 rounded">Unsaved</span>
+                      <span v-if="file.isNew" class="text-xs px-2 py-0.5 rounded" style="background: var(--portal-accent-dim); color: var(--portal-accent);">Unsaved</span>
                     </div>
-                    <p class="text-xs text-slate-500 truncate mt-0.5">{{ file.url }}</p>
-                    <p v-if="file.tags" class="text-xs text-slate-400 mt-1">{{ file.tags }}</p>
+                    <p class="portal-modal-hint truncate mt-0.5">{{ file.url }}</p>
+                    <p v-if="file.tags" class="text-xs mt-1" style="color: var(--portal-text);">{{ file.tags }}</p>
                   </div>
                   <div class="flex-shrink-0 flex gap-2">
                     <button
                       @click="startEditFile(file)"
                       :disabled="isProcessing"
-                      class="px-2 py-1 text-xs text-slate-400 hover:text-cyan-400 transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                      class="px-2 py-1 text-xs transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                      style="color: var(--portal-text);"
+                      onmouseover="this.style.color='var(--portal-accent)'"
+                      onmouseout="this.style.color='var(--portal-text)'"
                       title="Edit file"
                     >
                       ✎
@@ -133,9 +138,12 @@
                       @click="deleteExistingFile(file.id)"
                       :disabled="isProcessing"
                       :class="[
-                        'px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50',
+                        'px-2 py-1 text-xs transition-colors disabled:opacity-50',
                         file.isNew ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                       ]"
+                      style="color: var(--portal-danger);"
+                      onmouseover="this.style.color='var(--portal-danger)'"
+                      onmouseout="this.style.color='var(--portal-danger)'"
                       title="Delete file"
                     >
                       ✕
@@ -149,35 +157,35 @@
                     v-model="editingFile.name"
                     type="text"
                     placeholder="File name"
-                    class="w-full px-2 py-1 bg-slate-800/50 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded border border-slate-600/50"
+                    class="w-full portal-input"
                     :disabled="isProcessing"
                   />
                   <input
                     v-model="editingFile.url"
                     type="url"
                     placeholder="https://..."
-                    class="w-full px-2 py-1 bg-slate-800/50 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded border border-slate-600/50"
+                    class="w-full portal-input"
                     :disabled="isProcessing"
                   />
                   <input
                     v-model="editingFile.tags"
                     type="text"
                     placeholder="gameplay"
-                    class="w-full px-2 py-1 bg-slate-800/50 text-slate-200 placeholder-slate-500 text-xs focus:outline-none rounded border border-slate-600/50"
+                    class="w-full portal-input"
                     :disabled="isProcessing"
                   />
                   <div class="flex justify-end gap-2">
                     <button
                       @click="cancelEditFile"
                       :disabled="isProcessing"
-                      class="px-2 py-1 text-xs text-slate-400 hover:text-slate-300 transition-colors disabled:opacity-50"
+                      class="portal-btn portal-btn--ghost"
                     >
                       Cancel
                     </button>
                     <button
                       @click="saveEditFile(file.id as number)"
                       :disabled="isProcessing"
-                      class="px-2 py-1 text-xs bg-cyan-600 hover:bg-cyan-700 text-white rounded transition-colors disabled:opacity-50"
+                      class="portal-btn portal-btn--primary"
                     >
                       {{ isProcessing ? 'Saving...' : 'Save' }}
                     </button>
@@ -187,18 +195,18 @@
             </div>
 
             <!-- No Files Message -->
-            <div v-else class="text-center py-4 text-slate-500 text-xs border-t border-slate-700/30 pt-3">
+            <div v-else class="text-center py-4 portal-modal-hint border-t" style="border-color: var(--portal-border); padding-top: 0.75rem;">
               No files yet
             </div>
           </div>
 
           <!-- Comments Panel -->
-          <div class="space-y-3 bg-slate-800/30 border border-slate-700/30 rounded-lg p-4">
+          <div class="space-y-3 portal-card">
             <!-- Add Comment Input -->
             <div class="space-y-2">
               <div>
-                <h3 class="text-sm font-medium text-slate-300">💬 Comments</h3>
-                <p class="text-xs text-slate-500 mt-1">Paste comment, press Enter to add</p>
+                <h3 class="portal-modal-section-title">💬 Comments</h3>
+                <p class="portal-modal-hint mt-1">Paste comment, press Enter to add</p>
               </div>
 
               <!-- Comments Input with Auto-Add -->
@@ -207,7 +215,7 @@
                   v-model="newComment"
                   @keydown.enter.exact.prevent="addNewComment"
                   placeholder="Your comment..."
-                  class="w-full px-3 py-2 bg-slate-900/40 text-slate-200 placeholder-slate-500 text-xs resize-none focus:outline-none rounded-lg"
+                  class="w-full portal-input resize-none"
                   :disabled="isProcessing"
                   rows="2"
                 />
@@ -215,7 +223,7 @@
                   <button
                     @click="addNewComment"
                     :disabled="isProcessing || !newComment.trim()"
-                    class="px-3 py-1.5 bg-slate-900/40 hover:bg-slate-800/60 text-cyan-400 hover:text-cyan-300 text-xs rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    class="portal-btn portal-btn--ghost"
                     title="Add comment (or press Enter)"
                   >
                     + Add
@@ -225,29 +233,33 @@
             </div>
 
             <!-- Comments List -->
-            <div v-if="existingComments.length > 0" class="space-y-2 border-t border-slate-700/30 pt-3">
+            <div v-if="existingComments.length > 0" class="space-y-2 border-t" style="border-color: var(--portal-border); padding-top: 0.75rem;">
               <div
                 v-for="comment in existingComments"
                 :key="comment.id"
                 :class="[
-                  'rounded border transition-all p-3',
-                  editingCommentId === comment.id ? 'bg-slate-900/60 border-cyan-500/50' : (comment.isNew ? 'bg-cyan-900/20 border-cyan-500/50 animate-pulse-once' : 'bg-slate-800/50 border-slate-700/30 group hover:bg-slate-800/70')
+                  'portal-card transition-all p-3',
+                  editingCommentId === comment.id ? '' : (comment.isNew ? 'animate-pulse-once' : 'group')
                 ]"
+                :style="editingCommentId === comment.id ? 'background: var(--portal-surface-elevated); border-color: var(--portal-accent);' : (comment.isNew ? 'background: var(--portal-accent-dim); border-color: var(--portal-accent);' : '')"
               >
                 <!-- View Mode -->
                 <div v-if="editingCommentId !== comment.id" class="flex items-start gap-3">
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
-                      <p class="text-xs text-slate-300 break-words whitespace-pre-wrap flex-1">{{ comment.content }}</p>
-                      <span v-if="comment.isNew" class="flex-shrink-0 text-xs px-2 py-0.5 bg-cyan-500/30 text-cyan-300 rounded">Unsaved</span>
+                      <p class="text-xs break-words whitespace-pre-wrap flex-1" style="color: var(--portal-text-bright);">{{ comment.content }}</p>
+                      <span v-if="comment.isNew" class="flex-shrink-0 text-xs px-2 py-0.5 rounded" style="background: var(--portal-accent-dim); color: var(--portal-accent);">Unsaved</span>
                     </div>
-                    <p class="text-xs text-slate-500 mt-1">{{ formatCommentDate(comment.createdAt) }}</p>
+                    <p class="portal-modal-hint mt-1">{{ formatCommentDate(comment.createdAt) }}</p>
                   </div>
                   <div class="flex-shrink-0 flex gap-2">
                     <button
                       @click="startEditComment(comment)"
                       :disabled="isProcessing"
-                      class="px-2 py-1 text-xs text-slate-400 hover:text-cyan-400 transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                      class="px-2 py-1 text-xs transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                      style="color: var(--portal-text);"
+                      onmouseover="this.style.color='var(--portal-accent)'"
+                      onmouseout="this.style.color='var(--portal-text)'"
                       title="Edit comment"
                     >
                       ✎
@@ -256,9 +268,12 @@
                       @click="deleteExistingComment(comment.id)"
                       :disabled="isProcessing"
                       :class="[
-                        'px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50',
+                        'px-2 py-1 text-xs transition-colors disabled:opacity-50',
                         comment.isNew ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                       ]"
+                      style="color: var(--portal-danger);"
+                      onmouseover="this.style.color='var(--portal-danger)'"
+                      onmouseout="this.style.color='var(--portal-danger)'"
                       title="Delete comment"
                     >
                       ✕
@@ -271,7 +286,7 @@
                   <textarea
                     v-model="editingComment"
                     placeholder="Comment..."
-                    class="w-full px-2 py-1 bg-slate-800/50 text-slate-200 placeholder-slate-500 text-xs resize-none focus:outline-none rounded border border-slate-600/50"
+                    class="w-full portal-input resize-none"
                     :disabled="isProcessing"
                     rows="3"
                   />
@@ -279,14 +294,14 @@
                     <button
                       @click="cancelEditComment"
                       :disabled="isProcessing"
-                      class="px-2 py-1 text-xs text-slate-400 hover:text-slate-300 transition-colors disabled:opacity-50"
+                      class="portal-btn portal-btn--ghost"
                     >
                       Cancel
                     </button>
                     <button
                       @click="saveEditComment(comment.id as number)"
                       :disabled="isProcessing"
-                      class="px-2 py-1 text-xs bg-cyan-600 hover:bg-cyan-700 text-white rounded transition-colors disabled:opacity-50"
+                      class="portal-btn portal-btn--primary"
                     >
                       {{ isProcessing ? 'Saving...' : 'Save' }}
                     </button>
@@ -296,7 +311,7 @@
             </div>
 
             <!-- No Comments Message -->
-            <div v-else class="text-center py-4 text-slate-500 text-xs border-t border-slate-700/30 pt-3">
+            <div v-else class="text-center py-4 portal-modal-hint border-t" style="border-color: var(--portal-border); padding-top: 0.75rem;">
               No comments yet
             </div>
           </div>
@@ -304,21 +319,21 @@
       </div>
 
       <!-- Footer -->
-      <div class="sticky bottom-0 bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-sm border-t border-slate-700/50 p-6 flex items-center justify-end gap-3">
+      <div class="portal-modal-footer flex items-center justify-end gap-3">
         <button
-          class="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors disabled:opacity-50"
+          class="portal-btn portal-btn--ghost"
           @click="$emit('close')"
           :disabled="isProcessing"
         >
           Cancel
         </button>
         <button
-          class="px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="portal-btn portal-btn--primary flex items-center gap-2"
           @click="handleSave"
           :disabled="isProcessing || (newFiles.length === 0 && newComments.length === 0)"
           :title="newFiles.length === 0 && newComments.length === 0 ? 'No unsaved items to save' : ''"
         >
-          <div v-if="isProcessing" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <div v-if="isProcessing" class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
           <span v-if="isProcessing">Saving...</span>
           <span v-else>Save {{ newFiles.length + newComments.length }} Item{{ newFiles.length + newComments.length !== 1 ? 's' : '' }}</span>
         </button>
